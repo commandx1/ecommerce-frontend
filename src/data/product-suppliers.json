@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "name": "DentalPro Supply",
+    "logo": "https://storage.googleapis.com/uxpilot-auth.appspot.com/aaa4a845f9-2d0cbb5649f478a82b02.png",
+    "alt": "dental supply company logo, professional healthcare brand",
+    "badge": "Authorized Dealer",
+    "price": "$1,899",
+    "originalPrice": "$2,150",
+    "stock": "In Stock",
+    "stockColor": "green",
+    "shipping": "Free",
+    "shippingNote": "Orders $500+",
+    "leadTime": "1-2 Days",
+    "rating": 4.9,
+    "starCount": 5
+  },
+  {
+    "id": 2,
+    "name": "MediCore Equipment",
+    "logo": "https://storage.googleapis.com/uxpilot-auth.appspot.com/0aea97c647-5a3d4533404208cfb167.png",
+    "alt": "medical equipment supplier logo, healthcare distributor brand",
+    "badge": "Premium Partner",
+    "price": "$1,949",
+    "originalPrice": null,
+    "stock": "Low Stock",
+    "stockColor": "yellow",
+    "shipping": "$49",
+    "shippingNote": "Standard",
+    "leadTime": "2-3 Days",
+    "rating": 4.8,
+    "starCount": 5
+  },
+  {
+    "id": 3,
+    "name": "Digital Dental Solutions",
+    "logo": "https://storage.googleapis.com/uxpilot-auth.appspot.com/bd9c93a703-7c5732515a884b814507.png",
+    "alt": "dental technology company logo, imaging equipment supplier",
+    "badge": "Imaging Specialist",
+    "price": "$2,025",
+    "originalPrice": null,
+    "stock": "In Stock",
+    "stockColor": "green",
+    "shipping": "Free",
+    "shippingNote": "White Glove",
+    "leadTime": "3-5 Days",
+    "rating": 4.6,
+    "starCount": 4
+  }
+]

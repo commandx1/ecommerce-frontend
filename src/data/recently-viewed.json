@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "title": "Composite Resin Kit",
+    "description": "Premium restoration system",
+    "price": "$289",
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/bb4019d802-2c0bb6d30dfb7b9ff569.png",
+    "alt": "dental composite resin kit, restorative materials"
+  },
+  {
+    "id": 2,
+    "title": "Surgical Instrument Set",
+    "description": "15-piece premium kit",
+    "price": "$456",
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/28496d8869-2558e5aafd5c78250871.png",
+    "alt": "dental surgical instruments, extraction tools"
+  },
+  {
+    "id": 3,
+    "title": "LED Curing Light",
+    "description": "Wireless cordless design",
+    "price": "$325",
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/714ea2f56d-6ec0c9a3f25b2ea1819c.png",
+    "alt": "dental LED curing light, polymerization lamp"
+  },
+  {
+    "id": 4,
+    "title": "Ultrasonic Scaler",
+    "description": "Advanced periodontal care",
+    "price": "$899",
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/6095fca968-86f9eaed5357bf1298d4.png",
+    "alt": "dental ultrasonic scaler, periodontal cleaning device"
+  },
+  {
+    "id": 5,
+    "title": "Impression Material",
+    "description": "Fast-set alginate",
+    "price": "$89",
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/346ed5d935-b465a18547e8e2d9c7c0.png",
+    "alt": "dental impression material, alginate powder"
+  }
+]

@@ -1,0 +1,80 @@
+[
+  {
+    "id": 1,
+    "name": "DentalPro Supply",
+    "logo": "https://storage.googleapis.com/uxpilot-auth.appspot.com/aaa4a845f9-b314f0e21f92142830f3.png",
+    "alt": "dental supply company logo, professional healthcare brand logo",
+    "rating": 4.9,
+    "starCount": 5,
+    "reviewCount": "2,847",
+    "features": [
+      {
+        "icon": "check-circle",
+        "iconColor": "green",
+        "text": "15,000+ Products Available"
+      },
+      {
+        "icon": "truck",
+        "iconColor": "steel-blue",
+        "text": "Same-day shipping on orders before 2PM"
+      },
+      {
+        "icon": "shield-check",
+        "iconColor": "green",
+        "text": "FDA Certified & Licensed"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "MediCore Equipment",
+    "logo": "https://storage.googleapis.com/uxpilot-auth.appspot.com/56227405a6-e1fd093d5e462bd5f2b3.png",
+    "alt": "medical equipment company logo, professional healthcare supplier brand",
+    "rating": 4.8,
+    "starCount": 5,
+    "reviewCount": "1,923",
+    "features": [
+      {
+        "icon": "check-circle",
+        "iconColor": "green",
+        "text": "Specialized in Digital Equipment"
+      },
+      {
+        "icon": "tools",
+        "iconColor": "steel-blue",
+        "text": "Installation & Training Included"
+      },
+      {
+        "icon": "phone",
+        "iconColor": "green",
+        "text": "24/7 Technical Support"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "OrthoTech Solutions",
+    "logo": "https://storage.googleapis.com/uxpilot-auth.appspot.com/35d0bb5929-220634d1cbd2a303ef80.png",
+    "alt": "orthodontic supply company logo, dental specialty supplier brand",
+    "rating": 4.7,
+    "starCount": 4,
+    "reviewCount": "856",
+    "features": [
+      {
+        "icon": "check-circle",
+        "iconColor": "green",
+        "text": "Orthodontic Specialists"
+      },
+      {
+        "icon": "graduation-cap",
+        "iconColor": "steel-blue",
+        "text": "Training Programs Available"
+      },
+      {
+        "icon": "award",
+        "iconColor": "green",
+        "text": "Industry Award Winner 2023"
+      }
+    ]
+  }
+]

@@ -1,0 +1,892 @@
+[
+  {
+    "id": 1,
+    "title": "Premium Composite Kit",
+    "category": "Restorative",
+    "description": "Complete restoration system with multiple shades for superior aesthetic results. This premium composite kit offers exceptional durability and natural-looking restorations.",
+    "longDescription": "The Premium Composite Kit represents the latest advancement in dental restorative materials. Designed specifically for modern dental practices, this kit delivers exceptional aesthetic results with its comprehensive shade selection and advanced composite technology. The material offers superior durability, excellent polishability, and natural-looking restorations that blend seamlessly with natural dentition.",
+    "price": "$289",
+    "originalPrice": "$320",
+    "sku": "PCK-2024-PRO",
+    "rating": 4.8,
+    "reviewCount": 156,
+    "badge": "Best Seller",
+    "mainImage": "https://storage.googleapis.com/uxpilot-auth.appspot.com/bb4019d802-dd3fc4410e5f4346fb2b.png",
+    "thumbnailImages": [
+      "https://storage.googleapis.com/uxpilot-auth.appspot.com/bb4019d802-dd3fc4410e5f4346fb2b.png",
+      "https://storage.googleapis.com/uxpilot-auth.appspot.com/bb4019d802-2c0bb6d30dfb7b9ff569.png",
+      "https://storage.googleapis.com/uxpilot-auth.appspot.com/28496d8869-2558e5aafd5c78250871.png",
+      "https://storage.googleapis.com/uxpilot-auth.appspot.com/714ea2f56d-6ec0c9a3f25b2ea1819c.png"
+    ],
+    "alt": "dental composite resin kit, restorative material, dental filling materials",
+    "features": ["20+ Shade Selection", "High Durability", "Easy Application", "Natural Aesthetics"],
+    "technicalSpecs": [
+      { "label": "Material Type", "value": "Nano-hybrid Composite" },
+      { "label": "Shade Range", "value": "20+ Shades" },
+      { "label": "Viscosity", "value": "Medium" },
+      { "label": "Working Time", "value": "2-3 minutes" },
+      { "label": "Curing Time", "value": "20-40 seconds" },
+      { "label": "Packaging", "value": "4g Syringes" },
+      { "label": "Shelf Life", "value": "24 months" },
+      { "label": "Storage", "value": "Room Temperature" }
+    ],
+    "certifications": [
+      {
+        "id": 1,
+        "icon": "shield-check",
+        "iconColor": "green",
+        "title": "FDA Approved",
+        "description": "This product is FDA cleared for dental restorative applications.",
+        "badge": "Registration: K184756",
+        "badgeColor": "green"
+      },
+      {
+        "id": 2,
+        "icon": "certificate",
+        "iconColor": "blue",
+        "title": "CE Marking",
+        "description": "Complies with European health and safety standards.",
+        "badge": "Medical Device Class IIa",
+        "badgeColor": "blue"
+      }
+    ],
+    "suppliers": [
+      {
+        "id": 1,
+        "name": "DentalPro Supply",
+        "logo": "https://storage.googleapis.com/uxpilot-auth.appspot.com/aaa4a845f9-2d0cbb5649f478a82b02.png",
+        "alt": "dental supply company logo",
+        "badge": "Authorized Dealer",
+        "price": "$279",
+        "originalPrice": "$320",
+        "stock": "In Stock",
+        "stockColor": "green",
+        "shipping": "Free",
+        "shippingNote": "Orders $200+",
+        "leadTime": "1-2 Days",
+        "rating": 4.9,
+        "starCount": 5
+      },
+      {
+        "id": 2,
+        "name": "MediCore Equipment",
+        "logo": "https://storage.googleapis.com/uxpilot-auth.appspot.com/0aea97c647-5a3d4533404208cfb167.png",
+        "alt": "medical equipment supplier logo",
+        "badge": "Premium Partner",
+        "price": "$289",
+        "originalPrice": null,
+        "stock": "In Stock",
+        "stockColor": "green",
+        "shipping": "$15",
+        "shippingNote": "Standard",
+        "leadTime": "2-3 Days",
+        "rating": 4.7,
+        "starCount": 4
+      }
+    ],
+    "bulkPricing": [
+      {
+        "id": 1,
+        "range": "1 Unit",
+        "price": "$289",
+        "note": "Each",
+        "selected": false
+      },
+      {
+        "id": 2,
+        "range": "2-4 Units",
+        "price": "$269",
+        "note": "Save $20 each",
+        "selected": true
+      },
+      {
+        "id": 3,
+        "range": "5+ Units",
+        "price": "$249",
+        "note": "Save $40 each",
+        "selected": false
+      }
+    ],
+    "warrantyOptions": [
+      {
+        "id": 1,
+        "value": "standard",
+        "title": "Standard Warranty (1 Year)",
+        "description": "Included - No additional cost",
+        "price": "Free",
+        "selected": true
+      },
+      {
+        "id": 2,
+        "value": "extended",
+        "title": "Extended Warranty (2 Years)",
+        "description": "Includes priority support",
+        "price": "+$49",
+        "selected": false
+      }
+    ],
+    "orderSummary": {
+      "product": "Premium Composite Kit (1x)",
+      "productPrice": "$289.00",
+      "warranty": "$0.00",
+      "shipping": "Free",
+      "subtotal": "$289.00",
+      "tax": "$23.12",
+      "total": "$312.12"
+    },
+    "description": {
+      "paragraphs": [
+        "The Premium Composite Kit represents the latest advancement in dental restorative materials. Designed specifically for modern dental practices, this kit delivers exceptional aesthetic results with its comprehensive shade selection and advanced composite technology.",
+        "The nano-hybrid composite formula provides superior durability and excellent polishability, making it ideal for both anterior and posterior restorations. The material offers natural-looking results that blend seamlessly with natural dentition.",
+        "With easy application and consistent handling properties, the Premium Composite Kit streamlines your workflow while delivering predictable, high-quality results. The comprehensive shade selection ensures perfect color matching for every patient."
+      ],
+      "benefits": [
+        "Superior aesthetic results with natural-looking restorations",
+        "Excellent durability for long-lasting restorations",
+        "Easy application for efficient workflow",
+        "Comprehensive shade selection for perfect color matching"
+      ],
+      "included": [
+        { "icon": "package", "text": "Premium Composite Kit (20 shades)" },
+        { "icon": "syringe", "text": "Application Tips (50 count)" },
+        { "icon": "book", "text": "User Manual & Shade Guide" },
+        { "icon": "shield-check", "text": "1-Year Manufacturer Warranty" },
+        { "icon": "box", "text": "Storage Case" }
+      ],
+      "installationNote": {
+        "title": "Training & Support",
+        "text": "Free training and technical support are available for orders over $500. Our certified specialists will provide comprehensive guidance on product usage and best practices."
+      }
+    },
+    "reviews": {
+      "overall": {
+        "rating": 4.8,
+        "reviewCount": 156
+      },
+      "ratingBreakdown": [
+        { "stars": 5, "count": 98, "percentage": 63 },
+        { "stars": 4, "count": 42, "percentage": 27 },
+        { "stars": 3, "count": 12, "percentage": 8 },
+        { "stars": 2, "count": 3, "percentage": 2 },
+        { "stars": 1, "count": 1, "percentage": 1 }
+      ],
+      "categoryRatings": [
+        { "category": "Quality", "rating": 4.9, "starCount": 5 },
+        { "category": "Ease of Use", "rating": 4.7, "starCount": 4 },
+        { "category": "Value for Money", "rating": 4.6, "starCount": 4 },
+        { "category": "Aesthetics", "rating": 4.8, "starCount": 5 }
+      ],
+      "reviews": [
+        {
+          "id": 1,
+          "author": "Dr. Sarah Johnson",
+          "avatar": "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg",
+          "location": "Verified Purchaser • Smile Dental Clinic",
+          "rating": 5,
+          "starCount": 5,
+          "title": "Excellent Quality and Easy to Use",
+          "text": "We've been using this composite kit for about 6 months now, and it has completely transformed our restorative work. The shade selection is comprehensive, and the material handles beautifully. Patients love the natural-looking results.",
+          "helpfulCount": 28,
+          "date": "2 weeks ago"
+        },
+        {
+          "id": 2,
+          "author": "Dr. Michael Chen",
+          "avatar": "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg",
+          "location": "Verified Purchaser • Pacific Dental Group",
+          "rating": 5,
+          "starCount": 5,
+          "title": "Great Value for Premium Quality",
+          "text": "After comparing several composite systems, we chose this kit based on quality and price point. The material is easy to work with, polishes beautifully, and the results are consistently excellent. Highly recommended.",
+          "helpfulCount": 35,
+          "date": "1 month ago"
+        }
+      ]
+    },
+    "questions": [
+      {
+        "id": 1,
+        "question": "What shades are included in the kit?",
+        "askedBy": "Dr. Lisa Martinez",
+        "askedDate": "3 days ago",
+        "answer": {
+          "author": "Product Specialist",
+          "text": "The Premium Composite Kit includes 20+ shades covering the full Vita Classic shade range, plus additional bleached and translucent shades for optimal color matching.",
+          "answeredDate": "2 days ago"
+        }
+      },
+      {
+        "id": 2,
+        "question": "How long is the working time?",
+        "askedBy": "Dr. Robert Kim",
+        "askedDate": "1 week ago",
+        "answer": {
+          "author": "Technical Support",
+          "text": "The working time is approximately 2-3 minutes, providing ample time for placement and contouring before curing.",
+          "answeredDate": "5 days ago"
+        }
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "title": "ProVision HD Intraoral Camera",
+    "category": "Digital Imaging",
+    "description": "Professional-grade intraoral camera with 2MP HD resolution, LED illumination, and wireless connectivity for superior patient documentation and treatment planning.",
+    "longDescription": "The ProVision HD Intraoral Camera represents the latest advancement in dental imaging technology. Designed specifically for modern dental practices, this camera delivers exceptional image quality with its 2MP HD resolution and advanced CMOS sensor technology. The integrated LED illumination system provides consistent, shadow-free lighting for accurate color reproduction and detailed visualization of oral structures.",
+    "price": "$1,899",
+    "originalPrice": "$2,150",
+    "sku": "PV-HD-2024",
+    "rating": 4.9,
+    "reviewCount": 247,
+    "badge": "FDA Approved",
+    "mainImage": "https://storage.googleapis.com/uxpilot-auth.appspot.com/b0d60ead8b-61202c559e28bdc66d59.png",
+    "thumbnailImages": [
+      "https://storage.googleapis.com/uxpilot-auth.appspot.com/97c4e039e1-f60c365cae9d78266e4d.png",
+      "https://storage.googleapis.com/uxpilot-auth.appspot.com/bd68177716-4285aac5acdd53193b0b.png",
+      "https://storage.googleapis.com/uxpilot-auth.appspot.com/318e64d7b0-aef0c41e6251a537f969.png",
+      "https://storage.googleapis.com/uxpilot-auth.appspot.com/b058d295a8-2151d4111319c82f61e1.png"
+    ],
+    "alt": "digital intraoral camera, dental imaging device, handheld dental camera",
+    "features": ["2MP HD Resolution", "Wireless Connectivity", "LED Illumination", "Auto-Focus Technology"],
+    "technicalSpecs": [
+      { "label": "Resolution", "value": "2MP (1920x1080)" },
+      { "label": "Sensor Type", "value": "CMOS" },
+      { "label": "Focus Range", "value": "5mm - 50mm" },
+      { "label": "Illumination", "value": "8 LED White Light" },
+      { "label": "Connectivity", "value": "USB 2.0 / WiFi" },
+      { "label": "Power", "value": "USB Powered" },
+      { "label": "Weight", "value": "65g" },
+      { "label": "Dimensions", "value": "22cm x 2.8cm" },
+      { "label": "Operating System", "value": "Windows 10/11, macOS" },
+      { "label": "Warranty", "value": "2 Years" }
+    ],
+    "certifications": [
+      {
+        "id": 1,
+        "icon": "shield-check",
+        "iconColor": "green",
+        "title": "FDA Approved",
+        "description": "This device is FDA 510(k) cleared for intraoral imaging and patient documentation in dental practices.",
+        "badge": "Registration: K193847",
+        "badgeColor": "green"
+      },
+      {
+        "id": 2,
+        "icon": "certificate",
+        "iconColor": "blue",
+        "title": "CE Marking",
+        "description": "Complies with European health, safety, and environmental protection standards.",
+        "badge": "Medical Device Class IIa",
+        "badgeColor": "blue"
+      },
+      {
+        "id": 3,
+        "icon": "lock",
+        "iconColor": "purple",
+        "title": "HIPAA Compliant",
+        "description": "Software includes encryption and security features to protect patient data and ensure HIPAA compliance.",
+        "badge": "Data Encryption",
+        "badgeColor": "purple"
+      }
+    ],
+    "suppliers": [
+      {
+        "id": 1,
+        "name": "DentalPro Supply",
+        "logo": "https://storage.googleapis.com/uxpilot-auth.appspot.com/aaa4a845f9-2d0cbb5649f478a82b02.png",
+        "alt": "dental supply company logo",
+        "badge": "Authorized Dealer",
+        "price": "$1,899",
+        "originalPrice": "$2,150",
+        "stock": "In Stock",
+        "stockColor": "green",
+        "shipping": "Free",
+        "shippingNote": "Orders $500+",
+        "leadTime": "1-2 Days",
+        "rating": 4.9,
+        "starCount": 5
+      },
+      {
+        "id": 2,
+        "name": "MediCore Equipment",
+        "logo": "https://storage.googleapis.com/uxpilot-auth.appspot.com/0aea97c647-5a3d4533404208cfb167.png",
+        "alt": "medical equipment supplier logo",
+        "badge": "Premium Partner",
+        "price": "$1,949",
+        "originalPrice": null,
+        "stock": "Low Stock",
+        "stockColor": "yellow",
+        "shipping": "$49",
+        "shippingNote": "Standard",
+        "leadTime": "2-3 Days",
+        "rating": 4.8,
+        "starCount": 5
+      },
+      {
+        "id": 3,
+        "name": "Digital Dental Solutions",
+        "logo": "https://storage.googleapis.com/uxpilot-auth.appspot.com/bd9c93a703-7c5732515a884b814507.png",
+        "alt": "dental technology company logo",
+        "badge": "Imaging Specialist",
+        "price": "$2,025",
+        "originalPrice": null,
+        "stock": "In Stock",
+        "stockColor": "green",
+        "shipping": "Free",
+        "shippingNote": "White Glove",
+        "leadTime": "3-5 Days",
+        "rating": 4.6,
+        "starCount": 4
+      }
+    ],
+    "bulkPricing": [
+      {
+        "id": 1,
+        "range": "1 Unit",
+        "price": "$1,899",
+        "note": "Each",
+        "selected": false
+      },
+      {
+        "id": 2,
+        "range": "2-4 Units",
+        "price": "$1,799",
+        "note": "Save $100 each",
+        "selected": true
+      },
+      {
+        "id": 3,
+        "range": "5+ Units",
+        "price": "$1,699",
+        "note": "Save $200 each",
+        "selected": false
+      }
+    ],
+    "warrantyOptions": [
+      {
+        "id": 1,
+        "value": "standard",
+        "title": "Standard Warranty (2 Years)",
+        "description": "Included - No additional cost",
+        "price": "Free",
+        "selected": true
+      },
+      {
+        "id": 2,
+        "value": "extended",
+        "title": "Extended Warranty (4 Years)",
+        "description": "Includes priority support and replacement",
+        "price": "+$299",
+        "selected": false
+      }
+    ],
+    "orderSummary": {
+      "product": "ProVision HD Camera (1x)",
+      "productPrice": "$1,899.00",
+      "warranty": "$0.00",
+      "shipping": "Free",
+      "subtotal": "$1,899.00",
+      "tax": "$151.92",
+      "total": "$2,050.92"
+    },
+    "description": {
+      "paragraphs": [
+        "The ProVision HD Intraoral Camera represents the latest advancement in dental imaging technology. Designed specifically for modern dental practices, this camera delivers exceptional image quality with its 2MP HD resolution and advanced CMOS sensor technology.",
+        "The integrated LED illumination system provides consistent, shadow-free lighting for accurate color reproduction and detailed visualization of oral structures. The auto-focus technology ensures sharp images at various distances, making it ideal for both close-up detail work and broader oral cavity documentation.",
+        "With both USB and wireless connectivity options, the ProVision HD integrates seamlessly with existing practice management software and imaging systems. The lightweight, ergonomic design reduces hand fatigue during extended use, while the durable construction ensures reliable performance in busy clinical environments."
+      ],
+      "benefits": [
+        "Enhanced patient communication through high-quality visuals",
+        "Improved treatment planning with detailed documentation",
+        "Streamlined workflow with wireless connectivity",
+        "Reduced chair time with instant image capture"
+      ],
+      "included": [
+        { "icon": "camera", "text": "ProVision HD Intraoral Camera" },
+        { "icon": "usb", "text": "USB Cable (3m)" },
+        { "icon": "disc", "text": "Software Installation CD" },
+        { "icon": "book", "text": "User Manual & Quick Start Guide" },
+        { "icon": "shield-check", "text": "2-Year Manufacturer Warranty" },
+        { "icon": "tools", "text": "Disposable Sheath Covers (50 count)" }
+      ],
+      "installationNote": {
+        "title": "Installation & Training",
+        "text": "Free installation and training services are available for orders over $1,500. Our certified technicians will ensure proper setup and provide comprehensive training for your team."
+      }
+    },
+    "reviews": {
+      "overall": {
+        "rating": 4.9,
+        "reviewCount": 247
+      },
+      "ratingBreakdown": [
+        { "stars": 5, "count": 193, "percentage": 78 },
+        { "stars": 4, "count": 39, "percentage": 16 },
+        { "stars": 3, "count": 10, "percentage": 4 },
+        { "stars": 2, "count": 3, "percentage": 1 },
+        { "stars": 1, "count": 2, "percentage": 1 }
+      ],
+      "categoryRatings": [
+        { "category": "Image Quality", "rating": 4.9, "starCount": 5 },
+        { "category": "Ease of Use", "rating": 4.8, "starCount": 5 },
+        { "category": "Build Quality", "rating": 4.9, "starCount": 5 },
+        { "category": "Value for Money", "rating": 4.7, "starCount": 4 }
+      ],
+      "reviews": [
+        {
+          "id": 1,
+          "author": "Dr. Michael Chen",
+          "avatar": "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg",
+          "location": "Verified Purchaser • Pacific Dental Group",
+          "rating": 5,
+          "starCount": 5,
+          "title": "Exceptional Image Quality and Easy Integration",
+          "text": "We've been using the ProVision HD for about 3 months now, and it has completely transformed our patient consultations. The image quality is outstanding - the clarity and color accuracy help patients understand their treatment needs much better. The wireless connectivity works flawlessly with our practice management software.",
+          "helpfulCount": 23,
+          "date": "2 weeks ago"
+        },
+        {
+          "id": 2,
+          "author": "Dr. Sarah Johnson",
+          "avatar": "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg",
+          "location": "Verified Purchaser • Smile Dental Clinic",
+          "rating": 5,
+          "starCount": 5,
+          "title": "Great Value and Excellent Support",
+          "text": "After comparing several intraoral cameras, we chose the ProVision HD based on the feature set and price point. The installation was seamless, and the training provided was comprehensive. Our staff adapted quickly, and patients love seeing the detailed images of their teeth. Highly recommended for any practice looking to upgrade their imaging capabilities.",
+          "helpfulCount": 31,
+          "date": "1 month ago"
+        },
+        {
+          "id": 3,
+          "author": "Dr. James Wilson",
+          "avatar": "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg",
+          "location": "Verified Purchaser • Modern Dentistry Solutions",
+          "rating": 4,
+          "starCount": 4,
+          "title": "Solid Performance with Room for Improvement",
+          "text": "The ProVision HD delivers good image quality and the build feels solid. The auto-focus works well in most situations, though occasionally it struggles in very tight spaces. The software integration was straightforward. Overall, it's a reliable camera that meets our daily needs, though the price point could be more competitive.",
+          "helpfulCount": 18,
+          "date": "3 weeks ago"
+        }
+      ]
+    },
+    "questions": [
+      {
+        "id": 1,
+        "question": "Is this camera compatible with Mac computers?",
+        "askedBy": "Dr. Lisa Martinez",
+        "askedDate": "5 days ago",
+        "answer": {
+          "author": "DentalPro Support Team",
+          "text": "Yes, the ProVision HD is fully compatible with both Mac and Windows systems. The included software supports macOS 10.15 and later versions. We also provide free technical support for Mac setup and integration with popular dental practice management software on Mac platforms.",
+          "answeredDate": "3 days ago"
+        }
+      },
+      {
+        "id": 2,
+        "question": "What's the difference between this model and the ProVision Standard?",
+        "askedBy": "Dr. Robert Kim",
+        "askedDate": "1 week ago",
+        "answer": {
+          "author": "Product Specialist",
+          "text": "The ProVision HD offers several key upgrades over the Standard model:",
+          "list": [
+            "Higher resolution (2MP vs 1.3MP)",
+            "Wireless connectivity (Standard is USB only)",
+            "Advanced LED illumination system",
+            "Auto-focus technology",
+            "Enhanced software package"
+          ],
+          "answeredDate": "5 days ago"
+        }
+      },
+      {
+        "id": 3,
+        "question": "How long does the warranty cover repairs and replacements?",
+        "askedBy": "Dr. Amanda Foster",
+        "askedDate": "2 weeks ago",
+        "answer": {
+          "author": "Customer Service",
+          "text": "The standard warranty covers 2 years from purchase date, including parts and labor. During this period, we provide free repairs or replacement if needed. Extended warranty options are available for up to 4 years total coverage. All warranty service includes free shipping both ways.",
+          "answeredDate": "1 week ago"
+        }
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "title": "Surgical Instrument Set",
+    "category": "Instruments",
+    "description": "15-piece premium surgical kit with precision-crafted stainless steel instruments for dental extractions and surgical procedures.",
+    "longDescription": "The Surgical Instrument Set represents professional-grade dental surgical instruments designed for precision and durability. This comprehensive 15-piece kit includes all essential instruments needed for dental extractions and surgical procedures. Each instrument is crafted from high-grade stainless steel and undergoes rigorous quality control to ensure optimal performance and longevity.",
+    "price": "$456",
+    "originalPrice": "$520",
+    "sku": "SIS-15-PRO",
+    "rating": 4.7,
+    "reviewCount": 89,
+    "badge": "Professional Grade",
+    "mainImage": "https://storage.googleapis.com/uxpilot-auth.appspot.com/30f82e61fa-7fec69f44240c54acce8.png",
+    "thumbnailImages": [
+      "https://storage.googleapis.com/uxpilot-auth.appspot.com/30f82e61fa-7fec69f44240c54acce8.png",
+      "https://storage.googleapis.com/uxpilot-auth.appspot.com/28496d8869-2558e5aafd5c78250871.png",
+      "https://storage.googleapis.com/uxpilot-auth.appspot.com/6095fca968-86f9eaed5357bf1298d4.png",
+      "https://storage.googleapis.com/uxpilot-auth.appspot.com/346ed5d935-b465a18547e8e2d9c7c0.png"
+    ],
+    "alt": "dental surgical instruments set, stainless steel tools, dental extraction kit",
+    "features": ["Premium Stainless Steel", "15-Piece Complete Set", "Autoclave Safe", "Lifetime Warranty"],
+    "technicalSpecs": [
+      { "label": "Material", "value": "316L Stainless Steel" },
+      { "label": "Finish", "value": "Mirror Polish" },
+      { "label": "Sterilization", "value": "Autoclave Safe" },
+      { "label": "Packaging", "value": "Sterile Pouch" },
+      { "label": "Warranty", "value": "Lifetime" },
+      { "label": "Country of Origin", "value": "Germany" }
+    ],
+    "certifications": [
+      {
+        "id": 1,
+        "icon": "shield-check",
+        "iconColor": "green",
+        "title": "ISO 13485 Certified",
+        "description": "Manufactured in ISO 13485 certified facility ensuring highest quality standards.",
+        "badge": "Medical Device Class I",
+        "badgeColor": "green"
+      },
+      {
+        "id": 2,
+        "icon": "certificate",
+        "iconColor": "blue",
+        "title": "CE Marking",
+        "description": "Complies with European medical device regulations.",
+        "badge": "CE Certified",
+        "badgeColor": "blue"
+      }
+    ],
+    "suppliers": [
+      {
+        "id": 1,
+        "name": "DentalPro Supply",
+        "logo": "https://storage.googleapis.com/uxpilot-auth.appspot.com/aaa4a845f9-2d0cbb5649f478a82b02.png",
+        "alt": "dental supply company logo",
+        "badge": "Authorized Dealer",
+        "price": "$456",
+        "originalPrice": "$520",
+        "stock": "In Stock",
+        "stockColor": "green",
+        "shipping": "Free",
+        "shippingNote": "Orders $300+",
+        "leadTime": "1-2 Days",
+        "rating": 4.8,
+        "starCount": 5
+      },
+      {
+        "id": 2,
+        "name": "MediCore Equipment",
+        "logo": "https://storage.googleapis.com/uxpilot-auth.appspot.com/0aea97c647-5a3d4533404208cfb167.png",
+        "alt": "medical equipment supplier logo",
+        "badge": "Premium Partner",
+        "price": "$469",
+        "originalPrice": null,
+        "stock": "In Stock",
+        "stockColor": "green",
+        "shipping": "$25",
+        "shippingNote": "Standard",
+        "leadTime": "2-3 Days",
+        "rating": 4.6,
+        "starCount": 4
+      }
+    ],
+    "bulkPricing": [
+      {
+        "id": 1,
+        "range": "1 Unit",
+        "price": "$456",
+        "note": "Each",
+        "selected": false
+      },
+      {
+        "id": 2,
+        "range": "2-4 Units",
+        "price": "$429",
+        "note": "Save $27 each",
+        "selected": true
+      },
+      {
+        "id": 3,
+        "range": "5+ Units",
+        "price": "$399",
+        "note": "Save $57 each",
+        "selected": false
+      }
+    ],
+    "warrantyOptions": [
+      {
+        "id": 1,
+        "value": "standard",
+        "title": "Standard Warranty (Lifetime)",
+        "description": "Included - Lifetime warranty on materials and workmanship",
+        "price": "Free",
+        "selected": true
+      }
+    ],
+    "orderSummary": {
+      "product": "Surgical Instrument Set (1x)",
+      "productPrice": "$456.00",
+      "warranty": "$0.00",
+      "shipping": "Free",
+      "subtotal": "$456.00",
+      "tax": "$36.48",
+      "total": "$492.48"
+    },
+    "description": {
+      "paragraphs": [
+        "The Surgical Instrument Set represents professional-grade dental surgical instruments designed for precision and durability. This comprehensive 15-piece kit includes all essential instruments needed for dental extractions and surgical procedures.",
+        "Each instrument is crafted from high-grade 316L stainless steel and undergoes rigorous quality control to ensure optimal performance and longevity. The mirror polish finish provides smooth operation and easy cleaning, while the autoclave-safe construction ensures reliable sterilization.",
+        "The set includes elevators, forceps, periosteal elevators, and other essential surgical instruments, all designed with ergonomic handles for comfortable use during extended procedures."
+      ],
+      "benefits": [
+        "Premium quality stainless steel construction",
+        "Complete 15-piece surgical set",
+        "Autoclave safe for reliable sterilization",
+        "Lifetime warranty on materials and workmanship"
+      ],
+      "included": [
+        { "icon": "scissors", "text": "15-Piece Surgical Instrument Set" },
+        { "icon": "box", "text": "Sterile Storage Case" },
+        { "icon": "book", "text": "Instrument Guide & Care Instructions" },
+        { "icon": "shield-check", "text": "Lifetime Warranty Certificate" }
+      ],
+      "installationNote": {
+        "title": "Care & Maintenance",
+        "text": "All instruments are autoclave safe. Proper cleaning and sterilization procedures are included in the care instructions. Lifetime warranty covers defects in materials and workmanship."
+      }
+    },
+    "reviews": {
+      "overall": {
+        "rating": 4.7,
+        "reviewCount": 89
+      },
+      "ratingBreakdown": [
+        { "stars": 5, "count": 58, "percentage": 65 },
+        { "stars": 4, "count": 22, "percentage": 25 },
+        { "stars": 3, "count": 7, "percentage": 8 },
+        { "stars": 2, "count": 1, "percentage": 1 },
+        { "stars": 1, "count": 1, "percentage": 1 }
+      ],
+      "categoryRatings": [
+        { "category": "Quality", "rating": 4.8, "starCount": 5 },
+        { "category": "Durability", "rating": 4.9, "starCount": 5 },
+        { "category": "Value for Money", "rating": 4.5, "starCount": 4 },
+        { "category": "Ease of Use", "rating": 4.6, "starCount": 4 }
+      ],
+      "reviews": [
+        {
+          "id": 1,
+          "author": "Dr. Amanda Foster",
+          "avatar": "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg",
+          "location": "Verified Purchaser • Advanced Oral Surgery",
+          "rating": 5,
+          "starCount": 5,
+          "title": "Excellent Quality and Precision",
+          "text": "These instruments are top-notch. The quality of the stainless steel is excellent, and they feel perfectly balanced in hand. We've been using them for over a year now with no signs of wear. The lifetime warranty gives us confidence in our investment.",
+          "helpfulCount": 19,
+          "date": "3 weeks ago"
+        }
+      ]
+    },
+    "questions": [
+      {
+        "id": 1,
+        "question": "Are these instruments autoclave safe?",
+        "askedBy": "Dr. James Wilson",
+        "askedDate": "1 week ago",
+        "answer": {
+          "author": "Product Specialist",
+          "text": "Yes, all instruments in this set are made from 316L stainless steel and are fully autoclave safe. They can withstand standard autoclave sterilization cycles without damage.",
+          "answeredDate": "5 days ago"
+        }
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "title": "Metal Bracket System",
+    "category": "Orthodontics",
+    "description": "Self-ligating brackets with torque control for efficient orthodontic treatment and reduced chair time.",
+    "longDescription": "The Metal Bracket System features advanced self-ligating technology that reduces friction and enables more efficient tooth movement. These precision-engineered brackets offer superior torque control and are designed to minimize treatment time while maximizing patient comfort.",
+    "price": "$189",
+    "originalPrice": null,
+    "sku": "MBS-SL-2024",
+    "rating": 4.6,
+    "reviewCount": 124,
+    "badge": "New",
+    "mainImage": "https://storage.googleapis.com/uxpilot-auth.appspot.com/906d4ac563-acdabf311dbf68c5658a.png",
+    "thumbnailImages": [
+      "https://storage.googleapis.com/uxpilot-auth.appspot.com/906d4ac563-acdabf311dbf68c5658a.png",
+      "https://storage.googleapis.com/uxpilot-auth.appspot.com/bb4019d802-2c0bb6d30dfb7b9ff569.png",
+      "https://storage.googleapis.com/uxpilot-auth.appspot.com/28496d8869-2558e5aafd5c78250871.png",
+      "https://storage.googleapis.com/uxpilot-auth.appspot.com/714ea2f56d-6ec0c9a3f25b2ea1819c.png"
+    ],
+    "alt": "orthodontic brackets, metal braces, dental orthodontic supplies",
+    "features": ["Self-Ligating Technology", "Torque Control", "Reduced Friction", "Faster Treatment"],
+    "technicalSpecs": [
+      { "label": "Bracket Type", "value": "Self-Ligating" },
+      { "label": "Material", "value": "Stainless Steel" },
+      { "label": "Slot Size", "value": "0.022 inch" },
+      { "label": "Torque Range", "value": "0° to 20°" },
+      { "label": "Packaging", "value": "100 brackets per set" },
+      { "label": "Warranty", "value": "1 Year" }
+    ],
+    "certifications": [
+      {
+        "id": 1,
+        "icon": "shield-check",
+        "iconColor": "green",
+        "title": "FDA Approved",
+        "description": "FDA cleared for orthodontic applications.",
+        "badge": "Registration: K192345",
+        "badgeColor": "green"
+      },
+      {
+        "id": 2,
+        "icon": "certificate",
+        "iconColor": "blue",
+        "title": "CE Marking",
+        "description": "Complies with European medical device standards.",
+        "badge": "CE Certified",
+        "badgeColor": "blue"
+      }
+    ],
+    "suppliers": [
+      {
+        "id": 1,
+        "name": "DentalPro Supply",
+        "logo": "https://storage.googleapis.com/uxpilot-auth.appspot.com/aaa4a845f9-2d0cbb5649f478a82b02.png",
+        "alt": "dental supply company logo",
+        "badge": "Authorized Dealer",
+        "price": "$189",
+        "originalPrice": null,
+        "stock": "In Stock",
+        "stockColor": "green",
+        "shipping": "Free",
+        "shippingNote": "Orders $150+",
+        "leadTime": "1-2 Days",
+        "rating": 4.7,
+        "starCount": 5
+      }
+    ],
+    "bulkPricing": [
+      {
+        "id": 1,
+        "range": "1 Unit",
+        "price": "$189",
+        "note": "Each",
+        "selected": false
+      },
+      {
+        "id": 2,
+        "range": "2-4 Units",
+        "price": "$179",
+        "note": "Save $10 each",
+        "selected": true
+      },
+      {
+        "id": 3,
+        "range": "5+ Units",
+        "price": "$169",
+        "note": "Save $20 each",
+        "selected": false
+      }
+    ],
+    "warrantyOptions": [
+      {
+        "id": 1,
+        "value": "standard",
+        "title": "Standard Warranty (1 Year)",
+        "description": "Included - No additional cost",
+        "price": "Free",
+        "selected": true
+      }
+    ],
+    "orderSummary": {
+      "product": "Metal Bracket System (1x)",
+      "productPrice": "$189.00",
+      "warranty": "$0.00",
+      "shipping": "Free",
+      "subtotal": "$189.00",
+      "tax": "$15.12",
+      "total": "$204.12"
+    },
+    "description": {
+      "paragraphs": [
+        "The Metal Bracket System features advanced self-ligating technology that reduces friction and enables more efficient tooth movement. These precision-engineered brackets offer superior torque control and are designed to minimize treatment time while maximizing patient comfort.",
+        "The self-ligating mechanism eliminates the need for elastic or metal ligatures, reducing friction and allowing for more predictable tooth movement. This technology has been shown to reduce overall treatment time while maintaining excellent clinical outcomes.",
+        "The brackets are manufactured from high-grade stainless steel and feature a low-profile design that enhances patient comfort. The precise torque values ensure predictable tooth movement and optimal treatment results."
+      ],
+      "benefits": [
+        "Reduced treatment time with self-ligating technology",
+        "Superior torque control for predictable results",
+        "Enhanced patient comfort with low-profile design",
+        "Reduced friction for more efficient tooth movement"
+      ],
+      "included": [
+        { "icon": "package", "text": "Metal Bracket System (100 brackets)" },
+        { "icon": "book", "text": "Installation Guide & Torque Chart" },
+        { "icon": "shield-check", "text": "1-Year Manufacturer Warranty" },
+        { "icon": "box", "text": "Storage Case" }
+      ],
+      "installationNote": {
+        "title": "Training Available",
+        "text": "Free training and technical support are available for orders over $500. Our orthodontic specialists will provide comprehensive guidance on bracket placement and treatment protocols."
+      }
+    },
+    "reviews": {
+      "overall": {
+        "rating": 4.6,
+        "reviewCount": 124
+      },
+      "ratingBreakdown": [
+        { "stars": 5, "count": 72, "percentage": 58 },
+        { "stars": 4, "count": 38, "percentage": 31 },
+        { "stars": 3, "count": 10, "percentage": 8 },
+        { "stars": 2, "count": 3, "percentage": 2 },
+        { "stars": 1, "count": 1, "percentage": 1 }
+      ],
+      "categoryRatings": [
+        { "category": "Quality", "rating": 4.7, "starCount": 5 },
+        { "category": "Ease of Use", "rating": 4.5, "starCount": 4 },
+        { "category": "Treatment Efficiency", "rating": 4.6, "starCount": 5 },
+        { "category": "Value for Money", "rating": 4.5, "starCount": 4 }
+      ],
+      "reviews": [
+        {
+          "id": 1,
+          "author": "Dr. Robert Kim",
+          "avatar": "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg",
+          "location": "Verified Purchaser • Orthodontic Specialists",
+          "rating": 5,
+          "starCount": 5,
+          "title": "Excellent Self-Ligating System",
+          "text": "We've been using this bracket system for about 8 months now, and the results have been excellent. The self-ligating mechanism works smoothly, and we've noticed a reduction in treatment time. Patients appreciate the low-profile design.",
+          "helpfulCount": 22,
+          "date": "1 month ago"
+        }
+      ]
+    },
+    "questions": [
+      {
+        "id": 1,
+        "question": "How many brackets are included in one set?",
+        "askedBy": "Dr. Sarah Johnson",
+        "askedDate": "1 week ago",
+        "answer": {
+          "author": "Product Specialist",
+          "text": "Each set includes 100 brackets, which is typically sufficient for one full arch treatment.",
+          "answeredDate": "5 days ago"
+        }
+      }
+    ]
+  }
+]

@@ -1,0 +1,57 @@
+{
+  "overall": {
+    "rating": 4.9,
+    "reviewCount": 247
+  },
+  "ratingBreakdown": [
+    { "stars": 5, "count": 193, "percentage": 78 },
+    { "stars": 4, "count": 39, "percentage": 16 },
+    { "stars": 3, "count": 10, "percentage": 4 },
+    { "stars": 2, "count": 3, "percentage": 1 },
+    { "stars": 1, "count": 2, "percentage": 1 }
+  ],
+  "categoryRatings": [
+    { "category": "Image Quality", "rating": 4.9, "starCount": 5 },
+    { "category": "Ease of Use", "rating": 4.8, "starCount": 5 },
+    { "category": "Build Quality", "rating": 4.9, "starCount": 5 },
+    { "category": "Value for Money", "rating": 4.7, "starCount": 4 }
+  ],
+  "reviews": [
+    {
+      "id": 1,
+      "author": "Dr. Michael Chen",
+      "avatar": "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg",
+      "location": "Verified Purchaser • Pacific Dental Group",
+      "rating": 5,
+      "starCount": 5,
+      "title": "Exceptional Image Quality and Easy Integration",
+      "text": "We've been using the ProVision HD for about 3 months now, and it has completely transformed our patient consultations. The image quality is outstanding - the clarity and color accuracy help patients understand their treatment needs much better. The wireless connectivity works flawlessly with our practice management software.",
+      "helpfulCount": 23,
+      "date": "2 weeks ago"
+    },
+    {
+      "id": 2,
+      "author": "Dr. Sarah Johnson",
+      "avatar": "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg",
+      "location": "Verified Purchaser • Smile Dental Clinic",
+      "rating": 5,
+      "starCount": 5,
+      "title": "Great Value and Excellent Support",
+      "text": "After comparing several intraoral cameras, we chose the ProVision HD based on the feature set and price point. The installation was seamless, and the training provided was comprehensive. Our staff adapted quickly, and patients love seeing the detailed images of their teeth. Highly recommended for any practice looking to upgrade their imaging capabilities.",
+      "helpfulCount": 31,
+      "date": "1 month ago"
+    },
+    {
+      "id": 3,
+      "author": "Dr. James Wilson",
+      "avatar": "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg",
+      "location": "Verified Purchaser • Modern Dentistry Solutions",
+      "rating": 4,
+      "starCount": 4,
+      "title": "Solid Performance with Room for Improvement",
+      "text": "The ProVision HD delivers good image quality and the build feels solid. The auto-focus works well in most situations, though occasionally it struggles in very tight spaces. The software integration was straightforward. Overall, it's a reliable camera that meets our daily needs, though the price point could be more competitive.",
+      "helpfulCount": 18,
+      "date": "3 weeks ago"
+    }
+  ]
+}

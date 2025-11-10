@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "rating": 5,
+    "text": "DentyPro has revolutionized how we manage our supplies. The price transparency and quality assurance give us confidence in every purchase. Our practice has saved 30% on supply costs.",
+    "author": "Dr. Sarah Johnson",
+    "location": "Smile Dental Clinic, Austin TX",
+    "avatar": "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg"
+  },
+  {
+    "id": 2,
+    "rating": 5,
+    "text": "The platform makes it incredibly easy to compare suppliers and find the best deals. The automatic reordering feature ensures we never run out of essential supplies.",
+    "author": "Dr. Michael Chen",
+    "location": "Pacific Dental Group, San Francisco CA",
+    "avatar": "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg"
+  },
+  {
+    "id": 3,
+    "rating": 5,
+    "text": "As a new practice, DentyPro's equipment packages saved us thousands. The support team helped us choose the right products and suppliers for our specific needs.",
+    "author": "Dr. Emily Rodriguez",
+    "location": "Modern Dentistry, Miami FL",
+    "avatar": "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg"
+  }
+]

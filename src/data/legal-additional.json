@@ -1,0 +1,433 @@
+{
+  "vendorAgreement": {
+    "id": "vendor-agreement",
+    "title": "Vendor Partnership Agreement",
+    "subtitle": "Terms and conditions for suppliers and vendors",
+    "icon": "handshake",
+    "sections": [
+      {
+        "title": "Vendor Qualification Requirements",
+        "cards": [
+          {
+            "title": "Business Requirements",
+            "items": [
+              "Valid business license and registration",
+              "Professional liability insurance",
+              "FDA registration (where applicable)",
+              "Quality management system certification",
+              "Financial stability verification"
+            ]
+          },
+          {
+            "title": "Product Standards",
+            "items": [
+              "FDA approval or clearance documentation",
+              "ISO quality certifications",
+              "Product liability coverage",
+              "Accurate product descriptions and images",
+              "Competitive pricing structure"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Commission and Fee Structure",
+        "pricing": [
+          {
+            "value": "2.5%",
+            "label": "Transaction Fee",
+            "note": "Per successful transaction"
+          },
+          {
+            "value": "$99",
+            "label": "Monthly Listing Fee",
+            "note": "For premium placement"
+          },
+          {
+            "value": "0%",
+            "label": "Setup Fee",
+            "note": "No initial costs"
+          }
+        ]
+      }
+    ]
+  },
+  "buyerAgreement": {
+    "id": "buyer-agreement",
+    "title": "Buyer Service Agreement",
+    "subtitle": "Terms for dental professionals and practices",
+    "icon": "shopping-bag",
+    "sections": [
+      {
+        "title": "Professional Verification Process",
+        "content": "All buyers must complete professional verification to access our platform's full features and pricing. This process ensures that only licensed dental professionals can purchase regulated products and access professional-grade equipment.",
+        "steps": [
+          {
+            "step": 1,
+            "title": "License Upload",
+            "description": "Submit current dental license documentation"
+          },
+          {
+            "step": 2,
+            "title": "Identity Verification",
+            "description": "Confirm identity through secure verification"
+          },
+          {
+            "step": 3,
+            "title": "Practice Validation",
+            "description": "Verify practice location and credentials"
+          },
+          {
+            "step": 4,
+            "title": "Account Approval",
+            "description": "Receive full access within 24-48 hours"
+          }
+        ]
+      },
+      {
+        "title": "Payment Terms and Options",
+        "paymentOptions": [
+          {
+            "title": "Credit Card",
+            "items": [
+              "Immediate processing",
+              "All major cards accepted",
+              "Secure tokenization",
+              "Fraud protection included"
+            ]
+          },
+          {
+            "title": "Net Payment Terms",
+            "items": [
+              "Net 30/60/90 available",
+              "Credit approval required",
+              "Minimum order amounts apply",
+              "Early payment discounts"
+            ]
+          },
+          {
+            "title": "ACH/Wire Transfer",
+            "items": [
+              "Lower processing fees",
+              "Bulk order discounts",
+              "Direct bank transfers",
+              "Enhanced security protocols"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "dataProcessing": {
+    "id": "data-processing",
+    "title": "Data Processing Agreement",
+    "subtitle": "GDPR and data protection compliance",
+    "icon": "database",
+    "sections": [
+      {
+        "title": "Data Processing Purposes",
+        "cards": [
+          {
+            "title": "Primary Processing",
+            "items": [
+              "User account management and authentication",
+              "Order processing and transaction facilitation",
+              "Customer support and communication",
+              "Platform security and fraud prevention",
+              "Legal compliance and regulatory reporting"
+            ]
+          },
+          {
+            "title": "Secondary Processing",
+            "items": [
+              "Service improvement and analytics",
+              "Marketing communications (with consent)",
+              "Research and development activities",
+              "Business intelligence and reporting",
+              "Quality assurance and testing"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Data Subject Rights",
+        "cards": [
+          {
+            "title": "Access and Control Rights",
+            "items": [
+              "Right to access personal data",
+              "Right to rectification of inaccurate data",
+              "Right to erasure (\"right to be forgotten\")",
+              "Right to restrict processing"
+            ]
+          },
+          {
+            "title": "Portability and Objection Rights",
+            "items": [
+              "Right to data portability",
+              "Right to object to processing",
+              "Right to withdraw consent",
+              "Right to lodge complaints with authorities"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "cookiePolicy": {
+    "id": "cookie-policy",
+    "title": "Cookie Policy",
+    "subtitle": "Information about cookies and tracking technologies",
+    "icon": "cookie-bite",
+    "sections": [
+      {
+        "title": "Types of Cookies We Use",
+        "cookieTypes": [
+          {
+            "title": "Essential",
+            "icon": "cog",
+            "description": "Required for basic site functionality"
+          },
+          {
+            "title": "Analytics",
+            "icon": "chart-bar",
+            "description": "Help us understand user behavior"
+          },
+          {
+            "title": "Marketing",
+            "icon": "bullhorn",
+            "description": "Personalize ads and content"
+          },
+          {
+            "title": "Preference",
+            "icon": "user-cog",
+            "description": "Remember your settings"
+          }
+        ]
+      },
+      {
+        "title": "Cookie Management",
+        "content": "You can control and manage cookies in various ways. Please note that removing or blocking cookies may impact your user experience.",
+        "managementOptions": [
+          {
+            "title": "Browser Settings",
+            "description": "Adjust cookie settings directly in your browser preferences"
+          },
+          {
+            "title": "Cookie Banner",
+            "description": "Use our cookie consent banner to customize preferences"
+          },
+          {
+            "title": "Account Settings",
+            "description": "Manage tracking preferences in your user account"
+          }
+        ]
+      }
+    ]
+  },
+  "regulatoryNotices": {
+    "id": "regulatory-notices",
+    "title": "Regulatory Notices",
+    "subtitle": "FDA and industry compliance information",
+    "icon": "gavel",
+    "notice": {
+      "type": "error",
+      "title": "Important Regulatory Notice",
+      "text": "All products sold through DentalHub must comply with FDA regulations and relevant industry standards. Buyers are responsible for ensuring proper use and compliance."
+    },
+    "sections": [
+      {
+        "title": "FDA Medical Device Regulations",
+        "deviceClasses": [
+          {
+            "class": "Class I Devices",
+            "items": [
+              "General controls apply",
+              "Usually exempt from premarket review",
+              "Basic safety and effectiveness standards",
+              "Examples: dental floss, mouth mirrors"
+            ]
+          },
+          {
+            "class": "Class II Devices",
+            "items": [
+              "General and special controls",
+              "Usually require 510(k) clearance",
+              "Performance standards required",
+              "Examples: dental X-ray machines, amalgam"
+            ]
+          },
+          {
+            "class": "Class III Devices",
+            "items": [
+              "Highest level of regulatory control",
+              "Usually require PMA approval",
+              "Clinical trials often necessary",
+              "Examples: dental implants, certain lasers"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Quality System Regulations",
+        "content": "All medical device manufacturers must comply with FDA Quality System Regulation (QSR) requirements, including:",
+        "items": [
+          "Design controls and validation",
+          "Document and record control systems",
+          "Management responsibility and organization",
+          "Resource management and training",
+          "Product realization and manufacturing",
+          "Measurement, analysis, and improvement",
+          "Corrective and preventive action (CAPA)",
+          "Risk management and post-market surveillance"
+        ]
+      },
+      {
+        "title": "State Licensing Requirements",
+        "content": "Dental professionals must maintain current state licenses and comply with state-specific regulations regarding the purchase and use of dental products and equipment. Some products may require special permits or certifications."
+      }
+    ]
+  },
+  "complianceCertifications": {
+    "id": "compliance-certifications",
+    "title": "Platform Certifications",
+    "subtitle": "Our compliance certifications and standards",
+    "icon": "certificate",
+    "certifications": [
+      {
+        "title": "SOC 2 Type II",
+        "icon": "shield-check",
+        "description": "Security, availability, and confidentiality controls",
+        "status": "Certified"
+      },
+      {
+        "title": "ISO 27001",
+        "icon": "lock",
+        "description": "Information security management system",
+        "status": "Certified"
+      },
+      {
+        "title": "PCI DSS",
+        "icon": "credit-card",
+        "description": "Payment card industry data security",
+        "status": "Level 1"
+      },
+      {
+        "title": "HIPAA",
+        "icon": "user-md",
+        "description": "Healthcare information privacy compliance",
+        "status": "Compliant"
+      }
+    ],
+    "securityStandards": [
+      {
+        "title": "Data Protection",
+        "items": [
+          "AES-256 encryption for data at rest",
+          "TLS 1.3 for data in transit",
+          "Multi-factor authentication required",
+          "Regular penetration testing",
+          "24/7 security monitoring"
+        ]
+      },
+      {
+        "title": "Infrastructure Security",
+        "items": [
+          "AWS cloud infrastructure with 99.9% uptime",
+          "Redundant data centers and backup systems",
+          "DDoS protection and firewall systems",
+          "Automated security patching",
+          "Incident response team available 24/7"
+        ]
+      }
+    ]
+  },
+  "auditReports": {
+    "id": "audit-reports",
+    "title": "Audit Reports & Documentation",
+    "subtitle": "Third-party audits and compliance reports",
+    "icon": "clipboard-list",
+    "reports": [
+      {
+        "title": "SOC 2 Type II Report - 2024",
+        "description": "Independent assessment of security, availability, and confidentiality controls",
+        "period": "Jan 1, 2024 - Oct 31, 2024",
+        "auditor": "KPMG LLP",
+        "status": "Unqualified Opinion"
+      },
+      {
+        "title": "ISO 27001 Certification - 2024",
+        "description": "Information Security Management System certification and audit report",
+        "period": "Valid Until: March 15, 2027",
+        "auditor": "BSI Group",
+        "status": "Certificate No: IS 789456"
+      },
+      {
+        "title": "PCI DSS Compliance Report - 2024",
+        "description": "Payment Card Industry Data Security Standard assessment",
+        "period": "Valid Until: Dec 31, 2024",
+        "auditor": "Coalfire Systems Inc.",
+        "status": "Compliance Level: Level 1 Merchant"
+      },
+      {
+        "title": "HIPAA Risk Assessment - 2024",
+        "description": "Healthcare information privacy and security risk assessment",
+        "period": "Assessment Date: September 2024",
+        "auditor": "Clearwater Compliance",
+        "status": "Risk Level: Low"
+      },
+      {
+        "title": "Penetration Testing Report - Q4 2024",
+        "description": "External security assessment and vulnerability testing",
+        "period": "Test Period: Oct 15-25, 2024",
+        "auditor": "Rapid7",
+        "status": "Critical Issues: 0"
+      }
+    ]
+  },
+  "documentArchive": [
+    {
+      "title": "Terms of Service Archive",
+      "icon": "folder-open",
+      "versions": [
+        { "version": "Version 3.2 (Current)", "date": "Nov 2024" },
+        { "version": "Version 3.1", "date": "Oct 2024" },
+        { "version": "Version 3.0", "date": "Aug 2024" },
+        { "version": "Version 2.9", "date": "Jun 2024" }
+      ]
+    },
+    {
+      "title": "Privacy Policy Archive",
+      "icon": "folder-open",
+      "versions": [
+        { "version": "Version 2.4 (Current)", "date": "Nov 2024" },
+        { "version": "Version 2.3", "date": "Sep 2024" },
+        { "version": "Version 2.2", "date": "Jul 2024" },
+        { "version": "Version 2.1", "date": "May 2024" }
+      ]
+    },
+    {
+      "title": "Compliance Archive",
+      "icon": "folder-open",
+      "versions": [
+        { "version": "HIPAA Notice 2024", "date": "2024" },
+        { "version": "SOC 2 Report 2023", "date": "2023" },
+        { "version": "ISO Cert 2023", "date": "2023" },
+        { "version": "PCI DSS 2023", "date": "2023" }
+      ]
+    }
+  ],
+  "contactInfo": {
+    "phone": "1-800-DENTAL-LAW",
+    "email": "legal@dentalhub.com",
+    "topics": [
+      "Terms of Service",
+      "Privacy Policy",
+      "HIPAA Compliance",
+      "Vendor Agreement",
+      "Regulatory Compliance",
+      "Data Processing",
+      "Other"
+    ]
+  }
+}

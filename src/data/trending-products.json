@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "title": "Premium Composite Kit",
+    "category": "Restorative",
+    "description": "Complete restoration system with multiple shades",
+    "price": "$289",
+    "originalPrice": "$320",
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/bb4019d802-dd3fc4410e5f4346fb2b.png",
+    "alt": "dental composite resin kit, restorative material, dental filling materials"
+  },
+  {
+    "id": 2,
+    "title": "Digital Intraoral Camera",
+    "category": "Imaging",
+    "description": "High-resolution imaging with LED illumination",
+    "price": "$1,899",
+    "originalPrice": null,
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/72d00e28bd-ff64341848abcc6e242e.png",
+    "alt": "digital intraoral camera, dental imaging device, handheld dental camera"
+  },
+  {
+    "id": 3,
+    "title": "Surgical Instrument Set",
+    "category": "Instruments",
+    "description": "15-piece premium surgical kit",
+    "price": "$456",
+    "originalPrice": "$520",
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/30f82e61fa-7fec69f44240c54acce8.png",
+    "alt": "dental surgical instruments set, stainless steel tools, dental extraction kit"
+  },
+  {
+    "id": 4,
+    "title": "Metal Bracket System",
+    "category": "Orthodontics",
+    "description": "Self-ligating brackets with torque control",
+    "price": "$189",
+    "originalPrice": null,
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/906d4ac563-acdabf311dbf68c5658a.png",
+    "alt": "orthodontic brackets, metal braces, dental orthodontic supplies"
+  }
+]

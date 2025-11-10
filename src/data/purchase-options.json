@@ -1,0 +1,52 @@
+{
+  "bulkPricing": [
+    {
+      "id": 1,
+      "range": "1 Unit",
+      "price": "$1,899",
+      "note": "Each",
+      "selected": false
+    },
+    {
+      "id": 2,
+      "range": "2-4 Units",
+      "price": "$1,799",
+      "note": "Save $100 each",
+      "selected": true
+    },
+    {
+      "id": 3,
+      "range": "5+ Units",
+      "price": "$1,699",
+      "note": "Save $200 each",
+      "selected": false
+    }
+  ],
+  "warrantyOptions": [
+    {
+      "id": 1,
+      "value": "standard",
+      "title": "Standard Warranty (2 Years)",
+      "description": "Included - No additional cost",
+      "price": "Free",
+      "selected": true
+    },
+    {
+      "id": 2,
+      "value": "extended",
+      "title": "Extended Warranty (4 Years)",
+      "description": "Includes priority support and replacement",
+      "price": "+$299",
+      "selected": false
+    }
+  ],
+  "orderSummary": {
+    "product": "ProVision HD Camera (1x)",
+    "productPrice": "$1,899.00",
+    "warranty": "$0.00",
+    "shipping": "Free",
+    "subtotal": "$1,899.00",
+    "tax": "$151.92",
+    "total": "$2,050.92"
+  }
+}

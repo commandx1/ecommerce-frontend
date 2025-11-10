@@ -1,0 +1,285 @@
+{
+  "quickNav": [
+    {
+      "id": "terms-of-service",
+      "title": "Terms of Service",
+      "description": "Platform usage terms and conditions",
+      "icon": "file-contract"
+    },
+    {
+      "id": "privacy-policy",
+      "title": "Privacy Policy",
+      "description": "Data protection and privacy rights",
+      "icon": "shield-check"
+    },
+    {
+      "id": "hipaa-compliance",
+      "title": "HIPAA Compliance",
+      "description": "Healthcare privacy regulations",
+      "icon": "user-md"
+    },
+    {
+      "id": "regulatory-notices",
+      "title": "Regulatory Notices",
+      "description": "FDA and industry compliance",
+      "icon": "gavel"
+    }
+  ],
+  "sidebarNav": [
+    {
+      "id": "terms-of-service",
+      "title": "Terms of Service",
+      "icon": "file-contract"
+    },
+    {
+      "id": "privacy-policy",
+      "title": "Privacy Policy",
+      "icon": "shield-check"
+    },
+    {
+      "id": "hipaa-compliance",
+      "title": "HIPAA Compliance",
+      "icon": "user-md"
+    },
+    {
+      "id": "vendor-agreement",
+      "title": "Vendor Agreement",
+      "icon": "handshake"
+    },
+    {
+      "id": "buyer-agreement",
+      "title": "Buyer Agreement",
+      "icon": "shopping-bag"
+    },
+    {
+      "id": "data-processing",
+      "title": "Data Processing",
+      "icon": "database"
+    },
+    {
+      "id": "cookie-policy",
+      "title": "Cookie Policy",
+      "icon": "cookie-bite"
+    },
+    {
+      "id": "regulatory-notices",
+      "title": "Regulatory Notices",
+      "icon": "gavel"
+    },
+    {
+      "id": "compliance-certifications",
+      "title": "Certifications",
+      "icon": "certificate"
+    },
+    {
+      "id": "audit-reports",
+      "title": "Audit Reports",
+      "icon": "clipboard-list"
+    }
+  ],
+  "documents": [
+    {
+      "id": "terms-of-service",
+      "title": "Terms of Service",
+      "lastUpdated": "November 2, 2024",
+      "icon": "file-contract",
+      "notice": {
+        "type": "warning",
+        "title": "Important Notice",
+        "text": "These terms govern your use of DentalHub's B2B marketplace platform. Please read carefully before using our services."
+      },
+      "sections": [
+        {
+          "title": "1. Acceptance of Terms",
+          "content": "By accessing or using DentalHub (\"Platform\", \"Service\"), you agree to be bound by these Terms of Service (\"Terms\"). These Terms apply to all visitors, users, and others who access or use the Service. If you disagree with any part of these terms, then you may not access the Service."
+        },
+        {
+          "title": "2. Description of Service",
+          "content": "DentalHub is a B2B e-commerce platform that connects dental professionals, including dentists, dental clinics, suppliers, and technicians in the United States. Our platform facilitates:",
+          "list": [
+            "Product discovery and comparison across multiple verified suppliers",
+            "Secure transaction processing and payment handling",
+            "Professional license verification and compliance monitoring",
+            "Order management and logistics coordination",
+            "Customer support and dispute resolution services"
+          ]
+        },
+        {
+          "title": "3. User Account Registration",
+          "content": "To access certain features of our Service, you must register for an account. When creating an account, you must provide accurate, complete, and current information. You are responsible for:",
+          "cards": [
+            {
+              "title": "Account Security",
+              "items": [
+                "Maintaining password confidentiality",
+                "Monitoring account activity",
+                "Reporting unauthorized access"
+              ]
+            },
+            {
+              "title": "Information Accuracy",
+              "items": ["Valid professional licenses", "Current contact information", "Accurate business details"]
+            }
+          ]
+        },
+        {
+          "title": "4. Professional License Verification",
+          "content": "All dental professionals must provide valid license information for verification. We reserve the right to verify credentials through state licensing boards and third-party verification services. Falsification of professional credentials will result in immediate account termination and may be reported to relevant regulatory authorities."
+        },
+        {
+          "title": "5. Prohibited Uses",
+          "content": "You may not use our Service:",
+          "warning": true,
+          "items": [
+            "For any unlawful purpose or to solicit others to perform unlawful acts",
+            "To violate any international, federal, provincial, or state regulations or laws",
+            "To transmit or procure the sending of advertising or promotional material",
+            "To impersonate or attempt to impersonate another person or entity",
+            "To engage in any other conduct that restricts or inhibits anyone's use of the Service",
+            "To use automated systems to access the Service without authorization",
+            "To circumvent any content filtering techniques or security features",
+            "To interfere with or disrupt the Service or servers or networks"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "privacy-policy",
+      "title": "Privacy Policy",
+      "lastUpdated": "November 2, 2024",
+      "icon": "shield-check",
+      "notice": {
+        "type": "success",
+        "title": "Your Privacy Matters",
+        "text": "We are committed to protecting your personal information and respecting your privacy rights in accordance with applicable laws."
+      },
+      "sections": [
+        {
+          "title": "Information We Collect",
+          "content": "We collect various types of information to provide and improve our services:",
+          "cards": [
+            {
+              "title": "Personal Information",
+              "icon": "user",
+              "items": [
+                "Name and contact details",
+                "Professional credentials",
+                "Business information",
+                "Payment information"
+              ]
+            },
+            {
+              "title": "Usage Data",
+              "icon": "mouse-pointer",
+              "items": ["Platform interactions", "Search queries", "Transaction history", "Device information"]
+            },
+            {
+              "title": "Technical Data",
+              "icon": "cogs",
+              "items": [
+                "IP address and location",
+                "Browser information",
+                "Cookies and tracking data",
+                "Performance metrics"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "How We Use Your Information",
+          "content": "We use the collected information for various purposes, including but not limited to:",
+          "cards": [
+            {
+              "title": "Service Provision",
+              "items": [
+                "Account creation and management",
+                "Order processing and fulfillment",
+                "Customer support services",
+                "Payment processing and security"
+              ]
+            },
+            {
+              "title": "Platform Improvement",
+              "items": [
+                "Service optimization and analytics",
+                "Fraud prevention and security",
+                "Marketing and communications",
+                "Legal compliance and reporting"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Data Sharing and Disclosure",
+          "content": "We do not sell, trade, or otherwise transfer your personal information to third parties without your consent, except as described in this policy. We may share your information with trusted partners who assist us in operating our platform, conducting business, or serving our users."
+        }
+      ]
+    },
+    {
+      "id": "hipaa-compliance",
+      "title": "HIPAA Compliance Notice",
+      "subtitle": "Healthcare Information Privacy and Security",
+      "icon": "user-md",
+      "notice": {
+        "type": "info",
+        "title": "HIPAA Compliance Commitment",
+        "text": "DentalHub is committed to maintaining the highest standards of healthcare information privacy and security in compliance with HIPAA regulations."
+      },
+      "sections": [
+        {
+          "title": "Protected Health Information (PHI)",
+          "content": "While DentalHub primarily facilitates B2B commerce transactions and does not typically handle patient health information, we recognize that some interactions may involve Protected Health Information (PHI). We have implemented comprehensive safeguards to ensure HIPAA compliance when such information is present."
+        },
+        {
+          "title": "Administrative Safeguards",
+          "icon": "lock",
+          "items": [
+            "Designated HIPAA Security Officer",
+            "Comprehensive staff training programs",
+            "Access control and authorization procedures",
+            "Incident response and breach notification protocols",
+            "Regular security risk assessments",
+            "Business Associate Agreement management"
+          ]
+        },
+        {
+          "title": "Technical Safeguards",
+          "icon": "shield-alt",
+          "items": [
+            "End-to-end encryption for data transmission",
+            "Secure database storage with encryption at rest",
+            "Multi-factor authentication requirements",
+            "Audit logging and monitoring systems",
+            "Automatic session timeout controls",
+            "Regular security updates and patches"
+          ]
+        },
+        {
+          "title": "Physical Safeguards",
+          "content": "We maintain physical safeguards to protect PHI:",
+          "cards": [
+            {
+              "title": "Facility Access",
+              "icon": "building",
+              "text": "Controlled access to data centers and office facilities with biometric authentication"
+            },
+            {
+              "title": "Workstation Security",
+              "icon": "desktop",
+              "text": "Secured workstations with automatic screen locks and authorized personnel access only"
+            },
+            {
+              "title": "Media Controls",
+              "icon": "server",
+              "text": "Secure handling, storage, and disposal of electronic media containing PHI"
+            }
+          ]
+        },
+        {
+          "title": "Business Associate Agreements",
+          "content": "DentalHub enters into Business Associate Agreements (BAAs) with covered entities when necessary. These agreements ensure that all parties understand their responsibilities for protecting PHI and maintaining HIPAA compliance throughout our business relationship."
+        }
+      ]
+    }
+  ]
+}

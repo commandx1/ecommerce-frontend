@@ -1,0 +1,39 @@
+[
+  {
+    "id": 1,
+    "title": "Digital X-Ray Sensor",
+    "category": "Digital X-Ray",
+    "description": "High-resolution intraoral sensor with instant imaging",
+    "price": "$3,299",
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/e1b171407f-2563abf622d89cef3ebb.png",
+    "alt": "digital x-ray sensor, dental radiography equipment, intraoral sensor"
+  },
+  {
+    "id": 2,
+    "title": "Panoramic X-Ray Unit",
+    "category": "Panoramic",
+    "description": "Complete panoramic imaging system with 3D capability",
+    "price": "$45,999",
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/25480c6752-bf4b88836af9225e4772.png",
+    "alt": "dental panoramic x-ray machine, digital panoramic imaging system"
+  },
+  {
+    "id": 3,
+    "title": "Imaging Software Pro",
+    "category": "Software",
+    "description": "Advanced imaging software with AI enhancement",
+    "price": "$899",
+    "priceNote": "/year",
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/b058d295a8-ed84dd599f0298b365cb.png",
+    "alt": "dental imaging software interface, practice management software, digital radiography software"
+  },
+  {
+    "id": 4,
+    "title": "Medical Grade Monitor",
+    "category": "Display",
+    "description": "27\" 4K display optimized for dental imaging",
+    "price": "$1,299",
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/7b12efc406-9d01b15c90764485160d.png",
+    "alt": "dental monitor display, medical grade monitor, high resolution dental imaging display"
+  }
+]

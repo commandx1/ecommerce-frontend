@@ -1,0 +1,28 @@
+{
+  "description": {
+    "paragraphs": [
+      "The ProVision HD Intraoral Camera represents the latest advancement in dental imaging technology. Designed specifically for modern dental practices, this camera delivers exceptional image quality with its 2MP HD resolution and advanced CMOS sensor technology.",
+      "The integrated LED illumination system provides consistent, shadow-free lighting for accurate color reproduction and detailed visualization of oral structures. The auto-focus technology ensures sharp images at various distances, making it ideal for both close-up detail work and broader oral cavity documentation.",
+      "With both USB and wireless connectivity options, the ProVision HD integrates seamlessly with existing practice management software and imaging systems. The lightweight, ergonomic design reduces hand fatigue during extended use, while the durable construction ensures reliable performance in busy clinical environments."
+    ],
+    "benefits": [
+      "Enhanced patient communication through high-quality visuals",
+      "Improved treatment planning with detailed documentation",
+      "Streamlined workflow with wireless connectivity",
+      "Reduced chair time with instant image capture"
+    ],
+    "included": [
+      { "icon": "camera", "text": "ProVision HD Intraoral Camera" },
+      { "icon": "usb", "text": "USB Cable (3m)" },
+      { "icon": "disc", "text": "Software Installation CD" },
+      { "icon": "book", "text": "User Manual & Quick Start Guide" },
+      { "icon": "shield-check", "text": "2-Year Manufacturer Warranty" },
+      { "icon": "tools", "text": "Disposable Sheath Covers (50 count)" }
+    ],
+    "installationNote": {
+      "title": "Installation & Training",
+      "text": "Free installation and training services are available for orders over $1,500. Our certified technicians will ensure proper setup and provide comprehensive training for your team."
+    }
+  },
+  "tabs": ["Description", "Features", "Installation", "Support", "Downloads"]
+}

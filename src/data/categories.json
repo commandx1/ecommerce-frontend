@@ -1,0 +1,66 @@
+[
+  {
+    "id": 1,
+    "title": "Dental Instruments",
+    "description": "Surgical instruments, hand tools, and precision equipment",
+    "productCount": "2,500+",
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/6c424bb473-b03b22db46fc2c8b35f5.png",
+    "alt": "dental instruments and tools, surgical equipment, stainless steel, professional dental setup"
+  },
+  {
+    "id": 2,
+    "title": "Restorative Materials",
+    "description": "Composites, cements, and bonding agents",
+    "productCount": "1,800+",
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/05889ba3a1-036fb368bab0a010bc07.png",
+    "alt": "dental restorative materials, composite resins, dental fillings, laboratory materials"
+  },
+  {
+    "id": 3,
+    "title": "Digital Imaging",
+    "description": "X-ray systems, intraoral cameras, and imaging software",
+    "productCount": "450+",
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/420b6c39fb-bc6af0dea2fdff3e5e0b.png",
+    "alt": "dental x-ray machine, digital imaging equipment, modern dental technology"
+  },
+  {
+    "id": 4,
+    "title": "Orthodontics",
+    "description": "Brackets, wires, aligners, and orthodontic accessories",
+    "productCount": "1,200+",
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/434208483c-3f47a7b2d1c73abc13a7.png",
+    "alt": "orthodontic braces, dental aligners, orthodontic tools and equipment"
+  },
+  {
+    "id": 5,
+    "title": "Implants & Prosthetics",
+    "description": "Implant systems, abutments, and prosthetic components",
+    "productCount": "950+",
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/354515924f-b5f1d8673b14d2f6256f.png",
+    "alt": "dental implants, titanium implants, surgical implant kit, prosthetic components"
+  },
+  {
+    "id": 6,
+    "title": "Infection Control",
+    "description": "Sterilization, PPE, and infection prevention supplies",
+    "productCount": "800+",
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/838bc597cc-a92892b1f4b6457d8382.png",
+    "alt": "dental infection control supplies, sterilization equipment, protective gear, masks and gloves"
+  },
+  {
+    "id": 7,
+    "title": "Lab Equipment",
+    "description": "CAD/CAM systems, milling machines, and lab supplies",
+    "productCount": "650+",
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/0140cc698f-aa4d94558b22bcdf8fbd.png",
+    "alt": "dental laboratory equipment, CAD/CAM machine, dental lab workspace, milling machine"
+  },
+  {
+    "id": 8,
+    "title": "Office Equipment",
+    "description": "Dental chairs, units, and office furniture",
+    "productCount": "380+",
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/3552882621-d8121c4446cefd7b034f.png",
+    "alt": "dental office furniture, dental chairs, cabinetry, modern dental office interior"
+  }
+]

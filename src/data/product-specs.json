@@ -1,0 +1,43 @@
+{
+  "technical": [
+    { "label": "Resolution", "value": "2MP (1920x1080)" },
+    { "label": "Sensor Type", "value": "CMOS" },
+    { "label": "Focus Range", "value": "5mm - 50mm" },
+    { "label": "Illumination", "value": "8 LED White Light" },
+    { "label": "Connectivity", "value": "USB 2.0 / WiFi" },
+    { "label": "Power", "value": "USB Powered" },
+    { "label": "Weight", "value": "65g" },
+    { "label": "Dimensions", "value": "22cm x 2.8cm" },
+    { "label": "Operating System", "value": "Windows 10/11, macOS" },
+    { "label": "Warranty", "value": "2 Years" }
+  ],
+  "certifications": [
+    {
+      "id": 1,
+      "icon": "shield-check",
+      "iconColor": "green",
+      "title": "FDA Approved",
+      "description": "This device is FDA 510(k) cleared for intraoral imaging and patient documentation in dental practices.",
+      "badge": "Registration: K193847",
+      "badgeColor": "green"
+    },
+    {
+      "id": 2,
+      "icon": "certificate",
+      "iconColor": "blue",
+      "title": "CE Marking",
+      "description": "Complies with European health, safety, and environmental protection standards.",
+      "badge": "Medical Device Class IIa",
+      "badgeColor": "blue"
+    },
+    {
+      "id": 3,
+      "icon": "lock",
+      "iconColor": "purple",
+      "title": "HIPAA Compliant",
+      "description": "Software includes encryption and security features to protect patient data and ensure HIPAA compliance.",
+      "badge": "Data Encryption",
+      "badgeColor": "purple"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+[
+  {
+    "id": 1,
+    "title": "New Practice Setup",
+    "description": "Complete equipment packages for new dental practices. Save up to 25% on bundled orders.",
+    "buttonText": "Explore Packages",
+    "buttonBg": "bg-pale-lime",
+    "buttonTextColor": "text-steel-blue",
+    "gradient": "from-steel-blue to-blue-700",
+    "textColor": "text-white",
+    "descriptionColor": "text-blue-100",
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/0b31fe95b2-98748b90445c2f14863c.png",
+    "alt": "modern dental office setup, new dental practice equipment, professional dental chair and equipment"
+  },
+  {
+    "id": 2,
+    "title": "Lab Services",
+    "description": "Connect with certified dental labs for crowns, bridges, and custom prosthetics.",
+    "buttonText": "Find Labs",
+    "buttonBg": "bg-white",
+    "buttonTextColor": "text-coral-orange",
+    "gradient": "from-coral-orange to-orange-500",
+    "textColor": "text-white",
+    "descriptionColor": "text-orange-100",
+    "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/fe9867afdd-4cd43e01742460bad462.png",
+    "alt": "dental laboratory workspace, CAD/CAM machine, dental technician working, prosthetic manufacturing"
+  }
+]

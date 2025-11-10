@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "step": 1,
+    "title": "Register & Verify",
+    "description": "Create your professional account and verify your dental license for access to exclusive pricing and products.",
+    "icon": "user-check"
+  },
+  {
+    "id": 2,
+    "step": 2,
+    "title": "Browse & Compare",
+    "description": "Search our extensive catalog, compare prices from multiple suppliers, and read reviews from fellow professionals.",
+    "icon": "search"
+  },
+  {
+    "id": 3,
+    "step": 3,
+    "title": "Order & Pay",
+    "description": "Place orders with flexible payment terms, bulk discounts, and automatic reordering for recurring supplies.",
+    "icon": "shopping-cart"
+  },
+  {
+    "id": 4,
+    "step": 4,
+    "title": "Receive & Track",
+    "description": "Track your orders in real-time, receive fast shipping, and enjoy dedicated customer support throughout.",
+    "icon": "truck"
+  }
+]

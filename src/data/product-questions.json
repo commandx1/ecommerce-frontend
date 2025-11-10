@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "question": "Is this camera compatible with Mac computers?",
+    "askedBy": "Dr. Lisa Martinez",
+    "askedDate": "5 days ago",
+    "answer": {
+      "author": "DentalPro Support Team",
+      "text": "Yes, the ProVision HD is fully compatible with both Mac and Windows systems. The included software supports macOS 10.15 and later versions. We also provide free technical support for Mac setup and integration with popular dental practice management software on Mac platforms.",
+      "answeredDate": "3 days ago"
+    }
+  },
+  {
+    "id": 2,
+    "question": "What's the difference between this model and the ProVision Standard?",
+    "askedBy": "Dr. Robert Kim",
+    "askedDate": "1 week ago",
+    "answer": {
+      "author": "Product Specialist",
+      "text": "The ProVision HD offers several key upgrades over the Standard model:",
+      "list": [
+        "Higher resolution (2MP vs 1.3MP)",
+        "Wireless connectivity (Standard is USB only)",
+        "Advanced LED illumination system",
+        "Auto-focus technology",
+        "Enhanced software package"
+      ],
+      "answeredDate": "5 days ago"
+    }
+  },
+  {
+    "id": 3,
+    "question": "How long does the warranty cover repairs and replacements?",
+    "askedBy": "Dr. Amanda Foster",
+    "askedDate": "2 weeks ago",
+    "answer": {
+      "author": "Customer Service",
+      "text": "The standard warranty covers 2 years from purchase date, including parts and labor. During this period, we provide free repairs or replacement if needed. Extended warranty options are available for up to 4 years total coverage. All warranty service includes free shipping both ways.",
+      "answeredDate": "1 week ago"
+    }
+  }
+]

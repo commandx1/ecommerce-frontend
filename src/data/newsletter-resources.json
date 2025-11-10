@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "icon": "book",
+    "title": "Resource Center",
+    "description": "Access guides, tutorials, and best practices for dental practice management.",
+    "buttonText": "Explore Resources"
+  },
+  {
+    "id": 2,
+    "icon": "headphones",
+    "title": "24/7 Support",
+    "description": "Get help when you need it with our dedicated customer support team.",
+    "buttonText": "Contact Support"
+  },
+  {
+    "id": 3,
+    "icon": "graduation-cap",
+    "title": "Training Programs",
+    "description": "Free training on new equipment and techniques from industry experts.",
+    "buttonText": "View Programs"
+  },
+  {
+    "id": 4,
+    "icon": "trending-up",
+    "title": "Market Insights",
+    "description": "Stay informed with industry trends, pricing data, and market analysis.",
+    "buttonText": "Read Insights"
+  }
+]
