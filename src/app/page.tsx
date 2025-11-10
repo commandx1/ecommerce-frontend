@@ -1,6 +1,5 @@
 import { Fragment } from "react/jsx-runtime"
 import FeaturedSuppliers from "./components/featured-suppliers/FeaturedSuppliers"
-import Footer from "./components/footer"
 import HeroSection from "./components/hero-section/HeroSection"
 import NewsletterResources from "./components/newsletter-resources/NewsletterResources"
 import ProductCategories from "./components/product-categories/ProductCategories"
