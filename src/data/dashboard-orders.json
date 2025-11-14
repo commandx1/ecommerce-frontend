@@ -1,0 +1,80 @@
+{
+  "recentOrders": [
+    {
+      "id": "ORD-2024-1156",
+      "supplier": "DentalPro Supply",
+      "date": "Nov 1, 2024",
+      "items": "Composite Resin Kit, Dental Instruments",
+      "amount": "$456.99",
+      "status": "Delivered",
+      "statusColor": "green",
+      "action": "Reorder",
+      "icon": "box"
+    },
+    {
+      "id": "ORD-2024-1155",
+      "supplier": "MediCore Equipment",
+      "date": "Oct 30, 2024",
+      "items": "Digital X-Ray Sensors, Sterilization Pouches",
+      "amount": "$2,899.00",
+      "status": "In Transit",
+      "statusColor": "blue",
+      "action": "Track",
+      "icon": "truck"
+    },
+    {
+      "id": "ORD-2024-1154",
+      "supplier": "OrthoTech Solutions",
+      "date": "Oct 28, 2024",
+      "items": "Orthodontic Brackets, Arch Wires",
+      "amount": "$789.50",
+      "status": "Pending",
+      "statusColor": "coral-orange",
+      "action": "Details",
+      "icon": "clock"
+    },
+    {
+      "id": "ORD-2024-1153",
+      "supplier": "DentalPro Supply",
+      "date": "Oct 25, 2024",
+      "items": "Infection Control Supplies, PPE Kit",
+      "amount": "$234.75",
+      "status": "Delivered",
+      "statusColor": "green",
+      "action": "Reorder",
+      "icon": "check-circle"
+    }
+  ],
+  "quickReorder": [
+    {
+      "id": 1,
+      "title": "Composite Resin",
+      "lastOrdered": "Oct 15",
+      "icon": "tooth"
+    },
+    {
+      "id": 2,
+      "title": "PPE Supplies",
+      "lastOrdered": "Oct 10",
+      "icon": "shield-check"
+    },
+    {
+      "id": 3,
+      "title": "Anesthetic Cartridges",
+      "lastOrdered": "Oct 5",
+      "icon": "syringe"
+    },
+    {
+      "id": 4,
+      "title": "Surgical Instruments",
+      "lastOrdered": "Sep 28",
+      "icon": "cut"
+    },
+    {
+      "id": 5,
+      "title": "Impression Material",
+      "lastOrdered": "Sep 20",
+      "icon": "flask"
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "user": {
+    "name": "Dr. Sarah Johnson",
+    "clinic": "Smile Dental Clinic",
+    "avatar": "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg",
+    "verified": true
+  },
+  "accountInfo": [
+    {
+      "id": 1,
+      "icon": "credit-card",
+      "label": "Payment Methods",
+      "value": "2 active"
+    },
+    {
+      "id": 2,
+      "icon": "file-invoice",
+      "label": "Invoices",
+      "value": "View all"
+    },
+    {
+      "id": 3,
+      "icon": "map-marker-alt",
+      "label": "Shipping Address",
+      "action": "Edit"
+    },
+    {
+      "id": 4,
+      "icon": "bell",
+      "label": "Notifications",
+      "action": "Settings"
+    }
+  ],
+  "settings": [
+    {
+      "id": 1,
+      "icon": "user",
+      "title": "Profile Information",
+      "description": "Update your personal and clinic details"
+    },
+    {
+      "id": 2,
+      "icon": "shield-check",
+      "title": "License Verification",
+      "description": "Manage your professional credentials",
+      "badge": "Verified",
+      "badgeColor": "green"
+    },
+    {
+      "id": 3,
+      "icon": "map-marker-alt",
+      "title": "Shipping Addresses",
+      "description": "Manage delivery locations"
+    },
+    {
+      "id": 4,
+      "icon": "lock",
+      "title": "Security Settings",
+      "description": "Password and two-factor authentication"
+    },
+    {
+      "id": 5,
+      "icon": "palette",
+      "title": "Preferences",
+      "description": "Theme, language, and display options"
+    }
+  ],
+  "helpSupport": [
+    {
+      "id": 1,
+      "icon": "question-circle",
+      "title": "FAQ",
+      "description": "Find answers to common questions",
+      "action": "Browse FAQ"
+    },
+    {
+      "id": 2,
+      "icon": "headset",
+      "title": "Live Chat",
+      "description": "Chat with our support team",
+      "action": "Start Chat"
+    },
+    {
+      "id": 3,
+      "icon": "book",
+      "title": "User Guide",
+      "description": "Learn how to use the platform",
+      "action": "View Guide"
+    },
+    {
+      "id": 4,
+      "icon": "phone",
+      "title": "Phone Support",
+      "description": "Call us for immediate assistance",
+      "action": "1-800-DENTAL"
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "recentInvoices": [
+    {
+      "id": "INV-2024-1156",
+      "date": "Nov 1, 2024",
+      "supplier": "DentalPro Supply",
+      "amount": "$456.99",
+      "status": "Paid",
+      "statusColor": "green",
+      "action": "Download"
+    },
+    {
+      "id": "INV-2024-1155",
+      "date": "Oct 30, 2024",
+      "supplier": "MediCore Equipment",
+      "amount": "$2,899.00",
+      "status": "Pending",
+      "statusColor": "coral-orange",
+      "action": "Pay Now"
+    },
+    {
+      "id": "INV-2024-1154",
+      "date": "Oct 28, 2024",
+      "supplier": "OrthoTech Solutions",
+      "amount": "$789.50",
+      "status": "Paid",
+      "statusColor": "green",
+      "action": "Download"
+    },
+    {
+      "id": "INV-2024-1153",
+      "date": "Oct 25, 2024",
+      "supplier": "DentalPro Supply",
+      "amount": "$234.75",
+      "status": "Paid",
+      "statusColor": "green",
+      "action": "Download"
+    }
+  ],
+  "paymentSummary": {
+    "totalSpent": "$18,450",
+    "outstanding": "$2,899",
+    "paymentMethods": [
+      {
+        "id": 1,
+        "type": "visa",
+        "last4": "4242",
+        "label": "Primary",
+        "icon": "cc-visa",
+        "iconColor": "blue"
+      },
+      {
+        "id": 2,
+        "type": "mastercard",
+        "last4": "8888",
+        "label": "Backup",
+        "icon": "cc-mastercard",
+        "iconColor": "orange"
+      }
+    ]
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "topSuppliers": [
+    {
+      "id": 1,
+      "name": "DentalPro Supply",
+      "rating": 4.9,
+      "starCount": 5,
+      "totalSpent": "$8,450",
+      "orderCount": "12 orders",
+      "icon": "store",
+      "iconColor": "orange"
+    },
+    {
+      "id": 2,
+      "name": "MediCore Equipment",
+      "rating": 4.8,
+      "starCount": 5,
+      "totalSpent": "$6,200",
+      "orderCount": "5 orders",
+      "icon": "microscope",
+      "iconColor": "blue"
+    },
+    {
+      "id": 3,
+      "name": "OrthoTech Solutions",
+      "rating": 4.7,
+      "starCount": 4,
+      "totalSpent": "$3,800",
+      "orderCount": "7 orders",
+      "icon": "teeth",
+      "iconColor": "purple"
+    }
+  ],
+  "savedSuppliers": [
+    {
+      "id": 1,
+      "name": "DentalPro Supply",
+      "rating": 4.9,
+      "starCount": 5,
+      "features": [
+        { "icon": "check-circle", "text": "15,000+ Products", "color": "green" },
+        { "icon": "truck", "text": "Same-day shipping", "color": "steel-blue" }
+      ],
+      "icon": "store",
+      "iconColor": "orange"
+    },
+    {
+      "id": 2,
+      "name": "MediCore Equipment",
+      "rating": 4.8,
+      "starCount": 5,
+      "features": [
+        { "icon": "tools", "text": "Installation included", "color": "steel-blue" },
+        { "icon": "phone", "text": "24/7 Support", "color": "green" }
+      ],
+      "icon": "microscope",
+      "iconColor": "blue"
+    },
+    {
+      "id": 3,
+      "name": "OrthoTech Solutions",
+      "rating": 4.7,
+      "starCount": 4,
+      "features": [
+        { "icon": "award", "text": "Award winner 2023", "color": "green" },
+        { "icon": "graduation-cap", "text": "Training programs", "color": "steel-blue" }
+      ],
+      "icon": "teeth",
+      "iconColor": "purple"
+    },
+    {
+      "id": 4,
+      "name": "EcoVital Dental",
+      "rating": 4.9,
+      "starCount": 5,
+      "features": [
+        { "icon": "recycle", "text": "Eco-friendly products", "color": "green" },
+        { "icon": "certificate", "text": "Certified sustainable", "color": "steel-blue" }
+      ],
+      "icon": "leaf",
+      "iconColor": "green"
+    }
+  ]
+}

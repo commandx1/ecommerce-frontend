@@ -1,0 +1,49 @@
+{
+  "notifications": [
+    {
+      "id": 1,
+      "type": "shipped",
+      "title": "Order Shipped",
+      "message": "Your order #ORD-2024-1155 has been shipped and is on its way.",
+      "time": "2 hours ago",
+      "icon": "truck",
+      "iconColor": "blue"
+    },
+    {
+      "id": 2,
+      "type": "delivered",
+      "title": "Order Delivered",
+      "message": "Your order #ORD-2024-1156 has been delivered successfully.",
+      "time": "1 day ago",
+      "icon": "check-circle",
+      "iconColor": "green"
+    },
+    {
+      "id": 3,
+      "type": "alert",
+      "title": "Low Stock Alert",
+      "message": "Composite Resin Kit is running low in your frequent items.",
+      "time": "2 days ago",
+      "icon": "exclamation-triangle",
+      "iconColor": "coral-orange"
+    },
+    {
+      "id": 4,
+      "type": "promotion",
+      "title": "New Promotion",
+      "message": "DentalPro Supply is offering 15% off on all surgical instruments.",
+      "time": "3 days ago",
+      "icon": "tag",
+      "iconColor": "purple"
+    },
+    {
+      "id": 5,
+      "type": "system",
+      "title": "System Maintenance",
+      "message": "Scheduled maintenance on Nov 5, 2024 from 2-4 AM EST.",
+      "time": "1 week ago",
+      "icon": "bell",
+      "iconColor": "gray"
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "metrics": [
+    {
+      "id": 1,
+      "title": "Total Orders",
+      "value": "24",
+      "description": "This month",
+      "change": "+12%",
+      "changeType": "positive",
+      "icon": "shopping-bag",
+      "iconColor": "blue"
+    },
+    {
+      "id": 2,
+      "title": "Total Spent",
+      "value": "$18,450",
+      "description": "This month",
+      "change": "+8%",
+      "changeType": "positive",
+      "icon": "dollar-sign",
+      "iconColor": "green"
+    },
+    {
+      "id": 3,
+      "title": "Pending Orders",
+      "value": "3",
+      "description": "Awaiting approval",
+      "change": "3 pending",
+      "changeType": "warning",
+      "icon": "clock",
+      "iconColor": "coral-orange"
+    },
+    {
+      "id": 4,
+      "title": "Favorite Suppliers",
+      "value": "12",
+      "description": "Saved for quick access",
+      "change": "+2 new",
+      "changeType": "positive",
+      "icon": "heart",
+      "iconColor": "purple"
+    }
+  ]
+}

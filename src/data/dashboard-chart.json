@@ -1,0 +1,7 @@
+{
+  "spendingChart": {
+    "categories": ["May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov"],
+    "data": [12500, 15200, 18900, 16800, 19200, 17500, 18450],
+    "color": "#3E6C88"
+  }
+}
