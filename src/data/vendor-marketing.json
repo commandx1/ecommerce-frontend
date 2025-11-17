@@ -1,0 +1,38 @@
+{
+  "campaigns": [
+    {
+      "id": 1,
+      "name": "Summer Sale Campaign",
+      "status": "Active",
+      "statusColor": "blue",
+      "impressions": "45,892",
+      "clicks": "3,247",
+      "ctr": "7.1%",
+      "progress": 68,
+      "gradient": "from-blue-50 to-blue-100",
+      "borderColor": "border-blue-200"
+    },
+    {
+      "id": 2,
+      "name": "New Product Launch",
+      "status": "Completed",
+      "statusColor": "green",
+      "reach": "28,456",
+      "conversions": "847",
+      "roas": "4.2x",
+      "gradient": "from-green-50 to-green-100",
+      "borderColor": "border-green-200"
+    },
+    {
+      "id": 3,
+      "name": "Email Newsletter",
+      "status": "Scheduled",
+      "statusColor": "yellow",
+      "subscribers": "12,847",
+      "openRate": "24.5%",
+      "clickRate": "8.3%",
+      "gradient": "from-yellow-50 to-yellow-100",
+      "borderColor": "border-yellow-200"
+    }
+  ]
+}

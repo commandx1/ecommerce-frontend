@@ -1,4 +1,8 @@
+"use client"
+
 import Image from "next/image"
+import { useParams } from "next/navigation"
+import { useCartStore } from "@/stores/cartStore"
 
 interface Supplier {
   id: number
@@ -22,6 +26,16 @@ interface SupplierComparisonProps {
 }
 
 const SupplierComparison = ({ suppliers }: SupplierComparisonProps) => {
+  const params = useParams()
+  const productId = params?.id as string
+  const addToCart = useCartStore((state) => state.addToCart)
+
+  const handleAddToCart = () => {
+    if (productId) {
+      addToCart(productId, 1)
+    }
+  }
+
   const renderStars = (starCount: number, supplierName: string) => {
     return Array.from({ length: 5 }, (_, i) => {
       const starId = `${supplierName}-star-${i + 1}`
@@ -125,6 +139,7 @@ const SupplierComparison = ({ suppliers }: SupplierComparisonProps) => {
                     <td className="px-6 py-4 text-center">
                       <button
                         type="button"
+                        onClick={handleAddToCart}
                         className="bg-steel-blue text-white px-6 py-2 rounded-lg hover:bg-opacity-90 font-medium transition-colors"
                       >
                         Add to Cart

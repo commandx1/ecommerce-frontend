@@ -1,0 +1,49 @@
+{
+  "notifications": [
+    {
+      "id": 1,
+      "type": "alert",
+      "color": "red",
+      "title": "Low Stock Alert",
+      "message": "Dental Composite Resin Kit is running low (2 units remaining)",
+      "time": "2 minutes ago",
+      "icon": "times"
+    },
+    {
+      "id": 2,
+      "type": "success",
+      "color": "green",
+      "title": "New Order Received",
+      "message": "Dr. Sarah Johnson placed a new order (#10847) worth $289.50",
+      "time": "15 minutes ago",
+      "icon": "check"
+    },
+    {
+      "id": 3,
+      "type": "info",
+      "color": "blue",
+      "title": "Product Review",
+      "message": "Dr. Michael Chen left a 5-star review for Digital Intraoral Camera",
+      "time": "1 hour ago",
+      "icon": "eye"
+    },
+    {
+      "id": 4,
+      "type": "warning",
+      "color": "yellow",
+      "title": "Payment Received",
+      "message": "Payment of $1,899.00 received from Dr. Emily Rodriguez",
+      "time": "3 hours ago",
+      "icon": "dollar-sign"
+    },
+    {
+      "id": 5,
+      "type": "info",
+      "color": "purple",
+      "title": "Promotion Performance",
+      "message": "Summer Sale campaign reached 45k impressions with 7.1% CTR",
+      "time": "6 hours ago",
+      "icon": "chart-line"
+    }
+  ]
+}

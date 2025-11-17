@@ -1,0 +1,45 @@
+{
+  "status": [
+    {
+      "id": 1,
+      "status": "In Stock",
+      "count": 1089,
+      "percentage": 87,
+      "color": "green"
+    },
+    {
+      "id": 2,
+      "status": "Low Stock",
+      "count": 124,
+      "percentage": 10,
+      "color": "yellow"
+    },
+    {
+      "id": 3,
+      "status": "Out of Stock",
+      "count": 34,
+      "percentage": 3,
+      "color": "red"
+    }
+  ],
+  "alerts": [
+    {
+      "id": 1,
+      "product": "Dental Composite Resin Kit",
+      "stock": 2,
+      "status": "critical"
+    },
+    {
+      "id": 2,
+      "product": "Surgical Instrument Set",
+      "stock": 5,
+      "status": "critical"
+    },
+    {
+      "id": 3,
+      "product": "Orthodontic Brackets",
+      "stock": 12,
+      "status": "warning"
+    }
+  ]
+}

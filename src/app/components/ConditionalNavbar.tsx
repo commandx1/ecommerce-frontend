@@ -1,9 +1,9 @@
 "use client"
 
 import { usePathname } from "next/navigation"
-import Footer from "./footer"
+import Navbar from "./navbar"
 
-const ConditionalFooter = () => {
+const ConditionalNavbar = () => {
   const pathname = usePathname()
   const isDashboard = pathname?.startsWith("/buyer-dashboard") || pathname?.startsWith("/vendor-dashboard")
 
@@ -11,7 +11,7 @@ const ConditionalFooter = () => {
     return null
   }
 
-  return <Footer />
+  return <Navbar />
 }
 
-export default ConditionalFooter
+export default ConditionalNavbar

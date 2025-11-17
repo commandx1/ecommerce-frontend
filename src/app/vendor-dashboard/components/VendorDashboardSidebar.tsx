@@ -19,11 +19,11 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 
-const DashboardSidebar = () => {
+const VendorDashboardSidebar = () => {
   return (
     <aside
       id="sidebar"
-      className="w-64 bg-white shadow-sm border-r border-gray-200 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto z-40"
+      className="fixed left-0 top-32 w-64 h-[calc(100vh-8rem)] bg-white border-r border-gray-200 overflow-y-auto"
     >
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
@@ -60,7 +60,7 @@ const DashboardSidebar = () => {
           <div className="pb-2 border-b border-gray-200">
             <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Dashboard</h4>
             <Link
-              href="/buyer-dashboard"
+              href="/vendor-dashboard"
               className="flex items-center px-3 py-2 text-steel-blue bg-light-mint-gray rounded-lg font-medium"
             >
               <Home className="mr-3 text-steel-blue w-4 h-4" />
@@ -163,4 +163,4 @@ const DashboardSidebar = () => {
   )
 }
 
-export default DashboardSidebar
+export default VendorDashboardSidebar

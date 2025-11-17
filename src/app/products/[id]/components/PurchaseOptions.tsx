@@ -1,7 +1,9 @@
 "use client"
 
 import { Bolt, FileText, Minus, Plus, ShieldCheck, ShoppingCart } from "lucide-react"
+import { useParams } from "next/navigation"
 import { useState } from "react"
+import { useCartStore } from "@/stores/cartStore"
 
 interface BulkPricing {
   id: number
@@ -38,14 +40,28 @@ interface PurchaseOptionsProps {
 
 const PurchaseOptions = ({ bulkPricing, warrantyOptions, orderSummary }: PurchaseOptionsProps) => {
   const [quantity, setQuantity] = useState(1)
+  const params = useParams()
+  const productId = params?.id as string
+  const addToCart = useCartStore((state) => state.addToCart)
   const defaultSelectedBulk = bulkPricing.find((p) => p.selected)?.id || bulkPricing[0]?.id || 1
   const defaultSelectedWarranty =
     warrantyOptions.find((w) => w.selected)?.value || warrantyOptions[0]?.value || "standard"
   const [selectedBulkPricing, setSelectedBulkPricing] = useState(defaultSelectedBulk)
   const [selectedWarranty, setSelectedWarranty] = useState(defaultSelectedWarranty)
+  const [isAddingToCart, setIsAddingToCart] = useState(false)
 
   const handleQuantityChange = (delta: number) => {
     setQuantity(Math.max(1, quantity + delta))
+  }
+
+  const handleAddToCart = () => {
+    if (productId) {
+      setIsAddingToCart(true)
+      addToCart(productId, quantity)
+      setTimeout(() => {
+        setIsAddingToCart(false)
+      }, 500)
+    }
   }
 
   return (
@@ -188,10 +204,12 @@ const PurchaseOptions = ({ bulkPricing, warrantyOptions, orderSummary }: Purchas
               <div className="mt-6 space-y-3">
                 <button
                   type="button"
-                  className="w-full bg-steel-blue text-white py-3 px-6 rounded-lg hover:bg-opacity-90 font-semibold text-lg flex items-center justify-center transition-colors"
+                  onClick={handleAddToCart}
+                  disabled={isAddingToCart}
+                  className="w-full bg-steel-blue text-white py-3 px-6 rounded-lg hover:bg-opacity-90 font-semibold text-lg flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
-                  Add to Cart
+                  {isAddingToCart ? "Adding..." : "Add to Cart"}
                 </button>
                 <button
                   type="button"

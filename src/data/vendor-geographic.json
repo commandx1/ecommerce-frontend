@@ -1,0 +1,57 @@
+{
+  "regions": [
+    {
+      "id": 1,
+      "name": "California",
+      "percentage": 28,
+      "color": "steel-blue"
+    },
+    {
+      "id": 2,
+      "name": "Texas",
+      "percentage": 22,
+      "color": "blue"
+    },
+    {
+      "id": 3,
+      "name": "Florida",
+      "percentage": 18,
+      "color": "green"
+    },
+    {
+      "id": 4,
+      "name": "New York",
+      "percentage": 15,
+      "color": "yellow"
+    },
+    {
+      "id": 5,
+      "name": "Illinois",
+      "percentage": 11,
+      "color": "purple"
+    },
+    {
+      "id": 6,
+      "name": "Others",
+      "percentage": 6,
+      "color": "gray"
+    }
+  ],
+  "growthMarkets": [
+    {
+      "id": 1,
+      "name": "Arizona",
+      "growth": "+45%"
+    },
+    {
+      "id": 2,
+      "name": "North Carolina",
+      "growth": "+38%"
+    },
+    {
+      "id": 3,
+      "name": "Colorado",
+      "growth": "+32%"
+    }
+  ]
+}

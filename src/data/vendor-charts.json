@@ -1,0 +1,19 @@
+{
+  "revenue": {
+    "categories": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    "data": [32000, 35000, 38000, 42000, 45000, 48000, 52000, 49000, 46000, 48000, 51000, 47892],
+    "color": "#3E6C88"
+  },
+  "salesPerformance": {
+    "categories": ["Week 1", "Week 2", "Week 3", "Week 4"],
+    "sales": [85, 92, 78, 95],
+    "target": [80, 85, 90, 88],
+    "salesColor": "#D4ED6A",
+    "targetColor": "#FF9E7D"
+  },
+  "performance": {
+    "conversionRate": "68%",
+    "avgOrderValue": "$140",
+    "ordersPerCustomer": "2.4"
+  }
+}

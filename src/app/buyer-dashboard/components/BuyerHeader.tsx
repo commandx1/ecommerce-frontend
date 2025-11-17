@@ -1,9 +1,8 @@
 import { Bell, ChevronDown, Hospital, Search, ShoppingCart } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import dashboardAccountData from "@/data/dashboard-account.json"
 
-const DashboardHeader = () => {
+const BuyerHeader = () => {
   return (
     <header id="header" className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-full px-6">
@@ -56,15 +55,15 @@ const DashboardHeader = () => {
             </button>
             <div className="flex items-center space-x-3">
               <Image
-                src={dashboardAccountData.user.avatar}
+                src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg"
                 alt="Profile"
                 width={32}
                 height={32}
                 className="w-8 h-8 rounded-full"
               />
               <div className="hidden md:block">
-                <div className="text-sm font-semibold text-steel-blue">{dashboardAccountData.user.name}</div>
-                <div className="text-xs text-gray-600">{dashboardAccountData.user.clinic}</div>
+                <div className="text-sm font-semibold text-steel-blue">Dr. Sarah Johnson</div>
+                <div className="text-xs text-gray-600">Smile Dental Clinic</div>
               </div>
               <button type="button" className="text-gray-400 hover:text-steel-blue">
                 <ChevronDown className="text-sm w-4 h-4" />
@@ -77,4 +76,4 @@ const DashboardHeader = () => {
   )
 }
 
-export default DashboardHeader
+export default BuyerHeader

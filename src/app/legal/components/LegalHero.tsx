@@ -12,7 +12,7 @@ const LegalHero = () => {
           <h1 className="text-5xl font-bold mb-6">Legal & Compliance Center</h1>
           <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
             Access comprehensive legal documents, compliance guidelines, and regulatory information for your dental
-            practice operations on DentalHub.
+            practice operations on DentyPro.
           </p>
           <div className="flex justify-center space-x-4">
             <button

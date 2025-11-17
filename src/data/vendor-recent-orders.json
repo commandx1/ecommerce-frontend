@@ -1,0 +1,40 @@
+{
+  "orders": [
+    {
+      "id": 1,
+      "orderNumber": "#10847",
+      "customer": "Dr. Sarah Johnson",
+      "customerInitials": "SJ",
+      "amount": "$289.50",
+      "status": "Completed",
+      "statusColor": "green"
+    },
+    {
+      "id": 2,
+      "orderNumber": "#10846",
+      "customer": "Dr. Michael Chen",
+      "customerInitials": "MC",
+      "amount": "$1,899.00",
+      "status": "Processing",
+      "statusColor": "blue"
+    },
+    {
+      "id": 3,
+      "orderNumber": "#10845",
+      "customer": "Dr. Emily Rodriguez",
+      "customerInitials": "ER",
+      "amount": "$456.75",
+      "status": "Pending",
+      "statusColor": "yellow"
+    },
+    {
+      "id": 4,
+      "orderNumber": "#10844",
+      "customer": "Dr. David Wilson",
+      "customerInitials": "DW",
+      "amount": "$189.25",
+      "status": "Shipped",
+      "statusColor": "green"
+    }
+  ]
+}

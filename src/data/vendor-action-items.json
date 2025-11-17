@@ -1,0 +1,49 @@
+{
+  "items": [
+    {
+      "id": 1,
+      "title": "Update product descriptions for new dental tools",
+      "description": "15 products need updated descriptions and specifications",
+      "priority": "High Priority",
+      "priorityColor": "coral-orange",
+      "dueDate": "Due: Today",
+      "completed": false
+    },
+    {
+      "id": 2,
+      "title": "Respond to customer inquiries",
+      "description": "8 new inquiries about product availability and shipping",
+      "priority": "Medium Priority",
+      "priorityColor": "yellow",
+      "dueDate": "Due: Tomorrow",
+      "completed": false
+    },
+    {
+      "id": 3,
+      "title": "Process pending orders",
+      "description": "All pending orders have been processed and shipped",
+      "priority": "Completed",
+      "priorityColor": "green",
+      "dueDate": "Completed: Today",
+      "completed": true
+    },
+    {
+      "id": 4,
+      "title": "Review and approve new supplier applications",
+      "description": "3 new suppliers are waiting for approval",
+      "priority": "Low Priority",
+      "priorityColor": "green",
+      "dueDate": "Due: Next Week",
+      "completed": false
+    },
+    {
+      "id": 5,
+      "title": "Update inventory levels",
+      "description": "Sync inventory with warehouse management system",
+      "priority": "Medium Priority",
+      "priorityColor": "yellow",
+      "dueDate": "Due: This Week",
+      "completed": false
+    }
+  ]
+}

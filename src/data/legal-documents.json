@@ -86,16 +86,16 @@
       "notice": {
         "type": "warning",
         "title": "Important Notice",
-        "text": "These terms govern your use of DentalHub's B2B marketplace platform. Please read carefully before using our services."
+        "text": "These terms govern your use of DentyPro's B2B marketplace platform. Please read carefully before using our services."
       },
       "sections": [
         {
           "title": "1. Acceptance of Terms",
-          "content": "By accessing or using DentalHub (\"Platform\", \"Service\"), you agree to be bound by these Terms of Service (\"Terms\"). These Terms apply to all visitors, users, and others who access or use the Service. If you disagree with any part of these terms, then you may not access the Service."
+          "content": "By accessing or using DentyPro (\"Platform\", \"Service\"), you agree to be bound by these Terms of Service (\"Terms\"). These Terms apply to all visitors, users, and others who access or use the Service. If you disagree with any part of these terms, then you may not access the Service."
         },
         {
           "title": "2. Description of Service",
-          "content": "DentalHub is a B2B e-commerce platform that connects dental professionals, including dentists, dental clinics, suppliers, and technicians in the United States. Our platform facilitates:",
+          "content": "DentyPro is a B2B e-commerce platform that connects dental professionals, including dentists, dental clinics, suppliers, and technicians in the United States. Our platform facilitates:",
           "list": [
             "Product discovery and comparison across multiple verified suppliers",
             "Secure transaction processing and payment handling",
@@ -223,12 +223,12 @@
       "notice": {
         "type": "info",
         "title": "HIPAA Compliance Commitment",
-        "text": "DentalHub is committed to maintaining the highest standards of healthcare information privacy and security in compliance with HIPAA regulations."
+        "text": "DentyPro is committed to maintaining the highest standards of healthcare information privacy and security in compliance with HIPAA regulations."
       },
       "sections": [
         {
           "title": "Protected Health Information (PHI)",
-          "content": "While DentalHub primarily facilitates B2B commerce transactions and does not typically handle patient health information, we recognize that some interactions may involve Protected Health Information (PHI). We have implemented comprehensive safeguards to ensure HIPAA compliance when such information is present."
+          "content": "While DentyPro primarily facilitates B2B commerce transactions and does not typically handle patient health information, we recognize that some interactions may involve Protected Health Information (PHI). We have implemented comprehensive safeguards to ensure HIPAA compliance when such information is present."
         },
         {
           "title": "Administrative Safeguards",
@@ -277,7 +277,7 @@
         },
         {
           "title": "Business Associate Agreements",
-          "content": "DentalHub enters into Business Associate Agreements (BAAs) with covered entities when necessary. These agreements ensure that all parties understand their responsibilities for protecting PHI and maintaining HIPAA compliance throughout our business relationship."
+          "content": "DentyPro enters into Business Associate Agreements (BAAs) with covered entities when necessary. These agreements ensure that all parties understand their responsibilities for protecting PHI and maintaining HIPAA compliance throughout our business relationship."
         }
       ]
     }

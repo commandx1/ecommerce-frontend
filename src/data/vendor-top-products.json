@@ -1,0 +1,40 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "name": "Premium Composite Kit",
+      "sku": "DCK-001",
+      "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/bb4019d802-dd3fc4410e5f4346fb2b.png",
+      "sold": 89,
+      "change": "+12%",
+      "changeType": "positive"
+    },
+    {
+      "id": 2,
+      "name": "Surgical Instrument Set",
+      "sku": "SIS-015",
+      "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/30f82e61fa-7fec69f44240c54acce8.png",
+      "sold": 67,
+      "change": "+8%",
+      "changeType": "positive"
+    },
+    {
+      "id": 3,
+      "name": "Metal Bracket System",
+      "sku": "MBS-023",
+      "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/906d4ac563-acdabf311dbf68c5658a.png",
+      "sold": 54,
+      "change": "+15%",
+      "changeType": "positive"
+    },
+    {
+      "id": 4,
+      "name": "Digital Intraoral Camera",
+      "sku": "DIC-008",
+      "image": "https://storage.googleapis.com/uxpilot-auth.appspot.com/72d00e28bd-ff64341848abcc6e242e.png",
+      "sold": 41,
+      "change": "+22%",
+      "changeType": "positive"
+    }
+  ]
+}

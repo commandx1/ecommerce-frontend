@@ -1,8 +1,12 @@
+"use client"
+
 import { ChevronDown, Hospital, Menu, ShoppingCart } from "lucide-react"
 import Link from "next/link"
+import { useCartStore } from "@/stores/cartStore"
 import MainSearchbox from "./main-searchbox/MainSearchbox"
 
 const Navbar = () => {
+  const cartCount = useCartStore((state) => state.cartCount)
   return (
     <header id="header" className="bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -25,13 +29,15 @@ const Navbar = () => {
               <div className="text-sm">Returns</div>
               <div className="font-semibold">&amp; Orders</div>
             </button>
-            <button type="button" className="flex items-end space-x-2 text-gray-700 hover:text-steel-blue relative">
+            <Link href="/cart" className="flex items-end space-x-2 text-gray-700 hover:text-steel-blue relative">
               <ShoppingCart className="w-4 h-4" />
               <span className="font-semibold">Cart</span>
-              <span className="absolute -top-2 left-3 bg-coral-orange text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                3
-              </span>
-            </button>
+              {cartCount > 0 && (
+                <span className="absolute -top-2 left-3 bg-coral-orange text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
           </div>
         </div>
         <div className="flex items-center justify-between h-12">

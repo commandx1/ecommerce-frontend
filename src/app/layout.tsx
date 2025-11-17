@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import ConditionalFooter from "./components/ConditionalFooter"
-import Navbar from "./components/navbar"
+import ConditionalNavbar from "./components/ConditionalNavbar"
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -21,8 +21,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <Navbar />
+      <body className={inter.className} suppressHydrationWarning>
+        <ConditionalNavbar />
         {children}
         <ConditionalFooter />
       </body>

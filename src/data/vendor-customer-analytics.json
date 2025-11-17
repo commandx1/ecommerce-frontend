@@ -1,0 +1,37 @@
+{
+  "stats": [
+    {
+      "id": 1,
+      "label": "New Customers",
+      "value": "847",
+      "description": "+18% vs last month",
+      "changeType": "positive"
+    },
+    {
+      "id": 2,
+      "label": "Returning Customers",
+      "value": "1,247",
+      "description": "+12% vs last month",
+      "changeType": "positive"
+    },
+    {
+      "id": 3,
+      "label": "Retention Rate",
+      "value": "68%",
+      "description": "+5% vs last month",
+      "changeType": "positive"
+    },
+    {
+      "id": 4,
+      "label": "Avg. Orders/Customer",
+      "value": "4.2",
+      "description": "+0.3 vs last month",
+      "changeType": "positive"
+    }
+  ],
+  "chartData": {
+    "categories": ["Week 1", "Week 2", "Week 3", "Week 4"],
+    "newCustomers": [180, 220, 195, 252],
+    "returningCustomers": [280, 320, 305, 342]
+  }
+}

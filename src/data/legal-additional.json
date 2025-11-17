@@ -233,7 +233,7 @@
     "notice": {
       "type": "error",
       "title": "Important Regulatory Notice",
-      "text": "All products sold through DentalHub must comply with FDA regulations and relevant industry standards. Buyers are responsible for ensuring proper use and compliance."
+      "text": "All products sold through DentyPro must comply with FDA regulations and relevant industry standards. Buyers are responsible for ensuring proper use and compliance."
     },
     "sections": [
       {
@@ -419,7 +419,7 @@
   ],
   "contactInfo": {
     "phone": "1-800-DENTAL-LAW",
-    "email": "legal@dentalhub.com",
+    "email": "legal@DentyPro.com",
     "topics": [
       "Terms of Service",
       "Privacy Policy",
