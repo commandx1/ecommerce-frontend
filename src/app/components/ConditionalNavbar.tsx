@@ -5,7 +5,13 @@ import Navbar from "./navbar"
 
 const ConditionalNavbar = () => {
   const pathname = usePathname()
-  const isDashboard = pathname?.startsWith("/buyer-dashboard") || pathname?.startsWith("/vendor-dashboard")
+  const isDashboard =
+    pathname?.startsWith("/buyer-dashboard") ||
+    pathname?.startsWith("/vendor-dashboard") ||
+    pathname?.startsWith("/register") ||
+    pathname?.startsWith("/login") ||
+    pathname?.startsWith("/verify-email") ||
+    pathname?.startsWith("/forgot-password")
 
   if (isDashboard) {
     return null

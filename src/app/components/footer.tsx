@@ -1,6 +1,7 @@
-import { Facebook, Hospital, Instagram, Linkedin, Twitter } from "lucide-react"
+import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import Logo from "./Logo"
 
 const Footer = () => {
   return (
@@ -10,7 +11,7 @@ const Footer = () => {
           <div className="lg:col-span-2">
             <div className="flex items-center mb-6">
               <div className="w-10 h-10 bg-steel-blue rounded-lg flex items-center justify-center">
-                <Hospital />
+                <Logo />
               </div>
               <span className="ml-3 text-2xl font-bold text-white">DentyPro</span>
             </div>

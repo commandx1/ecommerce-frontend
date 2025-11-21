@@ -1,6 +1,7 @@
-import { Bell, ChevronDown, Hospital, Search, ShoppingCart } from "lucide-react"
+import { Bell, ChevronDown, Search, ShoppingCart } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import Logo from "@/app/components/Logo"
 
 const BuyerHeader = () => {
   return (
@@ -10,7 +11,7 @@ const BuyerHeader = () => {
           <div className="flex items-center space-x-8">
             <Link href="/" className="flex items-center">
               <div className="w-10 h-10 bg-steel-blue rounded-lg flex items-center justify-center">
-                <Hospital className="text-white w-5 h-5" />
+                <Logo />
               </div>
               <span className="ml-3 text-2xl font-bold text-steel-blue">DentyPro</span>
             </Link>
