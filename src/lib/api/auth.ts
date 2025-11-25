@@ -60,6 +60,21 @@ export interface UpdateUserPayload {
   phoneNumber: string
 }
 
+export interface ForgotPasswordPayload {
+  email: string
+}
+
+export interface ResetPasswordPayload {
+  token: string
+  newPassword: string
+}
+
+export interface Verify2FAPayload {
+  email: string
+  code: string
+  device: string
+}
+
 export interface ErrorResponse {
   timestamp: string
   message: string
@@ -190,6 +205,47 @@ class AuthAPI {
       const error = await response.json()
       throw error
     }
+  }
+
+  async forgotPassword(payload: ForgotPasswordPayload): Promise<void> {
+    const response = await fetch(`${API_BASE}/mail/forgot-password`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw error
+    }
+  }
+
+  async resetPassword(payload: ResetPasswordPayload): Promise<void> {
+    const response = await fetch(`${API_BASE}/mail/reset-password`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw error
+    }
+  }
+
+  async verify2FA(payload: Verify2FAPayload): Promise<LoginResponse> {
+    const response = await fetch(`${API_BASE}/auth/login/verify-2fa`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw error
+    }
+
+    return response.json()
   }
 }
 

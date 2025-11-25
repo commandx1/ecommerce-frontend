@@ -75,9 +75,9 @@ const RegisterPage = () => {
 
     try {
       await authAPI.register(formData)
-      // Kayıt başarılı, email verification sayfasına yönlendir
-      //router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`)
-      router.push("/login")
+
+      router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`)
+      //router.push("/login")
     } catch (error: unknown) {
       const err = error as { message?: string; password?: string }
       if (err.message) {

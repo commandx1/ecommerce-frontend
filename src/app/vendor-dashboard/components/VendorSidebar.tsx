@@ -30,13 +30,13 @@ const VendorSidebar = () => {
             <h3 className="text-lg font-semibold text-steel-blue">Quick Actions</h3>
           </div>
           <div className="space-y-2">
-            <button
-              type="button"
+            <Link
+              href="/vendor-dashboard/products/create"
               className="w-full bg-steel-blue text-white px-4 py-2 rounded-lg hover:bg-opacity-90 font-medium flex items-center"
             >
               <Plus className="mr-2 w-4 h-4" />
               Add Product
-            </button>
+            </Link>
             <button
               type="button"
               className="w-full bg-pale-lime text-steel-blue px-4 py-2 rounded-lg hover:bg-opacity-90 font-medium flex items-center"

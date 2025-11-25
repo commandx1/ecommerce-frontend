@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    const response = await fetch(`${BASE_URL}/api/auth/login`, {
+    const response = await fetch(`${BASE_URL}/api/auth/login/verify-2fa`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(data, { status: response.status })
       }
       return NextResponse.json(
-        { message: `Login failed with status ${response.status}`, status: response.status },
+        { message: `Verification failed with status ${response.status}`, status: response.status },
         { status: response.status },
       )
     }
@@ -38,24 +38,12 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json()
 
-    // Extract access token from Authorization header (Backend sends it here!)
-    const authHeader = response.headers.get("Authorization")
-    const accessToken = authHeader?.replace("Bearer ", "") || data.accessToken || data.token
-
-    // Extract refresh token from Set-Cookie header
-    // Backend sends: Set-Cookie: refreshToken=656df024-7dca-4d42-be6a-...; Path=/; ...
+    // Extract tokens from response headers
+    const accessToken = response.headers.get("Authorization")
+    const refreshToken = response.headers.get("X-Refresh-Token")
     const setCookie = response.headers.get("Set-Cookie")
-    let refreshToken = response.headers.get("X-Refresh-Token") || data.refreshToken
 
-    // Parse refresh token from Set-Cookie if present
-    if (!refreshToken && setCookie) {
-      const match = setCookie.match(/refreshToken=([^;]+)/)
-      if (match) {
-        refreshToken = match[1]
-      }
-    }
-
-    // Create response with data and tokens in body
+    // Create response with data
     const nextResponse = NextResponse.json({
       ...data,
       accessToken,

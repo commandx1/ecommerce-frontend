@@ -3,8 +3,8 @@
 import { Award, Percent, Shield, TrendingUp, Truck } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-// import { authAPI, type LoginPayload } from "@/lib/api/auth"
-import { authAPIDirect as authAPI, type LoginPayload } from "@/lib/api/auth-direct"
+import { authAPI, type LoginPayload } from "@/lib/api/auth"
+// import { authAPIDirect as authAPI, type LoginPayload } from "@/lib/api/auth-direct"
 import { useAuthStore } from "@/stores/authStore"
 
 const LoginPage = () => {
@@ -42,6 +42,13 @@ const LoginPage = () => {
       // biome-ignore lint/suspicious/noExplicitAny: Response type includes dynamic fields from backend
       const response: any = await authAPI.login(payload)
 
+      // Check if 2FA is required
+      if (response.twoFactorEnabled || response.requires2FA) {
+        // Redirect to 2FA verification page
+        router.push(`/verify-2fa?email=${encodeURIComponent(formData.email)}`)
+        return
+      }
+
       // Tokenleri kaydet
       if (response.accessToken && response.refreshToken) {
         setTokens(response.accessToken, response.refreshToken)
@@ -65,7 +72,13 @@ const LoginPage = () => {
       // Ana sayfaya yönlendir
       router.push("/")
     } catch (error: unknown) {
-      const err = error as { message?: string }
+      const err = error as { message?: string; requires2FA?: boolean }
+
+      // Check if 2FA is required (some backends return this as an error)
+      if (err.requires2FA || err.message?.includes("2FA") || err.message?.includes("two-factor")) {
+        router.push(`/verify-2fa?email=${encodeURIComponent(formData.email)}`)
+        return
+      }
 
       if (
         err.message?.includes("Email doğrulanmamış") ||
@@ -185,7 +198,11 @@ const LoginPage = () => {
                         />
                         <span className="ml-2 text-sm text-gray-600">Remember me</span>
                       </label>
-                      <button type="button" className="text-sm text-steel-blue hover:underline font-medium">
+                      <button
+                        type="button"
+                        onClick={() => router.push("/forgot-password")}
+                        className="text-sm text-steel-blue hover:underline font-medium"
+                      >
                         Forgot password?
                       </button>
                     </div>

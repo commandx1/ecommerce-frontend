@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronDown, LogOut, Menu, Settings, ShoppingCart, User } from "lucide-react"
+import { ChevronDown, LogOut, Menu, Settings, ShoppingCart, Store, User } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
@@ -69,7 +69,15 @@ const Navbar = () => {
                       className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100"
                     >
                       <User className="w-4 h-4 mr-3" />
-                      Dashboard
+                      Buyer Dashboard
+                    </Link>
+                    <Link
+                      href="/vendor-dashboard"
+                      onClick={() => setShowProfileMenu(false)}
+                      className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100"
+                    >
+                      <Store className="w-4 h-4 mr-3" />
+                      Vendor Dashboard
                     </Link>
                     <Link
                       href="/settings"

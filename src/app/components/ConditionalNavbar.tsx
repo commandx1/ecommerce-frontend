@@ -11,7 +11,9 @@ const ConditionalNavbar = () => {
     pathname?.startsWith("/register") ||
     pathname?.startsWith("/login") ||
     pathname?.startsWith("/verify-email") ||
-    pathname?.startsWith("/forgot-password")
+    pathname?.startsWith("/forgot-password") ||
+    pathname?.startsWith("/verify-2fa") ||
+    pathname?.startsWith("/reset-password")
 
   if (isDashboard) {
     return null
