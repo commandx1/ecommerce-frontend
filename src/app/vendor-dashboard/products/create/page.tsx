@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/performance/noImgElement: <explanation> */
 "use client"
 
 import {
@@ -13,7 +14,6 @@ import {
   Save,
   X,
 } from "lucide-react"
-import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
@@ -693,14 +693,7 @@ export default function CreateProductPage() {
                         {formData.photoPaths.map((url) => (
                           <div key={`image-${url}`} className="relative group">
                             <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                              {/* Using img for external user-provided URLs that may be from any domain */}
-                              <Image
-                                src={url}
-                                alt="Product preview"
-                                className="w-full h-full object-cover"
-                                width={100}
-                                height={100}
-                              />
+                              <img src={url} alt="Product preview" className="w-full h-full object-cover" />
                             </div>
                             {formData.photoPaths.indexOf(url) === 0 && (
                               <span className="absolute top-2 left-2 bg-steel-blue text-white text-xs px-2 py-1 rounded">
