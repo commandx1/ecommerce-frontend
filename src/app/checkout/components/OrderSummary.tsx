@@ -68,9 +68,18 @@ const OrderSummary = () => {
                   <h4 className="font-medium text-gray-900 text-sm hover:text-steel-blue">{product.title}</h4>
                 </Link>
                 <p className="text-xs text-gray-600">
-                  {typeof product.description === "string"
-                    ? product.description.slice(0, 50)
-                    : product.description?.paragraphs?.[0]?.slice(0, 50) || product.longDescription?.slice(0, 50) || ""}
+                  {(() => {
+                    const desc = product.description
+                    if (typeof desc === "string") {
+                      return (desc as string).slice(0, 50)
+                    }
+                    if (desc && typeof desc === "object" && "paragraphs" in desc) {
+                      const descObj = desc as { paragraphs?: string[] }
+                      return descObj.paragraphs?.[0]?.slice(0, 50) || ""
+                    }
+                    const longDesc = product.longDescription
+                    return typeof longDesc === "string" ? longDesc.slice(0, 50) : ""
+                  })()}
                   ...
                 </p>
                 <div className="flex items-center justify-between mt-1">
