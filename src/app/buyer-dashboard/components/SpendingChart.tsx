@@ -49,8 +49,10 @@ const SpendingChart = () => {
         titleColor: "#ffffff",
         bodyColor: "#ffffff",
         callbacks: {
-          label(context: { parsed: { y: number }; label: string }) {
-            return `$${context.parsed.y.toLocaleString()}`
+          label(tooltipItem) {
+            const value = tooltipItem.parsed.y
+            if (value === null || value === undefined) return ""
+            return `$${value.toLocaleString()}`
           },
         },
       },
