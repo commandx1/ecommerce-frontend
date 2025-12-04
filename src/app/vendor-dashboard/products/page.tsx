@@ -521,7 +521,10 @@ export default function ProductsPage() {
                             <ArrowDown className="w-4 h-4" />
                           )
                         ) : (
-                          <span className="w-4 h-4" />
+                          <div className="flex flex-col -space-y-1.5 w-4 h-4">
+                            <ArrowUp className="w-3 h-3 text-gray-400" />
+                            <ArrowDown className="w-3 h-3 text-gray-400" />
+                          </div>
                         )}
                       </button>
                     </th>
@@ -539,7 +542,10 @@ export default function ProductsPage() {
                             <ArrowDown className="w-4 h-4" />
                           )
                         ) : (
-                          <span className="w-4 h-4" />
+                          <div className="flex flex-col -space-y-1.5 w-4 h-4">
+                            <ArrowUp className="w-3 h-3 text-gray-400" />
+                            <ArrowDown className="w-3 h-3 text-gray-400" />
+                          </div>
                         )}
                       </button>
                     </th>
