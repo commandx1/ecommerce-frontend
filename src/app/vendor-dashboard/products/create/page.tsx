@@ -20,7 +20,7 @@ import {
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import {
   type BarcodeLookupProduct,
@@ -135,7 +135,7 @@ const barcodeFormatOptions = [
   { value: "QR_CODE", label: "QR Code" },
 ]
 
-export default function CreateProductPage() {
+function CreateProductPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { accessToken, isAuthenticated, user } = useAuthStore()
@@ -1744,5 +1744,28 @@ export default function CreateProductPage() {
         </main>
       </div>
     </div>
+  )
+}
+
+export default function CreateProductPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col min-h-screen bg-light-mint-gray">
+          <VendorHeader />
+          <div className="flex flex-1">
+            <VendorSidebar />
+            <main className="flex-1 p-8 flex items-center justify-center">
+              <div className="text-center">
+                <Loader2 className="w-8 h-8 text-steel-blue animate-spin mx-auto mb-4" />
+                <p className="text-gray-600">Loading...</p>
+              </div>
+            </main>
+          </div>
+        </div>
+      }
+    >
+      <CreateProductPageContent />
+    </Suspense>
   )
 }
