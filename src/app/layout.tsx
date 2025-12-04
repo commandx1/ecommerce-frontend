@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
+import { Toaster } from "sonner"
 import "./globals.css"
 import ConditionalFooter from "./components/ConditionalFooter"
 import ConditionalNavbar from "./components/ConditionalNavbar"
@@ -25,6 +26,7 @@ export default function RootLayout({
         <ConditionalNavbar />
         {children}
         <ConditionalFooter />
+        <Toaster position="top-right" richColors />
       </body>
     </html>
   )

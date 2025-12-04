@@ -3,30 +3,24 @@ import { NextResponse } from "next/server"
 
 const BASE_URL = "http://51.20.96.242:8080"
 
-// Create Product - POST /api/products
-// Content-Type: multipart/form-data
-// Fields: data (JSON string), coverPhoto (file), photos (file[])
-export async function POST(request: NextRequest) {
+// Get Product by Barcode - GET /api/barcode/products/ByBarcode/:barcode
+export async function GET(request: NextRequest, { params }: { params: Promise<{ barcode: string }> }) {
   try {
+    const { barcode } = await params
     const authHeader = request.headers.get("Authorization")
 
     if (!authHeader) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    // Get the form data from the request
-    const formData = await request.formData()
-
-    // Forward the form data to the backend
-    const response = await fetch(`${BASE_URL}/api/products`, {
-      method: "POST",
+    const response = await fetch(`${BASE_URL}/api/barcode/products/ByBarcode/${encodeURIComponent(barcode)}`, {
+      method: "GET",
       headers: {
+        "Content-Type": "application/json",
         "User-Agent": "Mozilla/5.0",
         Accept: "application/json",
         Authorization: authHeader,
-        // Note: Don't set Content-Type for FormData, fetch will set it with boundary
       },
-      body: formData,
     })
 
     const contentType = response.headers.get("content-type")
@@ -54,3 +48,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: errorMessage }, { status: 500 })
   }
 }
+
+

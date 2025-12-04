@@ -8,6 +8,16 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "storage.googleapis.com",
       },
+      {
+        protocol: "http",
+        hostname: "51.20.96.242",
+        port: "8080",
+      },
+      {
+        protocol: "https",
+        hostname: "images.barcodelookup.com",
+        pathname: "/**",
+      },
     ],
   },
   async rewrites() {

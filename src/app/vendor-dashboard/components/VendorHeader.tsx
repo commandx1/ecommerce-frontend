@@ -1,9 +1,13 @@
+"use client"
+
 import { Bell, ChevronDown, Mail } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import Logo from "@/app/components/Logo"
 
 const VendorHeader = () => {
+  const pathname = usePathname()
   return (
     <header id="header" className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-full px-6">
@@ -18,11 +22,22 @@ const VendorHeader = () => {
             <nav className="hidden md:flex space-x-8">
               <Link
                 href="/vendor-dashboard"
-                className="text-steel-blue hover:text-steel-blue font-semibold border-b-2 border-steel-blue"
+                className={`${
+                  pathname === "/vendor-dashboard"
+                    ? "text-steel-blue font-semibold border-b-2 border-steel-blue"
+                    : "text-gray-700 hover:text-steel-blue font-medium"
+                }`}
               >
                 Dashboard
               </Link>
-              <Link href="/products" className="text-gray-700 hover:text-steel-blue font-medium">
+              <Link
+                href="/vendor-dashboard/products"
+                className={`${
+                  pathname?.startsWith("/vendor-dashboard/products")
+                    ? "text-steel-blue font-semibold border-b-2 border-steel-blue"
+                    : "text-gray-700 hover:text-steel-blue font-medium"
+                }`}
+              >
                 Products
               </Link>
               <Link href="/orders" className="text-gray-700 hover:text-steel-blue font-medium">

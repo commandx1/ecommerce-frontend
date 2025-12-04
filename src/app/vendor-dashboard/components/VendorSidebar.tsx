@@ -1,3 +1,5 @@
+"use client"
+
 import {
   BarChart3,
   Box,
@@ -16,9 +18,12 @@ import {
   Users,
   Warehouse,
 } from "lucide-react"
+
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 const VendorSidebar = () => {
+  const pathname = usePathname()
   return (
     <aside
       id="sidebar"
@@ -51,7 +56,11 @@ const VendorSidebar = () => {
           <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Overview</div>
           <Link
             href="/vendor-dashboard"
-            className="flex items-center px-3 py-2 text-steel-blue bg-light-mint-gray rounded-lg font-medium"
+            className={`flex items-center px-3 py-2 rounded-lg ${
+              pathname === "/vendor-dashboard"
+                ? "text-steel-blue bg-light-mint-gray font-medium"
+                : "text-gray-700 hover:bg-light-mint-gray"
+            }`}
           >
             <TrendingUp className="w-5 mr-3" />
             Dashboard
@@ -97,8 +106,12 @@ const VendorSidebar = () => {
 
           <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">Catalog</div>
           <Link
-            href="/products"
-            className="flex items-center px-3 py-2 text-gray-700 hover:bg-light-mint-gray rounded-lg"
+            href="/vendor-dashboard/products"
+            className={`flex items-center px-3 py-2 rounded-lg ${
+              pathname?.startsWith("/vendor-dashboard/products")
+                ? "text-steel-blue bg-light-mint-gray font-medium"
+                : "text-gray-700 hover:bg-light-mint-gray"
+            }`}
           >
             <Box className="w-5 mr-3" />
             Products
