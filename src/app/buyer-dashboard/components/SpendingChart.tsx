@@ -9,6 +9,7 @@ import {
   PointElement,
   Title,
   Tooltip,
+  type TooltipItem,
 } from "chart.js"
 import { Line } from "react-chartjs-2"
 import dashboardChartData from "@/data/dashboard-chart.json"
@@ -49,7 +50,7 @@ const SpendingChart = () => {
         titleColor: "#ffffff",
         bodyColor: "#ffffff",
         callbacks: {
-          label(tooltipItem) {
+          label(tooltipItem: TooltipItem<"line">) {
             const value = tooltipItem.parsed.y
             if (value === null || value === undefined) return ""
             return `$${value.toLocaleString()}`
