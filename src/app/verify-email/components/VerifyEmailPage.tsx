@@ -2,11 +2,11 @@
 
 import { ArrowLeft, Mail } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useState } from "react"
+import { Suspense, useState } from "react"
 // import { authAPI } from "@/lib/api/auth"
 import { authAPIDirect as authAPI } from "@/lib/api/auth-direct"
 
-const VerifyEmailPage = () => {
+function VerifyEmailPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get("email") || ""
@@ -118,6 +118,27 @@ const VerifyEmailPage = () => {
         </div>
       </div>
     </div>
+  )
+}
+
+const VerifyEmailPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-light-mint-gray font-inter flex items-center justify-center p-4">
+          <div className="max-w-md w-full">
+            <div className="bg-white rounded-3xl shadow-2xl overflow-hidden p-12 text-center">
+              <div className="w-16 h-16 bg-steel-blue rounded-full flex items-center justify-center mx-auto mb-4">
+                <Mail className="text-white w-8 h-8 animate-pulse" />
+              </div>
+              <p className="text-gray-600">Loading...</p>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <VerifyEmailPageContent />
+    </Suspense>
   )
 }
 

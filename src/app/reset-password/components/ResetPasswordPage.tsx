@@ -2,11 +2,11 @@
 
 import { ArrowLeft, CheckCircle, Lock } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import Logo from "@/app/components/Logo"
 import { authAPIDirect as authAPI, type ResetPasswordPayload } from "@/lib/api/auth-direct"
 
-const ResetPasswordPage = () => {
+function ResetPasswordPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get("token") || ""
@@ -316,6 +316,39 @@ const ResetPasswordPage = () => {
         </div>
       </section>
     </div>
+  )
+}
+
+const ResetPasswordPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-light-mint-gray font-inter">
+          <header className="bg-white shadow-sm border-b border-gray-200">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between h-16">
+                <div className="flex items-center">
+                  <Logo />
+                  <span className="ml-3 text-2xl font-bold text-steel-blue">DentyPro</span>
+                </div>
+              </div>
+            </div>
+          </header>
+          <section className="py-12">
+            <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="bg-white rounded-3xl shadow-2xl overflow-hidden p-12 text-center">
+                <div className="w-16 h-16 bg-steel-blue rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Lock className="text-white w-8 h-8 animate-pulse" />
+                </div>
+                <p className="text-gray-600">Loading...</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      }
+    >
+      <ResetPasswordPageContent />
+    </Suspense>
   )
 }
 
