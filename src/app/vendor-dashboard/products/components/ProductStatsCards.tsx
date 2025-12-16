@@ -11,14 +11,14 @@ interface ProductStats {
   lowStockProducts: number
 }
 
-export type FilterType = "ALL" | "ACTIVE" | "INACTIVE" | "OUT_OF_STOCK" | "LOW_STOCK"
+export type FilterType = "ALL" | "TOTAL" | "ACTIVE" | "INACTIVE" | "OUT_OF_STOCK" | "LOW_STOCK"
 
 interface ProductStatsCardsProps {
   selectedFilter?: FilterType
   onFilterChange?: (filter: FilterType) => void
 }
 
-const ProductStatsCards = ({ selectedFilter = "ALL", onFilterChange }: ProductStatsCardsProps) => {
+const ProductStatsCards = ({ selectedFilter = "TOTAL", onFilterChange }: ProductStatsCardsProps) => {
   const [stats, setStats] = useState<ProductStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -104,7 +104,7 @@ const ProductStatsCards = ({ selectedFilter = "ALL", onFilterChange }: ProductSt
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
       {/* Total Products */}
-      <button type="button" onClick={() => handleCardClick("ALL")} className={getCardClasses("ALL")}>
+      <button type="button" onClick={() => handleCardClick("TOTAL")} className={getCardClasses("TOTAL")}>
         <div className="flex items-center justify-between mb-2">
           <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
             <svg

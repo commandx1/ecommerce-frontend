@@ -188,6 +188,9 @@ export interface UserProduct {
   id: string
   userId: string
   productId: string
+  coverPhotoPath: string
+  photoPhats: string[]
+  subCategoriesId: string
   productName: string
   price: number
   discount: number
@@ -595,21 +598,36 @@ class ProductsAPI {
 
   /**
    * Filter user products
-   * GET /api/user-products/filter?type=ACTIVE&price=false&page=0&size=10
+   * GET /api/user-products/filter?type=TOTAL&price=true&stock=false&page=0&size=10
    */
   async filterUserProducts(
     token: string,
-    type: "ACTIVE" | "INACTIVE" | "OUT_OF_STOCK" | "LOW_STOCK",
+    type: "ACTIVE" | "INACTIVE" | "OUT_OF_STOCK" | "LOW_STOCK" | "TOTAL",
     page: number = 0,
     size: number = 10,
-    price: boolean = false,
+    price?: boolean,
+    stock?: boolean,
+    search?: string,
   ): Promise<{ content: UserProduct[]; totalElements: number; totalPages: number; page: number; size: number }> {
     const params = new URLSearchParams({
       type,
-      price: String(price),
       page: String(page),
       size: String(size),
     })
+
+    // Only add price parameter if it's defined (sorting by price)
+    if (price !== undefined) {
+      params.append("price", String(price))
+    }
+
+    // Only add stock parameter if it's defined (sorting by stock)
+    if (stock !== undefined) {
+      params.append("stock", String(stock))
+    }
+
+    if (search !== undefined) {
+      params.append("search", search || "")
+    }
 
     const response = await fetch(`${BASE_URL}/api/user-products/filter?${params.toString()}`, {
       method: "GET",
@@ -621,7 +639,23 @@ class ProductsAPI {
       throw error
     }
 
-    return response.json()
+    const data = await response.json()
+    console.log("Raw API data:", data)
+
+    // Handle both array and pagination object responses
+    if (Array.isArray(data)) {
+      // If response is array, create pagination object
+      return {
+        content: data,
+        totalElements: data.length,
+        totalPages: Math.ceil(data.length / size),
+        page: page,
+        size: size,
+      }
+    } else {
+      // If response is already pagination object
+      return data
+    }
   }
 
   /**

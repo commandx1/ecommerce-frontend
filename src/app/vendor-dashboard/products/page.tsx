@@ -1,17 +1,6 @@
 "use client"
 
-import {
-  ArrowDown,
-  ArrowUp,
-  ChevronLeft,
-  ChevronRight,
-  Download,
-  Edit,
-  Filter,
-  Search,
-  Trash2,
-  Upload,
-} from "lucide-react"
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Download, Edit, Search, Trash2, Upload } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -21,6 +10,23 @@ import { useAuthStore } from "@/stores/authStore"
 import VendorHeader from "../components/VendorHeader"
 import VendorSidebar from "../components/VendorSidebar"
 import ProductStatsCards, { type FilterType } from "./components/ProductStatsCards"
+
+// Debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value)
+    }, delay)
+
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [value, delay])
+
+  return debouncedValue
+}
 
 // Confirmation Modal Component
 interface ConfirmationModalProps {
@@ -75,19 +81,6 @@ interface ProductWithDetails extends UserProduct {
   image?: string
 }
 
-const categories = [
-  "All Categories",
-  "Composite Materials",
-  "Surgical Equipment",
-  "Orthodontic Supplies",
-  "Diagnostic Tools",
-  "Dental Instruments",
-]
-
-const statuses = ["All Status", "Published", "Inactive", "Archived"]
-
-const stockStatuses = ["Stock Status", "In Stock", "Low Stock", "Out of Stock"]
-
 export default function ProductsPage() {
   const router = useRouter()
   const { accessToken, isAuthenticated } = useAuthStore()
@@ -95,17 +88,21 @@ export default function ProductsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("All Categories")
-  const [selectedStatus, setSelectedStatus] = useState("All Status")
-  const [selectedStockStatus, setSelectedStockStatus] = useState("Stock Status")
   const [sortField, setSortField] = useState<"price" | "stock" | null>(null)
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
-  const [selectedFilter, setSelectedFilter] = useState<FilterType>("ALL")
+  const [selectedFilter, setSelectedFilter] = useState<FilterType>("TOTAL")
+  const [pageSize, setPageSize] = useState<number>(25)
+  const [currentPage, setCurrentPage] = useState<number>(0)
+  const [totalPages, setTotalPages] = useState<number>(1)
+  const [totalElements, setTotalElements] = useState<number>(0)
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; productId: string | null; productName: string }>({
     isOpen: false,
     productId: null,
     productName: "",
   })
+
+  // Debounced search query
+  const debouncedSearchQuery = useDebounce(searchQuery, 500)
 
   // Fetch products
   const fetchProducts = async () => {
@@ -113,40 +110,92 @@ export default function ProductsPage() {
 
     try {
       setIsLoading(true)
-      let userProducts: UserProduct[] = []
+      const userProducts: UserProduct[] = []
 
-      if (selectedFilter === "ALL") {
-        // Fetch all products
-        userProducts = await productsAPI.getUserProducts(accessToken)
-      } else {
-        // Fetch filtered products
-        const filterResponse = await productsAPI.filterUserProducts(accessToken, selectedFilter, 0, 1000)
-        userProducts = filterResponse.content
+      // Prepare sort parameters
+      const sortParams: { price?: boolean; stock?: boolean } = {}
+      if (sortField === "price") {
+        sortParams.price = sortDirection === "desc" // Reverse logic
+      } else if (sortField === "stock") {
+        sortParams.stock = sortDirection === "desc" // Reverse logic
       }
 
-      // Fetch product details for each user product
-      const productsWithDetails: ProductWithDetails[] = await Promise.all(
-        userProducts.map(async (userProduct) => {
-          try {
-            const product = await productsAPI.getProductById(userProduct.productId, accessToken)
-            const image = product.coverPhotoPath ? getFullImageUrl(product.coverPhotoPath) : undefined
-            return {
-              ...userProduct,
-              product,
-              image,
-            }
-          } catch (error) {
-            console.error(`Error fetching product ${userProduct.productId}:`, error)
-            return {
-              ...userProduct,
-              product: undefined,
-              image: undefined,
-            }
-          }
-        }),
-      )
+      // Default sort by stock asc if no sort is selected
+      if (!sortField) {
+        sortParams.stock = true
+      }
+
+      // Use the same API for all filters with pagination
+      console.log("API Call:", {
+        type: selectedFilter === "ALL" ? "TOTAL" : selectedFilter,
+        page: currentPage,
+        size: pageSize,
+        price: sortParams.price,
+        stock: sortParams.stock,
+        search: debouncedSearchQuery || undefined,
+      })
+
+      let productsWithDetails: UserProduct[] = []
+
+      try {
+        const filterResponse = await productsAPI.filterUserProducts(
+          accessToken,
+          selectedFilter === "ALL" ? "TOTAL" : selectedFilter,
+          currentPage,
+          pageSize,
+          sortParams.price,
+          sortParams.stock,
+          debouncedSearchQuery,
+        )
+
+        const userProducts = filterResponse.content
+        setTotalPages(filterResponse.totalPages)
+        setTotalElements(filterResponse.totalElements)
+
+        // Filter API already includes product details, no need for additional API calls
+        productsWithDetails = userProducts.map((userProduct) => ({
+          ...userProduct,
+          product: {
+            id: userProduct.productId,
+            name: userProduct.productName || "",
+            detailedName: userProduct.productName || "",
+            barcode: "", // Not available in filter response
+            barcodeFormats: "",
+            active: userProduct.active,
+            subCategoriesId: userProduct.subCategoriesId || "",
+            coverPhotoPath: userProduct.coverPhotoPath,
+            // Add other required Product fields with defaults
+            aboutProduct: "",
+            customerReviews: "",
+            description: "",
+            manufacturerCode: "",
+            brand: "",
+            packaging: "",
+            primaryMarket: "",
+            scent: "",
+            size: "",
+            type: "",
+            sds: "",
+            photoPaths: userProduct.coverPhotoPath,
+            photoPhats: userProduct.coverPhotoPath ? [userProduct.coverPhotoPath] : [],
+            createdDate: "",
+            userId: userProduct.userId,
+            reviewCount: 0,
+            vendorsCount: 0,
+            overallStar: 0,
+          },
+          image: userProduct.coverPhotoPath ? getFullImageUrl(userProduct.coverPhotoPath) : undefined,
+        }))
+      } catch (apiError) {
+        console.error("API Error:", apiError)
+        // Fallback to empty results
+        setTotalPages(0)
+        setTotalElements(0)
+        productsWithDetails = []
+      }
 
       setProducts(productsWithDetails)
+      console.log("Products set:", productsWithDetails.length, "items")
     } catch (error) {
       console.error("Error fetching products:", error)
     } finally {
@@ -157,6 +206,24 @@ export default function ProductsPage() {
   // Handle filter change
   const handleFilterChange = (filter: FilterType) => {
     setSelectedFilter(filter)
+    setCurrentPage(0) // Reset to first page when filter changes
+  }
+
+  // Handle page size change
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize)
+    setCurrentPage(0) // Reset to first page when page size changes
+  }
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  // Handle search change
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query)
+    setCurrentPage(0) // Reset to first page when search changes
   }
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <no need to re-run this effect>
@@ -164,7 +231,16 @@ export default function ProductsPage() {
     if (isAuthenticated && accessToken) {
       fetchProducts()
     }
-  }, [isAuthenticated, accessToken, selectedFilter])
+  }, [
+    isAuthenticated,
+    accessToken,
+    selectedFilter,
+    sortField,
+    sortDirection,
+    pageSize,
+    currentPage,
+    debouncedSearchQuery,
+  ])
 
   const handleSelectProduct = (productId: string) => {
     setSelectedProducts((prev) =>
@@ -173,11 +249,10 @@ export default function ProductsPage() {
   }
 
   const handleSelectAll = () => {
-    const sorted = getSortedProducts()
-    if (selectedProducts.length === sorted.length) {
+    if (selectedProducts.length === products.length) {
       setSelectedProducts([])
     } else {
-      setSelectedProducts(sorted.map((p) => p.id))
+      setSelectedProducts(products.map((p) => p.id))
     }
   }
 
@@ -191,24 +266,8 @@ export default function ProductsPage() {
     }
   }
 
-  // Get sorted products
-  const getSortedProducts = () => {
-    if (!sortField) return products
-
-    return [...products].sort((a, b) => {
-      if (sortField === "price") {
-        return sortDirection === "asc" ? a.price - b.price : b.price - a.price
-      }
-
-      if (sortField === "stock") {
-        return sortDirection === "asc" ? a.stock - b.stock : b.stock - a.stock
-      }
-
-      return 0
-    })
-  }
-
-  const sortedProducts = getSortedProducts()
+  // Products are now sorted from API
+  const sortedProducts = products
 
   const handleEdit = (userProductId: string) => {
     router.push(`/vendor-dashboard/products/create?edit=${userProductId}`)
@@ -305,77 +364,26 @@ export default function ProductsPage() {
 
           {/* Filters and Search */}
           <section id="filters-section" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-              <div className="lg:col-span-4">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search products by name, SKU, or category..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-                  />
-                  <Search className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
-                </div>
-              </div>
-
-              <div className="lg:col-span-2">
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-                >
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="lg:col-span-2">
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-                >
-                  {statuses.map((status) => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="lg:col-span-2">
-                <select
-                  value={selectedStockStatus}
-                  onChange={(e) => setSelectedStockStatus(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-                >
-                  {stockStatuses.map((stockStatus) => (
-                    <option key={stockStatus} value={stockStatus}>
-                      {stockStatus}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="lg:col-span-2">
-                <button
-                  type="button"
-                  className="w-full px-4 py-2 bg-steel-blue text-white rounded-lg hover:bg-opacity-90 font-medium flex items-center justify-center"
-                >
-                  <Filter className="mr-2 w-4 h-4" />
-                  Apply Filters
-                </button>
+            <div className="max-w-lg">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search products by name"
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-steel-blue focus:border-transparent"
+                />
+                <Search className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
               </div>
             </div>
 
             <div className="mt-4 pt-4 border-t border-gray-200 text-sm text-gray-600">
               <div className="text-sm text-gray-600">
-                Showing <span className="font-semibold text-steel-blue">1-{sortedProducts.length}</span> of{" "}
-                <span className="font-semibold text-steel-blue">{sortedProducts.length}</span> products
+                Showing{" "}
+                <span className="font-semibold text-steel-blue">
+                  {currentPage * pageSize + 1}-{Math.min((currentPage + 1) * pageSize, totalElements)}
+                </span>{" "}
+                of <span className="font-semibold text-steel-blue">{totalElements}</span> products
               </div>
             </div>
           </section>
@@ -392,16 +400,13 @@ export default function ProductsPage() {
                     <th className="px-6 py-4 text-left">
                       <input
                         type="checkbox"
-                        checked={selectedProducts.length === sortedProducts.length && sortedProducts.length > 0}
+                        checked={selectedProducts.length === products.length && products.length > 0}
                         onChange={handleSelectAll}
                         className="w-4 h-4 text-steel-blue bg-gray-100 border-gray-300 rounded focus:ring-steel-blue"
                       />
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                       Product
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      SKU
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                       Category
@@ -462,18 +467,18 @@ export default function ProductsPage() {
                 <tbody className="divide-y divide-gray-200">
                   {isLoading ? (
                     <tr>
-                      <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
+                      <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                         Loading products...
                       </td>
                     </tr>
-                  ) : sortedProducts.length === 0 ? (
+                  ) : products.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
+                      <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                         No products found. Create your first product!
                       </td>
                     </tr>
                   ) : (
-                    sortedProducts.map((product) => (
+                    products.map((product) => (
                       <tr key={product.id} className="hover:bg-light-mint-gray transition-colors">
                         <td className="px-6 py-4">
                           <input
@@ -493,6 +498,7 @@ export default function ProductsPage() {
                                   width={40}
                                   height={40}
                                   className="min-w-10 min-h-10 object-contain"
+                                  unoptimized
                                 />
                               ) : (
                                 <svg
@@ -514,9 +520,6 @@ export default function ProductsPage() {
                             </div>
                             <div className="font-medium text-steel-blue">{product.productName}</div>
                           </div>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {product.product?.barcode ? String(product.product.barcode) : "-"}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-700">{product.product?.subCategoriesId || "-"}</td>
                         <td className="px-6 py-4 text-sm font-semibold text-steel-blue">${product.price.toFixed(2)}</td>
@@ -570,10 +573,15 @@ export default function ProductsPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600">Show</span>
-                  <select className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-steel-blue focus:border-transparent">
-                    <option>25</option>
-                    <option>50</option>
-                    <option>100</option>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                    className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-steel-blue focus:border-transparent"
+                  >
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
                   </select>
                   <span className="text-sm text-gray-600">per page</span>
                 </div>
@@ -581,40 +589,60 @@ export default function ProductsPage() {
                 <div className="flex items-center space-x-2">
                   <button
                     type="button"
-                    className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-white text-sm font-medium text-gray-700"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 0}
+                    className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-white text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
-                  <button type="button" className="px-3 py-2 bg-steel-blue text-white rounded-lg text-sm font-medium">
-                    1
-                  </button>
+
+                  {/* Page numbers */}
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNumber: number
+                    if (totalPages <= 5) {
+                      pageNumber = i
+                    } else if (currentPage < 3) {
+                      pageNumber = i
+                    } else if (currentPage > totalPages - 3) {
+                      pageNumber = totalPages - 5 + i
+                    } else {
+                      pageNumber = currentPage - 2 + i
+                    }
+
+                    return (
+                      <button
+                        key={pageNumber}
+                        type="button"
+                        onClick={() => handlePageChange(pageNumber)}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                          currentPage === pageNumber
+                            ? "bg-steel-blue text-white"
+                            : "border border-gray-300 hover:bg-white text-gray-700"
+                        }`}
+                      >
+                        {pageNumber + 1}
+                      </button>
+                    )
+                  })}
+
+                  {totalPages > 5 && currentPage < totalPages - 3 && (
+                    <>
+                      <span className="px-2 text-gray-500">...</span>
+                      <button
+                        type="button"
+                        onClick={() => handlePageChange(totalPages - 1)}
+                        className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-white text-sm font-medium text-gray-700"
+                      >
+                        {totalPages}
+                      </button>
+                    </>
+                  )}
+
                   <button
                     type="button"
-                    className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-white text-sm font-medium text-gray-700"
-                  >
-                    2
-                  </button>
-                  <button
-                    type="button"
-                    className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-white text-sm font-medium text-gray-700"
-                  >
-                    3
-                  </button>
-                  <button
-                    type="button"
-                    className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-white text-sm font-medium text-gray-700"
-                  >
-                    ...
-                  </button>
-                  <button
-                    type="button"
-                    className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-white text-sm font-medium text-gray-700"
-                  >
-                    50
-                  </button>
-                  <button
-                    type="button"
-                    className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-white text-sm font-medium text-gray-700"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages - 1}
+                    className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-white text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
