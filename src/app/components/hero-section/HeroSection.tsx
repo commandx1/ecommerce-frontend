@@ -180,6 +180,7 @@ const HeroSection = () => {
                                       width={48}
                                       height={48}
                                       className="w-full h-full object-cover"
+                                      unoptimized
                                     />
                                   </div>
                                 )}
