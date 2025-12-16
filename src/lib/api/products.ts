@@ -656,7 +656,6 @@ class ProductsAPI {
     }
 
     const data = await response.json()
-    console.log("Raw API data:", data)
 
     // Handle both array and pagination object responses
     if (Array.isArray(data)) {

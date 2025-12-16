@@ -44,7 +44,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             },
             { status: response.status },
           )
-        } catch (parseError) {
+        } catch {
           return NextResponse.json(
             {
               message: `Backend request failed with status ${response.status}. Could not parse error response.`,

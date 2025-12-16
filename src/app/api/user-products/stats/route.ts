@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
+import type { UserProduct } from "@/lib/api/products"
 
 const BASE_URL = "http://51.20.96.242:8080"
 
@@ -51,10 +52,10 @@ export async function GET(request: NextRequest) {
     // Calculate stats
     const stats = {
       totalProducts: userProducts.length,
-      activeProducts: userProducts.filter((p: any) => p.active).length,
-      inactiveProducts: userProducts.filter((p: any) => !p.active).length,
-      outOfStockProducts: userProducts.filter((p: any) => p.stock === 0).length,
-      lowStockProducts: userProducts.filter((p: any) => p.stock > 0 && p.stock < 20).length,
+      activeProducts: userProducts.filter((p: UserProduct) => p.active).length,
+      inactiveProducts: userProducts.filter((p: UserProduct) => !p.active).length,
+      outOfStockProducts: userProducts.filter((p: UserProduct) => p.stock === 0).length,
+      lowStockProducts: userProducts.filter((p: UserProduct) => p.stock > 0 && p.stock < 20).length,
     }
 
     return NextResponse.json(stats)
