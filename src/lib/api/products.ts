@@ -463,17 +463,24 @@ class ProductsAPI {
 
   /**
    * Get product by barcode
-   * GET /api/barcode/products/ByBarcode/:barcode
+   * GET /api/barcode/products/bybarcode/:barcode
    */
   async getProductByBarcode(barcode: string, token: string): Promise<Product | BarcodeLookupProduct> {
-    const response = await fetch(`${BASE_URL}/api/barcode/products/ByBarcode/${encodeURIComponent(barcode)}`, {
+    const response = await fetch(`${BASE_URL}/api/barcode/products/bybarcode/${encodeURIComponent(barcode)}`, {
       method: "GET",
       headers: this.getAuthHeaders(token),
     })
 
     if (!response.ok) {
-      const error = await response.json()
-      throw error
+      const contentType = response.headers.get("content-type")
+      const hasJson = contentType?.includes("application/json")
+
+      if (hasJson) {
+        const error = await response.json()
+        throw error
+      } else {
+        throw new Error(`Product not found (${response.status})`)
+      }
     }
 
     return response.json()
@@ -574,6 +581,37 @@ class ProductsAPI {
    */
   async getUserProducts(token: string): Promise<UserProduct[]> {
     const response = await fetch(`${BASE_URL}/api/user-products`, {
+      method: "GET",
+      ...this.getFetchOptions(token),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw error
+    }
+
+    return response.json()
+  }
+
+  /**
+   * Filter user products
+   * GET /api/user-products/filter?type=ACTIVE&price=false&page=0&size=10
+   */
+  async filterUserProducts(
+    token: string,
+    type: "ACTIVE" | "INACTIVE" | "OUT_OF_STOCK" | "LOW_STOCK",
+    page: number = 0,
+    size: number = 10,
+    price: boolean = false,
+  ): Promise<{ content: UserProduct[]; totalElements: number; totalPages: number; page: number; size: number }> {
+    const params = new URLSearchParams({
+      type,
+      price: String(price),
+      page: String(page),
+      size: String(size),
+    })
+
+    const response = await fetch(`${BASE_URL}/api/user-products/filter?${params.toString()}`, {
       method: "GET",
       ...this.getFetchOptions(token),
     })

@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 
 const BASE_URL = "http://51.20.96.242:8080"
 
-// Get Product by Barcode - GET /api/barcode/products/ByBarcode/:barcode
+// Get Product by Barcode - GET /api/barcode/products/bybarcode/:barcode
 export async function GET(request: NextRequest, { params }: { params: Promise<{ barcode: string }> }) {
   try {
     const { barcode } = await params
@@ -13,7 +13,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    const response = await fetch(`${BASE_URL}/api/barcode/products/ByBarcode/${encodeURIComponent(barcode)}`, {
+    if (!barcode || barcode.trim() === "") {
+      return NextResponse.json({ message: "Barcode parameter is required" }, { status: 400 })
+    }
+
+    const backendUrl = `${BASE_URL}/api/barcode/products/ByBarcode/${encodeURIComponent(barcode.trim())}`
+
+    const response = await fetch(backendUrl, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -28,11 +34,31 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     if (!response.ok) {
       if (hasJson) {
-        const data = await response.json()
-        return NextResponse.json(data, { status: response.status })
+        try {
+          const data = await response.json()
+          return NextResponse.json(
+            {
+              message: data.message || `Backend request failed with status ${response.status}`,
+              status: response.status,
+              ...data,
+            },
+            { status: response.status },
+          )
+        } catch (parseError) {
+          return NextResponse.json(
+            {
+              message: `Backend request failed with status ${response.status}. Could not parse error response.`,
+              status: response.status,
+            },
+            { status: response.status },
+          )
+        }
       }
       return NextResponse.json(
-        { message: `Request failed with status ${response.status}`, status: response.status },
+        {
+          message: `Backend request failed with status ${response.status}. No error details available.`,
+          status: response.status,
+        },
         { status: response.status },
       )
     }
@@ -45,8 +71,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json(data)
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Internal server error"
-    return NextResponse.json({ message: errorMessage }, { status: 500 })
+    return NextResponse.json(
+      {
+        message: errorMessage,
+        status: 500,
+      },
+      { status: 500 },
+    )
   }
 }
-
-

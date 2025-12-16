@@ -223,7 +223,13 @@ function CreateProductPageContent() {
 
         setShowDropdown(true)
       } catch (error) {
-        showToast(`Search error: ${error}`, "error")
+        const errorMessage =
+          error && typeof error === "object" && "message" in error
+            ? (error.message as string)
+            : error instanceof Error
+              ? error.message
+              : "An error occurred during search"
+        showToast(`Search error: ${errorMessage}`, "error")
         setSearchResults([])
       } finally {
         setIsSearching(false)
@@ -673,9 +679,7 @@ function CreateProductPageContent() {
       newErrors.barcode = "Barcode must be a number"
     }
 
-    if (!formData.subCategoriesId.trim()) {
-      newErrors.subCategoriesId = "Category is required"
-    }
+    // Category ID is optional - no validation needed
 
     // Validate user product fields (only for create mode, not edit mode)
     if (!isEditMode) {
@@ -1126,7 +1130,7 @@ function CreateProductPageContent() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label htmlFor="subCategoriesId" className="block text-sm font-medium text-gray-700 mb-2">
-                        Category ID *
+                        Category ID <span className="text-gray-400 font-normal">(Optional)</span>
                       </label>
                       <input
                         id="subCategoriesId"
