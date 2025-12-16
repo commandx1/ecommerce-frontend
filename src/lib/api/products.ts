@@ -6,12 +6,25 @@ const BACKEND_URL = "http://51.20.96.242:8080" // Backend URL for image paths
 // Helper function to get full image URL
 export function getFullImageUrl(path: string): string {
   if (!path) return ""
-  // If already a full URL, return as is
+
+  // If already a full URL, check if we need to proxy it
   if (path.startsWith("http://") || path.startsWith("https://")) {
+    // In production (HTTPS), proxy HTTP images through Next.js API to avoid mixed content issues
+    if (typeof window !== "undefined" && window.location.protocol === "https:" && path.startsWith("http://")) {
+      return `/api/images/proxy?url=${encodeURIComponent(path)}`
+    }
     return path
   }
-  // Otherwise prepend backend URL
-  return `${BACKEND_URL}${path.startsWith("/") ? "" : "/"}${path}`
+
+  // Build the full backend URL
+  const fullUrl = `${BACKEND_URL}${path.startsWith("/") ? "" : "/"}${path}`
+
+  // In production (HTTPS), proxy HTTP images through Next.js API to avoid mixed content issues
+  if (typeof window !== "undefined" && window.location.protocol === "https:" && fullUrl.startsWith("http://")) {
+    return `/api/images/proxy?url=${encodeURIComponent(fullUrl)}`
+  }
+
+  return fullUrl
 }
 
 // Product Types
