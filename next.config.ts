@@ -3,6 +3,7 @@ import type { NextConfig } from "next"
 const nextConfig: NextConfig = {
   reactCompiler: true,
   images: {
+    unoptimized: false,
     remotePatterns: [
       {
         protocol: "https",
@@ -12,6 +13,7 @@ const nextConfig: NextConfig = {
         protocol: "http",
         hostname: "51.20.96.242",
         port: "8080",
+        pathname: "/**",
       },
       {
         protocol: "https",
