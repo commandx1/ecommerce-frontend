@@ -12,17 +12,15 @@ export function getFullImageUrl(path: string | null | undefined): string {
   const isHttps = typeof window !== "undefined" && window.location.protocol === "https:"
   const needsProxy = isProduction || isHttps
 
-  // If already a full URL, check if we need to proxy it
+  // Always build the full backend URL
+  let fullUrl: string
   if (trimmedPath.startsWith("http://") || trimmedPath.startsWith("https://")) {
-    // In production or HTTPS, proxy HTTP images through Next.js API to avoid mixed content issues
-    if (needsProxy && trimmedPath.startsWith("http://")) {
-      return `/api/images/proxy?url=${encodeURIComponent(trimmedPath)}`
-    }
-    return trimmedPath
+    // Already a full URL, use as is
+    fullUrl = trimmedPath
+  } else {
+    // Relative path, prepend backend URL
+    fullUrl = `${BACKEND_URL}${trimmedPath.startsWith("/") ? "" : "/"}${trimmedPath}`
   }
-
-  // Build the full backend URL
-  const fullUrl = `${BACKEND_URL}${trimmedPath.startsWith("/") ? "" : "/"}${trimmedPath}`
 
   // In production or HTTPS, proxy HTTP images through Next.js API to avoid mixed content issues
   if (needsProxy && fullUrl.startsWith("http://")) {
