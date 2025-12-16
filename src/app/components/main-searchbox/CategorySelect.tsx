@@ -2,14 +2,14 @@ import { useId } from "react"
 
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-const SelectMenuSlideInDemo = () => {
+const CategorySelect = () => {
   const id = useId()
 
   return (
     <div className="w-fit">
       <Select defaultValue="all">
         <SelectTrigger id={id} className="w-fit rounded-l-md rounded-r-none border-r-0">
-          <SelectValue placeholder="Select a fruit" />
+          <SelectValue placeholder="All Categories" />
         </SelectTrigger>
         <SelectContent className="data-[state=open]:slide-in-from-top-4 data-[state=closed]:slide-out-to-top-4 data-[state=open]:zoom-in-100 duration-400">
           <SelectGroup>
@@ -25,4 +25,4 @@ const SelectMenuSlideInDemo = () => {
   )
 }
 
-export default SelectMenuSlideInDemo
+export default CategorySelect
