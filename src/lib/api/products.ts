@@ -8,11 +8,14 @@ export function getFullImageUrl(path: string | null | undefined): string {
   if (!path || typeof path !== "string" || path.trim() === "") return ""
 
   const trimmedPath = path.trim()
+  const isProduction = process.env.NODE_ENV === "production"
+  const isHttps = typeof window !== "undefined" && window.location.protocol === "https:"
+  const needsProxy = isProduction || isHttps
 
   // If already a full URL, check if we need to proxy it
   if (trimmedPath.startsWith("http://") || trimmedPath.startsWith("https://")) {
-    // In production (HTTPS), proxy HTTP images through Next.js API to avoid mixed content issues
-    if (typeof window !== "undefined" && window.location.protocol === "https:" && trimmedPath.startsWith("http://")) {
+    // In production or HTTPS, proxy HTTP images through Next.js API to avoid mixed content issues
+    if (needsProxy && trimmedPath.startsWith("http://")) {
       return `/api/images/proxy?url=${encodeURIComponent(trimmedPath)}`
     }
     return trimmedPath
@@ -21,8 +24,8 @@ export function getFullImageUrl(path: string | null | undefined): string {
   // Build the full backend URL
   const fullUrl = `${BACKEND_URL}${trimmedPath.startsWith("/") ? "" : "/"}${trimmedPath}`
 
-  // In production (HTTPS), proxy HTTP images through Next.js API to avoid mixed content issues
-  if (typeof window !== "undefined" && window.location.protocol === "https:" && fullUrl.startsWith("http://")) {
+  // In production or HTTPS, proxy HTTP images through Next.js API to avoid mixed content issues
+  if (needsProxy && fullUrl.startsWith("http://")) {
     return `/api/images/proxy?url=${encodeURIComponent(fullUrl)}`
   }
 
