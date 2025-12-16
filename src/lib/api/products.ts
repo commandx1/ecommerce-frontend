@@ -4,20 +4,22 @@ const BASE_URL = "" // Use Next.js API routes at /api/...
 const BACKEND_URL = "http://51.20.96.242:8080" // Backend URL for image paths
 
 // Helper function to get full image URL
-export function getFullImageUrl(path: string): string {
-  if (!path) return ""
+export function getFullImageUrl(path: string | null | undefined): string {
+  if (!path || typeof path !== "string" || path.trim() === "") return ""
+
+  const trimmedPath = path.trim()
 
   // If already a full URL, check if we need to proxy it
-  if (path.startsWith("http://") || path.startsWith("https://")) {
+  if (trimmedPath.startsWith("http://") || trimmedPath.startsWith("https://")) {
     // In production (HTTPS), proxy HTTP images through Next.js API to avoid mixed content issues
-    if (typeof window !== "undefined" && window.location.protocol === "https:" && path.startsWith("http://")) {
-      return `/api/images/proxy?url=${encodeURIComponent(path)}`
+    if (typeof window !== "undefined" && window.location.protocol === "https:" && trimmedPath.startsWith("http://")) {
+      return `/api/images/proxy?url=${encodeURIComponent(trimmedPath)}`
     }
-    return path
+    return trimmedPath
   }
 
   // Build the full backend URL
-  const fullUrl = `${BACKEND_URL}${path.startsWith("/") ? "" : "/"}${path}`
+  const fullUrl = `${BACKEND_URL}${trimmedPath.startsWith("/") ? "" : "/"}${trimmedPath}`
 
   // In production (HTTPS), proxy HTTP images through Next.js API to avoid mixed content issues
   if (typeof window !== "undefined" && window.location.protocol === "https:" && fullUrl.startsWith("http://")) {
