@@ -1,0 +1,52 @@
+import { type NextRequest, NextResponse } from "next/server"
+
+const BASE_URL = "http://51.20.96.242:8080"
+
+// Public Search Products - GET /api/products/public-search?Search=...&page=0&size=20
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const search = searchParams.get("Search") || ""
+    const page = searchParams.get("page") || "0"
+    const size = searchParams.get("size") || "20"
+
+    const queryParams = new URLSearchParams({
+      Search: search,
+      page,
+      size,
+    })
+
+    const response = await fetch(`${BASE_URL}/api/products/public-search?${queryParams.toString()}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0",
+        Accept: "application/json",
+      },
+    })
+
+    const contentType = response.headers.get("content-type")
+    const hasJson = contentType?.includes("application/json")
+
+    if (!response.ok) {
+      if (hasJson) {
+        const data = await response.json()
+        return NextResponse.json(data, { status: response.status })
+      }
+      return NextResponse.json(
+        { message: `Request failed with status ${response.status}`, status: response.status },
+        { status: response.status },
+      )
+    }
+
+    if (!hasJson) {
+      return NextResponse.json({ content: [], totalElements: 0, totalPages: 0 })
+    }
+
+    const data = await response.json()
+    return NextResponse.json(data)
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Internal server error"
+    return NextResponse.json({ message: errorMessage }, { status: 500 })
+  }
+}
