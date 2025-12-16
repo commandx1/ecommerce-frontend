@@ -14,9 +14,11 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const type = searchParams.get("type")
-    const price = searchParams.get("price") || "false"
+    const price = searchParams.get("price")
+    const stock = searchParams.get("stock")
     const page = searchParams.get("page") || "0"
     const size = searchParams.get("size") || "10"
+    const search = searchParams.get("search")
 
     if (!type) {
       return NextResponse.json({ message: "Type parameter is required" }, { status: 400 })
@@ -24,10 +26,20 @@ export async function GET(request: NextRequest) {
 
     const queryParams = new URLSearchParams({
       type,
-      price,
       page,
       size,
     })
+
+    // Only add optional parameters if they are provided
+    if (price !== null) {
+      queryParams.append("price", price)
+    }
+    if (stock !== null) {
+      queryParams.append("stock", stock)
+    }
+    if (search !== null && search !== "") {
+      queryParams.append("search", search)
+    }
 
     const response = await fetch(`${BASE_URL}/api/user-products/filter?${queryParams.toString()}`, {
       method: "GET",
