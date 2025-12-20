@@ -125,16 +125,6 @@ export default function ProductsPage() {
         sortParams.stock = true
       }
 
-      // Use the same API for all filters with pagination
-      console.log("API Call:", {
-        type: selectedFilter === "ALL" ? "TOTAL" : selectedFilter,
-        page: currentPage,
-        size: pageSize,
-        price: sortParams.price,
-        stock: sortParams.stock,
-        search: debouncedSearchQuery || undefined,
-      })
-
       let productsWithDetails: UserProduct[] = []
 
       try {
@@ -186,8 +176,28 @@ export default function ProductsPage() {
           },
           image: userProduct.coverPhotoPath ? getFullImageUrl(userProduct.coverPhotoPath) : undefined,
         }))
-      } catch (apiError) {
-        console.error("API Error:", apiError)
+      } catch (apiError: unknown) {
+        // 403 veya 401 hatası kontrolü
+        if (apiError && typeof apiError === "object" && "status" in apiError) {
+          const errorStatus = (apiError as { status: number }).status
+          if (errorStatus === 401 || errorStatus === 403) {
+            const { logout } = useAuthStore.getState()
+            await logout()
+            router.push("/login")
+            return // Component unmount olacak
+          }
+        }
+
+        // Sadece gerçek hataları logla (boş objeleri değil)
+        if (apiError && typeof apiError === "object") {
+          const errorObj = apiError as Record<string, unknown>
+          if (Object.keys(errorObj).length > 0 || errorObj.message) {
+            console.error("API Error:", apiError)
+          }
+        } else if (apiError) {
+          console.error("API Error:", apiError)
+        }
+
         // Fallback to empty results
         setTotalPages(0)
         setTotalElements(0)
@@ -195,7 +205,6 @@ export default function ProductsPage() {
       }
 
       setProducts(productsWithDetails)
-      console.log("Products set:", productsWithDetails.length, "items")
     } catch (error) {
       console.error("Error fetching products:", error)
     } finally {
