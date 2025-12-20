@@ -63,12 +63,6 @@ const LoginPage = () => {
       // biome-ignore lint/suspicious/noExplicitAny: Response type includes dynamic fields from backend
       const response: any = await authAPI.login(payload)
 
-      // Log the full response to see what backend returns
-      console.log("=== LOGIN RESPONSE ===")
-      console.log("Full response:", response)
-      console.log("Response keys:", Object.keys(response))
-      console.log("roleName in response:", response.roleName)
-
       // Check if 2FA is required
       if (response.twoFactorEnabled || response.requires2FA) {
         // Redirect to 2FA verification page
@@ -104,35 +98,7 @@ const LoginPage = () => {
         createdDate: response.createdDate,
         roleName: response.roleName,
       }
-
-      // Log the user data we're setting
-      console.log("=== USER DATA TO SET ===")
-      console.log("userData:", userData)
-      console.log("roleName in userData:", userData.roleName)
-
       setUser(userData)
-
-      // Log the user data after setting (from store)
-      setTimeout(() => {
-        const storedUser = useAuthStore.getState().user
-        console.log("=== USER DATA IN STORE (after setUser) ===")
-        console.log("storedUser:", storedUser)
-        console.log("roleName in storedUser:", storedUser?.roleName)
-
-        // Also check cookie directly using cookieStorage
-        try {
-          const cookieData = cookieStorage.getItem("auth-storage")
-          if (cookieData) {
-            const parsed = JSON.parse(cookieData)
-            console.log("=== COOKIE DATA ===")
-            console.log("Cookie parsed:", parsed)
-            console.log("Cookie state.user:", parsed?.state?.user)
-            console.log("Cookie roleName:", parsed?.state?.user?.roleName)
-          }
-        } catch (e) {
-          console.error("Error reading cookie:", e)
-        }
-      }, 100)
 
       // Ana sayfaya yönlendir
       router.push("/")

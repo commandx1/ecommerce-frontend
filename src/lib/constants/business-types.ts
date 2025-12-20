@@ -4,15 +4,15 @@
  */
 export const BUSINESS_TYPES = {
   PERSONAL_CUSTOMER: "Personal_Customer",
-  DENTAL_SERVICE_INDUSTRY: "Dental_Service_Industry",
+  DENTAL_PRACTICE: "Dental_Practice",
 } as const
 
 /**
  * Business type labels for display in the UI
  */
-export const BUSINESS_TYPE_LABELS: Record<typeof BUSINESS_TYPES[keyof typeof BUSINESS_TYPES], string> = {
+export const BUSINESS_TYPE_LABELS: Record<(typeof BUSINESS_TYPES)[keyof typeof BUSINESS_TYPES], string> = {
   [BUSINESS_TYPES.PERSONAL_CUSTOMER]: "Personal Customer",
-  [BUSINESS_TYPES.DENTAL_SERVICE_INDUSTRY]: "Dental Service Industry",
+  [BUSINESS_TYPES.DENTAL_PRACTICE]: "Dental Practice",
 }
 
 /**
@@ -24,13 +24,12 @@ export const BUSINESS_TYPE_OPTIONS = [
     label: BUSINESS_TYPE_LABELS[BUSINESS_TYPES.PERSONAL_CUSTOMER],
   },
   {
-    value: BUSINESS_TYPES.DENTAL_SERVICE_INDUSTRY,
-    label: BUSINESS_TYPE_LABELS[BUSINESS_TYPES.DENTAL_SERVICE_INDUSTRY],
+    value: BUSINESS_TYPES.DENTAL_PRACTICE,
+    label: BUSINESS_TYPE_LABELS[BUSINESS_TYPES.DENTAL_PRACTICE],
   },
 ] as const
 
 /**
  * Type for business describe values
  */
-export type BusinessType = typeof BUSINESS_TYPES[keyof typeof BUSINESS_TYPES]
-
+export type BusinessType = (typeof BUSINESS_TYPES)[keyof typeof BUSINESS_TYPES]
