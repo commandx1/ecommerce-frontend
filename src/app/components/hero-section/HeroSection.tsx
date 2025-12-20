@@ -2,7 +2,6 @@
 
 import { ShieldCheck } from "lucide-react"
 import Image from "next/image"
-import MainSearchbox from "../main-searchbox/MainSearchbox"
 
 const HeroSection = () => {
   return (
@@ -20,27 +19,6 @@ const HeroSection = () => {
               Connect with verified suppliers, access competitive pricing, and streamline your dental practice
               procurement with our comprehensive B2B marketplace.
             </p>
-            <div className="bg-white rounded-xl p-6 shadow-2xl">
-              <MainSearchbox variant="hero" />
-              <div className="flex flex-wrap gap-2 mt-4">
-                <span className="text-sm text-gray-600">Popular searches:</span>
-                <button type="button" className="text-sm text-steel-blue hover:underline">
-                  Dental Implants
-                </button>
-                <span className="text-gray-300">•</span>
-                <button type="button" className="text-sm text-steel-blue hover:underline">
-                  Composite Resins
-                </button>
-                <span className="text-gray-300">•</span>
-                <button type="button" className="text-sm text-steel-blue hover:underline">
-                  X-Ray Equipment
-                </button>
-                <span className="text-gray-300">•</span>
-                <button type="button" className="text-sm text-steel-blue hover:underline">
-                  Orthodontic Supplies
-                </button>
-              </div>
-            </div>
           </div>
           <div className="relative">
             <div className="h-96 overflow-hidden rounded-2xl shadow-2xl">
