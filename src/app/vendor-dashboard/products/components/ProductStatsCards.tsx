@@ -1,7 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/stores/authStore"
+import { handleApiError } from "@/lib/utils/api-error-handler"
 
 interface ProductStats {
   totalProducts: number
@@ -19,6 +21,7 @@ interface ProductStatsCardsProps {
 }
 
 const ProductStatsCards = ({ selectedFilter = "TOTAL", onFilterChange }: ProductStatsCardsProps) => {
+  const router = useRouter()
   const [stats, setStats] = useState<ProductStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -45,14 +48,17 @@ const ProductStatsCards = ({ selectedFilter = "TOTAL", onFilterChange }: Product
         },
       })
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch product stats")
-      }
+      // 403 veya 401 kontrolü yap ve otomatik logout
+      await handleApiError(response, router)
 
       const data: ProductStats = await response.json()
       setStats(data)
     } catch (err) {
       console.warn("Error fetching product stats:", err)
+      // If handleApiError already logged out, no need to show error here
+      if (err instanceof Error && err.message.includes("Unauthorized")) {
+        return // Logout yapıldı, component unmount olacak
+      }
       setError(err instanceof Error ? err.message : "Failed to load stats")
     } finally {
       setIsLoading(false)
