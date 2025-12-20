@@ -38,11 +38,21 @@
         "noNonNullAssertion": "warn",
         "useConst": "error",
         "useTemplate": "error"
+      },
+      "a11y": {
+        "useKeyWithClickEvents": "off"
       }
     },
     "domains": {
       "next": "recommended",
-      "react": "recommended"
+      "react": {
+        "recommended": true,
+        "rules": {
+          "a11y": {
+            "useKeyWithClickEvents": "off"
+          }
+        }
+      }
     }
   },
   "assist": {
