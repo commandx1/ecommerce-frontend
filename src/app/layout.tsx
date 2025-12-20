@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { Toaster } from "sonner"
 import "./globals.css"
+import AuthHydration from "./components/AuthHydration"
 import ConditionalFooter from "./components/ConditionalFooter"
 import ConditionalNavbar from "./components/ConditionalNavbar"
 
@@ -23,6 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className} suppressHydrationWarning>
+        <AuthHydration />
         <ConditionalNavbar />
         {children}
         <ConditionalFooter />
