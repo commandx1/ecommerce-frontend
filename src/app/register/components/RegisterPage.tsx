@@ -6,7 +6,10 @@ import { useState } from "react"
 import Logo from "@/app/components/Logo"
 // import { authAPI, type RegisterPayload } from "@/lib/api/auth"
 import { authAPIDirect as authAPI, type RegisterPayload } from "@/lib/api/auth-direct"
+import { BUSINESS_TYPE_OPTIONS } from "@/lib/constants/business-types"
+import type { ParsedAddress } from "@/lib/utils/google-maps"
 import { useAuthStore } from "@/stores/authStore"
+import AddressAutocomplete from "./AddressAutocomplete"
 
 const RegisterPage = () => {
   const router = useRouter()
@@ -18,6 +21,23 @@ const RegisterPage = () => {
     email: "",
     password: "",
     phoneNumber: "",
+    businessDescribe: "",
+    address: {
+      title: "Home",
+      fullName: "",
+      phoneNumber: "",
+      country: "",
+      state: "",
+      city: "",
+      district: "",
+      postalCode: "",
+      addressLine: "",
+      defaultAddress: true,
+      latitude: 0,
+      longitude: 0,
+      placeId: "",
+      formattedAddress: "",
+    },
   })
 
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -59,6 +79,14 @@ const RegisterPage = () => {
       newErrors.confirmPassword = "Passwords do not match"
     }
 
+    if (!formData.businessDescribe) {
+      newErrors.businessDescribe = "Business type is required"
+    }
+
+    if (!formData.address.placeId) {
+      newErrors.address = "Address is required"
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -92,17 +120,59 @@ const RegisterPage = () => {
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        [name]: value,
+      }
+      // Update address fullName when name or surname changes
+      if (name === "name" || name === "surname") {
+        updated.address = {
+          ...updated.address,
+          fullName: `${updated.name} ${updated.surname}`.trim() || updated.address.fullName,
+        }
+      }
+      return updated
+    })
     // Clear error for this field
     if (errors[name]) {
       setErrors((prev) => {
         const newErrors = { ...prev }
         delete newErrors[name]
+        return newErrors
+      })
+    }
+  }
+
+  const handleAddressSelect = (parsedAddress: ParsedAddress) => {
+    const fullName = `${formData.name} ${formData.surname}`.trim()
+    setFormData((prev) => ({
+      ...prev,
+      address: {
+        title: "Home",
+        fullName: fullName || prev.address.fullName,
+        phoneNumber: prev.phoneNumber,
+        country: parsedAddress.country,
+        state: parsedAddress.state,
+        city: parsedAddress.city,
+        // District is optional - only set if provided by API, user can edit it manually
+        district: parsedAddress.district || prev.address.district,
+        postalCode: parsedAddress.postalCode,
+        addressLine: parsedAddress.addressLine,
+        defaultAddress: true,
+        latitude: parsedAddress.latitude,
+        longitude: parsedAddress.longitude,
+        placeId: parsedAddress.placeId,
+        formattedAddress: parsedAddress.formattedAddress,
+      },
+    }))
+    // Clear address error
+    if (errors.address) {
+      setErrors((prev) => {
+        const newErrors = { ...prev }
+        delete newErrors.address
         return newErrors
       })
     }
@@ -210,13 +280,198 @@ const RegisterPage = () => {
                         type="tel"
                         name="phoneNumber"
                         value={formData.phoneNumber}
-                        onChange={handleChange}
+                        onChange={(e) => {
+                          handleChange(e)
+                          // Update address phoneNumber
+                          setFormData((prev) => ({
+                            ...prev,
+                            address: {
+                              ...prev.address,
+                              phoneNumber: e.target.value,
+                            },
+                          }))
+                        }}
                         className={`w-full px-4 py-3 border ${
                           errors.phoneNumber ? "border-red-500" : "border-gray-300"
                         } rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent`}
                         placeholder="(555) 123-4567"
                       />
                       {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>}
+                    </div>
+
+                    <div>
+                      <label htmlFor="businessDescribe" className="block text-sm font-medium text-gray-700 mb-2">
+                        Business Type *
+                      </label>
+                      <select
+                        id="businessDescribe"
+                        name="businessDescribe"
+                        value={formData.businessDescribe}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-3 border ${
+                          errors.businessDescribe ? "border-red-500" : "border-gray-300"
+                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent bg-white`}
+                      >
+                        <option value="">Select business type</option>
+                        {BUSINESS_TYPE_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.businessDescribe && (
+                        <p className="text-red-500 text-sm mt-1">{errors.businessDescribe}</p>
+                      )}
+                    </div>
+
+                    <div className="border-t pt-6">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Address Information</h3>
+                      <AddressAutocomplete
+                        onSelect={handleAddressSelect}
+                        selectedAddress={
+                          formData.address.placeId
+                            ? {
+                                country: formData.address.country,
+                                state: formData.address.state,
+                                city: formData.address.city,
+                                district: formData.address.district,
+                                postalCode: formData.address.postalCode,
+                                addressLine: formData.address.addressLine,
+                                latitude: formData.address.latitude,
+                                longitude: formData.address.longitude,
+                                placeId: formData.address.placeId,
+                                formattedAddress: formData.address.formattedAddress,
+                              }
+                            : null
+                        }
+                        error={errors.address}
+                      />
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                          <label htmlFor="addressTitle" className="block text-sm font-medium text-gray-700 mb-2">
+                            Address Title
+                          </label>
+                          <input
+                            id="addressTitle"
+                            type="text"
+                            value={formData.address.title}
+                            onChange={(e) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                address: { ...prev.address, title: e.target.value },
+                              }))
+                            }
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
+                            placeholder="Home, Office, etc."
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="addressFullName" className="block text-sm font-medium text-gray-700 mb-2">
+                            Full Name
+                          </label>
+                          <input
+                            id="addressFullName"
+                            type="text"
+                            value={formData.address.fullName}
+                            onChange={(e) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                address: { ...prev.address, fullName: e.target.value },
+                              }))
+                            }
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
+                            placeholder="Full name for delivery"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                          <label htmlFor="addressCountry" className="block text-sm font-medium text-gray-700 mb-2">
+                            Country
+                          </label>
+                          <input
+                            id="addressCountry"
+                            type="text"
+                            value={formData.address.country}
+                            disabled
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="addressState" className="block text-sm font-medium text-gray-700 mb-2">
+                            State
+                          </label>
+                          <input
+                            id="addressState"
+                            type="text"
+                            value={formData.address.state}
+                            disabled
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                          <label htmlFor="addressCity" className="block text-sm font-medium text-gray-700 mb-2">
+                            City
+                          </label>
+                          <input
+                            id="addressCity"
+                            type="text"
+                            value={formData.address.city}
+                            disabled
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="addressDistrict" className="block text-sm font-medium text-gray-700 mb-2">
+                            District
+                          </label>
+                          <input
+                            id="addressDistrict"
+                            type="text"
+                            value={formData.address.district}
+                            onChange={(e) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                address: { ...prev.address, district: e.target.value },
+                              }))
+                            }
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
+                            placeholder="Enter district (optional)"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                          <label htmlFor="addressPostalCode" className="block text-sm font-medium text-gray-700 mb-2">
+                            Postal Code
+                          </label>
+                          <input
+                            id="addressPostalCode"
+                            type="text"
+                            value={formData.address.postalCode}
+                            disabled
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="addressLine" className="block text-sm font-medium text-gray-700 mb-2">
+                            Address Line
+                          </label>
+                          <input
+                            id="addressLine"
+                            type="text"
+                            value={formData.address.addressLine}
+                            disabled
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                          />
+                        </div>
+                      </div>
                     </div>
 
                     <div>
