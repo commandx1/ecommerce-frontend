@@ -13,7 +13,7 @@ const NewsletterResources = () => {
               dental professionals who trust our insights.
             </p>
             <div className="bg-white rounded-xl p-6">
-              <div className="flex space-x-4">
+              <div className="flex gap-4 flex-wrap">
                 <input
                   type="email"
                   placeholder="Enter your email address"
