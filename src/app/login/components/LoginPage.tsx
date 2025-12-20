@@ -4,22 +4,43 @@ import { Award, Percent, Shield, TrendingUp, Truck } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { authAPI, type LoginPayload } from "@/lib/api/auth"
+import { cookieStorage } from "@/lib/storage/cookie-storage"
 // import { authAPIDirect as authAPI, type LoginPayload } from "@/lib/api/auth-direct"
 import { useAuthStore } from "@/stores/authStore"
+
+const REMEMBER_ME_EMAIL_KEY = "remembered_email"
+const REMEMBER_ME_PASSWORD_KEY = "remembered_password"
 
 const LoginPage = () => {
   const router = useRouter()
   const { setUser, setTokens, setError: setAuthError } = useAuthStore()
 
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
+  // Load remembered email and password from localStorage on mount
+  const [formData, setFormData] = useState(() => {
+    if (typeof window !== "undefined") {
+      const rememberedEmail = localStorage.getItem(REMEMBER_ME_EMAIL_KEY)
+      const rememberedPassword = localStorage.getItem(REMEMBER_ME_PASSWORD_KEY)
+      return {
+        email: rememberedEmail || "",
+        password: rememberedPassword || "",
+      }
+    }
+    return {
+      email: "",
+      password: "",
+    }
   })
 
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [needsEmailVerification, setNeedsEmailVerification] = useState(false)
+  const [rememberMe, setRememberMe] = useState(() => {
+    if (typeof window !== "undefined") {
+      return !!localStorage.getItem(REMEMBER_ME_EMAIL_KEY) || !!localStorage.getItem(REMEMBER_ME_PASSWORD_KEY)
+    }
+    return false
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,11 +63,26 @@ const LoginPage = () => {
       // biome-ignore lint/suspicious/noExplicitAny: Response type includes dynamic fields from backend
       const response: any = await authAPI.login(payload)
 
+      // Log the full response to see what backend returns
+      console.log("=== LOGIN RESPONSE ===")
+      console.log("Full response:", response)
+      console.log("Response keys:", Object.keys(response))
+      console.log("roleName in response:", response.roleName)
+
       // Check if 2FA is required
       if (response.twoFactorEnabled || response.requires2FA) {
         // Redirect to 2FA verification page
         router.push(`/verify-2fa?email=${encodeURIComponent(formData.email)}`)
         return
+      }
+
+      // Save email and password to localStorage if "Remember me" is checked
+      if (rememberMe) {
+        localStorage.setItem(REMEMBER_ME_EMAIL_KEY, formData.email)
+        localStorage.setItem(REMEMBER_ME_PASSWORD_KEY, formData.password)
+      } else {
+        localStorage.removeItem(REMEMBER_ME_EMAIL_KEY)
+        localStorage.removeItem(REMEMBER_ME_PASSWORD_KEY)
       }
 
       // Tokenleri kaydet
@@ -66,8 +102,37 @@ const LoginPage = () => {
         twoFactorEnabled: response.twoFactorEnabled,
         lockoutEnd: response.lockoutEnd,
         createdDate: response.createdDate,
+        roleName: response.roleName,
       }
+
+      // Log the user data we're setting
+      console.log("=== USER DATA TO SET ===")
+      console.log("userData:", userData)
+      console.log("roleName in userData:", userData.roleName)
+
       setUser(userData)
+
+      // Log the user data after setting (from store)
+      setTimeout(() => {
+        const storedUser = useAuthStore.getState().user
+        console.log("=== USER DATA IN STORE (after setUser) ===")
+        console.log("storedUser:", storedUser)
+        console.log("roleName in storedUser:", storedUser?.roleName)
+
+        // Also check cookie directly using cookieStorage
+        try {
+          const cookieData = cookieStorage.getItem("auth-storage")
+          if (cookieData) {
+            const parsed = JSON.parse(cookieData)
+            console.log("=== COOKIE DATA ===")
+            console.log("Cookie parsed:", parsed)
+            console.log("Cookie state.user:", parsed?.state?.user)
+            console.log("Cookie roleName:", parsed?.state?.user?.roleName)
+          }
+        } catch (e) {
+          console.error("Error reading cookie:", e)
+        }
+      }, 100)
 
       // Ana sayfaya yönlendir
       router.push("/")
@@ -191,10 +256,12 @@ const LoginPage = () => {
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <label className="flex items-center">
+                      <label className="flex items-center cursor-pointer">
                         <input
                           type="checkbox"
-                          className="w-4 h-4 text-steel-blue border-gray-300 rounded focus:ring-steel-blue"
+                          checked={rememberMe}
+                          onChange={(e) => setRememberMe(e.target.checked)}
+                          className="w-4 h-4 text-steel-blue border-gray-300 rounded focus:ring-steel-blue cursor-pointer"
                         />
                         <span className="ml-2 text-sm text-gray-600">Remember me</span>
                       </label>
