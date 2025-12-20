@@ -3,12 +3,31 @@
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/backend-api"
 
+export interface AddressPayload {
+  title: string
+  fullName: string
+  phoneNumber: string
+  country: string
+  state: string
+  city: string
+  district: string
+  postalCode: string
+  addressLine: string
+  defaultAddress: boolean
+  latitude: number
+  longitude: number
+  placeId: string
+  formattedAddress: string
+}
+
 export interface RegisterPayload {
   name: string
   surname: string
   email: string
   password: string
   phoneNumber: string
+  businessDescribe: string
+  address: AddressPayload
 }
 
 export interface LoginPayload {
@@ -43,6 +62,7 @@ export interface UserResponse {
   twoFactorEnabled: boolean
   lockoutEnd: string | null
   createdDate: string
+  roleName?: string
 }
 
 export interface UpdateUserPayload {
