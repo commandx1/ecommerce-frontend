@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "storage.googleapis.com",
+        pathname: "/**",
       },
       {
         protocol: "http",
@@ -21,6 +22,8 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
+    dangerouslyAllowSVG: true,
+    contentDispositionType: "attachment",
   },
   async rewrites() {
     return [
@@ -28,8 +31,13 @@ const nextConfig: NextConfig = {
         source: "/backend-api/:path*",
         destination: "http://51.20.96.242:8080/api/:path*",
       },
+      // Proxy images 
+      {
+        source: "/api/images/:path*",
+        destination: "http://51.20.96.242:8080/:path*",
+      }
     ]
-  },
+  }
 }
 
 export default nextConfig

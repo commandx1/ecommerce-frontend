@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 
-const BASE_URL = "http://51.20.96.242:8080"
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 // Get All User Products - GET /api/user-products
 export async function GET(request: NextRequest) {
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    const response = await fetch(`${BASE_URL}/api/user-products`, {
+    const response = await fetch(`${BACKEND_URL}/api/user-products`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    const response = await fetch(`${BASE_URL}/api/user-products`, {
+    const response = await fetch(`${BACKEND_URL}/api/user-products`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

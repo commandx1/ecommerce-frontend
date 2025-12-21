@@ -1,14 +1,14 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 
-const BASE_URL = "http://51.20.96.242:8080"
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 // Get Product by ID - GET /api/products/:id
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
 
-    const response = await fetch(`${BASE_URL}/api/products/${id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/products/${id}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -54,7 +54,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    const response = await fetch(`${BASE_URL}/api/products/${id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/products/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -101,7 +101,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    const response = await fetch(`${BASE_URL}/api/products/${id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/products/${id}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",

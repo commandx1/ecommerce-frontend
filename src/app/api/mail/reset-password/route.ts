@@ -1,13 +1,13 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 
-const BASE_URL = "http://51.20.96.242:8080"
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    const response = await fetch(`${BASE_URL}/api/mail/reset-password`, {
+    const response = await fetch(`${BACKEND_URL}/api/mail/reset-password`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

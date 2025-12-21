@@ -6,6 +6,7 @@ import { useCartStore } from "@/stores/cartStore"
 
 interface Supplier {
   id: number
+  userProductId?: string
   name: string
   logo: string
   alt: string
@@ -23,9 +24,10 @@ interface Supplier {
 
 interface SupplierComparisonProps {
   suppliers: Supplier[]
+  bestPriceVendorUserProductId?: string | null
 }
 
-const SupplierComparison = ({ suppliers }: SupplierComparisonProps) => {
+const SupplierComparison = ({ suppliers, bestPriceVendorUserProductId }: SupplierComparisonProps) => {
   const params = useParams()
   const productId = params?.id as string
   const addToCart = useCartStore((state) => state.addToCart)
@@ -89,25 +91,37 @@ const SupplierComparison = ({ suppliers }: SupplierComparisonProps) => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {suppliers.map((supplier) => (
-                  <tr key={supplier.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-light-mint-gray rounded-lg flex items-center justify-center">
-                          <Image
-                            className="w-8 h-8 object-contain"
-                            src={supplier.logo}
-                            alt={supplier.alt}
-                            width={32}
-                            height={32}
-                          />
+                {suppliers.map((supplier, index) => {
+                  const isBestSeller = bestPriceVendorUserProductId && supplier.userProductId === bestPriceVendorUserProductId
+                  return (
+                    <tr
+                      key={supplier.id}
+                      className={`hover:bg-gray-50 ${isBestSeller ? "bg-yellow-50 border-l-4 border-yellow-400" : ""}`}
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-light-mint-gray rounded-lg flex items-center justify-center">
+                            <Image
+                              className="w-8 h-8 object-contain"
+                              src={supplier.logo}
+                              alt={supplier.alt}
+                              width={32}
+                              height={32}
+                            />
+                          </div>
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <div className="font-semibold text-steel-blue">{supplier.name}</div>
+                              {isBestSeller && (
+                                <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-xs font-semibold">
+                                  Best Seller
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-sm text-gray-600">{supplier.badge}</div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="font-semibold text-steel-blue">{supplier.name}</div>
-                          <div className="text-sm text-gray-600">{supplier.badge}</div>
-                        </div>
-                      </div>
-                    </td>
+                      </td>
                     <td className="px-6 py-4 text-center">
                       <div className="font-bold text-2xl text-steel-blue">{supplier.price}</div>
                       {supplier.originalPrice && (
@@ -146,7 +160,8 @@ const SupplierComparison = ({ suppliers }: SupplierComparisonProps) => {
                       </button>
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           </div>

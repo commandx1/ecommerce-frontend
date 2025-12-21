@@ -1,5 +1,6 @@
 "use client"
 
+import formatCurrency from '@/lib/helpers/formatCurrency'
 import { Check, Heart, Search, ShieldCheck } from "lucide-react"
 import Image from "next/image"
 import { useRef, useState } from "react"
@@ -9,6 +10,8 @@ interface ProductHeroProps {
     title: string
     description: string
     category: string
+    bestPriceVendor: string
+    price: number
     rating: number
     reviewCount: number
     sku: string
@@ -181,8 +184,8 @@ const ProductHero = ({ product }: ProductHeroProps) => {
                     className="w-full h-full object-contain p-2"
                     src={image}
                     alt={`${productData.title} thumbnail ${index + 1}`}
-                    width={100}
-                    height={100}
+                    width={600}
+                    height={600}
                   />
                 </button>
               ))}
@@ -213,6 +216,18 @@ const ProductHero = ({ product }: ProductHeroProps) => {
               </div>
               <div className="h-6 w-px bg-gray-300" />
               <span className="text-gray-600">SKU: {productData.sku}</span>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <div className='text-2xl font-bold text-orange-500'>
+                {formatCurrency(productData.price)}
+              </div>
+              <div className='text-sm text-gray-600'>/ Free Shipping</div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <div className='bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium'>Lowest Price</div>
+              <div>{productData.bestPriceVendor}</div>
             </div>
 
             {/* Key Features */}

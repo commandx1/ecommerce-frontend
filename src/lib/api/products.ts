@@ -1,7 +1,7 @@
 // Use Next.js API routes as proxy to avoid CORS issues
 
 const BASE_URL = "" // Use Next.js API routes at /api/...
-const BACKEND_URL = "http://51.20.96.242:8080" // Backend URL for image paths
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL // Backend URL for image paths
 
 // Helper function to get full image URL
 export function getFullImageUrl(path: string | null | undefined): string {

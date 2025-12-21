@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 
-const BASE_URL = "http://51.20.96.242:8080"
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 // Create Product - POST /api/products
 // Content-Type: multipart/form-data
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
 
     // Forward the form data to the backend
-    const response = await fetch(`${BASE_URL}/api/products`, {
+    const response = await fetch(`${BACKEND_URL}/api/products`, {
       method: "POST",
       headers: {
         "User-Agent": "Mozilla/5.0",
