@@ -17,7 +17,8 @@ interface Supplier {
   stockColor: string
   shipping: string
   shippingNote: string
-  leadTime: string
+  distance: string
+  distanceTime: string
   rating: number
   starCount: number
 }
@@ -85,7 +86,7 @@ const SupplierComparison = ({ suppliers, bestPriceVendorUserProductId }: Supplie
                   <th className="px-6 py-4 text-center font-semibold">Price</th>
                   <th className="px-6 py-4 text-center font-semibold">Stock</th>
                   <th className="px-6 py-4 text-center font-semibold">Shipping</th>
-                  <th className="px-6 py-4 text-center font-semibold">Lead Time</th>
+                  <th className="px-6 py-4 text-center font-semibold">Distance</th>
                   <th className="px-6 py-4 text-center font-semibold">Rating</th>
                   <th className="px-6 py-4 text-center font-semibold">Action</th>
                 </tr>
@@ -100,7 +101,7 @@ const SupplierComparison = ({ suppliers, bestPriceVendorUserProductId }: Supplie
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-light-mint-gray rounded-lg flex items-center justify-center">
+                          {supplier.logo && <div className="w-12 h-12 bg-light-mint-gray rounded-lg flex items-center justify-center">
                             <Image
                               className="w-8 h-8 object-contain"
                               src={supplier.logo}
@@ -108,17 +109,16 @@ const SupplierComparison = ({ suppliers, bestPriceVendorUserProductId }: Supplie
                               width={32}
                               height={32}
                             />
-                          </div>
+                          </div>}
                           <div>
                             <div className="flex items-center space-x-2">
                               <div className="font-semibold text-steel-blue">{supplier.name}</div>
                               {isBestSeller && (
-                                <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-xs font-semibold">
+                                <span className="whitespace-nowrap bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-xs font-semibold">
                                   Best Seller
                                 </span>
                               )}
                             </div>
-                            <div className="text-sm text-gray-600">{supplier.badge}</div>
                           </div>
                         </div>
                       </td>
@@ -130,7 +130,7 @@ const SupplierComparison = ({ suppliers, bestPriceVendorUserProductId }: Supplie
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span
-                        className={`${getStockColorClass(supplier.stockColor)} px-3 py-1 rounded-full text-sm font-medium`}
+                        className={`${getStockColorClass(supplier.stockColor)} px-3 py-1 rounded-full text-sm font-medium truncate`}
                       >
                         {supplier.stock}
                       </span>
@@ -139,8 +139,11 @@ const SupplierComparison = ({ suppliers, bestPriceVendorUserProductId }: Supplie
                       <div className="text-sm font-medium">{supplier.shipping}</div>
                       <div className="text-xs text-gray-500">{supplier.shippingNote}</div>
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="text-sm font-medium">{supplier.leadTime}</div>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col items-center justify-center">
+                        <div className="text-sm font-medium">{supplier.distance}</div>
+                        <div className="text-xs text-gray-500">{supplier.distanceTime}</div>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex items-center justify-center space-x-1">

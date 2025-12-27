@@ -8,23 +8,12 @@ export function getFullImageUrl(path: string | null | undefined): string {
   if (!path || typeof path !== "string" || path.trim() === "") return ""
 
   const trimmedPath = path.trim()
-  const isProduction = process.env.NODE_ENV === "production"
-  const isHttps = typeof window !== "undefined" && window.location.protocol === "https:"
-  const needsProxy = isProduction || isHttps
 
-  // Always build the full backend URL
   let fullUrl: string
   if (trimmedPath.startsWith("http://") || trimmedPath.startsWith("https://")) {
-    // Already a full URL, use as is
     fullUrl = trimmedPath
   } else {
-    // Relative path, prepend backend URL
     fullUrl = `${BACKEND_URL}${trimmedPath.startsWith("/") ? "" : "/"}${trimmedPath}`
-  }
-
-  // In production or HTTPS, proxy HTTP images through Next.js API to avoid mixed content issues
-  if (needsProxy && fullUrl.startsWith("http://")) {
-    return `/api/images/proxy?url=${encodeURIComponent(fullUrl)}`
   }
 
   return fullUrl
@@ -546,7 +535,7 @@ class ProductsAPI {
 
       normalized.push({
         id: product.id,
-        barcode: String(product.barcode),
+        barcode: String(product.barcode || ""),
         title: product.name || product.detailedName || "",
         brand: product.brand,
         category: undefined,
@@ -773,7 +762,7 @@ class ProductsAPI {
 
     return {
       id: product.id,
-      barcode: String(product.barcode),
+      barcode: String(product.barcode || ""),
       title: product.name || product.detailedName || "",
       brand: product.brand,
       category: undefined,

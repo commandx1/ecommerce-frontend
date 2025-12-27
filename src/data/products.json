@@ -62,7 +62,8 @@
         "stockColor": "green",
         "shipping": "Free",
         "shippingNote": "Orders $200+",
-        "leadTime": "1-2 Days",
+        "distance": "5.2 km",
+        "distanceTime": "1-2 Days",
         "rating": 4.9,
         "starCount": 5
       },
@@ -78,7 +79,8 @@
         "stockColor": "green",
         "shipping": "$15",
         "shippingNote": "Standard",
-        "leadTime": "2-3 Days",
+        "distance": "12.8 km",
+        "distanceTime": "2-3 Days",
         "rating": 4.7,
         "starCount": 4
       }
@@ -301,7 +303,8 @@
         "stockColor": "green",
         "shipping": "Free",
         "shippingNote": "Orders $500+",
-        "leadTime": "1-2 Days",
+        "distance": "8.5 km",
+        "distanceTime": "1-2 Days",
         "rating": 4.9,
         "starCount": 5
       },
@@ -317,7 +320,8 @@
         "stockColor": "yellow",
         "shipping": "$49",
         "shippingNote": "Standard",
-        "leadTime": "2-3 Days",
+        "distance": "15.3 km",
+        "distanceTime": "2-3 Days",
         "rating": 4.8,
         "starCount": 5
       },
@@ -333,7 +337,8 @@
         "stockColor": "green",
         "shipping": "Free",
         "shippingNote": "White Glove",
-        "leadTime": "3-5 Days",
+        "distance": "22.7 km",
+        "distanceTime": "3-5 Days",
         "rating": 4.6,
         "starCount": 4
       }
@@ -574,7 +579,8 @@
         "stockColor": "green",
         "shipping": "Free",
         "shippingNote": "Orders $300+",
-        "leadTime": "1-2 Days",
+        "distance": "6.1 km",
+        "distanceTime": "1-2 Days",
         "rating": 4.8,
         "starCount": 5
       },
@@ -590,7 +596,8 @@
         "stockColor": "green",
         "shipping": "$25",
         "shippingNote": "Standard",
-        "leadTime": "2-3 Days",
+        "distance": "18.2 km",
+        "distanceTime": "2-3 Days",
         "rating": 4.6,
         "starCount": 4
       }
@@ -768,7 +775,8 @@
         "stockColor": "green",
         "shipping": "Free",
         "shippingNote": "Orders $150+",
-        "leadTime": "1-2 Days",
+        "distance": "3.8 km",
+        "distanceTime": "1-2 Days",
         "rating": 4.7,
         "starCount": 5
       }

@@ -21,6 +21,11 @@ const nextConfig: NextConfig = {
         hostname: "images.barcodelookup.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "nobledentalsupplies.imgix.net",
+        pathname: "/**",
+      },
     ],
     dangerouslyAllowSVG: true,
     contentDispositionType: "attachment",

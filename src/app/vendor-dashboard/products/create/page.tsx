@@ -977,10 +977,10 @@ function CreateProductPageContent() {
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-gray-900 truncate">{product.title || "Unnamed Product"}</p>
                             <div className="flex items-center space-x-2 mt-1">
-                              <span className="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded font-mono">
+                              {product.barcode && <span className="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded font-mono">
                                 <Barcode className="w-3 h-3 mr-1" />
                                 {product.barcode}
-                              </span>
+                              </span>}
                               {product.brand && <span className="text-xs text-gray-500 truncate">{product.brand}</span>}
                             </div>
                             {product.category && (

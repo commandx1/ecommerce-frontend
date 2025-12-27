@@ -155,6 +155,10 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
       const product = productData.product
       const userProducts = productData.userProducts || []
 
+      // just for testing
+      userProducts[0].vendorDistance = '300 miles'
+      userProducts[0].vendorDistanceTime = '2-3 days'
+
       // Parse reviews and questions
       let reviews = null
       if (reviewsResponse?.ok) {
@@ -243,7 +247,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                     id: index + 1,
                     userProductId: up.id,
                     name: up.vendor || "Vendor",
-                    logo: "/placeholder-logo.png",
+                    logo: up.vendorLogo,
                     alt: `${up.vendor || "Vendor"} logo`,
                     badge: up.id === bestPriceVendorUserProductId ? "Best Seller" : "Verified",
                     price: `$${up.price.toFixed(2)}`,
@@ -252,7 +256,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                     stockColor: up.stock > 0 ? "green" : "gray",
                     shipping: "Free",
                     shippingNote: "Standard shipping",
-                    leadTime: "2-3 days",
+                    distance: up.vendorDistance,
+                    distanceTime: up.vendorDistanceTime,
                     rating: 4.5,
                     starCount: 5,
                   }))
