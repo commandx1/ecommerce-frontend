@@ -7,7 +7,7 @@ import ConditionalFooter from "./components/ConditionalFooter"
 import ConditionalNavbar from "./components/ConditionalNavbar"
 
 const inter = Inter({
-  variable: "--font-geist-sans",
+  variable: "--font-inter",
   subsets: ["latin"],
 })
 
@@ -23,7 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={`${inter.className}`} suppressHydrationWarning>
         <AuthHydration />
         <ConditionalNavbar />
         {children}
