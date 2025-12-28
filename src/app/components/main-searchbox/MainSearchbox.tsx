@@ -124,22 +124,16 @@ const MainSearchbox = ({ variant = "default", className = "" }: MainSearchboxPro
     }, 300)
   }
 
-  const isHeroVariant = variant === "hero"
-
   return (
     <div className={`flex w-full max-w-2xl mx-auto relative ${className}`}>
-      {!isHeroVariant && <CategorySelect />}
+      <CategorySelect />
       <div className="flex-1 relative">
         <div className="relative">
           <Input
             ref={inputRef}
             type="text"
             placeholder="Search products, brands, or suppliers..."
-            className={
-              isHeroVariant
-                ? "w-full pl-4 pr-12 py-6 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue text-gray-700"
-                : "rounded-none flex-1 w-full px-4 py-2.5 border-t border-b border-gray-300 focus:outline-none focus:ring-2 focus:ring-steel-blue text-gray-700"
-            }
+            className="rounded-none flex-1 w-full px-4 py-2.5 border-t border-b border-gray-300 focus:outline-none focus:ring-2 focus:ring-steel-blue text-gray-700"
             value={searchQuery}
             onChange={handleInputChange}
             onFocus={() => {
@@ -148,15 +142,11 @@ const MainSearchbox = ({ variant = "default", className = "" }: MainSearchboxPro
               }
             }}
           />
-          {isHeroVariant ? (
-            isLoading ? (
-              <Loader2 className="w-5 h-5 text-gray-400 animate-spin absolute right-4 top-1/2 -translate-y-1/2" />
-            ) : (
-              <Search
-                className={`w-5 h-5 text-gray-400 absolute ${isHeroVariant ? "right-4" : "right-12"} top-1/2 -translate-y-1/2`}
-              />
-            )
-          ) : null}
+          {isLoading ? (
+            <Loader2 className="w-5 h-5 text-gray-400 animate-spin absolute right-4 top-1/2 -translate-y-1/2" />
+          ) : (
+            <Search className="w-5 h-5 text-gray-400 absolute right-12 top-1/2 -translate-y-1/2" />
+          )}
         </div>
 
         {showDropdown && (searchResults.length > 0 || isLoading) && (
@@ -218,14 +208,12 @@ const MainSearchbox = ({ variant = "default", className = "" }: MainSearchboxPro
           </div>
         )}
       </div>
-      {!isHeroVariant && (
-        <button
-          type="button"
-          className="bg-steel-blue text-white px-5 rounded-r-lg hover:bg-opacity-90 flex items-center justify-center"
-        >
-          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-        </button>
-      )}
+      <button
+        type="button"
+        className="bg-steel-blue text-white px-5 rounded-r-lg hover:bg-opacity-90 flex items-center justify-center"
+      >
+        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+      </button>
     </div>
   )
 }

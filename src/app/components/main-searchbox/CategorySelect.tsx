@@ -1,15 +1,14 @@
-import { useId } from "react"
-
+import { useState } from "react"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const CategorySelect = () => {
-  const id = useId()
+  const [selectedCategory, setSelectedCategory] = useState("")
 
   return (
     <div className="w-fit">
-      <Select defaultValue="all">
-        <SelectTrigger id={id} className="w-fit rounded-l-md rounded-r-none border-r-0">
-          <SelectValue placeholder="All Categories" />
+      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+        <SelectTrigger value={selectedCategory} className="w-fit rounded-l-md rounded-r-none border-r-0">
+          <SelectValue placeholder="Categories" />
         </SelectTrigger>
         <SelectContent className="data-[state=open]:slide-in-from-top-4 data-[state=closed]:slide-out-to-top-4 data-[state=open]:zoom-in-100 duration-400">
           <SelectGroup>
