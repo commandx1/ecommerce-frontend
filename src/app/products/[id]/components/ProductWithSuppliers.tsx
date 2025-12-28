@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useSelectedSupplierStore } from "@/stores/selectedSupplierStore"
 import ProductHero from "./ProductHero"
 import SupplierComparison from "./SupplierComparison"

@@ -54,11 +54,10 @@ interface SearchResponse {
 }
 
 interface MainSearchboxProps {
-  variant?: "default" | "hero"
   className?: string
 }
 
-const MainSearchbox = ({ variant = "default", className = "" }: MainSearchboxProps) => {
+const MainSearchbox = ({ className = "" }: MainSearchboxProps) => {
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<SearchProduct[]>([])
   const [isLoading, setIsLoading] = useState(false)
