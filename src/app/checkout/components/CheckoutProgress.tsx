@@ -16,7 +16,7 @@ const CheckoutProgress = () => {
 
   return (
     <section className="bg-white border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex items-center justify-center">
           <div className="flex items-center space-x-4 md:space-x-8 overflow-x-auto">
             {steps.map((step, index) => {

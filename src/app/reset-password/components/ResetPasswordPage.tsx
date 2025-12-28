@@ -97,7 +97,7 @@ function ResetPasswordPageContent() {
       <div className="min-h-screen bg-light-mint-gray font-inter">
         {/* Header */}
         <header className="bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <button type="button" className="flex items-center cursor-pointer" onClick={() => router.push("/")}>
                 <Logo />
@@ -135,7 +135,7 @@ function ResetPasswordPageContent() {
     <div className="min-h-screen bg-light-mint-gray font-inter">
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <button type="button" className="flex items-center cursor-pointer" onClick={() => router.push("/")}>
               <Logo />
@@ -325,7 +325,7 @@ const ResetPasswordPage = () => {
       fallback={
         <div className="min-h-screen bg-light-mint-gray font-inter">
           <header className="bg-white shadow-sm border-b border-gray-200">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between h-16">
                 <div className="flex items-center">
                   <Logo />

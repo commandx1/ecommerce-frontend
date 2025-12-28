@@ -84,7 +84,7 @@ export default function LegalPage() {
       <LegalBreadcrumb />
       <LegalHero />
       <QuickNavigationCards />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <LegalSidebar />
           <div id="document-content" className="lg:col-span-3">

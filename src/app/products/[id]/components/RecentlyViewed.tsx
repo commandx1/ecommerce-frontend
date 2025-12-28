@@ -5,7 +5,7 @@ import recentlyViewedData from "@/data/recently-viewed.json"
 const RecentlyViewed = () => {
   return (
     <section id="recently-viewed" className="bg-white py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl font-bold text-steel-blue mb-8">Recently Viewed</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           {recentlyViewedData.map((product) => (

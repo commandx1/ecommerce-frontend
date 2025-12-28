@@ -72,7 +72,7 @@ const SupplierComparison = ({
 
   return (
     <section id="supplier-comparison" className="bg-white py-12 border-t border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-steel-blue mb-4">Compare Suppliers & Pricing</h2>
           <p className="text-gray-600">

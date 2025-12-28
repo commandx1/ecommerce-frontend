@@ -4,7 +4,7 @@ import Link from "next/link"
 const LegalBreadcrumb = () => {
   return (
     <section id="breadcrumb-navigation" className="bg-white border-b border-gray-200 py-4">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="flex items-center space-x-2 text-sm">
           <Link href="/" className="text-steel-blue hover:underline">
             Home

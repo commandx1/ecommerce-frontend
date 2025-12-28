@@ -38,8 +38,8 @@ const Navbar = () => {
     }
   }
   return (
-    <header id="header" className="bg-white shadow-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header id="header" className="bg-white shadow-sm">
+      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20 border-b border-gray-200">
           <Link href="/" className="flex items-center">
             <Logo />

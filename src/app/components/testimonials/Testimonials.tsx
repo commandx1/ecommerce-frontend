@@ -4,7 +4,7 @@ import TestimonialCard from "./TestimonialCard"
 const Testimonials = () => {
   return (
     <section id="testimonials" className="py-16 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-steel-blue mb-4">What Dental Professionals Say</h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">

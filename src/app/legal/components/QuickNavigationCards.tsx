@@ -20,7 +20,7 @@ const QuickNavigationCards = () => {
 
   return (
     <section id="quick-navigation" className="py-16 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
           {legalDocumentsData.quickNav.map((item) => {
             const IconComponent = iconMap[item.icon]

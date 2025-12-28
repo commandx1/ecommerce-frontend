@@ -6,7 +6,7 @@ import Image from "next/image"
 const HeroSection = () => {
   return (
     <section id="hero-section" className="bg-linear-to-br from-steel-blue to-blue-800 py-8 flex items-center">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="text-white">
             <h1 className="text-5xl lg:text-6xl font-bold leading-tight mb-6">

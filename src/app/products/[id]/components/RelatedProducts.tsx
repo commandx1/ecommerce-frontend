@@ -12,7 +12,7 @@ const RelatedProducts = ({ currentProductId }: RelatedProductsProps) => {
   const relatedProducts = productsData.filter((p) => p.id !== currentProductId).slice(0, 4)
   return (
     <section id="related-products" className="bg-light-mint-gray py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-3xl font-bold text-steel-blue">Related Products</h2>
           <Link

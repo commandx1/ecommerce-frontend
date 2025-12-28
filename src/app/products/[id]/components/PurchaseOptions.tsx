@@ -125,7 +125,7 @@ const PurchaseOptions = ({ bulkPricing, warrantyOptions, orderSummary }: Purchas
 
   return (
     <section id="purchase-section" className="bg-white py-12 border-t border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-light-mint-gray rounded-2xl p-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">

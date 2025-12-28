@@ -224,7 +224,7 @@ const ProductListingClient = ({
 
       {/* Breadcrumb Navigation */}
       <section className="bg-white border-b border-gray-200 py-3">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center space-x-2 text-sm">
             <Link href="/" className="text-steel-blue hover:underline">
               Home
@@ -241,7 +241,7 @@ const ProductListingClient = ({
 
       {/* Page Header */}
       <section className="bg-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
             <div className="mb-6 lg:mb-0">
               <h1 className="text-4xl font-bold text-steel-blue mb-2">Dental Products</h1>
@@ -282,8 +282,8 @@ const ProductListingClient = ({
       </section>
 
       {/* Filter and Sort Bar */}
-      <section className="bg-white border-b border-gray-200 py-4 sticky top-20 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="bg-white border-b border-gray-200 py-4">
+        <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
             <div className="flex items-center space-x-4">
               <button
@@ -346,13 +346,13 @@ const ProductListingClient = ({
         </div>
       </section>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar Filters */}
           <aside className="hidden lg:block w-68 shrink-0">
             <div
-              style={{ maxHeight: "calc(100vh - 14rem)" }}
-              className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-y-auto sticky top-44 custom-scrollbar"
+              style={{ maxHeight: "calc(100vh - 4rem)" }}
+              className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-y-auto sticky top-8 custom-scrollbar"
             >
               <FilterContent brands={brands} manufacturers={manufacturers} />
             </div>
