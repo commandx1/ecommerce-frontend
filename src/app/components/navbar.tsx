@@ -3,7 +3,7 @@
 import { ChevronDown, LogOut, Menu, Settings, ShoppingCart, User } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useId, useState } from "react"
 // import { authAPI } from "@/lib/api/auth"
 import { authAPIDirect as authAPI } from "@/lib/api/auth-direct"
 import { useAuthStore } from "@/stores/authStore"
@@ -11,16 +11,34 @@ import { useCartStore } from "@/stores/cartStore"
 import Logo from "./Logo"
 import MainSearchbox from "./main-searchbox/MainSearchbox"
 
-const Navbar = () => {
+interface NavbarProps {
+  initialAuthState?: {
+    user: {
+      id: string
+      name: string
+      surname: string
+      email: string
+      roleName?: string
+    } | null
+    isAuthenticated: boolean
+  } | null
+}
+
+const Navbar = ({ initialAuthState }: NavbarProps) => {
   const router = useRouter()
   const cartCount = useCartStore((state) => state.cartCount)
-  const { user, isAuthenticated, clearAuth, accessToken, refreshToken } = useAuthStore()
+  const { clearAuth, accessToken, refreshToken } = useAuthStore()
+
+  const headerId = useId()
+
+  const user = initialAuthState?.user
+  const isAuthenticated = initialAuthState?.isAuthenticated
+
   const [showProfileMenu, setShowProfileMenu] = useState(false)
 
   // Helper function to get dashboard URL based on user type
   const getDashboardUrl = () => {
-    const currentUser = useAuthStore.getState().user
-    const isVendor = currentUser?.roleName === "Vendor"
+    const isVendor = user?.roleName === "Vendor"
     return isVendor ? "/vendor-dashboard" : "/buyer-dashboard"
   }
 
@@ -38,7 +56,7 @@ const Navbar = () => {
     }
   }
   return (
-    <header id="header" className="bg-white shadow-sm">
+    <header id={headerId} className="bg-white shadow-sm">
       <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20 border-b border-gray-200">
           <Link href="/" className="flex items-center">

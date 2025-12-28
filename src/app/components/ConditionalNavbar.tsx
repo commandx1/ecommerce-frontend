@@ -3,7 +3,20 @@
 import { usePathname } from "next/navigation"
 import Navbar from "./navbar"
 
-const ConditionalNavbar = () => {
+interface ConditionalNavbarProps {
+  initialAuthState?: {
+    user: {
+      id: string
+      name: string
+      surname: string
+      email: string
+      roleName?: string
+    } | null
+    isAuthenticated: boolean
+  } | null
+}
+
+const ConditionalNavbar = ({ initialAuthState }: ConditionalNavbarProps) => {
   const pathname = usePathname()
   const isDashboard =
     pathname?.startsWith("/buyer-dashboard") ||
@@ -19,7 +32,7 @@ const ConditionalNavbar = () => {
     return null
   }
 
-  return <Navbar />
+  return <Navbar initialAuthState={initialAuthState} />
 }
 
 export default ConditionalNavbar
