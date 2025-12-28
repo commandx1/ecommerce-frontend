@@ -13,6 +13,7 @@ interface Supplier {
   originalPrice: string | null
   stock: string
   stockColor: string
+  stockCount: number
   shipping: string
   shippingNote: string
   distance: string
