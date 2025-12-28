@@ -36,13 +36,13 @@ const nextConfig: NextConfig = {
         source: "/backend-api/:path*",
         destination: "http://51.20.96.242:8080/api/:path*",
       },
-      // Proxy images 
+      // Proxy images
       {
         source: "/api/images/:path*",
         destination: "http://51.20.96.242:8080/:path*",
-      }
+      },
     ]
-  }
+  },
 }
 
 export default nextConfig

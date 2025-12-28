@@ -2,8 +2,10 @@
 
 import { Bolt, FileText, Minus, Plus, ShieldCheck, ShoppingCart } from "lucide-react"
 import { useParams } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useCartStore } from "@/stores/cartStore"
+import { useSelectedSupplierStore } from "@/stores/selectedSupplierStore"
+import formatCurrency from "@/lib/helpers/formatCurrency"
 
 interface BulkPricing {
   id: number
@@ -43,15 +45,72 @@ const PurchaseOptions = ({ bulkPricing, warrantyOptions, orderSummary }: Purchas
   const params = useParams()
   const productId = params?.id as string
   const addToCart = useCartStore((state) => state.addToCart)
-  const defaultSelectedBulk = bulkPricing.find((p) => p.selected)?.id || bulkPricing[0]?.id || 1
+  const selectedSupplier = useSelectedSupplierStore((state) => state.selectedSupplier)
+  const stockCount = selectedSupplier?.stockCount ?? 15 // Fallback to 15 if not available
+
+  useEffect(() => {
+    if (quantity > stockCount) {
+      setQuantity(stockCount || 1)
+    }
+  }, [stockCount, quantity])
+
+  // Helper to parse price string like "$289.00" to number
+  const parsePrice = (priceString: string): number => {
+    if (!priceString) return 0
+    return Number.parseFloat(priceString.replace(/[$,]/g, "")) || 0
+  }
+
+  // Find which bulk pricing tier applies to the current quantity
+  const getApplicableBulkPricing = () => {
+    // Sort tiers by minimum quantity in descending order to find the highest matching tier
+    const sortedBulk = [...bulkPricing].sort((a, b) => {
+      const getMin = (range: string) => parseInt(range.split("-")[0].replace(/\+/g, "")) || 0
+      return getMin(b.range) - getMin(a.range)
+    })
+
+    for (const tier of sortedBulk) {
+      const range = tier.range.toLowerCase()
+      if (range.includes("+")) {
+        const min = parseInt(range.replace(/\+/g, ""))
+        if (quantity >= min) return tier
+      } else if (range.includes("-")) {
+        const [min, max] = range.split("-").map((s) => parseInt(s))
+        if (quantity >= min && quantity <= max) return tier
+      } else if (range.includes("1 unit")) {
+        if (quantity === 1) return tier
+      }
+    }
+    return bulkPricing.find((p) => p.selected) || bulkPricing[0]
+  }
+
+  const activeTier = getApplicableBulkPricing()
+  const selectedBulkPricing = activeTier?.id
+  const unitPrice = activeTier
+    ? parsePrice(activeTier.price)
+    : selectedSupplier
+      ? parsePrice(selectedSupplier.price)
+      : parsePrice(orderSummary.productPrice)
+
   const defaultSelectedWarranty =
     warrantyOptions.find((w) => w.selected)?.value || warrantyOptions[0]?.value || "standard"
-  const [selectedBulkPricing, setSelectedBulkPricing] = useState(defaultSelectedBulk)
   const [selectedWarranty, setSelectedWarranty] = useState(defaultSelectedWarranty)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
 
+  const warrantyPrice = parsePrice(
+    warrantyOptions.find((w) => w.value === selectedWarranty)?.price || orderSummary.warranty,
+  )
+  const shippingPrice = parsePrice(orderSummary.shipping)
+
+  const productTotal = unitPrice * quantity
+  const subtotal = productTotal + warrantyPrice
+  const tax = subtotal * 0.1 // Let's assume 10% tax for realism, or keep it 0 if you prefer
+  const total = subtotal + shippingPrice + tax
+
   const handleQuantityChange = (delta: number) => {
-    setQuantity(Math.max(1, quantity + delta))
+    const newQuantity = quantity + delta
+    if (newQuantity >= 1 && newQuantity <= stockCount) {
+      setQuantity(newQuantity)
+    }
   }
 
   const handleAddToCart = () => {
@@ -83,7 +142,8 @@ const PurchaseOptions = ({ bulkPricing, warrantyOptions, orderSummary }: Purchas
                       <button
                         type="button"
                         onClick={() => handleQuantityChange(-1)}
-                        className="px-4 py-2 text-gray-600 hover:text-steel-blue transition-colors"
+                        className="px-4 py-2 text-gray-600 hover:text-steel-blue transition-colors disabled:opacity-30"
+                        disabled={quantity <= 1}
                       >
                         <Minus className="w-4 h-4" />
                       </button>
@@ -92,18 +152,23 @@ const PurchaseOptions = ({ bulkPricing, warrantyOptions, orderSummary }: Purchas
                         type="number"
                         value={quantity}
                         min="1"
-                        onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                        className="w-20 px-4 py-2 text-center border-0 focus:outline-none focus:ring-2 focus:ring-steel-blue rounded"
+                        max={stockCount}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 1
+                          setQuantity(Math.min(stockCount, Math.max(1, val)))
+                        }}
+                        className="appearance-none w-20 px-4 py-2 text-center bg-white border-0 focus:outline-none focus:ring-2 focus:ring-steel-blue rounded"
                       />
                       <button
                         type="button"
                         onClick={() => handleQuantityChange(1)}
-                        className="px-4 py-2 text-gray-600 hover:text-steel-blue transition-colors"
+                        className="px-4 py-2 text-gray-600 hover:text-steel-blue transition-colors disabled:opacity-30"
+                        disabled={quantity >= stockCount}
                       >
                         <Plus className="w-4 h-4" />
                       </button>
                     </div>
-                    <span className="text-gray-600">Units available: 15</span>
+                    <span className="text-gray-600">Units available: {stockCount}</span>
                   </div>
                 </div>
 
@@ -112,14 +177,12 @@ const PurchaseOptions = ({ bulkPricing, warrantyOptions, orderSummary }: Purchas
                   <div className="block text-sm font-medium text-gray-700 mb-3">Bulk Pricing</div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {bulkPricing.map((option) => (
-                      <button
+                      <div
                         key={option.id}
-                        type="button"
-                        onClick={() => setSelectedBulkPricing(option.id)}
-                        className={`bg-white border rounded-lg p-4 cursor-pointer transition-colors text-left ${
+                        className={`bg-white border rounded-lg p-4 transition-colors text-left ${
                           selectedBulkPricing === option.id
-                            ? "border-2 border-steel-blue"
-                            : "border-gray-200 hover:border-steel-blue"
+                            ? "border-2 border-steel-blue ring-1 ring-steel-blue"
+                            : "border-gray-200 opacity-60"
                         }`}
                       >
                         <div className="text-center">
@@ -131,7 +194,7 @@ const PurchaseOptions = ({ bulkPricing, warrantyOptions, orderSummary }: Purchas
                             {option.note}
                           </div>
                         </div>
-                      </button>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -171,32 +234,43 @@ const PurchaseOptions = ({ bulkPricing, warrantyOptions, orderSummary }: Purchas
             <div className="bg-white rounded-xl p-6 h-fit">
               <h3 className="text-xl font-semibold text-steel-blue mb-4">Order Summary</h3>
               <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">{orderSummary.product}</span>
-                  <span className="font-semibold">{orderSummary.productPrice}</span>
+                <div className="space-y-2 border-b border-gray-100 pb-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600 text-sm">Unit Price</span>
+                    <span className="font-medium text-gray-900">{formatCurrency(unitPrice)}</span>
+                  </div>
+                  <div className="flex justify-between gap-8">
+                    <span className="text-gray-600">
+                      {orderSummary.product}{" "}
+                      <span className="whitespace-nowrap font-medium text-gray-400 text-sm">x {quantity}</span>
+                    </span>
+                    <span className="font-bold text-steel-blue">{formatCurrency(productTotal)}</span>
+                  </div>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Extended Warranty</span>
-                  <span className="font-semibold">{orderSummary.warranty}</span>
+                  <span className="font-semibold">{formatCurrency(warrantyPrice)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Shipping</span>
-                  <span className="text-green-600 font-semibold">{orderSummary.shipping}</span>
+                  <span className="text-green-600 font-semibold">
+                    {shippingPrice === 0 ? "Free" : formatCurrency(shippingPrice)}
+                  </span>
                 </div>
                 <div className="border-t border-gray-200 pt-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Subtotal</span>
-                    <span className="font-semibold">{orderSummary.subtotal}</span>
+                    <span className="font-semibold">{formatCurrency(subtotal)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Tax (Est.)</span>
-                    <span className="font-semibold">{orderSummary.tax}</span>
+                    <span className="font-semibold">{formatCurrency(tax)}</span>
                   </div>
                 </div>
                 <div className="border-t border-gray-200 pt-3">
                   <div className="flex justify-between text-xl font-bold text-steel-blue">
                     <span>Total</span>
-                    <span>{orderSummary.total}</span>
+                    <span>{formatCurrency(total)}</span>
                   </div>
                 </div>
               </div>
@@ -205,15 +279,16 @@ const PurchaseOptions = ({ bulkPricing, warrantyOptions, orderSummary }: Purchas
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  disabled={isAddingToCart}
+                  disabled={isAddingToCart || stockCount <= 0}
                   className="w-full bg-steel-blue text-white py-3 px-6 rounded-lg hover:bg-opacity-90 font-semibold text-lg flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
-                  {isAddingToCart ? "Adding..." : "Add to Cart"}
+                  {isAddingToCart ? "Adding..." : stockCount <= 0 ? "Out of Stock" : "Add to Cart"}
                 </button>
                 <button
                   type="button"
-                  className="w-full bg-pale-lime text-steel-blue py-3 px-6 rounded-lg hover:bg-opacity-90 font-semibold flex items-center justify-center transition-colors"
+                  disabled={stockCount <= 0}
+                  className="w-full bg-pale-lime text-steel-blue py-3 px-6 rounded-lg hover:bg-opacity-90 font-semibold flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Bolt className="w-5 h-5 mr-2" />
                   Buy Now

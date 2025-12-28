@@ -25,10 +25,7 @@ export async function GET(request: NextRequest) {
     )
 
     if (!response.ok) {
-      return NextResponse.json(
-        { message: "Failed to fetch places from Google Maps API" },
-        { status: response.status },
-      )
+      return NextResponse.json({ message: "Failed to fetch places from Google Maps API" }, { status: response.status })
     }
 
     const data = await response.json()
@@ -46,5 +43,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ message: errorMessage }, { status: 500 })
   }
 }
-
-

@@ -1,8 +1,6 @@
 "use client"
 
 import Image from "next/image"
-import { useParams } from "next/navigation"
-import { useCartStore } from "@/stores/cartStore"
 
 interface Supplier {
   id: number
@@ -26,16 +24,21 @@ interface Supplier {
 interface SupplierComparisonProps {
   suppliers: Supplier[]
   bestPriceVendorUserProductId?: string | null
+  selectedSupplierId?: number
+  onSelectSupplier?: (supplier: Supplier) => void
 }
 
-const SupplierComparison = ({ suppliers, bestPriceVendorUserProductId }: SupplierComparisonProps) => {
-  const params = useParams()
-  const productId = params?.id as string
-  const addToCart = useCartStore((state) => state.addToCart)
-
-  const handleAddToCart = () => {
-    if (productId) {
-      addToCart(productId, 1)
+const SupplierComparison = ({
+  suppliers,
+  bestPriceVendorUserProductId,
+  selectedSupplierId,
+  onSelectSupplier,
+}: SupplierComparisonProps) => {
+  const handleSelectSupplier = (supplier: Supplier) => {
+    if (onSelectSupplier) {
+      onSelectSupplier(supplier)
+      // Scroll to top to see the updated product info
+      window.scrollTo({ top: 0, behavior: "smooth" })
     }
   }
 
@@ -91,25 +94,36 @@ const SupplierComparison = ({ suppliers, bestPriceVendorUserProductId }: Supplie
                   <th className="px-6 py-4 text-center font-semibold">Action</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody>
                 {suppliers.map((supplier, index) => {
-                  const isBestSeller = bestPriceVendorUserProductId && supplier.userProductId === bestPriceVendorUserProductId
+                  const isBestSeller =
+                    bestPriceVendorUserProductId && supplier.userProductId === bestPriceVendorUserProductId
+                  const isSelected = selectedSupplierId === supplier.id
                   return (
                     <tr
                       key={supplier.id}
-                      className={`hover:bg-gray-50 ${isBestSeller ? "bg-yellow-50 border-l-4 border-yellow-400" : ""}`}
+                      className={`hover:bg-gray-50 transition-colors cursor-pointer ${
+                        isSelected
+                          ? "bg-blue-50 border-l-4 border-blue-500"
+                          : isBestSeller
+                            ? "bg-yellow-50 border-l-4 border-yellow-400"
+                            : ""
+                      }`}
+                      onClick={() => handleSelectSupplier(supplier)}
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-4">
-                          {supplier.logo && <div className="w-12 h-12 bg-light-mint-gray rounded-lg flex items-center justify-center">
-                            <Image
-                              className="w-8 h-8 object-contain"
-                              src={supplier.logo}
-                              alt={supplier.alt}
-                              width={32}
-                              height={32}
-                            />
-                          </div>}
+                          {supplier.logo && (
+                            <div className="w-12 h-12 bg-light-mint-gray rounded-lg flex items-center justify-center">
+                              <Image
+                                className="w-8 h-8 object-contain"
+                                src={supplier.logo}
+                                alt={supplier.alt}
+                                width={32}
+                                height={32}
+                              />
+                            </div>
+                          )}
                           <div>
                             <div className="flex items-center space-x-2">
                               <div className="font-semibold text-steel-blue">{supplier.name}</div>
@@ -122,47 +136,54 @@ const SupplierComparison = ({ suppliers, bestPriceVendorUserProductId }: Supplie
                           </div>
                         </div>
                       </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="font-bold text-2xl text-steel-blue">{supplier.price}</div>
-                      {supplier.originalPrice && (
-                        <div className="text-sm text-gray-500 line-through">{supplier.originalPrice}</div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span
-                        className={`${getStockColorClass(supplier.stockColor)} px-3 py-1 rounded-full text-sm font-medium truncate`}
-                      >
-                        {supplier.stock}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="text-sm font-medium">{supplier.shipping}</div>
-                      <div className="text-xs text-gray-500">{supplier.shippingNote}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col items-center justify-center">
-                        <div className="text-sm font-medium">{supplier.distance}</div>
-                        <div className="text-xs text-gray-500">{supplier.distanceTime}</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center space-x-1">
-                        <div className="flex text-yellow-400 text-sm">
-                          {renderStars(supplier.starCount, supplier.name)}
+                      <td className="px-6 py-4 text-center">
+                        <div className="font-bold text-2xl text-steel-blue">{supplier.price}</div>
+                        {supplier.originalPrice && (
+                          <div className="text-sm text-gray-500 line-through">{supplier.originalPrice}</div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span
+                          className={`${getStockColorClass(supplier.stockColor)} px-3 py-1 rounded-full text-sm font-medium truncate`}
+                        >
+                          {supplier.stock}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="text-sm font-medium">{supplier.shipping}</div>
+                        <div className="text-xs text-gray-500">{supplier.shippingNote}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col items-center justify-center">
+                          <div className="text-sm font-medium">{supplier.distance}</div>
+                          <div className="text-xs text-gray-500">{supplier.distanceTime}</div>
                         </div>
-                        <span className="text-sm text-gray-600">{supplier.rating}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <button
-                        type="button"
-                        onClick={handleAddToCart}
-                        className="bg-steel-blue text-white px-6 py-2 rounded-lg hover:bg-opacity-90 font-medium transition-colors"
-                      >
-                        Add to Cart
-                      </button>
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center space-x-1">
+                          <div className="flex text-yellow-400 text-sm">
+                            {renderStars(supplier.starCount, supplier.name)}
+                          </div>
+                          <span className="text-sm text-gray-600">{supplier.rating}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleSelectSupplier(supplier)
+                          }}
+                          className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                            isSelected
+                              ? "bg-blue-600 text-white hover:bg-blue-700"
+                              : "bg-steel-blue text-white hover:bg-opacity-90"
+                          }`}
+                        >
+                          {isSelected ? "Selected" : "Select"}
+                        </button>
+                      </td>
+                    </tr>
                   )
                 })}
               </tbody>

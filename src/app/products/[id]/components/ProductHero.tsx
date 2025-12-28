@@ -1,6 +1,6 @@
 "use client"
 
-import formatCurrency from '@/lib/helpers/formatCurrency'
+import formatCurrency from "@/lib/helpers/formatCurrency"
 import { Check, Heart, Search, ShieldCheck } from "lucide-react"
 import Image from "next/image"
 import { useRef, useState } from "react"
@@ -20,9 +20,18 @@ interface ProductHeroProps {
     thumbnailImages: string[]
     badge?: string
   }
+  selectedSupplier?: {
+    name: string
+    stock: string
+    stockColor: string
+    shipping: string
+    shippingNote: string
+    distance: string
+    distanceTime: string
+  } | null
 }
 
-const ProductHero = ({ product }: ProductHeroProps) => {
+const ProductHero = ({ product, selectedSupplier }: ProductHeroProps) => {
   const productData = product
   const [selectedImage, setSelectedImage] = useState(productData.mainImage)
   const [showMagnifier, setShowMagnifier] = useState(false)
@@ -34,6 +43,13 @@ const ProductHero = ({ product }: ProductHeroProps) => {
     isVisible: false,
   })
   const imageRef = useRef<HTMLImageElement>(null)
+
+  // Helper function to get stock color class
+  const getStockColorClass = (color: string) => {
+    if (color === "green") return "bg-green-100 text-green-800"
+    if (color === "yellow") return "bg-yellow-100 text-yellow-800"
+    return "bg-gray-100 text-gray-800"
+  }
 
   const toggleMagnifier = () => {
     setShowMagnifier((prev) => !prev)
@@ -219,16 +235,46 @@ const ProductHero = ({ product }: ProductHeroProps) => {
             </div>
 
             <div className="flex items-center space-x-2">
-              <div className='text-2xl font-bold text-orange-500'>
-                {formatCurrency(productData.price)}
-              </div>
-              <div className='text-sm text-gray-600'>/ Free Shipping</div>
+              <div className="text-2xl font-bold text-orange-500">{formatCurrency(productData.price)}</div>
+              {selectedSupplier && <div className="text-sm text-gray-600">/ {selectedSupplier.shipping} Shipping</div>}
             </div>
 
-            <div className="flex items-center space-x-2">
-              <div className='bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium'>Lowest Price</div>
-              <div>{productData.bestPriceVendor}</div>
-            </div>
+            {selectedSupplier && (
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <div className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+                    Selected Vendor
+                  </div>
+                  <div className="font-semibold text-steel-blue">{selectedSupplier.name}</div>
+                </div>
+
+                <div className="flex items-center space-x-4 text-sm">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-gray-600">Stock:</span>
+                    <span
+                      className={`${getStockColorClass(selectedSupplier.stockColor)} px-2 py-1 rounded-full font-medium`}
+                    >
+                      {selectedSupplier.stock}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-gray-600">Distance:</span>
+                    <span className="font-medium text-steel-blue">{selectedSupplier.distance}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-gray-600">Delivery:</span>
+                    <span className="font-medium text-steel-blue">{selectedSupplier.distanceTime}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!selectedSupplier && productData.bestPriceVendor && (
+              <div className="flex items-center space-x-2">
+                <div className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium">Lowest Price</div>
+                <div>{productData.bestPriceVendor}</div>
+              </div>
+            )}
 
             {/* Key Features */}
             <div className="grid grid-cols-2 gap-4">

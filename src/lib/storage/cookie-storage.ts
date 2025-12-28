@@ -1,7 +1,7 @@
 /**
  * Cookie storage adapter for Zustand persist
  * Allows storing auth state in cookies so it can be accessed in Next.js middleware
- * 
+ *
  * Note: getItem only works client-side. Server-side cookie access is handled by middleware.
  */
 
@@ -23,7 +23,7 @@ function parseCookieValue(cookieString: string, name: string): string | null {
     if (!cookieValue) {
       return null
     }
-    
+
     // Decode the cookie value (browser doesn't auto-decode)
     try {
       return decodeURIComponent(cookieValue)
@@ -79,4 +79,3 @@ export const cookieStorage: Storage = {
     document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
   },
 }
-

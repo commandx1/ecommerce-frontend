@@ -13,6 +13,7 @@ interface UserProduct {
 interface AskQuestionModalProps {
   productId: string
   userProducts: UserProduct[]
+  preSelectedUserProductId?: string
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
@@ -21,14 +22,17 @@ interface AskQuestionModalProps {
 export default function AskQuestionModal({
   productId,
   userProducts,
+  preSelectedUserProductId,
   isOpen,
   onClose,
   onSuccess,
 }: AskQuestionModalProps) {
   const { accessToken, isAuthenticated } = useAuthStore()
   const [question, setQuestion] = useState("")
-  const [selectedUserProductId, setSelectedUserProductId] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Get vendor name for display
+  const selectedVendor = userProducts.find((up) => up.id === preSelectedUserProductId)
 
   if (!isOpen) return null
 
@@ -45,8 +49,8 @@ export default function AskQuestionModal({
       return
     }
 
-    if (!selectedUserProductId) {
-      toast.error("Please select a vendor")
+    if (!preSelectedUserProductId) {
+      toast.error("Please select a vendor from the supplier table first")
       return
     }
 
@@ -61,7 +65,7 @@ export default function AskQuestionModal({
         },
         body: JSON.stringify({
           productId,
-          userProductId: selectedUserProductId,
+          userProductId: preSelectedUserProductId,
           question: question.trim(),
         }),
       })
@@ -72,18 +76,17 @@ export default function AskQuestionModal({
 
       toast.success("Your question has been submitted successfully!")
       setQuestion("")
-      setSelectedUserProductId("")
       onClose()
       onSuccess()
     } catch (error) {
-      toast.error("Failed to submit question. Please try again.")
+      toast.error((error as Error)?.message || "Failed to submit question. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
           <h3 className="text-2xl font-bold text-steel-blue">Ask a Question</h3>
@@ -104,33 +107,19 @@ export default function AskQuestionModal({
             </div>
           )}
 
-          {isAuthenticated && userProducts.length === 0 && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-blue-800 text-sm">No vendors available for this product.</p>
+          {isAuthenticated && !preSelectedUserProductId && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <p className="text-yellow-800 text-sm">Please select a vendor from the supplier table first.</p>
             </div>
           )}
 
-          {isAuthenticated && userProducts.length > 0 && (
+          {isAuthenticated && preSelectedUserProductId && (
             <>
-              <div>
-                <label htmlFor="vendor" className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Vendor
-                </label>
-                <select
-                  id="vendor"
-                  value={selectedUserProductId}
-                  onChange={(e) => setSelectedUserProductId(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-                  required
-                  disabled={isSubmitting}
-                >
-                  <option value="">Choose a vendor...</option>
-                  {userProducts.map((up) => (
-                    <option key={up.id} value={up.id}>
-                      {up.vendor}
-                    </option>
-                  ))}
-                </select>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm font-medium text-blue-900">
+                  Question will be sent to:{" "}
+                  <span className="font-bold">{selectedVendor?.vendor || "Selected Vendor"}</span>
+                </p>
               </div>
 
               <div>
@@ -185,8 +174,3 @@ export default function AskQuestionModal({
     </div>
   )
 }
-
-
-
-
-

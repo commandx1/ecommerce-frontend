@@ -1,7 +1,13 @@
-import { Reply, ThumbsUp } from "lucide-react"
+"use client"
+
+import { Reply, ThumbsUp, Edit2 } from "lucide-react"
 import Image from "next/image"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { getFullImageUrl } from "@/lib/api/products"
+import { useAuthStore } from "@/stores/authStore"
 import WriteReviewButton from "./WriteReviewButton"
+import EditReviewModal from "./EditReviewModal"
 
 interface Review {
   id: string
@@ -110,6 +116,10 @@ function renderOverallStars(rating: number) {
 }
 
 export default function ProductReviews({ productId, initialReviews }: ProductReviewsProps) {
+  const router = useRouter()
+  const { user } = useAuthStore()
+  const [editingReview, setEditingReview] = useState<Review | null>(null)
+
   // Default empty reviews if not provided
   const reviewsData: ReviewsResponse = initialReviews || {
     content: [],
@@ -193,7 +203,6 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
                     <div className="flex items-center justify-between mb-2">
                       <div>
                         <div className="font-semibold text-steel-blue">{review.username}</div>
-                        <div className="text-sm text-gray-600">Verified Purchaser</div>
                       </div>
                       <div className="text-right">
                         <div className="flex text-yellow-400 text-sm mb-1">
@@ -205,6 +214,16 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
                     <h4 className="font-semibold text-gray-900 mb-3">{review.title}</h4>
                     <p className="text-gray-700 leading-relaxed mb-4">{review.comment}</p>
                     <div className="flex items-center space-x-6 text-sm text-gray-600">
+                      {user?.id === review.userId && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingReview(review)}
+                          className="flex items-center space-x-1 hover:text-steel-blue transition-colors"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                          <span>Edit</span>
+                        </button>
+                      )}
                       <button
                         type="button"
                         className="flex items-center space-x-1 hover:text-steel-blue transition-colors"
@@ -242,6 +261,18 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
           </div>
         )}
       </div>
+
+      {editingReview && (
+        <EditReviewModal
+          review={editingReview}
+          isOpen={!!editingReview}
+          onClose={() => setEditingReview(null)}
+          onSuccess={() => {
+            setEditingReview(null)
+            router.refresh()
+          }}
+        />
+      )}
     </section>
   )
 }

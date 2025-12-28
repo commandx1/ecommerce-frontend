@@ -1,10 +1,20 @@
 "use client"
 
 import { ArrowRight } from "lucide-react"
+import { useId } from "react"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
 const ShippingDetails = () => {
   const { shippingAddress, updateShippingAddress, nextStep } = useCheckoutStore()
+
+  const firstNameId = useId()
+  const lastNameId = useId()
+  const companyId = useId()
+  const streetId = useId()
+  const cityId = useId()
+  const stateId = useId()
+  const zipCodeId = useId()
+  const phoneId = useId()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,11 +38,11 @@ const ShippingDetails = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label htmlFor="shipping-firstName" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor={firstNameId} className="block text-sm font-medium text-gray-700 mb-2">
               First Name *
             </label>
             <input
-              id="shipping-firstName"
+              id={firstNameId}
               type="text"
               required
               value={shippingAddress.firstName}
@@ -42,11 +52,11 @@ const ShippingDetails = () => {
             />
           </div>
           <div>
-            <label htmlFor="shipping-lastName" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor={lastNameId} className="block text-sm font-medium text-gray-700 mb-2">
               Last Name *
             </label>
             <input
-              id="shipping-lastName"
+              id={lastNameId}
               type="text"
               required
               value={shippingAddress.lastName}
@@ -56,11 +66,11 @@ const ShippingDetails = () => {
             />
           </div>
           <div className="md:col-span-2">
-            <label htmlFor="shipping-company" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor={companyId} className="block text-sm font-medium text-gray-700 mb-2">
               Company/Practice Name
             </label>
             <input
-              id="shipping-company"
+              id={companyId}
               type="text"
               value={shippingAddress.company}
               onChange={(e) => updateShippingAddress({ company: e.target.value })}
@@ -69,11 +79,11 @@ const ShippingDetails = () => {
             />
           </div>
           <div className="md:col-span-2">
-            <label htmlFor="shipping-street" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor={streetId} className="block text-sm font-medium text-gray-700 mb-2">
               Street Address *
             </label>
             <input
-              id="shipping-street"
+              id={streetId}
               type="text"
               required
               value={shippingAddress.street}
@@ -83,11 +93,11 @@ const ShippingDetails = () => {
             />
           </div>
           <div>
-            <label htmlFor="shipping-city" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor={cityId} className="block text-sm font-medium text-gray-700 mb-2">
               City *
             </label>
             <input
-              id="shipping-city"
+              id={cityId}
               type="text"
               required
               value={shippingAddress.city}
@@ -97,11 +107,11 @@ const ShippingDetails = () => {
             />
           </div>
           <div>
-            <label htmlFor="shipping-state" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor={stateId} className="block text-sm font-medium text-gray-700 mb-2">
               State *
             </label>
             <select
-              id="shipping-state"
+              id={stateId}
               required
               value={shippingAddress.state}
               onChange={(e) => updateShippingAddress({ state: e.target.value })}
@@ -115,11 +125,11 @@ const ShippingDetails = () => {
             </select>
           </div>
           <div>
-            <label htmlFor="shipping-zipCode" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor={zipCodeId} className="block text-sm font-medium text-gray-700 mb-2">
               ZIP Code *
             </label>
             <input
-              id="shipping-zipCode"
+              id={zipCodeId}
               type="text"
               required
               value={shippingAddress.zipCode}
@@ -129,11 +139,11 @@ const ShippingDetails = () => {
             />
           </div>
           <div>
-            <label htmlFor="shipping-phone" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor={phoneId} className="block text-sm font-medium text-gray-700 mb-2">
               Phone Number
             </label>
             <input
-              id="shipping-phone"
+              id={phoneId}
               type="tel"
               value={shippingAddress.phone}
               onChange={(e) => updateShippingAddress({ phone: e.target.value })}

@@ -10,5 +10,3 @@ export default function AuthHydration() {
   useAuthHydration()
   return null
 }
-
-

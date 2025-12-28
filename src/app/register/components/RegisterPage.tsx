@@ -388,18 +388,6 @@ const RegisterPage = () => {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                         <div>
-                          <label htmlFor="addressCountry" className="block text-sm font-medium text-gray-700 mb-2">
-                            Country
-                          </label>
-                          <input
-                            id="addressCountry"
-                            type="text"
-                            value={formData.address.country}
-                            disabled
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
-                          />
-                        </div>
-                        <div>
                           <label htmlFor="addressState" className="block text-sm font-medium text-gray-700 mb-2">
                             State
                           </label>
@@ -411,9 +399,6 @@ const RegisterPage = () => {
                             className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
                           />
                         </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                         <div>
                           <label htmlFor="addressCity" className="block text-sm font-medium text-gray-700 mb-2">
                             City
@@ -426,30 +411,12 @@ const RegisterPage = () => {
                             className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
                           />
                         </div>
-                        <div>
-                          <label htmlFor="addressDistrict" className="block text-sm font-medium text-gray-700 mb-2">
-                            District
-                          </label>
-                          <input
-                            id="addressDistrict"
-                            type="text"
-                            value={formData.address.district}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                address: { ...prev.address, district: e.target.value },
-                              }))
-                            }
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-                            placeholder="Enter district (optional)"
-                          />
-                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                         <div>
                           <label htmlFor="addressPostalCode" className="block text-sm font-medium text-gray-700 mb-2">
-                            Postal Code
+                            Zip Code
                           </label>
                           <input
                             id="addressPostalCode"

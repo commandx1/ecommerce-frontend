@@ -38,8 +38,3 @@ export default function AnswerQuestionButton({ questionId, questionText }: Answe
     </>
   )
 }
-
-
-
-
-

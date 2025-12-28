@@ -29,9 +29,7 @@ export default function ProductError({ message }: ProductErrorProps) {
           </svg>
         </div>
         <h1 className="text-2xl font-bold text-steel-blue mb-4">Product Not Found</h1>
-        <p className="text-gray-600 mb-6">
-          {message || "The product you're looking for doesn't exist."}
-        </p>
+        <p className="text-gray-600 mb-6">{message || "The product you're looking for doesn't exist."}</p>
         <a
           href="/"
           className="inline-block bg-steel-blue text-white px-6 py-3 rounded-lg hover:bg-opacity-90 transition-colors font-medium"
@@ -42,5 +40,3 @@ export default function ProductError({ message }: ProductErrorProps) {
     </div>
   )
 }
-
-

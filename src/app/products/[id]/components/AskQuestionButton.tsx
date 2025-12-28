@@ -12,9 +12,14 @@ interface UserProduct {
 interface AskQuestionButtonProps {
   productId: string
   userProducts: UserProduct[]
+  preSelectedUserProductId?: string
 }
 
-export default function AskQuestionButton({ productId, userProducts }: AskQuestionButtonProps) {
+export default function AskQuestionButton({
+  productId,
+  userProducts,
+  preSelectedUserProductId,
+}: AskQuestionButtonProps) {
   const router = useRouter()
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -36,6 +41,7 @@ export default function AskQuestionButton({ productId, userProducts }: AskQuesti
       <AskQuestionModal
         productId={productId}
         userProducts={userProducts}
+        preSelectedUserProductId={preSelectedUserProductId}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleSuccess}
@@ -43,8 +49,3 @@ export default function AskQuestionButton({ productId, userProducts }: AskQuesti
     </>
   )
 }
-
-
-
-
-

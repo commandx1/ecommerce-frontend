@@ -1,4 +1,7 @@
+"use client"
+
 import { User } from "lucide-react"
+import { useSelectedSupplierStore } from "@/stores/selectedSupplierStore"
 import AskQuestionButton from "./AskQuestionButton"
 import AnswerQuestionButton from "./AnswerQuestionButton"
 
@@ -82,10 +85,20 @@ function formatDate(dateString: string): string {
 }
 
 export default function ProductQuestions({ productId, initialQuestions, userProducts }: ProductQuestionsProps) {
+  // Get selected supplier from Zustand store
+  const selectedSupplier = useSelectedSupplierStore((state) => state.selectedSupplier)
+  const selectedSupplierUserProductId = selectedSupplier?.userProductId
+
   // Extract questions from response
-  const questions: Question[] = initialQuestions?.content || []
-  const totalQuestions = initialQuestions?.totalElements || 0
-  const hasMoreQuestions = initialQuestions && !initialQuestions.last
+  const allQuestions: Question[] = initialQuestions?.content || []
+
+  // Filter questions by selected supplier
+  const questions = selectedSupplierUserProductId
+    ? allQuestions.filter((q) => q.userProductId === selectedSupplierUserProductId)
+    : allQuestions
+
+  const totalQuestions = questions.length
+  const hasMoreQuestions = false // Since we're filtering client-side
 
   // Get user product IDs for vendor check
   const userProductIds = userProducts.map((up) => up.id)
@@ -107,7 +120,11 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
               </p>
             )}
           </div>
-          <AskQuestionButton productId={productId} userProducts={userProducts} />
+          <AskQuestionButton
+            productId={productId}
+            userProducts={userProducts}
+            preSelectedUserProductId={selectedSupplierUserProductId}
+          />
         </div>
 
         {questions.length > 0 ? (
@@ -122,7 +139,6 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
                         <h3 className="font-semibold text-steel-blue mb-2">{qa.question}</h3>
                         <div className="text-sm text-gray-600 mb-3">
                           Asked by {qa.questionerName} • {formatDate(qa.createdDate)}
-                          {qa.sellerName && <span className="ml-2">• To: {qa.sellerName}</span>}
                         </div>
                       </div>
                       {isVendor && qa.answers.length === 0 && (
@@ -141,7 +157,9 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
                             <div className="flex-1">
                               <div className="font-semibold text-steel-blue mb-1">{answer.answererName}</div>
                               <p className="text-gray-700 mb-3">{answer.answer}</p>
-                              <div className="text-sm text-gray-500 mt-2">Answered {formatDate(answer.createdDate)}</div>
+                              <div className="text-sm text-gray-500 mt-2">
+                                Answered {formatDate(answer.createdDate)}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -158,7 +176,11 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
           </div>
         ) : (
           <div className="bg-light-mint-gray rounded-2xl p-8 text-center">
-            <p className="text-gray-600">No questions yet. Be the first to ask a question!</p>
+            <p className="text-gray-600">
+              {selectedSupplierUserProductId
+                ? "No questions have been asked to this vendor yet."
+                : "No questions yet. Be the first to ask a question!"}
+            </p>
           </div>
         )}
 

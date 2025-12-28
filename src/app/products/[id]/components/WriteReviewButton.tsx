@@ -36,8 +36,3 @@ export default function WriteReviewButton({ productId }: WriteReviewButtonProps)
     </>
   )
 }
-
-
-
-
-

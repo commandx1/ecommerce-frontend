@@ -16,7 +16,7 @@ const Navbar = () => {
   const cartCount = useCartStore((state) => state.cartCount)
   const { user, isAuthenticated, clearAuth, accessToken, refreshToken } = useAuthStore()
   const [showProfileMenu, setShowProfileMenu] = useState(false)
-  
+
   // Helper function to get dashboard URL based on user type
   const getDashboardUrl = () => {
     const currentUser = useAuthStore.getState().user

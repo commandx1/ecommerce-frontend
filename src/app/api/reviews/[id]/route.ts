@@ -2,8 +2,9 @@ import { type NextRequest, NextResponse } from "next/server"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
-export async function POST(request: NextRequest) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const authHeader = request.headers.get("authorization")
     const body = await request.json()
 
@@ -15,15 +16,15 @@ export async function POST(request: NextRequest) {
       headers.Authorization = authHeader
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/product-questions`, {
-      method: "POST",
+    const response = await fetch(`${BACKEND_URL}/api/reviews/${id}`, {
+      method: "PUT",
       headers,
       body: JSON.stringify(body),
     })
 
     if (!response.ok) {
       const errorText = await response.text()
-      return NextResponse.json({ error: errorText || "Failed to create question" }, { status: response.status })
+      return NextResponse.json({ error: errorText || "Failed to update review" }, { status: response.status })
     }
 
     const data = await response.json()

@@ -640,11 +640,11 @@ class ProductsAPI {
     })
 
     if (!response.ok) {
-      let error: { message?: string; status: number } = { 
+      let error: { message?: string; status: number } = {
         message: `Request failed with status ${response.status}`,
-        status: response.status 
+        status: response.status,
       }
-      
+
       try {
         const errorData = await response.json()
         if (errorData && typeof errorData === "object") {
@@ -654,7 +654,7 @@ class ProductsAPI {
         // JSON parse başarısız olursa, sadece status ile devam et
         error.status = response.status
       }
-      
+
       throw error
     }
 

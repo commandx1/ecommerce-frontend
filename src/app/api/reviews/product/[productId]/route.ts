@@ -46,14 +46,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       headers.Authorization = `Bearer ${accessToken}`
     }
 
-    const response = await fetch(
-      `${BACKEND_URL}/api/reviews/product/${productId}?page=${page}&size=${size}`,
-      {
-        method: "GET",
-        headers,
-        cache: "no-store", // Always fetch fresh data for SSR
-      },
-    )
+    const response = await fetch(`${BACKEND_URL}/api/reviews/product/${productId}?page=${page}&size=${size}`, {
+      method: "GET",
+      headers,
+      cache: "no-store", // Always fetch fresh data for SSR
+    })
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ message: "Failed to fetch reviews" }))
@@ -66,4 +63,3 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ message: "Internal server error" }, { status: 500 })
   }
 }
-
