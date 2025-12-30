@@ -186,7 +186,7 @@ export default function NotFound() {
                 <div className="space-y-4 mb-8">
                   {[
                     { icon: Phone, title: "Call Us", desc: "1-800-DENTAL-HUB", detail: "Mon-Fri: 8AM - 8PM EST" },
-                    { icon: Mail, title: "Email Us", desc: "support@dentalhub.com", detail: "Response within 2 hours" },
+                    { icon: Mail, title: "Email Us", desc: "support@dentypro.com", detail: "Response within 2 hours" },
                     {
                       icon: MessageSquare,
                       title: "Live Chat",
