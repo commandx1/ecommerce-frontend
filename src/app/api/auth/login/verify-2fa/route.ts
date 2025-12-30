@@ -38,8 +38,9 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json()
 
-    // Extract tokens from response headers
-    const accessToken = response.headers.get("Authorization")
+    // Extract tokens and remove "Bearer " prefix if present
+    const authHeader = response.headers.get("Authorization")
+    const accessToken = authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : authHeader
     const refreshToken = response.headers.get("X-Refresh-Token")
     const setCookie = response.headers.get("Set-Cookie")
 

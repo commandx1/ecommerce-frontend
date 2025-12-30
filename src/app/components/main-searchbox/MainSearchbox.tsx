@@ -141,11 +141,6 @@ const MainSearchbox = ({ className = "" }: MainSearchboxProps) => {
               }
             }}
           />
-          {isLoading ? (
-            <Loader2 className="w-5 h-5 text-gray-400 animate-spin absolute right-4 top-1/2 -translate-y-1/2" />
-          ) : (
-            <Search className="w-5 h-5 text-gray-400 absolute right-12 top-1/2 -translate-y-1/2" />
-          )}
         </div>
 
         {showDropdown && (searchResults.length > 0 || isLoading) && (

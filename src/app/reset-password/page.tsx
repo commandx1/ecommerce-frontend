@@ -1,9 +1,9 @@
 "use client"
 
-import { Check, Eye, EyeOff, Key, Lock, ShieldCheck } from "lucide-react"
+import { Check, Eye, EyeOff, Key, Lock } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useId, useState } from "react"
 import { toast } from "sonner"
 
 export default function ResetPasswordPage() {
@@ -16,6 +16,9 @@ export default function ResetPasswordPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+
+  const passwordInputId = useId()
+  const confirmPasswordInputId = useId()
 
   useEffect(() => {
     if (!token) {
@@ -58,7 +61,7 @@ export default function ResetPasswordPage() {
       toast.success("Password updated successfully.")
       setTimeout(() => router.push("/login"), 3000)
     } catch (error) {
-      toast.error("An error occurred while updating password.")
+      toast.error((error as Error)?.message || "An error occurred while updating password.")
     } finally {
       setIsSubmitting(false)
     }
@@ -97,9 +100,12 @@ export default function ResetPasswordPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">New Password</label>
+            <label htmlFor={passwordInputId} className="block text-sm font-semibold text-gray-700 mb-2">
+              New Password
+            </label>
             <div className="relative">
               <input
+                id={passwordInputId}
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -120,9 +126,12 @@ export default function ResetPasswordPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm Password</label>
+            <label htmlFor={confirmPasswordInputId} className="block text-sm font-semibold text-gray-700 mb-2">
+              Confirm Password
+            </label>
             <div className="relative">
               <input
+                id={confirmPasswordInputId}
                 type={showPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}

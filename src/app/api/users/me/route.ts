@@ -1,44 +1,15 @@
-import type { NextRequest } from "next/server"
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
-export async function GET(request: NextRequest) {
-  try {
-    const authHeader = request.headers.get("Authorization")
-
-    if (!authHeader) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
-    }
-
-    const response = await fetch(`${BACKEND_URL}/api/users/me`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: authHeader,
-      },
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      return NextResponse.json(data, { status: response.status })
-    }
-
-    return NextResponse.json(data)
-  } catch {
-    return NextResponse.json({ message: "Internal server error" }, { status: 500 })
-  }
-}
-
 export async function PUT(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("Authorization")
-    const body = await request.json()
-
+    const authHeader = request.headers.get("authorization")
     if (!authHeader) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    const body = await request.json()
 
     const response = await fetch(`${BACKEND_URL}/api/users/me`, {
       method: "PUT",
@@ -49,41 +20,39 @@ export async function PUT(request: NextRequest) {
       body: JSON.stringify(body),
     })
 
-    const data = await response.json()
-
     if (!response.ok) {
-      return NextResponse.json(data, { status: response.status })
+      const errorText = await response.text()
+      return NextResponse.json({ error: errorText || "Failed to update user" }, { status: response.status })
     }
 
+    const data = await response.json()
     return NextResponse.json(data)
-  } catch {
-    return NextResponse.json({ message: "Internal server error" }, { status: 500 })
+  } catch (error) {
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
 export async function DELETE(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("Authorization")
-
+    const authHeader = request.headers.get("authorization")
     if (!authHeader) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const response = await fetch(`${BACKEND_URL}/api/users/me`, {
       method: "DELETE",
       headers: {
-        "Content-Type": "application/json",
         Authorization: authHeader,
       },
     })
 
     if (!response.ok) {
-      const data = await response.json()
-      return NextResponse.json(data, { status: response.status })
+      const errorText = await response.text()
+      return NextResponse.json({ error: errorText || "Failed to delete user" }, { status: response.status })
     }
 
     return NextResponse.json({ success: true })
-  } catch {
-    return NextResponse.json({ message: "Internal server error" }, { status: 500 })
+  } catch (error) {
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

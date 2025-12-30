@@ -27,6 +27,7 @@ interface AuthState {
   // Actions
   setUser: (user: User) => void
   setTokens: (accessToken: string, refreshToken: string) => void
+  setAuth: (user: User, accessToken: string, refreshToken: string) => void
   clearAuth: () => void
   logout: () => Promise<void>
   setLoading: (loading: boolean) => void
@@ -56,6 +57,15 @@ export const useAuthStore = create<AuthState>()(
           refreshToken,
         }),
 
+      setAuth: (user, accessToken, refreshToken) =>
+        set({
+          user,
+          accessToken,
+          refreshToken,
+          isAuthenticated: true,
+          error: null,
+        }),
+
       clearAuth: () =>
         set({
           user: null,
@@ -82,7 +92,7 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: false,
             error: null,
           })
-          // Router push işlemi component'lerde yapılacak
+          // Router push operation will be handled in components
         }
       },
 

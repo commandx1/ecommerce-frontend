@@ -5,7 +5,7 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    
+
     if (!BACKEND_URL) {
       return NextResponse.json({ error: "Backend URL is not configured" }, { status: 500 })
     }
@@ -23,16 +23,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: errorText || "Failed to send reset email" }, { status: response.status })
     }
 
-    // Backend 200 dönüp boş body gönderiyor olabilir (Postman'de bu sorun olmaz ama fetch.json() hata verir)
+    // Backend might return 200 OK with an empty body (Postman handles this, but fetch.json() fails)
     const contentType = response.headers.get("content-type")
     if (contentType && contentType.includes("application/json")) {
       const data = await response.json()
       return NextResponse.json(data)
     }
-    
-    // JSON değilse veya boşsa sadece başarı dön
+
+    // If not JSON or empty, just return success
     return NextResponse.json({ success: true })
-    
   } catch (error) {
     console.error("Forgot Password Proxy Error:", error)
     return NextResponse.json({ error: (error as Error).message || "Internal server error" }, { status: 500 })

@@ -18,8 +18,13 @@ import {
   Truck,
 } from "lucide-react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 const DashboardSidebar = () => {
+  const pathname = usePathname()
+
+  const isActive = (path: string) => pathname === path
+
   return (
     <aside
       id="sidebar"
@@ -61,45 +66,69 @@ const DashboardSidebar = () => {
             <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Dashboard</h4>
             <Link
               href="/buyer-dashboard"
-              className="flex items-center px-3 py-2 text-steel-blue bg-light-mint-gray rounded-lg font-medium"
+              className={`flex items-center px-3 py-2 rounded-lg font-medium transition-colors ${
+                isActive("/buyer-dashboard") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+              }`}
             >
-              <Home className="mr-3 text-steel-blue w-4 h-4" />
+              <Home className={`mr-3 w-4 h-4 ${isActive("/buyer-dashboard") ? "text-steel-blue" : "text-gray-500"}`} />
               <span>Overview</span>
             </Link>
-            <Link href="/analytics" className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-              <TrendingUp className="mr-3 text-gray-500 w-4 h-4" />
+            <Link
+              href="/analytics"
+              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                isActive("/analytics") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <TrendingUp className={`mr-3 w-4 h-4 ${isActive("/analytics") ? "text-steel-blue" : "text-gray-500"}`} />
               <span>Analytics</span>
             </Link>
           </div>
 
           <div className="py-2 border-b border-gray-200">
             <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Orders</h4>
-            <Link href="/orders" className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-              <ShoppingBag className="mr-3 text-gray-500 w-4 h-4" />
+            <Link
+              href="/orders"
+              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                isActive("/orders") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <ShoppingBag className={`mr-3 w-4 h-4 ${isActive("/orders") ? "text-steel-blue" : "text-gray-500"}`} />
               <span>All Orders</span>
               <span className="ml-auto bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">24</span>
             </Link>
             <Link
               href="/orders/pending"
-              className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                isActive("/orders/pending") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+              }`}
             >
-              <Clock className="mr-3 text-gray-500 w-4 h-4" />
+              <Clock
+                className={`mr-3 w-4 h-4 ${isActive("/orders/pending") ? "text-steel-blue" : "text-gray-500"}`}
+              />
               <span>Pending</span>
               <span className="ml-auto bg-coral-orange text-white text-xs px-2 py-1 rounded-full">3</span>
             </Link>
             <Link
               href="/orders/transit"
-              className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                isActive("/orders/transit") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+              }`}
             >
-              <Truck className="mr-3 text-gray-500 w-4 h-4" />
+              <Truck
+                className={`mr-3 w-4 h-4 ${isActive("/orders/transit") ? "text-steel-blue" : "text-gray-500"}`}
+              />
               <span>In Transit</span>
               <span className="ml-auto bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full">7</span>
             </Link>
             <Link
               href="/orders/completed"
-              className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                isActive("/orders/completed") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+              }`}
             >
-              <CheckCircle className="mr-3 text-gray-500 w-4 h-4" />
+              <CheckCircle
+                className={`mr-3 w-4 h-4 ${isActive("/orders/completed") ? "text-steel-blue" : "text-gray-500"}`}
+              />
               <span>Completed</span>
             </Link>
           </div>
@@ -108,52 +137,101 @@ const DashboardSidebar = () => {
             <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Suppliers</h4>
             <Link
               href="/suppliers/favorites"
-              className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                isActive("/suppliers/favorites")
+                  ? "text-steel-blue bg-light-mint-gray"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
             >
-              <Heart className="mr-3 text-gray-500 w-4 h-4" />
+              <Heart
+                className={`mr-3 w-4 h-4 ${isActive("/suppliers/favorites") ? "text-steel-blue" : "text-gray-500"}`}
+              />
               <span>Favorites</span>
               <span className="ml-auto bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">12</span>
             </Link>
-            <Link href="/suppliers" className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-              <Store className="mr-3 text-gray-500 w-4 h-4" />
+            <Link
+              href="/suppliers"
+              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                isActive("/suppliers") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <Store className={`mr-3 w-4 h-4 ${isActive("/suppliers") ? "text-steel-blue" : "text-gray-500"}`} />
               <span>All Suppliers</span>
             </Link>
             <Link
               href="/suppliers/top-rated"
-              className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                isActive("/suppliers/top-rated")
+                  ? "text-steel-blue bg-light-mint-gray"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
             >
-              <Star className="mr-3 text-gray-500 w-4 h-4" />
+              <Star
+                className={`mr-3 w-4 h-4 ${isActive("/suppliers/top-rated") ? "text-steel-blue" : "text-gray-500"}`}
+              />
               <span>Top Rated</span>
             </Link>
           </div>
 
           <div className="py-2 border-b border-gray-200">
             <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Account</h4>
-            <Link href="/invoices" className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-              <FileText className="mr-3 text-gray-500 w-4 h-4" />
+            <Link
+              href="/invoices"
+              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                isActive("/invoices") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <FileText className={`mr-3 w-4 h-4 ${isActive("/invoices") ? "text-steel-blue" : "text-gray-500"}`} />
               <span>Invoices</span>
             </Link>
             <Link
               href="/payment-methods"
-              className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                isActive("/payment-methods") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+              }`}
             >
-              <CreditCard className="mr-3 text-gray-500 w-4 h-4" />
+              <CreditCard
+                className={`mr-3 w-4 h-4 ${isActive("/payment-methods") ? "text-steel-blue" : "text-gray-500"}`}
+              />
               <span>Payment Methods</span>
             </Link>
-            <Link href="/settings" className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-              <Settings className="mr-3 text-gray-500 w-4 h-4" />
+            <Link
+              href="/buyer-dashboard/settings"
+              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                isActive("/buyer-dashboard/settings")
+                  ? "text-steel-blue bg-light-mint-gray"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <Settings
+                className={`mr-3 w-4 h-4 ${
+                  isActive("/buyer-dashboard/settings") ? "text-steel-blue" : "text-gray-500"
+                }`}
+              />
               <span>Settings</span>
             </Link>
           </div>
 
           <div className="py-2">
             <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Support</h4>
-            <Link href="/help" className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-              <HelpCircle className="mr-3 text-gray-500 w-4 h-4" />
+            <Link
+              href="/help"
+              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                isActive("/help") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <HelpCircle className={`mr-3 w-4 h-4 ${isActive("/help") ? "text-steel-blue" : "text-gray-500"}`} />
               <span>Help Center</span>
             </Link>
-            <Link href="/support" className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-              <HeadphonesIcon className="mr-3 text-gray-500 w-4 h-4" />
+            <Link
+              href="/support"
+              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                isActive("/support") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <HeadphonesIcon
+                className={`mr-3 w-4 h-4 ${isActive("/support") ? "text-steel-blue" : "text-gray-500"}`}
+              />
               <span>Contact Support</span>
             </Link>
           </div>

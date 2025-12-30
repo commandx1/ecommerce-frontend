@@ -2,8 +2,10 @@
 
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { useAuthStore } from "@/stores/authStore"
 import { cookieStorage } from "@/lib/storage/cookie-storage"
+import { useAuthStore } from "@/stores/authStore"
+import BuyerHeader from "./components/BuyerHeader"
+import DashboardSidebar from "./components/DashboardSidebar"
 
 export default function BuyerDashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -79,5 +81,15 @@ export default function BuyerDashboardLayout({ children }: { children: React.Rea
     )
   }
 
-  return <>{children}</>
+  return (
+    <div className="flex flex-col min-h-screen bg-light-mint-gray">
+      <BuyerHeader />
+      <div className="flex flex-1">
+        <DashboardSidebar />
+        <main id="main-content" className="flex-1 p-6">
+          {children}
+        </main>
+      </div>
+    </div>
+  )
 }

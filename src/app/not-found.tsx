@@ -175,7 +175,7 @@ export default function NotFound() {
       {/* Help Section */}
       <section className="py-16 bg-white">
         <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-r from-steel-blue to-blue-700 rounded-3xl overflow-hidden shadow-2xl">
+          <div className="bg-linear-to-r from-steel-blue to-blue-700 rounded-3xl overflow-hidden shadow-2xl">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
               <div className="p-12 text-white">
                 <h2 className="text-4xl font-bold mb-6">Need Help?</h2>
@@ -195,7 +195,7 @@ export default function NotFound() {
                     },
                   ].map((item) => (
                     <div key={item.title} className="flex items-start space-x-4 text-white">
-                      <div className="w-12 h-12 bg-pale-lime rounded-lg flex items-center justify-center flex-shrink-0 text-steel-blue">
+                      <div className="w-12 h-12 bg-pale-lime rounded-lg flex items-center justify-center shrink-0 text-steel-blue">
                         <item.icon className="w-6 h-6" />
                       </div>
                       <div>

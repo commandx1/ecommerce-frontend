@@ -1,6 +1,6 @@
 "use client"
 
-import { Check, Clock, Eye, Headset, Info, Key, Lock, Mail, SendIcon, ShieldCheck } from "lucide-react"
+import { Check, Headset, Info, Key, Mail, SendIcon, ShieldCheck } from "lucide-react"
 import Link from "next/link"
 import { useId, useState } from "react"
 import { toast } from "sonner"

@@ -2,9 +2,9 @@
 
 import { Award, Percent, Shield, TrendingUp, Truck } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useId, useState } from "react"
+import { toast } from "sonner"
 import { authAPI, type LoginPayload } from "@/lib/api/auth"
-import { cookieStorage } from "@/lib/storage/cookie-storage"
 // import { authAPIDirect as authAPI, type LoginPayload } from "@/lib/api/auth-direct"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -42,6 +42,9 @@ const LoginPage = () => {
     return false
   })
 
+  const emailInputId = useId()
+  const passwordInputId = useId()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -63,9 +66,9 @@ const LoginPage = () => {
       // biome-ignore lint/suspicious/noExplicitAny: Response type includes dynamic fields from backend
       const response: any = await authAPI.login(payload)
 
-      // Check if 2FA is required
-      if (response.twoFactorEnabled || response.requires2FA) {
-        // Redirect to 2FA verification page
+      // 2FA Control
+      if (response.twoFactorRequired || response.requires2FA || response.twoFactorEnabled) {
+        toast.info(response.message || "2FA code has been sent to your email.")
         router.push(`/verify-2fa?email=${encodeURIComponent(formData.email)}`)
         return
       }
@@ -79,12 +82,7 @@ const LoginPage = () => {
         localStorage.removeItem(REMEMBER_ME_PASSWORD_KEY)
       }
 
-      // Tokenleri kaydet
-      if (response.accessToken && response.refreshToken) {
-        setTokens(response.accessToken, response.refreshToken)
-      }
-
-      // Kullanıcı bilgilerini kaydet
+      // Save tokens and user information atomically
       const userData = {
         id: response.id,
         name: response.name,
@@ -98,9 +96,16 @@ const LoginPage = () => {
         createdDate: response.createdDate,
         roleName: response.roleName,
       }
-      setUser(userData)
 
-      // Ana sayfaya yönlendir
+      if (response.accessToken && response.refreshToken) {
+        const { setAuth } = useAuthStore.getState()
+        setAuth(userData, response.accessToken, response.refreshToken)
+      } else {
+        setUser(userData)
+      }
+
+      // Redirect to home and refresh
+      router.refresh()
       router.push("/")
     } catch (error: unknown) {
       const err = error as { message?: string; requires2FA?: boolean }
@@ -112,11 +117,11 @@ const LoginPage = () => {
       }
 
       if (
-        err.message?.includes("Email doğrulanmamış") ||
+        err.message?.includes("Email not verified") ||
         (err.message?.includes("email") && err.message?.includes("verified"))
       ) {
         setNeedsEmailVerification(true)
-        setError(err.message)
+        setError(err.message || "Email not verified")
       } else if (err.message?.includes("Account is Temporarily locked") || err.message?.includes("locked")) {
         setError("Your account is temporarily locked. Please try again later.")
       } else if (err.message?.includes("Invalid email or password") || err.message?.includes("Invalid")) {
@@ -183,11 +188,11 @@ const LoginPage = () => {
                 <form onSubmit={handleSubmit}>
                   <div className="space-y-6">
                     <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor={emailInputId} className="block text-sm font-medium text-gray-700 mb-2">
                         Email Address *
                       </label>
                       <input
-                        id="email"
+                        id={emailInputId}
                         type="email"
                         name="email"
                         value={formData.email}
@@ -198,12 +203,12 @@ const LoginPage = () => {
                     </div>
 
                     <div>
-                      <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor={passwordInputId} className="block text-sm font-medium text-gray-700 mb-2">
                         Password *
                       </label>
                       <div className="relative">
                         <input
-                          id="password"
+                          id={passwordInputId}
                           type={showPassword ? "text" : "password"}
                           name="password"
                           value={formData.password}
