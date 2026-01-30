@@ -114,12 +114,15 @@ const PurchaseOptions = ({ bulkPricing, warrantyOptions, orderSummary }: Purchas
   }
 
   const handleAddToCart = () => {
-    if (productId) {
+    const userProductId = selectedSupplier?.userProductId
+    if (userProductId) {
       setIsAddingToCart(true)
-      addToCart(productId, quantity)
+      addToCart(userProductId, quantity)
       setTimeout(() => {
         setIsAddingToCart(false)
       }, 500)
+    } else {
+      console.error("No userProductId found for the selected supplier")
     }
   }
 

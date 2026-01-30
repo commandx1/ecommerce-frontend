@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
@@ -8,13 +9,25 @@ import CartSummary from "./CartSummary"
 
 const CartPage = () => {
   const router = useRouter()
-  const { items } = useCartStore()
+  const { items, fetchCart, isLoading } = useCartStore()
   const { setStep } = useCheckoutStore()
+
+  useEffect(() => {
+    fetchCart()
+  }, [fetchCart])
 
   const handleCheckout = () => {
     if (items.length === 0) return
     setStep(2)
     router.push("/checkout")
+  }
+
+  if (isLoading && items.length === 0) {
+    return (
+      <div className="min-h-screen bg-light-mint-gray py-12 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-steel-blue"></div>
+      </div>
+    )
   }
 
   if (items.length === 0) {

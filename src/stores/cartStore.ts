@@ -1,69 +1,90 @@
 import { create } from "zustand"
-
-export interface CartItem {
-  id: string
-  productId: number
-  quantity: number
-}
+import { cartAPI, CartItem } from "@/lib/api/cart"
 
 interface CartStore {
-  cartCount: number
+  cartId: string | null
   items: CartItem[]
-  addToCart: (productId: string, quantity?: number) => void
-  removeFromCart: (itemId: string) => void
-  updateQuantity: (itemId: string, quantity: number) => void
-  clearCart: () => void
+  cartCount: number
+  isLoading: boolean
+  error: string | null
+  fetchCart: () => Promise<void>
+  addToCart: (userProductId: string, quantity?: number) => Promise<void>
+  removeFromCart: (userProductId: string) => Promise<void>
+  updateQuantity: (userProductId: string, quantity: number) => Promise<void>
+  clearCart: () => Promise<void>
 }
 
 export const useCartStore = create<CartStore>((set, get) => ({
-  cartCount: 0,
+  cartId: null,
   items: [],
-  addToCart: (productId: string, quantity = 1) => {
-    const existingItem = get().items.find((item) => item.productId === parseInt(productId, 10))
+  cartCount: 0,
+  isLoading: false,
+  error: null,
 
-    if (existingItem) {
-      set((state) => ({
-        items: state.items.map((item) =>
-          item.id === existingItem.id ? { ...item, quantity: item.quantity + quantity } : item,
-        ),
-        cartCount: state.cartCount + quantity,
-      }))
-    } else {
-      const newItem: CartItem = {
-        id: `item-${Date.now()}`,
-        productId: parseInt(productId, 10),
-        quantity,
+  fetchCart: async () => {
+    set({ isLoading: true, error: null })
+    try {
+      const cart = await cartAPI.getCart()
+      set({
+        cartId: cart.cartId,
+        items: cart.cartItems,
+        cartCount: cart.cartItems.reduce((acc, item) => acc + item.quantity, 0),
+        isLoading: false,
+      })
+    } catch (error: any) {
+      // If 400 or 404, it might mean no cart exists yet
+      if (error.status === 400 || error.status === 404) {
+        set({ items: [], cartCount: 0, cartId: null, isLoading: false })
+      } else {
+        set({ error: error.message || "Failed to fetch cart", isLoading: false })
       }
-      set((state) => ({
-        items: [...state.items, newItem],
-        cartCount: state.cartCount + quantity,
-      }))
     }
   },
-  removeFromCart: (itemId: string) => {
-    set((state) => {
-      const item = state.items.find((i) => i.id === itemId)
-      return {
-        items: state.items.filter((i) => i.id !== itemId),
-        cartCount: Math.max(0, state.cartCount - (item?.quantity || 0)),
-      }
-    })
+
+  addToCart: async (userProductId, quantity = 1) => {
+    set({ isLoading: true, error: null })
+    try {
+      await cartAPI.addItem(userProductId, quantity)
+      await get().fetchCart()
+    } catch (error: any) {
+      set({ error: error.message || "Failed to add item", isLoading: false })
+    }
   },
-  updateQuantity: (itemId: string, quantity: number) => {
+
+  removeFromCart: async (userProductId) => {
+    set({ isLoading: true, error: null })
+    try {
+      await cartAPI.removeItem(userProductId)
+      await get().fetchCart()
+    } catch (error: any) {
+      set({ error: error.message || "Failed to remove item", isLoading: false })
+    }
+  },
+
+  updateQuantity: async (userProductId, quantity) => {
     if (quantity <= 0) {
-      get().removeFromCart(itemId)
+      await get().removeFromCart(userProductId)
       return
     }
-    set((state) => {
-      const item = state.items.find((i) => i.id === itemId)
-      const oldQuantity = item?.quantity || 0
-      return {
-        items: state.items.map((i) => (i.id === itemId ? { ...i, quantity } : i)),
-        cartCount: state.cartCount - oldQuantity + quantity,
-      }
-    })
+    set({ isLoading: true, error: null })
+    try {
+      await cartAPI.updateItemQuantity(userProductId, quantity)
+      await get().fetchCart()
+    } catch (error: any) {
+      set({ error: error.message || "Failed to update quantity", isLoading: false })
+    }
   },
-  clearCart: () => {
-    set({ cartCount: 0, items: [] })
+
+  clearCart: async () => {
+    const { cartId } = get()
+    if (!cartId) return
+    set({ isLoading: true, error: null })
+    try {
+      await cartAPI.clearCart(cartId)
+      set({ items: [], cartCount: 0, cartId: null, isLoading: false })
+    } catch (error: any) {
+      set({ error: error.message || "Failed to clear cart", isLoading: false })
+    }
   },
 }))
+export type { CartItem }

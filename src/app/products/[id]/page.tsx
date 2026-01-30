@@ -146,10 +146,6 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     const product = productData.product
     const userProducts = productData.userProducts || []
 
-    // just for testing
-    userProducts[0].vendorDistance = "300 miles"
-    userProducts[0].vendorDistanceTime = "2-3 days"
-
     // Parse reviews and questions
     let reviews = null
     if (reviewsResponse?.ok) {

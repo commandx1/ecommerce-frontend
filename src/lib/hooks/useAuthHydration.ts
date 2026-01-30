@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { cookieStorage } from "@/lib/storage/cookie-storage"
 import { useAuthStore } from "@/stores/authStore"
+import { useCartStore } from "@/stores/cartStore"
 
 /**
  * Hook to ensure auth state is properly hydrated from cookies
@@ -15,6 +16,7 @@ export function useAuthHydration() {
   const user = useAuthStore((state) => state.user)
   const accessToken = useAuthStore((state) => state.accessToken)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const fetchCart = useCartStore((state) => state.fetchCart)
 
   useEffect(() => {
     // Only run on client-side
@@ -43,6 +45,13 @@ export function useAuthHydration() {
 
     setIsHydrated(true)
   }, [isAuthenticated, user, accessToken, setUser, setTokens]) // Include dependencies
+
+  // Fetch cart once authenticated
+  useEffect(() => {
+    if (isAuthenticated && accessToken) {
+      fetchCart()
+    }
+  }, [isAuthenticated, accessToken, fetchCart])
 
   return isHydrated
 }

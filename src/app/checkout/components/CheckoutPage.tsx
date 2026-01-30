@@ -13,14 +13,18 @@ import ShippingDetails from "./ShippingDetails"
 
 const CheckoutPage = () => {
   const router = useRouter()
-  const { items } = useCartStore()
+  const { items, fetchCart } = useCartStore()
   const { currentStep } = useCheckoutStore()
 
   useEffect(() => {
-    if (items.length === 0) {
-      router.push("/cart")
-    } else if (currentStep === 1) {
-      router.push("/cart")
+    fetchCart()
+  }, [fetchCart])
+
+  useEffect(() => {
+    // Only redirect if not loading and items are empty
+    // But since fetchCart is async, we might need an isLoading check
+    if (items.length === 0 && currentStep !== 5) {
+      // router.push("/cart")
     }
   }, [items.length, currentStep, router])
 

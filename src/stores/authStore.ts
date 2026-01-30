@@ -85,6 +85,7 @@ export const useAuthStore = create<AuthState>()(
         } catch {
           // Hata olsa bile local state'i temizle
         } finally {
+          // Clear auth state
           set({
             user: null,
             accessToken: null,
@@ -92,6 +93,11 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: false,
             error: null,
           })
+          
+          // Clear cart state
+          const { useCartStore } = await import("./cartStore")
+          useCartStore.getState().clearCart()
+          
           // Router push operation will be handled in components
         }
       },
