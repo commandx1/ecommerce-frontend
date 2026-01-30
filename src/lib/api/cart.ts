@@ -31,24 +31,24 @@ export interface Cart {
 
 class CartAPI {
   async getCart(): Promise<Cart> {
-    const response = await apiClient.get<Cart>("/cart")
+    const response = await apiClient.get<Cart>("/api/cart")
     return response.data
   }
 
   async addItem(userProductId: string, quantity: number): Promise<void> {
-    await apiClient.post("/cart/items", { userProductId, quantity })
+    await apiClient.post("/api/cart/items", { userProductId, quantity })
   }
 
   async updateItemQuantity(userProductId: string, quantity: number): Promise<void> {
-    await apiClient.put("/cart/items", { userProductId, quantity })
+    await apiClient.put("/api/cart/items", { userProductId, quantity })
   }
 
   async removeItem(userProductId: string): Promise<void> {
-    await apiClient.delete("/cart/items", { data: { userProductId } })
+    await apiClient.delete("/api/cart/items", { data: { userProductId } })
   }
 
   async clearCart(cartId: string): Promise<void> {
-    await apiClient.delete("/cart", { data: { cartId } })
+    await apiClient.delete("/api/cart", { data: { cartId } })
   }
 }
 
