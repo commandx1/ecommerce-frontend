@@ -7,10 +7,6 @@ export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl
   const refreshTokenParam = searchParams.get("refreshToken")
 
-  console.log(BACKEND_URL, 'BACKEND_URL')
-  console.log(refreshTokenParam, 'refreshTokenParam')
-  console.log(pathname, 'pathname')
-
   // Handle impersonation via refreshToken query parameter
   if (refreshTokenParam) {
     try {
