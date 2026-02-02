@@ -151,8 +151,12 @@ const VendorSidebar = () => {
 
           <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">Account</div>
           <Link
-            href="/settings"
-            className="flex items-center px-3 py-2 text-gray-700 hover:bg-light-mint-gray rounded-lg"
+            href="/vendor-dashboard/settings"
+            className={`flex items-center px-3 py-2 rounded-lg ${
+              pathname === "/vendor-dashboard/settings"
+                ? "text-steel-blue bg-light-mint-gray font-medium"
+                : "text-gray-700 hover:bg-light-mint-gray"
+            }`}
           >
             <Settings className="w-5 mr-3" />
             Settings

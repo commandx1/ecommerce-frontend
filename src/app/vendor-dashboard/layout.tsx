@@ -5,23 +5,31 @@ import { useEffect, useState } from "react"
 import { cookieStorage } from "@/lib/storage/cookie-storage"
 import { useAuthStore } from "@/stores/authStore"
 import { toast } from "sonner"
+import VendorHeader from "./components/VendorHeader"
+import VendorSidebar from "./components/VendorSidebar"
 
 export default function VendorDashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { user, isAuthenticated, isAdminImpersonating } = useAuthStore()
+  const { user, isAuthenticated } = useAuthStore()
   const [isChecking, setIsChecking] = useState(true)
 
   // Handle impersonation toast
   useEffect(() => {
     if (searchParams.get("impersonated") === "true") {
-      toast.success("Logged in as Vendor (Admin Impersonation)", {
-        description: "You are currently viewing this account as an administrator.",
-        duration: 5000,
-      })
-      // URL'yi temizle
+      // Small delay to ensure Toaster is mounted and ready
+      const timer = setTimeout(() => {
+        toast.success("Logged in as Vendor (Admin Impersonation)", {
+          description: "You are currently viewing this account as an administrator.",
+          duration: 5000,
+        })
+      }, 1000)
+
+      // Clean up the URL without triggering a re-render/redirect
       const newUrl = window.location.pathname
       window.history.replaceState({}, "", newUrl)
+
+      return () => clearTimeout(timer)
     }
   }, [searchParams])
 
@@ -98,5 +106,15 @@ export default function VendorDashboardLayout({ children }: { children: React.Re
     )
   }
 
-  return <>{children}</>
+  return (
+    <div className="flex flex-col min-h-screen bg-light-mint-gray">
+      <VendorHeader />
+      <div className="flex flex-1">
+        <VendorSidebar />
+        <main id="main-content" className="flex-1 p-8">
+          {children}
+        </main>
+      </div>
+    </div>
+  )
 }
