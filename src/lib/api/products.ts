@@ -1,7 +1,7 @@
 // Use Next.js API routes as proxy to avoid CORS issues
 
 const BASE_URL = "" // Use Next.js API routes at /api/...
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL // Backend URL for image paths
+const IMAGE_PROXY_URL = "/api/images" // Proxy path for images
 
 // Helper function to get full image URL
 export function getFullImageUrl(path: string | null | undefined): string {
@@ -13,7 +13,9 @@ export function getFullImageUrl(path: string | null | undefined): string {
   if (trimmedPath.startsWith("http://") || trimmedPath.startsWith("https://")) {
     fullUrl = trimmedPath
   } else {
-    fullUrl = `${BACKEND_URL}${trimmedPath.startsWith("/") ? "" : "/"}${trimmedPath}`
+    // Use the image proxy to avoid Mixed Content (HTTPS -> HTTP) issues
+    const cleanPath = trimmedPath.startsWith("/") ? trimmedPath : `/${trimmedPath}`
+    fullUrl = `${IMAGE_PROXY_URL}${cleanPath}`
   }
 
   return fullUrl

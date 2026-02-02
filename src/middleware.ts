@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 
-const BACKEND_URL = "http://51.20.96.242:8080"
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://51.20.96.242:8080"
 
 export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl

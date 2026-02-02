@@ -1,7 +1,7 @@
 // Direct API calls to backend through Next.js rewrites (proxy)
-// This bypasses CORS issues by routing through same-origin
+// This bypasses CORS issues and Mixed Content (HTTPS -> HTTP) by routing through same-origin
 
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL
+const BASE_URL = "/backend-api"
 
 export interface AddressPayload {
   title: string
