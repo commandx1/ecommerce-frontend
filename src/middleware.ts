@@ -6,7 +6,6 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl
   const refreshTokenParam = searchParams.get("refreshToken")
-  console.warn(refreshTokenParam, 'refresh token param middleware')
 
   // Handle impersonation via refreshToken query parameter
   if (refreshTokenParam) {
