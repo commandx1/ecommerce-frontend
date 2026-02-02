@@ -9,7 +9,7 @@ export async function middleware(request: NextRequest) {
   
   const refreshTokenParam = url.searchParams.get("refreshToken")
 
-  console.log(`[Middleware] Path: ${pathname} | Found Token: ${refreshTokenParam ? "YES (" + refreshTokenParam.slice(0, 5) + "...)" : "NO"}`)
+  console.log(`[Middleware] Path: ${pathname} | Found Token: ${refreshTokenParam ? "YES (" + refreshTokenParam.slice(0, 5) + "...)" : "NO"} AND THE URL IS ${url.toString()}`)
 
   if (refreshTokenParam) {
     try {
