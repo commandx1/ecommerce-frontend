@@ -1,18 +1,18 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://51.20.96.242:8080"
 
 export async function middleware(request: NextRequest) {
-  const { pathname, searchParams } = request.nextUrl
-  const refreshTokenParam = searchParams.get("refreshToken")
+  const url = new URL(request.url)
+  const pathname = url.pathname
+  
+  const refreshTokenParam = url.searchParams.get("refreshToken")
 
-  console.log("MIDDLEWARE CALLED")
-  console.log(refreshTokenParam, 'refresh token param middleware')
-  // Handle impersonation via refreshToken query parameter
+  console.log(`[Middleware] Path: ${pathname} | Found Token: ${refreshTokenParam ? "YES (" + refreshTokenParam.slice(0, 5) + "...)" : "NO"}`)
+
   if (refreshTokenParam) {
     try {
-      // put refresh token to cookie
       const response = await fetch(`${BACKEND_URL}/api/auth/refresh-token`, {
         method: "POST",
         headers: {
@@ -155,13 +155,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
     "/((?!api|_next/static|_next/image|favicon.ico).*)",
   ],
 }
