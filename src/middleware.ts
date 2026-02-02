@@ -21,9 +21,12 @@ export async function middleware(request: NextRequest) {
 
       if (response.ok) {
         const data = await response.json()
+        console.log(data, 'refresh token data middleware')
         const authHeader = response.headers.get("Authorization")
         const accessToken = authHeader?.replace("Bearer ", "") || data.accessToken
         const setCookieHeader = response.headers.get("Set-Cookie")
+
+        console.log(accessToken, 'access token middleware')
 
         let newRefreshToken = data.refreshToken
         if (!newRefreshToken && setCookieHeader) {
