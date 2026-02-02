@@ -1,30 +1,102 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+const BACKEND_URL = "http://51.20.96.242:8080"
+
+export async function middleware(request: NextRequest) {
+  const { pathname, searchParams } = request.nextUrl
+  const refreshTokenParam = searchParams.get("refreshToken")
+
+  // Handle impersonation via refreshToken query parameter
+  if (refreshTokenParam) {
+    try {
+      // put refresh token to cookie
+      const response = await fetch(`${BACKEND_URL}/api/auth/refresh-token`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Cookie": `refreshToken=${refreshTokenParam}; Path=/; SameSite=Lax`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const authHeader = response.headers.get("Authorization")
+        const accessToken = authHeader?.replace("Bearer ", "") || data.accessToken
+        const setCookieHeader = response.headers.get("Set-Cookie")
+
+        let newRefreshToken = data.refreshToken
+        if (!newRefreshToken && setCookieHeader) {
+          const match = setCookieHeader.match(/refreshToken=([^;]+)/)
+          if (match) newRefreshToken = match[1]
+        }
+
+        const authState = {
+          state: {
+            user: {
+              id: data.id,
+              name: data.name,
+              surname: data.surname,
+              email: data.email,
+              phoneNumber: data.phoneNumber,
+              emailConfirmed: data.emailConfirmed,
+              phoneNumberConfirmed: data.phoneNumberConfirmed,
+              twoFactorEnabled: data.twoFactorEnabled,
+              lockoutEnd: data.lockoutEnd,
+              createdDate: data.createdDate,
+              roleName: data.roleName || "Vendor", // Force Vendor role for impersonation
+            },
+            accessToken,
+            refreshToken: newRefreshToken || refreshTokenParam,
+            isAuthenticated: true,
+            isAdminImpersonating: true,
+          },
+        }
+
+        const redirectUrl = new URL("/vendor-dashboard", request.url)
+        redirectUrl.searchParams.set("impersonated", "true")
+        const nextResponse = NextResponse.redirect(redirectUrl)
+
+        // Set auth cookies for client-side hydration
+        // Note: nextResponse.cookies.set automatically handles encoding
+        const authStorageValue = JSON.stringify(authState)
+        nextResponse.cookies.set("auth-storage", authStorageValue, {
+          path: "/",
+          maxAge: 30 * 24 * 60 * 60,
+          sameSite: "lax",
+        })
+
+        if (newRefreshToken || refreshTokenParam) {
+          nextResponse.cookies.set("refreshToken", newRefreshToken || refreshTokenParam, {
+            path: "/",
+            maxAge: 30 * 24 * 60 * 60,
+            sameSite: "lax",
+          })
+        }
+
+        return nextResponse
+      }
+    } catch (error) {
+      console.error("Middleware impersonation error:", error)
+    }
+  }
 
   // Helper function to parse auth cookie
   const parseAuthCookie = (authCookie: { value: string }) => {
     let authData: { state?: { user?: { roleName?: string }; isAuthenticated?: boolean } }
     try {
-      // Try parsing directly (might be already decoded)
       authData = JSON.parse(authCookie.value)
     } catch {
-      // If that fails, try URL decoding first
       const decodedValue = decodeURIComponent(authCookie.value)
       authData = JSON.parse(decodedValue)
     }
     return authData
   }
 
-  // Check if the route is vendor-dashboard
+  // Protected routes logic
   if (pathname.startsWith("/vendor-dashboard")) {
-    // Get auth data from cookie (set by zustand persist with cookie storage)
     const authCookie = request.cookies.get("auth-storage")
-
     if (!authCookie) {
-      // Not authenticated, redirect to login
       const loginUrl = new URL("/login", request.url)
       loginUrl.searchParams.set("redirect", pathname)
       return NextResponse.redirect(loginUrl)
@@ -33,34 +105,25 @@ export function middleware(request: NextRequest) {
     try {
       const authData = parseAuthCookie(authCookie)
       const user = authData?.state?.user
-
-      // Check if user is authenticated
       if (!user || !authData?.state?.isAuthenticated) {
         const loginUrl = new URL("/login", request.url)
         loginUrl.searchParams.set("redirect", pathname)
         return NextResponse.redirect(loginUrl)
       }
 
-      // Check if user is a vendor (roleName === "Vendor")
       if (user.roleName !== "Vendor") {
-        // Not a vendor, redirect to buyer dashboard
         return NextResponse.redirect(new URL("/buyer-dashboard", request.url))
       }
     } catch {
-      // Invalid auth data, redirect to login
       const loginUrl = new URL("/login", request.url)
       loginUrl.searchParams.set("redirect", pathname)
       return NextResponse.redirect(loginUrl)
     }
   }
 
-  // Check if the route is buyer-dashboard
   if (pathname.startsWith("/buyer-dashboard")) {
-    // Get auth data from cookie (set by zustand persist with cookie storage)
     const authCookie = request.cookies.get("auth-storage")
-
     if (!authCookie) {
-      // Not authenticated, redirect to login
       const loginUrl = new URL("/login", request.url)
       loginUrl.searchParams.set("redirect", pathname)
       return NextResponse.redirect(loginUrl)
@@ -69,21 +132,16 @@ export function middleware(request: NextRequest) {
     try {
       const authData = parseAuthCookie(authCookie)
       const user = authData?.state?.user
-
-      // Check if user is authenticated
       if (!user || !authData?.state?.isAuthenticated) {
         const loginUrl = new URL("/login", request.url)
         loginUrl.searchParams.set("redirect", pathname)
         return NextResponse.redirect(loginUrl)
       }
 
-      // Check if user is a vendor (roleName === "Vendor")
       if (user.roleName === "Vendor") {
-        // Is a vendor, redirect to vendor dashboard
         return NextResponse.redirect(new URL("/vendor-dashboard", request.url))
       }
     } catch {
-      // Invalid auth data, redirect to login
       const loginUrl = new URL("/login", request.url)
       loginUrl.searchParams.set("redirect", pathname)
       return NextResponse.redirect(loginUrl)
@@ -94,5 +152,14 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/vendor-dashboard/:path*", "/buyer-dashboard/:path*"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+  ],
 }

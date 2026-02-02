@@ -21,13 +21,15 @@ interface AuthState {
   accessToken: string | null
   refreshToken: string | null
   isAuthenticated: boolean
+  isAdminImpersonating: boolean
   isLoading: boolean
   error: string | null
 
   // Actions
   setUser: (user: User) => void
   setTokens: (accessToken: string, refreshToken: string) => void
-  setAuth: (user: User, accessToken: string, refreshToken: string) => void
+  setAuth: (user: User, accessToken: string, refreshToken: string, isAdminImpersonating?: boolean) => void
+  setIsAdminImpersonating: (isImpersonating: boolean) => void
   clearAuth: () => void
   logout: () => Promise<void>
   setLoading: (loading: boolean) => void
@@ -41,6 +43,7 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
+      isAdminImpersonating: false,
       isLoading: false,
       error: null,
 
@@ -57,14 +60,18 @@ export const useAuthStore = create<AuthState>()(
           refreshToken,
         }),
 
-      setAuth: (user, accessToken, refreshToken) =>
+      setAuth: (user, accessToken, refreshToken, isAdminImpersonating = false) =>
         set({
           user,
           accessToken,
           refreshToken,
           isAuthenticated: true,
+          isAdminImpersonating,
           error: null,
         }),
+
+      setIsAdminImpersonating: (isAdminImpersonating) =>
+        set({ isAdminImpersonating }),
 
       clearAuth: () =>
         set({
@@ -72,6 +79,7 @@ export const useAuthStore = create<AuthState>()(
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
+          isAdminImpersonating: false,
           error: null,
         }),
 
@@ -91,6 +99,7 @@ export const useAuthStore = create<AuthState>()(
             accessToken: null,
             refreshToken: null,
             isAuthenticated: false,
+            isAdminImpersonating: false,
             error: null,
           })
           
@@ -121,6 +130,7 @@ export const useAuthStore = create<AuthState>()(
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
+        isAdminImpersonating: state.isAdminImpersonating,
       }),
       onRehydrateStorage: () => (state) => {
         // After rehydration, ensure isAuthenticated matches user presence
@@ -129,6 +139,7 @@ export const useAuthStore = create<AuthState>()(
             state.isAuthenticated = true
           } else {
             state.isAuthenticated = false
+            state.isAdminImpersonating = false
           }
         }
       },

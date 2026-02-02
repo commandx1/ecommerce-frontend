@@ -669,13 +669,7 @@ function CreateProductPageContent() {
       newErrors.name = "Product name is required"
     }
 
-    if (!formData.detailedName.trim()) {
-      newErrors.detailedName = "Detailed name is required"
-    }
-
-    if (!formData.barcode.trim()) {
-      newErrors.barcode = "Barcode is required"
-    } else if (Number.isNaN(Number(formData.barcode))) {
+    if (formData.barcode && Number.isNaN(Number(formData.barcode))) {
       newErrors.barcode = "Barcode must be a number"
     }
 
@@ -1096,7 +1090,7 @@ function CreateProductPageContent() {
 
                     <div>
                       <label htmlFor="detailedName" className="block text-sm font-medium text-gray-700 mb-2">
-                        Detailed Name *
+                        Detailed Name
                       </label>
                       <input
                         id="detailedName"
@@ -1105,10 +1099,9 @@ function CreateProductPageContent() {
                         value={formData.detailedName}
                         onChange={handleInputChange}
                         disabled={isProductSelected}
-                        className={`w-full px-4 py-3 border ${errors.detailedName ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60`}
+                        className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60`}
                         placeholder="e.g., Premium Dental Composite Kit - 20 Shades with Applicators"
                       />
-                      {errors.detailedName && <p className="text-red-500 text-sm mt-1">{errors.detailedName}</p>}
                     </div>
                   </div>
 
@@ -1168,7 +1161,7 @@ function CreateProductPageContent() {
                     <div>
                       <label htmlFor="barcode" className="block text-sm font-medium text-gray-700 mb-2">
                         <Barcode className="w-4 h-4 inline mr-1" />
-                        Barcode *
+                        Barcode
                       </label>
                       <input
                         id="barcode"
@@ -1176,7 +1169,6 @@ function CreateProductPageContent() {
                         name="barcode"
                         value={formData.barcode}
                         onChange={handleInputChange}
-                        disabled={isProductSelected}
                         className={`w-full px-4 py-3 border ${errors.barcode ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60`}
                         placeholder="e.g., 8901234567890"
                       />

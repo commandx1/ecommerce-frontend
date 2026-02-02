@@ -16,6 +16,7 @@ export function useAuthHydration() {
   const user = useAuthStore((state) => state.user)
   const accessToken = useAuthStore((state) => state.accessToken)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const isAdminImpersonating = useAuthStore((state) => state.isAdminImpersonating)
   const fetchCart = useCartStore((state) => state.fetchCart)
 
   useEffect(() => {
@@ -29,13 +30,23 @@ export function useAuthHydration() {
       try {
         const cookieData = cookieStorage.getItem("auth-storage")
         if (cookieData) {
-          const parsed = JSON.parse(cookieData)
+          let parsed = null
+          try {
+            parsed = JSON.parse(cookieData)
+          } catch {
+            // Fallback for double-encoded cookies
+            const decoded = decodeURIComponent(cookieData)
+            parsed = JSON.parse(decoded)
+          }
           const storedState = parsed?.state
 
           if (storedState?.user && storedState?.accessToken) {
             // Restore user and tokens from cookie
             setUser(storedState.user)
             setTokens(storedState.accessToken, storedState.refreshToken || "")
+            if (storedState.isAdminImpersonating !== undefined) {
+              useAuthStore.getState().setIsAdminImpersonating(storedState.isAdminImpersonating)
+            }
           }
         }
       } catch (error) {
@@ -46,12 +57,12 @@ export function useAuthHydration() {
     setIsHydrated(true)
   }, [isAuthenticated, user, accessToken, setUser, setTokens]) // Include dependencies
 
-  // Fetch cart once authenticated
+  // Fetch cart once authenticated (only for non-impersonating users)
   useEffect(() => {
-    if (isAuthenticated && accessToken) {
+    if (isAuthenticated && accessToken && !isAdminImpersonating) {
       fetchCart()
     }
-  }, [isAuthenticated, accessToken, fetchCart])
+  }, [isAuthenticated, accessToken, isAdminImpersonating, fetchCart])
 
   return isHydrated
 }

@@ -29,8 +29,13 @@ export default async function RootLayout({
 
   if (authCookie) {
     try {
-      const decodedValue = decodeURIComponent(authCookie.value)
-      const parsed = JSON.parse(decodedValue)
+      let parsed = null
+      try {
+        parsed = JSON.parse(authCookie.value)
+      } catch {
+        const decodedValue = decodeURIComponent(authCookie.value)
+        parsed = JSON.parse(decodedValue)
+      }
       initialState = parsed?.state || null
     } catch {
       // Ignore parsing errors

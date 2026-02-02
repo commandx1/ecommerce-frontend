@@ -1,14 +1,35 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { cookieStorage } from "@/lib/storage/cookie-storage"
 import { useAuthStore } from "@/stores/authStore"
+import { toast } from "sonner"
 
 export default function VendorDashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const { user, isAuthenticated } = useAuthStore()
+  const searchParams = useSearchParams()
+  const { user, isAuthenticated, isAdminImpersonating } = useAuthStore()
   const [isChecking, setIsChecking] = useState(true)
+
+  // Handle impersonation toast
+  useEffect(() => {
+    if (searchParams.get("impersonated") === "true") {
+      // Small delay to ensure Toaster is mounted and ready
+      const timer = setTimeout(() => {
+        toast.success("Logged in as Vendor (Admin Impersonation)", {
+          description: "You are currently viewing this account as an administrator.",
+          duration: 5000,
+        })
+      }, 1000)
+
+      // Clean up the URL without triggering a re-render/redirect
+      const newUrl = window.location.pathname
+      window.history.replaceState({}, "", newUrl)
+
+      return () => clearTimeout(timer)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     // Check cookie directly first (before hydration completes)
@@ -16,7 +37,13 @@ export default function VendorDashboardLayout({ children }: { children: React.Re
       try {
         const cookieData = cookieStorage.getItem("auth-storage")
         if (cookieData) {
-          const parsed = JSON.parse(cookieData)
+          let parsed = null
+          try {
+            parsed = JSON.parse(cookieData)
+          } catch {
+            const decoded = decodeURIComponent(cookieData)
+            parsed = JSON.parse(decoded)
+          }
           const storedUser = parsed?.state?.user
           const storedIsAuthenticated = parsed?.state?.isAuthenticated
 
