@@ -1,18 +1,21 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://51.20.96.242:8080"
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+    const refreshTokenValue = body.refreshToken
 
+    // MIDDLEWARE'DA ÇALIŞAN MANTIK: Manuel Cookie Header'ı ekliyoruz
     const response = await fetch(`${BACKEND_URL}/api/auth/refresh-token`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Cookie": `refreshToken=${refreshTokenValue}; Path=/; SameSite=Lax`,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ refreshToken: refreshTokenValue }),
     })
 
     const data = await response.json()
@@ -21,16 +24,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(data, { status: response.status })
     }
 
-    // Extract tokens from response headers
-    const accessToken = response.headers.get("Authorization")
-    const refreshToken = response.headers.get("X-Refresh-Token")
+    const authHeader = response.headers.get("Authorization") || response.headers.get("authorization")
+    const accessToken = authHeader?.replace("Bearer ", "") || data.accessToken
+    const setCookie = response.headers.get("Set-Cookie") || response.headers.get("set-cookie")
+    
+    let refreshToken = data.refreshToken
+    if (!refreshToken && setCookie) {
+      const match = setCookie.match(/refreshToken=([^;]+)/)
+      if (match) refreshToken = match[1]
+    }
 
-    return NextResponse.json({
+    const nextResponse = NextResponse.json({
       ...data,
       accessToken,
-      refreshToken,
+      refreshToken: refreshToken || refreshTokenValue,
     })
-  } catch {
+
+    // Cookie'leri forward et
+    if (setCookie) {
+      nextResponse.headers.set("Set-Cookie", setCookie)
+    }
+
+    return nextResponse
+  } catch (error) {
+    console.error("Refresh token error:", error)
     return NextResponse.json({ message: "Internal server error" }, { status: 500 })
   }
 }

@@ -15,19 +15,13 @@ export default function VendorDashboardLayout({ children }: { children: React.Re
   // Handle impersonation toast
   useEffect(() => {
     if (searchParams.get("impersonated") === "true") {
-      // Small delay to ensure Toaster is mounted and ready
-      const timer = setTimeout(() => {
-        toast.success("Logged in as Vendor (Admin Impersonation)", {
-          description: "You are currently viewing this account as an administrator.",
-          duration: 5000,
-        })
-      }, 1000)
-
-      // Clean up the URL without triggering a re-render/redirect
+      toast.success("Logged in as Vendor (Admin Impersonation)", {
+        description: "You are currently viewing this account as an administrator.",
+        duration: 5000,
+      })
+      // URL'yi temizle
       const newUrl = window.location.pathname
       window.history.replaceState({}, "", newUrl)
-
-      return () => clearTimeout(timer)
     }
   }, [searchParams])
 
