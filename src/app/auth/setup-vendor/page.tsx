@@ -54,10 +54,12 @@ function SetupVendorContent() {
         } else {
           const errorData = await response.json()
           toast.error(errorData.message || "Setup failed")
+          router.push("/login")
         }
       } catch (error) {
         console.error("Setup error:", error)
         toast.error("An error occurred during setup")
+        router.push("/login")
       }
     }
 
