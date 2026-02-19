@@ -26,6 +26,11 @@ const nextConfig: NextConfig = {
         hostname: "nobledentalsupplies.imgix.net",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "shippo-static.s3.amazonaws.com",
+        pathname: "/**",
+      },
     ],
     dangerouslyAllowSVG: true,
     contentDispositionType: "attachment",
