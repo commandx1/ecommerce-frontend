@@ -7,15 +7,16 @@ import {
   Heart,
   HelpCircle,
   Home,
+  MapPin,
   Plus,
   RotateCcw,
   Search,
-  Settings,
   ShoppingBag,
   Star,
   Store,
   TrendingUp,
   Truck,
+  User,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -195,21 +196,40 @@ const DashboardSidebar = () => {
               />
               <span>Payment Methods</span>
             </Link>
-            <Link
-              href="/buyer-dashboard/settings"
-              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/buyer-dashboard/settings")
-                  ? "text-steel-blue bg-light-mint-gray"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <Settings
-                className={`mr-3 w-4 h-4 ${
-                  isActive("/buyer-dashboard/settings") ? "text-steel-blue" : "text-gray-500"
+
+            <div className="mt-4">
+              <h5 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2">Settings</h5>
+              <Link
+                href="/buyer-dashboard/settings"
+                className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                  pathname === "/buyer-dashboard/settings"
+                    ? "text-steel-blue bg-light-mint-gray"
+                    : "text-gray-700 hover:bg-gray-100"
                 }`}
-              />
-              <span>Settings</span>
-            </Link>
+              >
+                <User
+                  className={`mr-3 w-4 h-4 ${
+                    pathname === "/buyer-dashboard/settings" ? "text-steel-blue" : "text-gray-500"
+                  }`}
+                />
+                <span className="text-sm">Account</span>
+              </Link>
+              <Link
+                href="/buyer-dashboard/settings/addresses"
+                className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                  pathname === "/buyer-dashboard/settings/addresses"
+                    ? "text-steel-blue bg-light-mint-gray"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                <MapPin
+                  className={`mr-3 w-4 h-4 ${
+                    pathname === "/buyer-dashboard/settings/addresses" ? "text-steel-blue" : "text-gray-500"
+                  }`}
+                />
+                <span className="text-sm">Addresses</span>
+              </Link>
+            </div>
           </div>
 
           <div className="py-2">
