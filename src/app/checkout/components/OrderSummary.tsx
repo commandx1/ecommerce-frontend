@@ -28,7 +28,7 @@ const OrderSummary = () => {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-40">
+    <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-8">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-bold text-steel-blue">Order Summary</h3>
         <button
