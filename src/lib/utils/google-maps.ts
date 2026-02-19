@@ -77,10 +77,12 @@ function parseAddressComponents(place: GooglePlaceDetails): ParsedAddress {
     const types = component.types
 
     if (types.includes("country")) {
-      country = component.long_name
+      country = component.short_name
     } else if (types.includes("administrative_area_level_1")) {
-      state = component.long_name
-    } else if (types.includes("locality") || types.includes("administrative_area_level_2")) {
+      state = component.short_name
+    } else if (types.includes("locality")) {
+      city = component.long_name
+    } else if (types.includes("administrative_area_level_2") && !city) {
       city = component.long_name
     } else if (
       types.includes("sublocality") ||
