@@ -67,6 +67,9 @@ const OrderSummary = () => {
                   <span className="text-xs text-gray-500">Qty: {quantity}</span>
                   <span className="font-semibold text-steel-blue">{formatCurrency(totalPrice)}</span>
                 </div>
+                <div className="text-[10px] text-gray-400 mt-0.5">
+                  Seller: {(userProduct as any).sellerName || (userProduct as any).vendor || "Standard Seller"}
+                </div>
               </div>
             </div>
           )

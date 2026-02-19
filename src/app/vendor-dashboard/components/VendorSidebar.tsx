@@ -6,6 +6,7 @@ import {
   CreditCard,
   DollarSign,
   HeadphonesIcon,
+  MapPin,
   Megaphone,
   PieChart,
   Plus,
@@ -15,6 +16,7 @@ import {
   Tag,
   Tags,
   TrendingUp,
+  User,
   Users,
   Warehouse,
 } from "lucide-react"
@@ -24,6 +26,9 @@ import { usePathname } from "next/navigation"
 
 const VendorSidebar = () => {
   const pathname = usePathname()
+
+  const isActive = (path: string) => pathname === path
+
   return (
     <aside
       id="sidebar"
@@ -56,124 +61,184 @@ const VendorSidebar = () => {
           <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Overview</div>
           <Link
             href="/vendor-dashboard"
-            className={`flex items-center px-3 py-2 rounded-lg ${
-              pathname === "/vendor-dashboard"
+            className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+              isActive("/vendor-dashboard")
                 ? "text-steel-blue bg-light-mint-gray font-medium"
                 : "text-gray-700 hover:bg-light-mint-gray"
             }`}
           >
-            <TrendingUp className="w-5 mr-3" />
+            <TrendingUp className={`w-5 mr-3 ${isActive("/vendor-dashboard") ? "text-steel-blue" : "text-gray-500"}`} />
             Dashboard
           </Link>
           <Link
             href="/analytics"
-            className="flex items-center px-3 py-2 text-gray-700 hover:bg-light-mint-gray rounded-lg"
+            className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+              isActive("/analytics")
+                ? "text-steel-blue bg-light-mint-gray font-medium"
+                : "text-gray-700 hover:bg-light-mint-gray"
+            }`}
           >
-            <BarChart3 className="w-5 mr-3" />
+            <BarChart3 className={`w-5 mr-3 ${isActive("/analytics") ? "text-steel-blue" : "text-gray-500"}`} />
             Analytics
           </Link>
           <Link
             href="/performance"
-            className="flex items-center px-3 py-2 text-gray-700 hover:bg-light-mint-gray rounded-lg"
+            className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+              isActive("/performance")
+                ? "text-steel-blue bg-light-mint-gray font-medium"
+                : "text-gray-700 hover:bg-light-mint-gray"
+            }`}
           >
-            <PieChart className="w-5 mr-3" />
+            <PieChart className={`w-5 mr-3 ${isActive("/performance") ? "text-steel-blue" : "text-gray-500"}`} />
             Performance
           </Link>
 
           <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">Sales</div>
           <Link
             href="/orders"
-            className="flex items-center px-3 py-2 text-gray-700 hover:bg-light-mint-gray rounded-lg"
+            className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+              isActive("/orders")
+                ? "text-steel-blue bg-light-mint-gray font-medium"
+                : "text-gray-700 hover:bg-light-mint-gray"
+            }`}
           >
-            <ShoppingBag className="w-5 mr-3" />
+            <ShoppingBag className={`w-5 mr-3 ${isActive("/orders") ? "text-steel-blue" : "text-gray-500"}`} />
             Orders
             <span className="ml-auto bg-coral-orange text-white text-xs px-2 py-1 rounded-full">12</span>
           </Link>
           <Link
             href="/revenue"
-            className="flex items-center px-3 py-2 text-gray-700 hover:bg-light-mint-gray rounded-lg"
+            className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+              isActive("/revenue")
+                ? "text-steel-blue bg-light-mint-gray font-medium"
+                : "text-gray-700 hover:bg-light-mint-gray"
+            }`}
           >
-            <DollarSign className="w-5 mr-3" />
+            <DollarSign className={`w-5 mr-3 ${isActive("/revenue") ? "text-steel-blue" : "text-gray-500"}`} />
             Revenue
           </Link>
           <Link
             href="/customers"
-            className="flex items-center px-3 py-2 text-gray-700 hover:bg-light-mint-gray rounded-lg"
+            className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+              isActive("/customers")
+                ? "text-steel-blue bg-light-mint-gray font-medium"
+                : "text-gray-700 hover:bg-light-mint-gray"
+            }`}
           >
-            <Users className="w-5 mr-3" />
+            <Users className={`w-5 mr-3 ${isActive("/customers") ? "text-steel-blue" : "text-gray-500"}`} />
             Customers
           </Link>
 
           <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">Catalog</div>
           <Link
             href="/vendor-dashboard/products"
-            className={`flex items-center px-3 py-2 rounded-lg ${
-              pathname?.startsWith("/vendor-dashboard/products")
+            className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+              isActive("/vendor-dashboard/products")
                 ? "text-steel-blue bg-light-mint-gray font-medium"
                 : "text-gray-700 hover:bg-light-mint-gray"
             }`}
           >
-            <Box className="w-5 mr-3" />
+            <Box className={`w-5 mr-3 ${isActive("/vendor-dashboard/products") ? "text-steel-blue" : "text-gray-500"}`} />
             Products
             <span className="ml-auto text-gray-500 text-sm">1,247</span>
           </Link>
           <Link
             href="/inventory"
-            className="flex items-center px-3 py-2 text-gray-700 hover:bg-light-mint-gray rounded-lg"
+            className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+              isActive("/inventory")
+                ? "text-steel-blue bg-light-mint-gray font-medium"
+                : "text-gray-700 hover:bg-light-mint-gray"
+            }`}
           >
-            <Warehouse className="w-5 mr-3" />
+            <Warehouse className={`w-5 mr-3 ${isActive("/inventory") ? "text-steel-blue" : "text-gray-500"}`} />
             Inventory
           </Link>
           <Link
             href="/categories"
-            className="flex items-center px-3 py-2 text-gray-700 hover:bg-light-mint-gray rounded-lg"
+            className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+              isActive("/categories")
+                ? "text-steel-blue bg-light-mint-gray font-medium"
+                : "text-gray-700 hover:bg-light-mint-gray"
+            }`}
           >
-            <Tags className="w-5 mr-3" />
+            <Tags className={`w-5 mr-3 ${isActive("/categories") ? "text-steel-blue" : "text-gray-500"}`} />
             Categories
           </Link>
 
           <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">Marketing</div>
           <Link
             href="/promotions"
-            className="flex items-center px-3 py-2 text-gray-700 hover:bg-light-mint-gray rounded-lg"
+            className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+              isActive("/promotions")
+                ? "text-steel-blue bg-light-mint-gray font-medium"
+                : "text-gray-700 hover:bg-light-mint-gray"
+            }`}
           >
-            <Megaphone className="w-5 mr-3" />
+            <Megaphone className={`w-5 mr-3 ${isActive("/promotions") ? "text-steel-blue" : "text-gray-500"}`} />
             Promotions
           </Link>
           <Link
             href="/reviews"
-            className="flex items-center px-3 py-2 text-gray-700 hover:bg-light-mint-gray rounded-lg"
+            className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+              isActive("/reviews")
+                ? "text-steel-blue bg-light-mint-gray font-medium"
+                : "text-gray-700 hover:bg-light-mint-gray"
+            }`}
           >
-            <Star className="w-5 mr-3" />
+            <Star className={`w-5 mr-3 ${isActive("/reviews") ? "text-steel-blue" : "text-gray-500"}`} />
             Reviews
             <span className="ml-auto bg-pale-lime text-steel-blue text-xs px-2 py-1 rounded-full">4.8</span>
           </Link>
 
           <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">Account</div>
+          
+          <div className="mt-4">
+            <h5 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2">Settings</h5>
+            <Link
+              href="/vendor-dashboard/settings"
+              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                isActive("/vendor-dashboard/settings")
+                  ? "text-steel-blue bg-light-mint-gray font-medium"
+                  : "text-gray-700 hover:bg-light-mint-gray"
+              }`}
+            >
+              <User className={`w-5 mr-3 ${isActive("/vendor-dashboard/settings") ? "text-steel-blue" : "text-gray-500"}`} />
+              <span className="text-sm">Account</span>
+            </Link>
+            <Link
+              href="/vendor-dashboard/settings/addresses"
+              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                isActive("/vendor-dashboard/settings/addresses")
+                  ? "text-steel-blue bg-light-mint-gray font-medium"
+                  : "text-gray-700 hover:bg-light-mint-gray"
+              }`}
+            >
+              <MapPin className={`w-5 mr-3 ${isActive("/vendor-dashboard/settings/addresses") ? "text-steel-blue" : "text-gray-500"}`} />
+              <span className="text-sm">Addresses</span>
+            </Link>
+          </div>
+
           <Link
-            href="/vendor-dashboard/settings"
-            className={`flex items-center px-3 py-2 rounded-lg ${
-              pathname === "/vendor-dashboard/settings"
+            href="/billing"
+            className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+              isActive("/billing")
                 ? "text-steel-blue bg-light-mint-gray font-medium"
                 : "text-gray-700 hover:bg-light-mint-gray"
             }`}
           >
-            <Settings className="w-5 mr-3" />
-            Settings
-          </Link>
-          <Link
-            href="/billing"
-            className="flex items-center px-3 py-2 text-gray-700 hover:bg-light-mint-gray rounded-lg"
-          >
-            <CreditCard className="w-5 mr-3" />
-            Billing
+            <CreditCard className={`w-5 mr-3 ${isActive("/billing") ? "text-steel-blue" : "text-gray-500"}`} />
+            <span className="text-sm">Billing</span>
           </Link>
           <Link
             href="/support"
-            className="flex items-center px-3 py-2 text-gray-700 hover:bg-light-mint-gray rounded-lg"
+            className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+              isActive("/support")
+                ? "text-steel-blue bg-light-mint-gray font-medium"
+                : "text-gray-700 hover:bg-light-mint-gray"
+            }`}
           >
-            <HeadphonesIcon className="w-5 mr-3" />
-            Support
+            <HeadphonesIcon className={`w-5 mr-3 ${isActive("/support") ? "text-steel-blue" : "text-gray-500"}`} />
+            <span className="text-sm">Support</span>
           </Link>
         </nav>
       </div>

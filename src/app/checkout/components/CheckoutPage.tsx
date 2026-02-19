@@ -24,7 +24,7 @@ const CheckoutPage = () => {
     // Only redirect if not loading and items are empty
     // But since fetchCart is async, we might need an isLoading check
     if (items.length === 0 && currentStep !== 5) {
-      // router.push("/cart")
+      router.push("/cart")
     }
   }, [items.length, currentStep, router])
 

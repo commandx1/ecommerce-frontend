@@ -85,6 +85,8 @@ const RegisterPage = () => {
 
     if (!formData.address.placeId) {
       newErrors.address = "Address is required"
+    } else if (!formData.address.postalCode?.trim()) {
+      newErrors.addressPostalCode = "Zip code is required"
     }
 
     setErrors(newErrors)
@@ -156,9 +158,8 @@ const RegisterPage = () => {
         phoneNumber: prev.phoneNumber,
         country: parsedAddress.country,
         state: parsedAddress.state,
-        city: parsedAddress.city,
-        // District is optional - only set if provided by API, user can edit it manually
-        district: parsedAddress.district || prev.address.district,
+        city: parsedAddress.state, // Sadece eyalet kısaltması
+        district: parsedAddress.city, // Şehir adını buraya taşıdık
         postalCode: parsedAddress.postalCode,
         addressLine: parsedAddress.addressLine,
         defaultAddress: true,
@@ -416,15 +417,34 @@ const RegisterPage = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                         <div>
                           <label htmlFor="addressPostalCode" className="block text-sm font-medium text-gray-700 mb-2">
-                            Zip Code
+                            Zip Code *
                           </label>
                           <input
                             id="addressPostalCode"
                             type="text"
+                            required
                             value={formData.address.postalCode}
-                            disabled
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                            onChange={(e) => {
+                              setFormData((prev) => ({
+                                ...prev,
+                                address: { ...prev.address, postalCode: e.target.value },
+                              }))
+                              if (errors.addressPostalCode) {
+                                setErrors((prev) => {
+                                  const newErrors = { ...prev }
+                                  delete newErrors.addressPostalCode
+                                  return newErrors
+                                })
+                              }
+                            }}
+                            className={`w-full px-4 py-3 border ${
+                              errors.addressPostalCode ? "border-red-500" : "border-gray-300"
+                            } rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent`}
+                            placeholder="Enter zip code"
                           />
+                          {errors.addressPostalCode && (
+                            <p className="text-red-500 text-sm mt-1">{errors.addressPostalCode}</p>
+                          )}
                         </div>
                         <div>
                           <label htmlFor="addressLine" className="block text-sm font-medium text-gray-700 mb-2">

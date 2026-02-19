@@ -1,168 +1,217 @@
 "use client"
 
-import { ArrowRight } from "lucide-react"
-import { useId } from "react"
+import { ArrowRight, Check, MapPin, Plus } from "lucide-react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useCheckoutStore } from "@/stores/checkoutStore"
+import { useCartStore } from "@/stores/cartStore"
+import { useAuthStore } from "@/stores/authStore"
+import { addressAPI, type Address } from "@/lib/api/address"
+import { toast } from "sonner"
+import VendorShipmentRates from "./VendorShipmentRates"
+import { useRouter } from "next/navigation"
 
 const ShippingDetails = () => {
-  const { shippingAddress, updateShippingAddress, nextStep } = useCheckoutStore()
+  const { updateShippingAddress, nextStep } = useCheckoutStore()
+  const { items, cartId } = useCartStore()
+  const { user } = useAuthStore()
+  const router = useRouter()
 
-  const firstNameId = useId()
-  const lastNameId = useId()
-  const companyId = useId()
-  const streetId = useId()
-  const cityId = useId()
-  const stateId = useId()
-  const zipCodeId = useId()
-  const phoneId = useId()
+  const [addresses, setAddresses] = useState<Address[]>([])
+  const [selectedAddressId, setSelectedAddressId] = useState<string>("")
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(true)
+  const [selectedRates, setSelectedRates] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      try {
+        const data = await addressAPI.getAddresses()
+        setAddresses(data)
+        const defaultAddress = data.find((a) => a.defaultAddress) || data[0]
+        if (defaultAddress) {
+          setSelectedAddressId(defaultAddress.id)
+          handleAddressChange(defaultAddress)
+        }
+      } catch (error) {
+        toast.error("Failed to load addresses")
+      } finally {
+        setIsLoadingAddresses(false)
+      }
+    }
+    fetchAddresses()
+  }, [])
+
+  const handleAddressChange = (address: Address) => {
+    setSelectedAddressId(address.id)
+    updateShippingAddress({
+      firstName: address.fullName.split(" ")[0] || "",
+      lastName: address.fullName.split(" ").slice(1).join(" ") || "",
+      street: address.addressLine,
+      city: address.city,
+      state: "CA", // Fallback if state is missing in Address
+      zipCode: address.postalCode,
+      phone: address.phoneNumber,
+      company: address.title,
+    })
+  }
+
+  const handleRateSelect = useCallback((vendorId: string, rate: any) => {
+    // @ts-ignore: rate can be ShipmentRate or UberQuote
+    const rateId = rate.objectId || rate.id
+    setSelectedRates((prev) => {
+      if (prev[vendorId] === rateId) return prev
+      return { ...prev, [vendorId]: rateId }
+    })
+  }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!selectedAddressId) {
+      toast.error("Please select a shipping address")
+      return
+    }
     nextStep()
   }
 
+  // Group items by seller
+  const sellerGroups = useMemo(() => {
+    return items.reduce((groups, item) => {
+      // biome-ignore lint/suspicious/noExplicitAny: backend returns seller info
+      const up = item.userProduct as any
+      // Get seller name and ID from backend fields
+      // sellerId usually maps to userProduct.sellerId or userProduct.userId
+      const sellerName = up.sellerName || up.vendor || item.product.name.split("-").pop()?.trim() || "Standard Seller"
+      const sellerId = up.sellerId || up.userId || sellerName
+
+      if (!groups[sellerId]) {
+        groups[sellerId] = {
+          name: sellerName,
+          items: [],
+        }
+      }
+      groups[sellerId].items.push({
+        userProductId: item.userProduct.userProductId,
+        name: item.product.name,
+      })
+      return groups
+    }, {} as Record<string, { name: string; items: { userProductId: string; name: string }[] }>)
+  }, [items])
+
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center">
-          <div className="w-8 h-8 bg-steel-blue rounded-full flex items-center justify-center mr-4">
-            <span className="text-white text-sm font-semibold">2</span>
+    <div className="space-y-8">
+      {/* Address Selection */}
+      <div className="bg-white rounded-2xl shadow-lg p-8">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center">
+            <div className="w-8 h-8 bg-steel-blue rounded-full flex items-center justify-center mr-4">
+              <span className="text-white text-sm font-semibold">2</span>
+            </div>
+            <h2 className="text-2xl font-bold text-steel-blue">Select Shipping Address</h2>
           </div>
-          <h2 className="text-2xl font-bold text-steel-blue">Shipping Details</h2>
-        </div>
-        <div className="flex items-center space-x-2 text-sm text-gray-600">
-          <span>✓ Secure checkout</span>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label htmlFor={firstNameId} className="block text-sm font-medium text-gray-700 mb-2">
-              First Name *
-            </label>
-            <input
-              id={firstNameId}
-              type="text"
-              required
-              value={shippingAddress.firstName}
-              onChange={(e) => updateShippingAddress({ firstName: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-              placeholder="Enter first name"
-            />
-          </div>
-          <div>
-            <label htmlFor={lastNameId} className="block text-sm font-medium text-gray-700 mb-2">
-              Last Name *
-            </label>
-            <input
-              id={lastNameId}
-              type="text"
-              required
-              value={shippingAddress.lastName}
-              onChange={(e) => updateShippingAddress({ lastName: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-              placeholder="Enter last name"
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label htmlFor={companyId} className="block text-sm font-medium text-gray-700 mb-2">
-              Company/Practice Name
-            </label>
-            <input
-              id={companyId}
-              type="text"
-              value={shippingAddress.company}
-              onChange={(e) => updateShippingAddress({ company: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-              placeholder="Enter company name"
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label htmlFor={streetId} className="block text-sm font-medium text-gray-700 mb-2">
-              Street Address *
-            </label>
-            <input
-              id={streetId}
-              type="text"
-              required
-              value={shippingAddress.street}
-              onChange={(e) => updateShippingAddress({ street: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-              placeholder="Enter street address"
-            />
-          </div>
-          <div>
-            <label htmlFor={cityId} className="block text-sm font-medium text-gray-700 mb-2">
-              City *
-            </label>
-            <input
-              id={cityId}
-              type="text"
-              required
-              value={shippingAddress.city}
-              onChange={(e) => updateShippingAddress({ city: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-              placeholder="Enter city"
-            />
-          </div>
-          <div>
-            <label htmlFor={stateId} className="block text-sm font-medium text-gray-700 mb-2">
-              State *
-            </label>
-            <select
-              id={stateId}
-              required
-              value={shippingAddress.state}
-              onChange={(e) => updateShippingAddress({ state: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-            >
-              <option value="">Select state</option>
-              <option value="CA">California</option>
-              <option value="NY">New York</option>
-              <option value="TX">Texas</option>
-              <option value="FL">Florida</option>
-            </select>
-          </div>
-          <div>
-            <label htmlFor={zipCodeId} className="block text-sm font-medium text-gray-700 mb-2">
-              ZIP Code *
-            </label>
-            <input
-              id={zipCodeId}
-              type="text"
-              required
-              value={shippingAddress.zipCode}
-              onChange={(e) => updateShippingAddress({ zipCode: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-              placeholder="Enter ZIP code"
-            />
-          </div>
-          <div>
-            <label htmlFor={phoneId} className="block text-sm font-medium text-gray-700 mb-2">
-              Phone Number
-            </label>
-            <input
-              id={phoneId}
-              type="tel"
-              value={shippingAddress.phone}
-              onChange={(e) => updateShippingAddress({ phone: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-              placeholder="(555) 123-4567"
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center justify-end pt-6">
           <button
-            type="submit"
-            className="flex items-center px-8 py-3 bg-steel-blue text-white rounded-lg hover:bg-opacity-90 font-semibold transition-colors"
+            type="button"
+            onClick={() => router.push("/buyer-dashboard/settings/addresses")}
+            className="flex items-center text-steel-blue hover:underline text-sm font-medium"
           >
-            Continue to Billing
-            <ArrowRight className="ml-2 w-5 h-5" />
+            <Plus className="w-4 h-4 mr-1" />
+            Add New Address
           </button>
         </div>
-      </form>
+
+        {isLoadingAddresses ? (
+          <div className="space-y-4 animate-pulse">
+            <div className="h-24 bg-gray-100 rounded-xl"></div>
+            <div className="h-24 bg-gray-100 rounded-xl"></div>
+          </div>
+        ) : addresses.length === 0 ? (
+          <div className="text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+            <MapPin className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 mb-6">No addresses found in your account.</p>
+            <button
+              onClick={() => router.push("/buyer-dashboard/settings/addresses")}
+              className="px-6 py-2 bg-steel-blue text-white rounded-lg hover:bg-opacity-90 transition-colors"
+            >
+              Add Your First Address
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {addresses.map((address) => (
+              <label
+                key={address.id}
+                className={`relative p-6 border rounded-2xl cursor-pointer transition-all hover:border-steel-blue/50 ${
+                  selectedAddressId === address.id
+                    ? "border-steel-blue bg-blue-50/50 ring-1 ring-steel-blue"
+                    : "border-gray-200 bg-white"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="shippingAddress"
+                  className="sr-only"
+                  checked={selectedAddressId === address.id}
+                  onChange={() => handleAddressChange(address)}
+                />
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-bold text-gray-900 mb-1">{address.title}</h3>
+                    <p className="text-sm text-gray-600 font-medium">{address.fullName}</p>
+                    <div className="text-sm text-gray-500 mt-2 space-y-1">
+                      <p>{address.formattedAddress || address.addressLine}</p>
+                      <p>{address.phoneNumber}</p>
+                    </div>
+                  </div>
+                  {selectedAddressId === address.id && (
+                    <div className="bg-steel-blue rounded-full p-1">
+                      <Check className="w-4 h-4 text-white" />
+                    </div>
+                  )}
+                </div>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Shipment Options by Seller */}
+      {selectedAddressId && Object.keys(sellerGroups).length > 0 && (
+        <div className="bg-white rounded-2xl shadow-lg p-8">
+          <div className="flex items-center mb-8">
+            <div className="w-8 h-8 bg-steel-blue rounded-full flex items-center justify-center mr-4">
+              <span className="text-white text-sm font-semibold">3</span>
+            </div>
+            <h2 className="text-2xl font-bold text-steel-blue">Shipping Methods</h2>
+          </div>
+
+          <div className="space-y-8">
+            {Object.entries(sellerGroups).map(([sellerId, group]) => (
+              <VendorShipmentRates
+                key={sellerId}
+                sellerId={sellerId}
+                sellerName={group.name}
+                items={group.items}
+                addressId={selectedAddressId}
+                userId={user?.id || ""}
+                cartId={cartId || ""}
+                selectedRateId={selectedRates[sellerId]}
+                onSelect={handleRateSelect}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Submit Button */}
+      <div className="flex items-center justify-end">
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={!selectedAddressId}
+          className="flex items-center px-10 py-4 bg-steel-blue text-white rounded-xl hover:bg-opacity-90 font-bold text-lg shadow-lg shadow-blue-900/20 transition-all disabled:opacity-50"
+        >
+          Continue to Billing
+          <ArrowRight className="ml-2 w-6 h-6" />
+        </button>
+      </div>
     </div>
   )
 }
