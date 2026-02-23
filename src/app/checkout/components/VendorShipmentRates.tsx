@@ -7,7 +7,7 @@ import Image from "next/image"
 interface SellerShipmentRatesProps {
   sellerId: string
   sellerName: string
-  items: { userProductId: string; name: string }[]
+  items: { userProductId: string; name: string; quantity: number }[]
   addressId: string
   userId: string
   cartId: string
@@ -42,9 +42,11 @@ export default function VendorShipmentRates({
       try {
         const response = await shipmentAPI.getRates({
           addressId,
-          userId,
+          userId: sellerId ?? "",
           cartId,
-          parcels: items.map((item) => ({ userProductId: item.userProductId })),
+          parcels: items.flatMap((item) =>
+            Array.from({ length: item.quantity }, () => ({ userProductId: item.userProductId }))
+          ),
         })
         
         if (!isMounted) return

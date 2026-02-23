@@ -91,9 +91,10 @@ const ShippingDetails = () => {
       groups[sellerId].items.push({
         userProductId: item.userProduct.userProductId,
         name: item.product.name,
+        quantity: item.quantity,
       })
       return groups
-    }, {} as Record<string, { name: string; items: { userProductId: string; name: string }[] }>)
+    }, {} as Record<string, { name: string; items: { userProductId: string; name: string; quantity: number }[] }>)
   }, [items])
 
   return (
