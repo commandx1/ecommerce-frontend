@@ -51,7 +51,11 @@ export default function VendorShipmentRates({
         
         if (!isMounted) return
 
-        setRates(response.shippoRates)
+        setRates(
+          response.shippoRates.filter(
+            (rate) => !rate.servicelevel.name.includes("Air") && !rate.servicelevel.name.includes("Ground"),
+          ),
+        )
         setUberQuote(response.uberQuote)
         
         // Auto-select first rate if none selected
