@@ -185,8 +185,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     if (product.size) technicalSpecs.push({ label: "Size", value: product.size })
     if (product.type) technicalSpecs.push({ label: "Type", value: product.type })
     if (product.scent) technicalSpecs.push({ label: "Scent", value: product.scent })
-    technicalSpecs.push({ label: "Barcode", value: String(product.barcode) })
-    technicalSpecs.push({ label: "Barcode Format", value: product.barcodeFormats })
+    technicalSpecs.push({ label: "Barcode", value: String(product.barcode || "-") })
+    technicalSpecs.push({ label: "Barcode Format", value: product.barcodeFormats || "-" })
 
     // Build description
     const description = {
