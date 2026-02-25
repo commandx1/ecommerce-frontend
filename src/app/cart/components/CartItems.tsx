@@ -1,21 +1,40 @@
 "use client"
 
+import { useState } from "react"
 import { Minus, Plus, Trash2 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useCartStore } from "@/stores/cartStore"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import ClearCartConfirmModal from "./ClearCartConfirmModal"
 
 const CartItems = () => {
-  const { items, updateQuantity, removeFromCart } = useCartStore()
+  const { items, cartId, clearCart, updateQuantity, removeFromCart } = useCartStore()
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
 
   const handleQuantityChange = (userProductId: string, currentQuantity: number, delta: number) => {
     updateQuantity(userProductId, currentQuantity + delta)
   }
 
+  const handleConfirmClear = () => {
+    clearCart()
+    setShowClearConfirm(false)
+  }
+
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6">
-      <h2 className="text-xl font-bold text-steel-blue mb-6">Cart Items ({items.length})</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-bold text-steel-blue">Cart Items ({items.length})</h2>
+        <button
+          type="button"
+          onClick={() => setShowClearConfirm(true)}
+          disabled={!cartId || items.length === 0}
+          className="cursor-pointer flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Trash2 className="w-4 h-4" />
+          Clear cart
+        </button>
+      </div>
       <div className="space-y-4">
         {items.map((item) => {
           const { userProduct, product, quantity } = item
@@ -84,6 +103,12 @@ const CartItems = () => {
           )
         })}
       </div>
+
+      <ClearCartConfirmModal
+        open={showClearConfirm}
+        onClose={() => setShowClearConfirm(false)}
+        onConfirm={handleConfirmClear}
+      />
     </div>
   )
 }
