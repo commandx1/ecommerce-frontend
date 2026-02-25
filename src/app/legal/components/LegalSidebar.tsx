@@ -14,7 +14,6 @@ import {
   ShoppingBag,
   User,
 } from "lucide-react"
-import { useEffect, useState } from "react"
 import legalDocumentsData from "@/data/legal-documents.json"
 
 const iconMap: Record<string, LucideIcon> = {
@@ -30,54 +29,12 @@ const iconMap: Record<string, LucideIcon> = {
   "clipboard-list": ClipboardList,
 }
 
-const LegalSidebar = () => {
-  const [activeSection, setActiveSection] = useState<string>("")
+interface LegalSidebarProps {
+  selectedId: string
+  onSelect: (id: string) => void
+}
 
-  useEffect(() => {
-    const observerOptions = {
-      root: null,
-      rootMargin: "-20% 0px -80% 0px",
-      threshold: 0,
-    }
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const id = entry.target.getAttribute("id")
-          if (id) {
-            setActiveSection(id)
-          }
-        }
-      })
-    }, observerOptions)
-
-    const sections = document.querySelectorAll("#document-content section[id]")
-    sections.forEach((section) => {
-      observer.observe(section)
-    })
-
-    return () => {
-      sections.forEach((section) => {
-        observer.unobserve(section)
-      })
-    }
-  }, [])
-
-  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
-    e.preventDefault()
-    const element = document.getElementById(id)
-    if (element) {
-      const offset = 100
-      const elementPosition = element.getBoundingClientRect().top
-      const offsetPosition = elementPosition + window.pageYOffset - offset
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: "smooth",
-      })
-    }
-  }
-
+const LegalSidebar = ({ selectedId, onSelect }: LegalSidebarProps) => {
   return (
     <div id="sidebar-navigation" className="lg:col-span-1">
       <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-12">
@@ -85,19 +42,19 @@ const LegalSidebar = () => {
         <nav className="space-y-2">
           {legalDocumentsData.sidebarNav.map((item) => {
             const IconComponent = iconMap[item.icon]
-            const isActive = activeSection === item.id
+            const isActive = selectedId === item.id
             return (
-              <a
+              <button
                 key={item.id}
-                href={`#${item.id}`}
-                onClick={(e) => handleNavClick(e, item.id)}
-                className={`flex items-center px-4 py-3 rounded-lg transition-colors group ${
+                type="button"
+                onClick={() => onSelect(item.id)}
+                className={`flex w-full items-center px-4 py-3 rounded-lg transition-colors group text-left ${
                   isActive ? "bg-light-mint-gray text-steel-blue font-medium" : "text-gray-700 hover:bg-light-mint-gray"
                 }`}
               >
-                {IconComponent && <IconComponent className="mr-3 text-steel-blue w-5 h-5" />}
+                {IconComponent && <IconComponent className="mr-3 text-steel-blue w-5 h-5 shrink-0" />}
                 <span className={isActive ? "text-steel-blue" : "group-hover:text-steel-blue"}>{item.title}</span>
-              </a>
+              </button>
             )
           })}
         </nav>

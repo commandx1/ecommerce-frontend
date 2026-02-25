@@ -155,7 +155,10 @@ const DocumentSection = ({ document }: DocumentSectionProps) => {
 
   return (
     <section id={document.id} className="bg-white rounded-2xl shadow-lg p-8 mb-8 scroll-mt-24">
-      <div className="flex items-center justify-between mb-6">
+      <div
+        className="flex items-center justify-between"
+        style={{ marginBottom: ["compliance-certifications", "audit-reports"].includes(document.id) ? 0 : "1.5rem" }}
+      >
         <div className="flex items-center">
           <div className="w-12 h-12 bg-steel-blue rounded-lg flex items-center justify-center mr-4">
             {IconComponent && <IconComponent className="text-white w-6 h-6" />}
