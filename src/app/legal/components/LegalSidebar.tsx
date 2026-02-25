@@ -80,7 +80,7 @@ const LegalSidebar = () => {
 
   return (
     <div id="sidebar-navigation" className="lg:col-span-1">
-      <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-36">
+      <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-12">
         <h3 className="text-lg font-semibold text-steel-blue mb-4">Document Categories</h3>
         <nav className="space-y-2">
           {legalDocumentsData.sidebarNav.map((item) => {
