@@ -47,7 +47,12 @@ export const useCartStore = create<CartStore>((set, get) => ({
       await cartAPI.addItem(userProductId, quantity)
       await get().fetchCart()
     } catch (error: any) {
-      set({ error: error.message || "Failed to add item", isLoading: false })
+      const status = error?.response?.status
+      set({ isLoading: false })
+      if (status === 403) {
+        throw error
+      }
+      set({ error: error?.message || "Failed to add item" })
     }
   },
 

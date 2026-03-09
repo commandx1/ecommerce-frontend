@@ -1,8 +1,9 @@
 "use client"
 
 import { Bolt, FileText, Minus, Plus, ShieldCheck, ShoppingCart } from "lucide-react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
+import { toast } from "sonner"
 import { useCartStore } from "@/stores/cartStore"
 import { useSelectedSupplierStore } from "@/stores/selectedSupplierStore"
 import formatCurrency from "@/lib/helpers/formatCurrency"
@@ -43,6 +44,7 @@ interface PurchaseOptionsProps {
 const PurchaseOptions = ({ bulkPricing, warrantyOptions, orderSummary }: PurchaseOptionsProps) => {
   const [quantity, setQuantity] = useState(1)
   const params = useParams()
+  const router = useRouter()
   const productId = params?.id as string
   const addToCart = useCartStore((state) => state.addToCart)
   const selectedSupplier = useSelectedSupplierStore((state) => state.selectedSupplier)
@@ -113,16 +115,25 @@ const PurchaseOptions = ({ bulkPricing, warrantyOptions, orderSummary }: Purchas
     }
   }
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     const userProductId = selectedSupplier?.userProductId
-    if (userProductId) {
-      setIsAddingToCart(true)
-      addToCart(userProductId, quantity)
-      setTimeout(() => {
-        setIsAddingToCart(false)
-      }, 500)
-    } else {
+    if (!userProductId) {
       console.error("No userProductId found for the selected supplier")
+      return
+    }
+    setIsAddingToCart(true)
+    try {
+      await addToCart(userProductId, quantity)
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status
+      if (status === 403) {
+        toast.error("Please log in to add items to cart.")
+        router.push("/login")
+        return
+      }
+      toast.error("Failed to add to cart. Please try again.")
+    } finally {
+      setIsAddingToCart(false)
     }
   }
 

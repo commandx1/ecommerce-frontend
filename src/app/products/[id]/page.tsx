@@ -57,7 +57,14 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
 
     // Add authorization header if token exists
     if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
+      const me = await fetch(`${BACKEND_URL}/api/users/me`, {
+        cache: "no-store",
+        headers,
+      })
+      const meData = await me.json()
+      if (meData.message !== "User not found") {
+        headers.Authorization = `Bearer ${accessToken}`
+      }
     }
 
     // Fetch directly from backend (server-side fetch doesn't have CORS issues)
