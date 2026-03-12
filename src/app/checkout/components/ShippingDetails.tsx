@@ -11,7 +11,7 @@ import VendorShipmentRates from "./VendorShipmentRates"
 import { useRouter } from "next/navigation"
 
 const ShippingDetails = () => {
-  const { updateShippingAddress, nextStep } = useCheckoutStore()
+  const { updateShippingAddress, nextStep, setOrderPayload } = useCheckoutStore()
   const { items, cartId } = useCartStore()
   const { user } = useAuthStore()
   const router = useRouter()
@@ -19,7 +19,12 @@ const ShippingDetails = () => {
   const [addresses, setAddresses] = useState<Address[]>([])
   const [selectedAddressId, setSelectedAddressId] = useState<string>("")
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(true)
-  const [selectedRates, setSelectedRates] = useState<Record<string, string>>({})
+  type SelectedRateInfo = {
+    type: "shippo" | "uber"
+    rateId: string
+  }
+
+  const [selectedRates, setSelectedRates] = useState<Record<string, SelectedRateInfo>>({})
 
   useEffect(() => {
     const fetchAddresses = async () => {
@@ -55,11 +60,13 @@ const ShippingDetails = () => {
   }
 
   const handleRateSelect = useCallback((vendorId: string, rate: any) => {
-    // @ts-ignore: rate can be ShipmentRate or UberQuote
+    const isUber = "fee" in rate && "duration" in rate
     const rateId = rate.objectId || rate.id
+    const type: SelectedRateInfo["type"] = isUber ? "uber" : "shippo"
+
     setSelectedRates((prev) => {
-      if (prev[vendorId] === rateId) return prev
-      return { ...prev, [vendorId]: rateId }
+      if (prev[vendorId]?.rateId === rateId && prev[vendorId]?.type === type) return prev
+      return { ...prev, [vendorId]: { type, rateId } }
     })
   }, [])
 
@@ -69,6 +76,54 @@ const ShippingDetails = () => {
       toast.error("Please select a shipping address")
       return
     }
+
+    const shippoRateOrders: {
+      shippoRateId: string
+      userId: string
+      products: { userProductId: string; quantity: number }[]
+    }[] = []
+
+    const uberRateOrders: {
+      uberRateId: string
+      userId: string
+      products: { userProductId: string; quantity: number }[]
+    }[] = []
+
+    Object.entries(sellerGroups).forEach(([sellerId, group]) => {
+      const selection = selectedRates[sellerId]
+      if (!selection) return
+
+      const products = group.items.map((item) => ({
+        userProductId: item.userProductId,
+        quantity: item.quantity,
+      }))
+
+      if (selection.type === "shippo") {
+        shippoRateOrders.push({
+          shippoRateId: selection.rateId,
+          userId: sellerId,
+          products,
+        })
+      } else {
+        uberRateOrders.push({
+          uberRateId: selection.rateId,
+          userId: sellerId,
+          products,
+        })
+      }
+    })
+
+    if (shippoRateOrders.length === 0 && uberRateOrders.length === 0) {
+      toast.error("Please select at least one shipping method")
+      return
+    }
+
+    setOrderPayload({
+      addressId: selectedAddressId,
+      shippoRateOrders,
+      uberRateOrders,
+    })
+
     nextStep()
   }
 
@@ -193,7 +248,7 @@ const ShippingDetails = () => {
                 addressId={selectedAddressId}
                 userId={user?.id || ""}
                 cartId={cartId || ""}
-                selectedRateId={selectedRates[sellerId]}
+                selectedRateId={selectedRates[sellerId]?.rateId}
                 onSelect={handleRateSelect}
               />
             ))}

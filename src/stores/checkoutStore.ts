@@ -1,4 +1,5 @@
 import { create } from "zustand"
+import type { PlaceOrderPayload, PlaceOrderResponse } from "@/lib/api/orders"
 
 export type CheckoutStep = 1 | 2 | 3 | 4 | 5
 
@@ -39,6 +40,8 @@ interface CheckoutStore {
   shippingAddress: ShippingAddress
   billingAddress: BillingAddress
   paymentMethod: PaymentMethod
+  orderPayload: PlaceOrderPayload | null
+  orderResult: PlaceOrderResponse | null
   poNumber: string
   department: string
   specialInstructions: string
@@ -60,6 +63,8 @@ interface CheckoutStore {
   setTermsAgreed: (agreed: boolean) => void
   setMarketingAgreed: (agreed: boolean) => void
   setHipaaAgreed: (agreed: boolean) => void
+  setOrderPayload: (payload: PlaceOrderPayload) => void
+  setOrderResult: (result: PlaceOrderResponse) => void
   reset: () => void
 }
 
@@ -96,6 +101,8 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
   shippingAddress: initialShippingAddress,
   billingAddress: initialBillingAddress,
   paymentMethod: initialPaymentMethod,
+  orderPayload: null,
+  orderResult: null,
   poNumber: "",
   department: "",
   specialInstructions: "",
@@ -124,6 +131,8 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
   setTermsAgreed: (agreed) => set({ termsAgreed: agreed }),
   setMarketingAgreed: (agreed) => set({ marketingAgreed: agreed }),
   setHipaaAgreed: (agreed) => set({ hipaaAgreed: agreed }),
+  setOrderPayload: (payload) => set({ orderPayload: payload }),
+  setOrderResult: (result) => set({ orderResult: result }),
   reset: () =>
     set({
       currentStep: 1,
@@ -137,5 +146,7 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
       termsAgreed: false,
       marketingAgreed: false,
       hipaaAgreed: false,
+      orderPayload: null,
+      orderResult: null,
     }),
 }))

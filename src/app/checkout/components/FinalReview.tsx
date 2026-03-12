@@ -1,13 +1,34 @@
 "use client"
 
+import { useState } from "react"
 import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react"
+import { toast } from "sonner"
 import { useCheckoutStore } from "@/stores/checkoutStore"
+import { ordersAPI } from "@/lib/api/orders"
 
 const FinalReview = () => {
-  const { shippingAddress, billingAddress, paymentMethod, previousStep, nextStep } = useCheckoutStore()
+  const { shippingAddress, billingAddress, paymentMethod, previousStep, nextStep, orderPayload, setOrderResult } =
+    useCheckoutStore()
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false)
 
-  const handlePlaceOrder = () => {
-    nextStep()
+  const handlePlaceOrder = async () => {
+    if (!orderPayload) {
+      toast.error("Order information is missing. Please go back and review your shipping details.")
+      return
+    }
+
+    try {
+      setIsPlacingOrder(true)
+      const response = await ordersAPI.placeOrder(orderPayload)
+      toast.success(`Order placed successfully. Order ID: ${response.orderId}`)
+      setOrderResult(response)
+      nextStep()
+    } catch (error: any) {
+      const message = error?.response?.data?.message || "Failed to place order. Please try again."
+      toast.error(message)
+    } finally {
+      setIsPlacingOrder(false)
+    }
   }
 
   return (
@@ -100,9 +121,10 @@ const FinalReview = () => {
         <button
           type="button"
           onClick={handlePlaceOrder}
-          className="flex items-center px-8 py-3 bg-steel-blue text-white rounded-lg hover:bg-opacity-90 font-semibold transition-colors"
+          disabled={isPlacingOrder}
+          className="flex items-center px-8 py-3 bg-steel-blue text-white rounded-lg hover:bg-opacity-90 font-semibold transition-colors disabled:opacity-60"
         >
-          Place Order
+          {isPlacingOrder ? "Placing Order..." : "Place Order"}
           <ArrowRight className="ml-2 w-5 h-5" />
         </button>
       </div>
