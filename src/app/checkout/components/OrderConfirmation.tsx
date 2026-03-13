@@ -1,16 +1,46 @@
 "use client"
 
-import { CheckCircle, ExternalLink, Home, Package } from "lucide-react"
+import { useEffect, useState } from "react"
+import { CheckCircle, ExternalLink, Home, Package, Printer } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { connectQzAndGetPrinters, printShippingLabel, type QzPrintOptions } from "@/lib/qz/printLabel"
 
 const OrderConfirmation = () => {
   const router = useRouter()
   const { clearCart } = useCartStore()
   const { reset, orderResult } = useCheckoutStore()
+
+  const [printers, setPrinters] = useState<string[]>([])
+  const [selectedPrinter, setSelectedPrinter] = useState<string>("")
+  const [printOptions, setPrintOptions] = useState<Pick<QzPrintOptions, "copies" | "colorType">>({
+    copies: 1,
+    colorType: "color",
+  })
+  const [isQzReady, setIsQzReady] = useState(false)
+  const [qzError, setQzError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const initQz = async () => {
+      try {
+        const foundPrinters = await connectQzAndGetPrinters()
+        if (foundPrinters.length > 0) {
+          setPrinters(foundPrinters)
+          setSelectedPrinter(foundPrinters[0] || "")
+          setIsQzReady(true)
+        } else {
+          setQzError("No printers found or QZ Tray is not running. Labels will open in your browser.")
+        }
+      } catch {
+        setQzError("Could not connect to QZ Tray. Labels will open in your browser.")
+      }
+    }
+
+    void initQz()
+  }, [])
 
   const handleContinueShopping = () => {
     clearCart()
@@ -19,6 +49,15 @@ const OrderConfirmation = () => {
   }
 
   const createdDate = orderResult ? new Date(orderResult.createdDate) : null
+
+  const handlePrintLabel = (url: string) => {
+    const options: QzPrintOptions = {
+      printer: selectedPrinter || undefined,
+      copies: printOptions.copies,
+      colorType: printOptions.colorType,
+    }
+    void printShippingLabel(url, options)
+  }
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-12 mb-8">
@@ -78,6 +117,112 @@ const OrderConfirmation = () => {
         <div className="mb-10">
           <h3 className="text-xl font-semibold text-steel-blue mb-4">Order Items</h3>
           <div className="space-y-4">
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex flex-col gap-3 text-sm mb-4">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <Printer className="w-4 h-4 text-steel-blue" />
+                  <span className="font-semibold text-gray-800">Print Settings (QZ Tray)</span>
+                </div>
+                {isQzReady ? (
+                  <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-1 rounded-full">
+                    QZ Tray connected - selected printer:{" "}
+                    <span className="font-semibold">
+                      {selectedPrinter || "Default printer"}
+                    </span>
+                  </span>
+                ) : (
+                  <span className="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-1 rounded-full">
+                    QZ Tray not connected - labels will open in your browser
+                  </span>
+                )}
+              </div>
+
+              {isQzReady && (
+                <div className="flex flex-col md:flex-row gap-4 mt-2">
+                  <div className="flex-1">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Printer</label>
+                    <select
+                      value={selectedPrinter}
+                      onChange={(e) => setSelectedPrinter(e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-steel-blue/60"
+                    >
+                      {printers.map((printer) => (
+                        <option key={printer} value={printer}>
+                          {printer}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Number of copies</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={10}
+                      value={printOptions.copies}
+                      onChange={(e) =>
+                        setPrintOptions((prev) => ({
+                          ...prev,
+                          copies: Number(e.target.value) || 1,
+                        }))
+                      }
+                      className="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-steel-blue/60"
+                    />
+                  </div>
+
+                  <div>
+                    <span className="block text-xs font-medium text-gray-600 mb-1">Color mode</span>
+                    <div className="flex items-center gap-3 mt-1">
+                      <label className="inline-flex items-center gap-1 text-xs text-gray-700">
+                        <input
+                          type="radio"
+                          name="colorMode"
+                          value="color"
+                          checked={printOptions.colorType === "color"}
+                          onChange={() =>
+                            setPrintOptions((prev) => ({
+                              ...prev,
+                              colorType: "color",
+                            }))
+                          }
+                          className="h-3 w-3"
+                        />
+                        <span>Color</span>
+                      </label>
+                      <label className="inline-flex items-center gap-1 text-xs text-gray-700">
+                        <input
+                          type="radio"
+                          name="colorMode"
+                          value="grayscale"
+                          checked={printOptions.colorType === "grayscale"}
+                          onChange={() =>
+                            setPrintOptions((prev) => ({
+                              ...prev,
+                              colorType: "grayscale",
+                            }))
+                          }
+                          className="h-3 w-3"
+                        />
+                        <span>Black &amp; White</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <p className="text-[11px] text-gray-500 mt-1">
+                When you click a &quot;Print Label&quot; button, {printOptions.copies} copies will be sent to the
+                selected printer using the settings above. If QZ Tray is not running, the label will open as a PDF in a
+                new browser tab.
+              </p>
+
+              {qzError && (
+                <p className="text-[11px] text-amber-700 mt-1">
+                  {qzError}
+                </p>
+              )}
+            </div>
             {orderResult.orderItems.map((item) => (
               <div
                 key={item.id}
@@ -110,19 +255,28 @@ const OrderConfirmation = () => {
                 <div className="space-y-4 text-sm">
                   {item.shippingLink && item.shippingLink.length > 0 && (
                     <div>
-                      <div className="text-xs font-medium text-gray-600 mb-1">Shipping Links</div>
+                      <div className="text-xs font-medium text-gray-600 mb-1">Shipping Labels</div>
                       <div className="flex flex-wrap gap-2">
                         {item.shippingLink.map((link, index) => (
-                          <a
-                            key={link}
-                            href={link}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center px-3 py-1 rounded-full bg-steel-blue/10 text-steel-blue text-xs font-medium hover:bg-steel-blue/20"
-                          >
-                            Shipping Link {index + 1}
-                            <ExternalLink className="w-4 h-4 ml-3" />
-                          </a>
+                          <div key={link} className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handlePrintLabel(link)}
+                              className="inline-flex items-center px-3 py-1 rounded-full bg-steel-blue/10 text-steel-blue text-xs font-medium hover:bg-steel-blue/20"
+                            >
+                              Print Label {index + 1}
+                              <Printer className="w-4 h-4 ml-2" />
+                            </button>
+                            <a
+                              href={link}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 text-gray-700 text-[11px] font-medium hover:bg-gray-200"
+                            >
+                              Open
+                              <ExternalLink className="w-3 h-3 ml-1" />
+                            </a>
+                          </div>
                         ))}
                       </div>
                     </div>

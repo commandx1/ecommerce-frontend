@@ -4,11 +4,13 @@ import { useState } from "react"
 import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react"
 import { toast } from "sonner"
 import { useCheckoutStore } from "@/stores/checkoutStore"
+import { useCartStore } from "@/stores/cartStore"
 import { ordersAPI } from "@/lib/api/orders"
 
 const FinalReview = () => {
   const { shippingAddress, billingAddress, paymentMethod, previousStep, nextStep, orderPayload, setOrderResult } =
     useCheckoutStore()
+  const { clearCart } = useCartStore()
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
 
   const handlePlaceOrder = async () => {
@@ -22,6 +24,7 @@ const FinalReview = () => {
       const response = await ordersAPI.placeOrder(orderPayload)
       toast.success(`Order placed successfully. Order ID: ${response.orderId}`)
       setOrderResult(response)
+      await clearCart()
       nextStep()
     } catch (error: any) {
       const message = error?.response?.data?.message || "Failed to place order. Please try again."
