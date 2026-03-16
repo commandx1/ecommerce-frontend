@@ -4,7 +4,7 @@ import { NextResponse } from "next/server"
 export async function middleware(request: NextRequest) {
   const url = new URL(request.url)
   const pathname = url.pathname
-  
+
   // Helper function to parse auth cookie (safe parse for URL encoded cookies)
   const parseAuthCookie = (authCookie: { value: string }) => {
     try {
@@ -19,39 +19,40 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Protected routes logic
+  const authCookie = request.cookies.get("auth-storage")
+  let user: { roleName?: string } | null = null
+  let isAuthenticated = false
+
+  if (authCookie) {
+    try {
+      const authData = parseAuthCookie(authCookie)
+      user = authData?.state?.user ?? null
+      isAuthenticated = Boolean(authData?.state?.isAuthenticated)
+    } catch (error) {
+      console.error("[Middleware] Failed to parse auth cookie:", error)
+    }
+  }
+
+  // Vendor users can only access vendor dashboard routes
+  if (user?.roleName === "Vendor" && !pathname.startsWith("/vendor-dashboard")) {
+    return NextResponse.redirect(new URL("/vendor-dashboard", request.url))
+  }
+
+  // Protected dashboard routes logic
   if (pathname.startsWith("/vendor-dashboard") || pathname.startsWith("/buyer-dashboard")) {
-    const authCookie = request.cookies.get("auth-storage")
-    
-    if (!authCookie) {
+    if (!authCookie || !user || !isAuthenticated) {
       const loginUrl = new URL("/login", request.url)
       loginUrl.searchParams.set("redirect", pathname)
       return NextResponse.redirect(loginUrl)
     }
 
-    try {
-      const authData = parseAuthCookie(authCookie)
-      const user = authData?.state?.user
-      const isAuthenticated = authData?.state?.isAuthenticated
+    // Role check between dashboards
+    if (pathname.startsWith("/vendor-dashboard") && user.roleName !== "Vendor") {
+      return NextResponse.redirect(new URL("/buyer-dashboard", request.url))
+    }
 
-      if (!user || !isAuthenticated) {
-        const loginUrl = new URL("/login", request.url)
-        loginUrl.searchParams.set("redirect", pathname)
-        return NextResponse.redirect(loginUrl)
-      }
-
-      // Role check
-      if (pathname.startsWith("/vendor-dashboard") && user.roleName !== "Vendor") {
-        return NextResponse.redirect(new URL("/buyer-dashboard", request.url))
-      }
-      
-      if (pathname.startsWith("/buyer-dashboard") && user.roleName === "Vendor") {
-        return NextResponse.redirect(new URL("/vendor-dashboard", request.url))
-      }
-    } catch (error) {
-      console.error("[Middleware] Auth check error:", error)
-      const loginUrl = new URL("/login", request.url)
-      return NextResponse.redirect(loginUrl)
+    if (pathname.startsWith("/buyer-dashboard") && user.roleName === "Vendor") {
+      return NextResponse.redirect(new URL("/vendor-dashboard", request.url))
     }
   }
 
@@ -67,6 +68,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api|backend-api|_next/static|_next/image|favicon.ico).*)",
   ],
 }
