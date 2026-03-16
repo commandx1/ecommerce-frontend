@@ -23,8 +23,22 @@ export type UpdateAddressPayload = Partial<CreateAddressPayload>
 
 class AddressAPI {
   async getAddresses(): Promise<Address[]> {
-    const response = await apiClient.get<Address[]>("/address")
-    return response.data
+    const response = await apiClient.get<Address[] | Address | { items?: Address[] }>("/address")
+    const data = response.data as Address[] | Address | { items?: Address[] } | null | undefined
+
+    if (Array.isArray(data)) {
+      return data
+    }
+
+    if (data && "items" in data && Array.isArray(data.items)) {
+      return data.items
+    }
+
+    if (!data) {
+      return []
+    }
+
+    return [data as Address]
   }
 
   async getAddress(id: string): Promise<Address> {
