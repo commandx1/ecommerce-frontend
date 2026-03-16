@@ -267,15 +267,6 @@ const OrderConfirmation = () => {
                               Print Label {index + 1}
                               <Printer className="w-4 h-4 ml-2" />
                             </button>
-                            <a
-                              href={link}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 text-gray-700 text-[11px] font-medium hover:bg-gray-200"
-                            >
-                              Open
-                              <ExternalLink className="w-3 h-3 ml-1" />
-                            </a>
                           </div>
                         ))}
                       </div>
