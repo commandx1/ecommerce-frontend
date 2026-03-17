@@ -60,14 +60,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!api|backend-api|_next/static|_next/image|favicon.ico).*)",
-  ],
+  matcher: ["/((?!api|backend-api|_next/static|_next/image|favicon.ico|qz-tray\\.js).*)"],
 }
