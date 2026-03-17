@@ -82,11 +82,11 @@ export default function BuyerDashboardLayout({ children }: { children: React.Rea
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-light-mint-gray">
+    <div className="flex flex-col bg-light-mint-gray">
       <BuyerHeader />
       <div className="flex flex-1">
         <DashboardSidebar />
-        <main id="main-content" className="flex-1 p-6">
+        <main id="main-content" className="flex-1 p-6 overflow-auto">
           {children}
         </main>
       </div>
