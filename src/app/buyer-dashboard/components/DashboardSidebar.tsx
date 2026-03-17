@@ -29,7 +29,8 @@ const DashboardSidebar = () => {
   return (
     <aside
       id="sidebar"
-      className="w-64 bg-white shadow-sm border-r border-gray-200 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto z-40"
+      style={{ flex: "0 0 256px" }}
+      className="bg-white shadow-sm border-r border-gray-200 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto z-40"
     >
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
@@ -103,9 +104,7 @@ const DashboardSidebar = () => {
                 isActive("/orders/pending") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
               }`}
             >
-              <Clock
-                className={`mr-3 w-4 h-4 ${isActive("/orders/pending") ? "text-steel-blue" : "text-gray-500"}`}
-              />
+              <Clock className={`mr-3 w-4 h-4 ${isActive("/orders/pending") ? "text-steel-blue" : "text-gray-500"}`} />
               <span>Pending</span>
               <span className="ml-auto bg-coral-orange text-white text-xs px-2 py-1 rounded-full">3</span>
             </Link>
@@ -115,9 +114,7 @@ const DashboardSidebar = () => {
                 isActive("/orders/transit") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
               }`}
             >
-              <Truck
-                className={`mr-3 w-4 h-4 ${isActive("/orders/transit") ? "text-steel-blue" : "text-gray-500"}`}
-              />
+              <Truck className={`mr-3 w-4 h-4 ${isActive("/orders/transit") ? "text-steel-blue" : "text-gray-500"}`} />
               <span>In Transit</span>
               <span className="ml-auto bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full">7</span>
             </Link>
