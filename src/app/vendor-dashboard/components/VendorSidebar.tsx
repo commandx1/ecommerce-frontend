@@ -95,16 +95,15 @@ const VendorSidebar = () => {
 
           <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">Sales</div>
           <Link
-            href="/orders"
+            href="/vendor-dashboard/orders"
             className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-              isActive("/orders")
+              isActive("/vendor-dashboard/orders")
                 ? "text-steel-blue bg-light-mint-gray font-medium"
                 : "text-gray-700 hover:bg-light-mint-gray"
             }`}
           >
             <ShoppingBag className={`w-5 mr-3 ${isActive("/orders") ? "text-steel-blue" : "text-gray-500"}`} />
             Orders
-            <span className="ml-auto bg-coral-orange text-white text-xs px-2 py-1 rounded-full">12</span>
           </Link>
           <Link
             href="/revenue"
