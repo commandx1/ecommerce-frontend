@@ -5,6 +5,7 @@ import { AlertTriangle, Fingerprint, Lock, Phone, Save, Shield, Trash2, User } f
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
+import { deleteMe, updateMe } from "@/lib/api/account"
 
 interface AccountSettingsSharedProps {
   title: string
@@ -47,24 +48,12 @@ export default function AccountSettingsShared({
   }, [user])
 
   const updateProfile = async (newData: typeof formData) => {
-    try {
-      const response = await fetch("/backend-api/users/me", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify(newData),
-      })
-
-      if (!response.ok) throw new Error("Failed to update profile")
-
-      const updatedUser = await response.json()
-      setUser(updatedUser)
-      return updatedUser
-    } catch (error) {
-      throw error
+    if (!accessToken) {
+      throw new Error("Authentication required. Please log in again.")
     }
+    const updatedUser = await updateMe(accessToken, newData)
+    setUser(updatedUser)
+    return updatedUser
   }
 
   const handleUpdate = async (e: React.FormEvent) => {
@@ -99,20 +88,16 @@ export default function AccountSettingsShared({
   const handleDeleteAccount = async () => {
     setIsDeleting(true)
     try {
-      const response = await fetch("/backend-api/users/me", {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
-
-      if (!response.ok) throw new Error("Failed to delete account")
+      if (!accessToken) {
+        throw new Error("Authentication required. Please log in again.")
+      }
+      await deleteMe(accessToken)
 
       toast.success("Account deleted successfully.")
       clearAuth()
       router.push("/")
     } catch (error) {
-      toast.error("Failed to delete account. Please contact support.")
+      toast.error((error as Error).message || "Failed to delete account. Please contact support.")
     } finally {
       setIsDeleting(false)
     }

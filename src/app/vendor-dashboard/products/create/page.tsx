@@ -32,6 +32,7 @@ import {
   type Product,
   productsAPI,
 } from "@/lib/api/products"
+import { downloadImageAsFileViaProxy } from "@/lib/api/image-proxy"
 import { useAuthStore } from "@/stores/authStore"
 import VendorHeader from "../../components/VendorHeader"
 import VendorSidebar from "../../components/VendorSidebar"
@@ -316,15 +317,7 @@ function CreateProductPageContent() {
   // Download image from URL and convert to File (using proxy to bypass CORS)
   const downloadImageAsFile = async (url: string, filename: string): Promise<File> => {
     try {
-      // Use proxy endpoint to bypass CORS
-      const proxyUrl = `/api/images/proxy?url=${encodeURIComponent(url)}`
-      const response = await fetch(proxyUrl)
-      if (!response.ok) {
-        throw new Error(`Failed to download image: ${response.statusText}`)
-      }
-      const blob = await response.blob()
-      const file = new File([blob], filename, { type: blob.type || "image/jpeg" })
-      return file
+      return await downloadImageAsFileViaProxy(url, filename)
     } catch (error) {
       showToast((error as { message?: string })?.message || "Error downloading image", "error")
       throw error

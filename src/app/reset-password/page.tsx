@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useId, useState } from "react"
 import { toast } from "sonner"
+import { resetPassword } from "@/lib/api/reset-password"
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams()
@@ -43,19 +44,10 @@ export default function ResetPasswordPage() {
     setIsSubmitting(true)
 
     try {
-      const response = await fetch("/api/mail/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token,
-          newPassword: password,
-        }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to reset password.")
+      if (!token) {
+        throw new Error("Invalid or missing reset token.")
       }
+      await resetPassword(token, password)
 
       setIsSuccess(true)
       toast.success("Password updated successfully.")

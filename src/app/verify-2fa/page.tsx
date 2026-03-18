@@ -1,11 +1,12 @@
 "use client"
 
-import { ArrowLeft, Loader2, Lock, Mail, ShieldCheck } from "lucide-react"
+import { ArrowLeft, Loader2, Lock, ShieldCheck } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useAuthStore } from "@/stores/authStore"
+import { verifyTwoFactorLogin } from "@/lib/api/two-factor"
 
 function Verify2FAContent() {
   const router = useRouter()
@@ -34,24 +35,18 @@ function Verify2FAContent() {
     setIsSubmitting(true)
 
     try {
-      const response = await fetch("/api/auth/login/verify-2fa", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          code,
-          device: "windows",
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || "Invalid verification code.")
+      if (!email) {
+        throw new Error("Email is missing. Please log in again.")
       }
 
+      const data = await verifyTwoFactorLogin({
+        email,
+        code,
+        device: "windows",
+      })
+
       // Atomic update for both user and tokens to ensure correct cookie persistence
-      if (data.accessToken || data.refreshToken) {
+      if (data.accessToken && data.refreshToken) {
         setAuth(
           {
             id: data.id,

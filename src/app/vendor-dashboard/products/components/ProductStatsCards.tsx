@@ -3,15 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/stores/authStore"
-import { handleApiError } from "@/lib/utils/api-error-handler"
-
-interface ProductStats {
-  totalProducts: number
-  activeProducts: number
-  inactiveProducts: number
-  outOfStockProducts: number
-  lowStockProducts: number
-}
+import { fetchUserProductStats, type ProductStats } from "@/lib/api/vendor-products"
 
 export type FilterType = "ALL" | "TOTAL" | "ACTIVE" | "INACTIVE" | "OUT_OF_STOCK" | "LOW_STOCK"
 
@@ -41,17 +33,7 @@ const ProductStatsCards = ({ selectedFilter = "TOTAL", onFilterChange }: Product
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch("/api/user-products/stats", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-      })
-
-      // 403 veya 401 kontrolü yap ve otomatik logout
-      await handleApiError(response, router)
-
-      const data: ProductStats = await response.json()
+      const data = await fetchUserProductStats({ accessToken, router })
       setStats(data)
     } catch (err) {
       console.warn("Error fetching product stats:", err)
