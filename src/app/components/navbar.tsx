@@ -100,7 +100,7 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
                 </div>
               </button>
             )}
-            <Link href="/cart" className="flex items-end space-x-2 text-gray-700 hover:text-steel-blue relative">
+            <Link href="/cart" className="flex items-center space-x-2 text-gray-700 hover:text-steel-blue relative">
               <ShoppingCart className="w-4 h-4" />
               <span className="font-semibold">Cart</span>
               {cartCount > 0 && (
