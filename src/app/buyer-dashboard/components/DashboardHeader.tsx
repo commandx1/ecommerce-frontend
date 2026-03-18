@@ -20,16 +20,16 @@ const DashboardHeader = () => {
               <Link href="/buyer-dashboard" className="text-steel-blue font-semibold border-b-2 border-steel-blue pb-1">
                 Dashboard
               </Link>
-              <Link href="/orders" className="text-gray-700 hover:text-steel-blue font-medium">
+              <Link href="/buyer-dashboard/orders" className="text-gray-700 hover:text-steel-blue font-medium">
                 Orders
               </Link>
-              <Link href="/suppliers" className="text-gray-700 hover:text-steel-blue font-medium">
+              <Link href="/buyer-dashboard/suppliers" className="text-gray-700 hover:text-steel-blue font-medium">
                 Suppliers
               </Link>
-              <Link href="/invoices" className="text-gray-700 hover:text-steel-blue font-medium">
+              <Link href="/buyer-dashboard/invoices" className="text-gray-700 hover:text-steel-blue font-medium">
                 Invoices
               </Link>
-              <Link href="/reports" className="text-gray-700 hover:text-steel-blue font-medium">
+              <Link href="/buyer-dashboard/reports" className="text-gray-700 hover:text-steel-blue font-medium">
                 Reports
               </Link>
             </nav>
