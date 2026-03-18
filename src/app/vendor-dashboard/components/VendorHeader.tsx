@@ -7,6 +7,25 @@ import Logo from "@/app/components/Logo"
 import AccountMenu from "@/app/components/AccountMenu"
 import { useAuthStore } from "@/stores/authStore"
 
+type NavLinkProps = {
+  href: string
+  label: string
+  isActive: boolean
+}
+
+const NavLink = ({ href, label, isActive }: NavLinkProps) => (
+  <Link
+    href={href}
+    className={`${
+      isActive
+        ? "text-steel-blue font-semibold border-b-2 border-steel-blue"
+        : "text-gray-700 hover:text-steel-blue font-medium"
+    }`}
+  >
+    {label}
+  </Link>
+)
+
 const VendorHeader = () => {
   const pathname = usePathname()
   const router = useRouter()
@@ -32,35 +51,27 @@ const VendorHeader = () => {
               <span className="ml-3 text-2xl font-bold text-steel-blue">DentyPro</span>
             </Link>
             <nav className="hidden md:flex space-x-8">
-              <Link
-                href="/vendor-dashboard"
-                className={`${
-                  pathname === "/vendor-dashboard"
-                    ? "text-steel-blue font-semibold border-b-2 border-steel-blue"
-                    : "text-gray-700 hover:text-steel-blue font-medium"
-                }`}
-              >
-                Dashboard
-              </Link>
-              <Link
+              <NavLink href="/vendor-dashboard" label="Dashboard" isActive={pathname === "/vendor-dashboard"} />
+              <NavLink
                 href="/vendor-dashboard/products"
-                className={`${
-                  pathname?.startsWith("/vendor-dashboard/products")
-                    ? "text-steel-blue font-semibold border-b-2 border-steel-blue"
-                    : "text-gray-700 hover:text-steel-blue font-medium"
-                }`}
-              >
-                Products
-              </Link>
-              <Link href="/vendor-dashboard/orders" className="text-gray-700 hover:text-steel-blue font-medium">
-                Orders
-              </Link>
-              <Link href="/vendor-dashboard/analytics" className="text-gray-700 hover:text-steel-blue font-medium">
-                Analytics
-              </Link>
-              <Link href="/vendor-dashboard/marketing" className="text-gray-700 hover:text-steel-blue font-medium">
-                Marketing
-              </Link>
+                label="Products"
+                isActive={pathname?.startsWith("/vendor-dashboard/products")}
+              />
+              <NavLink
+                href="/vendor-dashboard/orders"
+                label="Orders"
+                isActive={pathname?.startsWith("/vendor-dashboard/orders")}
+              />
+              <NavLink
+                href="/vendor-dashboard/analytics"
+                label="Analytics"
+                isActive={pathname?.startsWith("/vendor-dashboard/analytics")}
+              />
+              <NavLink
+                href="/vendor-dashboard/marketing"
+                label="Marketing"
+                isActive={pathname?.startsWith("/vendor-dashboard/marketing")}
+              />
             </nav>
           </div>
           <AccountMenu
