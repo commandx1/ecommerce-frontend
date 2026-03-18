@@ -28,11 +28,6 @@ interface BillingAddress {
 
 interface PaymentMethod {
   type: "card" | "net30" | "wire" | "financing"
-  cardNumber?: string
-  expiryMonth?: string
-  expiryYear?: string
-  cvv?: string
-  cardholderName?: string
 }
 
 interface CheckoutStore {
@@ -46,6 +41,8 @@ interface CheckoutStore {
   department: string
   specialInstructions: string
   applyTaxExemption: boolean
+  saveCard: boolean
+  cardName: string
   termsAgreed: boolean
   marketingAgreed: boolean
   hipaaAgreed: boolean
@@ -60,6 +57,8 @@ interface CheckoutStore {
   updateDepartment: (dept: string) => void
   updateSpecialInstructions: (instructions: string) => void
   setApplyTaxExemption: (apply: boolean) => void
+  setSaveCard: (save: boolean) => void
+  setCardName: (name: string) => void
   setTermsAgreed: (agreed: boolean) => void
   setMarketingAgreed: (agreed: boolean) => void
   setHipaaAgreed: (agreed: boolean) => void
@@ -93,7 +92,6 @@ const initialBillingAddress: BillingAddress = {
 
 const initialPaymentMethod: PaymentMethod = {
   type: "card",
-  cardholderName: "Dr. Michael Chen",
 }
 
 export const useCheckoutStore = create<CheckoutStore>((set) => ({
@@ -107,6 +105,8 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
   department: "",
   specialInstructions: "",
   applyTaxExemption: true,
+  saveCard: false,
+  cardName: "",
   termsAgreed: false,
   marketingAgreed: false,
   hipaaAgreed: false,
@@ -128,6 +128,8 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
   updateDepartment: (dept) => set({ department: dept }),
   updateSpecialInstructions: (instructions) => set({ specialInstructions: instructions }),
   setApplyTaxExemption: (apply) => set({ applyTaxExemption: apply }),
+  setSaveCard: (save) => set({ saveCard: save }),
+  setCardName: (name) => set({ cardName: name }),
   setTermsAgreed: (agreed) => set({ termsAgreed: agreed }),
   setMarketingAgreed: (agreed) => set({ marketingAgreed: agreed }),
   setHipaaAgreed: (agreed) => set({ hipaaAgreed: agreed }),
@@ -143,6 +145,8 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
       department: "",
       specialInstructions: "",
       applyTaxExemption: true,
+      saveCard: false,
+      cardName: "",
       termsAgreed: false,
       marketingAgreed: false,
       hipaaAgreed: false,
