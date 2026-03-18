@@ -3,7 +3,6 @@
 import { User } from "lucide-react"
 import { useSelectedSupplierStore } from "@/stores/selectedSupplierStore"
 import AskQuestionButton from "./AskQuestionButton"
-import AnswerQuestionButton from "./AnswerQuestionButton"
 
 interface Answer {
   id: string
@@ -100,14 +99,6 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
   const totalQuestions = questions.length
   const hasMoreQuestions = false // Since we're filtering client-side
 
-  // Get user product IDs for vendor check
-  const userProductIds = userProducts.map((up) => up.id)
-
-  // Check if current user can answer a specific question
-  const canAnswerQuestion = (question: Question) => {
-    return userProductIds.includes(question.userProductId)
-  }
-
   return (
     <section id="questions-answers" className="bg-white py-12">
       <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
@@ -130,7 +121,6 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
         {questions.length > 0 ? (
           <div className="space-y-6">
             {questions.map((qa) => {
-              const isVendor = canAnswerQuestion(qa)
               return (
                 <div key={qa.id} className="bg-light-mint-gray rounded-2xl p-8">
                   <div className="mb-4">
@@ -141,9 +131,6 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
                           Asked by {qa.questionerName} • {formatDate(qa.createdDate)}
                         </div>
                       </div>
-                      {isVendor && qa.answers.length === 0 && (
-                        <AnswerQuestionButton questionId={qa.id} questionText={qa.question} />
-                      )}
                     </div>
                   </div>
                   {qa.answers && qa.answers.length > 0 ? (
