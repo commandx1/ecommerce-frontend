@@ -24,7 +24,7 @@ import BrandFilter from "./BrandFilter"
 import ManufacturerFilter from "./ManufacturerFilter"
 import RatingFilter from "./RatingFilter"
 
-interface APIProduct {
+export interface APIProduct {
   productId: string
   productName: string
   brand: string
@@ -165,6 +165,7 @@ const ProductListingClient = ({
 }: ProductListingClientProps) => {
   const [viewType, setViewType] = useState<"grid" | "list">("grid")
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false)
+  const [imageFallbacks, setImageFallbacks] = useState<Record<string, boolean>>({})
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -179,6 +180,13 @@ const ProductListingClient = ({
     params.set("size", size)
     params.set("page", "1")
     router.push(`/products?${params.toString()}`)
+  }
+
+  const getProductImageSrc = (product: APIProduct) => {
+    if (imageFallbacks[product.productId] || !product.coverPhotoPath) {
+      return "/dentypro-product-placeholder.png"
+    }
+    return getFullImageUrl(product.coverPhotoPath)
   }
 
   return (
@@ -396,18 +404,18 @@ const ProductListingClient = ({
                   className={`bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all group ${viewType === "list" ? "shrink-0 flex" : ""}`}
                 >
                   <div className={`relative bg-light-mint-gray ${viewType === "list" ? "w-64 shrink-0" : "h-64"}`}>
-                    {product.coverPhotoPath ? (
-                      <Image
-                        src={getFullImageUrl(product.coverPhotoPath)}
-                        alt={product.productName}
-                        fill
-                        className="object-contain p-6 group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="text-steel-blue text-center p-6 font-semibold flex items-center justify-center h-full w-full">
-                        No photo available
-                      </div>
-                    )}
+                    <Image
+                      src={getProductImageSrc(product)}
+                      alt={product.productName}
+                      fill
+                      className="object-contain p-6 group-hover:scale-105 transition-transform duration-500"
+                      onError={() =>
+                        setImageFallbacks((prev) => ({
+                          ...prev,
+                          [product.productId]: true,
+                        }))
+                      }
+                    />
                     <button
                       type="button"
                       className="absolute top-4 right-4 w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-white text-gray-400 hover:text-red-500 transition-all"
