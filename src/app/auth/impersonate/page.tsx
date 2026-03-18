@@ -4,6 +4,7 @@ import { useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useAuthStore } from "@/stores/authStore"
 import { toast } from "sonner"
+import { refreshTokenForImpersonation } from "@/lib/api/impersonation"
 
 function ImpersonateContent() {
   const router = useRouter()
@@ -21,42 +22,25 @@ function ImpersonateContent() {
       }
 
       try {
-        // Exchange refresh token for access token using our internal API proxy
-        const response = await fetch("/api/auth/refresh-token", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ refreshToken }),
+        const data = await refreshTokenForImpersonation(refreshToken)
+
+        // Role correction: force Vendor if null
+        const userObj = {
+          ...data,
+          roleName: data.roleName || "Vendor",
+        }
+
+        setAuth(userObj as any, data.accessToken, (data.refreshToken as string | undefined) || refreshToken, true)
+
+        toast.success("Logged in as Vendor (Admin Impersonation)", {
+          description: "You are currently viewing this account as an administrator.",
+          duration: 5000,
         })
 
-        if (response.ok) {
-          const data = await response.json()
-          
-          // Role correction: force Vendor if null
-          const userObj = {
-            ...data,
-            roleName: data.roleName || "Vendor"
-          }
-
-          // Update store
-          setAuth(userObj, data.accessToken, data.refreshToken || refreshToken, true)
-          
-          toast.success("Logged in as Vendor (Admin Impersonation)", {
-            description: "You are currently viewing this account as an administrator.",
-            duration: 5000,
-          })
-
-          // Redirect to dashboard
-          router.push("/vendor-dashboard")
-        } else {
-          const errorData = await response.json()
-          toast.error(errorData.message || "Impersonation failed")
-          router.push("/login")
-        }
+        router.push("/vendor-dashboard")
       } catch (error) {
         console.error("Impersonation error:", error)
-        toast.error("An error occurred during impersonation")
+        toast.error(error instanceof Error ? error.message : "An error occurred during impersonation")
         router.push("/login")
       }
     }
