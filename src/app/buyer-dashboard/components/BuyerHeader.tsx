@@ -1,16 +1,15 @@
 "use client"
 
-import { ChevronDown, LogOut } from "lucide-react"
+import { LogOut } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
 import Logo from "@/app/components/Logo"
+import AccountMenu from "@/app/components/AccountMenu"
 import { useAuthStore } from "@/stores/authStore"
 
 const BuyerHeader = () => {
   const router = useRouter()
   const { user, logout } = useAuthStore()
-  const [showMenu, setShowMenu] = useState(false)
 
   const displayName = user ? `${user.name} ${user.surname}`.trim() || user.email : "Account"
 
@@ -18,7 +17,6 @@ const BuyerHeader = () => {
     await logout()
     router.refresh()
     router.push("/")
-    setShowMenu(false)
   }
 
   return (
@@ -50,42 +48,18 @@ const BuyerHeader = () => {
               </Link>
             </nav>
           </div>
-          <div className="relative flex items-center gap-3" onClick={() => setShowMenu((prev) => !prev)}>
-            <div className="w-8 h-8 rounded-full bg-steel-blue text-white flex items-center justify-center">
-              {displayName.charAt(0).toUpperCase()}
-            </div>
-            <div className="hidden md:block">
-              <div className="text-sm font-semibold text-steel-blue">{displayName}</div>
-              <div className="text-xs text-gray-600">{user?.email}</div>
-            </div>
-            <button type="button" className="text-gray-400 hover:text-steel-blue">
+          <AccountMenu
+            displayName={displayName}
+            email={user?.email}
+            items={[
               {
-                <ChevronDown
-                  className="text-sm w-4 h-4 transition-transform duration-200"
-                  style={{ transform: showMenu ? "rotate(180deg)" : "rotate(0deg)" }}
-                />
-              }
-            </button>
-            {showMenu && (
-              <div
-                onClick={(e) => e.stopPropagation()}
-                className="absolute right-0 top-12 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
-              >
-                <div className="px-4 py-3 border-b border-gray-200">
-                  <p className="text-sm font-medium text-gray-900">{displayName}</p>
-                  {user?.email && <p className="text-sm text-gray-500 truncate">{user.email}</p>}
-                </div>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="w-full flex items-center px-4 py-2 text-red-600 hover:bg-red-50 text-left text-sm font-medium"
-                >
-                  <LogOut className="w-4 h-4 mr-3" />
-                  Sign Out
-                </button>
-              </div>
-            )}
-          </div>
+                label: "Sign Out",
+                onClick: handleLogout,
+                icon: <LogOut className="w-4 h-4" />,
+                variant: "danger",
+              },
+            ]}
+          />
         </div>
       </div>
     </header>

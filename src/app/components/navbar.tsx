@@ -8,6 +8,7 @@ import { useEffect, useState } from "react"
 import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
 import Logo from "./Logo"
+import AccountMenu from "./AccountMenu"
 import MainSearchbox from "./main-searchbox/MainSearchbox"
 
 interface NavbarProps {
@@ -40,8 +41,6 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
   const user = mounted ? storeUser : initialAuthState?.user
   const isAuthenticated = mounted ? storeIsAuthenticated : initialAuthState?.isAuthenticated
 
-  const [showProfileMenu, setShowProfileMenu] = useState(false)
-
   // Helper function to get dashboard URL based on user type
   const getDashboardUrl = () => {
     const isVendor = user?.roleName === "Vendor"
@@ -52,7 +51,6 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
     await logout()
     router.refresh()
     router.push("/")
-    setShowProfileMenu(false)
   }
   return (
     <header id={headerId} className="bg-white shadow-sm">
@@ -67,56 +65,29 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
           </div>
           <div className="flex items-center space-x-6">
             {isAuthenticated && user ? (
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  className="text-left text-gray-700 hover:text-steel-blue"
-                >
-                  <div className="text-sm">Hello, {user.name}</div>
-                  <div className="font-semibold flex items-center gap-2">
-                    Account &amp; Lists <ChevronDown className="w-4 h-4" />
-                  </div>
-                </button>
-
-                {showProfileMenu && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                    <div className="px-4 py-3 border-b border-gray-200">
-                      <p className="text-sm font-medium text-gray-900">
-                        {user.name} {user.surname}
-                      </p>
-                      <p className="text-sm text-gray-500 truncate">{user.email}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowProfileMenu(false)
-                        router.push(getDashboardUrl())
-                      }}
-                      className="w-full flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 text-left"
-                    >
-                      <User className="w-4 h-4 mr-3" />
-                      Dashboard
-                    </button>
-                    <Link
-                      href="/buyer-dashboard/settings"
-                      onClick={() => setShowProfileMenu(false)}
-                      className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100"
-                    >
-                      <Settings className="w-4 h-4 mr-3" />
-                      Settings
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="w-full flex items-center px-4 py-2 text-red-600 hover:bg-red-50"
-                    >
-                      <LogOut className="w-4 h-4 mr-3" />
-                      Sign Out
-                    </button>
-                  </div>
-                )}
-              </div>
+              <AccountMenu
+                className="md:flex hidden"
+                displayName={`${user.name} ${user.surname}`.trim() || user.email}
+                email={user.email}
+                items={[
+                  {
+                    label: "Dashboard",
+                    onClick: () => router.push(getDashboardUrl()),
+                    icon: <User className="w-4 h-4" />,
+                  },
+                  {
+                    label: "Settings",
+                    onClick: () => router.push("/buyer-dashboard/settings"),
+                    icon: <Settings className="w-4 h-4" />,
+                  },
+                  {
+                    label: "Sign Out",
+                    onClick: handleLogout,
+                    icon: <LogOut className="w-4 h-4" />,
+                    variant: "danger",
+                  },
+                ]}
+              />
             ) : (
               <button
                 type="button"
