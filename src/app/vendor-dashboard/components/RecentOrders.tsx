@@ -21,7 +21,7 @@ const RecentOrders = () => {
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-steel-blue">Recent Orders</h2>
-          <Link href="/orders" className="text-steel-blue hover:underline font-medium">
+          <Link href="/vendor-dashboard/orders" className="text-steel-blue hover:underline font-medium">
             View All
           </Link>
         </div>

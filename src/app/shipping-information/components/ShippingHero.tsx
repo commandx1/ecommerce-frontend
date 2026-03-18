@@ -27,7 +27,7 @@ export default function ShippingHero() {
   return (
     <section
       id="hero-section"
-      className="bg-gradient-to-br from-steel-blue to-blue-800 py-16 sm:py-20 lg:py-24"
+      className="bg-linear-to-br from-steel-blue to-blue-800 py-16 sm:py-20 lg:py-24"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">

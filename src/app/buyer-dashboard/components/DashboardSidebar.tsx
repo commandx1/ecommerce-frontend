@@ -247,7 +247,7 @@ const DashboardSidebar = () => {
               }`}
             >
               <HeadphonesIcon
-                className={`mr-3 w-4 h-4 ${isActive("/support") ? "text-steel-blue" : "text-gray-500"}`}
+                className={`mr-3 w-4 h-4 ${isActive("/buyer-dashboard/support") ? "text-steel-blue" : "text-gray-500"}`}
               />
               <span>Contact Support</span>
             </Link>

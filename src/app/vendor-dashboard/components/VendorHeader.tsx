@@ -52,13 +52,13 @@ const VendorHeader = () => {
               >
                 Products
               </Link>
-              <Link href="/orders" className="text-gray-700 hover:text-steel-blue font-medium">
+              <Link href="/vendor-dashboard/orders" className="text-gray-700 hover:text-steel-blue font-medium">
                 Orders
               </Link>
-              <Link href="/analytics" className="text-gray-700 hover:text-steel-blue font-medium">
+              <Link href="/vendor-dashboard/analytics" className="text-gray-700 hover:text-steel-blue font-medium">
                 Analytics
               </Link>
-              <Link href="/marketing" className="text-gray-700 hover:text-steel-blue font-medium">
+              <Link href="/vendor-dashboard/marketing" className="text-gray-700 hover:text-steel-blue font-medium">
                 Marketing
               </Link>
             </nav>
