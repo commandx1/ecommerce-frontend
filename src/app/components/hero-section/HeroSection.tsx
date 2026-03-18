@@ -1,5 +1,3 @@
-"use client"
-
 import { ShieldCheck } from "lucide-react"
 import Image from "next/image"
 
