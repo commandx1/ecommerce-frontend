@@ -169,9 +169,9 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     if (product.coverPhotoPath) {
       photoPaths.unshift(product.coverPhotoPath)
     }
-    const mainImage = product.coverPhotoPath
-      ? getFullImageUrl(product.coverPhotoPath)
-      : photoPaths[0] || "/placeholder-product.jpg"
+    const fallbackImage = "/dentypro-product-placeholder.png"
+    const mainImagePath = product.coverPhotoPath || photoPaths[0]
+    const mainImage = mainImagePath ? getFullImageUrl(mainImagePath) : fallbackImage
 
     // Build features
     const features: string[] = []

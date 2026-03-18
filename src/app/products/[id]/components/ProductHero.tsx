@@ -33,7 +33,9 @@ interface ProductHeroProps {
 
 const ProductHero = ({ product, selectedSupplier }: ProductHeroProps) => {
   const productData = product
-  const [selectedImage, setSelectedImage] = useState(productData.mainImage)
+  const fallbackImage = "/dentypro-product-placeholder.png"
+  const [selectedImage, setSelectedImage] = useState(productData.mainImage || fallbackImage)
+  const [thumbnailFallbacks, setThumbnailFallbacks] = useState<Record<string, boolean>>({})
   const [showMagnifier, setShowMagnifier] = useState(false)
   const [magnifierPosition, setMagnifierPosition] = useState({
     screenX: 0,
@@ -131,10 +133,11 @@ const ProductHero = ({ product, selectedSupplier }: ProductHeroProps) => {
                 <Image
                   ref={imageRef}
                   className="w-full h-full object-contain"
-                  src={selectedImage}
+                  src={selectedImage || fallbackImage}
                   alt={productData.title}
                   width={600}
                   height={600}
+                  onError={() => setSelectedImage(fallbackImage)}
                 />
               </div>
               {productData.badge && (
@@ -198,10 +201,16 @@ const ProductHero = ({ product, selectedSupplier }: ProductHeroProps) => {
                 >
                   <Image
                     className="w-full h-full object-contain p-2"
-                    src={image}
+                    src={thumbnailFallbacks[image] ? fallbackImage : image}
                     alt={`${productData.title} thumbnail ${index + 1}`}
                     width={600}
                     height={600}
+                    onError={() =>
+                      setThumbnailFallbacks((prev) => ({
+                        ...prev,
+                        [image]: true,
+                      }))
+                    }
                   />
                 </button>
               ))}
