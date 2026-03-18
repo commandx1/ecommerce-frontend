@@ -18,6 +18,7 @@ const MainSearchbox = ({ className = "" }: MainSearchboxProps) => {
   const [searchResults, setSearchResults] = useState<SearchProduct[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [imageFallbacks, setImageFallbacks] = useState<Record<string, boolean>>({})
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -108,17 +109,25 @@ const MainSearchbox = ({ className = "" }: MainSearchboxProps) => {
                     onClick={() => setShowDropdown(false)}
                   >
                     <div className="flex items-center space-x-3">
-                      {product.coverPhotoPath && (
-                        <div className="w-12 h-12 shrink-0 bg-gray-100 rounded overflow-hidden">
-                          <Image
-                            src={getFullImageUrl(product.coverPhotoPath)}
-                            alt={product.productName}
-                            width={48}
-                            height={48}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
+                      <div className="w-12 h-12 shrink-0 bg-gray-100 rounded overflow-hidden">
+                        <Image
+                          src={
+                            imageFallbacks[product.productId] || !product.coverPhotoPath
+                              ? "/dentypro-product-placeholder.png"
+                              : getFullImageUrl(product.coverPhotoPath)
+                          }
+                          alt={product.productName}
+                          width={48}
+                          height={48}
+                          className="w-full h-full object-cover"
+                          onError={() =>
+                            setImageFallbacks((prev) => ({
+                              ...prev,
+                              [product.productId]: true,
+                            }))
+                          }
+                        />
+                      </div>
                       <div className="flex-1">
                         <div className="font-semibold text-steel-blue">{product.productName}</div>
                         <div className="flex items-center gap-1 text-sm text-gray-600">
