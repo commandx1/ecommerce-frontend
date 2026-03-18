@@ -1,9 +1,26 @@
-import { Bell, ChevronDown, Search, ShoppingCart } from "lucide-react"
-import Image from "next/image"
+"use client"
+
+import { ChevronDown, LogOut } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 import Logo from "@/app/components/Logo"
+import { useAuthStore } from "@/stores/authStore"
 
 const BuyerHeader = () => {
+  const router = useRouter()
+  const { user, logout } = useAuthStore()
+  const [showMenu, setShowMenu] = useState(false)
+
+  const displayName = user ? `${user.name} ${user.surname}`.trim() || user.email : "Account"
+
+  const handleLogout = async () => {
+    await logout()
+    router.refresh()
+    router.push("/")
+    setShowMenu(false)
+  }
+
   return (
     <header id="header" className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-full px-6">
@@ -19,57 +36,55 @@ const BuyerHeader = () => {
               <Link href="/buyer-dashboard" className="text-steel-blue font-semibold border-b-2 border-steel-blue pb-1">
                 Dashboard
               </Link>
-              <Link href="/orders" className="text-gray-700 hover:text-steel-blue font-medium">
+              <Link href="/buyer-dashboard/orders" className="text-gray-700 hover:text-steel-blue font-medium">
                 Orders
               </Link>
-              <Link href="/suppliers" className="text-gray-700 hover:text-steel-blue font-medium">
+              <Link href="/buyer-dashboard/suppliers" className="text-gray-700 hover:text-steel-blue font-medium">
                 Suppliers
               </Link>
-              <Link href="/invoices" className="text-gray-700 hover:text-steel-blue font-medium">
+              <Link href="/buyer-dashboard/invoices" className="text-gray-700 hover:text-steel-blue font-medium">
                 Invoices
               </Link>
-              <Link href="/reports" className="text-gray-700 hover:text-steel-blue font-medium">
+              <Link href="/buyer-dashboard/reports" className="text-gray-700 hover:text-steel-blue font-medium">
                 Reports
               </Link>
             </nav>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="relative hidden lg:block">
-              <input
-                type="text"
-                placeholder="Search orders, suppliers..."
-                className="w-80 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-              />
-              <Search className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
+          <div className="relative flex items-center gap-3" onClick={() => setShowMenu((prev) => !prev)}>
+            <div className="w-8 h-8 rounded-full bg-steel-blue text-white flex items-center justify-center">
+              {displayName.charAt(0).toUpperCase()}
             </div>
-            <button type="button" className="p-2 text-gray-600 hover:text-steel-blue relative">
-              <Bell className="text-xl w-5 h-5" />
-              <span className="absolute -top-1 -right-1 bg-coral-orange text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                5
-              </span>
+            <div className="hidden md:block">
+              <div className="text-sm font-semibold text-steel-blue">{displayName}</div>
+              <div className="text-xs text-gray-600">{user?.email}</div>
+            </div>
+            <button type="button" className="text-gray-400 hover:text-steel-blue">
+              {
+                <ChevronDown
+                  className="text-sm w-4 h-4 transition-transform duration-200"
+                  style={{ transform: showMenu ? "rotate(180deg)" : "rotate(0deg)" }}
+                />
+              }
             </button>
-            <button type="button" className="p-2 text-gray-600 hover:text-steel-blue relative">
-              <ShoppingCart className="text-xl w-5 h-5" />
-              <span className="absolute -top-1 -right-1 bg-coral-orange text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                3
-              </span>
-            </button>
-            <div className="flex items-center space-x-3">
-              <Image
-                src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg"
-                alt="Profile"
-                width={32}
-                height={32}
-                className="w-8 h-8 rounded-full"
-              />
-              <div className="hidden md:block">
-                <div className="text-sm font-semibold text-steel-blue">Dr. Sarah Johnson</div>
-                <div className="text-xs text-gray-600">Smile Dental Clinic</div>
+            {showMenu && (
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="absolute right-0 top-12 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
+              >
+                <div className="px-4 py-3 border-b border-gray-200">
+                  <p className="text-sm font-medium text-gray-900">{displayName}</p>
+                  {user?.email && <p className="text-sm text-gray-500 truncate">{user.email}</p>}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full flex items-center px-4 py-2 text-red-600 hover:bg-red-50 text-left text-sm font-medium"
+                >
+                  <LogOut className="w-4 h-4 mr-3" />
+                  Sign Out
+                </button>
               </div>
-              <button type="button" className="text-gray-400 hover:text-steel-blue">
-                <ChevronDown className="text-sm w-4 h-4" />
-              </button>
-            </div>
+            )}
           </div>
         </div>
       </div>
