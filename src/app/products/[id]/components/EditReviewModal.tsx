@@ -4,6 +4,7 @@ import { useAuthStore } from "@/stores/authStore"
 import { Star, X } from "lucide-react"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
+import { updateReview } from "@/lib/api/product-reviews"
 
 interface Review {
   id: string
@@ -62,28 +63,13 @@ export default function EditReviewModal({ review, isOpen, onClose, onSuccess }: 
     setIsSubmitting(true)
 
     try {
-      const response = await fetch(`/api/reviews/${review.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          star: rating,
-          title: title.trim(),
-          comment: comment.trim(),
-        }),
+      await updateReview({
+        accessToken,
+        reviewId: review.id,
+        star: rating,
+        title: title.trim(),
+        comment: comment.trim(),
       })
-
-      if (!response.ok) {
-        let errorData = await response.json()
-
-        if (errorData.error?.startsWith("{")) {
-          errorData = JSON.parse(errorData.error)
-        }
-
-        throw new Error(errorData.message || "Failed to update review")
-      }
 
       toast.success("Your review has been updated successfully!")
       onClose()

@@ -4,6 +4,7 @@ import { useAuthStore } from "@/stores/authStore"
 import { X } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
+import { submitProductQuestion } from "@/lib/api/product-qa"
 
 interface UserProduct {
   id: string
@@ -57,22 +58,12 @@ export default function AskQuestionModal({
     setIsSubmitting(true)
 
     try {
-      const response = await fetch("/api/product-questions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          productId,
-          userProductId: preSelectedUserProductId,
-          question: question.trim(),
-        }),
+      await submitProductQuestion({
+        accessToken,
+        productId,
+        userProductId: preSelectedUserProductId,
+        question: question.trim(),
       })
-
-      if (!response.ok) {
-        throw new Error("Failed to submit question")
-      }
 
       toast.success("Your question has been submitted successfully!")
       setQuestion("")

@@ -4,6 +4,7 @@ import { useAuthStore } from "@/stores/authStore"
 import { Star, X } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
+import { createReview } from "@/lib/api/product-reviews"
 
 interface WriteReviewModalProps {
   productId: string
@@ -48,29 +49,13 @@ export default function WriteReviewModal({ productId, isOpen, onClose, onSuccess
     setIsSubmitting(true)
 
     try {
-      const response = await fetch("/api/reviews", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          productId,
-          star: rating,
-          title: title.trim(),
-          comment: comment.trim(),
-        }),
+      await createReview({
+        accessToken,
+        productId,
+        star: rating,
+        title: title.trim(),
+        comment: comment.trim(),
       })
-
-      if (!response.ok) {
-        let errorData = await response.json()
-
-        if (errorData.error?.startsWith("{")) {
-          errorData = JSON.parse(errorData.error)
-        }
-
-        throw new Error(errorData.message || "Failed to submit review")
-      }
 
       toast.success("Your review has been submitted successfully!")
       setRating(0)

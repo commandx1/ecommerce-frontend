@@ -4,6 +4,7 @@ import { useAuthStore } from "@/stores/authStore"
 import { X } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
+import { submitProductAnswer } from "@/lib/api/product-qa"
 
 interface AnswerQuestionModalProps {
   questionId: string
@@ -37,27 +38,11 @@ export default function AnswerQuestionModal({
     setIsSubmitting(true)
 
     try {
-      const response = await fetch("/api/product-answers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          productQuestionId: questionId,
-          answer: answer.trim(),
-        }),
+      await submitProductAnswer({
+        accessToken,
+        productQuestionId: questionId,
+        answer: answer.trim(),
       })
-
-      if (!response.ok) {
-        let errorData = await response.json()
-
-        if (errorData.error.startsWith('{"')) {
-          errorData = JSON.parse(errorData.error)
-        }
-
-        throw new Error(errorData.message || "Failed to submit answer")
-      }
 
       toast.success("Your answer has been submitted successfully!")
       setAnswer("")
