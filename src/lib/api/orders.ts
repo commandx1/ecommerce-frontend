@@ -21,6 +21,8 @@ export interface PlaceOrderPayload {
   addressId: string
   shippoRateOrders: ShippoRateOrder[]
   uberRateOrders: UberRateOrder[]
+  cardSave?: number
+  cardName?: string
 }
 
 export interface OrderItem {
@@ -39,7 +41,24 @@ export interface PlaceOrderResponse {
   totalPrice: number
   status: string
   createdDate: string
+  clientSecret?: string
   orderItems: OrderItem[]
+}
+
+export interface SavedCard {
+  id: string
+  name: string
+  stripeCardId: string
+  brand: string
+  last4: string
+  expMonth: number
+  expYear: number
+  createdDate: string
+}
+
+export interface SavedCardsResponse {
+  cards: SavedCard[]
+  total: number
 }
 
 class OrdersAPI {
@@ -47,7 +66,11 @@ class OrdersAPI {
     const response = await apiClient.post<PlaceOrderResponse>("/orders", payload)
     return response.data
   }
+
+  async getSavedCards(): Promise<SavedCardsResponse> {
+    const response = await apiClient.get<SavedCardsResponse>("/orders/saved-cards")
+    return response.data
+  }
 }
 
 export const ordersAPI = new OrdersAPI()
-
