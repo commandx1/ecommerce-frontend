@@ -315,7 +315,7 @@ export default function BuyerOrdersPage() {
       </section>
       {trackingModalLinks && trackingModalLinks.length > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full mx-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full mx-4">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-steel-blue">Tracking links ({trackingModalLinks.length})</h2>
               <button
@@ -334,7 +334,7 @@ export default function BuyerOrdersPage() {
                 >
                   <div className="flex-1 break-all text-gray-600">
                     <span className="font-semibold text-gray-800 mr-2">Link {index + 1}</span>
-                    {link}
+                    {link.length > 50 ? link.substring(0, 50) + "..." : link}
                   </div>
                   <Link
                     href={link}
