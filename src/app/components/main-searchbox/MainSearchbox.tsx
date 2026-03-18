@@ -6,52 +6,8 @@ import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { getFullImageUrl } from "@/lib/api/products"
+import { searchPublicProducts, type SearchProduct } from "@/lib/api/product-search"
 import CategorySelect from "./CategorySelect"
-
-interface SearchProduct {
-  productId: string
-  productName: string
-  barcode: string
-  coverPhotoPath: string | null
-  secureCode: string
-  manufacturerCode: string
-  reorderId: string | null
-  referanceNumber: string | null
-  userId: string
-  price: number
-  oldPrice: number
-  discount: number
-  stock: number
-}
-
-interface SearchResponse {
-  content: SearchProduct[]
-  pageable: {
-    pageNumber: number
-    pageSize: number
-    sort: {
-      empty: boolean
-      unsorted: boolean
-      sorted: boolean
-    }
-    offset: number
-    unpaged: boolean
-    paged: boolean
-  }
-  last: boolean
-  totalPages: number
-  totalElements: number
-  size: number
-  number: number
-  sort: {
-    empty: boolean
-    unsorted: boolean
-    sorted: boolean
-  }
-  numberOfElements: number
-  first: boolean
-  empty: boolean
-}
 
 interface MainSearchboxProps {
   className?: string
@@ -93,15 +49,9 @@ const MainSearchbox = ({ className = "" }: MainSearchboxProps) => {
 
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/products/public-search?Search=${encodeURIComponent(query)}&page=0&size=20`)
-      if (response.ok) {
-        const data: SearchResponse = await response.json()
-        setSearchResults(data.content || [])
-        setShowDropdown(true)
-      } else {
-        setSearchResults([])
-        setShowDropdown(false)
-      }
+      const results = await searchPublicProducts(query, 0, 20)
+      setSearchResults(results)
+      setShowDropdown(results.length > 0)
     } catch {
       setSearchResults([])
       setShowDropdown(false)
