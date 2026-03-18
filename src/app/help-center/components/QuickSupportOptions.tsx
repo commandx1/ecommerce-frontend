@@ -36,12 +36,8 @@ export default function QuickSupportOptions() {
     <section id="quick-support" className="py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-steel-blue mb-4">
-            Get Help Fast
-          </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Choose the support option that works best for you
-          </p>
+          <h2 className="text-4xl font-bold text-steel-blue mb-4">Get Help Fast</h2>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">Choose the support option that works best for you</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {options.map((item) => {
@@ -54,17 +50,11 @@ export default function QuickSupportOptions() {
                 <div className="w-16 h-16 bg-steel-blue rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-opacity-90 transition-colors">
                   <Icon className="text-white w-8 h-8" />
                 </div>
-                <h3 className="text-xl font-semibold text-steel-blue mb-3">
-                  {item.title}
-                </h3>
+                <h3 className="text-xl font-semibold text-steel-blue mb-3">{item.title}</h3>
                 <p className="text-gray-600 mb-4">{item.description}</p>
                 <div
                   className={`text-sm font-medium ${
-                    item.badgeGreen
-                      ? "text-green-600"
-                      : item.badgeGray
-                        ? "text-gray-500"
-                        : "text-steel-blue"
+                    item.badgeGreen ? "text-green-600" : item.badgeGray ? "text-gray-500" : "text-steel-blue"
                   }`}
                 >
                   {item.badge}

@@ -54,4 +54,3 @@ export async function updateReview(params: {
     throw new Error(message)
   }
 }
-

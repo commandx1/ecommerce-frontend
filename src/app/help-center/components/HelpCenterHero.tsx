@@ -2,17 +2,13 @@ import { Search } from "lucide-react"
 
 export default function HelpCenterHero() {
   return (
-    <section
-      id="support-hero"
-      className="bg-linear-to-br from-steel-blue to-blue-800 h-[400px] flex items-center"
-    >
+    <section id="support-hero" className="bg-linear-to-br from-steel-blue to-blue-800 h-[400px] flex items-center">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="text-center text-white">
           <h1 className="text-5xl font-bold mb-6">Support & Help Center</h1>
           <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
-            Get the help you need, when you need it. Our comprehensive support
-            center provides answers, assistance, and expert guidance for all
-            your dental supply needs.
+            Get the help you need, when you need it. Our comprehensive support center provides answers, assistance, and
+            expert guidance for all your dental supply needs.
           </p>
           <div className="bg-white rounded-xl p-6 shadow-2xl max-w-2xl mx-auto">
             <div className="flex items-center space-x-4">
@@ -33,31 +29,19 @@ export default function HelpCenterHero() {
             </div>
             <div className="flex flex-wrap gap-2 mt-4">
               <span className="text-sm text-gray-600">Popular topics:</span>
-              <button
-                type="button"
-                className="text-sm text-steel-blue hover:underline"
-              >
+              <button type="button" className="text-sm text-steel-blue hover:underline">
                 Order Status
               </button>
               <span className="text-gray-300">•</span>
-              <button
-                type="button"
-                className="text-sm text-steel-blue hover:underline"
-              >
+              <button type="button" className="text-sm text-steel-blue hover:underline">
                 Returns
               </button>
               <span className="text-gray-300">•</span>
-              <button
-                type="button"
-                className="text-sm text-steel-blue hover:underline"
-              >
+              <button type="button" className="text-sm text-steel-blue hover:underline">
                 Account Setup
               </button>
               <span className="text-gray-300">•</span>
-              <button
-                type="button"
-                className="text-sm text-steel-blue hover:underline"
-              >
+              <button type="button" className="text-sm text-steel-blue hover:underline">
                 Billing
               </button>
             </div>

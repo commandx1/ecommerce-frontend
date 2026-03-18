@@ -70,8 +70,7 @@ export const useAuthStore = create<AuthState>()(
           error: null,
         }),
 
-      setIsAdminImpersonating: (isAdminImpersonating) =>
-        set({ isAdminImpersonating }),
+      setIsAdminImpersonating: (isAdminImpersonating) => set({ isAdminImpersonating }),
 
       clearAuth: () =>
         set({
@@ -102,11 +101,11 @@ export const useAuthStore = create<AuthState>()(
             isAdminImpersonating: false,
             error: null,
           })
-          
+
           // Clear cart state
           const { useCartStore } = await import("./cartStore")
           useCartStore.getState().clearCart()
-          
+
           // Router push operation will be handled in components
         }
       },

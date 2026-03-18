@@ -6,4 +6,3 @@ export async function refreshTokenForVendorSetup(refreshToken: string): Promise<
   // Same endpoint/shape; separated name for clarity in call sites
   return refreshTokenForImpersonation(refreshToken)
 }
-

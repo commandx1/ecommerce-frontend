@@ -25,4 +25,3 @@ export async function fetchUserProductStats(params: {
   await handleApiError(response, params.router)
   return response.json()
 }
-

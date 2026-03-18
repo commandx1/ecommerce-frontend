@@ -34,4 +34,3 @@ export async function refreshTokenForImpersonation(refreshToken: string): Promis
 
   return data as ImpersonationRefreshResponse
 }
-

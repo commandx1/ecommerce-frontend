@@ -30,4 +30,3 @@ export async function readApiErrorMessage(response: Response, fallback: string):
 
   return fallback
 }
-

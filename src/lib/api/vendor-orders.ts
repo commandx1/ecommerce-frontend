@@ -44,4 +44,3 @@ class VendorOrdersAPI {
 }
 
 export const vendorOrdersAPI = new VendorOrdersAPI()
-

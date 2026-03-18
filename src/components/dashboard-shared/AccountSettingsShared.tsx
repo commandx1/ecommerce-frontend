@@ -73,7 +73,7 @@ export default function AccountSettingsShared({
   const handle2FAToggle = async (enabled: boolean) => {
     setIsUpdating2FA(true)
     const newData = { ...formData, twoFactorEnabled: enabled }
-    
+
     try {
       await updateProfile(newData)
       setFormData(newData)
@@ -121,7 +121,9 @@ export default function AccountSettingsShared({
             <form onSubmit={handleUpdate} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label htmlFor="name" className="text-sm font-medium text-gray-700">First Name</label>
+                  <label htmlFor="name" className="text-sm font-medium text-gray-700">
+                    First Name
+                  </label>
                   <input
                     id="name"
                     type="text"
@@ -132,7 +134,9 @@ export default function AccountSettingsShared({
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="surname" className="text-sm font-medium text-gray-700">Last Name</label>
+                  <label htmlFor="surname" className="text-sm font-medium text-gray-700">
+                    Last Name
+                  </label>
                   <input
                     id="surname"
                     type="text"
@@ -145,7 +149,9 @@ export default function AccountSettingsShared({
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="phone" className="text-sm font-medium text-gray-700">Phone Number</label>
+                <label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                  Phone Number
+                </label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
                   <input
@@ -197,7 +203,9 @@ export default function AccountSettingsShared({
                     disabled={isUpdating2FA}
                     className="sr-only peer"
                   />
-                  <div className={`w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-steel-blue ${isUpdating2FA ? "opacity-50" : ""}`} />
+                  <div
+                    className={`w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-steel-blue ${isUpdating2FA ? "opacity-50" : ""}`}
+                  />
                 </label>
               </div>
 
@@ -239,7 +247,9 @@ export default function AccountSettingsShared({
                 </button>
               ) : (
                 <div className="bg-white p-4 rounded-xl border border-red-200 space-y-4">
-                  <p className="text-sm font-medium text-gray-900">Are you absolutely sure you want to delete your account?</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    Are you absolutely sure you want to delete your account?
+                  </p>
                   <div className="flex space-x-3">
                     <button
                       type="button"
@@ -291,9 +301,7 @@ export default function AccountSettingsShared({
 
           <div className="bg-light-mint-gray rounded-2xl p-6">
             <h3 className="font-semibold text-steel-blue mb-2">{infoSidebarTitle}</h3>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              {infoSidebarContent}
-            </p>
+            <p className="text-sm text-gray-700 leading-relaxed">{infoSidebarContent}</p>
           </div>
         </div>
       </div>

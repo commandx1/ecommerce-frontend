@@ -49,4 +49,3 @@ export async function submitProductAnswer(params: {
     throw new Error(message)
   }
 }
-

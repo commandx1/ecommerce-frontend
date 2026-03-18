@@ -9,4 +9,3 @@ export async function downloadImageAsFileViaProxy(url: string, filename: string)
   const blob = await response.blob()
   return new File([blob], filename, { type: blob.type || "image/jpeg" })
 }
-

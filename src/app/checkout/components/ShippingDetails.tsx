@@ -129,27 +129,30 @@ const ShippingDetails = () => {
 
   // Group items by seller
   const sellerGroups = useMemo(() => {
-    return items.reduce((groups, item) => {
-      // biome-ignore lint/suspicious/noExplicitAny: backend returns seller info
-      const up = item.userProduct as any
-      // Get seller name and ID from backend fields
-      // sellerId usually maps to userProduct.sellerId or userProduct.userId
-      const sellerName = up.sellerName || up.vendor || item.product.name.split("-").pop()?.trim() || "Standard Seller"
-      const sellerId = up.sellerId || up.userId || sellerName
+    return items.reduce(
+      (groups, item) => {
+        // biome-ignore lint/suspicious/noExplicitAny: backend returns seller info
+        const up = item.userProduct as any
+        // Get seller name and ID from backend fields
+        // sellerId usually maps to userProduct.sellerId or userProduct.userId
+        const sellerName = up.sellerName || up.vendor || item.product.name.split("-").pop()?.trim() || "Standard Seller"
+        const sellerId = up.sellerId || up.userId || sellerName
 
-      if (!groups[sellerId]) {
-        groups[sellerId] = {
-          name: sellerName,
-          items: [],
+        if (!groups[sellerId]) {
+          groups[sellerId] = {
+            name: sellerName,
+            items: [],
+          }
         }
-      }
-      groups[sellerId].items.push({
-        userProductId: item.userProduct.userProductId,
-        name: item.product.name,
-        quantity: item.quantity,
-      })
-      return groups
-    }, {} as Record<string, { name: string; items: { userProductId: string; name: string; quantity: number }[] }>)
+        groups[sellerId].items.push({
+          userProductId: item.userProduct.userProductId,
+          name: item.product.name,
+          quantity: item.quantity,
+        })
+        return groups
+      },
+      {} as Record<string, { name: string; items: { userProductId: string; name: string; quantity: number }[] }>,
+    )
   }, [items])
 
   return (

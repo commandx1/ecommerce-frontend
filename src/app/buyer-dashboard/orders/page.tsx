@@ -225,7 +225,8 @@ export default function BuyerOrdersPage() {
                                         onClick={() => setTrackingModalLinks(item.trackingLink)}
                                         className="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-700 text-[11px] font-medium hover:bg-green-200"
                                       >
-                                        View {item.trackingLink.length} tracking link{item.trackingLink.length > 1 ? "s" : ""}
+                                        View {item.trackingLink.length} tracking link
+                                        {item.trackingLink.length > 1 ? "s" : ""}
                                         <ExternalLink className="w-3 h-3 ml-2" />
                                       </button>
                                     ) : (

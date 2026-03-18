@@ -45,10 +45,10 @@ export default function VendorShipmentRates({
           userId: sellerId ?? "",
           cartId,
           parcels: items.flatMap((item) =>
-            Array.from({ length: item.quantity }, () => ({ userProductId: item.userProductId }))
+            Array.from({ length: item.quantity }, () => ({ userProductId: item.userProductId })),
           ),
         })
-        
+
         if (!isMounted) return
 
         setRates(
@@ -57,7 +57,7 @@ export default function VendorShipmentRates({
           ),
         )
         setUberQuote(response.uberQuote)
-        
+
         // Auto-select first rate if none selected
         if (!selectedRateId && response.shippoRates.length > 0) {
           onSelect(sellerId, response.shippoRates[0])
@@ -150,9 +150,7 @@ export default function VendorShipmentRates({
                 </div>
                 <div className="flex items-center justify-between mt-1">
                   <span className="text-xs text-gray-500 truncate">{rate.durationTerms}</span>
-                  <span className="text-xs font-medium text-green-600">
-                    Est. {rate.estimatedDays} days
-                  </span>
+                  <span className="text-xs font-medium text-green-600">Est. {rate.estimatedDays} days</span>
                 </div>
               </div>
             </div>
@@ -192,9 +190,7 @@ export default function VendorShipmentRates({
                 </div>
                 <div className="flex items-center justify-between mt-1">
                   <span className="text-xs text-gray-500">Same-day delivery</span>
-                  <span className="text-xs font-medium text-green-600">
-                    {uberQuote.duration} mins
-                  </span>
+                  <span className="text-xs font-medium text-green-600">{uberQuote.duration} mins</span>
                 </div>
               </div>
             </div>

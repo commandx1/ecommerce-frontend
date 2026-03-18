@@ -6,11 +6,7 @@ interface ClearCartConfirmModalProps {
   onConfirm: () => void
 }
 
-export default function ClearCartConfirmModal({
-  open,
-  onClose,
-  onConfirm,
-}: ClearCartConfirmModalProps) {
+export default function ClearCartConfirmModal({ open, onClose, onConfirm }: ClearCartConfirmModalProps) {
   if (!open) return null
 
   return (
@@ -21,16 +17,11 @@ export default function ClearCartConfirmModal({
       aria-modal="true"
       aria-labelledby="clear-cart-title"
     >
-      <div
-        className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
         <h3 id="clear-cart-title" className="text-lg font-bold text-gray-900 mb-2">
           Clear cart?
         </h3>
-        <p className="text-sm text-gray-600 mb-6">
-          All items will be removed from your cart. This cannot be undone.
-        </p>
+        <p className="text-sm text-gray-600 mb-6">All items will be removed from your cart. This cannot be undone.</p>
         <div className="flex gap-3 justify-end">
           <button
             type="button"

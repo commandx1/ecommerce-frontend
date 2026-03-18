@@ -91,37 +91,51 @@ const DashboardSidebar = () => {
             <Link
               href="/buyer-dashboard/orders"
               className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/buyer-dashboard/orders") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+                isActive("/buyer-dashboard/orders")
+                  ? "text-steel-blue bg-light-mint-gray"
+                  : "text-gray-700 hover:bg-gray-100"
               }`}
             >
-              <ShoppingBag className={`mr-3 w-4 h-4 ${isActive("/buyer-dashboard/orders") ? "text-steel-blue" : "text-gray-500"}`} />
+              <ShoppingBag
+                className={`mr-3 w-4 h-4 ${isActive("/buyer-dashboard/orders") ? "text-steel-blue" : "text-gray-500"}`}
+              />
               <span>All Orders</span>
               <span className="ml-auto bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">24</span>
             </Link>
             <Link
               href="/buyer-dashboard/orders/pending"
               className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/buyer-dashboard/orders/pending") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+                isActive("/buyer-dashboard/orders/pending")
+                  ? "text-steel-blue bg-light-mint-gray"
+                  : "text-gray-700 hover:bg-gray-100"
               }`}
             >
-              <Clock className={`mr-3 w-4 h-4 ${isActive("/buyer-dashboard/orders/pending") ? "text-steel-blue" : "text-gray-500"}`} />
+              <Clock
+                className={`mr-3 w-4 h-4 ${isActive("/buyer-dashboard/orders/pending") ? "text-steel-blue" : "text-gray-500"}`}
+              />
               <span>Pending</span>
               <span className="ml-auto bg-coral-orange text-white text-xs px-2 py-1 rounded-full">3</span>
             </Link>
             <Link
               href="/buyer-dashboard/orders/transit"
               className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/buyer-dashboard/orders/transit") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+                isActive("/buyer-dashboard/orders/transit")
+                  ? "text-steel-blue bg-light-mint-gray"
+                  : "text-gray-700 hover:bg-gray-100"
               }`}
             >
-              <Truck className={`mr-3 w-4 h-4 ${isActive("/buyer-dashboard/orders/transit") ? "text-steel-blue" : "text-gray-500"}`} />
+              <Truck
+                className={`mr-3 w-4 h-4 ${isActive("/buyer-dashboard/orders/transit") ? "text-steel-blue" : "text-gray-500"}`}
+              />
               <span>In Transit</span>
               <span className="ml-auto bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full">7</span>
             </Link>
             <Link
               href="/buyer-dashboard/orders/completed"
               className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/buyer-dashboard/orders/completed") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+                isActive("/buyer-dashboard/orders/completed")
+                  ? "text-steel-blue bg-light-mint-gray"
+                  : "text-gray-700 hover:bg-gray-100"
               }`}
             >
               <CheckCircle
@@ -150,7 +164,9 @@ const DashboardSidebar = () => {
             <Link
               href="/buyer-dashboard/suppliers"
               className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/buyer-dashboard/suppliers") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+                isActive("/buyer-dashboard/suppliers")
+                  ? "text-steel-blue bg-light-mint-gray"
+                  : "text-gray-700 hover:bg-gray-100"
               }`}
             >
               <Store className={`mr-3 w-4 h-4 ${isActive("/suppliers") ? "text-steel-blue" : "text-gray-500"}`} />
@@ -234,16 +250,22 @@ const DashboardSidebar = () => {
             <Link
               href="/buyer-dashboard/help"
               className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/buyer-dashboard/help") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+                isActive("/buyer-dashboard/help")
+                  ? "text-steel-blue bg-light-mint-gray"
+                  : "text-gray-700 hover:bg-gray-100"
               }`}
             >
-              <HelpCircle className={`mr-3 w-4 h-4 ${isActive("/buyer-dashboard/help") ? "text-steel-blue" : "text-gray-500"}`} />
+              <HelpCircle
+                className={`mr-3 w-4 h-4 ${isActive("/buyer-dashboard/help") ? "text-steel-blue" : "text-gray-500"}`}
+              />
               <span>Help Center</span>
             </Link>
             <Link
               href="/buyer-dashboard/support"
               className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/buyer-dashboard/support") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+                isActive("/buyer-dashboard/support")
+                  ? "text-steel-blue bg-light-mint-gray"
+                  : "text-gray-700 hover:bg-gray-100"
               }`}
             >
               <HeadphonesIcon

@@ -86,9 +86,7 @@ const FinalReviewContent = () => {
       setIsPlacingOrder(true)
       const payload = {
         ...orderPayload,
-        ...(paymentMethod.type === "card" && saveCard
-          ? { cardSave: 1, cardName: cardName.trim() || "Card" }
-          : {}),
+        ...(paymentMethod.type === "card" && saveCard ? { cardSave: 1, cardName: cardName.trim() || "Card" } : {}),
       }
       const response = await ordersAPI.placeOrder(payload)
 
@@ -104,27 +102,23 @@ const FinalReviewContent = () => {
 
         let confirmResult
         if (selectedSavedCardId) {
-          confirmResult = await stripe.confirmCardPayment(
-            response.clientSecret,
-            { payment_method: selectedSavedCardId },
-          )
+          confirmResult = await stripe.confirmCardPayment(response.clientSecret, {
+            payment_method: selectedSavedCardId,
+          })
         } else {
           const cardElement = elements.getElement(CardElement)
           if (!cardElement) {
             toast.error("Please enter your card details.")
             return
           }
-          confirmResult = await stripe.confirmCardPayment(
-            response.clientSecret,
-            {
-              payment_method: {
-                card: cardElement,
-                billing_details: {
-                  name: `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim() || undefined,
-                },
+          confirmResult = await stripe.confirmCardPayment(response.clientSecret, {
+            payment_method: {
+              card: cardElement,
+              billing_details: {
+                name: `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim() || undefined,
               },
             },
-          )
+          })
         }
 
         if (confirmResult?.error) {

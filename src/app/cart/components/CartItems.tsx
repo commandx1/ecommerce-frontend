@@ -38,7 +38,7 @@ const CartItems = () => {
       <div className="space-y-4">
         {items.map((item) => {
           const { userProduct, product, quantity } = item
-          
+
           return (
             <div key={item.id} className="flex items-center space-x-4 p-4 bg-light-mint-gray rounded-lg">
               <Link
@@ -55,9 +55,7 @@ const CartItems = () => {
               </Link>
               <div className="flex-1 min-w-0">
                 <Link href={`/products/${product.id}`}>
-                  <h3 className="font-medium text-gray-900 text-sm hover:text-steel-blue truncate">
-                    {product.name}
-                  </h3>
+                  <h3 className="font-medium text-gray-900 text-sm hover:text-steel-blue truncate">{product.name}</h3>
                 </Link>
                 <div className="flex items-center justify-between mt-2">
                   <div className="flex items-center space-x-2">
@@ -79,9 +77,7 @@ const CartItems = () => {
                   </div>
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
-                      <span className="block font-semibold text-steel-blue">
-                        {formatCurrency(userProduct.price)}
-                      </span>
+                      <span className="block font-semibold text-steel-blue">{formatCurrency(userProduct.price)}</span>
                       {userProduct.oldPrice > userProduct.price && (
                         <span className="block text-xs text-gray-400 line-through">
                           {formatCurrency(userProduct.oldPrice)}

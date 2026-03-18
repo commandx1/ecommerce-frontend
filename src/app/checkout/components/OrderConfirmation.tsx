@@ -57,9 +57,7 @@ const OrderConfirmation = () => {
               {createdDate ? createdDate.toLocaleString() : "-"}
             </div>
             <div className="text-sm text-gray-600 mb-2">Total Price</div>
-            <div className="text-2xl font-bold text-steel-blue">
-              {formatCurrency(orderResult.totalPrice)}
-            </div>
+            <div className="text-2xl font-bold text-steel-blue">{formatCurrency(orderResult.totalPrice)}</div>
           </div>
 
           <div className="bg-light-mint-gray rounded-xl p-6">

@@ -38,4 +38,3 @@ export async function deleteMe(accessToken: string) {
     throw new Error(await readApiErrorMessage(response, "Failed to delete account"))
   }
 }
-

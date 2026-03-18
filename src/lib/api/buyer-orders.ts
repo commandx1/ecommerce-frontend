@@ -45,4 +45,3 @@ class BuyerOrdersAPI {
 }
 
 export const buyerOrdersAPI = new BuyerOrdersAPI()
-

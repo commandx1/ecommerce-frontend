@@ -20,12 +20,7 @@ const RatingFilter = () => {
             <div className="ml-3 flex items-center">
               <div className="flex text-yellow-400 mr-2">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={`w-4 h-4 ${
-                      star <= option.stars ? "fill-current" : "text-gray-300"
-                    }`}
-                  />
+                  <Star key={star} className={`w-4 h-4 ${star <= option.stars ? "fill-current" : "text-gray-300"}`} />
                 ))}
               </div>
               <span className="text-sm text-gray-700 group-hover:text-steel-blue transition-colors">
@@ -41,4 +36,3 @@ const RatingFilter = () => {
 }
 
 export default RatingFilter
-

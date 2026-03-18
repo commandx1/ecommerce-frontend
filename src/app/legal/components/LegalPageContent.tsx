@@ -31,7 +31,7 @@ const additionalDocs = [
 ] as LegalDocument[]
 
 const docById = (id: string): LegalDocument | undefined =>
-  legalDocumentsData.documents.find((d: { id: string }) => d.id === id) as LegalDocument | undefined ||
+  (legalDocumentsData.documents.find((d: { id: string }) => d.id === id) as LegalDocument | undefined) ||
   additionalDocs.find((d) => d.id === id)
 
 export default function LegalPageContent() {
@@ -46,15 +46,12 @@ export default function LegalPageContent() {
 
   const selectedDocument = useMemo(
     () => documentsInOrder.find((d) => d.id === selectedId) ?? documentsInOrder[0],
-    [documentsInOrder, selectedId]
+    [documentsInOrder, selectedId],
   )
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-      <LegalSidebar
-        selectedId={selectedId}
-        onSelect={setSelectedId}
-      />
+      <LegalSidebar selectedId={selectedId} onSelect={setSelectedId} />
       <div id="document-content" className="lg:col-span-3">
         {selectedDocument && (
           <DocumentSection document={selectedDocument as Parameters<typeof DocumentSection>[0]["document"]} />

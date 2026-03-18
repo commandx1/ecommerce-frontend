@@ -51,9 +51,7 @@ const CheckoutPage = () => {
       <section className="py-8">
         <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row gap-12">
-            <div className="flex-1 lg:w-2/3">
-              {renderStepContent()}
-            </div>
+            <div className="flex-1 lg:w-2/3">{renderStepContent()}</div>
             {currentStep !== 5 && (
               <div className="lg:w-1/3">
                 <OrderSummary />

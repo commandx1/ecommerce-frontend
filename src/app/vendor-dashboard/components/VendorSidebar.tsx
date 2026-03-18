@@ -45,8 +45,7 @@ const SidebarLink = ({
   disabled,
   size = "default",
 }: SidebarLinkProps) => {
-  const baseClasses =
-    "flex items-center rounded-lg transition-colors px-3 py-2"
+  const baseClasses = "flex items-center rounded-lg transition-colors px-3 py-2"
   const activeClasses = isActive
     ? "text-steel-blue bg-light-mint-gray font-medium"
     : "text-gray-700 hover:bg-light-mint-gray"
@@ -59,9 +58,7 @@ const SidebarLink = ({
       <Icon className={iconClasses} />
       <span className={labelClasses}>{label}</span>
       {trailingText && <span className="ml-auto text-gray-500 text-sm">{trailingText}</span>}
-      {badge && (
-        <span className="ml-auto bg-pale-lime text-steel-blue text-xs px-2 py-1 rounded-full">{badge}</span>
-      )}
+      {badge && <span className="ml-auto bg-pale-lime text-steel-blue text-xs px-2 py-1 rounded-full">{badge}</span>}
     </Link>
   )
 }

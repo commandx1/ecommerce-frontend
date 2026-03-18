@@ -131,4 +131,3 @@ export async function fetchProductDetailPageData(id: string): Promise<ProductDet
 
   return { productData, reviews, questions }
 }
-

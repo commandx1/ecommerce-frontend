@@ -95,4 +95,3 @@ export async function printShippingLabel(url: string, options: QzPrintOptions = 
     window.open(url, "_blank", "noopener,noreferrer")
   }
 }
-

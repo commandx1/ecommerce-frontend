@@ -11,9 +11,19 @@ export async function requestPasswordReset(email: string): Promise<void> {
     let message = "Failed to send reset request."
     try {
       const errorData = await response.json()
-      if (errorData && typeof errorData === "object" && "error" in errorData && typeof (errorData as any).error === "string") {
+      if (
+        errorData &&
+        typeof errorData === "object" &&
+        "error" in errorData &&
+        typeof (errorData as any).error === "string"
+      ) {
         message = (errorData as any).error
-      } else if (errorData && typeof errorData === "object" && "message" in errorData && typeof (errorData as any).message === "string") {
+      } else if (
+        errorData &&
+        typeof errorData === "object" &&
+        "message" in errorData &&
+        typeof (errorData as any).message === "string"
+      ) {
         message = (errorData as any).message
       }
     } catch {
@@ -22,4 +32,3 @@ export async function requestPasswordReset(email: string): Promise<void> {
     throw new Error(message)
   }
 }
-

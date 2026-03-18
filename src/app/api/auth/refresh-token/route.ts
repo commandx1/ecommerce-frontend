@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Cookie": `refreshToken=${refreshTokenValue}; Path=/; SameSite=Lax`,
+        Cookie: `refreshToken=${refreshTokenValue}; Path=/; SameSite=Lax`,
       },
       body: JSON.stringify({ refreshToken: refreshTokenValue }),
     })
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     const authHeader = response.headers.get("Authorization") || response.headers.get("authorization")
     const accessToken = authHeader?.replace("Bearer ", "") || data.accessToken
     const setCookie = response.headers.get("Set-Cookie") || response.headers.get("set-cookie")
-    
+
     let refreshToken = data.refreshToken
     if (!refreshToken && setCookie) {
       const match = setCookie.match(/refreshToken=([^;]+)/)

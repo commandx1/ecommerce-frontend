@@ -29,9 +29,7 @@ const CartSummary = ({ onCheckout }: CartSummaryProps) => {
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Shipping</span>
-          <span className="font-medium">
-            {shipping === 0 ? "Free" : formatCurrency(shipping)}
-          </span>
+          <span className="font-medium">{shipping === 0 ? "Free" : formatCurrency(shipping)}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Tax (Est.)</span>

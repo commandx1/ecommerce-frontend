@@ -13,7 +13,10 @@ function requireBackendUrl() {
   return BACKEND_URL
 }
 
-export async function getPublicProducts<TProduct = unknown>(page = 0, size = 10): Promise<PublicProductsResponse<TProduct>> {
+export async function getPublicProducts<TProduct = unknown>(
+  page = 0,
+  size = 10,
+): Promise<PublicProductsResponse<TProduct>> {
   const baseUrl = requireBackendUrl()
   const res = await fetch(`${baseUrl}/api/products/public?page=${page}&size=${size}`, {
     cache: "no-store",
@@ -50,4 +53,3 @@ export async function getProductManufacturers(): Promise<string[]> {
   })
   return res.ok ? res.json() : []
 }
-

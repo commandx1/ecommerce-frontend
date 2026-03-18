@@ -1,11 +1,4 @@
-import {
-  UserPlus,
-  ShoppingCart,
-  Truck,
-  Undo2,
-  CreditCard,
-  Settings,
-} from "lucide-react"
+import { UserPlus, ShoppingCart, Truck, Undo2, CreditCard, Settings } from "lucide-react"
 import { ChevronRight } from "lucide-react"
 import Link from "next/link"
 
@@ -101,12 +94,9 @@ export default function KnowledgeBaseSection() {
     <section id="knowledge-base" className="py-16 bg-light-mint-gray">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-steel-blue mb-4">
-            Knowledge Base
-          </h2>
+          <h2 className="text-4xl font-bold text-steel-blue mb-4">Knowledge Base</h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Browse our extensive knowledge base organized by topic for quick
-            self-service support
+            Browse our extensive knowledge base organized by topic for quick self-service support
           </p>
         </div>
 
@@ -114,37 +104,24 @@ export default function KnowledgeBaseSection() {
           {categories.map((cat) => {
             const Icon = cat.icon
             return (
-              <div
-                key={cat.title}
-                className="bg-white rounded-2xl p-6 hover:shadow-lg transition-shadow"
-              >
+              <div key={cat.title} className="bg-white rounded-2xl p-6 hover:shadow-lg transition-shadow">
                 <div className="flex items-center mb-4">
-                  <div
-                    className={`w-12 h-12 ${cat.iconBg} rounded-lg flex items-center justify-center mr-4`}
-                  >
+                  <div className={`w-12 h-12 ${cat.iconBg} rounded-lg flex items-center justify-center mr-4`}>
                     <Icon className={cat.iconColor} />
                   </div>
-                  <h3 className="text-xl font-semibold text-steel-blue">
-                    {cat.title}
-                  </h3>
+                  <h3 className="text-xl font-semibold text-steel-blue">{cat.title}</h3>
                 </div>
                 <ul className="space-y-3">
                   {cat.articles.map((article) => (
                     <li key={article}>
-                      <Link
-                        href="#"
-                        className="text-gray-600 hover:text-steel-blue flex items-center"
-                      >
+                      <Link href="#" className="text-gray-600 hover:text-steel-blue flex items-center">
                         <ChevronRight className="w-3 h-3 mr-2" />
                         {article}
                       </Link>
                     </li>
                   ))}
                 </ul>
-                <Link
-                  href="#"
-                  className="mt-4 text-steel-blue font-medium hover:underline inline-block"
-                >
+                <Link href="#" className="mt-4 text-steel-blue font-medium hover:underline inline-block">
                   View all articles ({cat.count}) →
                 </Link>
               </div>

@@ -36,4 +36,3 @@ export async function verifyTwoFactorLogin(params: {
 
   return data
 }
-

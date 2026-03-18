@@ -10,7 +10,7 @@ import { useAuthStore } from "@/stores/authStore"
 import VendorHeader from "../components/VendorHeader"
 import VendorSidebar from "../components/VendorSidebar"
 import ProductStatsCards, { type FilterType } from "./components/ProductStatsCards"
-import { cn } from '@/lib/utils'
+import { cn } from "@/lib/utils"
 
 // Debounce hook
 function useDebounce<T>(value: T, delay: number): T {

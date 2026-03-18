@@ -59,9 +59,7 @@ const OrderSummary = () => {
               </div>
               <div className="flex-1 min-w-0">
                 <Link href={`/products/${product.id}`}>
-                  <h4 className="font-medium text-gray-900 text-sm hover:text-steel-blue truncate">
-                    {product.name}
-                  </h4>
+                  <h4 className="font-medium text-gray-900 text-sm hover:text-steel-blue truncate">{product.name}</h4>
                 </Link>
                 <div className="flex items-center justify-between mt-1">
                   <span className="text-xs text-gray-500">Qty: {quantity}</span>

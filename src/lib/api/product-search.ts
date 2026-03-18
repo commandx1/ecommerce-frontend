@@ -55,4 +55,3 @@ export async function searchPublicProducts(query: string, page = 0, size = 20): 
   const data: SearchResponse = await response.json()
   return data.content || []
 }
-
