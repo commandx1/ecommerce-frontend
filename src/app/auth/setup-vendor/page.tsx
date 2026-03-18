@@ -4,6 +4,7 @@ import { useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useAuthStore } from "@/stores/authStore"
 import { toast } from "sonner"
+import { refreshTokenForVendorSetup } from "@/lib/api/setup-vendor"
 
 function SetupVendorContent() {
   const router = useRouter()
@@ -21,44 +22,29 @@ function SetupVendorContent() {
       }
 
       try {
-        // Exchange setup/refresh token for access token using our internal API proxy
-        const response = await fetch("/api/auth/refresh-token", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ refreshToken }),
+        const data = await refreshTokenForVendorSetup(refreshToken)
+
+        // Role correction: force Vendor if null
+        const userObj = {
+          ...data,
+          roleName: data.roleName || "Vendor",
+        }
+
+        // Update store (not impersonating, just a setup/login)
+        setAuth(userObj as any, data.accessToken, (data.refreshToken as string | undefined) || refreshToken, false)
+
+        toast.success("Account setup successful!", {
+          description: "Please complete your profile information.",
+          duration: 5000,
         })
 
-        if (response.ok) {
-          const data = await response.json()
-          
-          // Role correction: force Vendor if null
-          const userObj = {
-            ...data,
-            roleName: data.roleName || "Vendor"
-          }
-
-          // Update store (not impersonating, just a setup/login)
-          setAuth(userObj, data.accessToken, data.refreshToken || refreshToken, false)
-          
-          toast.success("Account setup successful!", {
-            description: "Please complete your profile information.",
-            duration: 5000,
-          })
-
-          // Redirect to settings page as requested
-          setTimeout(() => {
-            router.push("/vendor-dashboard/settings")
-          }, 800)
-        } else {
-          const errorData = await response.json()
-          toast.error(errorData.message || "Setup failed")
-          router.push("/login")
-        }
+        // Redirect to settings page as requested
+        setTimeout(() => {
+          router.push("/vendor-dashboard/settings")
+        }, 800)
       } catch (error) {
         console.error("Setup error:", error)
-        toast.error("An error occurred during setup")
+        toast.error(error instanceof Error ? error.message : "An error occurred during setup")
         router.push("/login")
       }
     }

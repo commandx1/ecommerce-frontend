@@ -4,6 +4,7 @@ import { Check, Headset, Info, Key, Mail, SendIcon, ShieldCheck } from "lucide-r
 import Link from "next/link"
 import { useId, useState } from "react"
 import { toast } from "sonner"
+import { requestPasswordReset } from "@/lib/api/password-recovery"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -17,17 +18,7 @@ export default function ForgotPasswordPage() {
     setIsSubmitting(true)
 
     try {
-      const response = await fetch("/api/mail/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to send reset request.")
-      }
-
+      await requestPasswordReset(email)
       setIsSent(true)
       toast.success("Password reset instructions have been sent to your email address.")
     } catch {
