@@ -345,107 +345,14 @@ const BillingInformation = () => {
           </div>
         </div>
 
-        {/* Credit Card Form */}
+        {/* Stripe Card Entry Notice */}
         {paymentMethod.type === "card" && (
           <div className="p-6 bg-light-mint-gray rounded-xl">
-            <h4 className="text-lg font-semibold text-gray-900 mb-4">Card Information</h4>
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="card-number" className="block text-sm font-medium text-gray-700 mb-2">
-                  Card Number *
-                </label>
-                <div className="relative">
-                  <input
-                    id="card-number"
-                    type="text"
-                    required
-                    value={paymentMethod.cardNumber || ""}
-                    onChange={(e) => updatePaymentMethod({ cardNumber: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent pr-12"
-                    placeholder="1234 5678 9012 3456"
-                  />
-                  <div className="absolute right-3 top-3">
-                    <CreditCard className="w-5 h-5 text-gray-400" />
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label htmlFor="expiry-month" className="block text-sm font-medium text-gray-700 mb-2">
-                    Expiry Month *
-                  </label>
-                  <select
-                    id="expiry-month"
-                    required
-                    value={paymentMethod.expiryMonth || ""}
-                    onChange={(e) => updatePaymentMethod({ expiryMonth: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-                  >
-                    <option value="">MM</option>
-                    {Array.from({ length: 12 }, (_, i) => {
-                      const month = String(i + 1).padStart(2, "0")
-                      return (
-                        <option key={`month-${month}`} value={month}>
-                          {month}
-                        </option>
-                      )
-                    })}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="expiry-year" className="block text-sm font-medium text-gray-700 mb-2">
-                    Expiry Year *
-                  </label>
-                  <select
-                    id="expiry-year"
-                    required
-                    value={paymentMethod.expiryYear || ""}
-                    onChange={(e) => updatePaymentMethod({ expiryYear: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-                  >
-                    <option value="">YYYY</option>
-                    {Array.from({ length: 10 }, (_, i) => {
-                      const year = 2024 + i
-                      return (
-                        <option key={`year-${year}`} value={year}>
-                          {year}
-                        </option>
-                      )
-                    })}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="cvv" className="block text-sm font-medium text-gray-700 mb-2">
-                    CVV *
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="cvv"
-                      type="text"
-                      required
-                      value={paymentMethod.cvv || ""}
-                      onChange={(e) => updatePaymentMethod({ cvv: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent pr-10"
-                      placeholder="123"
-                    />
-                  </div>
-                </div>
-              </div>
-              <div>
-                <label htmlFor="cardholder-name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Cardholder Name *
-                </label>
-                <input
-                  id="cardholder-name"
-                  type="text"
-                  required
-                  value={paymentMethod.cardholderName || ""}
-                  onChange={(e) => updatePaymentMethod({ cardholderName: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-                  placeholder="Dr. Michael Chen"
-                />
-              </div>
-            </div>
+            <h4 className="text-lg font-semibold text-gray-900 mb-2">Card Information</h4>
+            <p className="text-sm text-gray-600">
+              Card details will be entered securely using Stripe in the next step. We do not collect or store your card
+              information on our servers.
+            </p>
           </div>
         )}
 
