@@ -1,42 +1,7 @@
 import Link from "next/link"
 import ProductListingClient from "./components/ProductListingClient"
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
-
-async function getProducts(page = 0, size = 10) {
-  const res = await fetch(`${BACKEND_URL}/api/products/public?page=${page}&size=${size}`, {
-    cache: "no-store",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  })
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch products")
-  }
-
-  return res.json()
-}
-
-async function getBrands() {
-  const res = await fetch(`${BACKEND_URL}/api/products/brands`, {
-    cache: "no-store",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  })
-  return res.ok ? res.json() : []
-}
-
-async function getManufacturers() {
-  const res = await fetch(`${BACKEND_URL}/api/products/manufacturers`, {
-    cache: "no-store",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  })
-  return res.ok ? res.json() : []
-}
+import { getProductBrands, getProductManufacturers, getPublicProducts } from "@/lib/api/public-products"
+import type { APIProduct } from "./components/ProductListingClient"
 
 export default async function ProductListingPage({
   searchParams,
@@ -50,9 +15,9 @@ export default async function ProductListingPage({
     const apiPage = Math.max(0, displayPage - 1)
 
     const [data, brands, manufacturers] = await Promise.all([
-      getProducts(apiPage, pageSize),
-      getBrands(),
-      getManufacturers(),
+      getPublicProducts<APIProduct>(apiPage, pageSize),
+      getProductBrands(),
+      getProductManufacturers(),
     ])
 
     return (
