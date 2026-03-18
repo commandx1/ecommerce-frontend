@@ -10,6 +10,7 @@ import { useAuthStore } from "@/stores/authStore"
 import VendorHeader from "../components/VendorHeader"
 import VendorSidebar from "../components/VendorSidebar"
 import ProductStatsCards, { type FilterType } from "./components/ProductStatsCards"
+import { cn } from '@/lib/utils'
 
 // Debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -95,6 +96,7 @@ export default function ProductsPage() {
   const [currentPage, setCurrentPage] = useState<number>(0)
   const [totalPages, setTotalPages] = useState<number>(1)
   const [totalElements, setTotalElements] = useState<number>(0)
+  const [imageFallbacks, setImageFallbacks] = useState<Record<string, boolean>>({})
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; productId: string | null; productName: string }>({
     isOpen: false,
     productId: null,
@@ -495,32 +497,27 @@ export default function ProductsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center min-w-72">
-                        <div className="w-12 h-12 bg-white rounded-lg border border-gray-200 flex items-center justify-center mr-3">
-                          {product.image ? (
-                            <Image
-                              src={product.image}
-                              alt={product.productName}
-                              width={40}
-                              height={40}
-                              className="min-w-10 min-h-10 object-contain"
-                            />
-                          ) : (
-                            <svg
-                              className="w-6 h-6 text-gray-400"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                              aria-label="Product placeholder"
-                            >
-                              <title>Product placeholder</title>
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                              />
-                            </svg>
-                          )}
+                        <div className="w-12 h-12 min-w-12 min-h-12 max-w-12 max-h-12 overflow-hidden bg-white rounded-lg border border-gray-200 flex items-center justify-center mr-3">
+                          <Image
+                            src={
+                              imageFallbacks[product.id] || !product.image
+                                ? "/dentypro-product-placeholder.png"
+                                : product.image
+                            }
+                            alt={product.productName}
+                            width={40}
+                            height={40}
+                            className={cn(
+                              "w-full h-full object-contain",
+                              imageFallbacks[product.id] || !product.image ? "scale-110" : "",
+                            )}
+                            onError={() =>
+                              setImageFallbacks((prev) => ({
+                                ...prev,
+                                [product.id]: true,
+                              }))
+                            }
+                          />
                         </div>
                         <div className="font-medium text-steel-blue">{product.productName}</div>
                       </div>
@@ -529,9 +526,7 @@ export default function ProductsPage() {
                     <td className="px-6 py-4 text-sm font-semibold text-steel-blue">${product.price.toFixed(2)}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <span className={`text-sm font-medium ${getStockColor(product.stock)}`}>
-                          {product.stock}
-                        </span>
+                        <span className={`text-sm font-medium ${getStockColor(product.stock)}`}>{product.stock}</span>
                         <span className="ml-2 text-xs text-gray-500">units</span>
                       </div>
                     </td>
