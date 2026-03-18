@@ -107,7 +107,6 @@ const FinalReviewContent = () => {
           confirmResult = await stripe.confirmCardPayment(
             response.clientSecret,
             { payment_method: selectedSavedCardId },
-            { redirect: "if_required" },
           )
         } else {
           const cardElement = elements.getElement(CardElement)
@@ -125,7 +124,6 @@ const FinalReviewContent = () => {
                 },
               },
             },
-            { redirect: "if_required" },
           )
         }
 
