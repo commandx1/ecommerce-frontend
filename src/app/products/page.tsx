@@ -6,12 +6,13 @@ import type { APIProduct } from "./components/ProductListingClient"
 export default async function ProductListingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; size?: string }>
+  searchParams: Promise<{ page?: string; size?: string; view?: string }>
 }) {
   try {
     const params = await searchParams
     const displayPage = parseInt(params.page || "1", 10)
     const pageSize = parseInt(params.size || "10", 10)
+    const viewParam = params.view === "list" ? "list" : "grid"
     const apiPage = Math.max(0, displayPage - 1)
 
     const [data, brands, manufacturers] = await Promise.all([
@@ -29,6 +30,7 @@ export default async function ProductListingPage({
         currentPage={displayPage}
         pageSize={pageSize}
         totalPages={data.totalPages || 1}
+        viewType={viewParam}
       />
     )
   } catch (_error) {

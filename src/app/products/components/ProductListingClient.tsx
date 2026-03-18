@@ -1,5 +1,3 @@
-"use client"
-
 import {
   Box,
   ChevronRight,
@@ -15,14 +13,12 @@ import {
   Truck,
   X,
 } from "lucide-react"
-import Image from "next/image"
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useState } from "react"
 import { getFullImageUrl } from "@/lib/api/products"
 import BrandFilter from "./BrandFilter"
 import ManufacturerFilter from "./ManufacturerFilter"
 import RatingFilter from "./RatingFilter"
+import ProductImageWithFallback from "./ProductImageWithFallback"
 
 export interface APIProduct {
   productId: string
@@ -51,6 +47,7 @@ interface ProductListingClientProps {
   currentPage: number
   pageSize: number
   totalPages: number
+  viewType: "grid" | "list"
 }
 
 const FilterContent = ({ brands, manufacturers }: { brands: string[]; manufacturers: string[] }) => (
@@ -61,7 +58,7 @@ const FilterContent = ({ brands, manufacturers }: { brands: string[]; manufactur
       <div className="flex flex-wrap gap-2">
         <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-steel-blue text-white">
           In Stock
-          <button type="button" className="ml-2 text-white/80 hover:text-white" onClick={() => {}}>
+          <button type="button" className="ml-2 text-white/80 hover:text-white">
             <X className="w-3 h-3" />
           </button>
         </span>
@@ -162,70 +159,33 @@ const ProductListingClient = ({
   currentPage,
   pageSize,
   totalPages,
+  viewType,
 }: ProductListingClientProps) => {
-  const [viewType, setViewType] = useState<"grid" | "list">("grid")
-  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false)
-  const [imageFallbacks, setImageFallbacks] = useState<Record<string, boolean>>({})
-  const router = useRouter()
-  const searchParams = useSearchParams()
-
-  const handlePageChange = (page: number) => {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set("page", page.toString())
-    router.push(`/products?${params.toString()}`)
-  }
-
-  const handleSizeChange = (size: string) => {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set("size", size)
-    params.set("page", "1")
-    router.push(`/products?${params.toString()}`)
-  }
-
-  const getProductImageSrc = (product: APIProduct) => {
-    if (imageFallbacks[product.productId] || !product.coverPhotoPath) {
-      return "/dentypro-product-placeholder.png"
-    }
-    return getFullImageUrl(product.coverPhotoPath)
+  const buildUrl = (overrides: { page?: number; size?: number; view?: "grid" | "list" }) => {
+    const params = new URLSearchParams()
+    params.set("page", String(overrides.page ?? currentPage))
+    params.set("size", String(overrides.size ?? pageSize))
+    params.set("view", overrides.view ?? viewType)
+    return `/products?${params.toString()}`
   }
 
   return (
     <div className="bg-light-mint-gray min-h-screen font-inter">
-      {/* Mobile Filters Modal */}
-      {isMobileFiltersOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <button
-            type="button"
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm w-full h-full cursor-default"
-            onClick={() => setIsMobileFiltersOpen(false)}
-            aria-label="Close filters"
-          />
-          <div className="fixed inset-y-0 left-0 w-full max-w-xs bg-white shadow-xl flex flex-col animate-in slide-in-from-left duration-300">
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-white sticky top-0 z-10">
-              <h2 className="text-xl font-bold text-steel-blue">Filters</h2>
-              <button
-                type="button"
-                onClick={() => setIsMobileFiltersOpen(false)}
-                className="p-2 text-gray-400 hover:text-steel-blue transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto custom-scrollbar">
-              <FilterContent brands={brands} manufacturers={manufacturers} />
-            </div>
-            <div className="p-4 border-t border-gray-200 bg-gray-50">
-              <button
-                type="button"
-                onClick={() => setIsMobileFiltersOpen(false)}
-                className="w-full bg-steel-blue text-white py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-all"
-              >
-                Show {totalElements} Products
-              </button>
-            </div>
+      {/* Mobile Filters */}
+      <div className="lg:hidden px-4 sm:px-6 lg:px-8 pt-4">
+        <details className="rounded-xl border border-gray-200 bg-white shadow-sm">
+          <summary className="flex items-center justify-between cursor-pointer px-4 py-3 text-sm font-semibold text-steel-blue">
+            <span className="flex items-center">
+              <Filter className="w-4 h-4 mr-2" />
+              Filters
+            </span>
+            <X className="w-4 h-4 text-gray-400" />
+          </summary>
+          <div className="border-t border-gray-200">
+            <FilterContent brands={brands} manufacturers={manufacturers} />
           </div>
-        </div>
-      )}
+        </details>
+      </div>
 
       {/* Breadcrumb Navigation */}
       <section className="bg-white border-b border-gray-200 py-3">
@@ -291,43 +251,38 @@ const ProductListingClient = ({
         <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
             <div className="flex items-center space-x-4">
-              <button
-                type="button"
-                onClick={() => setIsMobileFiltersOpen(true)}
-                className="lg:hidden bg-steel-blue text-white px-4 py-2 rounded-lg font-medium flex items-center shadow-md active:scale-95 transition-all"
-              >
-                <Filter className="w-4 h-4 mr-2" />
-                Filters
-              </button>
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600">View:</span>
-                <button
-                  type="button"
-                  onClick={() => setViewType("grid")}
+                <Link
+                  href={buildUrl({ view: "grid" })}
                   className={`p-2 rounded ${viewType === "grid" ? "bg-steel-blue text-white" : "text-gray-400 hover:text-steel-blue"}`}
                 >
                   <LayoutGrid className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewType("list")}
+                </Link>
+                <Link
+                  href={buildUrl({ view: "list" })}
                   className={`p-2 rounded ${viewType === "list" ? "bg-steel-blue text-white" : "text-gray-400 hover:text-steel-blue"}`}
                 >
                   <List className="w-4 h-4" />
-                </button>
+                </Link>
               </div>
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600">Items per page:</span>
-                <select
-                  value={pageSize}
-                  onChange={(e) => handleSizeChange(e.target.value)}
-                  className="border border-gray-300 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-steel-blue bg-white"
-                >
-                  <option value="10">10</option>
-                  <option value="20">20</option>
-                  <option value="50">50</option>
-                  <option value="100">100</option>
-                </select>
+                <div className="flex items-center gap-2">
+                  {[10, 20, 50, 100].map((size) => (
+                    <Link
+                      key={size}
+                      href={buildUrl({ size, page: 1 })}
+                      className={`px-3 py-1 rounded text-sm border ${
+                        pageSize === size
+                          ? "border-steel-blue bg-steel-blue text-white"
+                          : "border-gray-300 text-gray-600 hover:text-steel-blue hover:border-steel-blue"
+                      }`}
+                    >
+                      {size}
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -404,17 +359,15 @@ const ProductListingClient = ({
                   className={`bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all group ${viewType === "list" ? "shrink-0 flex" : ""}`}
                 >
                   <div className={`relative bg-light-mint-gray ${viewType === "list" ? "w-64 shrink-0" : "h-64"}`}>
-                    <Image
-                      src={getProductImageSrc(product)}
+                    <ProductImageWithFallback
+                      src={
+                        product.coverPhotoPath
+                          ? getFullImageUrl(product.coverPhotoPath)
+                          : "/dentypro-product-placeholder.png"
+                      }
                       alt={product.productName}
                       fill
                       className="object-contain p-6 group-hover:scale-105 transition-transform duration-500"
-                      onError={() =>
-                        setImageFallbacks((prev) => ({
-                          ...prev,
-                          [product.productId]: true,
-                        }))
-                      }
                     />
                     <button
                       type="button"
@@ -519,41 +472,48 @@ const ProductListingClient = ({
                 of <span className="font-bold text-steel-blue">{totalElements}</span>
               </span>
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="p-2 border border-gray-200 rounded-lg text-gray-400 hover:text-steel-blue disabled:opacity-30"
-                >
-                  <ChevronRight className="w-5 h-5 rotate-180" />
-                </button>
+                {currentPage === 1 ? (
+                  <span className="p-2 border border-gray-200 rounded-lg text-gray-300 opacity-30">
+                    <ChevronRight className="w-5 h-5 rotate-180" />
+                  </span>
+                ) : (
+                  <Link
+                    href={buildUrl({ page: currentPage - 1 })}
+                    className="p-2 border border-gray-200 rounded-lg text-gray-400 hover:text-steel-blue"
+                  >
+                    <ChevronRight className="w-5 h-5 rotate-180" />
+                  </Link>
+                )}
 
                 {Array.from({ length: totalPages }).map((_, i) => {
                   const pageNumber = i + 1
                   return (
-                    <button
+                    <Link
                       key={pageNumber}
-                      type="button"
-                      onClick={() => handlePageChange(pageNumber)}
-                      className={`w-10 h-10 rounded-lg text-sm font-bold transition-all ${
+                      href={buildUrl({ page: pageNumber })}
+                      className={`w-10 h-10 rounded-lg text-sm font-bold transition-all flex items-center justify-center ${
                         currentPage === pageNumber
                           ? "bg-steel-blue text-white shadow-md"
                           : "hover:bg-gray-100 text-gray-600"
                       }`}
                     >
                       {pageNumber}
-                    </button>
+                    </Link>
                   )
                 })}
 
-                <button
-                  type="button"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage >= totalPages}
-                  className="p-2 border border-gray-200 rounded-lg text-gray-400 hover:text-steel-blue disabled:opacity-30"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
+                {currentPage >= totalPages ? (
+                  <span className="p-2 border border-gray-200 rounded-lg text-gray-300 opacity-30">
+                    <ChevronRight className="w-5 h-5" />
+                  </span>
+                ) : (
+                  <Link
+                    href={buildUrl({ page: currentPage + 1 })}
+                    className="p-2 border border-gray-200 rounded-lg text-gray-400 hover:text-steel-blue"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </Link>
+                )}
               </div>
             </div>
           </main>
