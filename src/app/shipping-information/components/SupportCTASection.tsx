@@ -1,4 +1,4 @@
-import { Headphones, Phone, Mail } from "lucide-react"
+import { Headphones, Mail, Phone } from "lucide-react"
 
 export default function SupportCTASection() {
   return (

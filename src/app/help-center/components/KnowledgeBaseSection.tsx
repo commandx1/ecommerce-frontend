@@ -1,5 +1,4 @@
-import { UserPlus, ShoppingCart, Truck, Undo2, CreditCard, Settings } from "lucide-react"
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, CreditCard, Settings, ShoppingCart, Truck, Undo2, UserPlus } from "lucide-react"
 import Link from "next/link"
 
 const categories = [

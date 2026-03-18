@@ -1,10 +1,10 @@
 "use client"
 
-import { useAuthStore } from "@/stores/authStore"
 import { X } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { submitProductQuestion } from "@/lib/api/product-qa"
+import { useAuthStore } from "@/stores/authStore"
 
 interface UserProduct {
   id: string

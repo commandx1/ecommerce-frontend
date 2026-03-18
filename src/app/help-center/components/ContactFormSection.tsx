@@ -1,6 +1,6 @@
 "use client"
 
-import { Phone, Mail, MessageCircle, Send, CloudUpload } from "lucide-react"
+import { CloudUpload, Mail, MessageCircle, Phone, Send } from "lucide-react"
 
 export default function ContactFormSection() {
   return (

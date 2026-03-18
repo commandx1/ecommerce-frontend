@@ -2,9 +2,9 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
+import { toast } from "sonner"
 import { cookieStorage } from "@/lib/storage/cookie-storage"
 import { useAuthStore } from "@/stores/authStore"
-import { toast } from "sonner"
 import VendorHeader from "./components/VendorHeader"
 import VendorSidebar from "./components/VendorSidebar"
 

@@ -5,8 +5,8 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 import { toast } from "sonner"
-import { useAuthStore } from "@/stores/authStore"
 import { verifyTwoFactorLogin } from "@/lib/api/two-factor"
+import { useAuthStore } from "@/stores/authStore"
 
 function Verify2FAContent() {
   const router = useRouter()

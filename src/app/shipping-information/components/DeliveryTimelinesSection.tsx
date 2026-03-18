@@ -1,4 +1,4 @@
-import { Clock, Check, Zap, Truck, Globe, AlertTriangle, Circle } from "lucide-react"
+import { AlertTriangle, Check, Circle, Clock, Globe, Truck, Zap } from "lucide-react"
 
 const steps = [
   {

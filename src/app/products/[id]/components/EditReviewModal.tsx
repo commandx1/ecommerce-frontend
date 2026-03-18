@@ -1,10 +1,10 @@
 "use client"
 
-import { useAuthStore } from "@/stores/authStore"
 import { Star, X } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { updateReview } from "@/lib/api/product-reviews"
+import { useAuthStore } from "@/stores/authStore"
 
 interface Review {
   id: string

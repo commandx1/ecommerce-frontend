@@ -3,7 +3,7 @@
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ExternalLink, Search, X } from "lucide-react"
 import Link from "next/link"
 import { Fragment, useEffect, useState } from "react"
-import { buyerOrdersAPI, type BuyerOrder } from "@/lib/api/buyer-orders"
+import { type BuyerOrder, buyerOrdersAPI } from "@/lib/api/buyer-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useAuthStore } from "@/stores/authStore"
 

@@ -22,6 +22,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
+import { downloadImageAsFileViaProxy } from "@/lib/api/image-proxy"
 import {
   type BarcodeLookupProduct,
   type BarcodeProduct,
@@ -32,7 +33,6 @@ import {
   type Product,
   productsAPI,
 } from "@/lib/api/products"
-import { downloadImageAsFileViaProxy } from "@/lib/api/image-proxy"
 import { useAuthStore } from "@/stores/authStore"
 import VendorHeader from "../../components/VendorHeader"
 import VendorSidebar from "../../components/VendorSidebar"

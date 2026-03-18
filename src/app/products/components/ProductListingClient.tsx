@@ -17,8 +17,8 @@ import Link from "next/link"
 import { getFullImageUrl } from "@/lib/api/products"
 import BrandFilter from "./BrandFilter"
 import ManufacturerFilter from "./ManufacturerFilter"
-import RatingFilter from "./RatingFilter"
 import ProductImageWithFallback from "./ProductImageWithFallback"
+import RatingFilter from "./RatingFilter"
 
 export interface APIProduct {
   productId: string

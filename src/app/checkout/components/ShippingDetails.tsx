@@ -1,14 +1,14 @@
 "use client"
 
 import { ArrowRight, Check, MapPin, Plus } from "lucide-react"
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { useCheckoutStore } from "@/stores/checkoutStore"
-import { useCartStore } from "@/stores/cartStore"
-import { useAuthStore } from "@/stores/authStore"
-import { addressAPI, type Address } from "@/lib/api/address"
-import { toast } from "sonner"
-import VendorShipmentRates from "./VendorShipmentRates"
 import { useRouter } from "next/navigation"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { toast } from "sonner"
+import { type Address, addressAPI } from "@/lib/api/address"
+import { useAuthStore } from "@/stores/authStore"
+import { useCartStore } from "@/stores/cartStore"
+import { useCheckoutStore } from "@/stores/checkoutStore"
+import VendorShipmentRates from "./VendorShipmentRates"
 
 const ShippingDetails = () => {
   const { updateShippingAddress, nextStep, setOrderPayload } = useCheckoutStore()

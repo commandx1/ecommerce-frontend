@@ -1,4 +1,4 @@
-import { BookOpen, Video, Download, Users } from "lucide-react"
+import { BookOpen, Download, Users, Video } from "lucide-react"
 import Link from "next/link"
 
 const resources = [

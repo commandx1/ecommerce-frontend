@@ -2,11 +2,11 @@
 
 import { Bolt, FileText, Minus, Plus, ShieldCheck, ShoppingCart } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
+import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useCartStore } from "@/stores/cartStore"
 import { useSelectedSupplierStore } from "@/stores/selectedSupplierStore"
-import formatCurrency from "@/lib/helpers/formatCurrency"
 
 interface BulkPricing {
   id: number

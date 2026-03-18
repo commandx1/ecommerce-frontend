@@ -1,11 +1,11 @@
 "use client"
 
-import { useAuthStore } from "@/stores/authStore"
 import { AlertTriangle, Fingerprint, Lock, Phone, Save, Shield, Trash2, User } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { deleteMe, updateMe } from "@/lib/api/account"
+import { useAuthStore } from "@/stores/authStore"
 
 interface AccountSettingsSharedProps {
   title: string

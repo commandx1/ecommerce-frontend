@@ -1,4 +1,4 @@
-import { MessageCircle, Phone, Mail, Ticket } from "lucide-react"
+import { Mail, MessageCircle, Phone, Ticket } from "lucide-react"
 
 const options = [
   {

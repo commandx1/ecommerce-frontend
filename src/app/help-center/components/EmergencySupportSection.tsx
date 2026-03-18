@@ -1,4 +1,4 @@
-import { AlertTriangle, Phone, MessageCircle, Mail } from "lucide-react"
+import { AlertTriangle, Mail, MessageCircle, Phone } from "lucide-react"
 
 export default function EmergencySupportSection() {
   return (

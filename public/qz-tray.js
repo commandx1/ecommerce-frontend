@@ -1,5 +1,3 @@
-"use strict"
-
 /**
  * @version 2.2.6-SNAPSHOT
  * @overview QZ Tray Connector
@@ -8,25 +6,19 @@
  * Connects a web client to the QZ Tray software.
  * Enables printing and device communication from javascript.
  */
-var qz = (function () {
+var qz = (() => {
   ///// POLYFILLS /////
 
   if (!Array.isArray) {
-    Array.isArray = function (arg) {
-      return Object.prototype.toString.call(arg) === "[object Array]"
-    }
+    Array.isArray = (arg) => Object.prototype.toString.call(arg) === "[object Array]"
   }
 
   if (!Number.isInteger) {
-    Number.isInteger = function (value) {
-      return typeof value === "number" && isFinite(value) && Math.floor(value) === value
-    }
+    Number.isInteger = (value) => typeof value === "number" && isFinite(value) && Math.floor(value) === value
   }
 
   if (!Array.from) {
-    Array.from = function (object) {
-      return [].slice.call(object)
-    }
+    Array.from = (object) => [].slice.call(object)
   }
 
   if (!String.prototype.padStart) {
@@ -57,27 +49,27 @@ var qz = (function () {
 
     log: {
       /** Debugging messages */
-      trace: function () {
+      trace: () => {
         if (_qz.DEBUG) {
           console.log.apply(console, arguments)
         }
       },
       /** General messages */
-      info: function () {
+      info: () => {
         console.info.apply(console, arguments)
       },
       /** General warnings */
-      warn: function () {
+      warn: () => {
         console.warn.apply(console, arguments)
       },
       /** Debugging errors */
-      allay: function () {
+      allay: () => {
         if (_qz.DEBUG) {
           console.warn.apply(console, arguments)
         }
       },
       /** General errors */
-      error: function () {
+      error: () => {
         console.error.apply(console, arguments)
       },
     },
@@ -119,7 +111,7 @@ var qz = (function () {
 
       setup: {
         /** Loop through possible ports to open connection, sets web socket calls that will settle the promise. */
-        findConnection: function (config, resolve, reject) {
+        findConnection: (config, resolve, reject) => {
           if (_qz.websocket.shutdown) {
             reject(new Error("Connection attempt cancelled by user"))
             return
@@ -139,7 +131,7 @@ var qz = (function () {
             config.usingSecure = true
           }
 
-          var deeper = function () {
+          var deeper = () => {
             if (_qz.websocket.shutdown) {
               //connection attempt was cancelled, bail out
               reject(new Error("Connection attempt cancelled by user"))
@@ -191,7 +183,7 @@ var qz = (function () {
             _qz.websocket.connection.established = false
 
             //called on successful connection to qz, begins setup of websocket calls and resolves connect promise after certificate is sent
-            _qz.websocket.connection.onopen = function (evt) {
+            _qz.websocket.connection.onopen = (evt) => {
               if (!_qz.websocket.connection.established) {
                 _qz.log.trace(evt)
                 _qz.log.info("Established connection with " + _qz.TITLE + " on " + address)
@@ -199,7 +191,7 @@ var qz = (function () {
                 _qz.websocket.setup.openConnection({ resolve: resolve, reject: reject })
 
                 if (config.keepAlive > 0) {
-                  var interval = setInterval(function () {
+                  var interval = setInterval(() => {
                     if (!_qz.tools.isActive() || _qz.websocket.connection.interval !== interval) {
                       clearInterval(interval)
                       return
@@ -214,7 +206,7 @@ var qz = (function () {
             }
 
             //called during websocket close during setup
-            _qz.websocket.connection.onclose = function () {
+            _qz.websocket.connection.onclose = () => {
               // Safari compatibility fix to raise error event
               if (
                 _qz.websocket.connection &&
@@ -227,7 +219,7 @@ var qz = (function () {
             }
 
             //called for errors during setup (such as invalid ports), reject connect promise only if all ports have been tried
-            _qz.websocket.connection.onerror = function (evt) {
+            _qz.websocket.connection.onerror = (evt) => {
               _qz.log.trace(evt)
 
               _qz.websocket.connection = null
@@ -240,7 +232,7 @@ var qz = (function () {
         },
 
         /** Finish setting calls on successful connection, sets web socket calls that won't settle the promise. */
-        openConnection: function (openPromise) {
+        openConnection: (openPromise) => {
           _qz.websocket.connection.established = true
 
           //called when an open connection is closed
@@ -252,7 +244,7 @@ var qz = (function () {
             _qz.log.info("Closed connection with " + _qz.TITLE)
 
             for (var uid in _qz.websocket.pendingCalls) {
-              if (_qz.websocket.pendingCalls.hasOwnProperty(uid)) {
+              if (Object.hasOwn(_qz.websocket.pendingCalls, uid)) {
                 _qz.websocket.pendingCalls[uid].reject(new Error("Connection closed before response received"))
               }
             }
@@ -264,12 +256,12 @@ var qz = (function () {
           }
 
           //called for any errors with an open connection
-          _qz.websocket.connection.onerror = function (evt) {
+          _qz.websocket.connection.onerror = (evt) => {
             _qz.websocket.callError(evt)
           }
 
           //send JSON objects to qz
-          _qz.websocket.connection.sendData = function (obj) {
+          _qz.websocket.connection.sendData = (obj) => {
             _qz.log.trace("Preparing object for websocket", obj)
 
             if (obj.timestamp == undefined) {
@@ -306,16 +298,14 @@ var qz = (function () {
                 //make a hashing promise if not already one
                 var hashing = _qz.tools.hash(_qz.tools.stringify(signObj))
                 if (!hashing.then) {
-                  hashing = _qz.tools.promise(function (resolve) {
+                  hashing = _qz.tools.promise((resolve) => {
                     resolve(hashing)
                   })
                 }
 
                 hashing
-                  .then(function (hashed) {
-                    return _qz.security.callSign(hashed)
-                  })
-                  .then(function (signature) {
+                  .then((hashed) => _qz.security.callSign(hashed))
+                  .then((signature) => {
                     _qz.log.trace("Signature for call", signature)
                     obj.signature = signature || ""
                     obj.signAlgorithm = _qz.security.signAlgorithm
@@ -323,7 +313,7 @@ var qz = (function () {
                     _qz.signContent = undefined
                     _qz.websocket.connection.send(_qz.tools.stringify(obj))
                   })
-                  .catch(function (err) {
+                  .catch((err) => {
                     _qz.log.error("Signing failed", err)
 
                     if (obj.promise != undefined) {
@@ -348,7 +338,7 @@ var qz = (function () {
           }
 
           //receive message from qz
-          _qz.websocket.connection.onmessage = function (evt) {
+          _qz.websocket.connection.onmessage = (evt) => {
             var returned = JSON.parse(evt.data)
 
             if (returned.uid == null) {
@@ -423,7 +413,7 @@ var qz = (function () {
             //websocket setup, query what version is connected
             qz.api
               .getVersion()
-              .then(function (version) {
+              .then((version) => {
                 _qz.websocket.connection.version = version
                 _qz.websocket.connection.semver = version
                   .toLowerCase()
@@ -447,7 +437,7 @@ var qz = (function () {
                 //algorithm can be declared before a connection, check for incompatibilities now that we have one
                 _qz.compatible.algorithm(true)
               })
-              .then(function () {
+              .then(() => {
                 _qz.websocket.connection.sendData({ certificate: cert, promise: openPromise })
               })
           }
@@ -455,7 +445,7 @@ var qz = (function () {
           _qz.security
             .callCert()
             .then(sendCert)
-            .catch(function (error) {
+            .catch((error) => {
               _qz.log.warn("Failed to get certificate:", error)
 
               if (_qz.security.rejectOnCertFailure) {
@@ -467,14 +457,14 @@ var qz = (function () {
         },
 
         /** Generate unique ID used to map a response to a call. */
-        newUID: function () {
+        newUID: () => {
           var len = 6
-          return (new Array(len + 1).join("0") + ((Math.random() * Math.pow(36, len)) << 0).toString(36)).slice(-len)
+          return (new Array(len + 1).join("0") + ((Math.random() * 36 ** len) << 0).toString(36)).slice(-len)
         },
       },
 
-      dataPromise: function (callName, params, signature, signingTimestamp) {
-        return _qz.tools.promise(function (resolve, reject) {
+      dataPromise: (callName, params, signature, signingTimestamp) =>
+        _qz.tools.promise((resolve, reject) => {
           var msg = {
             call: callName,
             promise: { resolve: resolve, reject: reject },
@@ -484,8 +474,7 @@ var qz = (function () {
           }
 
           _qz.websocket.connection.sendData(msg)
-        })
-      },
+        }),
 
       /** Library of promises awaiting a response, uid -> promise */
       pendingCalls: {},
@@ -493,7 +482,7 @@ var qz = (function () {
       /** List of functions to call on error from the websocket. */
       errorCallbacks: [],
       /** Calls all functions registered to listen for errors. */
-      callError: function (evt) {
+      callError: (evt) => {
         if (Array.isArray(_qz.websocket.errorCallbacks)) {
           for (var i = 0; i < _qz.websocket.errorCallbacks.length; i++) {
             _qz.websocket.errorCallbacks[i](evt)
@@ -506,7 +495,7 @@ var qz = (function () {
       /** List of function to call on closing from the websocket. */
       closedCallbacks: [],
       /** Calls all functions registered to listen for closing. */
-      callClose: function (evt) {
+      callClose: (evt) => {
         if (Array.isArray(_qz.websocket.closedCallbacks)) {
           for (var i = 0; i < _qz.websocket.closedCallbacks.length; i++) {
             _qz.websocket.closedCallbacks[i](evt)
@@ -551,7 +540,7 @@ var qz = (function () {
       /** List of functions called when receiving data from serial connection. */
       serialCallbacks: [],
       /** Calls all functions registered to listen for serial events. */
-      callSerial: function (streamEvent) {
+      callSerial: (streamEvent) => {
         if (Array.isArray(_qz.serial.serialCallbacks)) {
           for (var i = 0; i < _qz.serial.serialCallbacks.length; i++) {
             _qz.serial.serialCallbacks[i](streamEvent)
@@ -566,7 +555,7 @@ var qz = (function () {
       /** List of functions called when receiving data from network socket connection. */
       socketCallbacks: [],
       /** Calls all functions registered to listen for network socket events. */
-      callSocket: function (socketEvent) {
+      callSocket: (socketEvent) => {
         if (Array.isArray(_qz.socket.socketCallbacks)) {
           for (var i = 0; i < _qz.socket.socketCallbacks.length; i++) {
             _qz.socket.socketCallbacks[i](socketEvent)
@@ -581,7 +570,7 @@ var qz = (function () {
       /** List of functions called when receiving data from usb connection. */
       usbCallbacks: [],
       /** Calls all functions registered to listen for usb events. */
-      callUsb: function (streamEvent) {
+      callUsb: (streamEvent) => {
         if (Array.isArray(_qz.usb.usbCallbacks)) {
           for (var i = 0; i < _qz.usb.usbCallbacks.length; i++) {
             _qz.usb.usbCallbacks[i](streamEvent)
@@ -596,7 +585,7 @@ var qz = (function () {
       /** List of functions called when receiving data from hid connection. */
       hidCallbacks: [],
       /** Calls all functions registered to listen for hid events. */
-      callHid: function (streamEvent) {
+      callHid: (streamEvent) => {
         if (Array.isArray(_qz.hid.hidCallbacks)) {
           for (var i = 0; i < _qz.hid.hidCallbacks.length; i++) {
             _qz.hid.hidCallbacks[i](streamEvent)
@@ -611,7 +600,7 @@ var qz = (function () {
       /** List of functions called when receiving data from printer connection. */
       printerCallbacks: [],
       /** Calls all functions registered to listen for printer events. */
-      callPrinter: function (streamEvent) {
+      callPrinter: (streamEvent) => {
         if (Array.isArray(_qz.printers.printerCallbacks)) {
           for (var i = 0; i < _qz.printers.printerCallbacks.length; i++) {
             _qz.printers.printerCallbacks[i](streamEvent)
@@ -626,7 +615,7 @@ var qz = (function () {
       /** List of functions called when receiving info regarding file changes. */
       fileCallbacks: [],
       /** Calls all functions registered to listen for file events. */
-      callFile: function (streamEvent) {
+      callFile: (streamEvent) => {
         if (Array.isArray(_qz.file.fileCallbacks)) {
           for (var i = 0; i < _qz.file.fileCallbacks.length; i++) {
             _qz.file.fileCallbacks[i](streamEvent)
@@ -639,11 +628,11 @@ var qz = (function () {
 
     security: {
       /** Function used to resolve promise when acquiring site's public certificate. */
-      certHandler: function (resolve, reject) {
+      certHandler: (resolve, reject) => {
         reject()
       },
       /** Called to create new promise (using {@link _qz.security.certHandler}) for certificate retrieval. */
-      callCert: function () {
+      callCert: () => {
         if (typeof _qz.security.certHandler.then === "function") {
           //already a promise
           return _qz.security.certHandler
@@ -657,13 +646,11 @@ var qz = (function () {
       },
 
       /** Function used to create promise resolver when requiring signed calls. */
-      signatureFactory: function () {
-        return function (resolve) {
-          resolve()
-        }
+      signatureFactory: () => (resolve) => {
+        resolve()
       },
       /** Called to create new promise (using {@link _qz.security.signatureFactory}) for signed calls. */
-      callSign: function (toSign) {
+      callSign: (toSign) => {
         if (_qz.security.signatureFactory.constructor.name === "AsyncFunction") {
           //use directly
           return _qz.security.signatureFactory(toSign)
@@ -678,7 +665,7 @@ var qz = (function () {
 
       rejectOnCertFailure: false,
 
-      needsSigned: function (callName) {
+      needsSigned: (callName) => {
         const undialoged = [
           "printers.getStatus",
           "printers.stopListening",
@@ -699,7 +686,7 @@ var qz = (function () {
 
     tools: {
       /** Create a new promise */
-      promise: function (resolver) {
+      promise: (resolver) => {
         //prefer global object for historical purposes
         if (typeof RSVP !== "undefined") {
           return new RSVP.Promise(resolver)
@@ -711,13 +698,12 @@ var qz = (function () {
       },
 
       /** Stub for rejecting with an Error from withing a Promise */
-      reject: function (error) {
-        return _qz.tools.promise(function (resolve, reject) {
+      reject: (error) =>
+        _qz.tools.promise((resolve, reject) => {
           reject(error)
-        })
-      },
+        }),
 
-      stringify: function (object) {
+      stringify: (object) => {
         //old versions of prototype affect stringify
         var pjson = Array.prototype.toJSON
         delete Array.prototype.toJSON
@@ -739,7 +725,7 @@ var qz = (function () {
         return result
       },
 
-      hash: function (data) {
+      hash: (data) => {
         //prefer global object for historical purposes
         if (typeof Sha256 !== "undefined") {
           return Sha256.hash(data)
@@ -750,7 +736,7 @@ var qz = (function () {
 
       ws: typeof WebSocket !== "undefined" ? WebSocket : null,
 
-      absolute: function (loc) {
+      absolute: (loc) => {
         if (typeof window !== "undefined" && typeof document.createElement === "function") {
           var a = document.createElement("a")
           a.href = loc
@@ -762,7 +748,7 @@ var qz = (function () {
         return loc
       },
 
-      relative: function (data) {
+      relative: (data) => {
         for (var i = 0; i < data.length; i++) {
           if (data[i].constructor === Object) {
             var absolute = false
@@ -806,7 +792,7 @@ var qz = (function () {
       },
 
       /** Performs deep copy to target from remaining params */
-      extend: function (target) {
+      extend: (target) => {
         //special case when reassigning properties as objects in a deep copy
         if (typeof target !== "object") {
           target = {}
@@ -819,7 +805,7 @@ var qz = (function () {
           }
 
           for (var key in source) {
-            if (source.hasOwnProperty(key)) {
+            if (Object.hasOwn(source, key)) {
               if (target === source[key]) {
                 continue
               }
@@ -843,7 +829,7 @@ var qz = (function () {
         return target
       },
 
-      versionCompare: function (major, minor, patch, build) {
+      versionCompare: (major, minor, patch, build) => {
         if (_qz.tools.assertActive()) {
           var semver = _qz.websocket.connection.semver
           if (Array.isArray(semver)) {
@@ -866,20 +852,15 @@ var qz = (function () {
         }
       },
 
-      isVersion: function (major, minor, patch, build) {
-        return _qz.tools.versionCompare(major, minor, patch, build) == 0
-      },
+      isVersion: (major, minor, patch, build) => _qz.tools.versionCompare(major, minor, patch, build) == 0,
 
-      isActive: function () {
-        return (
-          !_qz.websocket.shutdown &&
-          _qz.websocket.connection != null &&
-          (_qz.websocket.connection.readyState === _qz.tools.ws.OPEN ||
-            _qz.websocket.connection.readyState === _qz.tools.ws.CONNECTING)
-        )
-      },
+      isActive: () =>
+        !_qz.websocket.shutdown &&
+        _qz.websocket.connection != null &&
+        (_qz.websocket.connection.readyState === _qz.tools.ws.OPEN ||
+          _qz.websocket.connection.readyState === _qz.tools.ws.CONNECTING),
 
-      assertActive: function () {
+      assertActive: () => {
         if (_qz.tools.isActive()) {
           return true
         }
@@ -887,15 +868,12 @@ var qz = (function () {
         throw new Error("A connection to " + _qz.TITLE + " has not been established yet")
       },
 
-      uint8ArrayToHex: function (uint8) {
-        return Array.from(uint8)
-          .map(function (i) {
-            return i.toString(16).padStart(2, "0")
-          })
-          .join("")
-      },
+      uint8ArrayToHex: (uint8) =>
+        Array.from(uint8)
+          .map((i) => i.toString(16).padStart(2, "0"))
+          .join(""),
 
-      uint8ArrayToBase64: function (uint8) {
+      uint8ArrayToBase64: (uint8) => {
         /**
          * Adapted from Egor Nepomnyaschih's code under MIT Licence (C) 2020
          * see https://gist.github.com/enepomnyaschih/72c423f727d395eeaa09697058238727
@@ -995,7 +973,7 @@ var qz = (function () {
 
     compatible: {
       /** Converts message format to a previous version's */
-      data: function (printData) {
+      data: (printData) => {
         // special handling for Uint8Array
         for (var i = 0; i < printData.length; i++) {
           if (printData[i].constructor === Object && printData[i].data instanceof Uint8Array) {
@@ -1067,7 +1045,7 @@ var qz = (function () {
       },
 
       /* Converts config defaults to match previous version */
-      config: function (config, dirty) {
+      config: (config, dirty) => {
         if (_qz.tools.isVersion(2, 0)) {
           if (!dirty.rasterize) {
             config.rasterize = true
@@ -1096,10 +1074,10 @@ var qz = (function () {
       },
 
       /** Compat wrapper with previous version **/
-      networking: function (hostname, port, signature, signingTimestamp, mappingCallback) {
+      networking: (hostname, port, signature, signingTimestamp, mappingCallback) => {
         // Use 2.0
         if (_qz.tools.isVersion(2, 0)) {
-          return _qz.tools.promise(function (resolve, reject) {
+          return _qz.tools.promise((resolve, reject) => {
             _qz.websocket
               .dataPromise(
                 "websocket.getNetworkInfo",
@@ -1110,7 +1088,7 @@ var qz = (function () {
                 signature,
                 signingTimestamp,
               )
-              .then(function (data) {
+              .then((data) => {
                 if (typeof mappingCallback !== "undefined") {
                   resolve(mappingCallback(data))
                 } else {
@@ -1120,7 +1098,7 @@ var qz = (function () {
           })
         }
         // Wrap 2.1
-        return _qz.tools.promise(function (resolve, reject) {
+        return _qz.tools.promise((resolve, reject) => {
           _qz.websocket
             .dataPromise(
               "networking.device",
@@ -1131,14 +1109,14 @@ var qz = (function () {
               signature,
               signingTimestamp,
             )
-            .then(function (data) {
+            .then((data) => {
               resolve({ ipAddress: data.ip, macAddress: data.mac })
             }, reject)
         })
       },
 
       /** Check if QZ version supports chosen algorithm */
-      algorithm: function (quiet) {
+      algorithm: (quiet) => {
         //if not connected yet we will assume compatibility exists for the time being
         //check semver to guard race condition for pending connections
         if (_qz.tools.isActive() && _qz.websocket.connection.semver) {
@@ -1162,7 +1140,7 @@ var qz = (function () {
      */
     SHA: {
       //@formatter:off - keep this block compact
-      hash: function (msg) {
+      hash: (msg) => {
         // add trailing '1' bit (+ 0's padding) to string [§5.1.1]
         msg = _qz.SHA._utf8Encode(msg) + String.fromCharCode(0x80)
 
@@ -1199,7 +1177,7 @@ var qz = (function () {
         // add length (in bits) into final pair of 32-bit integers (big-endian) [§5.1.1]
         // note: most significant word would be (len-1)*8 >>> 32, but since JS converts
         // bitwise-op args to 32 bits, we need to simulate this by arithmetic operators
-        M[N - 1][14] = ((msg.length - 1) * 8) / Math.pow(2, 32)
+        M[N - 1][14] = ((msg.length - 1) * 8) / 2 ** 32
         M[N - 1][14] = Math.floor(M[N - 1][14])
         M[N - 1][15] = ((msg.length - 1) * 8) & 0xffffffff
 
@@ -1260,30 +1238,16 @@ var qz = (function () {
       },
 
       // Rotates right (circular right shift) value x by n positions
-      _rotr: function (n, x) {
-        return (x >>> n) | (x << (32 - n))
-      },
+      _rotr: (n, x) => (x >>> n) | (x << (32 - n)),
       // logical functions
-      _sig0: function (x) {
-        return _qz.SHA._rotr(2, x) ^ _qz.SHA._rotr(13, x) ^ _qz.SHA._rotr(22, x)
-      },
-      _sig1: function (x) {
-        return _qz.SHA._rotr(6, x) ^ _qz.SHA._rotr(11, x) ^ _qz.SHA._rotr(25, x)
-      },
-      _dev0: function (x) {
-        return _qz.SHA._rotr(7, x) ^ _qz.SHA._rotr(18, x) ^ (x >>> 3)
-      },
-      _dev1: function (x) {
-        return _qz.SHA._rotr(17, x) ^ _qz.SHA._rotr(19, x) ^ (x >>> 10)
-      },
-      _ch: function (x, y, z) {
-        return (x & y) ^ (~x & z)
-      },
-      _maj: function (x, y, z) {
-        return (x & y) ^ (x & z) ^ (y & z)
-      },
+      _sig0: (x) => _qz.SHA._rotr(2, x) ^ _qz.SHA._rotr(13, x) ^ _qz.SHA._rotr(22, x),
+      _sig1: (x) => _qz.SHA._rotr(6, x) ^ _qz.SHA._rotr(11, x) ^ _qz.SHA._rotr(25, x),
+      _dev0: (x) => _qz.SHA._rotr(7, x) ^ _qz.SHA._rotr(18, x) ^ (x >>> 3),
+      _dev1: (x) => _qz.SHA._rotr(17, x) ^ _qz.SHA._rotr(19, x) ^ (x >>> 10),
+      _ch: (x, y, z) => (x & y) ^ (~x & z),
+      _maj: (x, y, z) => (x & y) ^ (x & z) ^ (y & z),
       // note can't use toString(16) as it is implementation-dependant, and in IE returns signed numbers when used on full words
-      _hexStr: function (n) {
+      _hexStr: (n) => {
         var s = "",
           v
         for (var i = 7; i >= 0; i--) {
@@ -1293,8 +1257,8 @@ var qz = (function () {
         return s
       },
       // implementation of deprecated unescape() based on https://cwestblog.com/2011/05/23/escape-unescape-deprecated/ (and comments)
-      _unescape: function (str) {
-        return str.replace(/%(u[\da-f]{4}|[\da-f]{2})/gi, function (seq) {
+      _unescape: (str) =>
+        str.replace(/%(u[\da-f]{4}|[\da-f]{2})/gi, (seq) => {
           if (seq.length - 1) {
             return String.fromCharCode(parseInt(seq.substring(seq.length - 3 ? 2 : 1), 16))
           } else {
@@ -1303,11 +1267,8 @@ var qz = (function () {
               ? "%" + (0 + code.toString(16)).slice(-2).toUpperCase()
               : "%u" + ("000" + code.toString(16)).slice(-4).toUpperCase()
           }
-        })
-      },
-      _utf8Encode: function (str) {
-        return _qz.SHA._unescape(encodeURIComponent(str))
-      },
+        }),
+      _utf8Encode: (str) => _qz.SHA._unescape(encodeURIComponent(str)),
       //@formatter:on
     },
   }
@@ -1403,9 +1364,7 @@ var qz = (function () {
        *
        * @memberof  qz.websocket
        */
-      isActive: function () {
-        return _qz.tools.isActive()
-      },
+      isActive: () => _qz.tools.isActive(),
 
       /**
        * Call to setup connection with QZ Tray on user's system.
@@ -1424,8 +1383,8 @@ var qz = (function () {
        *
        * @memberof qz.websocket
        */
-      connect: function (options) {
-        return _qz.tools.promise(function (resolve, reject) {
+      connect: (options) =>
+        _qz.tools.promise((resolve, reject) => {
           if (_qz.websocket.connection) {
             const state = _qz.websocket.connection.readyState
 
@@ -1469,9 +1428,9 @@ var qz = (function () {
           }
 
           _qz.websocket.shutdown = false //reset state for new connection attempt
-          var attempt = function (count) {
+          var attempt = (count) => {
             var tried = false
-            var nextAttempt = function () {
+            var nextAttempt = () => {
               if (!tried) {
                 tried = true
 
@@ -1484,7 +1443,7 @@ var qz = (function () {
               }
             }
 
-            var delayed = function () {
+            var delayed = () => {
               var config = _qz.tools.extend({}, _qz.websocket.connectConfig, options)
               _qz.websocket.setup.findConnection(config, resolve, nextAttempt)
             }
@@ -1496,8 +1455,7 @@ var qz = (function () {
           }
 
           attempt(0)
-        })
-      },
+        }),
 
       /**
        * Stop any active connection with QZ Tray.
@@ -1506,8 +1464,8 @@ var qz = (function () {
        *
        * @memberof qz.websocket
        */
-      disconnect: function () {
-        return _qz.tools.promise(function (resolve, reject) {
+      disconnect: () =>
+        _qz.tools.promise((resolve, reject) => {
           if (_qz.websocket.connection != null) {
             if (_qz.tools.isActive()) {
               // handles closing both 'connecting' and 'connected' states
@@ -1520,8 +1478,7 @@ var qz = (function () {
           } else {
             reject(new Error("No open connection with " + _qz.TITLE))
           }
-        })
-      },
+        }),
 
       /**
        * List of functions called for any connections errors outside of an API call.<p/>
@@ -1531,7 +1488,7 @@ var qz = (function () {
        *
        * @memberof qz.websocket
        */
-      setErrorCallbacks: function (calls) {
+      setErrorCallbacks: (calls) => {
         _qz.websocket.errorCallbacks = calls
       },
 
@@ -1543,7 +1500,7 @@ var qz = (function () {
        *
        * @memberof qz.websocket
        */
-      setClosedCallbacks: function (calls) {
+      setClosedCallbacks: (calls) => {
         _qz.websocket.closedCallbacks = calls
       },
 
@@ -1566,9 +1523,9 @@ var qz = (function () {
        *
        * @memberof qz.websocket
        */
-      getConnectionInfo: function () {
+      getConnectionInfo: () => {
         if (_qz.tools.assertActive()) {
-          var url = _qz.websocket.connection.url.split(/[:\/]+/g)
+          var url = _qz.websocket.connection.url.split(/[:/]+/g)
           return { socket: url[0], host: url[1], port: +url[2] }
         }
       },
@@ -1587,9 +1544,8 @@ var qz = (function () {
        *
        * @memberof qz.printers
        */
-      getDefault: function (signature, signingTimestamp) {
-        return _qz.websocket.dataPromise("printers.getDefault", null, signature, signingTimestamp)
-      },
+      getDefault: (signature, signingTimestamp) =>
+        _qz.websocket.dataPromise("printers.getDefault", null, signature, signingTimestamp),
 
       /**
        * @param {string} [query] Search for a specific printer. All printers are returned if not provided.
@@ -1601,9 +1557,8 @@ var qz = (function () {
        *
        * @memberof qz.printers
        */
-      find: function (query, signature, signingTimestamp) {
-        return _qz.websocket.dataPromise("printers.find", { query: query }, signature, signingTimestamp)
-      },
+      find: (query, signature, signingTimestamp) =>
+        _qz.websocket.dataPromise("printers.find", { query: query }, signature, signingTimestamp),
 
       /**
        * Provides a list, with additional information, for each printer available to QZ.
@@ -1612,9 +1567,7 @@ var qz = (function () {
        *
        * @memberof qz.printers
        */
-      details: function () {
-        return _qz.websocket.dataPromise("printers.detail")
-      },
+      details: () => _qz.websocket.dataPromise("printers.detail"),
 
       /**
        * Start listening for printer status events, such as paper_jam events.
@@ -1633,7 +1586,7 @@ var qz = (function () {
        *
        * @memberof qz.printers
        */
-      startListening: function (printers, options) {
+      startListening: (printers, options) => {
         if (!Array.isArray(printers)) {
           printers = [printers]
         }
@@ -1658,7 +1611,7 @@ var qz = (function () {
        *
        * @memberof qz.printers
        */
-      clearQueue: function (options) {
+      clearQueue: (options) => {
         if (typeof options !== "object") {
           options = {
             printerName: options,
@@ -1677,9 +1630,7 @@ var qz = (function () {
        *
        * @memberof qz.printers
        */
-      stopListening: function () {
-        return _qz.websocket.dataPromise("printers.stopListening")
-      },
+      stopListening: () => _qz.websocket.dataPromise("printers.stopListening"),
 
       /**
        * Retrieve current printer status from any active listeners.
@@ -1691,9 +1642,7 @@ var qz = (function () {
        *
        * @memberof qz.printers
        */
-      getStatus: function () {
-        return _qz.websocket.dataPromise("printers.getStatus")
-      },
+      getStatus: () => _qz.websocket.dataPromise("printers.getStatus"),
 
       /**
        * List of functions called for any printer status change.
@@ -1707,7 +1656,7 @@ var qz = (function () {
        *
        * @memberof qz.printers
        */
-      setPrinterCallbacks: function (calls) {
+      setPrinterCallbacks: (calls) => {
         _qz.printers.printerCallbacks = calls
       },
     },
@@ -1772,7 +1721,7 @@ var qz = (function () {
        *
        * @memberof qz.configs
        */
-      setDefaults: function (options) {
+      setDefaults: (options) => {
         _qz.tools.extend(_qz.printing.defaultConfig, options)
       },
 
@@ -1792,9 +1741,7 @@ var qz = (function () {
        *
        * @memberof qz.configs
        */
-      create: function (printer, options) {
-        return new Config(printer, options)
-      },
+      create: (printer, options) => new Config(printer, options),
     },
 
     /**
@@ -1853,7 +1800,7 @@ var qz = (function () {
      *
      * @memberof qz
      */
-    print: function (configs, data) {
+    print: (configs, data) => {
       var resumeOnError = false,
         signatures = [],
         signaturesTimestamps = []
@@ -1894,7 +1841,7 @@ var qz = (function () {
         _qz.compatible.data(data[d])
       }
 
-      var sendToPrint = function (mapping) {
+      var sendToPrint = (mapping) => {
         var params = {
           printer: mapping.config.getPrinter(),
           options: mapping.config.getOptions(),
@@ -1907,7 +1854,7 @@ var qz = (function () {
       //chain instead of Promise.all, so resumeOnError can collect each error
       var chain = []
       for (var i = 0; i < configs.length || i < data.length; i++) {
-        ;(function (i_) {
+        ;((i_) => {
           var map = {
             config: configs[Math.min(i_, configs.length - 1)],
             data: data[Math.min(i_, data.length - 1)],
@@ -1915,9 +1862,7 @@ var qz = (function () {
             timestamp: signaturesTimestamps[i_],
           }
 
-          chain.push(function () {
-            return sendToPrint(map)
-          })
+          chain.push(() => sendToPrint(map))
         })(i)
       }
 
@@ -1925,25 +1870,25 @@ var qz = (function () {
       var fallThrough = null
       if (resumeOnError) {
         var fallen = []
-        fallThrough = function (err) {
+        fallThrough = (err) => {
           fallen.push(err)
         }
 
         //final promise to reject any errors as a group
-        chain.push(function () {
-          return _qz.tools.promise(function (resolve, reject) {
+        chain.push(() =>
+          _qz.tools.promise((resolve, reject) => {
             fallen.length ? reject(fallen) : resolve()
-          })
-        })
+          }),
+        )
       }
 
       var last = null
       chain.reduce(
-        function (sequence, link) {
+        (sequence, link) => {
           last = sequence.catch(fallThrough).then(link) //catch is ignored if fallThrough is null
           return last
         },
-        _qz.tools.promise(function (r) {
+        _qz.tools.promise((r) => {
           r()
         }),
       ) //an immediately resolved promise to start off the chain
@@ -1962,9 +1907,7 @@ var qz = (function () {
        *
        * @memberof qz.serial
        */
-      findPorts: function () {
-        return _qz.websocket.dataPromise("serial.findPorts")
-      },
+      findPorts: () => _qz.websocket.dataPromise("serial.findPorts"),
 
       /**
        * List of functions called for any response from open serial ports.
@@ -1976,7 +1919,7 @@ var qz = (function () {
        *
        * @memberof qz.serial
        */
-      setSerialCallbacks: function (calls) {
+      setSerialCallbacks: (calls) => {
         _qz.serial.serialCallbacks = calls
       },
 
@@ -2013,7 +1956,7 @@ var qz = (function () {
        *
        * @memberof qz.serial
        */
-      openPort: function (port, options) {
+      openPort: (port, options) => {
         var params = {
           port: port,
           options: options,
@@ -2038,7 +1981,7 @@ var qz = (function () {
        *
        * @memberof qz.serial
        */
-      sendData: function (port, data, options) {
+      sendData: (port, data, options) => {
         if (_qz.tools.versionCompare(2, 1, 0, 12) >= 0) {
           if (typeof data !== "object") {
             data = {
@@ -2067,9 +2010,7 @@ var qz = (function () {
        *
        * @memberof qz.serial
        */
-      closePort: function (port) {
-        return _qz.websocket.dataPromise("serial.closePort", { port: port })
-      },
+      closePort: (port) => _qz.websocket.dataPromise("serial.closePort", { port: port }),
     },
 
     /**
@@ -2087,7 +2028,7 @@ var qz = (function () {
        *
        * @memberof qz.socket
        */
-      open: function (host, port, options) {
+      open: (host, port, options) => {
         var params = {
           host: host,
           port: port,
@@ -2102,7 +2043,7 @@ var qz = (function () {
        *
        * @memberof qz.socket
        */
-      close: function (host, port) {
+      close: (host, port) => {
         var params = {
           host: host,
           port: port,
@@ -2121,7 +2062,7 @@ var qz = (function () {
        *
        * @memberof qz.socket
        */
-      sendData: function (host, port, data) {
+      sendData: (host, port, data) => {
         if (typeof data !== "object") {
           data = {
             data: data,
@@ -2147,7 +2088,7 @@ var qz = (function () {
        *
        * @memberof qz.socket
        */
-      setSocketCallbacks: function (calls) {
+      setSocketCallbacks: (calls) => {
         _qz.socket.socketCallbacks = calls
       },
     },
@@ -2166,9 +2107,7 @@ var qz = (function () {
        *
        * @memberof qz.usb
        */
-      listDevices: function (includeHubs) {
-        return _qz.websocket.dataPromise("usb.listDevices", { includeHubs: includeHubs })
-      },
+      listDevices: (includeHubs) => _qz.websocket.dataPromise("usb.listDevices", { includeHubs: includeHubs }),
 
       /**
        * @param {object} deviceInfo Config details of the HID device.
@@ -2178,7 +2117,7 @@ var qz = (function () {
        *
        * @memberof qz.usb
        */
-      listInterfaces: function (deviceInfo) {
+      listInterfaces: (deviceInfo) => {
         if (typeof deviceInfo !== "object") {
           deviceInfo = { vendorId: arguments[0], productId: arguments[1] }
         } //backwards compatibility
@@ -2195,7 +2134,7 @@ var qz = (function () {
        *
        * @memberof qz.usb
        */
-      listEndpoints: function (deviceInfo) {
+      listEndpoints: (deviceInfo) => {
         //backwards compatibility
         if (typeof deviceInfo !== "object") {
           deviceInfo = {
@@ -2218,7 +2157,7 @@ var qz = (function () {
        *
        * @memberof qz.usb
        */
-      setUsbCallbacks: function (calls) {
+      setUsbCallbacks: (calls) => {
         _qz.usb.usbCallbacks = calls
       },
 
@@ -2233,7 +2172,7 @@ var qz = (function () {
        *
        * @memberof qz.usb
        */
-      claimDevice: function (deviceInfo) {
+      claimDevice: (deviceInfo) => {
         //backwards compatibility
         if (typeof deviceInfo !== "object") {
           deviceInfo = {
@@ -2257,7 +2196,7 @@ var qz = (function () {
        * @since 2.0.2
        * @memberOf qz.usb
        */
-      isClaimed: function (deviceInfo) {
+      isClaimed: (deviceInfo) => {
         if (typeof deviceInfo !== "object") {
           deviceInfo = { vendorId: arguments[0], productId: arguments[1] }
         } //backwards compatibility
@@ -2278,7 +2217,7 @@ var qz = (function () {
        *
        * @memberof qz.usb
        */
-      sendData: function (deviceInfo) {
+      sendData: (deviceInfo) => {
         //backwards compatibility
         if (typeof deviceInfo !== "object") {
           deviceInfo = {
@@ -2317,7 +2256,7 @@ var qz = (function () {
        *
        * @memberof qz.usb
        */
-      readData: function (deviceInfo) {
+      readData: (deviceInfo) => {
         //backwards compatibility
         if (typeof deviceInfo !== "object") {
           deviceInfo = {
@@ -2346,7 +2285,7 @@ var qz = (function () {
        *
        * @memberof qz.usb
        */
-      openStream: function (deviceInfo) {
+      openStream: (deviceInfo) => {
         //backwards compatibility
         if (typeof deviceInfo !== "object") {
           deviceInfo = {
@@ -2372,7 +2311,7 @@ var qz = (function () {
        *
        * @memberof qz.usb
        */
-      closeStream: function (deviceInfo) {
+      closeStream: (deviceInfo) => {
         //backwards compatibility
         if (typeof deviceInfo !== "object") {
           deviceInfo = {
@@ -2395,7 +2334,7 @@ var qz = (function () {
        *
        * @memberof qz.usb
        */
-      releaseDevice: function (deviceInfo) {
+      releaseDevice: (deviceInfo) => {
         if (typeof deviceInfo !== "object") {
           deviceInfo = { vendorId: arguments[0], productId: arguments[1] }
         } //backwards compatibility
@@ -2421,9 +2360,7 @@ var qz = (function () {
        *
        * @memberof qz.hid
        */
-      listDevices: function () {
-        return _qz.websocket.dataPromise("hid.listDevices")
-      },
+      listDevices: () => _qz.websocket.dataPromise("hid.listDevices"),
 
       /**
        * Start listening for HID device actions, such as attach / detach events.
@@ -2436,9 +2373,7 @@ var qz = (function () {
        *
        * @memberof qz.hid
        */
-      startListening: function () {
-        return _qz.websocket.dataPromise("hid.startListening")
-      },
+      startListening: () => _qz.websocket.dataPromise("hid.startListening"),
 
       /**
        * Stop listening for HID device actions.
@@ -2450,9 +2385,7 @@ var qz = (function () {
        *
        * @memberof qz.hid
        */
-      stopListening: function () {
-        return _qz.websocket.dataPromise("hid.stopListening")
-      },
+      stopListening: () => _qz.websocket.dataPromise("hid.stopListening"),
 
       /**
        * List of functions called for any response from open usb devices.
@@ -2466,7 +2399,7 @@ var qz = (function () {
        *
        * @memberof qz.hid
        */
-      setHidCallbacks: function (calls) {
+      setHidCallbacks: (calls) => {
         _qz.hid.hidCallbacks = calls
       },
 
@@ -2483,7 +2416,7 @@ var qz = (function () {
        *
        * @memberof qz.hid
        */
-      claimDevice: function (deviceInfo) {
+      claimDevice: (deviceInfo) => {
         if (typeof deviceInfo !== "object") {
           deviceInfo = { vendorId: arguments[0], productId: arguments[1] }
         } //backwards compatibility
@@ -2504,7 +2437,7 @@ var qz = (function () {
        * @since 2.0.2
        * @memberOf qz.hid
        */
-      isClaimed: function (deviceInfo) {
+      isClaimed: (deviceInfo) => {
         if (typeof deviceInfo !== "object") {
           deviceInfo = { vendorId: arguments[0], productId: arguments[1] }
         } //backwards compatibility
@@ -2530,7 +2463,7 @@ var qz = (function () {
        *
        * @memberof qz.hid
        */
-      sendData: function (deviceInfo) {
+      sendData: (deviceInfo) => {
         //backwards compatibility
         if (typeof deviceInfo !== "object") {
           deviceInfo = {
@@ -2586,7 +2519,7 @@ var qz = (function () {
        *
        * @memberof qz.hid
        */
-      readData: function (deviceInfo) {
+      readData: (deviceInfo) => {
         //backwards compatibility
         if (typeof deviceInfo !== "object") {
           deviceInfo = {
@@ -2616,9 +2549,7 @@ var qz = (function () {
        *
        * @memberof qz.hid
        */
-      sendFeatureReport: function (deviceInfo) {
-        return _qz.websocket.dataPromise("hid.sendFeatureReport", deviceInfo)
-      },
+      sendFeatureReport: (deviceInfo) => _qz.websocket.dataPromise("hid.sendFeatureReport", deviceInfo),
 
       /**
        * Get a feature report from a claimed HID device.
@@ -2633,9 +2564,7 @@ var qz = (function () {
        *
        * @memberof qz.hid
        */
-      getFeatureReport: function (deviceInfo) {
-        return _qz.websocket.dataPromise("hid.getFeatureReport", deviceInfo)
-      },
+      getFeatureReport: (deviceInfo) => _qz.websocket.dataPromise("hid.getFeatureReport", deviceInfo),
 
       /**
        * Provides a continuous stream of read data from a claimed HID device.
@@ -2654,7 +2583,7 @@ var qz = (function () {
        *
        * @memberof qz.hid
        */
-      openStream: function (deviceInfo) {
+      openStream: (deviceInfo) => {
         //backwards compatibility
         if (typeof deviceInfo !== "object") {
           deviceInfo = {
@@ -2681,7 +2610,7 @@ var qz = (function () {
        *
        * @memberof qz.hid
        */
-      closeStream: function (deviceInfo) {
+      closeStream: (deviceInfo) => {
         if (typeof deviceInfo !== "object") {
           deviceInfo = { vendorId: arguments[0], productId: arguments[1] }
         } //backwards compatibility
@@ -2702,7 +2631,7 @@ var qz = (function () {
        *
        * @memberof qz.hid
        */
-      releaseDevice: function (deviceInfo) {
+      releaseDevice: (deviceInfo) => {
         if (typeof deviceInfo !== "object") {
           deviceInfo = { vendorId: arguments[0], productId: arguments[1] }
         } //backwards compatibility
@@ -2729,7 +2658,7 @@ var qz = (function () {
        *
        * @memberof qz.file
        */
-      list: function (path, params) {
+      list: (path, params) => {
         var param = _qz.tools.extend({ path: path }, params)
         return _qz.websocket.dataPromise("file.list", param)
       },
@@ -2747,7 +2676,7 @@ var qz = (function () {
        *
        * @memberof qz.file
        */
-      read: function (path, params) {
+      read: (path, params) => {
         var param = _qz.tools.extend({ path: path }, params)
         return _qz.websocket.dataPromise("file.read", param)
       },
@@ -2767,7 +2696,7 @@ var qz = (function () {
        *
        * @memberof qz.file
        */
-      write: function (path, params) {
+      write: (path, params) => {
         var param = _qz.tools.extend({ path: path }, params)
         return _qz.websocket.dataPromise("file.write", param)
       },
@@ -2784,7 +2713,7 @@ var qz = (function () {
        *
        * @memberof qz.file
        */
-      remove: function (path, params) {
+      remove: (path, params) => {
         var param = _qz.tools.extend({ path: path }, params)
         return _qz.websocket.dataPromise("file.remove", param)
       },
@@ -2810,7 +2739,7 @@ var qz = (function () {
        *
        * @memberof qz.file
        */
-      startListening: function (path, params) {
+      startListening: (path, params) => {
         if (params && typeof params.include !== "undefined" && !Array.isArray(params.include)) {
           params.include = [params.include]
         }
@@ -2832,7 +2761,7 @@ var qz = (function () {
        *
        * @memberof qz.file
        */
-      stopListening: function (path, params) {
+      stopListening: (path, params) => {
         var param = _qz.tools.extend({ path: path }, params)
         return _qz.websocket.dataPromise("file.stopListening", param)
       },
@@ -2847,7 +2776,7 @@ var qz = (function () {
        *
        * @memberof qz.file
        */
-      setFileCallbacks: function (calls) {
+      setFileCallbacks: (calls) => {
         _qz.file.fileCallbacks = calls
       },
     },
@@ -2866,12 +2795,13 @@ var qz = (function () {
        * @memberof qz.networking
        * @since 2.1.0
        */
-      device: function (hostname, port) {
+      device: (hostname, port) => {
         // Wrap 2.0
         if (_qz.tools.isVersion(2, 0)) {
-          return _qz.compatible.networking(hostname, port, null, null, function (data) {
-            return { ip: data.ipAddress, mac: data.macAddress }
-          })
+          return _qz.compatible.networking(hostname, port, null, null, (data) => ({
+            ip: data.ipAddress,
+            mac: data.macAddress,
+          }))
         }
         // Use 2.1
         return _qz.websocket.dataPromise("networking.device", {
@@ -2890,11 +2820,11 @@ var qz = (function () {
        * @memberof qz.networking
        * @since 2.2.2
        */
-      hostname: function (hostname, port) {
+      hostname: (hostname, port) => {
         // Wrap < 2.2.2
         if (_qz.tools.versionCompare(2, 2, 2) < 0) {
-          return _qz.tools.promise(function (resolve, reject) {
-            _qz.websocket.dataPromise("networking.device", { hostname: hostname, port: port }).then(function (device) {
+          return _qz.tools.promise((resolve, reject) => {
+            _qz.websocket.dataPromise("networking.device", { hostname: hostname, port: port }).then((device) => {
               console.log(device)
               resolve(device.hostname)
             })
@@ -2912,12 +2842,12 @@ var qz = (function () {
        * @memberof qz.networking
        * @since 2.1.0
        */
-      devices: function (hostname, port) {
+      devices: (hostname, port) => {
         // Wrap 2.0
         if (_qz.tools.isVersion(2, 0)) {
-          return _qz.compatible.networking(hostname, port, null, null, function (data) {
-            return [{ ip: data.ipAddress, mac: data.macAddress }]
-          })
+          return _qz.compatible.networking(hostname, port, null, null, (data) => [
+            { ip: data.ipAddress, mac: data.macAddress },
+          ])
         }
         // Use 2.1
         return _qz.websocket.dataPromise("networking.devices", {
@@ -2941,7 +2871,7 @@ var qz = (function () {
        *  @param {boolean} [options.rejectOnFailure=[false]] Overrides default behavior to call resolve with a blank certificate on failure.
        * @memberof qz.security
        */
-      setCertificatePromise: function (promiseHandler, options) {
+      setCertificatePromise: (promiseHandler, options) => {
         _qz.security.certHandler = promiseHandler
         _qz.security.rejectOnCertFailure = !!(options && options.rejectOnFailure)
       },
@@ -2963,7 +2893,7 @@ var qz = (function () {
        *
        * @memberof qz.security
        */
-      setSignaturePromise: function (promiseFactory) {
+      setSignaturePromise: (promiseFactory) => {
         _qz.security.signatureFactory = promiseFactory
       },
 
@@ -2975,7 +2905,7 @@ var qz = (function () {
        *
        * @memberof qz.security
        */
-      setSignatureAlgorithm: function (algorithm) {
+      setSignatureAlgorithm: (algorithm) => {
         //warn for incompatibilities if known
         if (!_qz.compatible.algorithm()) {
           return
@@ -2996,9 +2926,7 @@ var qz = (function () {
        *
        * @memberof qz.security
        */
-      getSignatureAlgorithm: function () {
-        return _qz.security.signAlgorithm
-      },
+      getSignatureAlgorithm: () => _qz.security.signAlgorithm,
     },
 
     /**
@@ -3013,9 +2941,7 @@ var qz = (function () {
        * @returns {boolean} Value of debugging flag
        * @memberof qz.api
        */
-      showDebug: function (show) {
-        return (_qz.DEBUG = show)
-      },
+      showDebug: (show) => (_qz.DEBUG = show),
 
       /**
        * Get internal branding title used by logs and exceptions (e.g "QZ Tray")
@@ -3024,9 +2950,7 @@ var qz = (function () {
        *
        * @memberof qz.api
        */
-      getTitle: function () {
-        return _qz.TITLE
-      },
+      getTitle: () => _qz.TITLE,
 
       /**
        * Get version of connected QZ Tray application.
@@ -3035,9 +2959,7 @@ var qz = (function () {
        *
        * @memberof qz.api
        */
-      getVersion: function () {
-        return _qz.websocket.dataPromise("getVersion")
-      },
+      getVersion: () => _qz.websocket.dataPromise("getVersion"),
 
       /**
        * Checks for the specified version of connected QZ Tray application.
@@ -3062,9 +2984,7 @@ var qz = (function () {
        * @memberof qz.api
        * @since 2.1.0-4
        */
-      isVersionGreater: function (major, minor, patch, build) {
-        return _qz.tools.versionCompare(major, minor, patch, build) > 0
-      },
+      isVersionGreater: (major, minor, patch, build) => _qz.tools.versionCompare(major, minor, patch, build) > 0,
 
       /**
        * Checks if the connected QZ Tray application is less than the specified version.
@@ -3078,9 +2998,7 @@ var qz = (function () {
        * @memberof qz.api
        * @since 2.1.0-4
        */
-      isVersionLess: function (major, minor, patch, build) {
-        return _qz.tools.versionCompare(major, minor, patch, build) < 0
-      },
+      isVersionLess: (major, minor, patch, build) => _qz.tools.versionCompare(major, minor, patch, build) < 0,
 
       /**
        * Change the promise library used by QZ API.
@@ -3090,7 +3008,7 @@ var qz = (function () {
        *
        * @memberof qz.api
        */
-      setPromiseType: function (promiser) {
+      setPromiseType: (promiser) => {
         _qz.tools.promise = promiser
       },
 
@@ -3102,7 +3020,7 @@ var qz = (function () {
        *
        * @memberof qz.api
        */
-      setSha256Type: function (hasher) {
+      setSha256Type: (hasher) => {
         _qz.tools.hash = hasher
       },
 
@@ -3114,7 +3032,7 @@ var qz = (function () {
        *
        * @memberof qz.api
        */
-      setTitle: function (title) {
+      setTitle: (title) => {
         _qz.TITLE = title
       },
 
@@ -3126,7 +3044,7 @@ var qz = (function () {
        *
        * @memberof qz.api
        */
-      setWebSocketType: function (ws) {
+      setWebSocketType: (ws) => {
         _qz.tools.ws = ws
       },
     },
@@ -3144,7 +3062,7 @@ var qz = (function () {
   return qz
 })()
 
-;(function () {
+;(() => {
   if (typeof define === "function" && define.amd) {
     define(qz)
   } else if (typeof exports === "object") {

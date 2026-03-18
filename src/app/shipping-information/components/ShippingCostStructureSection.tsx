@@ -1,4 +1,4 @@
-import { Calculator, Weight, Ruler, MapPin, Gauge, Shield, CheckCircle, Info } from "lucide-react"
+import { Calculator, CheckCircle, Gauge, Info, MapPin, Ruler, Shield, Weight } from "lucide-react"
 
 const costFactors = [
   {

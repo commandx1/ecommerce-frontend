@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useAuthStore } from "@/stores/authStore"
+import { useEffect, useState } from "react"
 import { fetchUserProductStats, type ProductStats } from "@/lib/api/vendor-products"
+import { useAuthStore } from "@/stores/authStore"
 
 export type FilterType = "ALL" | "TOTAL" | "ACTIVE" | "INACTIVE" | "OUT_OF_STOCK" | "LOW_STOCK"
 

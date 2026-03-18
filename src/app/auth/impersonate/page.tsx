@@ -1,10 +1,10 @@
 "use client"
 
-import { useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useAuthStore } from "@/stores/authStore"
+import { Suspense, useEffect } from "react"
 import { toast } from "sonner"
 import { refreshTokenForImpersonation } from "@/lib/api/impersonation"
+import { useAuthStore } from "@/stores/authStore"
 
 function ImpersonateContent() {
   const router = useRouter()

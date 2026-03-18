@@ -7,8 +7,8 @@ import { useEffect, useState } from "react"
 // import { authAPI } from "@/lib/api/auth"
 import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
-import Logo from "./Logo"
 import AccountMenu from "./AccountMenu"
+import Logo from "./Logo"
 import MainSearchbox from "./main-searchbox/MainSearchbox"
 
 interface NavbarProps {

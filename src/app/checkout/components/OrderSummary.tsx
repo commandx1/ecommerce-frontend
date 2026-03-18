@@ -4,9 +4,9 @@ import { Award, HeadphonesIcon, Lock, Truck } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
-import formatCurrency from "@/lib/helpers/formatCurrency"
 
 const OrderSummary = () => {
   const router = useRouter()

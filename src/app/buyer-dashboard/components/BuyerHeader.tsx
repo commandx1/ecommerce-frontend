@@ -3,8 +3,8 @@
 import { LogOut } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import Logo from "@/app/components/Logo"
 import AccountMenu from "@/app/components/AccountMenu"
+import Logo from "@/app/components/Logo"
 import { useAuthStore } from "@/stores/authStore"
 
 const BuyerHeader = () => {

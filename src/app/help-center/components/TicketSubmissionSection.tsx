@@ -1,17 +1,17 @@
 "use client"
 
 import {
-  Clock,
-  User,
-  TrendingUp,
-  Ticket,
   Bold,
+  Clock,
+  CloudUpload,
+  Info,
   Italic,
+  Link as LinkIcon,
   List,
   ListOrdered,
-  Link as LinkIcon,
-  Info,
-  CloudUpload,
+  Ticket,
+  TrendingUp,
+  User,
 } from "lucide-react"
 
 export default function TicketSubmissionSection() {

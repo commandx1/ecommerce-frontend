@@ -1,11 +1,11 @@
 "use client"
 
-import { useState } from "react"
 import { Minus, Plus, Trash2 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useCartStore } from "@/stores/cartStore"
+import { useState } from "react"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { useCartStore } from "@/stores/cartStore"
 import ClearCartConfirmModal from "./ClearCartConfirmModal"
 
 const CartItems = () => {

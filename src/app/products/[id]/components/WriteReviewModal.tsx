@@ -1,10 +1,10 @@
 "use client"
 
-import { useAuthStore } from "@/stores/authStore"
 import { Star, X } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { createReview } from "@/lib/api/product-reviews"
+import { useAuthStore } from "@/stores/authStore"
 
 interface WriteReviewModalProps {
   productId: string

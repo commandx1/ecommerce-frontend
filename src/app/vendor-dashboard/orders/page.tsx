@@ -3,11 +3,11 @@
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ExternalLink, Printer, X } from "lucide-react"
 import Link from "next/link"
 import { Fragment, useEffect, useState } from "react"
-import { vendorOrdersAPI, type VendorOrder } from "@/lib/api/vendor-orders"
+import { toast } from "sonner"
+import { type VendorOrder, vendorOrdersAPI } from "@/lib/api/vendor-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { connectQzAndGetPrinters, printShippingLabel, type QzPrintOptions } from "@/lib/qz/printLabel"
 import { useAuthStore } from "@/stores/authStore"
-import { toast } from "sonner"
 
 export default function VendorOrdersPage() {
   const { isAuthenticated } = useAuthStore()

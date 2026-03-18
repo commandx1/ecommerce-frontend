@@ -1,5 +1,6 @@
-import { getFullImageUrl } from "@/lib/api/products"
 import { fetchProductDetailPageData } from "@/lib/api/product-detail"
+import { getFullImageUrl } from "@/lib/api/products"
+import formatCurrency from "@/lib/helpers/formatCurrency"
 import Breadcrumb from "./components/Breadcrumb"
 import ProductDetailsTabs from "./components/ProductDetailsTabs"
 import ProductError from "./components/ProductError"
@@ -10,7 +11,6 @@ import PurchaseOptions from "./components/PurchaseOptions"
 import RecentlyViewed from "./components/RecentlyViewed"
 import RelatedProducts from "./components/RelatedProducts"
 import TechnicalSpecs from "./components/TechnicalSpecs"
-import formatCurrency from "@/lib/helpers/formatCurrency"
 
 interface ProductDetailPageProps {
   params: Promise<{ id: string }>

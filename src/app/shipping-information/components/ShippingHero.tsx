@@ -1,4 +1,4 @@
-import { Zap, Truck, MapPin, Package } from "lucide-react"
+import { MapPin, Package, Truck, Zap } from "lucide-react"
 
 const features = [
   {

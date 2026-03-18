@@ -1,13 +1,13 @@
 "use client"
 
-import { useAuthStore } from "@/stores/authStore"
 import { Edit2, MapPin, Plus, Save, Trash2, X } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import AddressAutocomplete from "@/app/register/components/AddressAutocomplete"
-import type { ParsedAddress } from "@/lib/utils/google-maps"
-import { addressAPI, type Address, type CreateAddressPayload, type UpdateAddressPayload } from "@/lib/api/address"
 import ConfirmationModal from "@/app/components/ConfirmationModal"
+import AddressAutocomplete from "@/app/register/components/AddressAutocomplete"
+import { type Address, addressAPI, type CreateAddressPayload, type UpdateAddressPayload } from "@/lib/api/address"
+import type { ParsedAddress } from "@/lib/utils/google-maps"
+import { useAuthStore } from "@/stores/authStore"
 
 export default function AddressManagementShared() {
   const { user } = useAuthStore()

@@ -1,4 +1,4 @@
-import { Zap, Truck, MapPin, Globe, CheckCircle, Info } from "lucide-react"
+import { CheckCircle, Globe, Info, MapPin, Truck, Zap } from "lucide-react"
 
 export default function ShippingMethodsComparison() {
   return (

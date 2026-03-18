@@ -1,4 +1,4 @@
-import { Box, Shield, CheckCircle, Camera, RotateCcw } from "lucide-react"
+import { Box, Camera, CheckCircle, RotateCcw, Shield } from "lucide-react"
 
 const packagingItems = [
   {

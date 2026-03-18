@@ -1,7 +1,7 @@
 import Link from "next/link"
-import ProductListingClient from "./components/ProductListingClient"
 import { getProductBrands, getProductManufacturers, getPublicProducts } from "@/lib/api/public-products"
 import type { APIProduct } from "./components/ProductListingClient"
+import ProductListingClient from "./components/ProductListingClient"
 
 export default async function ProductListingPage({
   searchParams,

@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react"
-import { Truck, Info, Check } from "lucide-react"
-import { shipmentAPI, type ShipmentRate, type UberQuote } from "@/lib/api/shipment"
-import formatCurrency from "@/lib/helpers/formatCurrency"
+import { Check, Info, Truck } from "lucide-react"
 import Image from "next/image"
+import { useEffect, useState } from "react"
+import { type ShipmentRate, shipmentAPI, type UberQuote } from "@/lib/api/shipment"
+import formatCurrency from "@/lib/helpers/formatCurrency"
 
 interface SellerShipmentRatesProps {
   sellerId: string

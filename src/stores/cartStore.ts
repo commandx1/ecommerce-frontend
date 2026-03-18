@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import { cartAPI, CartItem } from "@/lib/api/cart"
+import { type CartItem, cartAPI } from "@/lib/api/cart"
 
 interface CartStore {
   cartId: string | null

@@ -5,8 +5,8 @@ import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import { Input } from "@/components/ui/input"
+import { type SearchProduct, searchPublicProducts } from "@/lib/api/product-search"
 import { getFullImageUrl } from "@/lib/api/products"
-import { searchPublicProducts, type SearchProduct } from "@/lib/api/product-search"
 import CategorySelect from "./CategorySelect"
 
 interface MainSearchboxProps {

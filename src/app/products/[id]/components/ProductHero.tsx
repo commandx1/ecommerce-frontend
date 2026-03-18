@@ -1,9 +1,9 @@
 "use client"
 
-import formatCurrency from "@/lib/helpers/formatCurrency"
 import { Check, Heart, Search, ShieldCheck } from "lucide-react"
 import Image from "next/image"
 import { useRef, useState } from "react"
+import formatCurrency from "@/lib/helpers/formatCurrency"
 
 interface ProductHeroProps {
   product: {

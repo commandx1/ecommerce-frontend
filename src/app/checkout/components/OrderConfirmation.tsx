@@ -3,9 +3,9 @@
 import { CheckCircle, ExternalLink, Home, Package } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
-import formatCurrency from "@/lib/helpers/formatCurrency"
 
 const OrderConfirmation = () => {
   const router = useRouter()

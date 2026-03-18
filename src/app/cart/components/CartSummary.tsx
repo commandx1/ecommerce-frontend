@@ -1,7 +1,7 @@
 "use client"
 
-import { useCartStore } from "@/stores/cartStore"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { useCartStore } from "@/stores/cartStore"
 
 interface CartSummaryProps {
   onCheckout: () => void

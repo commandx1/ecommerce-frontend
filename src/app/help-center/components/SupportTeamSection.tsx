@@ -1,4 +1,4 @@
-import { Mail, Linkedin } from "lucide-react"
+import { Linkedin, Mail } from "lucide-react"
 import Image from "next/image"
 
 const team = [
