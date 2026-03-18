@@ -104,7 +104,7 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
               <ShoppingCart className="w-4 h-4" />
               <span className="font-semibold">Cart</span>
               {cartCount > 0 && (
-                <span className="absolute -top-2 left-3 bg-coral-orange text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-2 left-2 bg-coral-orange text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                   {cartCount}
                 </span>
               )}
