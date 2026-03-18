@@ -102,7 +102,7 @@ export default function DeliveryTimelinesSection() {
           </div>
 
           <div className="space-y-6 sm:space-y-8">
-            <div className="bg-gradient-to-br from-steel-blue to-blue-800 rounded-xl sm:rounded-2xl p-6 sm:p-8 text-white">
+            <div className="bg-linear-to-br from-steel-blue to-blue-800 rounded-xl sm:rounded-2xl p-6 sm:p-8 text-white">
               <div className="flex items-center mb-4">
                 <Clock className="text-pale-lime w-8 h-8 sm:w-10 sm:h-10 mr-4" />
                 <h3 className="text-xl sm:text-2xl font-bold">

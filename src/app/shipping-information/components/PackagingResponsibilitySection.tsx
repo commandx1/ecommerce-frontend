@@ -147,7 +147,7 @@ export default function PackagingResponsibilitySection() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-steel-blue to-blue-800 rounded-2xl sm:rounded-3xl p-8 sm:p-12 text-white">
+        <div className="bg-linear-to-br from-steel-blue to-blue-800 rounded-2xl sm:rounded-3xl p-8 sm:p-12 text-white">
           <h3 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-center">
             Damaged Goods Reporting
           </h3>
