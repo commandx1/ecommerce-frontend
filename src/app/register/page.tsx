@@ -1,4 +1,4 @@
-import RegisterPage from "./components/RegisterPage"
+import RegisterPage from "@/features/register/RegisterPage"
 
 export default function Register() {
   return <RegisterPage />
