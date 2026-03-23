@@ -6,14 +6,14 @@ import QuickNavigationCards from "./components/QuickNavigationCards"
 
 export default function LegalPage() {
   return (
-    <>
+    <main className="min-h-screen">
       <LegalHero />
       <QuickNavigationCards />
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+      <section className="app-container mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <LegalPageContent />
-      </div>
+      </section>
       <ContactSupport />
       <LegalArchive />
-    </>
+    </main>
   )
 }
