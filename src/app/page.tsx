@@ -1,22 +1,10 @@
-import { Fragment } from "react/jsx-runtime"
-import FeaturedSuppliers from "./components/featured-suppliers/FeaturedSuppliers"
-import HeroSection from "./components/hero-section/HeroSection"
-import NewsletterResources from "./components/newsletter-resources/NewsletterResources"
-import ProductCategories from "./components/product-categories/ProductCategories"
-import Testimonials from "./components/testimonials/Testimonials"
-import TrendingProducts from "./components/trending-products/TrendingProducts"
-import TrustIndicators from "./components/trust-indicators/TrustIndicators"
+import type { Metadata } from "next"
+import HomePage from "@/features/home/HomePage"
+
+export const metadata: Metadata = {
+  title: "DentyPro",
+}
 
 export default function Home() {
-  return (
-    <Fragment>
-      <HeroSection />
-      <TrustIndicators />
-      <ProductCategories />
-      <FeaturedSuppliers />
-      <TrendingProducts />
-      <Testimonials />
-      <NewsletterResources />
-    </Fragment>
-  )
+  return <HomePage />
 }
