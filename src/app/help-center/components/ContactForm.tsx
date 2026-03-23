@@ -62,14 +62,7 @@ const ContactForm = ({ formData, onChange, onSubmit }: ContactFormProps) => {
           required
         />
 
-        <TextField
-          id="phone"
-          name="phone"
-          type="tel"
-          label="Phone Number"
-          value={formData.phone}
-          onChange={onChange}
-        />
+        <TextField id="phone" name="phone" type="tel" label="Phone Number" value={formData.phone} onChange={onChange} />
 
         <TextField
           id="company"
@@ -80,14 +73,7 @@ const ContactForm = ({ formData, onChange, onSubmit }: ContactFormProps) => {
           onChange={onChange}
         />
 
-        <SelectField
-          id="subject"
-          name="subject"
-          label="Subject"
-          value={formData.subject}
-          onChange={onChange}
-          required
-        >
+        <SelectField id="subject" name="subject" label="Subject" value={formData.subject} onChange={onChange} required>
           <option value="">Select a topic...</option>
           {SUBJECT_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
