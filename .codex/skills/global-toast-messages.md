@@ -39,3 +39,11 @@ description: Ensure all messages in the project (error, success, warning, info, 
 7. **Optional: consistency check**
    - Confirm that every message in the project now uses the reusable Toast component
    - Remove any leftover ad-hoc or inline message rendering
+
+## Severity Guide
+
+- API failure → error
+- Validation (client-side) → warning
+- 401/403 → error
+- Empty required field → warning
+- Success → success
