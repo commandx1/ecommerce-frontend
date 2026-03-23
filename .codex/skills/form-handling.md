@@ -1,6 +1,6 @@
 ---
 name: form-handling
-description: Create a reusable form with validation, extracted hook, and proper error display
+description: Create a reusable form with validation, extracted hook, reusable form elements and proper error display
 ---
 
 # Workflow
