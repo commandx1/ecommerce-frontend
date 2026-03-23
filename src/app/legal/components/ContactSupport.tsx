@@ -1,8 +1,8 @@
 "use client"
 
+import { useContactSupportForm } from "../hooks/useContactSupportForm"
 import ContactSupportForm from "./ContactSupportForm"
 import ContactSupportInfo from "./ContactSupportInfo"
-import { useContactSupportForm } from "../hooks/useContactSupportForm"
 
 const ContactSupport = () => {
   const { formData, handleChange, handleSubmit } = useContactSupportForm()

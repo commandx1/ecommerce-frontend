@@ -1,5 +1,6 @@
 import { BookOpen, Download, Users, Video } from "lucide-react"
-import Link from "next/link"
+
+import SupportResourceCard from "./SupportResourceCard"
 
 const resources = [
   {
@@ -40,24 +41,15 @@ export default function SupportResourcesSection() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {resources.map((item) => {
-            const Icon = item.icon
-            return (
-              <div
-                key={item.title}
-                className="bg-light-mint-gray rounded-2xl p-6 hover:shadow-lg transition-shadow cursor-pointer group"
-              >
-                <div className="w-14 h-14 bg-steel-blue rounded-xl flex items-center justify-center mb-4 group-hover:bg-opacity-90 transition-colors">
-                  <Icon className="text-white w-6 h-6" />
-                </div>
-                <h3 className="text-lg font-semibold text-steel-blue mb-3">{item.title}</h3>
-                <p className="text-gray-600 mb-4">{item.description}</p>
-                <Link href="#" className="text-steel-blue font-medium hover:underline">
-                  {item.label}
-                </Link>
-              </div>
-            )
-          })}
+          {resources.map((item) => (
+            <SupportResourceCard
+              key={item.title}
+              title={item.title}
+              description={item.description}
+              label={item.label}
+              Icon={item.icon}
+            />
+          ))}
         </div>
       </div>
     </section>

@@ -1,8 +1,6 @@
 "use client"
 
 import { Download, FileText } from "lucide-react"
-
-import { iconMap } from "./documentIcons"
 import type {
   LegalCertification,
   LegalCookieType,
@@ -16,6 +14,7 @@ import type {
   LegalSecurityStandard,
   LegalStepItem,
 } from "../../types"
+import { iconMap } from "./documentIcons"
 
 interface DocumentSectionContentProps {
   section: LegalSection
@@ -63,8 +62,7 @@ const SectionItems = ({ items }: { items: string[] }) => {
 }
 
 const SectionCards = ({ cards }: { cards: LegalSectionCard[] }) => {
-  const gridClassName =
-    cards.length === 2 ? "md:grid-cols-2" : cards.length === 3 ? "md:grid-cols-3" : "md:grid-cols-2"
+  const gridClassName = cards.length === 2 ? "md:grid-cols-2" : cards.length === 3 ? "md:grid-cols-3" : "md:grid-cols-2"
 
   return (
     <div className={`grid grid-cols-1 ${gridClassName} gap-6 mb-8`}>
@@ -245,10 +243,7 @@ const SectionReports = ({ reports }: { reports: LegalReport[] }) => {
   return (
     <div className="space-y-4">
       {reports.map((report) => (
-        <div
-          key={report.title}
-          className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
-        >
+        <div key={report.title} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div className="flex items-start space-x-4">
               <div className="w-12 h-12 bg-steel-blue rounded-lg flex items-center justify-center">

@@ -1,5 +1,28 @@
 import { AlertTriangle, Mail, MessageCircle, Phone } from "lucide-react"
 
+import EmergencySupportCard from "./EmergencySupportCard"
+
+const EMERGENCY_CHANNELS = [
+  {
+    title: "Emergency Hotline",
+    value: "1-800-URGENT-1",
+    note: "Available 24/7/365",
+    icon: Phone,
+  },
+  {
+    title: "Priority Chat",
+    value: "Instant Response",
+    note: "Skip the queue",
+    icon: MessageCircle,
+  },
+  {
+    title: "Priority Email",
+    value: "urgent@dentalhub.com",
+    note: "15-minute response",
+    icon: Mail,
+  },
+]
+
 export default function EmergencySupportSection() {
   return (
     <section id="emergency-support" className="py-16 bg-coral-orange">
@@ -15,26 +38,15 @@ export default function EmergencySupportSection() {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-              <Phone className="text-white w-8 h-8 mb-3" />
-              <h3 className="text-lg font-semibold mb-2">Emergency Hotline</h3>
-              <p className="text-orange-100 text-lg font-medium">1-800-URGENT-1</p>
-              <p className="text-orange-200 text-sm mt-1">Available 24/7/365</p>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-              <MessageCircle className="text-white w-8 h-8 mb-3" />
-              <h3 className="text-lg font-semibold mb-2">Priority Chat</h3>
-              <p className="text-orange-100 text-lg font-medium">Instant Response</p>
-              <p className="text-orange-200 text-sm mt-1">Skip the queue</p>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-              <Mail className="text-white w-8 h-8 mb-3" />
-              <h3 className="text-lg font-semibold mb-2">Priority Email</h3>
-              <p className="text-orange-100 text-lg font-medium">urgent@dentalhub.com</p>
-              <p className="text-orange-200 text-sm mt-1">15-minute response</p>
-            </div>
+            {EMERGENCY_CHANNELS.map((channel) => (
+              <EmergencySupportCard
+                key={channel.title}
+                title={channel.title}
+                value={channel.value}
+                note={channel.note}
+                Icon={channel.icon}
+              />
+            ))}
           </div>
 
           <div className="mt-8 bg-white/10 backdrop-blur-sm rounded-xl p-6 max-w-2xl mx-auto">

@@ -1,9 +1,8 @@
 "use client"
 
 import { Download, Printer } from "lucide-react"
-
-import { iconMap } from "./documentIcons"
 import type { LegalDocument } from "../../types"
+import { iconMap } from "./documentIcons"
 
 interface DocumentSectionHeaderProps {
   document: LegalDocument

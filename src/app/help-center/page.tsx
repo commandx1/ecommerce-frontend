@@ -11,7 +11,7 @@ import TicketSubmissionSection from "./components/TicketSubmissionSection"
 
 export default function HelpCenterPage() {
   return (
-    <div className="min-h-screen bg-light-mint-gray font-(--font-inter)">
+    <main className="min-h-screen bg-light-mint-gray font-(--font-inter)">
       <HelpCenterBreadcrumb />
       <HelpCenterHero />
       <QuickSupportOptions />
@@ -23,6 +23,6 @@ export default function HelpCenterPage() {
       {/* <SystemStatusSection /> */}
       <SupportTeamSection />
       <EmergencySupportSection />
-    </div>
+    </main>
   )
 }

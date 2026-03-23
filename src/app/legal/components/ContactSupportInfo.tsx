@@ -31,13 +31,7 @@ const ContactSupportInfo = () => {
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {SUPPORT_CHANNELS.map(({ title, description, value, icon }) => (
-          <ContactSupportChannelCard
-            key={title}
-            title={title}
-            description={description}
-            value={value}
-            Icon={icon}
-          />
+          <ContactSupportChannelCard key={title} title={title} description={description} value={value} Icon={icon} />
         ))}
       </div>
     </div>

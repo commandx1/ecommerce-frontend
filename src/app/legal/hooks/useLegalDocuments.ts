@@ -16,9 +16,7 @@ const additionalDocuments: LegalDocument[] = [
 ]
 
 const findDocumentById = (id: string): LegalDocument | undefined => {
-  const primaryMatch = legalDocumentsData.documents.find((document) => document.id === id) as
-    | LegalDocument
-    | undefined
+  const primaryMatch = legalDocumentsData.documents.find((document) => document.id === id) as LegalDocument | undefined
   return primaryMatch ?? additionalDocuments.find((document) => document.id === id)
 }
 
@@ -27,9 +25,7 @@ export const useLegalDocuments = () => {
   const [selectedId, setSelectedId] = useState<string>(firstId)
 
   const documentsInOrder = useMemo(() => {
-    return legalDocumentsData.sidebarNav
-      .map((item) => findDocumentById(item.id))
-      .filter(Boolean) as LegalDocument[]
+    return legalDocumentsData.sidebarNav.map((item) => findDocumentById(item.id)).filter(Boolean) as LegalDocument[]
   }, [])
 
   const selectedDocument = useMemo(

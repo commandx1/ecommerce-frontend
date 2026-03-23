@@ -1,8 +1,8 @@
 "use client"
 
+import { useLegalDocuments } from "../hooks/useLegalDocuments"
 import DocumentSection from "./DocumentSection"
 import LegalSidebar from "./LegalSidebar"
-import { useLegalDocuments } from "../hooks/useLegalDocuments"
 
 export default function LegalPageContent() {
   const { selectedId, setSelectedId, selectedDocument } = useLegalDocuments()

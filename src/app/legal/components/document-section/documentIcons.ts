@@ -14,6 +14,7 @@ import {
   Handshake,
   Info,
   Lock,
+  type LucideIcon,
   Monitor,
   MousePointer,
   Server,
@@ -23,7 +24,6 @@ import {
   User,
   UserCog,
   Volume2,
-  type LucideIcon,
 } from "lucide-react"
 
 export const iconMap: Record<string, LucideIcon> = {

@@ -1,5 +1,5 @@
-import { useCallback, useState } from "react"
 import type { ChangeEvent, FormEvent } from "react"
+import { useCallback, useState } from "react"
 
 import { showToast } from "@/components/ui/Toast"
 
@@ -26,13 +26,10 @@ const isBlank = (value: string) => value.trim().length === 0
 export const useContactSupportForm = () => {
   const [formData, setFormData] = useState<ContactSupportFormData>(INITIAL_FORM_DATA)
 
-  const handleChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-      const { name, value } = event.target
-      setFormData((prev) => ({ ...prev, [name]: value }))
-    },
-    [],
-  )
+  const handleChange = useCallback((event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = event.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+  }, [])
 
   const handleSubmit = useCallback(
     (event: FormEvent<HTMLFormElement>) => {

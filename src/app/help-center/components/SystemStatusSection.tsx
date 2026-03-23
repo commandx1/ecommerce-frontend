@@ -1,3 +1,6 @@
+import SystemAnnouncementCard from "./SystemAnnouncementCard"
+import SystemStatusCard from "./SystemStatusCard"
+
 const statusItems = [
   { name: "Website & Platform", status: "Operational", color: "green" },
   { name: "Order Processing", status: "Operational", color: "green" },
@@ -60,19 +63,7 @@ export default function SystemStatusSection() {
 
             <div className="space-y-4">
               {statusItems.map((item) => (
-                <div key={item.name} className="flex items-center justify-between p-4 bg-white rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div
-                      className={`w-2 h-2 rounded-full ${item.color === "green" ? "bg-green-500" : "bg-yellow-500"}`}
-                    />
-                    <span className="font-medium text-gray-700">{item.name}</span>
-                  </div>
-                  <span
-                    className={`text-sm font-medium ${item.color === "green" ? "text-green-600" : "text-yellow-600"}`}
-                  >
-                    {item.status}
-                  </span>
-                </div>
+                <SystemStatusCard key={item.name} name={item.name} status={item.status} color={item.color} />
               ))}
             </div>
 
@@ -90,18 +81,15 @@ export default function SystemStatusSection() {
             <h3 className="text-2xl font-semibold text-steel-blue mb-6">Recent Updates & Announcements</h3>
 
             <div className="space-y-6">
-              {announcements.map((ann) => (
-                <div key={ann.title} className="bg-white rounded-lg p-6">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center space-x-2">
-                      <div className={`w-2 h-2 ${ann.dotColor} rounded-full mt-2`} />
-                      <span className="font-semibold text-steel-blue">{ann.type}</span>
-                    </div>
-                    <span className="text-sm text-gray-500">{ann.date}</span>
-                  </div>
-                  <h4 className="font-medium text-gray-800 mb-2">{ann.title}</h4>
-                  <p className="text-gray-600 text-sm">{ann.description}</p>
-                </div>
+              {announcements.map((announcement) => (
+                <SystemAnnouncementCard
+                  key={announcement.title}
+                  type={announcement.type}
+                  dotColor={announcement.dotColor}
+                  date={announcement.date}
+                  title={announcement.title}
+                  description={announcement.description}
+                />
               ))}
             </div>
 

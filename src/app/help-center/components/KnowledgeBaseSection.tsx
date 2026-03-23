@@ -1,5 +1,6 @@
-import { ChevronRight, CreditCard, Settings, ShoppingCart, Truck, Undo2, UserPlus } from "lucide-react"
-import Link from "next/link"
+import { CreditCard, Settings, ShoppingCart, Truck, Undo2, UserPlus } from "lucide-react"
+
+import KnowledgeBaseCategoryCard from "./KnowledgeBaseCategoryCard"
 
 const categories = [
   {
@@ -100,32 +101,17 @@ export default function KnowledgeBaseSection() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {categories.map((cat) => {
-            const Icon = cat.icon
-            return (
-              <div key={cat.title} className="bg-white rounded-2xl p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-center mb-4">
-                  <div className={`w-12 h-12 ${cat.iconBg} rounded-lg flex items-center justify-center mr-4`}>
-                    <Icon className={cat.iconColor} />
-                  </div>
-                  <h3 className="text-xl font-semibold text-steel-blue">{cat.title}</h3>
-                </div>
-                <ul className="space-y-3">
-                  {cat.articles.map((article) => (
-                    <li key={article}>
-                      <Link href="#" className="text-gray-600 hover:text-steel-blue flex items-center">
-                        <ChevronRight className="w-3 h-3 mr-2" />
-                        {article}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-                <Link href="#" className="mt-4 text-steel-blue font-medium hover:underline inline-block">
-                  View all articles ({cat.count}) →
-                </Link>
-              </div>
-            )
-          })}
+          {categories.map((category) => (
+            <KnowledgeBaseCategoryCard
+              key={category.title}
+              title={category.title}
+              articles={category.articles}
+              count={category.count}
+              iconBg={category.iconBg}
+              iconColor={category.iconColor}
+              Icon={category.icon}
+            />
+          ))}
         </div>
       </div>
     </section>

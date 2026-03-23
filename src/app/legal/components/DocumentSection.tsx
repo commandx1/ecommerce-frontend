@@ -1,10 +1,10 @@
 "use client"
 
+import { useDocumentActions } from "../hooks/useDocumentActions"
+import type { LegalDocument } from "../types"
 import DocumentNotice from "./document-section/DocumentNotice"
 import DocumentSectionContent from "./document-section/DocumentSectionContent"
 import DocumentSectionHeader from "./document-section/DocumentSectionHeader"
-import { useDocumentActions } from "../hooks/useDocumentActions"
-import type { LegalDocument } from "../types"
 
 interface DocumentSectionProps {
   document: LegalDocument
