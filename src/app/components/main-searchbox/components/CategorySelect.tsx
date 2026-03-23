@@ -1,3 +1,5 @@
+"use client"
+
 import { useEffect, useState } from "react"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
@@ -13,7 +15,7 @@ const CategorySelect = () => {
   // Alternatively, we show a simple div/button placeholder on the server.
   if (!mounted) {
     return (
-      <div className="w-[120px] h-[42px] bg-white border border-gray-300 rounded-l-md border-r-0 flex items-center px-3 text-sm text-gray-500">
+      <div className="w-[120px] h-[36px] bg-white border border-gray-300 rounded-l-md border-r-0 flex items-center px-3 text-sm text-gray-500">
         Categories
       </div>
     )
