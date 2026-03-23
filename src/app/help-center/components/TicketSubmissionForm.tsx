@@ -1,14 +1,14 @@
 "use client"
 
-import type { ChangeEventHandler, FormEventHandler } from "react"
 import { Ticket } from "lucide-react"
+import type { ChangeEventHandler, FormEventHandler } from "react"
+import { CheckboxField } from "@/components/form/CheckboxField"
 import { SelectField } from "@/components/form/SelectField"
 import { TextField } from "@/components/form/TextField"
-import { CheckboxField } from "@/components/form/CheckboxField"
+import type { TicketFormData } from "../hooks/useTicketForm"
 import FormAttachmentDropzone from "./FormAttachmentDropzone"
 import TicketDescriptionField from "./TicketDescriptionField"
 import TicketTipsCard from "./TicketTipsCard"
-import type { TicketFormData } from "../hooks/useTicketForm"
 
 const PRIORITY_OPTIONS = [
   { value: "low", label: "Low - General inquiry" },

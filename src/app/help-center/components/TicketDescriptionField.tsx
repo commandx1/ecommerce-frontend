@@ -1,7 +1,7 @@
 "use client"
 
-import type { ChangeEventHandler } from "react"
 import { Bold, Italic, Link as LinkIcon, List, ListOrdered } from "lucide-react"
+import type { ChangeEventHandler } from "react"
 import { Textarea } from "@/components/ui/textarea"
 
 interface TicketDescriptionFieldProps {

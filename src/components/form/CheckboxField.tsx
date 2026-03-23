@@ -1,7 +1,6 @@
 import type { ComponentProps } from "react"
-
-import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
 interface CheckboxFieldProps extends Omit<ComponentProps<typeof Checkbox>, "className"> {
