@@ -9,11 +9,7 @@ interface ForgotPasswordEmailFieldProps {
   isSubmitting: boolean
 }
 
-export default function ForgotPasswordEmailField({
-  value,
-  onChange,
-  isSubmitting,
-}: ForgotPasswordEmailFieldProps) {
+export default function ForgotPasswordEmailField({ value, onChange, isSubmitting }: ForgotPasswordEmailFieldProps) {
   return (
     <FormField label="Email Address" htmlFor="forgot-password-email" required>
       <div className="relative">

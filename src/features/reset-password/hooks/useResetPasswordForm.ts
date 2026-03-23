@@ -49,10 +49,7 @@ export const useResetPasswordForm = () => {
 
   const validate = () => {
     if (formData.password.length < MIN_PASSWORD_LENGTH) {
-      showToast.warning(
-        "Weak password",
-        `Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`,
-      )
+      showToast.warning("Weak password", `Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`)
       return false
     }
 

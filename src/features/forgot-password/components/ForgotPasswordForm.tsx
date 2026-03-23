@@ -12,12 +12,7 @@ interface ForgotPasswordFormProps {
   onSubmit: FormEventHandler<HTMLFormElement>
 }
 
-export default function ForgotPasswordForm({
-  email,
-  isSubmitting,
-  onEmailChange,
-  onSubmit,
-}: ForgotPasswordFormProps) {
+export default function ForgotPasswordForm({ email, isSubmitting, onEmailChange, onSubmit }: ForgotPasswordFormProps) {
   return (
     <div className="bg-white rounded-3xl shadow-2xl p-8 lg:p-12">
       <ForgotPasswordFormHeader />

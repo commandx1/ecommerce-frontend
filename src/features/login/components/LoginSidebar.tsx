@@ -21,8 +21,8 @@ export default function LoginSidebar() {
       <div className="text-white mb-8">
         <h2 className="text-3xl font-bold mb-4">Welcome to the Professional Network</h2>
         <p className="text-blue-100 text-lg leading-relaxed mb-6">
-          Connect with thousands of verified dental professionals and access exclusive pricing, certified suppliers,
-          and industry-leading products.
+          Connect with thousands of verified dental professionals and access exclusive pricing, certified suppliers, and
+          industry-leading products.
         </p>
       </div>
 
