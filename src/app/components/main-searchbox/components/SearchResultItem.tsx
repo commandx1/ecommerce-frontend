@@ -1,8 +1,8 @@
 "use client"
 
+import { Barcode } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { Barcode } from "lucide-react"
 
 import type { SearchProduct } from "@/lib/api/product-search"
 

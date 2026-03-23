@@ -1,4 +1,6 @@
 import { Star } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 
 const RatingFilter = () => {
   const ratingOptions = [
@@ -12,23 +14,20 @@ const RatingFilter = () => {
       <h3 className="text-lg font-semibold text-steel-blue mb-4">Customer Rating</h3>
       <div className="space-y-3">
         {ratingOptions.map((option) => (
-          <label key={option.stars} className="flex items-center cursor-pointer group">
-            <input
-              type="checkbox"
-              className="form-checkbox text-steel-blue h-4 w-4 rounded border-gray-300 focus:ring-steel-blue"
-            />
-            <div className="ml-3 flex items-center">
-              <div className="flex text-yellow-400 mr-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} className={`w-4 h-4 ${star <= option.stars ? "fill-current" : "text-gray-300"}`} />
-                ))}
-              </div>
-              <span className="text-sm text-gray-700 group-hover:text-steel-blue transition-colors">
+          <div key={option.stars} className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Checkbox id={`rating-${option.stars}`} />
+              <Label htmlFor={`rating-${option.stars}`} className="flex items-center text-sm text-gray-700">
+                <span className="flex text-yellow-400 mr-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star key={star} className={`w-4 h-4 ${star <= option.stars ? "fill-current" : "text-gray-300"}`} />
+                  ))}
+                </span>
                 {option.label}
-              </span>
+              </Label>
             </div>
-            <span className="ml-auto text-xs text-gray-500">({option.count})</span>
-          </label>
+            <span className="text-xs text-gray-500">({option.count})</span>
+          </div>
         ))}
       </div>
     </div>

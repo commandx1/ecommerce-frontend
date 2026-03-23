@@ -1,7 +1,7 @@
 import type { ChangeEvent } from "react"
 import { useCallback, useEffect, useRef, useState } from "react"
 
-import { searchPublicProducts, type SearchProduct } from "@/lib/api/product-search"
+import { type SearchProduct, searchPublicProducts } from "@/lib/api/product-search"
 import { getFullImageUrl } from "@/lib/api/products"
 
 interface UseMainSearchOptions {
@@ -12,9 +12,10 @@ interface UseMainSearchOptions {
 const DEFAULT_DEBOUNCE_MS = 300
 const DEFAULT_MAX_RESULTS = 20
 
-export const useMainSearch = (
-  { debounceMs = DEFAULT_DEBOUNCE_MS, maxResults = DEFAULT_MAX_RESULTS }: UseMainSearchOptions = {},
-) => {
+export const useMainSearch = ({
+  debounceMs = DEFAULT_DEBOUNCE_MS,
+  maxResults = DEFAULT_MAX_RESULTS,
+}: UseMainSearchOptions = {}) => {
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<SearchProduct[]>([])
   const [isLoading, setIsLoading] = useState(false)
