@@ -1,6 +1,6 @@
 import type { ChangeEvent } from "react"
-import type { RegisterFormErrors } from "@/features/register/types"
 import { PasswordField } from "@/components/form/PasswordField"
+import type { RegisterFormErrors } from "@/features/register/types"
 
 interface PasswordSectionProps {
   password: string

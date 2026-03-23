@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { useRegisterForm } from "@/hooks/useRegisterForm"
 import { showToast } from "@/components/ui/Toast"
 import AddressSection from "@/features/register/components/AddressSection"
 import BusinessTypeField from "@/features/register/components/BusinessTypeField"
@@ -9,6 +8,7 @@ import PasswordSection from "@/features/register/components/PasswordSection"
 import PersonalInfoFields from "@/features/register/components/PersonalInfoFields"
 import RegisterFormActions from "@/features/register/components/RegisterFormActions"
 import RegisterFormIntro from "@/features/register/components/RegisterFormIntro"
+import { useRegisterForm } from "@/hooks/useRegisterForm"
 
 export default function RegisterForm() {
   const {

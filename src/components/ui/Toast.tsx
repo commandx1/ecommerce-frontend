@@ -1,5 +1,5 @@
-import React from "react"
-import { Check, X, TriangleAlert, Info, Heart, Loader2 } from "lucide-react"
+import { Check, Heart, Info, Loader2, TriangleAlert, X } from "lucide-react"
+import type React from "react"
 import { toast } from "sonner"
 
 type ToastType = "success" | "error" | "warning" | "info" | "love" | "loading"

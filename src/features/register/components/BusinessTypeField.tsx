@@ -1,7 +1,7 @@
 import type { ChangeEvent } from "react"
-import { BUSINESS_TYPE_OPTIONS } from "@/lib/constants/business-types"
-import type { RegisterFormErrors } from "@/features/register/types"
 import { SelectField } from "@/components/form/SelectField"
+import type { RegisterFormErrors } from "@/features/register/types"
+import { BUSINESS_TYPE_OPTIONS } from "@/lib/constants/business-types"
 
 interface BusinessTypeFieldProps {
   value: string

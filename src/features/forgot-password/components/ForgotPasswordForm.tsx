@@ -1,5 +1,5 @@
-import type { FormEventHandler } from "react"
 import { SendIcon } from "lucide-react"
+import type { FormEventHandler } from "react"
 import ForgotPasswordEmailField from "@/features/forgot-password/components/ForgotPasswordEmailField"
 import ForgotPasswordFooterLink from "@/features/forgot-password/components/ForgotPasswordFooterLink"
 import ForgotPasswordFormHeader from "@/features/forgot-password/components/ForgotPasswordFormHeader"

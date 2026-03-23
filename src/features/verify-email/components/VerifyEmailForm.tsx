@@ -1,5 +1,5 @@
-import type { ChangeEventHandler, FormEventHandler } from "react"
 import { ArrowLeft } from "lucide-react"
+import type { ChangeEventHandler, FormEventHandler } from "react"
 import { TextField } from "@/components/form/TextField"
 
 interface VerifyEmailFormProps {

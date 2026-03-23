@@ -1,6 +1,6 @@
 import type { ChangeEvent } from "react"
-import type { RegisterFormData, RegisterFormErrors } from "@/features/register/types"
 import { TextField } from "@/components/form/TextField"
+import type { RegisterFormData, RegisterFormErrors } from "@/features/register/types"
 
 interface PersonalInfoFieldsProps {
   formData: RegisterFormData

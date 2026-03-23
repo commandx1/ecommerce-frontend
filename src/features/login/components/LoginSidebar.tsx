@@ -1,4 +1,4 @@
-import { Award, Percent, Shield, TrendingUp, Truck, type LucideIcon } from "lucide-react"
+import { Award, type LucideIcon, Percent, Shield, TrendingUp, Truck } from "lucide-react"
 
 const BENEFITS: Array<{ icon: LucideIcon; label: string }> = [
   { icon: Shield, label: "Verified professional network" },

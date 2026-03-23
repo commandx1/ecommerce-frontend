@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import { verifyEmail } from "@/features/verify-email/services/verifyEmail"
 

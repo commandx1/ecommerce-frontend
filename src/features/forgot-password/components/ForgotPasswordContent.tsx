@@ -1,10 +1,10 @@
 "use client"
 
+import type { ChangeEvent } from "react"
 import ForgotPasswordForm from "@/features/forgot-password/components/ForgotPasswordForm"
 import ForgotPasswordInfoPanel from "@/features/forgot-password/components/ForgotPasswordInfoPanel"
 import ForgotPasswordSuccess from "@/features/forgot-password/components/ForgotPasswordSuccess"
 import { useForgotPasswordForm } from "@/features/forgot-password/hooks/useForgotPasswordForm"
-import { ChangeEvent } from "react"
 
 export default function ForgotPasswordContent() {
   const { email, isSubmitting, isSent, handleChange, handleResetRequest, handleSendAgain } = useForgotPasswordForm()

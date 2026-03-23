@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type ChangeEvent, type FormEvent } from "react"
+import { type ChangeEvent, type FormEvent, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import { sendPasswordReset } from "@/features/forgot-password/services/requestPasswordReset"
 import type { ForgotPasswordFormData } from "@/features/forgot-password/types"

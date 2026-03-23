@@ -1,6 +1,6 @@
 import AddressAutocomplete from "@/components/AddressAutocomplete"
-import type { ParsedAddress, RegisterAddress, RegisterFormErrors } from "@/features/register/types"
 import { TextField } from "@/components/form/TextField"
+import type { ParsedAddress, RegisterAddress, RegisterFormErrors } from "@/features/register/types"
 
 interface AddressSectionProps {
   address: RegisterAddress
