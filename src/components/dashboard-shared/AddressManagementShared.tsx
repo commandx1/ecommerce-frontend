@@ -2,7 +2,7 @@
 
 import { Edit2, MapPin, Plus, Save, Trash2, X } from "lucide-react"
 import { useEffect, useState } from "react"
-import { toast } from "sonner"
+import { showToast } from "@/components/ui/Toast"
 import ConfirmationModal from "@/app/components/ConfirmationModal"
 import AddressAutocomplete from "@/app/register/components/AddressAutocomplete"
 import { type Address, addressAPI, type CreateAddressPayload, type UpdateAddressPayload } from "@/lib/api/address"
@@ -26,7 +26,7 @@ export default function AddressManagementShared() {
       const data = await addressAPI.getAddresses()
       setAddresses(data)
     } catch (error) {
-      toast.error("An error occurred while loading addresses")
+      showToast.error("An error occurred while loading addresses")
     } finally {
       setIsLoading(false)
     }
@@ -57,11 +57,11 @@ export default function AddressManagementShared() {
     setIsDeleting(true)
     try {
       await addressAPI.deleteAddress(addressToDelete)
-      toast.success("Address deleted successfully")
+      showToast.success("Address deleted successfully")
       setAddressToDelete(null)
       fetchAddresses()
     } catch (error) {
-      toast.error("An error occurred while deleting the address")
+      showToast.error("An error occurred while deleting the address")
     } finally {
       setIsDeleting(false)
     }
@@ -72,7 +72,7 @@ export default function AddressManagementShared() {
     if (!currentAddress) return
 
     if (!currentAddress.postalCode?.trim()) {
-      toast.error("Zip code is required")
+      showToast.error("Zip code is required")
       return
     }
 
@@ -86,12 +86,12 @@ export default function AddressManagementShared() {
         await addressAPI.createAddress(currentAddress as CreateAddressPayload)
       }
 
-      toast.success(isUpdate ? "Address updated" : "New address added")
+      showToast.success(isUpdate ? "Address updated" : "New address added")
       setIsEditing(false)
       setCurrentAddress(null)
       fetchAddresses()
     } catch (error) {
-      toast.error("An error occurred while saving the address")
+      showToast.error("An error occurred while saving the address")
     } finally {
       setIsSaving(false)
     }

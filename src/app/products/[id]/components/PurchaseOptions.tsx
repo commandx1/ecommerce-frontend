@@ -3,7 +3,7 @@
 import { Bolt, FileText, Minus, Plus, ShieldCheck, ShoppingCart } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { toast } from "sonner"
+import { showToast } from "@/components/ui/Toast"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useCartStore } from "@/stores/cartStore"
 import { useSelectedSupplierStore } from "@/stores/selectedSupplierStore"
@@ -127,11 +127,11 @@ const PurchaseOptions = ({ bulkPricing, warrantyOptions, orderSummary }: Purchas
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status
       if (status === 403) {
-        toast.error("Please log in to add items to cart.")
+        showToast.error("Please log in to add items to cart.")
         router.push("/login")
         return
       }
-      toast.error("Failed to add to cart. Please try again.")
+      showToast.error("Failed to add to cart. Please try again.")
     } finally {
       setIsAddingToCart(false)
     }

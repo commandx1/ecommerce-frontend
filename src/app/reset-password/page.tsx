@@ -4,7 +4,7 @@ import { Check, Eye, EyeOff, Key, Lock } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useId, useState } from "react"
-import { toast } from "sonner"
+import { showToast } from "@/components/ui/Toast"
 import { resetPassword } from "@/lib/api/reset-password"
 
 export default function ResetPasswordPage() {
@@ -23,7 +23,7 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     if (!token) {
-      toast.error("Invalid or missing reset token.")
+      showToast.error("Invalid or missing reset token.")
       router.push("/forgot-password")
     }
   }, [token, router])
@@ -32,12 +32,12 @@ export default function ResetPasswordPage() {
     e.preventDefault()
 
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match.")
+      showToast.error("Passwords do not match.")
       return
     }
 
     if (password.length < 8) {
-      toast.error("Password must be at least 8 characters long.")
+      showToast.error("Password must be at least 8 characters long.")
       return
     }
 
@@ -50,10 +50,10 @@ export default function ResetPasswordPage() {
       await resetPassword(token, password)
 
       setIsSuccess(true)
-      toast.success("Password updated successfully.")
+      showToast.success("Password updated successfully.")
       setTimeout(() => router.push("/login"), 3000)
     } catch (error) {
-      toast.error((error as Error)?.message || "An error occurred while updating password.")
+      showToast.error((error as Error)?.message || "An error occurred while updating password.")
     } finally {
       setIsSubmitting(false)
     }

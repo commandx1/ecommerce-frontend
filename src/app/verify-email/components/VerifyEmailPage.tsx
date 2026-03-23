@@ -3,6 +3,7 @@
 import { ArrowLeft, Mail } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useState } from "react"
+import { showToast } from "@/components/ui/Toast"
 // import { authAPI } from "@/lib/api/auth"
 import { authAPIDirect as authAPI } from "@/lib/api/auth-direct"
 
@@ -13,19 +14,17 @@ function VerifyEmailPageContent() {
 
   const [code, setCode] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!code || code.length !== 6) {
-      setError("Please enter the 6-digit verification code")
+      showToast.error("Please enter the 6-digit verification code")
       return
     }
 
     setIsLoading(true)
-    setError("")
 
     try {
       await authAPI.verifyEmail({ email, code })
@@ -35,7 +34,7 @@ function VerifyEmailPageContent() {
       }, 2000)
     } catch (error: unknown) {
       const err = error as { message?: string }
-      setError(err.message || "An error occurred during verification")
+      showToast.error(err.message || "An error occurred during verification")
     } finally {
       setIsLoading(false)
     }
@@ -44,7 +43,6 @@ function VerifyEmailPageContent() {
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, "").slice(0, 6)
     setCode(value)
-    if (error) setError("")
   }
 
   return (
@@ -81,11 +79,6 @@ function VerifyEmailPageContent() {
                   placeholder="000000"
                   maxLength={6}
                 />
-                {error && (
-                  <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3">
-                    <p className="text-red-600 text-sm">{error}</p>
-                  </div>
-                )}
               </div>
 
               <button

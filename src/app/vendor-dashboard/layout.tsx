@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
-import { toast } from "sonner"
+import { showToast } from "@/components/ui/Toast"
 import { cookieStorage } from "@/lib/storage/cookie-storage"
 import { useAuthStore } from "@/stores/authStore"
 import VendorHeader from "./components/VendorHeader"
@@ -19,10 +19,11 @@ export default function VendorDashboardLayout({ children }: { children: React.Re
     if (searchParams.get("impersonated") === "true") {
       // Small delay to ensure Toaster is mounted and ready
       const timer = setTimeout(() => {
-        toast.success("Logged in as Vendor (Admin Impersonation)", {
-          description: "You are currently viewing this account as an administrator.",
-          duration: 5000,
-        })
+        showToast.success(
+          "Logged in as Vendor (Admin Impersonation)",
+          "You are currently viewing this account as an administrator.",
+          5000,
+        )
       }, 1000)
 
       // Clean up the URL without triggering a re-render/redirect

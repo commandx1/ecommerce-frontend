@@ -4,7 +4,7 @@ import { CardElement, Elements, useElements, useStripe } from "@stripe/react-str
 import { loadStripe } from "@stripe/stripe-js"
 import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react"
 import { useEffect, useState } from "react"
-import { toast } from "sonner"
+import { showToast } from "@/components/ui/Toast"
 import { ordersAPI, type SavedCard } from "@/lib/api/orders"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
@@ -65,7 +65,7 @@ const FinalReviewContent = () => {
           setSavedCards([])
           return
         }
-        toast.error("Failed to load saved cards.")
+        showToast.error("Failed to load saved cards.")
       })
       .finally(() => {
         if (isMounted) setIsLoadingCards(false)
@@ -78,7 +78,7 @@ const FinalReviewContent = () => {
 
   const handlePlaceOrder = async () => {
     if (!orderPayload) {
-      toast.error("Order information is missing. Please go back and review your shipping details.")
+      showToast.error("Order information is missing. Please go back and review your shipping details.")
       return
     }
 
@@ -92,11 +92,11 @@ const FinalReviewContent = () => {
 
       if (paymentMethod.type === "card") {
         if (!stripe || !elements) {
-          toast.error("Stripe is not ready. Please refresh and try again.")
+          showToast.error("Stripe is not ready. Please refresh and try again.")
           return
         }
         if (!response.clientSecret) {
-          toast.error("Payment could not be initiated. Missing client secret.")
+          showToast.error("Payment could not be initiated. Missing client secret.")
           return
         }
 
@@ -108,7 +108,7 @@ const FinalReviewContent = () => {
         } else {
           const cardElement = elements.getElement(CardElement)
           if (!cardElement) {
-            toast.error("Please enter your card details.")
+            showToast.error("Please enter your card details.")
             return
           }
           confirmResult = await stripe.confirmCardPayment(response.clientSecret, {
@@ -122,17 +122,17 @@ const FinalReviewContent = () => {
         }
 
         if (confirmResult?.error) {
-          toast.error(confirmResult.error.message || "Payment failed. Please try again.")
+          showToast.error(confirmResult.error.message || "Payment failed. Please try again.")
           return
         }
       }
 
-      toast.success(`Order placed successfully. Order ID: ${response.orderId}`)
+      showToast.success(`Order placed successfully. Order ID: ${response.orderId}`)
       setOrderResult(response)
       nextStep()
     } catch (error: any) {
       const message = error?.response?.data?.message || "Failed to place order. Please try again."
-      toast.error(message)
+      showToast.error(message)
     } finally {
       setIsPlacingOrder(false)
     }

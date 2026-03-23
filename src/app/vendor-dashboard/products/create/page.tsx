@@ -21,7 +21,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useCallback, useEffect, useRef, useState } from "react"
-import { toast } from "sonner"
+import { showToast } from "@/components/ui/Toast"
 import { downloadImageAsFileViaProxy } from "@/lib/api/image-proxy"
 import {
   type BarcodeLookupProduct,
@@ -186,15 +186,6 @@ function CreateProductPageContent() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // Show toast notification using sonner
-  const showToast = useCallback((message: string, type: "error" | "success" = "error") => {
-    if (type === "success") {
-      toast.success(message)
-    } else {
-      toast.error(message)
-    }
-  }, [])
-
   // Search function
   const performSearch = useCallback(
     async (query: string) => {
@@ -230,13 +221,13 @@ function CreateProductPageContent() {
             : error instanceof Error
               ? error.message
               : "An error occurred during search"
-        showToast(`Search error: ${errorMessage}`, "error")
+        showToast.error(`Search error: ${errorMessage}`)
         setSearchResults([])
       } finally {
         setIsSearching(false)
       }
     },
-    [accessToken, showToast],
+    [accessToken],
   )
 
   // Trigger search when debounced query changes
@@ -262,7 +253,7 @@ function CreateProductPageContent() {
       const userProduct = userProducts.find((up) => up.id === userProductId)
 
       if (!userProduct) {
-        showToast("Product not found", "error")
+        showToast.error("Product not found")
         router.push("/vendor-dashboard/products")
         return
       }
@@ -307,7 +298,7 @@ function CreateProductPageContent() {
       // Disable form fields in edit mode
       setIsProductSelected(true)
     } catch (error) {
-      showToast((error as { message?: string })?.message || "Failed to load product data", "error")
+      showToast.error((error as { message?: string })?.message || "Failed to load product data")
       router.push("/vendor-dashboard/products")
     } finally {
       setIsLoading(false)
@@ -319,7 +310,7 @@ function CreateProductPageContent() {
     try {
       return await downloadImageAsFileViaProxy(url, filename)
     } catch (error) {
-      showToast((error as { message?: string })?.message || "Error downloading image", "error")
+      showToast.error((error as { message?: string })?.message || "Error downloading image")
       throw error
     }
   }
@@ -359,7 +350,7 @@ function CreateProductPageContent() {
       // Clear existing images since we're using downloaded files
       setExistingImages({ coverPhoto: null, photos: [] })
     } catch (error) {
-      showToast((error as { message?: string })?.message || "Error downloading images", "error")
+      showToast.error((error as { message?: string })?.message || "Error downloading images")
       // On error, fallback to showing URLs as existing images
       setFileData(initialFileData)
       setExistingImages({
@@ -700,7 +691,7 @@ function CreateProductPageContent() {
       const errorMessage =
         errorCount === 1 ? `${newErrors[firstErrorField]}` : `Please fill in ${errorCount} required fields`
 
-      showToast(errorMessage, "error")
+      showToast.error(errorMessage)
     }
     return Object.keys(newErrors).length === 0
   }
@@ -729,7 +720,7 @@ function CreateProductPageContent() {
           accessToken || "",
         )
 
-        showToast("Product updated successfully!", "success")
+        showToast.success("Product updated successfully!")
 
         // Redirect immediately
         router.push("/vendor-dashboard/products")
@@ -802,7 +793,7 @@ function CreateProductPageContent() {
         await productsAPI.createUserProduct(userProductPayload, accessToken || "")
       }
 
-      showToast("Product created successfully!", "success")
+      showToast.success("Product created successfully!")
 
       // Redirect immediately
       router.push("/vendor-dashboard/products")
@@ -810,7 +801,7 @@ function CreateProductPageContent() {
       const err = error as { message?: string }
       const errorMessage = err.message || `Failed to ${isEditMode ? "update" : "create"} product. Please try again.`
       setErrors({ submit: errorMessage })
-      showToast(errorMessage, "error")
+      showToast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }

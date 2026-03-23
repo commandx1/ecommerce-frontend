@@ -2,7 +2,7 @@
 
 import { Star, X } from "lucide-react"
 import { useState } from "react"
-import { toast } from "sonner"
+import { showToast } from "@/components/ui/Toast"
 import { createReview } from "@/lib/api/product-reviews"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -27,22 +27,22 @@ export default function WriteReviewModal({ productId, isOpen, onClose, onSuccess
     e.preventDefault()
 
     if (!isAuthenticated) {
-      toast.error("Please log in to write a review")
+      showToast.error("Please log in to write a review")
       return
     }
 
     if (rating === 0) {
-      toast.error("Please select a rating")
+      showToast.error("Please select a rating")
       return
     }
 
     if (!title.trim()) {
-      toast.error("Please enter a review title")
+      showToast.error("Please enter a review title")
       return
     }
 
     if (!comment.trim()) {
-      toast.error("Please enter your review")
+      showToast.error("Please enter your review")
       return
     }
 
@@ -57,14 +57,14 @@ export default function WriteReviewModal({ productId, isOpen, onClose, onSuccess
         comment: comment.trim(),
       })
 
-      toast.success("Your review has been submitted successfully!")
+      showToast.success("Your review has been submitted successfully!")
       setRating(0)
       setTitle("")
       setComment("")
       onClose()
       onSuccess()
     } catch (error) {
-      toast.error((error as Error)?.message || "Failed to submit review. Please try again.")
+      showToast.error((error as Error)?.message || "Failed to submit review. Please try again.")
     } finally {
       setIsSubmitting(false)
     }

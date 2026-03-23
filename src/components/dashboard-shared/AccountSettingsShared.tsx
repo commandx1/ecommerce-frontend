@@ -3,7 +3,7 @@
 import { AlertTriangle, Fingerprint, Lock, Phone, Save, Shield, Trash2, User } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { toast } from "sonner"
+import { showToast } from "@/components/ui/Toast"
 import { deleteMe, updateMe } from "@/lib/api/account"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -62,9 +62,9 @@ export default function AccountSettingsShared({
 
     try {
       await updateProfile(formData)
-      toast.success("Profile updated successfully!")
+      showToast.success("Profile updated successfully!")
     } catch (error) {
-      toast.error("Failed to update profile. Please try again.")
+      showToast.error("Failed to update profile. Please try again.")
     } finally {
       setIsUpdating(false)
     }
@@ -77,9 +77,9 @@ export default function AccountSettingsShared({
     try {
       await updateProfile(newData)
       setFormData(newData)
-      toast.success(`Two-factor authentication ${enabled ? "enabled" : "disabled"}`)
+      showToast.success(`Two-factor authentication ${enabled ? "enabled" : "disabled"}`)
     } catch (error) {
-      toast.error("Failed to update security settings.")
+      showToast.error("Failed to update security settings.")
     } finally {
       setIsUpdating2FA(false)
     }
@@ -93,11 +93,11 @@ export default function AccountSettingsShared({
       }
       await deleteMe(accessToken)
 
-      toast.success("Account deleted successfully.")
+      showToast.success("Account deleted successfully.")
       clearAuth()
       router.push("/")
     } catch (error) {
-      toast.error((error as Error).message || "Failed to delete account. Please contact support.")
+      showToast.error((error as Error).message || "Failed to delete account. Please contact support.")
     } finally {
       setIsDeleting(false)
     }

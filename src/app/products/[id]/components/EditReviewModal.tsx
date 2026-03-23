@@ -2,7 +2,7 @@
 
 import { Star, X } from "lucide-react"
 import { useEffect, useState } from "react"
-import { toast } from "sonner"
+import { showToast } from "@/components/ui/Toast"
 import { updateReview } from "@/lib/api/product-reviews"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -41,22 +41,22 @@ export default function EditReviewModal({ review, isOpen, onClose, onSuccess }: 
     e.preventDefault()
 
     if (!isAuthenticated) {
-      toast.error("Please log in to edit your review")
+      showToast.error("Please log in to edit your review")
       return
     }
 
     if (rating === 0) {
-      toast.error("Please select a rating")
+      showToast.error("Please select a rating")
       return
     }
 
     if (!title.trim()) {
-      toast.error("Please enter a review title")
+      showToast.error("Please enter a review title")
       return
     }
 
     if (!comment.trim()) {
-      toast.error("Please enter your review")
+      showToast.error("Please enter your review")
       return
     }
 
@@ -71,11 +71,11 @@ export default function EditReviewModal({ review, isOpen, onClose, onSuccess }: 
         comment: comment.trim(),
       })
 
-      toast.success("Your review has been updated successfully!")
+      showToast.success("Your review has been updated successfully!")
       onClose()
       onSuccess()
     } catch (error) {
-      toast.error((error as Error)?.message || "Failed to update review. Please try again.")
+      showToast.error((error as Error)?.message || "Failed to update review. Please try again.")
     } finally {
       setIsSubmitting(false)
     }

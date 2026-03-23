@@ -3,7 +3,7 @@
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ExternalLink, Printer, X } from "lucide-react"
 import Link from "next/link"
 import { Fragment, useEffect, useState } from "react"
-import { toast } from "sonner"
+import { showToast } from "@/components/ui/Toast"
 import { type VendorOrder, vendorOrdersAPI } from "@/lib/api/vendor-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { connectQzAndGetPrinters, printShippingLabel, type QzPrintOptions } from "@/lib/qz/printLabel"
@@ -85,7 +85,7 @@ export default function VendorOrdersPage() {
     }
     const isUrlValid = url.startsWith("http") || url.startsWith("https")
     if (!isUrlValid) {
-      toast.error("Invalid URL. Please check the URL and try again.")
+      showToast.error("Invalid URL. Please check the URL and try again.")
     }
     void printShippingLabel(url, options)
   }

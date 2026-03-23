@@ -3,7 +3,7 @@
 import { ArrowRight, Check, MapPin, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { toast } from "sonner"
+import { showToast } from "@/components/ui/Toast"
 import { type Address, addressAPI } from "@/lib/api/address"
 import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
@@ -37,7 +37,7 @@ const ShippingDetails = () => {
           handleAddressChange(defaultAddress)
         }
       } catch (error) {
-        toast.error("Failed to load addresses")
+        showToast.error("Failed to load addresses")
       } finally {
         setIsLoadingAddresses(false)
       }
@@ -73,7 +73,7 @@ const ShippingDetails = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedAddressId) {
-      toast.error("Please select a shipping address")
+      showToast.error("Please select a shipping address")
       return
     }
 
@@ -114,7 +114,7 @@ const ShippingDetails = () => {
     })
 
     if (shippoRateOrders.length === 0 && uberRateOrders.length === 0) {
-      toast.error("Please select at least one shipping method")
+      showToast.error("Please select at least one shipping method")
       return
     }
 

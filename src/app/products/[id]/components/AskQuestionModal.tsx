@@ -2,7 +2,7 @@
 
 import { X } from "lucide-react"
 import { useState } from "react"
-import { toast } from "sonner"
+import { showToast } from "@/components/ui/Toast"
 import { submitProductQuestion } from "@/lib/api/product-qa"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -41,17 +41,17 @@ export default function AskQuestionModal({
     e.preventDefault()
 
     if (!isAuthenticated) {
-      toast.error("Please log in to ask a question")
+      showToast.error("Please log in to ask a question")
       return
     }
 
     if (!question.trim()) {
-      toast.error("Please enter your question")
+      showToast.error("Please enter your question")
       return
     }
 
     if (!preSelectedUserProductId) {
-      toast.error("Please select a vendor from the supplier table first")
+      showToast.error("Please select a vendor from the supplier table first")
       return
     }
 
@@ -65,12 +65,12 @@ export default function AskQuestionModal({
         question: question.trim(),
       })
 
-      toast.success("Your question has been submitted successfully!")
+      showToast.success("Your question has been submitted successfully!")
       setQuestion("")
       onClose()
       onSuccess()
     } catch (error) {
-      toast.error((error as Error)?.message || "Failed to submit question. Please try again.")
+      showToast.error((error as Error)?.message || "Failed to submit question. Please try again.")
     } finally {
       setIsSubmitting(false)
     }

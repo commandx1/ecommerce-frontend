@@ -3,7 +3,7 @@
 import { Check, Headset, Info, Key, Mail, SendIcon, ShieldCheck } from "lucide-react"
 import Link from "next/link"
 import { useId, useState } from "react"
-import { toast } from "sonner"
+import { showToast } from "@/components/ui/Toast"
 import { requestPasswordReset } from "@/lib/api/password-recovery"
 
 export default function ForgotPasswordPage() {
@@ -20,9 +20,9 @@ export default function ForgotPasswordPage() {
     try {
       await requestPasswordReset(email)
       setIsSent(true)
-      toast.success("Password reset instructions have been sent to your email address.")
-    } catch {
-      toast.error("An error occurred. Please try again.")
+      showToast.success("Password reset instructions have been sent to your email address.")
+    } catch (error) {
+      showToast.error(error instanceof Error ? error.message : "An error occurred. Please try again.")
     } finally {
       setIsSubmitting(false)
     }

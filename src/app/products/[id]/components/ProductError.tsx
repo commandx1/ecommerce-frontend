@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { toast } from "sonner"
+import { showToast } from "@/components/ui/Toast"
 
 interface ProductErrorProps {
   message?: string
@@ -10,7 +10,7 @@ interface ProductErrorProps {
 export default function ProductError({ message }: ProductErrorProps) {
   useEffect(() => {
     if (message) {
-      toast.error(message)
+      showToast.error(message)
     }
   }, [message])
 

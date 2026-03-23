@@ -3,7 +3,7 @@
 import { Award, Percent, Shield, TrendingUp, Truck } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useId, useState } from "react"
-import { toast } from "sonner"
+import { showToast } from "@/components/ui/Toast"
 import { authAPI, type LoginPayload } from "@/lib/api/auth"
 // import { authAPIDirect as authAPI, type LoginPayload } from "@/lib/api/auth-direct"
 import { useAuthStore } from "@/stores/authStore"
@@ -13,7 +13,7 @@ const REMEMBER_ME_PASSWORD_KEY = "remembered_password"
 
 const LoginPage = () => {
   const router = useRouter()
-  const { setUser, setTokens, setError: setAuthError } = useAuthStore()
+  const { setUser, setError } = useAuthStore()
 
   // Load remembered email and password from localStorage on mount
   const [formData, setFormData] = useState(() => {
@@ -32,7 +32,6 @@ const LoginPage = () => {
   })
 
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [needsEmailVerification, setNeedsEmailVerification] = useState(false)
   const [rememberMe, setRememberMe] = useState(() => {
@@ -49,13 +48,12 @@ const LoginPage = () => {
     e.preventDefault()
 
     if (!formData.email || !formData.password) {
-      setError("Please fill in all fields")
+      showToast.error("Please fill in all fields")
       return
     }
 
     setIsLoading(true)
-    setError("")
-    setAuthError(null)
+    setError(null)
 
     try {
       const payload: LoginPayload = {
@@ -68,7 +66,7 @@ const LoginPage = () => {
 
       // 2FA Control
       if (response.twoFactorRequired || response.requires2FA || response.twoFactorEnabled) {
-        toast.info(response.message || "2FA code has been sent to your email.")
+        showToast.info(response.message || "2FA code has been sent to your email.")
         router.push(`/verify-2fa?email=${encodeURIComponent(formData.email)}`)
         return
       }
@@ -121,13 +119,17 @@ const LoginPage = () => {
         (err.message?.includes("email") && err.message?.includes("verified"))
       ) {
         setNeedsEmailVerification(true)
-        setError(err.message || "Email not verified")
+        const error = err.message || "Email not verified"
+        showToast.error(error)
       } else if (err.message?.includes("Account is Temporarily locked") || err.message?.includes("locked")) {
-        setError("Your account is temporarily locked. Please try again later.")
+        const error = "Your account is temporarily locked. Please try again later."
+        showToast.error(error)
       } else if (err.message?.includes("Invalid email or password") || err.message?.includes("Invalid")) {
-        setError("Invalid email or password")
+        const error = "Invalid email or password"
+        showToast.error(error)
       } else {
-        setError(err.message || "An error occurred during sign in")
+        const error = err.message || "An error occurred during sign in"
+        showToast.error(error)
       }
     } finally {
       setIsLoading(false)
@@ -140,7 +142,7 @@ const LoginPage = () => {
       ...prev,
       [name]: value,
     }))
-    if (error) setError("")
+    setNeedsEmailVerification(false)
   }
 
   const handleVerifyEmail = () => {
@@ -245,18 +247,15 @@ const LoginPage = () => {
                       </button>
                     </div>
 
-                    {error && (
+                    {needsEmailVerification && (
                       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <p className="text-red-600 text-sm">{error}</p>
-                        {needsEmailVerification && (
-                          <button
-                            type="button"
-                            onClick={handleVerifyEmail}
-                            className="mt-2 text-steel-blue hover:underline text-sm font-medium"
-                          >
-                            Go to email verification page →
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={handleVerifyEmail}
+                          className="mt-2 text-steel-blue hover:underline text-sm font-medium"
+                        >
+                          Go to email verification page →
+                        </button>
                       </div>
                     )}
 

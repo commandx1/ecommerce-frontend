@@ -4,7 +4,7 @@ import { ArrowLeft, Loader2, Lock, ShieldCheck } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
-import { toast } from "sonner"
+import { showToast } from "@/components/ui/Toast"
 import { verifyTwoFactorLogin } from "@/lib/api/two-factor"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -19,7 +19,7 @@ function Verify2FAContent() {
 
   useEffect(() => {
     if (!email) {
-      toast.error("Email is missing. Please log in again.")
+      showToast.error("Email is missing. Please log in again.")
       router.push("/login")
     }
   }, [email, router])
@@ -28,7 +28,7 @@ function Verify2FAContent() {
     e.preventDefault()
 
     if (code.length < 6) {
-      toast.error("Please enter the 6-digit code.")
+      showToast.error("Please enter the 6-digit code.")
       return
     }
 
@@ -71,7 +71,7 @@ function Verify2FAContent() {
       router.refresh()
       router.push("/")
     } catch (error) {
-      toast.error((error as Error).message || "Verification failed. Please try again.")
+      showToast.error((error as Error).message || "Verification failed. Please try again.")
     } finally {
       setIsSubmitting(false)
     }

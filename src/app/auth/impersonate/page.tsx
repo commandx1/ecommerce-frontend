@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect } from "react"
-import { toast } from "sonner"
+import { showToast } from "@/components/ui/Toast"
 import { refreshTokenForImpersonation } from "@/lib/api/impersonation"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -16,7 +16,7 @@ function ImpersonateContent() {
       const refreshToken = searchParams.get("refreshToken")
 
       if (!refreshToken) {
-        toast.error("No refresh token provided")
+        showToast.error("No refresh token provided")
         router.push("/login")
         return
       }
@@ -32,15 +32,16 @@ function ImpersonateContent() {
 
         setAuth(userObj as any, data.accessToken, (data.refreshToken as string | undefined) || refreshToken, true)
 
-        toast.success("Logged in as Vendor (Admin Impersonation)", {
-          description: "You are currently viewing this account as an administrator.",
-          duration: 5000,
-        })
+        showToast.success(
+          "Logged in as Vendor (Admin Impersonation)",
+          "You are currently viewing this account as an administrator.",
+          5000,
+        )
 
         router.push("/vendor-dashboard")
       } catch (error) {
         console.error("Impersonation error:", error)
-        toast.error(error instanceof Error ? error.message : "An error occurred during impersonation")
+        showToast.error(error instanceof Error ? error.message : "An error occurred during impersonation")
         router.push("/login")
       }
     }

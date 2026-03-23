@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect } from "react"
-import { toast } from "sonner"
+import { showToast } from "@/components/ui/Toast"
 import { refreshTokenForVendorSetup } from "@/lib/api/setup-vendor"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -16,7 +16,7 @@ function SetupVendorContent() {
       const refreshToken = searchParams.get("refreshToken")
 
       if (!refreshToken) {
-        toast.error("No setup token provided")
+        showToast.error("No setup token provided")
         router.push("/login")
         return
       }
@@ -33,10 +33,7 @@ function SetupVendorContent() {
         // Update store (not impersonating, just a setup/login)
         setAuth(userObj as any, data.accessToken, (data.refreshToken as string | undefined) || refreshToken, false)
 
-        toast.success("Account setup successful!", {
-          description: "Please complete your profile information.",
-          duration: 5000,
-        })
+        showToast.success("Account setup successful!", "Please complete your profile information.", 5000)
 
         // Redirect to settings page as requested
         setTimeout(() => {
@@ -44,7 +41,7 @@ function SetupVendorContent() {
         }, 800)
       } catch (error) {
         console.error("Setup error:", error)
-        toast.error(error instanceof Error ? error.message : "An error occurred during setup")
+        showToast.error(error instanceof Error ? error.message : "An error occurred during setup")
         router.push("/login")
       }
     }
