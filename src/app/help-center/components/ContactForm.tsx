@@ -5,6 +5,7 @@ import { Send } from "lucide-react"
 import { SelectField } from "@/components/form/SelectField"
 import { TextAreaField } from "@/components/form/TextAreaField"
 import { TextField } from "@/components/form/TextField"
+import { CheckboxField } from "@/components/form/CheckboxField"
 import FormAttachmentDropzone from "./FormAttachmentDropzone"
 import type { ContactFormData } from "../hooks/useContactForm"
 
@@ -115,19 +116,13 @@ const ContactForm = ({ formData, onChange, onSubmit }: ContactFormProps) => {
           />
         </div>
 
-        <div className="flex items-center space-x-3">
-          <input
-            id="newsletter"
-            name="subscribe"
-            type="checkbox"
-            checked={formData.subscribe}
-            onChange={onChange}
-            className="w-4 h-4 bg-white text-steel-blue border-gray-300 rounded focus:ring-steel-blue"
-          />
-          <label htmlFor="newsletter" className="text-sm text-gray-600">
-            Subscribe to our newsletter for updates and exclusive offers
-          </label>
-        </div>
+        <CheckboxField
+          id="newsletter"
+          name="subscribe"
+          checked={formData.subscribe}
+          onChange={onChange}
+          label="Subscribe to our newsletter for updates and exclusive offers"
+        />
 
         <button
           type="submit"

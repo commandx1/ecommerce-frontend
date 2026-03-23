@@ -4,6 +4,7 @@ import type { ChangeEventHandler, FormEventHandler } from "react"
 import { Ticket } from "lucide-react"
 import { SelectField } from "@/components/form/SelectField"
 import { TextField } from "@/components/form/TextField"
+import { CheckboxField } from "@/components/form/CheckboxField"
 import FormAttachmentDropzone from "./FormAttachmentDropzone"
 import TicketDescriptionField from "./TicketDescriptionField"
 import TicketTipsCard from "./TicketTipsCard"
@@ -104,19 +105,13 @@ const TicketSubmissionForm = ({ formData, onChange, onSubmit }: TicketSubmission
       <TicketTipsCard />
 
       <div className="flex items-center justify-between pt-4">
-        <div className="flex items-center space-x-3">
-          <input
-            id="urgentCallback"
-            name="urgentCallback"
-            type="checkbox"
-            checked={formData.urgentCallback}
-            onChange={onChange}
-            className="w-4 h-4 text-steel-blue border-gray-300 rounded focus:ring-steel-blue"
-          />
-          <label htmlFor="urgentCallback" className="text-sm text-gray-600">
-            Request urgent callback (for high/urgent priority tickets)
-          </label>
-        </div>
+        <CheckboxField
+          id="urgentCallback"
+          name="urgentCallback"
+          checked={formData.urgentCallback}
+          onChange={onChange}
+          label="Request urgent callback (for high/urgent priority tickets)"
+        />
         <button
           type="submit"
           className="bg-steel-blue text-white px-8 py-3 rounded-lg hover:bg-opacity-90 font-semibold transition-colors flex items-center"
