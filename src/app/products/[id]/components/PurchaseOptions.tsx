@@ -139,11 +139,7 @@ const PurchaseOptions = ({ bulkPricing, warrantyOptions, orderSummary }: Purchas
                 tax={tax}
                 total={total}
               />
-              <PurchaseActions
-                onAddToCart={handleAddToCart}
-                isAddingToCart={isAddingToCart}
-                stockCount={stockCount}
-              />
+              <PurchaseActions onAddToCart={handleAddToCart} isAddingToCart={isAddingToCart} stockCount={stockCount} />
             </div>
           </div>
         </div>

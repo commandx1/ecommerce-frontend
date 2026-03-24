@@ -87,23 +87,25 @@ export const buildSuppliers = (userProducts: UserProduct[], bestPriceVendorUserP
 
   return [...userProducts]
     .sort((a, b) => a.price - b.price)
-    .map((up, index): SupplierViewModel => ({
-      id: index + 1,
-      userProductId: up.id,
-      name: up.vendor || "Vendor",
-      logo: up.vendorLogo,
-      alt: `${up.vendor || "Vendor"} logo`,
-      badge: up.id === bestPriceVendorUserProductId ? "Best Seller" : "Verified",
-      price: `$${up.price.toFixed(2)}`,
-      originalPrice: up.oldPrice && up.oldPrice !== up.price ? `$${up.oldPrice.toFixed(2)}` : null,
-      stock: up.stock > 0 ? "In Stock" : "Out of Stock",
-      stockColor: up.stock > 0 ? "green" : "gray",
-      stockCount: up.stock || 0,
-      shipping: "Free",
-      shippingNote: "Standard shipping",
-      distance: up.vendorDistance,
-      distanceTime: up.vendorDistanceTime,
-      rating: 4.5,
-      starCount: 5,
-    }))
+    .map(
+      (up, index): SupplierViewModel => ({
+        id: index + 1,
+        userProductId: up.id,
+        name: up.vendor || "Vendor",
+        logo: up.vendorLogo,
+        alt: `${up.vendor || "Vendor"} logo`,
+        badge: up.id === bestPriceVendorUserProductId ? "Best Seller" : "Verified",
+        price: `$${up.price.toFixed(2)}`,
+        originalPrice: up.oldPrice && up.oldPrice !== up.price ? `$${up.oldPrice.toFixed(2)}` : null,
+        stock: up.stock > 0 ? "In Stock" : "Out of Stock",
+        stockColor: up.stock > 0 ? "green" : "gray",
+        stockCount: up.stock || 0,
+        shipping: "Free",
+        shippingNote: "Standard shipping",
+        distance: up.vendorDistance,
+        distanceTime: up.vendorDistanceTime,
+        rating: 4.5,
+        starCount: 5,
+      }),
+    )
 }

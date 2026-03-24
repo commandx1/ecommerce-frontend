@@ -1,9 +1,9 @@
 "use client"
 
 import ProductImageWithFallback from "@/app/products/components/ProductImageWithFallback"
-import StarRating from "./StarRating"
 import type { SupplierViewModel } from "../types"
 import { getStockColorClass } from "../utils/stockStyles"
+import StarRating from "./StarRating"
 
 interface SupplierComparisonRowProps {
   supplier: SupplierViewModel
@@ -16,7 +16,11 @@ const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }:
   return (
     <tr
       className={`hover:bg-gray-50 transition-colors cursor-pointer ${
-        isSelected ? "bg-blue-50 border-l-4 border-blue-500" : isBestSeller ? "bg-yellow-50 border-l-4 border-yellow-400" : ""
+        isSelected
+          ? "bg-blue-50 border-l-4 border-blue-500"
+          : isBestSeller
+            ? "bg-yellow-50 border-l-4 border-yellow-400"
+            : ""
       }`}
       onClick={() => onSelect(supplier)}
     >
@@ -50,7 +54,9 @@ const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }:
         {supplier.originalPrice && <div className="text-sm text-gray-500 line-through">{supplier.originalPrice}</div>}
       </td>
       <td className="px-6 py-4 text-center">
-        <span className={`${getStockColorClass(supplier.stockColor)} px-3 py-1 rounded-full text-sm font-medium truncate`}>
+        <span
+          className={`${getStockColorClass(supplier.stockColor)} px-3 py-1 rounded-full text-sm font-medium truncate`}
+        >
           {supplier.stock}
         </span>
       </td>

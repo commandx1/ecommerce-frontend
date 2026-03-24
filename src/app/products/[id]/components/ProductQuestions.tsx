@@ -2,8 +2,8 @@
 
 import { User } from "lucide-react"
 import { useSelectedSupplierStore } from "@/stores/selectedSupplierStore"
-import AskQuestionButton from "./AskQuestionButton"
 import { formatRelativeDate } from "../utils/relativeDate"
+import AskQuestionButton from "./AskQuestionButton"
 
 interface Answer {
   id: string

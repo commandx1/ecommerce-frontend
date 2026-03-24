@@ -50,7 +50,9 @@ const OrderSummaryCard = ({
         </div>
         <div className="flex justify-between">
           <span className="text-gray-600">Shipping</span>
-          <span className="text-green-600 font-semibold">{shippingPrice === 0 ? "Free" : formatCurrency(shippingPrice)}</span>
+          <span className="text-green-600 font-semibold">
+            {shippingPrice === 0 ? "Free" : formatCurrency(shippingPrice)}
+          </span>
         </div>
         <div className="border-t border-gray-200 pt-3">
           <div className="flex justify-between">

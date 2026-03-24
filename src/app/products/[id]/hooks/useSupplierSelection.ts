@@ -8,10 +8,7 @@ const parsePrice = (priceString: string): number => {
   return Number.parseFloat(priceString.replace(/[$,]/g, "")) || 0
 }
 
-export const useSupplierSelection = (
-  suppliers: SupplierViewModel[],
-  bestPriceVendorUserProductId?: string | null,
-) => {
+export const useSupplierSelection = (suppliers: SupplierViewModel[], bestPriceVendorUserProductId?: string | null) => {
   const defaultSupplier = useMemo(() => {
     return suppliers.find((supplier) => supplier.userProductId === bestPriceVendorUserProductId) || suppliers[0] || null
   }, [bestPriceVendorUserProductId, suppliers])

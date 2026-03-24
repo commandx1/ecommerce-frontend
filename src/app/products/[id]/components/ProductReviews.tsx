@@ -4,10 +4,10 @@ import { Edit2, Reply, ThumbsUp } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useAuthStore } from "@/stores/authStore"
+import { formatRelativeDate } from "../utils/relativeDate"
 import EditReviewModal from "./EditReviewModal"
 import StarRating from "./StarRating"
 import WriteReviewButton from "./WriteReviewButton"
-import { formatRelativeDate } from "../utils/relativeDate"
 
 interface Review {
   id: string
@@ -55,7 +55,6 @@ interface ProductReviewsProps {
   productId: string
   initialReviews?: ReviewsResponse
 }
-
 
 export default function ProductReviews({ productId, initialReviews }: ProductReviewsProps) {
   const router = useRouter()

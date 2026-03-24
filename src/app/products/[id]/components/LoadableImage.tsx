@@ -12,16 +12,19 @@ interface LoadableImageProps extends Omit<ImageProps, "src"> {
 }
 
 const LoadableImage = forwardRef<HTMLImageElement, LoadableImageProps>(
-  ({
-    src,
-    fallbackSrc = "/dentypro-product-placeholder.png",
-    showSkeleton = true,
-    skeletonClassName,
-    className,
-    onError,
-    onLoadingComplete,
-    ...props
-  }, ref) => {
+  (
+    {
+      src,
+      fallbackSrc = "/dentypro-product-placeholder.png",
+      showSkeleton = true,
+      skeletonClassName,
+      className,
+      onError,
+      onLoadingComplete,
+      ...props
+    },
+    ref,
+  ) => {
     const [resolvedSrc, setResolvedSrc] = useState(src)
     const [isLoading, setIsLoading] = useState(true)
 

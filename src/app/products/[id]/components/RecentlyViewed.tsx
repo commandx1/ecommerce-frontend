@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import recentlyViewedData from "@/data/recently-viewed.json"
 import ProductImageWithFallback from "@/app/products/components/ProductImageWithFallback"
+import recentlyViewedData from "@/data/recently-viewed.json"
 
 const RecentlyViewed = () => {
   return (

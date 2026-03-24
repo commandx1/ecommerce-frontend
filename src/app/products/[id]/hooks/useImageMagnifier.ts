@@ -1,4 +1,4 @@
-import { useCallback, useState, type MouseEvent, type RefObject } from "react"
+import { type MouseEvent, type RefObject, useCallback, useState } from "react"
 
 export interface MagnifierPosition {
   screenX: number
@@ -41,7 +41,12 @@ export const useImageMagnifier = (imageRef: RefObject<HTMLImageElement>) => {
       const image = imageRef.current
       const rect = image.getBoundingClientRect()
 
-      if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) {
+      if (
+        event.clientX < rect.left ||
+        event.clientX > rect.right ||
+        event.clientY < rect.top ||
+        event.clientY > rect.bottom
+      ) {
         setPosition((prev) => ({ ...prev, isVisible: false }))
         return
       }

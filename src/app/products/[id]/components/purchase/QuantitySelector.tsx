@@ -9,7 +9,13 @@ interface QuantitySelectorProps {
   onDecrement: () => void
 }
 
-const QuantitySelector = ({ quantity, stockCount, onQuantityChange, onIncrement, onDecrement }: QuantitySelectorProps) => {
+const QuantitySelector = ({
+  quantity,
+  stockCount,
+  onQuantityChange,
+  onIncrement,
+  onDecrement,
+}: QuantitySelectorProps) => {
   return (
     <div>
       <label htmlFor="quantity-input" className="block text-sm font-medium text-gray-700 mb-2">

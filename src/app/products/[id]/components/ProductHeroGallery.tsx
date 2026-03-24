@@ -2,10 +2,10 @@
 
 import { Heart, Search } from "lucide-react"
 import { useRef } from "react"
-import ImageMagnifierOverlay from "./ImageMagnifierOverlay"
-import LoadableImage from "./LoadableImage"
 import { useImageMagnifier } from "../hooks/useImageMagnifier"
 import { useProductImageGallery } from "../hooks/useProductImageGallery"
+import ImageMagnifierOverlay from "./ImageMagnifierOverlay"
+import LoadableImage from "./LoadableImage"
 
 interface ProductHeroGalleryProps {
   title: string

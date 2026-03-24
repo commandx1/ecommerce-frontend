@@ -1,9 +1,9 @@
 "use client"
 
 import { useSupplierSelection } from "../hooks/useSupplierSelection"
+import type { ProductHeroViewModel, SupplierViewModel } from "../types"
 import ProductHero from "./ProductHero"
 import SupplierComparison from "./SupplierComparison"
-import type { ProductHeroViewModel, SupplierViewModel } from "../types"
 
 interface ProductWithSuppliersProps {
   product: ProductHeroViewModel
