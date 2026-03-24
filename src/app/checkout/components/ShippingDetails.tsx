@@ -11,7 +11,7 @@ import { useCheckoutStore } from "@/stores/checkoutStore"
 import VendorShipmentRates from "./VendorShipmentRates"
 
 const ShippingDetails = () => {
-  const { updateShippingAddress, nextStep, setOrderPayload } = useCheckoutStore()
+  const { updateShippingAddress, nextStep, setOrderPayload, setSelectedShippingEtaText } = useCheckoutStore()
   const { items, cartId } = useCartStore()
   const { user } = useAuthStore()
   const router = useRouter()
@@ -63,12 +63,16 @@ const ShippingDetails = () => {
     const isUber = "fee" in rate && "duration" in rate
     const rateId = rate.objectId || rate.id
     const type: SelectedRateInfo["type"] = isUber ? "uber" : "shippo"
+    const etaText = isUber
+      ? `Same-day delivery - ${rate.duration} mins`
+      : `${rate.servicelevel?.name || "Shipping"} - ${rate.estimatedDays} business days`
 
     setSelectedRates((prev) => {
       if (prev[vendorId]?.rateId === rateId && prev[vendorId]?.type === type) return prev
       return { ...prev, [vendorId]: { type, rateId } }
     })
-  }, [])
+    setSelectedShippingEtaText(etaText)
+  }, [setSelectedShippingEtaText])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

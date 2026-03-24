@@ -51,16 +51,15 @@ export default function VendorShipmentRates({
 
         if (!isMounted) return
 
-        setRates(
-          response.shippoRates.filter(
-            (rate) => !rate.servicelevel.name.includes("Air") && !rate.servicelevel.name.includes("Ground"),
-          ),
+        const filteredRates = response.shippoRates.filter(
+          (rate) => !rate.servicelevel.name.includes("Air") && !rate.servicelevel.name.includes("Ground"),
         )
+        setRates(filteredRates)
         setUberQuote(response.uberQuote)
 
         // Auto-select first rate if none selected
-        if (!selectedRateId && response.shippoRates.length > 0) {
-          onSelect(sellerId, response.shippoRates[0])
+        if (!selectedRateId && filteredRates.length > 0) {
+          onSelect(sellerId, filteredRates[0])
         }
       } catch (err) {
         if (!isMounted) return

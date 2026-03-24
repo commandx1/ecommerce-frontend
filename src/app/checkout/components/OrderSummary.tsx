@@ -11,7 +11,7 @@ import { useCheckoutStore } from "@/stores/checkoutStore"
 const OrderSummary = () => {
   const router = useRouter()
   const { items } = useCartStore()
-  const { shippingAddress, applyTaxExemption, currentStep } = useCheckoutStore()
+  const { shippingAddress, applyTaxExemption, currentStep, selectedShippingEtaText } = useCheckoutStore()
 
   const subtotal = items.reduce((sum, item) => {
     return sum + item.userProduct.price * item.quantity
@@ -98,7 +98,7 @@ const OrderSummary = () => {
           </div>
           <div className="mt-3 flex items-center text-sm">
             <Truck className="w-4 h-4 text-steel-blue mr-2" />
-            <span className="text-gray-700">Express Delivery - 2-3 business days</span>
+            <span className="text-gray-700">{selectedShippingEtaText}</span>
           </div>
         </div>
       )}

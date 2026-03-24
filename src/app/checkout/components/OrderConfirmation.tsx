@@ -18,7 +18,7 @@ const OrderConfirmation = () => {
     router.push("/")
   }
 
-  const createdDate = orderResult ? new Date(orderResult.createdDate) : null
+  const createdDate = orderResult?.createdDate ? new Date(orderResult.createdDate) : null
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-12 mb-8">
@@ -134,7 +134,7 @@ const OrderConfirmation = () => {
 
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Link
-          href="/buyer-dashboard"
+          href="/buyer-dashboard/orders"
           className="flex items-center justify-center px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors"
         >
           <Package className="mr-2 w-5 h-5" />
