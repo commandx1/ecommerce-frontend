@@ -7,7 +7,7 @@ const statusItems = [
   { name: "Payment Gateway", status: "Operational", color: "green" },
   { name: "Mobile App", status: "Minor Issues", color: "yellow" },
   { name: "Support Systems", status: "Operational", color: "green" },
-]
+] as const
 
 const announcements = [
   {
