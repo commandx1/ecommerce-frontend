@@ -31,7 +31,7 @@ const options = [
     badge: "Response within 2 hours",
     badgeTone: "gray",
   },
-]
+] as const
 
 export default function QuickSupportOptions() {
   return (
