@@ -34,13 +34,91 @@ export interface UserProduct {
   vendorDistanceTime?: string
 }
 
+/** Spring Data page sort block */
+export interface PageSortState {
+  empty: boolean
+  sorted: boolean
+  unsorted: boolean
+}
+
+export interface SpringPageable {
+  pageNumber: number
+  pageSize: number
+  sort: PageSortState
+  offset: number
+  paged: boolean
+  unpaged: boolean
+}
+
+export interface Review {
+  id: string
+  productId: string
+  star: number
+  userId: string
+  username: string
+  title: string
+  comment: string
+  createdDate: string
+  peopleFoundHelpful: number
+  helpfulTrue?: boolean
+}
+
+export interface ReviewsResponse {
+  content: Review[]
+  pageable: SpringPageable
+  last: boolean
+  totalPages: number
+  totalElements: number
+  size: number
+  number: number
+  sort: PageSortState
+  numberOfElements: number
+  first: boolean
+  empty: boolean
+}
+
+export interface Answer {
+  id: string
+  productQuestionId: string
+  answererUserId: string
+  answererName: string
+  answer: string
+  createdDate: string
+}
+
+export interface Question {
+  id: string
+  productId: string
+  userId: string
+  questionerName: string
+  userProductId: string
+  sellerName: string
+  question: string
+  createdDate: string
+  answers: Answer[]
+}
+
+export interface QuestionsResponse {
+  content: Question[]
+  pageable: SpringPageable
+  last: boolean
+  totalPages: number
+  totalElements: number
+  size: number
+  number: number
+  sort: PageSortState
+  numberOfElements: number
+  first: boolean
+  empty: boolean
+}
+
 export interface ProductDetailPageData {
   productData: {
     product: ProductDetail
     userProducts?: UserProduct[]
   }
-  reviews: unknown
-  questions: unknown
+  reviews: ReviewsResponse | null
+  questions: QuestionsResponse | null
 }
 
 export interface SupplierViewModel {

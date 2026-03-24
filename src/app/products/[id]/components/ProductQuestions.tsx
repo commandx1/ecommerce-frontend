@@ -2,58 +2,9 @@
 
 import { User } from "lucide-react"
 import { useSelectedSupplierStore } from "@/stores/selectedSupplierStore"
+import type { Question, QuestionsResponse } from "../types"
 import { formatRelativeDate } from "../utils/relativeDate"
 import AskQuestionButton from "./AskQuestionButton"
-
-interface Answer {
-  id: string
-  productQuestionId: string
-  answererUserId: string
-  answererName: string
-  answer: string
-  createdDate: string
-}
-
-interface Question {
-  id: string
-  productId: string
-  userId: string
-  questionerName: string
-  userProductId: string
-  sellerName: string
-  question: string
-  createdDate: string
-  answers: Answer[]
-}
-
-interface QuestionsResponse {
-  content: Question[]
-  pageable: {
-    pageNumber: number
-    pageSize: number
-    sort: {
-      empty: boolean
-      sorted: boolean
-      unsorted: boolean
-    }
-    offset: number
-    paged: boolean
-    unpaged: boolean
-  }
-  last: boolean
-  totalPages: number
-  totalElements: number
-  size: number
-  number: number
-  sort: {
-    empty: boolean
-    sorted: boolean
-    unsorted: boolean
-  }
-  numberOfElements: number
-  first: boolean
-  empty: boolean
-}
 
 interface UserProduct {
   id: string

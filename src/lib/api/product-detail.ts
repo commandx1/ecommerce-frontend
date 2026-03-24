@@ -1,13 +1,7 @@
 "use server"
 
 import { cookies } from "next/headers"
-
-type ProductDetailPageData = {
-  // backend shapes are not strictly typed in current codebase
-  productData: any
-  reviews: any | null
-  questions: any | null
-}
+import type { ProductDetailPageData, QuestionsResponse, ReviewsResponse } from "@/app/products/[id]/types"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
@@ -126,8 +120,12 @@ export async function fetchProductDetailPageData(id: string): Promise<ProductDet
     throw new Error("Invalid product data received from server")
   }
 
-  const reviews = reviewsResponse?.ok ? await reviewsResponse.json() : null
-  const questions = questionsResponse?.ok ? await questionsResponse.json() : null
+  const reviewsRaw = reviewsResponse?.ok ? await reviewsResponse.json() : null
+  const questionsRaw = questionsResponse?.ok ? await questionsResponse.json() : null
 
-  return { productData, reviews, questions }
+  return {
+    productData,
+    reviews: reviewsRaw as ReviewsResponse | null,
+    questions: questionsRaw as QuestionsResponse | null,
+  } as ProductDetailPageData
 }

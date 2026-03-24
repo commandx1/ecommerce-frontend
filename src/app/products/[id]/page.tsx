@@ -10,7 +10,6 @@ import PurchaseOptions from "./components/PurchaseOptions"
 import RecentlyViewed from "./components/RecentlyViewed"
 import RelatedProducts from "./components/RelatedProducts"
 import TechnicalSpecs from "./components/TechnicalSpecs"
-import type { ProductDetailPageData } from "./types"
 import {
   buildDescription,
   buildFeatures,
@@ -30,7 +29,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const { id } = await params
 
   try {
-    const { productData, reviews, questions } = (await fetchProductDetailPageData(id)) as ProductDetailPageData
+    const { productData, reviews, questions } = await fetchProductDetailPageData(id)
     const product = productData.product
     const userProducts = productData.userProducts || []
 

@@ -4,56 +4,15 @@ import { Edit2, Reply, ThumbsUp } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useAuthStore } from "@/stores/authStore"
+import type { Review, ReviewsResponse } from "../types"
 import { formatRelativeDate } from "../utils/relativeDate"
 import EditReviewModal from "./EditReviewModal"
 import StarRating from "./StarRating"
 import WriteReviewButton from "./WriteReviewButton"
 
-interface Review {
-  id: string
-  productId: string
-  star: number
-  userId: string
-  username: string
-  title: string
-  comment: string
-  createdDate: string
-  peopleFoundHelpful: number
-  helpfulTrue?: boolean
-}
-
-interface ReviewsResponse {
-  content: Review[]
-  pageable: {
-    pageNumber: number
-    pageSize: number
-    sort: {
-      empty: boolean
-      sorted: boolean
-      unsorted: boolean
-    }
-    offset: number
-    paged: boolean
-    unpaged: boolean
-  }
-  last: boolean
-  totalPages: number
-  totalElements: number
-  size: number
-  number: number
-  sort: {
-    empty: boolean
-    sorted: boolean
-    unsorted: boolean
-  }
-  numberOfElements: number
-  first: boolean
-  empty: boolean
-}
-
 interface ProductReviewsProps {
   productId: string
-  initialReviews?: ReviewsResponse
+  initialReviews?: ReviewsResponse | null
 }
 
 export default function ProductReviews({ productId, initialReviews }: ProductReviewsProps) {
