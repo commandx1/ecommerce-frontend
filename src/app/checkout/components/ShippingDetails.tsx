@@ -59,20 +59,23 @@ const ShippingDetails = () => {
     })
   }
 
-  const handleRateSelect = useCallback((vendorId: string, rate: any) => {
-    const isUber = "fee" in rate && "duration" in rate
-    const rateId = rate.objectId || rate.id
-    const type: SelectedRateInfo["type"] = isUber ? "uber" : "shippo"
-    const etaText = isUber
-      ? `Same-day delivery - ${rate.duration} mins`
-      : `${rate.servicelevel?.name || "Shipping"} - ${rate.estimatedDays} business days`
+  const handleRateSelect = useCallback(
+    (vendorId: string, rate: any) => {
+      const isUber = "fee" in rate && "duration" in rate
+      const rateId = rate.objectId || rate.id
+      const type: SelectedRateInfo["type"] = isUber ? "uber" : "shippo"
+      const etaText = isUber
+        ? `Same-day delivery - ${rate.duration} mins`
+        : `${rate.servicelevel?.name || "Shipping"} - ${rate.estimatedDays} business days`
 
-    setSelectedRates((prev) => {
-      if (prev[vendorId]?.rateId === rateId && prev[vendorId]?.type === type) return prev
-      return { ...prev, [vendorId]: { type, rateId } }
-    })
-    setSelectedShippingEtaText(etaText)
-  }, [setSelectedShippingEtaText])
+      setSelectedRates((prev) => {
+        if (prev[vendorId]?.rateId === rateId && prev[vendorId]?.type === type) return prev
+        return { ...prev, [vendorId]: { type, rateId } }
+      })
+      setSelectedShippingEtaText(etaText)
+    },
+    [setSelectedShippingEtaText],
+  )
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
