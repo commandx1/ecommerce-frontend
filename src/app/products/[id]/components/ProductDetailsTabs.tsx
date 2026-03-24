@@ -1,20 +1,11 @@
 "use client"
 
 import { Book, Camera, CheckCircle, Disc, Info, Package, ShieldCheck, Syringe, Usb, Wrench } from "lucide-react"
-import { useState } from "react"
-
-interface Description {
-  paragraphs: string[]
-  benefits: string[]
-  included: Array<{ icon: string; text: string }>
-  installationNote: {
-    title: string
-    text: string
-  }
-}
+import { useMemo, useState } from "react"
+import type { ProductDescriptionContent } from "../types"
 
 interface ProductDetailsTabsProps {
-  description: Description
+  description: ProductDescriptionContent
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -30,15 +21,28 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   box: Package,
 }
 
+const tabs = ["Description", "Features", "Installation", "Support", "Downloads"] as const
+
 const ProductDetailsTabs = ({ description }: ProductDetailsTabsProps) => {
   const [activeTab, setActiveTab] = useState("Description")
+  const paragraphs = useMemo(() => {
+    return description.paragraphs.length > 0
+      ? description.paragraphs
+      : ["Professional-grade product designed for daily clinical workflows."]
+  }, [description.paragraphs])
+  const benefits = description.benefits.length
+    ? description.benefits
+    : ["Professional grade materials", "Verified supplier network", "Reliable delivery timelines"]
+  const includedItems = description.included.length
+    ? description.included
+    : [{ icon: "box", text: "Protective case and accessories" }]
 
   return (
     <section id="product-details-tabs" className="bg-white py-12">
       <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="border-b border-gray-200">
           <nav className="flex space-x-8">
-            {["Description", "Features", "Installation", "Support", "Downloads"].map((tab) => (
+            {tabs.map((tab) => (
               <button
                 key={tab}
                 type="button"
@@ -60,7 +64,7 @@ const ProductDetailsTabs = ({ description }: ProductDetailsTabsProps) => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
               <div className="space-y-6">
                 <h3 className="text-2xl font-bold text-steel-blue">Product Description</h3>
-                {description.paragraphs.map((paragraph) => (
+                {paragraphs.map((paragraph) => (
                   <p key={paragraph.substring(0, 30)} className="text-gray-700 leading-relaxed">
                     {paragraph}
                   </p>
@@ -69,7 +73,7 @@ const ProductDetailsTabs = ({ description }: ProductDetailsTabsProps) => {
                 <div className="bg-light-mint-gray rounded-xl p-6">
                   <h4 className="font-semibold text-steel-blue mb-4">Key Benefits</h4>
                   <ul className="space-y-3">
-                    {description.benefits.map((benefit) => (
+                    {benefits.map((benefit) => (
                       <li key={benefit} className="flex items-start space-x-3">
                         <CheckCircle className="text-green-500 mt-1 shrink-0" />
                         <span className="text-gray-700">{benefit}</span>
@@ -83,7 +87,7 @@ const ProductDetailsTabs = ({ description }: ProductDetailsTabsProps) => {
                 <h3 className="text-2xl font-bold text-steel-blue">What's Included</h3>
                 <div className="bg-gray-50 rounded-xl p-6">
                   <div className="grid grid-cols-1 gap-4">
-                    {description.included.map((item) => {
+                    {includedItems.map((item) => {
                       const IconComponent = iconMap[item.icon]
                       return (
                         <div key={item.text} className="flex items-center space-x-3">

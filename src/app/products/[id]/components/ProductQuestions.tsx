@@ -3,6 +3,7 @@
 import { User } from "lucide-react"
 import { useSelectedSupplierStore } from "@/stores/selectedSupplierStore"
 import AskQuestionButton from "./AskQuestionButton"
+import { formatRelativeDate } from "../utils/relativeDate"
 
 interface Answer {
   id: string
@@ -65,24 +66,6 @@ interface ProductQuestionsProps {
   userProducts: UserProduct[]
 }
 
-function formatDate(dateString: string): string {
-  try {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInMs = now.getTime() - date.getTime()
-    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24))
-
-    if (diffInDays === 0) return "Today"
-    if (diffInDays === 1) return "1 day ago"
-    if (diffInDays < 7) return `${diffInDays} days ago`
-    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`
-    if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} months ago`
-    return `${Math.floor(diffInDays / 365)} years ago`
-  } catch {
-    return dateString
-  }
-}
-
 export default function ProductQuestions({ productId, initialQuestions, userProducts }: ProductQuestionsProps) {
   // Get selected supplier from Zustand store
   const selectedSupplier = useSelectedSupplierStore((state) => state.selectedSupplier)
@@ -96,7 +79,7 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
     ? allQuestions.filter((q) => q.userProductId === selectedSupplierUserProductId)
     : allQuestions
 
-  const totalQuestions = questions.length
+  const totalQuestions = allQuestions.length
   const hasMoreQuestions = false // Since we're filtering client-side
 
   return (
@@ -128,7 +111,7 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
                       <div className="flex-1">
                         <h3 className="font-semibold text-steel-blue mb-2">{qa.question}</h3>
                         <div className="text-sm text-gray-600 mb-3">
-                          Asked by {qa.questionerName} • {formatDate(qa.createdDate)}
+                          Asked by {qa.questionerName} • {formatRelativeDate(qa.createdDate)}
                         </div>
                       </div>
                     </div>
@@ -145,7 +128,7 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
                               <div className="font-semibold text-steel-blue mb-1">{answer.answererName}</div>
                               <p className="text-gray-700 mb-3">{answer.answer}</p>
                               <div className="text-sm text-gray-500 mt-2">
-                                Answered {formatDate(answer.createdDate)}
+                                Answered {formatRelativeDate(answer.createdDate)}
                               </div>
                             </div>
                           </div>

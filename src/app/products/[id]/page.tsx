@@ -1,5 +1,4 @@
 import { fetchProductDetailPageData } from "@/lib/api/product-detail"
-import { getFullImageUrl } from "@/lib/api/products"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import Breadcrumb from "./components/Breadcrumb"
 import ProductDetailsTabs from "./components/ProductDetailsTabs"
@@ -11,6 +10,17 @@ import PurchaseOptions from "./components/PurchaseOptions"
 import RecentlyViewed from "./components/RecentlyViewed"
 import RelatedProducts from "./components/RelatedProducts"
 import TechnicalSpecs from "./components/TechnicalSpecs"
+import type { ProductDetailPageData } from "./types"
+import {
+  buildDescription,
+  buildFeatures,
+  buildPhotoPaths,
+  buildSuppliers,
+  buildTechnicalSpecs,
+  buildThumbnailImages,
+  resolveBestPriceVendorUserProductId,
+  resolveMainImage,
+} from "./utils/productDetailTransforms"
 
 interface ProductDetailPageProps {
   params: Promise<{ id: string }>
@@ -20,55 +30,18 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const { id } = await params
 
   try {
-    const { productData, reviews, questions } = await fetchProductDetailPageData(id)
+    const { productData, reviews, questions } = (await fetchProductDetailPageData(id)) as ProductDetailPageData
     const product = productData.product
     const userProducts = productData.userProducts || []
 
-    // Build photo paths
-    const photoPaths = product.photoPhats || []
-    if (product.coverPhotoPath) {
-      photoPaths.unshift(product.coverPhotoPath)
-    }
-    const fallbackImage = "/dentypro-product-placeholder.png"
-    const mainImagePath = product.coverPhotoPath || photoPaths[0]
-    const mainImage = mainImagePath ? getFullImageUrl(mainImagePath) : fallbackImage
-
-    // Build features
-    const features: string[] = []
-    if (product.brand) features.push(`Brand: ${product.brand}`)
-    if (product.packaging) features.push(product.packaging)
-    if (product.type) features.push(product.type)
-    if (product.size) features.push(`Size: ${product.size}`)
-    if (features.length === 0) {
-      features.push("Professional Grade", "Quality Assured", "Fast Delivery", "Verified Supplier")
-    }
-
-    // Build technical specs
-    const technicalSpecs = []
-    if (product.brand) technicalSpecs.push({ label: "Brand", value: product.brand })
-    if (product.manufacturerCode) technicalSpecs.push({ label: "Manufacturer Code", value: product.manufacturerCode })
-    if (product.packaging) technicalSpecs.push({ label: "Packaging", value: product.packaging })
-    if (product.primaryMarket) technicalSpecs.push({ label: "Primary Market", value: product.primaryMarket })
-    if (product.size) technicalSpecs.push({ label: "Size", value: product.size })
-    if (product.type) technicalSpecs.push({ label: "Type", value: product.type })
-    if (product.scent) technicalSpecs.push({ label: "Scent", value: product.scent })
-    technicalSpecs.push({ label: "Barcode", value: String(product.barcode || "-") })
-    technicalSpecs.push({ label: "Barcode Format", value: product.barcodeFormats || "-" })
-
-    // Build description
-    const description = {
-      paragraphs: [product.aboutProduct, product.description].filter((p) => p),
-      benefits: features,
-      included: [],
-      installationNote: "",
-    }
-
-    // Get best price vendor user product ID from API response
-    const bestPriceVendorUserProductId =
-      product.bestPriceVendorUserProductId ||
-      (userProducts.length > 0
-        ? userProducts.reduce((best: any, current: any) => (current.price < best.price ? current : best))?.id
-        : null)
+    const photoPaths = buildPhotoPaths(product)
+    const mainImage = resolveMainImage(product, photoPaths)
+    const features = buildFeatures(product)
+    const technicalSpecs = buildTechnicalSpecs(product)
+    const description = buildDescription(product, features)
+    const bestPriceVendorUserProductId = resolveBestPriceVendorUserProductId(product, userProducts)
+    const suppliers = buildSuppliers(userProducts, bestPriceVendorUserProductId)
+    const thumbnailImages = buildThumbnailImages(photoPaths)
 
     return (
       <>
@@ -90,34 +63,10 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             sku: product.id.substring(0, 8).toUpperCase(),
             features,
             mainImage,
-            thumbnailImages: photoPaths.map(getFullImageUrl),
+            thumbnailImages,
             badge: "Available",
           }}
-          suppliers={
-            userProducts.length > 0
-              ? userProducts
-                  .sort((a: any, b: any) => a.price - b.price)
-                  .map((up: any, index: number) => ({
-                    id: index + 1,
-                    userProductId: up.id,
-                    name: up.vendor || "Vendor",
-                    logo: up.vendorLogo,
-                    alt: `${up.vendor || "Vendor"} logo`,
-                    badge: up.id === bestPriceVendorUserProductId ? "Best Seller" : "Verified",
-                    price: `$${up.price.toFixed(2)}`,
-                    originalPrice: up.oldPrice && up.oldPrice !== up.price ? `$${up.oldPrice.toFixed(2)}` : null,
-                    stock: up.stock > 0 ? "In Stock" : "Out of Stock",
-                    stockColor: up.stock > 0 ? "green" : "gray",
-                    stockCount: up.stock || 0,
-                    shipping: "Free",
-                    shippingNote: "Standard shipping",
-                    distance: up.vendorDistance,
-                    distanceTime: up.vendorDistanceTime,
-                    rating: 4.5,
-                    starCount: 5,
-                  }))
-              : []
-          }
+          suppliers={suppliers}
           bestPriceVendorUserProductId={bestPriceVendorUserProductId}
         />
         <TechnicalSpecs
@@ -205,20 +154,12 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             total: String(product.price || 0),
           }}
         />
-        <ProductDetailsTabs
-          description={{
-            ...description,
-            installationNote: {
-              title: "Installation Note",
-              text: description.installationNote || "",
-            },
-          }}
-        />
+        <ProductDetailsTabs description={description} />
         <ProductReviews productId={id} initialReviews={reviews} />
         <ProductQuestions
           productId={id}
           initialQuestions={questions}
-          userProducts={userProducts.map((up: any) => ({ id: up.id, vendor: up.vendor }))}
+          userProducts={userProducts.map((up) => ({ id: up.id, vendor: up.vendor || "Vendor" }))}
         />
         <RelatedProducts currentProductId={Number.parseInt(id.substring(0, 8), 16) || 1} />
         <RecentlyViewed />

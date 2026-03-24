@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react"
 import { useState } from "react"
+import { TextAreaField } from "@/components/form/TextAreaField"
 import { showToast } from "@/components/ui/Toast"
 import { submitProductQuestion } from "@/lib/api/product-qa"
 import { useAuthStore } from "@/stores/authStore"
@@ -113,21 +114,18 @@ export default function AskQuestionModal({
                 </p>
               </div>
 
-              <div>
-                <label htmlFor="question" className="block text-sm font-medium text-gray-700 mb-2">
-                  Your Question
-                </label>
-                <textarea
+              <div className="space-y-2">
+                <TextAreaField
                   id="question"
+                  label="Your Question"
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
                   rows={5}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-steel-blue focus:border-transparent resize-none"
                   placeholder="Type your question here..."
                   required
                   disabled={isSubmitting}
                 />
-                <p className="text-sm text-gray-500 mt-2">{question.length} characters</p>
+                <p className="text-sm text-gray-500">{question.length} characters</p>
               </div>
 
               <div className="flex items-center justify-end space-x-4">

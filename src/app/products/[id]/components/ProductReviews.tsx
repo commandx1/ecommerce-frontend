@@ -1,13 +1,13 @@
 "use client"
 
 import { Edit2, Reply, ThumbsUp } from "lucide-react"
-import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { getFullImageUrl } from "@/lib/api/products"
 import { useAuthStore } from "@/stores/authStore"
 import EditReviewModal from "./EditReviewModal"
+import StarRating from "./StarRating"
 import WriteReviewButton from "./WriteReviewButton"
+import { formatRelativeDate } from "../utils/relativeDate"
 
 interface Review {
   id: string
@@ -56,64 +56,6 @@ interface ProductReviewsProps {
   initialReviews?: ReviewsResponse
 }
 
-function formatDate(dateString: string): string {
-  try {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInMs = now.getTime() - date.getTime()
-    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24))
-
-    if (diffInDays === 0) return "Today"
-    if (diffInDays === 1) return "1 day ago"
-    if (diffInDays < 7) return `${diffInDays} days ago`
-    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`
-    if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} months ago`
-    return `${Math.floor(diffInDays / 365)} years ago`
-  } catch {
-    return dateString
-  }
-}
-
-function renderStars(starCount: number, reviewId: string) {
-  return Array.from({ length: 5 }, (_, i) => {
-    const starId = `review-${reviewId}-star-${i + 1}`
-    return (
-      <svg
-        key={starId}
-        className={`w-4 h-4 ${i < starCount ? "fill-yellow-400 text-yellow-400" : "fill-none text-gray-300"}`}
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <title>{i < starCount ? "Filled star" : "Empty star"}</title>
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-        />
-      </svg>
-    )
-  })
-}
-
-function renderOverallStars(rating: number) {
-  return Array.from({ length: 5 }, (_, i) => {
-    const starId = `overall-star-${i + 1}`
-    const filled = i < Math.floor(rating)
-    const halfFilled = i === Math.floor(rating) && rating % 1 >= 0.5
-    return (
-      <svg key={starId} className="w-5 h-5 fill-yellow-400 text-yellow-400" viewBox="0 0 24 24" stroke="currentColor">
-        <title>{filled ? "Filled star" : halfFilled ? "Half-filled star" : "Empty star"}</title>
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-        />
-      </svg>
-    )
-  })
-}
 
 export default function ProductReviews({ productId, initialReviews }: ProductReviewsProps) {
   const router = useRouter()
@@ -160,7 +102,7 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
             <h2 className="text-3xl font-bold text-steel-blue mb-2">Customer Reviews</h2>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <div className="flex text-yellow-400 text-lg">{renderOverallStars(averageRating)}</div>
+                <StarRating rating={averageRating} size="lg" className="text-yellow-400" />
                 <span className="text-2xl font-bold text-steel-blue">{averageRating.toFixed(1)}</span>
                 <span className="text-gray-600">out of 5</span>
               </div>
@@ -205,10 +147,8 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
                         <div className="font-semibold text-steel-blue">{review.username}</div>
                       </div>
                       <div className="text-right">
-                        <div className="flex text-yellow-400 text-sm mb-1">
-                          {renderStars(Math.floor(review.star), review.id)}
-                        </div>
-                        <div className="text-sm text-gray-500">{formatDate(review.createdDate)}</div>
+                        <StarRating rating={review.star} size="sm" className="text-yellow-400 mb-1" />
+                        <div className="text-sm text-gray-500">{formatRelativeDate(review.createdDate)}</div>
                       </div>
                     </div>
                     <h4 className="font-semibold text-gray-900 mb-3">{review.title}</h4>

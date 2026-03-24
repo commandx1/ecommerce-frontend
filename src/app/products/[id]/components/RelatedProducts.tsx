@@ -1,7 +1,9 @@
+"use client"
+
 import { ArrowRight, Heart } from "lucide-react"
-import Image from "next/image"
 import Link from "next/link"
 import productsData from "@/data/products.json"
+import ProductImageWithFallback from "@/app/products/components/ProductImageWithFallback"
 
 interface RelatedProductsProps {
   currentProductId: number
@@ -31,13 +33,13 @@ const RelatedProducts = ({ currentProductId }: RelatedProductsProps) => {
               className="bg-white rounded-2xl overflow-hidden hover:shadow-lg transition-shadow group"
             >
               <Link href={`/products/${product.id}`} className="block">
-                <div className="h-48 overflow-hidden bg-gray-50">
-                  <Image
-                    className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+                <div className="relative h-48 overflow-hidden bg-gray-50">
+                  <ProductImageWithFallback
+                    className="object-contain p-4 group-hover:scale-105 transition-transform duration-300"
                     src={product.mainImage}
                     alt={product.alt}
-                    width={400}
-                    height={192}
+                    fill
+                    sizes="(min-width: 1024px) 25vw, 50vw"
                   />
                 </div>
               </Link>

@@ -2,6 +2,8 @@
 
 import { Star, X } from "lucide-react"
 import { useState } from "react"
+import { TextAreaField } from "@/components/form/TextAreaField"
+import { TextField } from "@/components/form/TextField"
 import { showToast } from "@/components/ui/Toast"
 import { createReview } from "@/lib/api/product-reviews"
 import { useAuthStore } from "@/stores/authStore"
@@ -128,37 +130,28 @@ export default function WriteReviewModal({ productId, isOpen, onClose, onSuccess
                 </div>
               </div>
 
-              <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                  Review Title *
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-                  placeholder="Summarize your experience"
-                  required
-                  disabled={isSubmitting}
-                />
-              </div>
+              <TextField
+                id="review-title"
+                label="Review Title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Summarize your experience"
+                required
+                disabled={isSubmitting}
+              />
 
-              <div>
-                <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">
-                  Your Review *
-                </label>
-                <textarea
-                  id="comment"
+              <div className="space-y-2">
+                <TextAreaField
+                  id="review-comment"
+                  label="Your Review"
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   rows={6}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-steel-blue focus:border-transparent resize-none"
                   placeholder="Share your experience with this product..."
                   required
                   disabled={isSubmitting}
                 />
-                <p className="text-sm text-gray-500 mt-2">{comment.length} characters</p>
+                <p className="text-sm text-gray-500">{comment.length} characters</p>
               </div>
 
               <div className="flex items-center justify-end space-x-4">
