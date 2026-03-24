@@ -1,18 +1,38 @@
 import { Check, Info, Truck } from "lucide-react"
 import Image from "next/image"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { type ShipmentRate, shipmentAPI, type UberQuote } from "@/lib/api/shipment"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 
-interface SellerShipmentRatesProps {
+interface VendorShipmentRatesProps {
   sellerId: string
   sellerName: string
   items: { userProductId: string; name: string; quantity: number }[]
   addressId: string
-  userId: string
   cartId: string
   onSelect: (sellerId: string, rate: ShipmentRate | UberQuote) => void
   selectedRateId?: string
+}
+
+function ShippingRatesSkeleton() {
+  return (
+    <div className="p-4 border border-gray-100 rounded-xl bg-gray-50 animate-pulse">
+      <div className="h-4 bg-gray-200 rounded w-1/4 mb-4" />
+      <div className="space-y-3">
+        <div className="h-12 bg-gray-200 rounded" />
+        <div className="h-12 bg-gray-200 rounded" />
+      </div>
+    </div>
+  )
+}
+
+function ShippingRatesError() {
+  return (
+    <div className="p-4 border border-red-100 rounded-xl bg-red-50 text-red-600 text-sm flex items-center">
+      <Info className="w-4 h-4 mr-2" />
+      Failed to fetch shipping rates
+    </div>
+  )
 }
 
 export default function VendorShipmentRates({
@@ -20,29 +40,41 @@ export default function VendorShipmentRates({
   sellerName,
   items,
   addressId,
-  userId,
   cartId,
   onSelect,
   selectedRateId,
-}: SellerShipmentRatesProps) {
+}: VendorShipmentRatesProps) {
   const [rates, setRates] = useState<ShipmentRate[]>([])
   const [uberQuote, setUberQuote] = useState<UberQuote | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [hasError, setHasError] = useState(false)
 
-  const itemsKey = JSON.stringify(items)
+  const onSelectRef = useRef(onSelect)
+  onSelectRef.current = onSelect
+  const selectedRateIdRef = useRef(selectedRateId)
+  selectedRateIdRef.current = selectedRateId
+
+  const itemsKey = useMemo(
+    () =>
+      JSON.stringify(
+        [...items]
+          .map((item) => ({ userProductId: item.userProductId, quantity: item.quantity }))
+          .sort((a, b) => a.userProductId.localeCompare(b.userProductId)),
+      ),
+    [items],
+  )
 
   useEffect(() => {
     let isMounted = true
 
     const fetchRates = async () => {
-      if (!isMounted) return
       setIsLoading(true)
-      setError(null)
+      setHasError(false)
+
       try {
         const response = await shipmentAPI.getRates({
           addressId,
-          userId: sellerId ?? "",
+          userId: sellerId,
           cartId,
           parcels: items.flatMap((item) =>
             Array.from({ length: item.quantity }, () => ({ userProductId: item.userProductId })),
@@ -54,16 +86,16 @@ export default function VendorShipmentRates({
         const filteredRates = response.shippoRates.filter(
           (rate) => !rate.servicelevel.name.includes("Air") && !rate.servicelevel.name.includes("Ground"),
         )
+
         setRates(filteredRates)
         setUberQuote(response.uberQuote)
 
-        // Auto-select first rate if none selected
-        if (!selectedRateId && filteredRates.length > 0) {
-          onSelect(sellerId, filteredRates[0])
+        if (!selectedRateIdRef.current && filteredRates.length > 0) {
+          onSelectRef.current(sellerId, filteredRates[0])
         }
-      } catch (err) {
+      } catch (_error) {
         if (!isMounted) return
-        setError("Failed to fetch shipping rates")
+        setHasError(true)
       } finally {
         if (isMounted) {
           setIsLoading(false)
@@ -72,47 +104,27 @@ export default function VendorShipmentRates({
     }
 
     if (addressId && items.length > 0) {
-      fetchRates()
+      void fetchRates()
     }
 
     return () => {
       isMounted = false
     }
-  }, [addressId, itemsKey, userId, cartId, onSelect])
+  }, [addressId, cartId, itemsKey, sellerId])
 
-  if (isLoading) {
-    return (
-      <div className="p-4 border border-gray-100 rounded-xl bg-gray-50 animate-pulse">
-        <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-        <div className="space-y-3">
-          <div className="h-12 bg-gray-200 rounded"></div>
-          <div className="h-12 bg-gray-200 rounded"></div>
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 border border-red-100 rounded-xl bg-red-50 text-red-600 text-sm flex items-center">
-        <Info className="w-4 h-4 mr-2" />
-        {error}
-      </div>
-    )
-  }
+  if (isLoading) return <ShippingRatesSkeleton />
+  if (hasError) return <ShippingRatesError />
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center justify-between">
-          <h4 className="font-semibold text-gray-700 flex items-center text-sm">
-            <Truck className="w-4 h-4 mr-2 text-steel-blue/70" />
-            Shipping from: <span className="text-steel-blue/80 ml-1">{sellerName}</span>
-          </h4>
-          <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-            {items.length} items
-          </span>
-        </div>
+      <div className="flex items-center justify-between">
+        <h4 className="font-semibold text-gray-700 flex items-center text-sm">
+          <Truck className="w-4 h-4 mr-2 text-steel-blue/70" />
+          Shipping from: <span className="text-steel-blue/80 ml-1">{sellerName}</span>
+        </h4>
+        <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+          {items.length} items
+        </span>
       </div>
 
       <div className="grid grid-cols-1 gap-3">
@@ -153,17 +165,15 @@ export default function VendorShipmentRates({
                 </div>
               </div>
             </div>
-            {selectedRateId === rate.objectId && (
-              <div className="absolute top-2 right-2">
-                <div className="bg-steel-blue rounded-full p-0.5">
-                  <Check className="w-3 h-3 text-white" />
-                </div>
+            {selectedRateId === rate.objectId ? (
+              <div className="absolute top-2 right-2 bg-steel-blue rounded-full p-0.5">
+                <Check className="w-3 h-3 text-white" />
               </div>
-            )}
+            ) : null}
           </label>
         ))}
 
-        {uberQuote && (
+        {uberQuote ? (
           <label
             className={`relative flex items-center p-4 border rounded-xl cursor-pointer transition-all hover:border-steel-blue/50 ${
               selectedRateId === uberQuote.id
@@ -193,15 +203,13 @@ export default function VendorShipmentRates({
                 </div>
               </div>
             </div>
-            {selectedRateId === uberQuote.id && (
-              <div className="absolute top-2 right-2">
-                <div className="bg-steel-blue rounded-full p-0.5">
-                  <Check className="w-3 h-3 text-white" />
-                </div>
+            {selectedRateId === uberQuote.id ? (
+              <div className="absolute top-2 right-2 bg-steel-blue rounded-full p-0.5">
+                <Check className="w-3 h-3 text-white" />
               </div>
-            )}
+            ) : null}
           </label>
-        )}
+        ) : null}
       </div>
     </div>
   )

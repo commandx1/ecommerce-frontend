@@ -33,14 +33,14 @@ export interface OrderItem {
   status: string
   shippingLink: string[]
   trackingLink: string[]
-  updatedDate: string
+  updatedDate: string | null
 }
 
 export interface PlaceOrderResponse {
   orderId: string
   totalPrice: number
   status: string
-  createdDate: string
+  createdDate: string | null
   clientSecret?: string
   orderItems: OrderItem[]
 }

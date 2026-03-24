@@ -3,7 +3,7 @@ import type { PlaceOrderPayload, PlaceOrderResponse } from "@/lib/api/orders"
 
 export type CheckoutStep = 1 | 2 | 3 | 4 | 5
 
-interface ShippingAddress {
+export interface ShippingAddress {
   firstName: string
   lastName: string
   company: string
@@ -14,7 +14,7 @@ interface ShippingAddress {
   phone: string
 }
 
-interface BillingAddress {
+export interface BillingAddress {
   sameAsShipping: boolean
   firstName: string
   lastName: string
@@ -26,7 +26,7 @@ interface BillingAddress {
   phone: string
 }
 
-interface PaymentMethod {
+export interface PaymentMethod {
   type: "card" | "net30" | "wire" | "financing"
 }
 
