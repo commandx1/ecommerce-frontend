@@ -1,7 +1,4 @@
-"use client"
-
 import ShippingFAQItem from "@/features/shipping-information/components/ShippingFAQItem"
-import { useShippingFAQ } from "@/features/shipping-information/hooks/useShippingFAQ"
 
 const FAQ_ITEMS = [
   {
@@ -55,8 +52,6 @@ const FAQ_ITEMS = [
 ] as const
 
 export default function ShippingFAQSection() {
-  const { openId, toggleItem } = useShippingFAQ()
-
   return (
     <section className="py-12 sm:py-16 lg:py-20 bg-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -68,14 +63,7 @@ export default function ShippingFAQSection() {
         </div>
         <div className="space-y-4">
           {FAQ_ITEMS.map((item) => (
-            <ShippingFAQItem
-              key={item.id}
-              id={item.id}
-              question={item.question}
-              answer={item.answer}
-              isOpen={openId === item.id}
-              onToggle={toggleItem}
-            />
+            <ShippingFAQItem key={item.id} question={item.question} answer={item.answer} />
           ))}
         </div>
       </div>
