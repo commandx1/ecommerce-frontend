@@ -1,6 +1,6 @@
+import { unstable_noStore } from "next/cache"
 import { getSelectedDocument } from "@/features/legal/getLegalDocuments"
 import LegalPage from "@/features/legal/LegalPage"
-import { unstable_noStore } from "next/cache"
 
 // `?doc=` query parametresine göre SSR içerik üretmek için sayfayı dinamik tutuyoruz.
 // Aksi halde Next, bazı senaryolarda statik optimize edip `searchParams` değişse bile

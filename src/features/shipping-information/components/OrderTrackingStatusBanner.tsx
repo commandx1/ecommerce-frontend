@@ -9,7 +9,7 @@ const TRACKING_STEPS = [
 
 export default function OrderTrackingStatusBanner() {
   return (
-    <div className="bg-gradient-to-br from-steel-blue to-blue-800 rounded-2xl sm:rounded-3xl p-8 sm:p-12 mb-8 sm:mb-12">
+    <div className="bg-linear-to-br from-steel-blue to-blue-800 rounded-2xl sm:rounded-3xl p-8 sm:p-12 mb-8 sm:mb-12">
       <div className="max-w-5xl mx-auto">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8">
           {TRACKING_STEPS.map(({ icon: Icon, title, description, active }, index) => (
