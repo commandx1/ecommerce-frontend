@@ -1,5 +1,13 @@
 import { Check } from "lucide-react"
 
+interface TIMELINE_STEP_ITEM {
+  step: number
+  title: string
+  description: string
+  note: string
+  isLast?: boolean
+}
+
 const TIMELINE_STEPS = [
   {
     step: 1,
@@ -26,7 +34,7 @@ const TIMELINE_STEPS = [
     note: "Based on shipping method",
     isLast: true,
   },
-] as const
+] as TIMELINE_STEP_ITEM[]
 
 export default function DeliveryTimelineProcessCard() {
   return (
