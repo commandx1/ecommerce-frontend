@@ -1,16 +1,12 @@
-"use client"
-
-import { Download, Printer } from "lucide-react"
-import type { LegalDocument } from "../../types"
+import DocumentSectionActions from "@/features/legal/components/document-section/DocumentSectionActions"
+import type { LegalDocument } from "@/features/legal/types"
 import { iconMap } from "./documentIcons"
 
 interface DocumentSectionHeaderProps {
   document: LegalDocument
-  onPrint: () => void
-  onDownload: () => void
 }
 
-const DocumentSectionHeader = ({ document, onPrint, onDownload }: DocumentSectionHeaderProps) => {
+const DocumentSectionHeader = ({ document }: DocumentSectionHeaderProps) => {
   const IconComponent = document.icon ? iconMap[document.icon] : iconMap["file-contract"]
   const headerSpacing = ["compliance-certifications", "audit-reports"].includes(document.id) ? 0 : "1.5rem"
 
@@ -26,24 +22,7 @@ const DocumentSectionHeader = ({ document, onPrint, onDownload }: DocumentSectio
           {document.lastUpdated && <p className="text-gray-600">Last updated: {document.lastUpdated}</p>}
         </div>
       </div>
-      <div className="flex space-x-3">
-        <button
-          type="button"
-          onClick={onPrint}
-          className="bg-light-mint-gray text-steel-blue px-4 py-2 rounded-lg hover:bg-opacity-80 font-medium flex items-center transition-colors"
-        >
-          <Printer className="w-4 h-4 mr-2" />
-          Print
-        </button>
-        <button
-          type="button"
-          onClick={onDownload}
-          className="bg-steel-blue text-white px-4 py-2 rounded-lg hover:bg-opacity-90 font-medium flex items-center transition-colors"
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Download PDF
-        </button>
-      </div>
+      <DocumentSectionActions />
     </div>
   )
 }

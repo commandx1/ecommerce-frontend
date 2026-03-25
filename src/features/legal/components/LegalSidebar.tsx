@@ -1,5 +1,3 @@
-"use client"
-
 import {
   Award,
   ClipboardList,
@@ -14,6 +12,8 @@ import {
   ShoppingBag,
   User,
 } from "lucide-react"
+import Link from "next/link"
+
 import legalDocumentsData from "@/data/legal-documents.json"
 
 const iconMap: Record<string, LucideIcon> = {
@@ -31,12 +31,11 @@ const iconMap: Record<string, LucideIcon> = {
 
 interface LegalSidebarProps {
   selectedId: string
-  onSelect: (id: string) => void
 }
 
-const LegalSidebar = ({ selectedId, onSelect }: LegalSidebarProps) => {
+const LegalSidebar = ({ selectedId }: LegalSidebarProps) => {
   return (
-    <div id="sidebar-navigation" className="lg:col-span-1">
+    <div className="lg:col-span-1">
       <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-12">
         <h3 className="text-lg font-semibold text-steel-blue mb-4">Document Categories</h3>
         <nav className="space-y-2">
@@ -44,17 +43,16 @@ const LegalSidebar = ({ selectedId, onSelect }: LegalSidebarProps) => {
             const IconComponent = iconMap[item.icon]
             const isActive = selectedId === item.id
             return (
-              <button
+              <Link
                 key={item.id}
-                type="button"
-                onClick={() => onSelect(item.id)}
+                href={`/legal?doc=${item.id}`}
                 className={`flex w-full items-center px-4 py-3 rounded-lg transition-colors group text-left ${
                   isActive ? "bg-light-mint-gray text-steel-blue font-medium" : "text-gray-700 hover:bg-light-mint-gray"
                 }`}
               >
                 {IconComponent && <IconComponent className="mr-3 text-steel-blue w-5 h-5 shrink-0" />}
                 <span className={isActive ? "text-steel-blue" : "group-hover:text-steel-blue"}>{item.title}</span>
-              </button>
+              </Link>
             )
           })}
         </nav>
@@ -68,7 +66,7 @@ const LegalSidebar = ({ selectedId, onSelect }: LegalSidebarProps) => {
             Contact our legal team for questions about compliance or document interpretation.
           </p>
           <a
-            href="#contact-support"
+            href="/help-center"
             className="block w-full bg-steel-blue text-white py-2 px-4 rounded-lg hover:bg-opacity-90 text-sm font-medium text-center transition-colors"
           >
             Contact Legal Team

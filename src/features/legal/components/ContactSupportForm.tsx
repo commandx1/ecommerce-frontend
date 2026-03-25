@@ -1,29 +1,29 @@
 "use client"
 
 import type { ChangeEventHandler, FormEventHandler } from "react"
+import { useId } from "react"
 
 import legalAdditionalData from "@/data/legal-additional.json"
+import { useContactSupportForm } from "@/features/legal/hooks/useContactSupportForm"
 
-import type { ContactSupportFormData } from "../hooks/useContactSupportForm"
+const ContactSupportForm = () => {
+  const { formData, handleChange, handleSubmit } = useContactSupportForm()
+  const id = useId()
 
-interface ContactSupportFormProps {
-  formData: ContactSupportFormData
-  onChange: ChangeEventHandler<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  onSubmit: FormEventHandler<HTMLFormElement>
-}
+  const onChange: ChangeEventHandler<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement> = handleChange
+  const onSubmit: FormEventHandler<HTMLFormElement> = handleSubmit
 
-const ContactSupportForm = ({ formData, onChange, onSubmit }: ContactSupportFormProps) => {
   return (
     <div className="bg-white rounded-2xl p-8 shadow-2xl">
       <h3 className="text-2xl font-bold text-steel-blue mb-6">Request Legal Consultation</h3>
       <form onSubmit={onSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor={`${id}-first-name`} className="block text-sm font-medium text-gray-700 mb-2">
               First Name
             </label>
             <input
-              id="firstName"
+              id={`${id}-first-name`}
               name="firstName"
               type="text"
               value={formData.firstName}
@@ -32,11 +32,11 @@ const ContactSupportForm = ({ formData, onChange, onSubmit }: ContactSupportForm
             />
           </div>
           <div>
-            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor={`${id}-last-name`} className="block text-sm font-medium text-gray-700 mb-2">
               Last Name
             </label>
             <input
-              id="lastName"
+              id={`${id}-last-name`}
               name="lastName"
               type="text"
               value={formData.lastName}
@@ -46,11 +46,11 @@ const ContactSupportForm = ({ formData, onChange, onSubmit }: ContactSupportForm
           </div>
         </div>
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor={`${id}-email`} className="block text-sm font-medium text-gray-700 mb-2">
             Email Address
           </label>
           <input
-            id="email"
+            id={`${id}-email`}
             name="email"
             type="email"
             value={formData.email}
@@ -59,11 +59,11 @@ const ContactSupportForm = ({ formData, onChange, onSubmit }: ContactSupportForm
           />
         </div>
         <div>
-          <label htmlFor="topic" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor={`${id}-topic`} className="block text-sm font-medium text-gray-700 mb-2">
             Legal Topic
           </label>
           <select
-            id="topic"
+            id={`${id}-topic`}
             name="topic"
             value={formData.topic}
             onChange={onChange}
@@ -78,11 +78,11 @@ const ContactSupportForm = ({ formData, onChange, onSubmit }: ContactSupportForm
           </select>
         </div>
         <div>
-          <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor={`${id}-message`} className="block text-sm font-medium text-gray-700 mb-2">
             Message
           </label>
           <textarea
-            id="message"
+            id={`${id}-message`}
             name="message"
             rows={4}
             value={formData.message}

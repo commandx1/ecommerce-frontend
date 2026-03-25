@@ -1,9 +1,6 @@
-import { useMemo, useState } from "react"
-
 import legalAdditionalData from "@/data/legal-additional.json"
 import legalDocumentsData from "@/data/legal-documents.json"
-
-import type { LegalDocument } from "../types"
+import type { LegalDocument } from "@/features/legal/types"
 
 const additionalDocuments: LegalDocument[] = [
   legalAdditionalData.vendorAgreement,
@@ -20,23 +17,18 @@ const findDocumentById = (id: string): LegalDocument | undefined => {
   return primaryMatch ?? additionalDocuments.find((document) => document.id === id)
 }
 
-export const useLegalDocuments = () => {
-  const firstId = legalDocumentsData.sidebarNav[0]?.id ?? "terms-of-service"
-  const [selectedId, setSelectedId] = useState<string>(firstId)
+export function getDocumentsInOrder(): LegalDocument[] {
+  return legalDocumentsData.sidebarNav.map((item) => findDocumentById(item.id)).filter(Boolean) as LegalDocument[]
+}
 
-  const documentsInOrder = useMemo(() => {
-    return legalDocumentsData.sidebarNav.map((item) => findDocumentById(item.id)).filter(Boolean) as LegalDocument[]
-  }, [])
-
-  const selectedDocument = useMemo(
-    () => documentsInOrder.find((document) => document.id === selectedId) ?? documentsInOrder[0],
-    [documentsInOrder, selectedId],
-  )
+export function getSelectedDocument(docId?: string) {
+  const documentsInOrder = getDocumentsInOrder()
+  const defaultId = legalDocumentsData.sidebarNav[0]?.id ?? "terms-of-service"
+  const selectedId = docId && documentsInOrder.some((document) => document.id === docId) ? docId : defaultId
+  const selectedDocument = documentsInOrder.find((document) => document.id === selectedId) ?? documentsInOrder[0]
 
   return {
-    documentsInOrder,
-    selectedDocument,
     selectedId,
-    setSelectedId,
+    selectedDocument,
   }
 }

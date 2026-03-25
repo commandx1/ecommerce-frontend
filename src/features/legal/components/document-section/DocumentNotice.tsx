@@ -1,6 +1,4 @@
-"use client"
-
-import type { LegalNotice } from "../../types"
+import type { LegalNotice } from "@/features/legal/types"
 import { noticeIconMap } from "./documentIcons"
 
 interface DocumentNoticeProps {

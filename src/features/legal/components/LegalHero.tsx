@@ -3,7 +3,7 @@ import Link from "next/link"
 
 const LegalHero = () => {
   return (
-    <section id="hero-section" className="bg-gradient-to-br from-steel-blue to-blue-800 h-[400px] flex items-center">
+    <section className="bg-gradient-to-br from-steel-blue to-blue-800 h-[400px] flex items-center">
       <div className="app-container mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="text-center text-white">
           <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -23,7 +23,7 @@ const LegalHero = () => {
               Download All Documents
             </button>
             <Link
-              href="#contact-support"
+              href="/help-center"
               className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-steel-blue transition-colors flex items-center"
             >
               <Phone className="w-5 h-5 mr-2" />

@@ -1,19 +1,11 @@
-import ContactSupport from "./components/ContactSupport"
-import LegalArchive from "./components/LegalArchive"
-import LegalHero from "./components/LegalHero"
-import LegalPageContent from "./components/LegalPageContent"
-import QuickNavigationCards from "./components/QuickNavigationCards"
+import { getSelectedDocument } from "@/features/legal/getLegalDocuments"
+import LegalPage from "@/features/legal/LegalPage"
 
-export default function LegalPage() {
-  return (
-    <main className="min-h-screen">
-      <LegalHero />
-      <QuickNavigationCards />
-      <section className="app-container mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        <LegalPageContent />
-      </section>
-      <ContactSupport />
-      <LegalArchive />
-    </main>
-  )
+export const dynamic = "force-static"
+
+export default async function LegalRoutePage({ searchParams }: { searchParams: Promise<{ doc?: string }> }) {
+  const params = await searchParams
+  const { selectedId, selectedDocument } = getSelectedDocument(params.doc)
+
+  return <LegalPage selectedId={selectedId} selectedDocument={selectedDocument} />
 }

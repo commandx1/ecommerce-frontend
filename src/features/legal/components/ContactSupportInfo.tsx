@@ -1,10 +1,7 @@
-"use client"
-
 import { MessageCircle, Phone } from "lucide-react"
 
 import legalAdditionalData from "@/data/legal-additional.json"
-
-import ContactSupportChannelCard from "./ContactSupportChannelCard"
+import ContactSupportChannelCard from "@/features/legal/components/ContactSupportChannelCard"
 
 const SUPPORT_CHANNELS = [
   {

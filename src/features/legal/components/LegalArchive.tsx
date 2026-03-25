@@ -3,7 +3,7 @@ import legalAdditionalData from "@/data/legal-additional.json"
 
 const LegalArchive = () => {
   return (
-    <section id="document-archive" className="py-16 bg-light-mint-gray">
+    <section className="py-16 bg-light-mint-gray">
       <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-steel-blue mb-4">Document Archive</h2>
