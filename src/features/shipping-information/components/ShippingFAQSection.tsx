@@ -1,9 +1,9 @@
 "use client"
 
-import { ChevronDown } from "lucide-react"
-import { useState } from "react"
+import ShippingFAQItem from "@/features/shipping-information/components/ShippingFAQItem"
+import { useShippingFAQ } from "@/features/shipping-information/hooks/useShippingFAQ"
 
-const faqItems = [
+const FAQ_ITEMS = [
   {
     id: "sf1",
     question: "Can I schedule a specific delivery date or time?",
@@ -52,13 +52,13 @@ const faqItems = [
     answer:
       "Certain hazardous materials, controlled substances, and items requiring special permits may have shipping restrictions based on carrier policies and regulatory requirements. Temperature-controlled biologicals and pharmaceuticals may require specialized cold chain shipping (additional fees apply). Products with shipping restrictions are clearly marked on their detail pages. Contact our compliance team if you have questions about specific products.",
   },
-]
+] as const
 
 export default function ShippingFAQSection() {
-  const [openId, setOpenId] = useState<string | null>(null)
+  const { openId, toggleItem } = useShippingFAQ()
 
   return (
-    <section id="faq-section" className="py-12 sm:py-16 lg:py-20 bg-white">
+    <section className="py-12 sm:py-16 lg:py-20 bg-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8 sm:mb-12">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-steel-blue mb-3 sm:mb-4">
@@ -66,37 +66,17 @@ export default function ShippingFAQSection() {
           </h2>
           <p className="text-base sm:text-lg lg:text-xl text-gray-600">Common shipping questions answered</p>
         </div>
-
         <div className="space-y-4">
-          {faqItems.map((item) => {
-            const isOpen = openId === item.id
-            return (
-              <div key={item.id} className="bg-light-mint-gray rounded-xl overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setOpenId(isOpen ? null : item.id)}
-                  className="w-full text-left p-4 sm:p-6 focus:outline-none"
-                >
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-base sm:text-lg font-semibold text-steel-blue pr-4">{item.question}</h3>
-                    <ChevronDown
-                      className={`text-gray-400 shrink-0 transition-transform duration-300 ease-in-out ${isOpen ? "rotate-180" : ""}`}
-                    />
-                  </div>
-                </button>
-                <div
-                  className="grid transition-[grid-template-rows] duration-300 ease-in-out"
-                  style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
-                >
-                  <div className="min-h-0 overflow-hidden">
-                    <div className="px-4 sm:px-6 pb-4 sm:pb-6 text-sm sm:text-base text-gray-600">
-                      <p>{item.answer}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
+          {FAQ_ITEMS.map((item) => (
+            <ShippingFAQItem
+              key={item.id}
+              id={item.id}
+              question={item.question}
+              answer={item.answer}
+              isOpen={openId === item.id}
+              onToggle={toggleItem}
+            />
+          ))}
         </div>
       </div>
     </section>
