@@ -1,5 +1,6 @@
 import { ChevronRight } from "lucide-react"
 import Link from "next/link"
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 
 interface BreadcrumbProps {
   product?: {
@@ -21,8 +22,8 @@ const Breadcrumb = ({ product }: BreadcrumbProps) => {
   const breadcrumbItems = defaultItems
 
   return (
-    <section id="breadcrumb-section" className="bg-white border-b border-gray-200">
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <section className="bg-white border-b border-gray-200">
+      <PageSectionContainer as="div" containerClassName="py-4">
         <div className="flex items-center space-x-2 text-sm">
           {breadcrumbItems.map((item, index) => (
             <div key={`${item.label}-${index}`} className="flex items-center space-x-2">
@@ -37,7 +38,7 @@ const Breadcrumb = ({ product }: BreadcrumbProps) => {
             </div>
           ))}
         </div>
-      </div>
+      </PageSectionContainer>
     </section>
   )
 }

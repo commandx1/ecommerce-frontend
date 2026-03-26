@@ -1,4 +1,6 @@
 import { Award, Lock, type LucideIcon, ShieldCheck } from "lucide-react"
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 
 interface TechnicalSpec {
   label: string
@@ -40,12 +42,12 @@ const badgeColorMap: Record<string, string> = {
 
 const TechnicalSpecs = ({ technicalSpecs, certifications }: TechnicalSpecsProps) => {
   return (
-    <section id="technical-specs" className="bg-light-mint-gray py-12">
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="bg-light-mint-gray py-12">
+      <PageSectionContainer as="div">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div>
             <h2 className="text-3xl font-bold text-steel-blue mb-6">Technical Specifications</h2>
-            <div className="bg-white rounded-2xl p-8">
+            <SurfaceCard className="p-8">
               <div className="grid grid-cols-1 gap-6">
                 {technicalSpecs.map((spec) => (
                   <div
@@ -57,7 +59,7 @@ const TechnicalSpecs = ({ technicalSpecs, certifications }: TechnicalSpecsProps)
                   </div>
                 ))}
               </div>
-            </div>
+            </SurfaceCard>
           </div>
 
           <div>
@@ -69,7 +71,7 @@ const TechnicalSpecs = ({ technicalSpecs, certifications }: TechnicalSpecsProps)
                 const badgeColorClass = badgeColorMap[cert.badgeColor] || "bg-gray-100 text-gray-800"
 
                 return (
-                  <div key={cert.id} className="bg-white rounded-2xl p-6">
+                  <SurfaceCard key={cert.id} className="p-6">
                     <div className="flex items-start space-x-4">
                       <div
                         className={`w-16 h-16 ${iconColorClass} rounded-xl flex items-center justify-center shrink-0`}
@@ -84,13 +86,13 @@ const TechnicalSpecs = ({ technicalSpecs, certifications }: TechnicalSpecsProps)
                         </span>
                       </div>
                     </div>
-                  </div>
+                  </SurfaceCard>
                 )
               })}
             </div>
           </div>
         </div>
-      </div>
+      </PageSectionContainer>
     </section>
   )
 }

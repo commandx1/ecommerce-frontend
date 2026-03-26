@@ -2,6 +2,7 @@
 
 import { Book, Camera, CheckCircle, Disc, Info, Package, ShieldCheck, Syringe, Usb, Wrench } from "lucide-react"
 import { useMemo, useState } from "react"
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import type { ProductDescriptionContent } from "../types"
 
 interface ProductDetailsTabsProps {
@@ -38,8 +39,8 @@ const ProductDetailsTabs = ({ description }: ProductDetailsTabsProps) => {
     : [{ icon: "box", text: "Protective case and accessories" }]
 
   return (
-    <section id="product-details-tabs" className="bg-white py-12">
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="bg-white py-12">
+      <PageSectionContainer as="div">
         <div className="border-b border-gray-200">
           <nav className="flex space-x-8">
             {tabs.map((tab) => (
@@ -120,7 +121,7 @@ const ProductDetailsTabs = ({ description }: ProductDetailsTabsProps) => {
             </div>
           )}
         </div>
-      </div>
+      </PageSectionContainer>
     </section>
   )
 }

@@ -1,10 +1,11 @@
 import { ShieldCheck } from "lucide-react"
 import Image from "next/image"
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 
 const HeroSection = () => {
   return (
-    <section id="hero-section" className="bg-linear-to-br from-steel-blue to-blue-800 py-8 flex items-center">
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8 w-full">
+    <section className="bg-linear-to-br from-steel-blue to-blue-800 py-8 flex items-center">
+      <PageSectionContainer as="div" containerClassName="w-full">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="text-white">
             <h1 className="text-5xl lg:text-6xl font-bold leading-tight mb-6">
@@ -41,7 +42,7 @@ const HeroSection = () => {
             </div>
           </div>
         </div>
-      </div>
+      </PageSectionContainer>
     </section>
   )
 }

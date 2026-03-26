@@ -1,11 +1,12 @@
 import { ArrowRight } from "lucide-react"
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import suppliersData from "@/data/suppliers.json"
 import SupplierCard from "./SupplierCard"
 
 const FeaturedSuppliers = () => {
   return (
-    <section id="featured-suppliers" className="py-16 bg-white">
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-16 bg-white">
+      <PageSectionContainer as="div">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-steel-blue mb-4">Featured Suppliers</h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
@@ -27,7 +28,7 @@ const FeaturedSuppliers = () => {
             <ArrowRight className="ml-2 w-5 h-5" />
           </button>
         </div>
-      </div>
+      </PageSectionContainer>
     </section>
   )
 }

@@ -3,6 +3,8 @@
 import { Edit2, Reply, ThumbsUp } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import { useAuthStore } from "@/stores/authStore"
 import type { Review, ReviewsResponse } from "../types"
 import { formatRelativeDate } from "../utils/relativeDate"
@@ -53,8 +55,8 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
   })
 
   return (
-    <section id="customer-reviews" className="bg-light-mint-gray py-12">
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="bg-light-mint-gray py-12">
+      <PageSectionContainer as="div">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-3xl font-bold text-steel-blue mb-2">Customer Reviews</h2>
@@ -72,7 +74,7 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
 
         {/* Rating Breakdown */}
         {reviews.length > 0 && (
-          <div className="bg-white rounded-2xl p-8 mb-8">
+          <SurfaceCard className="p-8 mb-8">
             <div>
               <h3 className="text-xl font-semibold text-steel-blue mb-6">Rating Breakdown</h3>
               <div className="space-y-4">
@@ -87,14 +89,14 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
                 ))}
               </div>
             </div>
-          </div>
+          </SurfaceCard>
         )}
 
         {/* Individual Reviews */}
         {reviews.length > 0 ? (
           <div className="space-y-6">
             {reviews.map((review) => (
-              <div key={review.id} className="bg-white rounded-2xl p-8">
+              <SurfaceCard key={review.id} className="p-8">
                 <div className="flex items-start space-x-4">
                   <div className="w-12 h-12 bg-steel-blue rounded-full flex items-center justify-center shrink-0">
                     <span className="text-white font-semibold text-lg">{review.username.charAt(0).toUpperCase()}</span>
@@ -139,13 +141,13 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
                     </div>
                   </div>
                 </div>
-              </div>
+              </SurfaceCard>
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-2xl p-8 text-center">
+          <SurfaceCard className="p-8 text-center">
             <p className="text-gray-600">No reviews yet. Be the first to review this product!</p>
-          </div>
+          </SurfaceCard>
         )}
 
         {!reviewsData.last && (
@@ -158,7 +160,7 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
             </button>
           </div>
         )}
-      </div>
+      </PageSectionContainer>
 
       {editingReview && (
         <EditReviewModal

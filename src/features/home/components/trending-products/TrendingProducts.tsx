@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { useId } from "react"
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import productsData from "@/data/trending-products.json"
 import ProductCard from "./ProductCard"
 
@@ -7,7 +8,7 @@ const TrendingProducts = () => {
   const sectionId = useId()
   return (
     <section id={sectionId} className="py-16 bg-white">
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
+      <PageSectionContainer as="div">
         <div className="flex items-center justify-between mb-12">
           <div>
             <h2 className="text-4xl font-bold text-steel-blue mb-4">Trending Products</h2>
@@ -25,7 +26,7 @@ const TrendingProducts = () => {
             <ProductCard key={product.id} {...product} href={`/products/${product.id}`} />
           ))}
         </div>
-      </div>
+      </PageSectionContainer>
     </section>
   )
 }

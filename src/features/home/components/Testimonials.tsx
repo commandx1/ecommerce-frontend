@@ -1,11 +1,12 @@
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import testimonialsData from "@/data/testimonials.json"
 import SectionHeader from "@/features/home/components/SectionHeader"
 import TestimonialCard from "@/features/home/components/TestimonialCard"
 
 export default function Testimonials() {
   return (
-    <section id="testimonials" className="py-16 bg-white">
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-16 bg-white">
+      <PageSectionContainer as="div">
         <div className="mb-16">
           <SectionHeader
             title="What Dental Professionals Say"
@@ -18,7 +19,7 @@ export default function Testimonials() {
             <TestimonialCard key={testimonial.id} {...testimonial} />
           ))}
         </div>
-      </div>
+      </PageSectionContainer>
     </section>
   )
 }

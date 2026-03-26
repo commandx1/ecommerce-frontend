@@ -1,4 +1,5 @@
 import { Box, Download, Heart, ShieldCheck, Truck } from "lucide-react"
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 
 interface ProductListingHeaderProps {
   totalElements: number
@@ -7,7 +8,7 @@ interface ProductListingHeaderProps {
 const ProductListingHeader = ({ totalElements }: ProductListingHeaderProps) => {
   return (
     <section className="bg-white py-8">
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
+      <PageSectionContainer as="div">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
           <div className="mb-6 lg:mb-0">
             <h1 className="text-4xl font-bold text-steel-blue mb-2">Dental Products</h1>
@@ -44,7 +45,7 @@ const ProductListingHeader = ({ totalElements }: ProductListingHeaderProps) => {
             </button>
           </div>
         </div>
-      </div>
+      </PageSectionContainer>
     </section>
   )
 }

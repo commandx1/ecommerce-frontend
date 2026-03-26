@@ -1,10 +1,11 @@
 import { Download, Phone, Scale } from "lucide-react"
 import Link from "next/link"
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 
 const LegalHero = () => {
   return (
     <section className="bg-gradient-to-br from-steel-blue to-blue-800 h-[400px] flex items-center">
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8 w-full">
+      <PageSectionContainer as="div" containerClassName="w-full">
         <div className="text-center text-white">
           <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <Scale className="text-white w-10 h-10" />
@@ -31,7 +32,7 @@ const LegalHero = () => {
             </Link>
           </div>
         </div>
-      </div>
+      </PageSectionContainer>
     </section>
   )
 }

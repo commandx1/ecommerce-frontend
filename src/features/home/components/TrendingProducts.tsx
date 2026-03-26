@@ -1,12 +1,13 @@
 import Link from "next/link"
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import productsData from "@/data/trending-products.json"
 import ProductCard from "@/features/home/components/ProductCard"
 import SectionHeader from "@/features/home/components/SectionHeader"
 
 export default function TrendingProducts() {
   return (
-    <section id="trending-products" className="py-16 bg-white">
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-16 bg-white">
+      <PageSectionContainer as="div">
         <div className="mb-12">
           <SectionHeader
             title="Trending Products"
@@ -26,7 +27,7 @@ export default function TrendingProducts() {
             <ProductCard key={product.id} {...product} href={`/products/${product.id}`} />
           ))}
         </div>
-      </div>
+      </PageSectionContainer>
     </section>
   )
 }

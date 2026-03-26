@@ -1,10 +1,11 @@
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import stepsData from "@/data/how-it-works.json"
 import StepCard from "./StepCard"
 
 const HowItWorks = () => {
   return (
-    <section id="how-it-works" className="py-16 bg-light-mint-gray">
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-16 bg-light-mint-gray">
+      <PageSectionContainer as="div">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-steel-blue mb-4">How DentyPro Works</h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
@@ -16,7 +17,7 @@ const HowItWorks = () => {
             <StepCard key={step.id} {...step} />
           ))}
         </div>
-      </div>
+      </PageSectionContainer>
     </section>
   )
 }

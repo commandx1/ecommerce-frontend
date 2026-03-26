@@ -1,6 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import OrderSummaryItems from "@/features/checkout/components/OrderSummaryItems"
 import OrderSummaryShippingInfo from "@/features/checkout/components/OrderSummaryShippingInfo"
 import OrderSummaryTotals from "@/features/checkout/components/OrderSummaryTotals"
@@ -15,7 +16,7 @@ export default function OrderSummary() {
   if (currentStep === 5) return null
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-8">
+    <SurfaceCard className="sticky top-8 p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-bold text-steel-blue">Order Summary</h3>
         <button
@@ -45,6 +46,6 @@ export default function OrderSummary() {
       />
 
       <OrderSummaryTrustBadges />
-    </div>
+    </SurfaceCard>
   )
 }

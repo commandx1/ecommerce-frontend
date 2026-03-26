@@ -1,5 +1,6 @@
 import { LayoutGrid, List } from "lucide-react"
 import Link from "next/link"
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 
 interface ProductListingToolbarProps {
   buildUrl: (overrides: { page?: number; size?: number; view?: "grid" | "list" }) => string
@@ -10,7 +11,7 @@ interface ProductListingToolbarProps {
 const ProductListingToolbar = ({ buildUrl, viewType, pageSize }: ProductListingToolbarProps) => {
   return (
     <section className="bg-white border-b border-gray-200 py-4">
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
+      <PageSectionContainer as="div">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
@@ -67,7 +68,7 @@ const ProductListingToolbar = ({ buildUrl, viewType, pageSize }: ProductListingT
             </button>
           </div>
         </div>
-      </div>
+      </PageSectionContainer>
     </section>
   )
 }

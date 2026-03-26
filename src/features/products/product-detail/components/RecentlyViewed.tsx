@@ -1,13 +1,14 @@
 "use client"
 
 import Link from "next/link"
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import recentlyViewedData from "@/data/recently-viewed.json"
 import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
 
 const RecentlyViewed = () => {
   return (
-    <section id="recently-viewed" className="bg-white py-12">
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="bg-white py-12">
+      <PageSectionContainer as="div">
         <h2 className="text-3xl font-bold text-steel-blue mb-8">Recently Viewed</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           {recentlyViewedData.map((product) => (
@@ -31,7 +32,7 @@ const RecentlyViewed = () => {
             </Link>
           ))}
         </div>
-      </div>
+      </PageSectionContainer>
     </section>
   )
 }

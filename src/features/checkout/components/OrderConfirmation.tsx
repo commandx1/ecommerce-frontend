@@ -1,6 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import OrderConfirmationActions from "@/features/checkout/components/OrderConfirmationActions"
 import OrderConfirmationHeader from "@/features/checkout/components/OrderConfirmationHeader"
 import OrderConfirmationItems from "@/features/checkout/components/OrderConfirmationItems"
@@ -20,11 +21,11 @@ export default function OrderConfirmation() {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-12 mb-8">
+    <SurfaceCard className="mb-8 p-12">
       <OrderConfirmationHeader />
       {orderResult ? <OrderConfirmationStats orderResult={orderResult} /> : null}
       {orderResult ? <OrderConfirmationItems orderResult={orderResult} /> : null}
       <OrderConfirmationActions onContinueShopping={onContinueShopping} />
-    </div>
+    </SurfaceCard>
   )
 }

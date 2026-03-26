@@ -2,6 +2,7 @@
 
 import { Elements } from "@stripe/react-stripe-js"
 import { loadStripe } from "@stripe/stripe-js"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import FinalReviewAddressCards from "@/features/checkout/components/FinalReviewAddressCards"
 import FinalReviewNavigation from "@/features/checkout/components/FinalReviewNavigation"
 import FinalReviewPaymentSection from "@/features/checkout/components/FinalReviewPaymentSection"
@@ -31,7 +32,7 @@ function FinalReviewContent() {
   } = useFinalReview()
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+    <SurfaceCard className="mb-8 p-8">
       <div className="flex items-center mb-8">
         <div className="w-8 h-8 bg-steel-blue rounded-full flex items-center justify-center mr-4">
           <span className="text-white text-sm font-semibold">4</span>
@@ -64,7 +65,7 @@ function FinalReviewContent() {
           void onPlaceOrder()
         }}
       />
-    </div>
+    </SurfaceCard>
   )
 }
 

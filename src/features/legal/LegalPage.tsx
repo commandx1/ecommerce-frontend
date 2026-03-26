@@ -1,3 +1,4 @@
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import ContactSupport from "@/features/legal/components/ContactSupport"
 import LegalArchive from "@/features/legal/components/LegalArchive"
 import LegalHero from "@/features/legal/components/LegalHero"
@@ -15,9 +16,9 @@ export default function LegalPage({ selectedDocument, selectedId }: LegalPagePro
     <main className="min-h-screen">
       <LegalHero />
       <QuickNavigationCards selectedId={selectedId} />
-      <section className="app-container mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+      <PageSectionContainer as="section" className="pb-16">
         <LegalPageContent selectedDocument={selectedDocument} selectedId={selectedId} />
-      </section>
+      </PageSectionContainer>
       <ContactSupport />
       <LegalArchive />
     </main>

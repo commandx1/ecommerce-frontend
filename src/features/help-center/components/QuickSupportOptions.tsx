@@ -1,5 +1,8 @@
 import { Mail, MessageCircle, Phone, Ticket } from "lucide-react"
 
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
+import SectionHeading from "@/components/layout/SectionHeading"
+
 import QuickSupportOptionCard from "./QuickSupportOptionCard"
 
 const options = [
@@ -35,25 +38,26 @@ const options = [
 
 export default function QuickSupportOptions() {
   return (
-    <section className="py-16 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-steel-blue mb-4">Get Help Fast</h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">Choose the support option that works best for you</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {options.map((item) => (
-            <QuickSupportOptionCard
-              key={item.title}
-              title={item.title}
-              description={item.description}
-              badge={item.badge}
-              badgeTone={item.badgeTone}
-              Icon={item.icon}
-            />
-          ))}
-        </div>
+    <PageSectionContainer as="section" className="py-16 bg-white">
+      <SectionHeading
+        title="Get Help Fast"
+        description="Choose the support option that works best for you"
+        className="mb-12 justify-center"
+        titleClassName="text-4xl text-center mb-4"
+        descriptionClassName="text-xl max-w-3xl mx-auto text-center"
+      />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {options.map((item) => (
+          <QuickSupportOptionCard
+            key={item.title}
+            title={item.title}
+            description={item.description}
+            badge={item.badge}
+            badgeTone={item.badgeTone}
+            Icon={item.icon}
+          />
+        ))}
       </div>
-    </section>
+    </PageSectionContainer>
   )
 }

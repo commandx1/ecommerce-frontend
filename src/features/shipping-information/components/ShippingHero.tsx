@@ -1,4 +1,5 @@
 import { MapPin, Package, Truck, Zap } from "lucide-react"
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 
 const HERO_FEATURES = [
   { icon: Zap, title: "Same-Day Delivery", description: "Local courier service" },
@@ -10,7 +11,7 @@ const HERO_FEATURES = [
 export default function ShippingHero() {
   return (
     <section className="bg-linear-to-br from-steel-blue to-blue-800 py-16 sm:py-20 lg:py-24">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <PageSectionContainer as="div">
         <div className="text-center mb-12">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6">Shipping Information</h1>
           <p className="text-lg sm:text-xl lg:text-2xl text-blue-100 max-w-3xl mx-auto leading-relaxed px-4">
@@ -28,7 +29,7 @@ export default function ShippingHero() {
             </div>
           ))}
         </div>
-      </div>
+      </PageSectionContainer>
     </section>
   )
 }

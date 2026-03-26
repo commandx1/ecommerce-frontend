@@ -2,6 +2,7 @@
 
 import type { ChangeEventHandler, FormEventHandler } from "react"
 import { useId } from "react"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 
 import legalAdditionalData from "@/data/legal-additional.json"
 import { useContactSupportForm } from "@/features/legal/hooks/useContactSupportForm"
@@ -14,7 +15,7 @@ const ContactSupportForm = () => {
   const onSubmit: FormEventHandler<HTMLFormElement> = handleSubmit
 
   return (
-    <div className="bg-white rounded-2xl p-8 shadow-2xl">
+    <SurfaceCard className="p-8 shadow-2xl">
       <h3 className="text-2xl font-bold text-steel-blue mb-6">Request Legal Consultation</h3>
       <form onSubmit={onSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -98,7 +99,7 @@ const ContactSupportForm = () => {
           Submit Request
         </button>
       </form>
-    </div>
+    </SurfaceCard>
   )
 }
 

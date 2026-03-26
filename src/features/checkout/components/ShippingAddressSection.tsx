@@ -1,4 +1,5 @@
 import { Check, MapPin, Plus } from "lucide-react"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import type { Address } from "@/lib/api/address"
 
 interface ShippingAddressSectionProps {
@@ -17,7 +18,7 @@ export default function ShippingAddressSection({
   onSelectAddress,
 }: ShippingAddressSectionProps) {
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-8">
+    <SurfaceCard className="p-8">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center">
           <div className="w-8 h-8 bg-steel-blue rounded-full flex items-center justify-center mr-4">
@@ -93,6 +94,6 @@ export default function ShippingAddressSection({
           ))}
         </div>
       ) : null}
-    </div>
+    </SurfaceCard>
   )
 }

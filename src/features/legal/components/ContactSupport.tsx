@@ -1,16 +1,15 @@
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import ContactSupportForm from "@/features/legal/components/ContactSupportForm"
 import ContactSupportInfo from "@/features/legal/components/ContactSupportInfo"
 
 const ContactSupport = () => {
   return (
-    <section className="py-16 bg-steel-blue">
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <ContactSupportInfo />
-          <ContactSupportForm />
-        </div>
+    <PageSectionContainer as="section" className="py-16 bg-steel-blue">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <ContactSupportInfo />
+        <ContactSupportForm />
       </div>
-    </section>
+    </PageSectionContainer>
   )
 }
 

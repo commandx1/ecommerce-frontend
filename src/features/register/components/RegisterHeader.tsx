@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import Logo from "@/components/layout/Logo"
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 
 interface RegisterHeaderProps {
   signInPath?: string
@@ -12,7 +13,7 @@ export default function RegisterHeader({ signInPath = "/login" }: RegisterHeader
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
+      <PageSectionContainer as="div">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <Logo />
@@ -29,7 +30,7 @@ export default function RegisterHeader({ signInPath = "/login" }: RegisterHeader
             </button>
           </div>
         </div>
-      </div>
+      </PageSectionContainer>
     </header>
   )
 }

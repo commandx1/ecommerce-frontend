@@ -1,11 +1,12 @@
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import categoriesData from "@/data/categories.json"
 import CategoryCard from "@/features/home/components/CategoryCard"
 import SectionHeader from "@/features/home/components/SectionHeader"
 
 export default function ProductCategories() {
   return (
-    <section id="categories-grid" className="py-16 bg-light-mint-gray">
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-16 bg-light-mint-gray">
+      <PageSectionContainer as="div">
         <div className="mb-12">
           <SectionHeader
             title="Shop by Category"
@@ -18,7 +19,7 @@ export default function ProductCategories() {
             <CategoryCard key={category.id} {...category} />
           ))}
         </div>
-      </div>
+      </PageSectionContainer>
     </section>
   )
 }

@@ -19,13 +19,14 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 
 export default function NotFound() {
   return (
     <div className="bg-light-mint-gray min-h-screen font-inter">
       {/* 404 Main Section */}
       <section className="min-h-[80vh] flex items-center justify-center py-16">
-        <div className="app-container mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <PageSectionContainer as="div" containerClassName="w-full">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="order-2 lg:order-1">
               <div className="mb-8">
@@ -81,12 +82,12 @@ export default function NotFound() {
               </div>
             </div>
           </div>
-        </div>
+        </PageSectionContainer>
       </section>
 
       {/* Popular Pages */}
       <section className="py-16 bg-white">
-        <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
+        <PageSectionContainer as="div">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-steel-blue mb-4">Popular Pages</h2>
             <p className="text-lg text-gray-600">Here are some pages you might be looking for</p>
@@ -138,12 +139,12 @@ export default function NotFound() {
               </Link>
             ))}
           </div>
-        </div>
+        </PageSectionContainer>
       </section>
 
       {/* Categories */}
       <section className="py-16 bg-light-mint-gray">
-        <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
+        <PageSectionContainer as="div">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-steel-blue mb-4">Browse by Category</h2>
             <p className="text-lg text-gray-600">Find what you need in our organized product categories</p>
@@ -169,12 +170,12 @@ export default function NotFound() {
               </Link>
             ))}
           </div>
-        </div>
+        </PageSectionContainer>
       </section>
 
       {/* Help Section */}
       <section className="py-16 bg-white">
-        <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
+        <PageSectionContainer as="div">
           <div className="bg-linear-to-r from-steel-blue to-blue-700 rounded-3xl overflow-hidden shadow-2xl">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
               <div className="p-12 text-white">
@@ -224,12 +225,12 @@ export default function NotFound() {
               </div>
             </div>
           </div>
-        </div>
+        </PageSectionContainer>
       </section>
 
       {/* FAQ Section */}
       <section className="py-16 bg-light-mint-gray">
-        <div className="app-container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
+        <PageSectionContainer as="div" containerClassName="max-w-4xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-steel-blue mb-4">Frequently Asked Questions</h2>
             <p className="text-lg text-gray-600">Quick answers to common questions</p>
@@ -272,7 +273,7 @@ export default function NotFound() {
               View All FAQs <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
           </div>
-        </div>
+        </PageSectionContainer>
       </section>
     </div>
   )

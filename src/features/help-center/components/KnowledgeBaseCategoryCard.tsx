@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react"
 import { ChevronRight } from "lucide-react"
 import Link from "next/link"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 
 interface KnowledgeBaseCategoryCardProps {
   title: string
@@ -20,7 +21,7 @@ const KnowledgeBaseCategoryCard = ({
   Icon,
 }: KnowledgeBaseCategoryCardProps) => {
   return (
-    <div className="bg-white rounded-2xl p-6 hover:shadow-lg transition-shadow">
+    <SurfaceCard className="p-6 hover:shadow-lg transition-shadow">
       <div className="flex items-center mb-4">
         <div className={`w-12 h-12 ${iconBg} rounded-lg flex items-center justify-center mr-4`}>
           <Icon className={iconColor} />
@@ -40,7 +41,7 @@ const KnowledgeBaseCategoryCard = ({
       <Link href="#" className="mt-4 text-steel-blue font-medium hover:underline inline-block">
         View all articles ({count}) →
       </Link>
-    </div>
+    </SurfaceCard>
   )
 }
 

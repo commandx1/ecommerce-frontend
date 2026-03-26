@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import { showToast } from "@/components/ui/Toast"
 import { useCartStore } from "@/stores/cartStore"
 import { useSelectedSupplierStore } from "@/stores/selectedSupplierStore"
@@ -76,7 +78,7 @@ const PurchaseOptions = ({ bulkPricing, warrantyOptions, orderSummary }: Purchas
   const handleAddToCart = async () => {
     const userProductId = selectedSupplier?.userProductId
     if (!userProductId) {
-      console.error("No userProductId found for the selected supplier")
+      showToast.error("Selected supplier is unavailable right now. Please choose another supplier.")
       return
     }
     setIsAddingToCart(true)
@@ -101,9 +103,9 @@ const PurchaseOptions = ({ bulkPricing, warrantyOptions, orderSummary }: Purchas
   }
 
   return (
-    <section id="purchase-section" className="bg-white py-12 border-t border-gray-200">
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-light-mint-gray rounded-2xl p-8">
+    <section className="bg-white py-12 border-t border-gray-200">
+      <PageSectionContainer as="div">
+        <SurfaceCard variant="subtle" className="p-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <h2 className="text-2xl font-bold text-steel-blue mb-6">Purchase Options</h2>
@@ -142,8 +144,8 @@ const PurchaseOptions = ({ bulkPricing, warrantyOptions, orderSummary }: Purchas
               <PurchaseActions onAddToCart={handleAddToCart} isAddingToCart={isAddingToCart} stockCount={stockCount} />
             </div>
           </div>
-        </div>
-      </div>
+        </SurfaceCard>
+      </PageSectionContainer>
     </section>
   )
 }

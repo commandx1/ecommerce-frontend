@@ -1,3 +1,4 @@
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import VendorShipmentRates from "@/features/checkout/components/VendorShipmentRates"
 import type { SellerGroup, ShippingRate } from "@/features/checkout/types"
 
@@ -17,7 +18,7 @@ export default function ShippingMethodsSection({
   onRateSelect,
 }: ShippingMethodsSectionProps) {
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-8">
+    <SurfaceCard className="p-8">
       <div className="flex items-center mb-8">
         <div className="w-8 h-8 bg-steel-blue rounded-full flex items-center justify-center mr-4">
           <span className="text-white text-sm font-semibold">3</span>
@@ -39,6 +40,6 @@ export default function ShippingMethodsSection({
           />
         ))}
       </div>
-    </div>
+    </SurfaceCard>
   )
 }

@@ -1,5 +1,6 @@
 "use client"
 
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import BillingAddressForm from "@/features/checkout/components/BillingAddressForm"
 import BillingAddressSection from "@/features/checkout/components/BillingAddressSection"
 import BillingAgreementsSection from "@/features/checkout/components/BillingAgreementsSection"
@@ -37,7 +38,7 @@ export default function BillingInformation() {
   const { paymentOptions, showDifferentBilling, onSubmit, setShowDifferentBilling } = useBillingInformation()
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+    <SurfaceCard className="mb-8 p-8">
       <BillingHeader />
       <form onSubmit={onSubmit} className="space-y-8">
         <BillingAddressSection
@@ -78,6 +79,6 @@ export default function BillingInformation() {
 
         <BillingNavigation termsAgreed={termsAgreed} onBack={previousStep} />
       </form>
-    </div>
+    </SurfaceCard>
   )
 }

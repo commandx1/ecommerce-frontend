@@ -1,6 +1,7 @@
 "use client"
 
 import { Check } from "lucide-react"
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import type { CheckoutProgressStep } from "@/features/checkout/types"
 
 interface CheckoutProgressProps {
@@ -58,21 +59,19 @@ function CheckoutProgressItem({
 
 export default function CheckoutProgress({ currentStep }: CheckoutProgressProps) {
   return (
-    <section className="bg-white border-b border-gray-200">
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex items-center justify-center">
-          <div className="flex items-center space-x-4 md:space-x-8 overflow-x-auto">
-            {CHECKOUT_STEPS.map((step, index) => (
-              <CheckoutProgressItem
-                key={step.number}
-                currentStep={currentStep}
-                isLast={index === CHECKOUT_STEPS.length - 1}
-                step={step}
-              />
-            ))}
-          </div>
+    <PageSectionContainer as="section" className="bg-white border-b border-gray-200" containerClassName="py-6">
+      <div className="flex items-center justify-center">
+        <div className="flex items-center space-x-4 md:space-x-8 overflow-x-auto">
+          {CHECKOUT_STEPS.map((step, index) => (
+            <CheckoutProgressItem
+              key={step.number}
+              currentStep={currentStep}
+              isLast={index === CHECKOUT_STEPS.length - 1}
+              step={step}
+            />
+          ))}
         </div>
       </div>
-    </section>
+    </PageSectionContainer>
   )
 }

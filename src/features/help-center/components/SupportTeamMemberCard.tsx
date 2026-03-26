@@ -1,5 +1,6 @@
 import { Linkedin, Mail } from "lucide-react"
 import Image from "next/image"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 
 interface SupportTeamMemberCardProps {
   name: string
@@ -10,7 +11,7 @@ interface SupportTeamMemberCardProps {
 
 const SupportTeamMemberCard = ({ name, role, bio, avatar }: SupportTeamMemberCardProps) => {
   return (
-    <div className="bg-white rounded-2xl p-6 text-center hover:shadow-lg transition-shadow">
+    <SurfaceCard className="p-6 text-center hover:shadow-lg transition-shadow">
       <div className="w-20 h-20 mx-auto mb-4 overflow-hidden rounded-full relative">
         <Image src={avatar} alt={name} fill className="object-cover" unoptimized />
       </div>
@@ -31,7 +32,7 @@ const SupportTeamMemberCard = ({ name, role, bio, avatar }: SupportTeamMemberCar
           <Linkedin className="text-white w-3 h-3" />
         </button>
       </div>
-    </div>
+    </SurfaceCard>
   )
 }
 

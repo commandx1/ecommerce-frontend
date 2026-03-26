@@ -1,3 +1,5 @@
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
+
 const INDICATORS = [
   { value: "10,000+", label: "Dental Professionals" },
   { value: "500+", label: "Verified Suppliers" },
@@ -7,8 +9,8 @@ const INDICATORS = [
 
 export default function TrustIndicators() {
   return (
-    <section id="trust-indicators" className="bg-white py-12">
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="bg-white py-12">
+      <PageSectionContainer as="div">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center">
           {INDICATORS.map((indicator) => (
             <div key={indicator.label} className="text-center">
@@ -17,7 +19,7 @@ export default function TrustIndicators() {
             </div>
           ))}
         </div>
-      </div>
+      </PageSectionContainer>
     </section>
   )
 }

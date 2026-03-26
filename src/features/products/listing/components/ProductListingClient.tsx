@@ -1,3 +1,4 @@
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import { createProductsUrlBuilder } from "./listing/buildProductsUrl"
 import FeaturedBanner from "./listing/FeaturedBanner"
 import MobileFilters from "./listing/MobileFilters"
@@ -58,7 +59,7 @@ const ProductListingClient = ({
       <ProductListingHeader totalElements={totalElements} />
       <ProductListingToolbar buildUrl={buildUrl} viewType={viewType} pageSize={pageSize} />
 
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <PageSectionContainer as="div" containerClassName="py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar Filters */}
           <aside className="hidden lg:block w-68 shrink-0">
@@ -84,7 +85,7 @@ const ProductListingClient = ({
             />
           </main>
         </div>
-      </div>
+      </PageSectionContainer>
     </div>
   )
 }

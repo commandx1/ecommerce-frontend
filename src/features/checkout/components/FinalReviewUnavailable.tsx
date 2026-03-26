@@ -1,6 +1,8 @@
+import SurfaceCard from "@/components/ui/SurfaceCard"
+
 export default function FinalReviewUnavailable() {
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+    <SurfaceCard className="mb-8 p-8">
       <div className="flex items-center mb-8">
         <div className="w-8 h-8 bg-steel-blue rounded-full flex items-center justify-center mr-4">
           <span className="text-white text-sm font-semibold">4</span>
@@ -10,6 +12,6 @@ export default function FinalReviewUnavailable() {
       <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
         Stripe publishable key is missing. Please set `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` to enable card payments.
       </div>
-    </div>
+    </SurfaceCard>
   )
 }
