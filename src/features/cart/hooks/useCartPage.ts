@@ -1,13 +1,14 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { CartTotals } from "@/features/cart/types"
 import type { CartItem } from "@/stores/cartStore"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
 type CartViewState = "loading" | "empty" | "ready"
+const QUANTITY_DEBOUNCE_MS = 450
 
 interface UseCartPageResult {
   cartId: string | null
@@ -29,13 +30,39 @@ export function useCartPage(): UseCartPageResult {
   const { cartId, items, fetchCart, isLoading, clearCart, updateQuantity, removeFromCart } = useCartStore()
   const { selectedShippingCost, setStep } = useCheckoutStore()
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false)
+  const [pendingQuantities, setPendingQuantities] = useState<Record<string, number>>({})
+  const quantityTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+  const quantityRequestVersionRef = useRef<Map<string, number>>(new Map())
+
+  useEffect(() => {
+    return () => {
+      for (const timeoutId of quantityTimersRef.current.values()) {
+        clearTimeout(timeoutId)
+      }
+      quantityTimersRef.current.clear()
+    }
+  }, [])
 
   useEffect(() => {
     void fetchCart()
   }, [fetchCart])
 
+  const itemsWithPendingQuantity = useMemo<CartItem[]>(() => {
+    return items.map((item) => {
+      const pendingQuantity = pendingQuantities[item.userProduct.userProductId]
+      if (pendingQuantity === undefined) {
+        return item
+      }
+
+      return {
+        ...item,
+        quantity: pendingQuantity,
+      }
+    })
+  }, [items, pendingQuantities])
+
   const totals = useMemo<CartTotals>(() => {
-    const subtotal = items.reduce((sum, item) => sum + item.userProduct.price * item.quantity, 0)
+    const subtotal = itemsWithPendingQuantity.reduce((sum, item) => sum + item.userProduct.price * item.quantity, 0)
     const shipping = selectedShippingCost
 
     return {
@@ -43,39 +70,81 @@ export function useCartPage(): UseCartPageResult {
       shipping,
       total: subtotal + shipping,
     }
-  }, [items, selectedShippingCost])
+  }, [itemsWithPendingQuantity, selectedShippingCost])
 
   const viewState: CartViewState = useMemo(() => {
-    if (isLoading && items.length === 0) {
+    if (isLoading && itemsWithPendingQuantity.length === 0) {
       return "loading"
     }
 
-    if (items.length === 0) {
+    if (itemsWithPendingQuantity.length === 0) {
       return "empty"
     }
 
     return "ready"
-  }, [isLoading, items.length])
+  }, [isLoading, itemsWithPendingQuantity.length])
 
   const onContinueShopping = useCallback(() => {
     router.push("/")
   }, [router])
 
   const onCheckout = useCallback(() => {
-    if (items.length === 0) return
+    if (itemsWithPendingQuantity.length === 0) return
     setStep(2)
     router.push("/checkout")
-  }, [items.length, router, setStep])
+  }, [itemsWithPendingQuantity.length, router, setStep])
 
   const onQuantityChange = useCallback(
     (userProductId: string, currentQuantity: number, delta: number) => {
-      void updateQuantity(userProductId, currentQuantity + delta)
+      const baseQuantity = pendingQuantities[userProductId] ?? currentQuantity
+      const nextQuantity = Math.max(0, baseQuantity + delta)
+
+      setPendingQuantities((prev) => ({
+        ...prev,
+        [userProductId]: nextQuantity,
+      }))
+
+      const existingTimeout = quantityTimersRef.current.get(userProductId)
+      if (existingTimeout) {
+        clearTimeout(existingTimeout)
+      }
+
+      const requestVersion = (quantityRequestVersionRef.current.get(userProductId) ?? 0) + 1
+      quantityRequestVersionRef.current.set(userProductId, requestVersion)
+
+      const timeoutId = setTimeout(() => {
+        void (async () => {
+          await updateQuantity(userProductId, nextQuantity)
+
+          if (quantityRequestVersionRef.current.get(userProductId) !== requestVersion) {
+            return
+          }
+
+          quantityTimersRef.current.delete(userProductId)
+          setPendingQuantities((prev) => {
+            const { [userProductId]: _removed, ...rest } = prev
+            return rest
+          })
+        })()
+      }, QUANTITY_DEBOUNCE_MS)
+
+      quantityTimersRef.current.set(userProductId, timeoutId)
     },
-    [updateQuantity],
+    [pendingQuantities, updateQuantity],
   )
 
   const onRemoveItem = useCallback(
     (userProductId: string) => {
+      const existingTimeout = quantityTimersRef.current.get(userProductId)
+      if (existingTimeout) {
+        clearTimeout(existingTimeout)
+        quantityTimersRef.current.delete(userProductId)
+      }
+
+      setPendingQuantities((prev) => {
+        const { [userProductId]: _removed, ...rest } = prev
+        return rest
+      })
       void removeFromCart(userProductId)
     },
     [removeFromCart],
@@ -90,6 +159,12 @@ export function useCartPage(): UseCartPageResult {
   }, [])
 
   const onConfirmClearCart = useCallback(async () => {
+    for (const timeoutId of quantityTimersRef.current.values()) {
+      clearTimeout(timeoutId)
+    }
+    quantityTimersRef.current.clear()
+    setPendingQuantities({})
+
     await clearCart()
     setIsClearConfirmOpen(false)
   }, [clearCart])
@@ -97,7 +172,7 @@ export function useCartPage(): UseCartPageResult {
   return {
     cartId,
     isClearConfirmOpen,
-    items,
+    items: itemsWithPendingQuantity,
     totals,
     viewState,
     onCheckout,
