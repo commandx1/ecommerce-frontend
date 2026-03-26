@@ -4,6 +4,7 @@ import { Star, X } from "lucide-react"
 import { useEffect, useState } from "react"
 import { TextAreaField } from "@/components/form/TextAreaField"
 import { TextField } from "@/components/form/TextField"
+import Modal from "@/components/ui/Modal"
 import { showToast } from "@/components/ui/Toast"
 import { updateReview } from "@/lib/api/product-reviews"
 import { useAuthStore } from "@/stores/authStore"
@@ -36,8 +37,6 @@ export default function EditReviewModal({ review, isOpen, onClose, onSuccess }: 
     setTitle(review.title)
     setComment(review.comment)
   }, [review])
-
-  if (!isOpen) return null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -84,8 +83,14 @@ export default function EditReviewModal({ review, isOpen, onClose, onSuccess }: 
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Edit Your Review"
+      maxWidthClassName="max-w-2xl"
+      closeOnOverlayClick={false}
+    >
+      <div>
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
           <h3 className="text-2xl font-bold text-steel-blue">Edit Your Review</h3>
           <button
@@ -174,6 +179,6 @@ export default function EditReviewModal({ review, isOpen, onClose, onSuccess }: 
           </div>
         </form>
       </div>
-    </div>
+    </Modal>
   )
 }

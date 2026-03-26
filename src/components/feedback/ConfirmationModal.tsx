@@ -1,6 +1,7 @@
 "use client"
 
 import { AlertTriangle, X } from "lucide-react"
+import Modal from "@/components/ui/Modal"
 
 interface ConfirmationModalProps {
   isOpen: boolean
@@ -25,21 +26,15 @@ export default function ConfirmationModal({
   isDanger = true,
   isLoading = false,
 }: ConfirmationModalProps) {
-  if (!isOpen) return null
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onClick={onClose} />
-
-      {/* Modal Container */}
-      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+    <Modal isOpen={isOpen} onClose={onClose} title={title} maxWidthClassName="max-w-md" overlayClassName="bg-black/50">
+      <div className="overflow-hidden rounded-2xl">
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <div className={`p-2 rounded-full ${isDanger ? "bg-red-50" : "bg-blue-50"}`}>
               <AlertTriangle className={`w-6 h-6 ${isDanger ? "text-red-600" : "text-blue-600"}`} />
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+            <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
               <X className="w-6 h-6" />
             </button>
           </div>
@@ -69,6 +64,6 @@ export default function ConfirmationModal({
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }

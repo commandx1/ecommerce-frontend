@@ -3,6 +3,7 @@
 import { X } from "lucide-react"
 import { useState } from "react"
 import { TextAreaField } from "@/components/form/TextAreaField"
+import Modal from "@/components/ui/Modal"
 import { showToast } from "@/components/ui/Toast"
 import { submitProductQuestion } from "@/lib/api/product-qa"
 import { useAuthStore } from "@/stores/authStore"
@@ -35,8 +36,6 @@ export default function AskQuestionModal({
 
   // Get vendor name for display
   const selectedVendor = userProducts.find((up) => up.id === preSelectedUserProductId)
-
-  if (!isOpen) return null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -78,8 +77,14 @@ export default function AskQuestionModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Ask a Question"
+      maxWidthClassName="max-w-2xl"
+      closeOnOverlayClick={false}
+    >
+      <div>
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
           <h3 className="text-2xl font-bold text-steel-blue">Ask a Question</h3>
           <button
@@ -160,6 +165,6 @@ export default function AskQuestionModal({
           )}
         </form>
       </div>
-    </div>
+    </Modal>
   )
 }
