@@ -1,9 +1,13 @@
 "use client"
 
 import { Star, X } from "lucide-react"
-import { useState } from "react"
+import Link from "next/link"
+import { useId, useState } from "react"
+import NoticeBanner from "@/components/feedback/NoticeBanner"
 import { TextAreaField } from "@/components/form/TextAreaField"
 import { TextField } from "@/components/form/TextField"
+import ActionButton from "@/components/ui/ActionButton"
+import AsyncSubmitButton from "@/components/ui/AsyncSubmitButton"
 import Modal from "@/components/ui/Modal"
 import { showToast } from "@/components/ui/Toast"
 import { createReview } from "@/lib/api/product-reviews"
@@ -18,6 +22,7 @@ interface WriteReviewModalProps {
 
 export default function WriteReviewModal({ productId, isOpen, onClose, onSuccess }: WriteReviewModalProps) {
   const { accessToken, isAuthenticated } = useAuthStore()
+  const id = useId()
   const [rating, setRating] = useState(0)
   const [hoveredRating, setHoveredRating] = useState(0)
   const [title, setTitle] = useState("")
@@ -94,15 +99,13 @@ export default function WriteReviewModal({ productId, isOpen, onClose, onSuccess
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {!isAuthenticated && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-yellow-800 text-sm">You need to log in to write a review.</p>
-            </div>
+            <NoticeBanner tone="warning" description="You need to log in to write a review." className="rounded-lg" />
           )}
 
           {isAuthenticated && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Your Rating *</label>
+                <p className="block text-sm font-medium text-gray-700 mb-2">Your Rating *</p>
                 <div className="flex items-center space-x-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
@@ -136,7 +139,7 @@ export default function WriteReviewModal({ productId, isOpen, onClose, onSuccess
               </div>
 
               <TextField
-                id="review-title"
+                id={`${id}-title`}
                 label="Review Title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -147,7 +150,7 @@ export default function WriteReviewModal({ productId, isOpen, onClose, onSuccess
 
               <div className="space-y-2">
                 <TextAreaField
-                  id="review-comment"
+                  id={`${id}-comment`}
                   label="Your Review"
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
@@ -160,33 +163,24 @@ export default function WriteReviewModal({ productId, isOpen, onClose, onSuccess
               </div>
 
               <div className="flex items-center justify-end space-x-4">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
-                  disabled={isSubmitting}
-                >
+                <ActionButton type="button" onClick={onClose} intent="outline" disabled={isSubmitting}>
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-3 bg-steel-blue text-white rounded-lg hover:bg-opacity-90 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Submitting..." : "Submit Review"}
-                </button>
+                </ActionButton>
+                <AsyncSubmitButton
+                  idleText="Submit Review"
+                  submittingText="Submitting..."
+                  isSubmitting={isSubmitting}
+                  fullWidth={false}
+                />
               </div>
             </>
           )}
 
           {!isAuthenticated && (
             <div className="flex items-center justify-center">
-              <a
-                href="/login"
-                className="px-6 py-3 bg-steel-blue text-white rounded-lg hover:bg-opacity-90 transition-colors font-medium"
-              >
-                Log In to Write Review
-              </a>
+              <ActionButton asChild>
+                <Link href="/login">Log In to Write Review</Link>
+              </ActionButton>
             </div>
           )}
         </form>

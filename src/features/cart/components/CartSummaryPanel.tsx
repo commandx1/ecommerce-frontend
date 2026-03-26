@@ -1,3 +1,4 @@
+import ActionButton from "@/components/ui/ActionButton"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import type { CartTotals } from "@/features/cart/types"
 import formatCurrency from "@/lib/helpers/formatCurrency"
@@ -42,14 +43,15 @@ export default function CartSummaryPanel({
           </div>
         </div>
       </div>
-      <button
+      <ActionButton
         type="button"
         disabled={isCheckoutDisabled}
         onClick={onCheckout}
-        className="w-full bg-steel-blue text-white py-3 px-6 rounded-lg hover:bg-opacity-90 font-semibold text-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+        fullWidth
+        className="text-lg disabled:bg-gray-300"
       >
         Proceed to Checkout
-      </button>
+      </ActionButton>
     </SurfaceCard>
   )
 }

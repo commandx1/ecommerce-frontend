@@ -2,6 +2,7 @@
 
 import type { ChangeEventHandler, FormEventHandler } from "react"
 import { useId } from "react"
+import ActionButton from "@/components/ui/ActionButton"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 
 import legalAdditionalData from "@/data/legal-additional.json"
@@ -92,12 +93,9 @@ const ContactSupportForm = () => {
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
           />
         </div>
-        <button
-          type="submit"
-          className="w-full bg-steel-blue text-white py-3 px-6 rounded-lg hover:bg-opacity-90 font-semibold transition-colors"
-        >
+        <ActionButton type="submit" fullWidth>
           Submit Request
-        </button>
+        </ActionButton>
       </form>
     </SurfaceCard>
   )

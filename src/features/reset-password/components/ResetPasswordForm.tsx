@@ -1,5 +1,7 @@
 import type { ChangeEventHandler, FormEventHandler } from "react"
+import { useId } from "react"
 import { PasswordField } from "@/components/form/PasswordField"
+import AsyncSubmitButton from "@/components/ui/AsyncSubmitButton"
 
 interface ResetPasswordFormProps {
   password: string
@@ -16,10 +18,12 @@ export default function ResetPasswordForm({
   onChange,
   onSubmit,
 }: ResetPasswordFormProps) {
+  const id = useId()
+
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       <PasswordField
-        id="password"
+        id={`${id}-password`}
         label="New Password"
         name="password"
         required
@@ -30,7 +34,7 @@ export default function ResetPasswordForm({
       />
 
       <PasswordField
-        id="confirmPassword"
+        id={`${id}-confirm-password`}
         label="Confirm Password"
         name="confirmPassword"
         required
@@ -40,13 +44,13 @@ export default function ResetPasswordForm({
         disabled={isSubmitting}
       />
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full bg-steel-blue text-white py-4 px-6 rounded-xl hover:bg-opacity-90 font-semibold text-lg transition-all disabled:opacity-50"
-      >
-        {isSubmitting ? "Updating..." : "Update Password"}
-      </button>
+      <AsyncSubmitButton
+        idleText="Update Password"
+        submittingText="Updating..."
+        isSubmitting={isSubmitting}
+        size="lg"
+        className="rounded-xl"
+      />
     </form>
   )
 }

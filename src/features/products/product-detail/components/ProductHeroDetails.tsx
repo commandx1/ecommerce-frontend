@@ -1,4 +1,5 @@
 import { Check, ShieldCheck } from "lucide-react"
+import NoticeBanner from "@/components/feedback/NoticeBanner"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import type { ProductHeroViewModel, SupplierViewModel } from "../types"
 import { getStockColorClass } from "../utils/stockStyles"
@@ -86,21 +87,19 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
         ))}
       </div>
 
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <div className="flex items-start space-x-3">
-          <ShieldCheck className="text-yellow-600 text-lg mt-0.5 shrink-0" />
-          <div>
-            <h3 className="font-semibold text-yellow-800 mb-1">Professional Verification Required</h3>
-            <p className="text-yellow-700 text-sm">
-              This product requires verification of your dental license to view pricing and place orders.{" "}
-              <a href="/verification" className="underline font-medium">
-                Complete verification
-              </a>{" "}
-              to access exclusive professional pricing.
-            </p>
-          </div>
-        </div>
-      </div>
+      <NoticeBanner
+        tone="warning"
+        title="Professional Verification Required"
+        icon={<ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" />}
+      >
+        <p className="text-sm text-yellow-700">
+          This product requires verification of your dental license to view pricing and place orders.{" "}
+          <a href="/verification" className="font-medium underline">
+            Complete verification
+          </a>{" "}
+          to access exclusive professional pricing.
+        </p>
+      </NoticeBanner>
     </div>
   )
 }

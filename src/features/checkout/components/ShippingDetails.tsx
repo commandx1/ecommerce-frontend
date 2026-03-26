@@ -1,6 +1,7 @@
 "use client"
 
 import { ArrowRight } from "lucide-react"
+import ActionButton from "@/components/ui/ActionButton"
 import ShippingAddressSection from "@/features/checkout/components/ShippingAddressSection"
 import ShippingMethodsSection from "@/features/checkout/components/ShippingMethodsSection"
 import { useShippingDetails } from "@/features/checkout/hooks/useShippingDetails"
@@ -40,14 +41,16 @@ export default function ShippingDetails() {
       ) : null}
 
       <div className="flex items-center justify-end">
-        <button
+        <ActionButton
           type="submit"
           disabled={!selectedAddressId}
-          className="flex items-center px-10 py-4 bg-steel-blue text-white rounded-xl hover:bg-opacity-90 font-bold text-lg shadow-lg shadow-blue-900/20 transition-all disabled:opacity-50"
+          size="lg"
+          fullWidth={false}
+          className="rounded-xl px-10 font-bold shadow-lg shadow-blue-900/20"
         >
           Continue to Billing
           <ArrowRight className="ml-2 w-6 h-6" />
-        </button>
+        </ActionButton>
       </div>
     </form>
   )

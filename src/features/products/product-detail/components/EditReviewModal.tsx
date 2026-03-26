@@ -1,9 +1,11 @@
 "use client"
 
 import { Star, X } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useId, useState } from "react"
 import { TextAreaField } from "@/components/form/TextAreaField"
 import { TextField } from "@/components/form/TextField"
+import ActionButton from "@/components/ui/ActionButton"
+import AsyncSubmitButton from "@/components/ui/AsyncSubmitButton"
 import Modal from "@/components/ui/Modal"
 import { showToast } from "@/components/ui/Toast"
 import { updateReview } from "@/lib/api/product-reviews"
@@ -25,6 +27,7 @@ interface EditReviewModalProps {
 
 export default function EditReviewModal({ review, isOpen, onClose, onSuccess }: EditReviewModalProps) {
   const { accessToken, isAuthenticated } = useAuthStore()
+  const id = useId()
   const [rating, setRating] = useState(review.star)
   const [hoveredRating, setHoveredRating] = useState(0)
   const [title, setTitle] = useState(review.title)
@@ -105,7 +108,7 @@ export default function EditReviewModal({ review, isOpen, onClose, onSuccess }: 
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Your Rating *</label>
+            <p className="block text-sm font-medium text-gray-700 mb-2">Your Rating *</p>
             <div className="flex items-center space-x-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -137,7 +140,7 @@ export default function EditReviewModal({ review, isOpen, onClose, onSuccess }: 
           </div>
 
           <TextField
-            id="edit-review-title"
+            id={`${id}-title`}
             label="Review Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -148,7 +151,7 @@ export default function EditReviewModal({ review, isOpen, onClose, onSuccess }: 
 
           <div className="space-y-2">
             <TextAreaField
-              id="edit-review-comment"
+              id={`${id}-comment`}
               label="Your Review"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
@@ -161,21 +164,15 @@ export default function EditReviewModal({ review, isOpen, onClose, onSuccess }: 
           </div>
 
           <div className="flex items-center justify-end space-x-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
-              disabled={isSubmitting}
-            >
+            <ActionButton type="button" onClick={onClose} intent="outline" disabled={isSubmitting}>
               Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-3 bg-steel-blue text-white rounded-lg hover:bg-opacity-90 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Updating..." : "Update Review"}
-            </button>
+            </ActionButton>
+            <AsyncSubmitButton
+              idleText="Update Review"
+              submittingText="Updating..."
+              isSubmitting={isSubmitting}
+              fullWidth={false}
+            />
           </div>
         </form>
       </div>

@@ -1,4 +1,4 @@
-import { Info } from "lucide-react"
+import NoticeBanner from "@/components/feedback/NoticeBanner"
 
 const TIPS = [
   "Include screenshots or photos when relevant",
@@ -9,19 +9,13 @@ const TIPS = [
 
 const TicketTipsCard = () => {
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-      <div className="flex items-start space-x-3">
-        <Info className="text-blue-500 mt-0.5 w-5 h-5 shrink-0" />
-        <div>
-          <h4 className="font-semibold text-blue-900 mb-1">Tips for faster resolution:</h4>
-          <ul className="text-sm text-blue-800 space-y-1">
-            {TIPS.map((tip) => (
-              <li key={tip}>• {tip}</li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </div>
+    <NoticeBanner tone="info" title="Tips for faster resolution:" className="rounded-lg">
+      <ul className="mt-1 space-y-1 text-sm text-blue-800">
+        {TIPS.map((tip) => (
+          <li key={tip}>• {tip}</li>
+        ))}
+      </ul>
+    </NoticeBanner>
   )
 }
 

@@ -1,8 +1,12 @@
 "use client"
 
 import { X } from "lucide-react"
-import { useState } from "react"
+import Link from "next/link"
+import { useId, useState } from "react"
+import NoticeBanner from "@/components/feedback/NoticeBanner"
 import { TextAreaField } from "@/components/form/TextAreaField"
+import ActionButton from "@/components/ui/ActionButton"
+import AsyncSubmitButton from "@/components/ui/AsyncSubmitButton"
 import Modal from "@/components/ui/Modal"
 import { showToast } from "@/components/ui/Toast"
 import { submitProductQuestion } from "@/lib/api/product-qa"
@@ -31,6 +35,7 @@ export default function AskQuestionModal({
   onSuccess,
 }: AskQuestionModalProps) {
   const { accessToken, isAuthenticated } = useAuthStore()
+  const id = useId()
   const [question, setQuestion] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -99,29 +104,29 @@ export default function AskQuestionModal({
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {!isAuthenticated && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-yellow-800 text-sm">You need to log in to ask a question.</p>
-            </div>
+            <NoticeBanner tone="warning" description="You need to log in to ask a question." className="rounded-lg" />
           )}
 
           {isAuthenticated && !preSelectedUserProductId && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-yellow-800 text-sm">Please select a vendor from the supplier table first.</p>
-            </div>
+            <NoticeBanner
+              tone="warning"
+              description="Please select a vendor from the supplier table first."
+              className="rounded-lg"
+            />
           )}
 
           {isAuthenticated && preSelectedUserProductId && (
             <>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <NoticeBanner tone="info" className="rounded-lg" title="Question destination">
                 <p className="text-sm font-medium text-blue-900">
                   Question will be sent to:{" "}
                   <span className="font-bold">{selectedVendor?.vendor || "Selected Vendor"}</span>
                 </p>
-              </div>
+              </NoticeBanner>
 
               <div className="space-y-2">
                 <TextAreaField
-                  id="question"
+                  id={`${id}-question`}
                   label="Your Question"
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
@@ -134,33 +139,24 @@ export default function AskQuestionModal({
               </div>
 
               <div className="flex items-center justify-end space-x-4">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
-                  disabled={isSubmitting}
-                >
+                <ActionButton type="button" onClick={onClose} intent="outline" disabled={isSubmitting}>
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-3 bg-steel-blue text-white rounded-lg hover:bg-opacity-90 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Submitting..." : "Submit Question"}
-                </button>
+                </ActionButton>
+                <AsyncSubmitButton
+                  idleText="Submit Question"
+                  submittingText="Submitting..."
+                  isSubmitting={isSubmitting}
+                  fullWidth={false}
+                />
               </div>
             </>
           )}
 
           {!isAuthenticated && (
             <div className="flex items-center justify-center">
-              <a
-                href="/login"
-                className="px-6 py-3 bg-steel-blue text-white rounded-lg hover:bg-opacity-90 transition-colors font-medium"
-              >
-                Log In to Ask Question
-              </a>
+              <ActionButton asChild>
+                <Link href="/login">Log In to Ask Question</Link>
+              </ActionButton>
             </div>
           )}
         </form>

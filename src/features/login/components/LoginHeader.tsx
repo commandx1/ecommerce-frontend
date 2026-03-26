@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import Logo from "@/components/layout/Logo"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
+import ActionButton from "@/components/ui/ActionButton"
 
 interface LoginHeaderProps {
   signUpPath?: string
@@ -21,13 +22,9 @@ export default function LoginHeader({ signUpPath = "/register" }: LoginHeaderPro
           </div>
           <div className="flex items-center space-x-4">
             <span className="text-gray-600">Don't have an account?</span>
-            <button
-              type="button"
-              onClick={() => router.push(signUpPath)}
-              className="bg-steel-blue text-white px-4 py-2 rounded-lg hover:bg-opacity-90 font-medium"
-            >
+            <ActionButton type="button" onClick={() => router.push(signUpPath)} size="sm">
               Sign Up
-            </button>
+            </ActionButton>
           </div>
         </div>
       </PageSectionContainer>

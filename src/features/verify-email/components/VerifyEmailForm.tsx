@@ -1,6 +1,9 @@
 import { ArrowLeft } from "lucide-react"
 import type { ChangeEventHandler, FormEventHandler } from "react"
+import { useId } from "react"
 import { TextField } from "@/components/form/TextField"
+import ActionButton from "@/components/ui/ActionButton"
+import AsyncSubmitButton from "@/components/ui/AsyncSubmitButton"
 
 interface VerifyEmailFormProps {
   code: string
@@ -21,11 +24,13 @@ export default function VerifyEmailForm({
   onSubmit,
   onBackToRegister,
 }: VerifyEmailFormProps) {
+  const id = useId()
+
   return (
     <form onSubmit={onSubmit}>
       <div className="mb-6">
         <TextField
-          id="code"
+          id={`${id}-code`}
           label="Verification Code"
           required
           type="text"
@@ -40,22 +45,19 @@ export default function VerifyEmailForm({
         />
       </div>
 
-      <button
-        type="submit"
-        disabled={isSubmitting || !isCodeComplete}
-        className="w-full bg-steel-blue text-white py-4 px-6 rounded-lg hover:bg-opacity-90 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-4"
-      >
-        {submitLabel}
-      </button>
+      <AsyncSubmitButton
+        idleText={submitLabel}
+        submittingText={submitLabel}
+        isSubmitting={isSubmitting}
+        disabled={!isCodeComplete}
+        size="lg"
+        className="mb-4"
+      />
 
-      <button
-        type="button"
-        onClick={onBackToRegister}
-        className="w-full flex items-center justify-center text-steel-blue hover:underline"
-      >
+      <ActionButton type="button" onClick={onBackToRegister} intent="ghost" fullWidth className="justify-center">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back to registration
-      </button>
+      </ActionButton>
     </form>
   )
 }

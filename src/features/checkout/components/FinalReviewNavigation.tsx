@@ -1,4 +1,6 @@
 import { ArrowLeft, ArrowRight } from "lucide-react"
+import ActionButton from "@/components/ui/ActionButton"
+import AsyncSubmitButton from "@/components/ui/AsyncSubmitButton"
 
 interface FinalReviewNavigationProps {
   isPlacingOrder: boolean
@@ -15,23 +17,20 @@ export default function FinalReviewNavigation({
 }: FinalReviewNavigationProps) {
   return (
     <div className="flex items-center justify-between">
-      <button
-        type="button"
-        onClick={onBack}
-        className="flex items-center px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors"
-      >
+      <ActionButton type="button" onClick={onBack} intent="outline">
         <ArrowLeft className="mr-2 w-5 h-5" />
         Back to Billing
-      </button>
-      <button
+      </ActionButton>
+      <AsyncSubmitButton
         type="button"
         onClick={onPlaceOrder}
+        idleText="Place Order"
+        submittingText="Placing Order..."
+        isSubmitting={isPlacingOrder}
         disabled={submitDisabled}
-        className="flex items-center px-8 py-3 bg-steel-blue text-white rounded-lg hover:bg-opacity-90 font-semibold transition-colors disabled:opacity-60"
-      >
-        {isPlacingOrder ? "Placing Order..." : "Place Order"}
-        <ArrowRight className="ml-2 w-5 h-5" />
-      </button>
+        fullWidth={false}
+        icon={<ArrowRight className="ml-2 w-5 h-5" />}
+      />
     </div>
   )
 }
