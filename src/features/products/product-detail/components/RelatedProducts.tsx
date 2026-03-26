@@ -2,8 +2,8 @@
 
 import { ArrowRight, Heart } from "lucide-react"
 import Link from "next/link"
-import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
 import productsData from "@/data/products.json"
+import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
 
 interface RelatedProductsProps {
   currentProductId: number

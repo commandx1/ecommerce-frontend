@@ -5,7 +5,7 @@ const TABLE_ROWS = [
     feature: "Best For",
     uber: { label: "Local same-day", icon: MapPin, className: "bg-pale-lime/20 text-steel-blue" },
     shippo: { label: "National & international", icon: Globe, className: "bg-blue-100 text-steel-blue" },
-    striped: false
+    striped: false,
   },
   {
     feature: "Delivery Speed",
@@ -17,7 +17,7 @@ const TABLE_ROWS = [
     feature: "Tracking",
     uber: { label: "Real-time courier tracking", icon: CheckCircle },
     shippo: { label: "Carrier-based tracking", icon: CheckCircle },
-    striped: false
+    striped: false,
   },
   {
     feature: "Bulk Orders",
@@ -29,7 +29,7 @@ const TABLE_ROWS = [
     feature: "Coverage",
     uber: { primary: "Selected cities", secondary: "Major metro areas" },
     shippo: { primary: "Domestic & international", secondary: "Nationwide coverage" },
-    striped: false
+    striped: false,
   },
   {
     feature: "Ideal Use Case",
