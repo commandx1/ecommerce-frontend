@@ -8,7 +8,6 @@ import BillingNavigation from "@/features/checkout/components/BillingNavigation"
 import CardPaymentNotice from "@/features/checkout/components/CardPaymentNotice"
 import PaymentMethodSection from "@/features/checkout/components/PaymentMethodSection"
 import PurchaseOrderSection from "@/features/checkout/components/PurchaseOrderSection"
-import TaxExemptionSection from "@/features/checkout/components/TaxExemptionSection"
 import { useBillingInformation } from "@/features/checkout/hooks/useBillingInformation"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
@@ -20,7 +19,6 @@ export default function BillingInformation() {
     poNumber,
     department,
     specialInstructions,
-    applyTaxExemption,
     termsAgreed,
     marketingAgreed,
     hipaaAgreed,
@@ -30,7 +28,6 @@ export default function BillingInformation() {
     updatePONumber,
     updateDepartment,
     updateSpecialInstructions,
-    setApplyTaxExemption,
     setTermsAgreed,
     setMarketingAgreed,
     setHipaaAgreed,
@@ -70,9 +67,6 @@ export default function BillingInformation() {
           updateDepartment={updateDepartment}
           updateSpecialInstructions={updateSpecialInstructions}
         />
-
-        <TaxExemptionSection applyTaxExemption={applyTaxExemption} setApplyTaxExemption={setApplyTaxExemption} />
-
         <BillingAgreementsSection
           termsAgreed={termsAgreed}
           marketingAgreed={marketingAgreed}

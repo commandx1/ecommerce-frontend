@@ -47,6 +47,7 @@ interface CheckoutStore {
   marketingAgreed: boolean
   hipaaAgreed: boolean
   selectedShippingEtaText: string
+  selectedShippingCost: number
   setStep: (step: CheckoutStep) => void
   nextStep: () => void
   previousStep: () => void
@@ -64,6 +65,7 @@ interface CheckoutStore {
   setMarketingAgreed: (agreed: boolean) => void
   setHipaaAgreed: (agreed: boolean) => void
   setSelectedShippingEtaText: (etaText: string) => void
+  setSelectedShippingCost: (cost: number) => void
   setOrderPayload: (payload: PlaceOrderPayload) => void
   setOrderResult: (result: PlaceOrderResponse) => void
   reset: () => void
@@ -113,6 +115,7 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
   marketingAgreed: false,
   hipaaAgreed: false,
   selectedShippingEtaText: "",
+  selectedShippingCost: 0,
   setStep: (step) => set({ currentStep: step }),
   nextStep: () => set((state) => ({ currentStep: Math.min(5, state.currentStep + 1) as CheckoutStep })),
   previousStep: () => set((state) => ({ currentStep: Math.max(1, state.currentStep - 1) as CheckoutStep })),
@@ -137,6 +140,7 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
   setMarketingAgreed: (agreed) => set({ marketingAgreed: agreed }),
   setHipaaAgreed: (agreed) => set({ hipaaAgreed: agreed }),
   setSelectedShippingEtaText: (etaText) => set({ selectedShippingEtaText: etaText }),
+  setSelectedShippingCost: (cost) => set({ selectedShippingCost: cost }),
   setOrderPayload: (payload) => set({ orderPayload: payload }),
   setOrderResult: (result) => set({ orderResult: result }),
   reset: () =>
@@ -155,6 +159,7 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
       marketingAgreed: false,
       hipaaAgreed: false,
       selectedShippingEtaText: "Express Delivery - 2-3 business days",
+      selectedShippingCost: 0,
       orderPayload: null,
       orderResult: null,
     }),

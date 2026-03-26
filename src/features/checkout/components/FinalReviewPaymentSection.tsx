@@ -1,4 +1,4 @@
-import { CardElement } from "@stripe/react-stripe-js"
+import { CardCvcElement, CardExpiryElement, CardNumberElement } from "@stripe/react-stripe-js"
 import { useId } from "react"
 import type { SavedCard } from "@/lib/api/orders"
 
@@ -110,8 +110,27 @@ export default function FinalReviewPaymentSection({
                     <span className="ml-3 text-sm font-medium text-gray-900">Use a new card</span>
                   </label>
                   {selectedSavedCardId === "" ? (
-                    <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
-                      <CardElement options={CARD_ELEMENT_OPTIONS} />
+                    <div className="space-y-3">
+                      <div>
+                        <div className="mb-1 text-xs font-medium text-gray-600">Card Number</div>
+                        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
+                          <CardNumberElement options={CARD_ELEMENT_OPTIONS} />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div>
+                          <div className="mb-1 text-xs font-medium text-gray-600">Expiry Date</div>
+                          <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
+                            <CardExpiryElement options={CARD_ELEMENT_OPTIONS} />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="mb-1 text-xs font-medium text-gray-600">CVC</div>
+                          <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
+                            <CardCvcElement options={CARD_ELEMENT_OPTIONS} />
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   ) : null}
                 </div>

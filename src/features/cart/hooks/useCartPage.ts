@@ -7,10 +7,6 @@ import type { CartItem } from "@/stores/cartStore"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
-const FREE_SHIPPING_THRESHOLD = 1000
-const STANDARD_SHIPPING_FEE = 50
-const TAX_RATE = 0.18
-
 type CartViewState = "loading" | "empty" | "ready"
 
 interface UseCartPageResult {
@@ -31,7 +27,7 @@ interface UseCartPageResult {
 export function useCartPage(): UseCartPageResult {
   const router = useRouter()
   const { cartId, items, fetchCart, isLoading, clearCart, updateQuantity, removeFromCart } = useCartStore()
-  const { setStep } = useCheckoutStore()
+  const { selectedShippingCost, setStep } = useCheckoutStore()
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false)
 
   useEffect(() => {
@@ -40,16 +36,14 @@ export function useCartPage(): UseCartPageResult {
 
   const totals = useMemo<CartTotals>(() => {
     const subtotal = items.reduce((sum, item) => sum + item.userProduct.price * item.quantity, 0)
-    const shipping = subtotal > FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING_FEE
-    const tax = subtotal * TAX_RATE
+    const shipping = selectedShippingCost
 
     return {
       subtotal,
       shipping,
-      tax,
-      total: subtotal + shipping + tax,
+      total: subtotal + shipping,
     }
-  }, [items])
+  }, [items, selectedShippingCost])
 
   const viewState: CartViewState = useMemo(() => {
     if (isLoading && items.length === 0) {

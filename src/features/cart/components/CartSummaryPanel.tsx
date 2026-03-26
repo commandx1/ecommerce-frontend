@@ -22,7 +22,6 @@ export default function CartSummaryPanel({
   const summaryRows: SummaryRow[] = [
     { label: `Subtotal (${itemsCount} items)`, value: formatCurrency(totals.subtotal) },
     { label: "Shipping", value: totals.shipping === 0 ? "Free" : formatCurrency(totals.shipping) },
-    { label: "Tax (Est.)", value: formatCurrency(totals.tax) },
   ]
 
   return (

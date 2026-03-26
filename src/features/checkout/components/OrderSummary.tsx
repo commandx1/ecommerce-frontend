@@ -16,8 +16,6 @@ export default function OrderSummary() {
     shipping,
     shippingAddress,
     subtotal,
-    tax,
-    taxExemption,
     total,
     volumeDiscount,
   } = useOrderSummary()
@@ -50,8 +48,6 @@ export default function OrderSummary() {
         itemCount={items.length}
         subtotal={subtotal}
         shipping={shipping}
-        tax={tax}
-        taxExemption={taxExemption}
         total={total}
         volumeDiscount={volumeDiscount}
       />

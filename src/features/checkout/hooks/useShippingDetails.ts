@@ -19,6 +19,7 @@ interface UserProductSellerMeta {
 interface SelectedRateInfo {
   type: "shippo" | "uber"
   rateId: string
+  amount: number
 }
 
 interface UseShippingDetailsResult {
@@ -37,7 +38,8 @@ interface UseShippingDetailsResult {
 
 export function useShippingDetails(): UseShippingDetailsResult {
   const router = useRouter()
-  const { updateShippingAddress, nextStep, setOrderPayload, setSelectedShippingEtaText } = useCheckoutStore()
+  const { updateShippingAddress, nextStep, setOrderPayload, setSelectedShippingEtaText, setSelectedShippingCost } =
+    useCheckoutStore()
   const { items, cartId } = useCartStore()
   const { user } = useAuthStore()
 
@@ -110,15 +112,16 @@ export function useShippingDetails(): UseShippingDetailsResult {
       const isUber = "fee" in rate && "duration" in rate
       const rateId = "objectId" in rate ? rate.objectId : rate.id
       const type: SelectedRateInfo["type"] = isUber ? "uber" : "shippo"
+      const amount = isUber ? rate.fee / 100 : Number(rate.amount)
       const etaText = isUber
         ? `Same-day delivery - ${rate.duration} mins`
         : `${rate.servicelevel.name} - ${rate.estimatedDays} business days`
 
       setSelectedRates((prev) => {
-        if (prev[vendorId]?.rateId === rateId && prev[vendorId]?.type === type) {
+        if (prev[vendorId]?.rateId === rateId && prev[vendorId]?.type === type && prev[vendorId]?.amount === amount) {
           return prev
         }
-        return { ...prev, [vendorId]: { type, rateId } }
+        return { ...prev, [vendorId]: { type, rateId, amount } }
       })
 
       // `setSelectedRates` updater timing'i ile senkron `didChange` bayrağı güvenilir değil; ETA her seçimde güncellenmeli.
@@ -126,6 +129,11 @@ export function useShippingDetails(): UseShippingDetailsResult {
     },
     [setSelectedShippingEtaText],
   )
+
+  useEffect(() => {
+    const totalShippingCost = Object.values(selectedRates).reduce((sum, selectedRate) => sum + selectedRate.amount, 0)
+    setSelectedShippingCost(totalShippingCost)
+  }, [selectedRates, setSelectedShippingCost])
 
   const onSubmit = useCallback(
     (event: React.FormEvent) => {

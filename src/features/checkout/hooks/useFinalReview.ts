@@ -1,6 +1,6 @@
 "use client"
 
-import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js"
+import { CardNumberElement, useElements, useStripe } from "@stripe/react-stripe-js"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import { ordersAPI, type SavedCard } from "@/lib/api/orders"
@@ -91,8 +91,8 @@ export function useFinalReview(): UseFinalReviewResult {
 
   const isStripeReady = useMemo(() => Boolean(stripe && elements), [elements, stripe])
 
-  // CardElement mount / doldurulma durumu React state’e yansımaz; getElement ile useMemo’da
-  // kontrol etmek butonu kalıcı disabled bırakır. Stripe doğrulaması zaten onPlaceOrder içinde.
+  // Stripe Element mount / doldurulma durumu React state'e yansimaz; getElement ile useMemo'da
+  // kontrol etmek butonu kalici disabled birakabilir. Stripe dogrulamasi onPlaceOrder icinde.
   const submitDisabled = useMemo(() => {
     if (isPlacingOrder) return true
     if (paymentMethod.type !== "card") return false
@@ -151,15 +151,15 @@ export function useFinalReview(): UseFinalReviewResult {
 
           finalOrderStatus = mapPaymentIntentStatusToOrderStatus(savedCardResult.paymentIntent.status)
         } else {
-          const cardElement = elements.getElement(CardElement)
-          if (!cardElement) {
+          const cardNumberElement = elements.getElement(CardNumberElement)
+          if (!cardNumberElement) {
             showToast.error("Please enter your card details.")
             return
           }
 
           const cardResult = await stripe.confirmCardPayment(response.clientSecret, {
             payment_method: {
-              card: cardElement,
+              card: cardNumberElement,
               billing_details: {
                 name: `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim() || undefined,
               },
