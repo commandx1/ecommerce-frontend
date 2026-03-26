@@ -1,42 +1,28 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
+import { buildErrorResponse, parseJsonOrText, proxyRequest } from "@/features/products/api/proxy/http"
+import type { ProductRouteContext } from "@/features/products/api/proxy/types"
 
 // Get Product by ID - GET /api/products/:id
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_request: NextRequest, { params }: ProductRouteContext) {
   try {
     const { id } = await params
 
-    const response = await fetch(`${BACKEND_URL}/api/products/${id}`, {
+    const response = await proxyRequest({
+      id,
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0",
-        Accept: "application/json",
-      },
     })
 
-    const contentType = response.headers.get("content-type")
-    const hasJson = contentType?.includes("application/json")
-
     if (!response.ok) {
-      if (hasJson) {
-        const data = await response.json()
-        return NextResponse.json(data, { status: response.status })
-      }
-      return NextResponse.json(
-        { message: `Request failed with status ${response.status}`, status: response.status },
-        { status: response.status },
-      )
+      return buildErrorResponse(response)
     }
 
-    if (!hasJson) {
+    const parsed = await parseJsonOrText(response)
+    if (!parsed.isJson) {
       return NextResponse.json({ message: "Invalid response from server" }, { status: 500 })
     }
 
-    const data = await response.json()
-    return NextResponse.json(data)
+    return NextResponse.json(parsed.data)
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Internal server error"
     return NextResponse.json({ message: errorMessage }, { status: 500 })
@@ -44,47 +30,33 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 }
 
 // Update Product by ID - PUT /api/products/:id
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(request: NextRequest, { params }: ProductRouteContext) {
   try {
     const { id } = await params
     const authHeader = request.headers.get("Authorization")
-    const body = await request.json()
 
     if (!authHeader) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/products/${id}`, {
+    const body = await request.json()
+    const response = await proxyRequest({
+      id,
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0",
-        Accept: "application/json",
-        Authorization: authHeader,
-      },
-      body: JSON.stringify(body),
+      authHeader,
+      body,
     })
 
-    const contentType = response.headers.get("content-type")
-    const hasJson = contentType?.includes("application/json")
-
     if (!response.ok) {
-      if (hasJson) {
-        const data = await response.json()
-        return NextResponse.json(data, { status: response.status })
-      }
-      return NextResponse.json(
-        { message: `Request failed with status ${response.status}`, status: response.status },
-        { status: response.status },
-      )
+      return buildErrorResponse(response)
     }
 
-    if (!hasJson) {
+    const parsed = await parseJsonOrText(response)
+    if (!parsed.isJson) {
       return NextResponse.json({ success: true })
     }
 
-    const data = await response.json()
-    return NextResponse.json(data)
+    return NextResponse.json(parsed.data)
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Internal server error"
     return NextResponse.json({ message: errorMessage }, { status: 500 })
@@ -92,7 +64,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 // Delete Product by ID - DELETE /api/products/:id
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, { params }: ProductRouteContext) {
   try {
     const { id } = await params
     const authHeader = request.headers.get("Authorization")
@@ -101,28 +73,14 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/products/${id}`, {
+    const response = await proxyRequest({
+      id,
       method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0",
-        Accept: "application/json",
-        Authorization: authHeader,
-      },
+      authHeader,
     })
 
     if (!response.ok) {
-      const contentType = response.headers.get("content-type")
-      const hasJson = contentType?.includes("application/json")
-
-      if (hasJson) {
-        const data = await response.json()
-        return NextResponse.json(data, { status: response.status })
-      }
-      return NextResponse.json(
-        { message: `Request failed with status ${response.status}`, status: response.status },
-        { status: response.status },
-      )
+      return buildErrorResponse(response)
     }
 
     return NextResponse.json({ success: true })

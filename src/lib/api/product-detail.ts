@@ -1,7 +1,11 @@
 "use server"
 
 import { cookies } from "next/headers"
-import type { ProductDetailPageData, QuestionsResponse, ReviewsResponse } from "@/app/products/[id]/types"
+import type {
+  ProductDetailPageData,
+  QuestionsResponse,
+  ReviewsResponse,
+} from "@/features/products/product-detail/types"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 

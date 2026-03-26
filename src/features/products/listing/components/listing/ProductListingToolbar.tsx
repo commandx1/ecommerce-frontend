@@ -17,12 +17,14 @@ const ProductListingToolbar = ({ buildUrl, viewType, pageSize }: ProductListingT
               <span className="text-sm text-gray-600">View:</span>
               <Link
                 href={buildUrl({ view: "grid" })}
+                scroll={false}
                 className={`p-2 rounded ${viewType === "grid" ? "bg-steel-blue text-white" : "text-gray-400 hover:text-steel-blue"}`}
               >
                 <LayoutGrid className="w-4 h-4" />
               </Link>
               <Link
                 href={buildUrl({ view: "list" })}
+                scroll={false}
                 className={`p-2 rounded ${viewType === "list" ? "bg-steel-blue text-white" : "text-gray-400 hover:text-steel-blue"}`}
               >
                 <List className="w-4 h-4" />

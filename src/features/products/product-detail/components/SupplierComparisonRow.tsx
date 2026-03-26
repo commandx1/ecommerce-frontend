@@ -1,6 +1,6 @@
 "use client"
 
-import ProductImageWithFallback from "@/app/products/components/ProductImageWithFallback"
+import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
 import type { SupplierViewModel } from "../types"
 import { getStockColorClass } from "../utils/stockStyles"
 import StarRating from "./StarRating"
