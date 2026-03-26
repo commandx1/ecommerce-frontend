@@ -1,5 +1,5 @@
 import { Trash2 } from "lucide-react"
-import ConfirmationModal from "@/app/components/ConfirmationModal"
+import ConfirmationModal from "@/components/feedback/ConfirmationModal"
 import CartItemCard from "@/features/cart/components/CartItemCard"
 import type { CartItem } from "@/stores/cartStore"
 

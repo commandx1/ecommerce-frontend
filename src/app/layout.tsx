@@ -3,9 +3,9 @@ import { Inter } from "next/font/google"
 import { cookies } from "next/headers"
 import { Toaster } from "sonner"
 import "./globals.css"
-import AuthHydration from "./components/AuthHydration"
-import ConditionalFooter from "./components/ConditionalFooter"
-import ConditionalNavbar from "./components/ConditionalNavbar"
+import AuthHydration from "@/components/auth/AuthHydration"
+import ConditionalFooter from "@/components/layout/ConditionalFooter"
+import ConditionalNavbar from "@/components/layout/ConditionalNavbar"
 
 const inter = Inter({
   variable: "--font-inter",

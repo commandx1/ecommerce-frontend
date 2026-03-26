@@ -1,7 +1,7 @@
 import { Bell, ChevronDown, Search, ShoppingCart } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import Logo from "@/app/components/Logo"
+import Logo from "@/components/layout/Logo"
 import dashboardAccountData from "@/data/dashboard-account.json"
 
 const DashboardHeader = () => {

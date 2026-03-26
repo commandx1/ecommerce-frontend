@@ -9,7 +9,7 @@ import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
 import AccountMenu from "./AccountMenu"
 import Logo from "./Logo"
-import MainSearchbox from "./main-searchbox/MainSearchbox"
+import MainSearchbox from "../search/main-searchbox/MainSearchbox"
 
 interface NavbarProps {
   initialAuthState?: {

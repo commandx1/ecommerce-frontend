@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import Logo from "@/app/components/Logo"
+import Logo from "@/components/layout/Logo"
 
 interface LoginHeaderProps {
   signUpPath?: string
