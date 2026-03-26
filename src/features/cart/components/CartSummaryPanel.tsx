@@ -1,3 +1,4 @@
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import type { CartTotals } from "@/features/cart/types"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 
@@ -25,7 +26,7 @@ export default function CartSummaryPanel({
   ]
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-6">
+    <SurfaceCard className="sticky top-6 p-6">
       <h3 className="text-xl font-bold text-steel-blue mb-6">Order Summary</h3>
       <div className="space-y-3 mb-6">
         {summaryRows.map((row) => (
@@ -49,6 +50,6 @@ export default function CartSummaryPanel({
       >
         Proceed to Checkout
       </button>
-    </div>
+    </SurfaceCard>
   )
 }

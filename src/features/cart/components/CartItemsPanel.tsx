@@ -1,5 +1,7 @@
 import { Trash2 } from "lucide-react"
 import ConfirmationModal from "@/components/feedback/ConfirmationModal"
+import SectionHeading from "@/components/layout/SectionHeading"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import CartItemCard from "@/features/cart/components/CartItemCard"
 import type { CartItem } from "@/stores/cartStore"
 
@@ -25,19 +27,24 @@ export default function CartItemsPanel({
   onRemoveItem,
 }: CartItemsPanelProps) {
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-steel-blue">Cart Items ({items.length})</h2>
-        <button
-          type="button"
-          onClick={onOpenClearConfirm}
-          disabled={!cartId || items.length === 0}
-          className="cursor-pointer flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Trash2 className="w-4 h-4" />
-          Clear cart
-        </button>
-      </div>
+    <SurfaceCard className="p-6">
+      <SectionHeading
+        titleAs="h2"
+        title={`Cart Items (${items.length})`}
+        titleClassName="text-xl"
+        className="mb-6"
+        actions={
+          <button
+            type="button"
+            onClick={onOpenClearConfirm}
+            disabled={!cartId || items.length === 0}
+            className="cursor-pointer flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Trash2 className="w-4 h-4" />
+            Clear cart
+          </button>
+        }
+      />
 
       <div className="space-y-4">
         {items.map((item) => (
@@ -57,6 +64,6 @@ export default function CartItemsPanel({
         cancelText="Cancel"
         isDanger
       />
-    </div>
+    </SurfaceCard>
   )
 }
