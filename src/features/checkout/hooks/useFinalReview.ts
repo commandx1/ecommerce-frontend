@@ -109,9 +109,25 @@ export function useFinalReview(): UseFinalReviewResult {
 
     try {
       setIsPlacingOrder(true)
-      const payload = {
-        ...orderPayload,
-        ...(paymentMethod.type === "card" && saveCard ? { cardSave: 1, cardName: cardName.trim() || "Card" } : {}),
+      const payload = { ...orderPayload }
+
+      if (paymentMethod.type === "card") {
+        if (selectedSavedCardId) {
+          payload.paymentMethodId = selectedSavedCardId
+          payload.cardName = ""
+          payload.cardSave = 0
+        } else if (saveCard) {
+          const trimmedCardName = cardName.trim()
+          if (!trimmedCardName) {
+            showToast.error("Please enter a card name to save this card.")
+            return
+          }
+          payload.cardSave = 1
+          payload.cardName = trimmedCardName
+        } else {
+          payload.cardSave = 0
+          payload.cardName = ""
+        }
       }
 
       const response = await ordersAPI.placeOrder(payload)
