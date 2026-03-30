@@ -32,11 +32,13 @@ export interface VendorOrdersResponse {
 }
 
 class VendorOrdersAPI {
-  async getVendorOrders(page = 0, size = 10): Promise<VendorOrdersResponse> {
+  async getVendorOrders(page = 0, size = 10, sortBy?: string, sortDir?: "asc" | "desc"): Promise<VendorOrdersResponse> {
     const response = await apiClient.get<VendorOrdersResponse>("/orders/seller", {
       params: {
         page,
         size,
+        sortBy,
+        sortDir,
       },
     })
     return response.data

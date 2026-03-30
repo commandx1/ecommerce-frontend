@@ -16,6 +16,7 @@ export default function BuyerOrdersPage() {
   const [currentPage, setCurrentPage] = useState<number>(0)
   const [totalPages, setTotalPages] = useState<number>(1)
   const [totalElements, setTotalElements] = useState<number>(0)
+  const [dateSortDir, setDateSortDir] = useState<"asc" | "desc">("desc")
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
   const [trackingModalLinks, setTrackingModalLinks] = useState<string[] | null>(null)
 
@@ -24,7 +25,7 @@ export default function BuyerOrdersPage() {
       if (!isAuthenticated) return
       try {
         setIsLoading(true)
-        const response = await buyerOrdersAPI.getBuyerOrders(currentPage, pageSize)
+        const response = await buyerOrdersAPI.getBuyerOrders(currentPage, pageSize, "createdDate", dateSortDir)
         setOrders(response.orders)
         setTotalPages(response.totalPages)
         setTotalElements(response.totalElements)
@@ -39,7 +40,7 @@ export default function BuyerOrdersPage() {
     }
 
     void fetchOrders()
-  }, [isAuthenticated, currentPage, pageSize])
+  }, [isAuthenticated, currentPage, pageSize, dateSortDir])
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
@@ -47,6 +48,11 @@ export default function BuyerOrdersPage() {
 
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize)
+    setCurrentPage(0)
+  }
+
+  const handleDateSortToggle = () => {
+    setDateSortDir((prev) => (prev === "desc" ? "asc" : "desc"))
     setCurrentPage(0)
   }
 
@@ -99,7 +105,15 @@ export default function BuyerOrdersPage() {
                   Order
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  Placed On
+                  <button
+                    type="button"
+                    onClick={handleDateSortToggle}
+                    className="inline-flex items-center gap-1 hover:text-steel-blue"
+                    aria-label={`Sort by date ${dateSortDir === "desc" ? "ascending" : "descending"}`}
+                  >
+                    Placed On
+                    {dateSortDir === "desc" ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
+                  </button>
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Shipping Address

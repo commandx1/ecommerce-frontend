@@ -1,6 +1,15 @@
 "use client"
 
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ExternalLink, Printer, X } from "lucide-react"
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsUpDown,
+  ChevronUp,
+  ExternalLink,
+  Printer,
+  X,
+} from "lucide-react"
 import Link from "next/link"
 import { Fragment, useEffect, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
@@ -16,6 +25,8 @@ export default function VendorOrdersPage() {
   const [pageSize, setPageSize] = useState<number>(10)
   const [currentPage, setCurrentPage] = useState<number>(0)
   const [totalPages, setTotalPages] = useState<number>(1)
+  const [sortBy, setSortBy] = useState<"price" | "quantity">("price")
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
   const [labelModalLinks, setLabelModalLinks] = useState<{ shipping: string[]; tracking: string[] } | null>(null)
   const [printers, setPrinters] = useState<string[]>([])
@@ -32,7 +43,7 @@ export default function VendorOrdersPage() {
       if (!isAuthenticated) return
       try {
         setIsLoading(true)
-        const response = await vendorOrdersAPI.getVendorOrders(currentPage, pageSize)
+        const response = await vendorOrdersAPI.getVendorOrders(currentPage, pageSize, sortBy, sortDir)
         setOrders(response.orders)
         setTotalPages(response.totalPages)
       } catch (error) {
@@ -45,7 +56,7 @@ export default function VendorOrdersPage() {
     }
 
     void fetchOrders()
-  }, [isAuthenticated, currentPage, pageSize])
+  }, [isAuthenticated, currentPage, pageSize, sortBy, sortDir])
 
   useEffect(() => {
     if (!labelModalLinks || isQzReady) return
@@ -74,6 +85,16 @@ export default function VendorOrdersPage() {
 
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize)
+    setCurrentPage(0)
+  }
+
+  const handleSortToggle = (field: "price" | "quantity") => {
+    if (sortBy === field) {
+      setSortDir((prev) => (prev === "desc" ? "asc" : "desc"))
+    } else {
+      setSortBy(field)
+      setSortDir("desc")
+    }
     setCurrentPage(0)
   }
 
@@ -129,10 +150,45 @@ export default function VendorOrdersPage() {
                   Created
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  <button
+                    type="button"
+                    onClick={() => handleSortToggle("quantity")}
+                    className="inline-flex items-center gap-1 hover:text-steel-blue"
+                    aria-label={`Sort by quantity ${sortBy === "quantity" && sortDir === "desc" ? "ascending" : "descending"}`}
+                  >
+                    Quantity
+                    {sortBy === "quantity" ? (
+                      sortDir === "desc" ? (
+                        <ChevronDown className="w-3 h-3" />
+                      ) : (
+                        <ChevronUp className="w-3 h-3" />
+                      )
+                    ) : (
+                      <ChevronsUpDown className="w-3 h-3 opacity-70" />
+                    )}
+                  </button>
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Items
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  Total
+                  <button
+                    type="button"
+                    onClick={() => handleSortToggle("price")}
+                    className="inline-flex items-center gap-1 hover:text-steel-blue"
+                    aria-label={`Sort by price ${sortBy === "price" && sortDir === "desc" ? "ascending" : "descending"}`}
+                  >
+                    Price
+                    {sortBy === "price" ? (
+                      sortDir === "desc" ? (
+                        <ChevronDown className="w-3 h-3" />
+                      ) : (
+                        <ChevronUp className="w-3 h-3" />
+                      )
+                    ) : (
+                      <ChevronsUpDown className="w-3 h-3 opacity-70" />
+                    )}
+                  </button>
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Status
@@ -142,19 +198,20 @@ export default function VendorOrdersPage() {
             <tbody className="divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
                     Loading orders...
                   </td>
                 </tr>
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
                     No orders found.
                   </td>
                 </tr>
               ) : (
                 orders.map((order) => {
                   const total = order.orderItems.reduce((sum, item) => sum + item.totalPrice, 0)
+                  const quantity = order.orderItems.reduce((sum, item) => sum + item.quantity, 0)
                   const created = new Date(order.orderCreatedDate)
 
                   return (
@@ -176,6 +233,9 @@ export default function VendorOrdersPage() {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">
+                          <span className="font-medium">{quantity}</span>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-700">
                           <button
@@ -209,7 +269,7 @@ export default function VendorOrdersPage() {
                       </tr>
                       {expandedOrderId === order.orderId && (
                         <tr className="bg-gray-50/60">
-                          <td colSpan={6} className="p-4">
+                          <td colSpan={7} className="p-4">
                             <div className="border border-gray-200 rounded-xl bg-white p-4 space-y-3 text-sm">
                               {order.orderItems.map((item) => (
                                 <div

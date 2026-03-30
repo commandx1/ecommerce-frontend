@@ -33,11 +33,13 @@ export interface BuyerOrdersResponse {
 }
 
 class BuyerOrdersAPI {
-  async getBuyerOrders(page = 0, size = 10): Promise<BuyerOrdersResponse> {
+  async getBuyerOrders(page = 0, size = 10, sortBy?: string, sortDir?: "asc" | "desc"): Promise<BuyerOrdersResponse> {
     const response = await apiClient.get<BuyerOrdersResponse>("/orders/buyer", {
       params: {
         page,
         size,
+        sortBy,
+        sortDir,
       },
     })
     return response.data
