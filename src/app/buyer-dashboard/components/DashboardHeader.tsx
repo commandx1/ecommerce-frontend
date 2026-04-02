@@ -11,10 +11,8 @@ const DashboardHeader = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
             <Link href="/" className="flex items-center">
-              <div className="w-10 h-10 bg-steel-blue rounded-lg flex items-center justify-center">
-                <Logo />
-              </div>
-              <span className="ml-3 text-2xl font-bold text-steel-blue">DentyPro</span>
+              <Logo />
+              <span className="ml-3 text-2xl font-bold text-neutral-700">DentyPro</span>
             </Link>
             <nav className="hidden md:flex space-x-6">
               <Link href="/buyer-dashboard" className="text-steel-blue font-semibold border-b-2 border-steel-blue pb-1">

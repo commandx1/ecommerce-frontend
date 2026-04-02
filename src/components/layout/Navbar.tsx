@@ -58,7 +58,7 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
         <div className="flex items-center justify-between h-20 border-b border-gray-200">
           <Link href="/" className="flex items-center">
             <Logo />
-            <span className="ml-3 text-2xl font-bold text-steel-blue">DentyPro</span>
+            <span className="ml-3 text-2xl font-bold text-neutral-700">DentyPro</span>
           </Link>
           <div className="flex-1 mx-8 hidden lg:block">
             <MainSearchbox />

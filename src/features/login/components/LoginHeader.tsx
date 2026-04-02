@@ -19,7 +19,7 @@ export default function LoginHeader({ signUpPath = "/register" }: LoginHeaderPro
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center">
             <Logo />
-            <span className="ml-3 text-2xl font-bold text-steel-blue">DentyPro</span>
+            <span className="ml-3 text-2xl font-bold text-neutral-700">DentyPro</span>
           </Link>
           <div className="flex items-center space-x-4">
             <span className="text-gray-600">Don't have an account?</span>

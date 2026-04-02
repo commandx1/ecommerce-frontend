@@ -10,9 +10,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           <div className="lg:col-span-2">
             <div className="flex items-center mb-6">
-              <div className="w-10 h-10 bg-steel-blue rounded-lg flex items-center justify-center">
-                <Logo />
-              </div>
+              <Logo />
               <span className="ml-3 text-2xl font-bold text-white">DentyPro</span>
             </div>
             <p className="text-gray-300 mb-6 leading-relaxed">

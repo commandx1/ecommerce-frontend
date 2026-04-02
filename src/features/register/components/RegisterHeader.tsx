@@ -18,7 +18,7 @@ export default function RegisterHeader({ signInPath = "/login" }: RegisterHeader
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <Logo />
-            <span className="ml-3 text-2xl font-bold text-steel-blue">DentyPro</span>
+            <span className="ml-3 text-2xl font-bold text-neutral-700">DentyPro</span>
           </div>
           <div className="flex items-center space-x-4">
             <span className="text-gray-600">Already have an account?</span>
