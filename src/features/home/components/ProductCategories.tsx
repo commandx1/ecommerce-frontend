@@ -5,7 +5,7 @@ import SectionHeader from "@/features/home/components/SectionHeader"
 
 export default function ProductCategories() {
   return (
-    <section className="py-16 bg-light-mint-gray">
+    <section className="py-16 bg-gray-50">
       <PageSectionContainer as="div">
         <div className="mb-12">
           <SectionHeader

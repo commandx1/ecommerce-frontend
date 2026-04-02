@@ -7,7 +7,7 @@ interface CartEmptyStateProps {
 
 export default function CartEmptyState({ onContinueShopping }: CartEmptyStateProps) {
   return (
-    <div className="min-h-screen bg-light-mint-gray py-12">
+    <div className="min-h-screen bg-gray-50 py-12">
       <PageSectionContainer as="div">
         <EmptyStateCard
           title="Your Cart is Empty"

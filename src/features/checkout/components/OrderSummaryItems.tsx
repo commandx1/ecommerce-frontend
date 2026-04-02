@@ -21,7 +21,7 @@ export default function OrderSummaryItems({ items }: OrderSummaryItemsProps) {
         const totalPrice = userProduct.price * quantity
 
         return (
-          <div key={item.id} className="flex items-center space-x-4 p-4 bg-light-mint-gray rounded-lg">
+          <div key={item.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
             <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center shrink-0">
               <Image
                 src={product.coverPhotoPath}

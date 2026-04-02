@@ -24,7 +24,7 @@ const AccountSettings = () => {
             return (
               <div
                 key={setting.id}
-                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-light-mint-gray transition-colors cursor-pointer"
+                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
               >
                 <div className="flex items-center space-x-4">
                   <div className="w-10 h-10 bg-steel-blue/10 rounded-lg flex items-center justify-center">

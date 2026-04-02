@@ -11,7 +11,7 @@ export default function DocumentSectionActions() {
       <button
         type="button"
         onClick={handlePrint}
-        className="bg-light-mint-gray text-steel-blue px-4 py-2 rounded-lg hover:bg-opacity-80 font-medium flex items-center transition-colors"
+        className="bg-gray-50 text-steel-blue px-4 py-2 rounded-lg hover:bg-opacity-80 font-medium flex items-center transition-colors"
       >
         <Printer className="w-4 h-4 mr-2" />
         Print

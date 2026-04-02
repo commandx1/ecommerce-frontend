@@ -1,6 +1,6 @@
 import { Check, Info, Truck } from "lucide-react"
 import Image from "next/image"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { type ShipmentRate, shipmentAPI, type UberQuote } from "@/lib/api/shipment"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 
@@ -54,20 +54,15 @@ export default function VendorShipmentRates({
   const selectedRateIdRef = useRef(selectedRateId)
   selectedRateIdRef.current = selectedRateId
 
-  const itemsKey = useMemo(
-    () =>
-      JSON.stringify(
-        [...items]
-          .map((item) => ({ userProductId: item.userProductId, quantity: item.quantity }))
-          .sort((a, b) => a.userProductId.localeCompare(b.userProductId)),
-      ),
-    [items],
-  )
-
   useEffect(() => {
     let isMounted = true
 
     const fetchRates = async () => {
+      const parcels = items.map((item) => ({
+        userProductId: item.userProductId,
+        quantity: item.quantity,
+      }))
+
       setIsLoading(true)
       setHasError(false)
 
@@ -76,9 +71,7 @@ export default function VendorShipmentRates({
           addressId,
           userId: sellerId,
           cartId,
-          parcels: items.flatMap((item) =>
-            Array.from({ length: item.quantity }, () => ({ userProductId: item.userProductId })),
-          ),
+          parcels,
         })
 
         if (!isMounted) return
@@ -110,7 +103,7 @@ export default function VendorShipmentRates({
     return () => {
       isMounted = false
     }
-  }, [addressId, cartId, itemsKey, sellerId])
+  }, [addressId, cartId, items, sellerId])
 
   if (isLoading) return <ShippingRatesSkeleton />
   if (hasError) return <ShippingRatesError />

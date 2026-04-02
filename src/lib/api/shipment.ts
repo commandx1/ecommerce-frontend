@@ -48,6 +48,7 @@ export interface ShipmentRatesPayload {
   cartId: string
   parcels: {
     userProductId: string
+    quantity: number
   }[]
 }
 

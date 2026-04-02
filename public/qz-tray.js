@@ -49,28 +49,28 @@ var qz = (() => {
 
     log: {
       /** Debugging messages */
-      trace: () => {
+      trace: (...args) => {
         if (_qz.DEBUG) {
-          console.log.apply(console, arguments)
+          console.log.apply(console, args)
         }
       },
       /** General messages */
-      info: () => {
-        console.info.apply(console, arguments)
+      info: (...args) => {
+        console.info.apply(console, args)
       },
       /** General warnings */
-      warn: () => {
-        console.warn.apply(console, arguments)
+      warn: (...args) => {
+        console.warn.apply(console, args)
       },
       /** Debugging errors */
-      allay: () => {
+      allay: (...args) => {
         if (_qz.DEBUG) {
-          console.warn.apply(console, arguments)
+          console.warn.apply(console, args)
         }
       },
       /** General errors */
-      error: () => {
-        console.error.apply(console, arguments)
+      error: (...args) => {
+        console.error.apply(console, args)
       },
     },
 
@@ -792,14 +792,14 @@ var qz = (() => {
       },
 
       /** Performs deep copy to target from remaining params */
-      extend: (target) => {
+      extend: (target, ...sources) => {
         //special case when reassigning properties as objects in a deep copy
         if (typeof target !== "object") {
           target = {}
         }
 
-        for (var i = 1; i < arguments.length; i++) {
-          var source = arguments[i]
+        for (var i = 0; i < sources.length; i++) {
+          var source = sources[i]
           if (!source) {
             continue
           }
@@ -1430,7 +1430,7 @@ var qz = (() => {
           _qz.websocket.shutdown = false //reset state for new connection attempt
           var attempt = (count) => {
             var tried = false
-            var nextAttempt = () => {
+            var nextAttempt = (...args) => {
               if (!tried) {
                 tried = true
 
@@ -1438,7 +1438,7 @@ var qz = (() => {
                   attempt(count + 1)
                 } else {
                   _qz.websocket.connection = null
-                  reject.apply(null, arguments)
+                  reject.apply(null, args)
                 }
               }
             }
@@ -1800,23 +1800,23 @@ var qz = (() => {
      *
      * @memberof qz
      */
-    print: (configs, data) => {
+    print: (configs, data, ...optionalArgs) => {
       var resumeOnError = false,
         signatures = [],
         signaturesTimestamps = []
 
       //find optional parameters
-      if (arguments.length >= 3) {
-        if (typeof arguments[2] === "boolean") {
-          resumeOnError = arguments[2]
+      if (optionalArgs.length >= 1) {
+        if (typeof optionalArgs[0] === "boolean") {
+          resumeOnError = optionalArgs[0]
 
-          if (arguments.length >= 5) {
-            signatures = arguments[3]
-            signaturesTimestamps = arguments[4]
+          if (optionalArgs.length >= 3) {
+            signatures = optionalArgs[1]
+            signaturesTimestamps = optionalArgs[2]
           }
-        } else if (arguments.length >= 4) {
-          signatures = arguments[2]
-          signaturesTimestamps = arguments[3]
+        } else if (optionalArgs.length >= 2) {
+          signatures = optionalArgs[0]
+          signaturesTimestamps = optionalArgs[1]
         }
 
         //ensure values are arrays for consistency
@@ -2117,9 +2117,9 @@ var qz = (() => {
        *
        * @memberof qz.usb
        */
-      listInterfaces: (deviceInfo) => {
+      listInterfaces: (deviceInfo, ...legacyArgs) => {
         if (typeof deviceInfo !== "object") {
-          deviceInfo = { vendorId: arguments[0], productId: arguments[1] }
+          deviceInfo = { vendorId: deviceInfo, productId: legacyArgs[0] }
         } //backwards compatibility
 
         return _qz.websocket.dataPromise("usb.listInterfaces", deviceInfo)
@@ -2134,13 +2134,13 @@ var qz = (() => {
        *
        * @memberof qz.usb
        */
-      listEndpoints: (deviceInfo) => {
+      listEndpoints: (deviceInfo, ...legacyArgs) => {
         //backwards compatibility
         if (typeof deviceInfo !== "object") {
           deviceInfo = {
-            vendorId: arguments[0],
-            productId: arguments[1],
-            interface: arguments[2],
+            vendorId: deviceInfo,
+            productId: legacyArgs[0],
+            interface: legacyArgs[1],
           }
         }
 
@@ -2172,13 +2172,13 @@ var qz = (() => {
        *
        * @memberof qz.usb
        */
-      claimDevice: (deviceInfo) => {
+      claimDevice: (deviceInfo, ...legacyArgs) => {
         //backwards compatibility
         if (typeof deviceInfo !== "object") {
           deviceInfo = {
-            vendorId: arguments[0],
-            productId: arguments[1],
-            interface: arguments[2],
+            vendorId: deviceInfo,
+            productId: legacyArgs[0],
+            interface: legacyArgs[1],
           }
         }
 
@@ -2196,9 +2196,9 @@ var qz = (() => {
        * @since 2.0.2
        * @memberOf qz.usb
        */
-      isClaimed: (deviceInfo) => {
+      isClaimed: (deviceInfo, ...legacyArgs) => {
         if (typeof deviceInfo !== "object") {
-          deviceInfo = { vendorId: arguments[0], productId: arguments[1] }
+          deviceInfo = { vendorId: deviceInfo, productId: legacyArgs[0] }
         } //backwards compatibility
 
         return _qz.websocket.dataPromise("usb.isClaimed", deviceInfo)
@@ -2217,14 +2217,14 @@ var qz = (() => {
        *
        * @memberof qz.usb
        */
-      sendData: (deviceInfo) => {
+      sendData: (deviceInfo, ...legacyArgs) => {
         //backwards compatibility
         if (typeof deviceInfo !== "object") {
           deviceInfo = {
-            vendorId: arguments[0],
-            productId: arguments[1],
-            endpoint: arguments[2],
-            data: arguments[3],
+            vendorId: deviceInfo,
+            productId: legacyArgs[0],
+            endpoint: legacyArgs[1],
+            data: legacyArgs[2],
           }
         }
 
@@ -2256,14 +2256,14 @@ var qz = (() => {
        *
        * @memberof qz.usb
        */
-      readData: (deviceInfo) => {
+      readData: (deviceInfo, ...legacyArgs) => {
         //backwards compatibility
         if (typeof deviceInfo !== "object") {
           deviceInfo = {
-            vendorId: arguments[0],
-            productId: arguments[1],
-            endpoint: arguments[2],
-            responseSize: arguments[3],
+            vendorId: deviceInfo,
+            productId: legacyArgs[0],
+            endpoint: legacyArgs[1],
+            responseSize: legacyArgs[2],
           }
         }
 
@@ -2285,15 +2285,15 @@ var qz = (() => {
        *
        * @memberof qz.usb
        */
-      openStream: (deviceInfo) => {
+      openStream: (deviceInfo, ...legacyArgs) => {
         //backwards compatibility
         if (typeof deviceInfo !== "object") {
           deviceInfo = {
-            vendorId: arguments[0],
-            productId: arguments[1],
-            endpoint: arguments[2],
-            responseSize: arguments[3],
-            interval: arguments[4],
+            vendorId: deviceInfo,
+            productId: legacyArgs[0],
+            endpoint: legacyArgs[1],
+            responseSize: legacyArgs[2],
+            interval: legacyArgs[3],
           }
         }
 
@@ -2311,13 +2311,13 @@ var qz = (() => {
        *
        * @memberof qz.usb
        */
-      closeStream: (deviceInfo) => {
+      closeStream: (deviceInfo, ...legacyArgs) => {
         //backwards compatibility
         if (typeof deviceInfo !== "object") {
           deviceInfo = {
-            vendorId: arguments[0],
-            productId: arguments[1],
-            endpoint: arguments[2],
+            vendorId: deviceInfo,
+            productId: legacyArgs[0],
+            endpoint: legacyArgs[1],
           }
         }
 
@@ -2334,9 +2334,9 @@ var qz = (() => {
        *
        * @memberof qz.usb
        */
-      releaseDevice: (deviceInfo) => {
+      releaseDevice: (deviceInfo, ...legacyArgs) => {
         if (typeof deviceInfo !== "object") {
-          deviceInfo = { vendorId: arguments[0], productId: arguments[1] }
+          deviceInfo = { vendorId: deviceInfo, productId: legacyArgs[0] }
         } //backwards compatibility
 
         return _qz.websocket.dataPromise("usb.releaseDevice", deviceInfo)
@@ -2416,9 +2416,9 @@ var qz = (() => {
        *
        * @memberof qz.hid
        */
-      claimDevice: (deviceInfo) => {
+      claimDevice: (deviceInfo, ...legacyArgs) => {
         if (typeof deviceInfo !== "object") {
-          deviceInfo = { vendorId: arguments[0], productId: arguments[1] }
+          deviceInfo = { vendorId: deviceInfo, productId: legacyArgs[0] }
         } //backwards compatibility
 
         return _qz.websocket.dataPromise("hid.claimDevice", deviceInfo)
@@ -2437,9 +2437,9 @@ var qz = (() => {
        * @since 2.0.2
        * @memberOf qz.hid
        */
-      isClaimed: (deviceInfo) => {
+      isClaimed: (deviceInfo, ...legacyArgs) => {
         if (typeof deviceInfo !== "object") {
-          deviceInfo = { vendorId: arguments[0], productId: arguments[1] }
+          deviceInfo = { vendorId: deviceInfo, productId: legacyArgs[0] }
         } //backwards compatibility
 
         return _qz.websocket.dataPromise("hid.isClaimed", deviceInfo)
@@ -2463,14 +2463,14 @@ var qz = (() => {
        *
        * @memberof qz.hid
        */
-      sendData: (deviceInfo) => {
+      sendData: (deviceInfo, ...legacyArgs) => {
         //backwards compatibility
         if (typeof deviceInfo !== "object") {
           deviceInfo = {
-            vendorId: arguments[0],
-            productId: arguments[1],
-            data: arguments[2],
-            endpoint: arguments[3],
+            vendorId: deviceInfo,
+            productId: legacyArgs[0],
+            data: legacyArgs[1],
+            endpoint: legacyArgs[2],
           }
         }
 
@@ -2519,13 +2519,13 @@ var qz = (() => {
        *
        * @memberof qz.hid
        */
-      readData: (deviceInfo) => {
+      readData: (deviceInfo, ...legacyArgs) => {
         //backwards compatibility
         if (typeof deviceInfo !== "object") {
           deviceInfo = {
-            vendorId: arguments[0],
-            productId: arguments[1],
-            responseSize: arguments[2],
+            vendorId: deviceInfo,
+            productId: legacyArgs[0],
+            responseSize: legacyArgs[1],
           }
         }
 
@@ -2583,14 +2583,14 @@ var qz = (() => {
        *
        * @memberof qz.hid
        */
-      openStream: (deviceInfo) => {
+      openStream: (deviceInfo, ...legacyArgs) => {
         //backwards compatibility
         if (typeof deviceInfo !== "object") {
           deviceInfo = {
-            vendorId: arguments[0],
-            productId: arguments[1],
-            responseSize: arguments[2],
-            interval: arguments[3],
+            vendorId: deviceInfo,
+            productId: legacyArgs[0],
+            responseSize: legacyArgs[1],
+            interval: legacyArgs[2],
           }
         }
 
@@ -2610,9 +2610,9 @@ var qz = (() => {
        *
        * @memberof qz.hid
        */
-      closeStream: (deviceInfo) => {
+      closeStream: (deviceInfo, ...legacyArgs) => {
         if (typeof deviceInfo !== "object") {
-          deviceInfo = { vendorId: arguments[0], productId: arguments[1] }
+          deviceInfo = { vendorId: deviceInfo, productId: legacyArgs[0] }
         } //backwards compatibility
 
         return _qz.websocket.dataPromise("hid.closeStream", deviceInfo)
@@ -2631,9 +2631,9 @@ var qz = (() => {
        *
        * @memberof qz.hid
        */
-      releaseDevice: (deviceInfo) => {
+      releaseDevice: (deviceInfo, ...legacyArgs) => {
         if (typeof deviceInfo !== "object") {
-          deviceInfo = { vendorId: arguments[0], productId: arguments[1] }
+          deviceInfo = { vendorId: deviceInfo, productId: legacyArgs[0] }
         } //backwards compatibility
 
         return _qz.websocket.dataPromise("hid.releaseDevice", deviceInfo)

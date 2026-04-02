@@ -11,7 +11,7 @@ export default function OrderConfirmationStats({ orderResult }: OrderConfirmatio
 
   return (
     <div className="grid gap-6 mb-10 lg:grid-cols-3">
-      <div className="bg-light-mint-gray rounded-xl p-6">
+      <div className="bg-gray-50 rounded-xl p-6">
         <div className="text-sm text-gray-600 mb-2">Order ID</div>
         <div className="text-base font-mono break-all text-gray-900 mb-4">{orderResult.orderId}</div>
         <div className="flex items-center justify-between text-sm text-gray-600">
@@ -26,7 +26,7 @@ export default function OrderConfirmationStats({ orderResult }: OrderConfirmatio
         </div>
       </div>
 
-      <div className="bg-light-mint-gray rounded-xl p-6">
+      <div className="bg-gray-50 rounded-xl p-6">
         <div className="text-sm text-gray-600 mb-2">Order Date</div>
         <div className="text-base font-semibold text-gray-900 mb-4">
           {createdDate ? createdDate.toLocaleString() : "-"}
@@ -35,7 +35,7 @@ export default function OrderConfirmationStats({ orderResult }: OrderConfirmatio
         <div className="text-2xl font-bold text-steel-blue">{formatCurrency(orderResult.totalPrice)}</div>
       </div>
 
-      <div className="bg-light-mint-gray rounded-xl p-6">
+      <div className="bg-gray-50 rounded-xl p-6">
         <div className="text-sm text-gray-600 mb-2">Items Count</div>
         <div className="text-2xl font-bold text-steel-blue mb-4">{itemCount}</div>
         <div className="text-xs text-gray-600">

@@ -17,7 +17,7 @@ export default function OrderSummaryShippingInfo({
   if (currentStep < 2) return null
 
   return (
-    <div className="mb-6 p-4 bg-light-mint-gray rounded-lg">
+    <div className="mb-6 p-4 bg-gray-50 rounded-lg">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium text-gray-700">Shipping to:</span>
         {currentStep === 2 ? (

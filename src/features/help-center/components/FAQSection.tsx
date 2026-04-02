@@ -5,7 +5,7 @@ import { FAQ_ITEMS } from "@/features/help-center/data/faqItems"
 
 export default function FAQSection() {
   return (
-    <PageSectionContainer as="section" className="py-16 bg-light-mint-gray">
+    <PageSectionContainer as="section" className="py-16 bg-gray-50">
       <SectionHeading
         title="Frequently Asked Questions"
         description="Find quick answers to common questions about ordering, shipping, returns, and account management"

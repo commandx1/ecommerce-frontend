@@ -10,7 +10,7 @@ const ContactForm = () => {
   const { formData, handleChange, handleSubmit } = useContactForm()
 
   return (
-    <div className="bg-light-mint-gray rounded-2xl p-8">
+    <div className="bg-gray-50 rounded-2xl p-8">
       <form className="space-y-6" onSubmit={handleSubmit}>
         <ContactFormIdentityFields formData={formData} onChange={handleChange} />
         <ContactFormSubjectMessageFields formData={formData} onChange={handleChange} />

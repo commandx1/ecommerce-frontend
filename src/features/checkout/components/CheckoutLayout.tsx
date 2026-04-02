@@ -11,7 +11,7 @@ interface CheckoutLayoutProps {
 
 export default function CheckoutLayout({ currentStep, showOrderSummary, view }: CheckoutLayoutProps) {
   return (
-    <div className="min-h-screen bg-light-mint-gray">
+    <div className="min-h-screen bg-gray-50">
       <CheckoutProgress currentStep={currentStep} />
       <PageSectionContainer as="section" className="py-8">
         <div className="flex flex-col lg:flex-row gap-12">

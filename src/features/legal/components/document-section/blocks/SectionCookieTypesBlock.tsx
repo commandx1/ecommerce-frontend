@@ -11,7 +11,7 @@ export default function SectionCookieTypesBlock({ cookies }: SectionCookieTypesP
       {cookies.map((cookie) => {
         const CookieIcon = iconMap[cookie.icon]
         return (
-          <div key={cookie.title} className="bg-light-mint-gray p-4 rounded-xl text-center">
+          <div key={cookie.title} className="bg-gray-50 p-4 rounded-xl text-center">
             {CookieIcon ? (
               <div className="w-12 h-12 bg-steel-blue rounded-full flex items-center justify-center mx-auto mb-3">
                 <CookieIcon className="text-white w-6 h-6" />

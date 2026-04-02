@@ -486,7 +486,7 @@ export default function ProductsPage() {
                 </tr>
               ) : (
                 products.map((product) => (
-                  <tr key={product.id} className="hover:bg-light-mint-gray transition-colors">
+                  <tr key={product.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <input
                         type="checkbox"
@@ -545,7 +545,7 @@ export default function ProductsPage() {
                         <button
                           type="button"
                           onClick={() => handleEdit(product.id)}
-                          className="p-2 text-steel-blue hover:bg-light-mint-gray rounded-lg"
+                          className="p-2 text-steel-blue hover:bg-gray-50 rounded-lg"
                           title="Edit"
                         >
                           <Edit className="w-4 h-4" />
@@ -568,7 +568,7 @@ export default function ProductsPage() {
         </div>
 
         {/* Pagination */}
-        <div className="px-6 py-4 border-t border-gray-200 bg-light-mint-gray">
+        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">Show</span>

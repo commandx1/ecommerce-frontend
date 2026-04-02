@@ -56,7 +56,7 @@ const AccountInfo = () => {
         <div className="pt-4 border-t border-gray-200">
           <button
             type="button"
-            className="w-full bg-light-mint-gray text-steel-blue py-2 px-4 rounded-lg hover:bg-opacity-80 font-medium"
+            className="w-full bg-gray-50 text-steel-blue py-2 px-4 rounded-lg hover:bg-opacity-80 font-medium"
           >
             Manage Account
           </button>

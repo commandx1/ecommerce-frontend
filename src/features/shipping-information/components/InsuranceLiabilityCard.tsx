@@ -29,7 +29,7 @@ export default function InsuranceLiabilityCard() {
       </div>
       <div className="space-y-4">
         {INSURANCE_BLOCKS.map((item) => (
-          <div key={item.title} className="bg-light-mint-gray rounded-lg p-4">
+          <div key={item.title} className="bg-gray-50 rounded-lg p-4">
             <h4 className="font-semibold text-gray-800 mb-2 text-sm sm:text-base">{item.title}</h4>
             <p className="text-xs sm:text-sm text-gray-600 mb-2">{item.main}</p>
             <div className="text-xs text-gray-500">{item.note}</div>

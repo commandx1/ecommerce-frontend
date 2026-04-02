@@ -187,7 +187,7 @@ export default function AccountSettingsShared({
             <div className="p-6 space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-start space-x-3">
-                  <div className="mt-1 bg-light-mint-gray p-2 rounded-lg">
+                  <div className="mt-1 bg-gray-50 p-2 rounded-lg">
                     <Fingerprint className="w-5 h-5 text-steel-blue" />
                   </div>
                   <div>
@@ -211,7 +211,7 @@ export default function AccountSettingsShared({
 
               <div className="flex items-center justify-between border-t border-gray-50 pt-6">
                 <div className="flex items-start space-x-3">
-                  <div className="mt-1 bg-light-mint-gray p-2 rounded-lg">
+                  <div className="mt-1 bg-gray-50 p-2 rounded-lg">
                     <Lock className="w-5 h-5 text-steel-blue" />
                   </div>
                   <div>
@@ -299,7 +299,7 @@ export default function AccountSettingsShared({
             </div>
           </div>
 
-          <div className="bg-light-mint-gray rounded-2xl p-6">
+          <div className="bg-gray-50 rounded-2xl p-6">
             <h3 className="font-semibold text-steel-blue mb-2">{infoSidebarTitle}</h3>
             <p className="text-sm text-gray-700 leading-relaxed">{infoSidebarContent}</p>
           </div>

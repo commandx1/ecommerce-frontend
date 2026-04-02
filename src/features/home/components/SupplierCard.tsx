@@ -36,7 +36,7 @@ const colorMap: Record<string, string> = {
 
 export default function SupplierCard({ name, logo, alt, rating, starCount, reviewCount, features }: SupplierCardProps) {
   return (
-    <div className="bg-light-mint-gray rounded-2xl p-8 hover:shadow-lg transition-shadow">
+    <div className="bg-gray-50 rounded-2xl p-8 hover:shadow-lg transition-shadow">
       <div className="flex items-center mb-6">
         <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center shadow-md">
           <Image className="w-12 h-12 object-contain" src={logo} alt={alt} width={48} height={48} />

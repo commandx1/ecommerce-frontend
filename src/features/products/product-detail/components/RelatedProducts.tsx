@@ -15,7 +15,7 @@ const RelatedProducts = ({ currentProductId }: RelatedProductsProps) => {
   // Get related products (exclude current product, limit to 4)
   const relatedProducts = productsData.filter((p) => p.id !== currentProductId).slice(0, 4)
   return (
-    <PageSectionContainer as="section" className="bg-light-mint-gray py-12">
+    <PageSectionContainer as="section" className="bg-gray-50 py-12">
       <SectionHeading
         title="Related Products"
         className="mb-8"
@@ -49,7 +49,7 @@ const RelatedProducts = ({ currentProductId }: RelatedProductsProps) => {
             </Link>
             <div className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600 bg-light-mint-gray px-2 py-1 rounded">{product.category}</span>
+                <span className="text-sm text-gray-600 bg-gray-50 px-2 py-1 rounded">{product.category}</span>
                 <button
                   type="button"
                   className="text-gray-400 hover:text-red-500 transition-colors"

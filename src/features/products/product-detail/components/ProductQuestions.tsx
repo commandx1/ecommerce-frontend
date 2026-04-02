@@ -54,7 +54,7 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
         <div className="space-y-6">
           {questions.map((qa) => {
             return (
-              <div key={qa.id} className="bg-light-mint-gray rounded-2xl p-8">
+              <div key={qa.id} className="bg-gray-50 rounded-2xl p-8">
                 <div className="mb-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -94,7 +94,7 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
           })}
         </div>
       ) : (
-        <div className="bg-light-mint-gray rounded-2xl p-8 text-center">
+        <div className="bg-gray-50 rounded-2xl p-8 text-center">
           <p className="text-gray-600">
             {selectedSupplierUserProductId
               ? "No questions have been asked to this vendor yet."

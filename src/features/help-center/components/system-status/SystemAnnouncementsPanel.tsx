@@ -7,7 +7,7 @@ interface SystemAnnouncementsPanelProps {
 
 export default function SystemAnnouncementsPanel({ announcements }: SystemAnnouncementsPanelProps) {
   return (
-    <div className="rounded-2xl bg-light-mint-gray p-8">
+    <div className="rounded-2xl bg-gray-50 p-8">
       <h3 className="mb-6 text-2xl font-semibold text-steel-blue">Recent Updates & Announcements</h3>
 
       <div className="space-y-6">

@@ -10,7 +10,7 @@ interface SupportResourceCardProps {
 
 const SupportResourceCard = ({ title, description, label, Icon }: SupportResourceCardProps) => {
   return (
-    <div className="bg-light-mint-gray rounded-2xl p-6 hover:shadow-lg transition-shadow cursor-pointer group">
+    <div className="bg-gray-50 rounded-2xl p-6 hover:shadow-lg transition-shadow cursor-pointer group">
       <div className="w-14 h-14 bg-steel-blue rounded-xl flex items-center justify-center mb-4 group-hover:bg-opacity-90 transition-colors">
         <Icon className="text-white w-6 h-6" />
       </div>

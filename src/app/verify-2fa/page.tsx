@@ -78,10 +78,10 @@ function Verify2FAContent() {
   }
 
   return (
-    <div className="min-h-screen bg-light-mint-gray flex items-center justify-center p-4 font-inter">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 font-inter">
       <div className="bg-white rounded-3xl shadow-2xl p-8 lg:p-12 max-w-md w-full">
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-light-mint-gray rounded-full flex items-center justify-center mx-auto mb-6 text-steel-blue">
+          <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-steel-blue">
             <ShieldCheck className="w-10 h-10" />
           </div>
           <h1 className="text-3xl font-bold text-steel-blue mb-3">Two-Factor Authentication</h1>
@@ -149,7 +149,7 @@ export default function Verify2FAPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-light-mint-gray flex items-center justify-center">
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <Loader2 className="w-10 h-10 text-steel-blue animate-spin" />
         </div>
       }

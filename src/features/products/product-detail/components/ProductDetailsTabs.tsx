@@ -71,7 +71,7 @@ const ProductDetailsTabs = ({ description }: ProductDetailsTabsProps) => {
                   </p>
                 ))}
 
-                <div className="bg-light-mint-gray rounded-xl p-6">
+                <div className="bg-gray-50 rounded-xl p-6">
                   <h4 className="font-semibold text-steel-blue mb-4">Key Benefits</h4>
                   <ul className="space-y-3">
                     {benefits.map((benefit) => (

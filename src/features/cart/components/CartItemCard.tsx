@@ -9,7 +9,7 @@ export default function CartItemCard({ item, onQuantityChange, onRemoveItem }: C
   const { userProduct, product, quantity } = item
 
   return (
-    <div className="flex items-center space-x-4 p-4 bg-light-mint-gray rounded-lg">
+    <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
       <Link
         href={`/products/${product.id}`}
         className="w-16 h-16 bg-white rounded-lg flex items-center justify-center shrink-0"

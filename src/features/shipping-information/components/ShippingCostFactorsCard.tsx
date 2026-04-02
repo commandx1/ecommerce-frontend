@@ -19,7 +19,7 @@ export default function ShippingCostFactorsCard() {
       </div>
       <div className="space-y-4">
         {COST_FACTORS.map(({ icon: Icon, title, description }) => (
-          <div key={title} className="flex items-start p-4 bg-light-mint-gray rounded-lg">
+          <div key={title} className="flex items-start p-4 bg-gray-50 rounded-lg">
             <Icon className="text-steel-blue w-5 h-5 sm:w-6 sm:h-6 mr-4 mt-1 shrink-0" />
             <div>
               <h4 className="font-semibold text-gray-800 mb-1 text-sm sm:text-base">{title}</h4>

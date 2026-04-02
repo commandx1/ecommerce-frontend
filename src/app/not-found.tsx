@@ -23,7 +23,7 @@ import PageSectionContainer from "@/components/layout/PageSectionContainer"
 
 export default function NotFound() {
   return (
-    <div className="bg-light-mint-gray min-h-screen font-inter">
+    <div className="bg-gray-50 min-h-screen font-inter">
       {/* 404 Main Section */}
       <section className="min-h-[80vh] flex items-center justify-center py-16">
         <PageSectionContainer as="div" containerClassName="w-full">
@@ -126,7 +126,7 @@ export default function NotFound() {
               <Link
                 key={page.title}
                 href={page.link}
-                className="bg-light-mint-gray rounded-2xl p-6 hover:shadow-lg transition-shadow group"
+                className="bg-gray-50 rounded-2xl p-6 hover:shadow-lg transition-shadow group"
               >
                 <div className="w-12 h-12 bg-steel-blue rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform text-white">
                   <page.icon className="w-6 h-6" />
@@ -143,7 +143,7 @@ export default function NotFound() {
       </section>
 
       {/* Categories */}
-      <section className="py-16 bg-light-mint-gray">
+      <section className="py-16 bg-gray-50">
         <PageSectionContainer as="div">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-steel-blue mb-4">Browse by Category</h2>
@@ -229,7 +229,7 @@ export default function NotFound() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-16 bg-light-mint-gray">
+      <section className="py-16 bg-gray-50">
         <PageSectionContainer as="div" containerClassName="max-w-4xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-steel-blue mb-4">Frequently Asked Questions</h2>

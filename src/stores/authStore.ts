@@ -104,7 +104,7 @@ export const useAuthStore = create<AuthState>()(
 
           // Clear cart state
           const { useCartStore } = await import("./cartStore")
-          useCartStore.getState().clearCart()
+          useCartStore.getState().resetCart()
 
           // Router push operation will be handled in components
         }

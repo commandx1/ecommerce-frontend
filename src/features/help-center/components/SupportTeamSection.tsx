@@ -31,7 +31,7 @@ const team = [
 
 export default function SupportTeamSection() {
   return (
-    <PageSectionContainer as="section" className="py-16 bg-light-mint-gray">
+    <PageSectionContainer as="section" className="py-16 bg-gray-50">
       <SectionHeading
         title="Meet Our Support Team"
         description="Our experienced team of dental industry professionals is here to help you succeed"

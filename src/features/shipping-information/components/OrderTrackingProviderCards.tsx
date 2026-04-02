@@ -102,7 +102,7 @@ export default function OrderTrackingProviderCards() {
         title="Uber Direct Tracking"
         icon="uber"
         features={UBER_TRACKING_FEATURES}
-        wrapperClass="bg-light-mint-gray rounded-xl sm:rounded-2xl p-6 sm:p-8"
+        wrapperClass="bg-gray-50 rounded-xl sm:rounded-2xl p-6 sm:p-8"
         iconWrapperClass="bg-pale-lime"
         iconClass="text-steel-blue"
       />

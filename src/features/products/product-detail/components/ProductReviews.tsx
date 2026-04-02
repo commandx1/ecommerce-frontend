@@ -55,7 +55,7 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
   })
 
   return (
-    <section className="bg-light-mint-gray py-12">
+    <section className="bg-gray-50 py-12">
       <PageSectionContainer as="div">
         <div className="flex items-center justify-between mb-8">
           <div>

@@ -106,7 +106,7 @@ const CustomerAnalyticsChart = () => {
       </div>
       <div className="grid grid-cols-4 gap-4 mt-6">
         {vendorCustomerAnalyticsData.stats.map((stat) => (
-          <div key={stat.id} className="text-center p-4 bg-light-mint-gray rounded-xl">
+          <div key={stat.id} className="text-center p-4 bg-gray-50 rounded-xl">
             <div className="text-2xl font-bold text-steel-blue">{stat.value}</div>
             <div className="text-sm text-gray-600">{stat.label}</div>
             <div className="text-xs text-green-600 mt-1">{stat.description}</div>

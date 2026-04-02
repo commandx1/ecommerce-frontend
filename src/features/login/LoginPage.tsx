@@ -4,7 +4,7 @@ import LoginSidebar from "@/features/login/components/LoginSidebar"
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-light-mint-gray font-inter">
+    <div className="min-h-screen bg-gray-50 font-inter">
       <LoginHeader />
 
       <section className="py-12">

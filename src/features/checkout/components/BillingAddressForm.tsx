@@ -17,7 +17,7 @@ export default function BillingAddressForm({ billingAddress, updateBillingAddres
   const id = useId()
 
   return (
-    <div className="p-6 bg-light-mint-gray rounded-xl">
+    <div className="p-6 bg-gray-50 rounded-xl">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label htmlFor={`${id}-first-name`} className="block text-sm font-medium text-gray-700 mb-2">

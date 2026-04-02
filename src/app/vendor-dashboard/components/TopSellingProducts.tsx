@@ -13,7 +13,7 @@ const TopSellingProducts = () => {
       </div>
       <div className="space-y-4">
         {vendorTopProductsData.products.map((product) => (
-          <div key={product.id} className="flex items-center p-4 bg-light-mint-gray rounded-xl">
+          <div key={product.id} className="flex items-center p-4 bg-gray-50 rounded-xl">
             <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center mr-4">
               <Image src={product.image} alt={product.name} width={32} height={32} className="w-8 h-8 object-contain" />
             </div>

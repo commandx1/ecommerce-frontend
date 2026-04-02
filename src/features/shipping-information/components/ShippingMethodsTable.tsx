@@ -106,7 +106,7 @@ export default function ShippingMethodsTable() {
             {TABLE_ROWS.map((row) => (
               <tr
                 key={row.feature}
-                className={`${row.striped ? "bg-light-mint-gray/30" : ""} border-b border-gray-100`}
+                className={`${row.striped ? "bg-gray-50/30" : ""} border-b border-gray-100`}
               >
                 <td className="p-4 sm:p-6 font-medium text-gray-700 text-sm sm:text-base">{row.feature}</td>
                 <td className="p-4 sm:p-6 text-center">

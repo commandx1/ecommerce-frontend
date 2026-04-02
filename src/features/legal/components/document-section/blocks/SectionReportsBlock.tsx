@@ -30,7 +30,7 @@ export default function SectionReportsBlock({ reports }: SectionReportsProps) {
             <div className="flex space-x-2">
               <button
                 type="button"
-                className="bg-light-mint-gray text-steel-blue px-4 py-2 rounded-lg hover:bg-opacity-80 text-sm font-medium"
+                className="bg-gray-50 text-steel-blue px-4 py-2 rounded-lg hover:bg-opacity-80 text-sm font-medium"
               >
                 View
               </button>

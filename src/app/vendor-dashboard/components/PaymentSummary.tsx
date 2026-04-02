@@ -10,11 +10,11 @@ const PaymentSummary = () => {
       </div>
       <div className="p-6 space-y-6">
         <div className="grid grid-cols-2 gap-4">
-          <div className="text-center p-4 bg-light-mint-gray rounded-lg">
+          <div className="text-center p-4 bg-gray-50 rounded-lg">
             <div className="text-2xl font-bold text-steel-blue">{dashboardInvoicesData.paymentSummary.totalSpent}</div>
             <div className="text-sm text-gray-600 mt-1">Total Spent</div>
           </div>
-          <div className="text-center p-4 bg-light-mint-gray rounded-lg">
+          <div className="text-center p-4 bg-gray-50 rounded-lg">
             <div className="text-2xl font-bold text-steel-blue">{dashboardInvoicesData.paymentSummary.outstanding}</div>
             <div className="text-sm text-gray-600 mt-1">Outstanding</div>
           </div>

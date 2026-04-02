@@ -7,7 +7,7 @@ interface SystemStatusPanelProps {
 
 export default function SystemStatusPanel({ items }: SystemStatusPanelProps) {
   return (
-    <div className="rounded-2xl bg-light-mint-gray p-8">
+    <div className="rounded-2xl bg-gray-50 p-8">
       <div className="mb-6 flex items-center justify-between">
         <h3 className="text-2xl font-semibold text-steel-blue">Current System Status</h3>
         <div className="flex items-center space-x-2">

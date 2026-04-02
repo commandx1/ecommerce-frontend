@@ -48,7 +48,7 @@ const LegalSidebar = ({ selectedId }: LegalSidebarProps) => {
                 href={`/legal?doc=${item.id}`}
                 scroll={false}
                 className={`flex w-full items-center px-4 py-3 rounded-lg transition-colors group text-left ${
-                  isActive ? "bg-light-mint-gray text-steel-blue font-medium" : "text-gray-700 hover:bg-light-mint-gray"
+                  isActive ? "bg-gray-50 text-steel-blue font-medium" : "text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 {IconComponent && <IconComponent className="mr-3 text-steel-blue w-5 h-5 shrink-0" />}
@@ -58,7 +58,7 @@ const LegalSidebar = ({ selectedId }: LegalSidebarProps) => {
           })}
         </nav>
 
-        <div className="mt-8 p-4 bg-light-mint-gray rounded-xl">
+        <div className="mt-8 p-4 bg-gray-50 rounded-xl">
           <div className="flex items-center mb-3">
             <Info className="text-steel-blue mr-2 w-5 h-5" />
             <span className="font-semibold text-steel-blue">Need Help?</span>

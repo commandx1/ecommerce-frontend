@@ -20,7 +20,7 @@ const ProductCard = ({ product, viewType }: ProductCardProps) => {
     <div
       className={`bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all group ${viewType === "list" ? "shrink-0 flex" : ""}`}
     >
-      <div className={`relative bg-light-mint-gray ${viewType === "list" ? "w-64 shrink-0" : "h-64"}`}>
+      <div className={`relative bg-gray-50 ${viewType === "list" ? "w-64 shrink-0" : "h-64"}`}>
         <ProductImageWithFallback
           src={imageSrc}
           alt={product.productName}

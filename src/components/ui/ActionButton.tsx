@@ -10,7 +10,7 @@ const actionButtonVariants = cva(
         primary: "bg-steel-blue text-white hover:bg-opacity-90",
         secondary: "bg-pale-lime text-steel-blue hover:bg-opacity-90",
         outline: "border border-steel-blue text-steel-blue hover:bg-steel-blue hover:text-white",
-        ghost: "text-steel-blue hover:bg-light-mint-gray",
+        ghost: "text-steel-blue hover:bg-gray-50",
         danger: "bg-red-600 text-white hover:bg-red-700",
       },
       size: {

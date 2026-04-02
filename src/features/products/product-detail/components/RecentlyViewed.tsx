@@ -15,7 +15,7 @@ const RecentlyViewed = () => {
             <Link
               key={product.id}
               href={`/products/${product.id}`}
-              className="bg-light-mint-gray rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer block"
+              className="bg-gray-50 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer block"
             >
               <div className="relative h-32 overflow-hidden bg-white rounded-lg mb-3">
                 <ProductImageWithFallback

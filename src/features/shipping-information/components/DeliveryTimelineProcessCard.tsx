@@ -38,7 +38,7 @@ const TIMELINE_STEPS = [
 
 export default function DeliveryTimelineProcessCard() {
   return (
-    <div className="bg-light-mint-gray rounded-xl sm:rounded-2xl p-6 sm:p-8">
+    <div className="bg-gray-50 rounded-xl sm:rounded-2xl p-6 sm:p-8">
       <h3 className="text-xl sm:text-2xl font-bold text-steel-blue mb-6">Standard Processing Timeline</h3>
       <div className="space-y-6">
         {TIMELINE_STEPS.map((step) => (

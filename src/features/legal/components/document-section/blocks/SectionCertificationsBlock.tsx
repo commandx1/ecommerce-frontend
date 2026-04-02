@@ -11,7 +11,7 @@ export default function SectionCertificationsBlock({ certifications }: SectionCe
       {certifications.map((cert) => {
         const CertIcon = iconMap[cert.icon]
         return (
-          <div key={cert.title} className="bg-light-mint-gray p-6 rounded-xl text-center">
+          <div key={cert.title} className="bg-gray-50 p-6 rounded-xl text-center">
             {CertIcon ? (
               <div className="w-16 h-16 bg-steel-blue rounded-full flex items-center justify-center mx-auto mb-4">
                 <CertIcon className="text-white w-8 h-8" />

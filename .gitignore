@@ -42,3 +42,6 @@ next-env.d.ts
 
 api_endpoints.md
 llm.txt
+.agents
+.vscode
+skills-lock.json

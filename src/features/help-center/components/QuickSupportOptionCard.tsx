@@ -16,7 +16,7 @@ const badgeColorMap: Record<QuickSupportOptionCardProps["badgeTone"], string> = 
 
 const QuickSupportOptionCard = ({ title, description, badge, badgeTone, Icon }: QuickSupportOptionCardProps) => {
   return (
-    <div className="bg-light-mint-gray rounded-2xl p-8 text-center hover:shadow-lg transition-shadow cursor-pointer group">
+    <div className="bg-gray-50 rounded-2xl p-8 text-center hover:shadow-lg transition-shadow cursor-pointer group">
       <div className="w-16 h-16 bg-steel-blue rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-opacity-90 transition-colors">
         <Icon className="text-white w-8 h-8" />
       </div>

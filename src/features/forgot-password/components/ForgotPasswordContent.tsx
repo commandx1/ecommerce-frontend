@@ -15,8 +15,8 @@ export default function ForgotPasswordContent() {
   }
 
   return (
-    <div className="font-inter bg-light-mint-gray min-h-screen">
-      <PageSectionContainer as="section" className="py-16 bg-light-mint-gray min-h-screen flex items-center">
+    <div className="font-inter bg-gray-50 min-h-screen">
+      <PageSectionContainer as="section" className="py-16 bg-gray-50 min-h-screen flex items-center">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center w-full">
           <ForgotPasswordInfoPanel />
           <div className="w-full max-w-md mx-auto lg:mx-0">

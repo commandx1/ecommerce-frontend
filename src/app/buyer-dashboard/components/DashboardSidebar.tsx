@@ -69,7 +69,7 @@ const DashboardSidebar = () => {
             <Link
               href="/buyer-dashboard"
               className={`flex items-center px-3 py-2 rounded-lg font-medium transition-colors ${
-                isActive("/buyer-dashboard") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+                isActive("/buyer-dashboard") ? "text-steel-blue bg-gray-50" : "text-gray-700 hover:bg-gray-100"
               }`}
             >
               <Home className={`mr-3 w-4 h-4 ${isActive("/buyer-dashboard") ? "text-steel-blue" : "text-gray-500"}`} />
@@ -78,7 +78,7 @@ const DashboardSidebar = () => {
             <Link
               href="/buyer-dashboard/analytics"
               className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/analytics") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+                isActive("/analytics") ? "text-steel-blue bg-gray-50" : "text-gray-700 hover:bg-gray-100"
               }`}
             >
               <TrendingUp className={`mr-3 w-4 h-4 ${isActive("/analytics") ? "text-steel-blue" : "text-gray-500"}`} />
@@ -92,7 +92,7 @@ const DashboardSidebar = () => {
               href="/buyer-dashboard/orders"
               className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
                 isActive("/buyer-dashboard/orders")
-                  ? "text-steel-blue bg-light-mint-gray"
+                  ? "text-steel-blue bg-gray-50"
                   : "text-gray-700 hover:bg-gray-100"
               }`}
             >
@@ -106,7 +106,7 @@ const DashboardSidebar = () => {
               href="/buyer-dashboard/orders/pending"
               className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
                 isActive("/buyer-dashboard/orders/pending")
-                  ? "text-steel-blue bg-light-mint-gray"
+                  ? "text-steel-blue bg-gray-50"
                   : "text-gray-700 hover:bg-gray-100"
               }`}
             >
@@ -120,7 +120,7 @@ const DashboardSidebar = () => {
               href="/buyer-dashboard/orders/transit"
               className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
                 isActive("/buyer-dashboard/orders/transit")
-                  ? "text-steel-blue bg-light-mint-gray"
+                  ? "text-steel-blue bg-gray-50"
                   : "text-gray-700 hover:bg-gray-100"
               }`}
             >
@@ -134,7 +134,7 @@ const DashboardSidebar = () => {
               href="/buyer-dashboard/orders/completed"
               className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
                 isActive("/buyer-dashboard/orders/completed")
-                  ? "text-steel-blue bg-light-mint-gray"
+                  ? "text-steel-blue bg-gray-50"
                   : "text-gray-700 hover:bg-gray-100"
               }`}
             >
@@ -151,7 +151,7 @@ const DashboardSidebar = () => {
               href="/buyer-dashboard/suppliers/favorites"
               className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
                 isActive("/buyer-dashboard/suppliers/favorites")
-                  ? "text-steel-blue bg-light-mint-gray"
+                  ? "text-steel-blue bg-gray-50"
                   : "text-gray-700 hover:bg-gray-100"
               }`}
             >
@@ -165,7 +165,7 @@ const DashboardSidebar = () => {
               href="/buyer-dashboard/suppliers"
               className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
                 isActive("/buyer-dashboard/suppliers")
-                  ? "text-steel-blue bg-light-mint-gray"
+                  ? "text-steel-blue bg-gray-50"
                   : "text-gray-700 hover:bg-gray-100"
               }`}
             >
@@ -176,7 +176,7 @@ const DashboardSidebar = () => {
               href="/buyer-dashboard/suppliers/top-rated"
               className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
                 isActive("/buyer-dashboard/suppliers/top-rated")
-                  ? "text-steel-blue bg-light-mint-gray"
+                  ? "text-steel-blue bg-gray-50"
                   : "text-gray-700 hover:bg-gray-100"
               }`}
             >
@@ -192,7 +192,7 @@ const DashboardSidebar = () => {
             <Link
               href="/buyer-dashboard/invoices"
               className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/invoices") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+                isActive("/invoices") ? "text-steel-blue bg-gray-50" : "text-gray-700 hover:bg-gray-100"
               }`}
             >
               <FileText className={`mr-3 w-4 h-4 ${isActive("/invoices") ? "text-steel-blue" : "text-gray-500"}`} />
@@ -201,7 +201,7 @@ const DashboardSidebar = () => {
             <Link
               href="/buyer-dashboard/payment-methods"
               className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/payment-methods") ? "text-steel-blue bg-light-mint-gray" : "text-gray-700 hover:bg-gray-100"
+                isActive("/payment-methods") ? "text-steel-blue bg-gray-50" : "text-gray-700 hover:bg-gray-100"
               }`}
             >
               <CreditCard
@@ -216,7 +216,7 @@ const DashboardSidebar = () => {
                 href="/buyer-dashboard/settings"
                 className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
                   pathname === "/buyer-dashboard/settings"
-                    ? "text-steel-blue bg-light-mint-gray"
+                    ? "text-steel-blue bg-gray-50"
                     : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
@@ -231,7 +231,7 @@ const DashboardSidebar = () => {
                 href="/buyer-dashboard/settings/addresses"
                 className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
                   pathname === "/buyer-dashboard/settings/addresses"
-                    ? "text-steel-blue bg-light-mint-gray"
+                    ? "text-steel-blue bg-gray-50"
                     : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
@@ -251,7 +251,7 @@ const DashboardSidebar = () => {
               href="/buyer-dashboard/help"
               className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
                 isActive("/buyer-dashboard/help")
-                  ? "text-steel-blue bg-light-mint-gray"
+                  ? "text-steel-blue bg-gray-50"
                   : "text-gray-700 hover:bg-gray-100"
               }`}
             >
@@ -264,7 +264,7 @@ const DashboardSidebar = () => {
               href="/buyer-dashboard/support"
               className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
                 isActive("/buyer-dashboard/support")
-                  ? "text-steel-blue bg-light-mint-gray"
+                  ? "text-steel-blue bg-gray-50"
                   : "text-gray-700 hover:bg-gray-100"
               }`}
             >

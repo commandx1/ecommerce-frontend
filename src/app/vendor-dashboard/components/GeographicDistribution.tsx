@@ -44,7 +44,7 @@ const GeographicDistribution = () => {
         })}
       </div>
 
-      <div className="mt-6 p-4 bg-light-mint-gray rounded-xl">
+      <div className="mt-6 p-4 bg-gray-50 rounded-xl">
         <div className="text-sm font-medium text-steel-blue mb-2">Top Growth Markets</div>
         <div className="space-y-2">
           {vendorGeographicData.growthMarkets.map((market) => (

@@ -3,7 +3,7 @@ import Link from "next/link"
 
 export default function ResetPasswordSuccess() {
   return (
-    <div className="min-h-screen bg-light-mint-gray flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-2xl p-8 lg:p-12 max-w-md w-full text-center">
         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
           <Check className="w-10 h-10 text-green-600" />

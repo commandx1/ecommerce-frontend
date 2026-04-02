@@ -548,7 +548,7 @@ function CreateProductPageContent() {
   // Redirect to login if not authenticated
   if (!isAuthenticated || !user) {
     return (
-      <div className="flex flex-col min-h-screen bg-light-mint-gray">
+      <div className="flex flex-col min-h-screen bg-gray-50">
         <VendorHeader />
         <div className="flex flex-1">
           <VendorSidebar />
@@ -808,7 +808,7 @@ function CreateProductPageContent() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-light-mint-gray">
+    <div className="flex flex-col min-h-screen bg-gray-50">
       <VendorHeader />
       <div className="flex flex-1">
         <VendorSidebar />
@@ -1745,7 +1745,7 @@ export default function CreateProductPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex flex-col min-h-screen bg-light-mint-gray">
+        <div className="flex flex-col min-h-screen bg-gray-50">
           <VendorHeader />
           <div className="flex flex-1">
             <VendorSidebar />

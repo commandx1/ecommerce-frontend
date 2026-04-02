@@ -4,7 +4,7 @@ import StepCard from "./StepCard"
 
 const HowItWorks = () => {
   return (
-    <section className="py-16 bg-light-mint-gray">
+    <section className="py-16 bg-gray-50">
       <PageSectionContainer as="div">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-steel-blue mb-4">How DentyPro Works</h2>

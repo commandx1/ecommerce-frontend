@@ -108,7 +108,7 @@ export default function VendorDashboardLayout({ children }: { children: React.Re
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-light-mint-gray">
+    <div className="flex flex-col min-h-screen bg-gray-50">
       <VendorHeader />
       <div className="flex flex-1">
         <VendorSidebar />

@@ -28,7 +28,7 @@ const QuickNavigationCards = ({ selectedId }: QuickNavigationCardsProps) => {
               href={`/legal?doc=${item.id}`}
               scroll={false}
               className={`rounded-2xl p-6 text-center hover:shadow-lg transition-shadow cursor-pointer group ${
-                isActive ? "bg-steel-blue text-white" : "bg-light-mint-gray"
+                isActive ? "bg-steel-blue text-white" : "bg-gray-50"
               }`}
             >
               <div

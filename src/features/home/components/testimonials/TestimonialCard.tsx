@@ -33,7 +33,7 @@ const TestimonialCard = ({ rating, text, author, location, avatar }: Testimonial
   }
 
   return (
-    <div className="bg-light-mint-gray rounded-2xl p-8">
+    <div className="bg-gray-50 rounded-2xl p-8">
       <div className="flex text-yellow-400 mb-4">{renderStars()}</div>
       <p className="text-gray-700 mb-6 leading-relaxed">&quot;{text}&quot;</p>
       <div className="flex items-center">

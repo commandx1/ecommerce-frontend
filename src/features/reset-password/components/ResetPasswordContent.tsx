@@ -12,7 +12,7 @@ export default function ResetPasswordContent() {
   }
 
   return (
-    <div className="min-h-screen bg-light-mint-gray flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <ResetPasswordCard
         password={formData.password}
         confirmPassword={formData.confirmPassword}

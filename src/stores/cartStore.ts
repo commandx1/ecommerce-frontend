@@ -7,6 +7,7 @@ interface CartStore {
   cartCount: number
   isLoading: boolean
   error: string | null
+  resetCart: () => void
   fetchCart: () => Promise<void>
   addToCart: (userProductId: string, quantity?: number) => Promise<void>
   removeFromCart: (userProductId: string) => Promise<void>
@@ -20,6 +21,16 @@ export const useCartStore = create<CartStore>((set, get) => ({
   cartCount: 0,
   isLoading: false,
   error: null,
+
+  resetCart: () => {
+    set({
+      cartId: null,
+      items: [],
+      cartCount: 0,
+      isLoading: false,
+      error: null,
+    })
+  },
 
   fetchCart: async () => {
     set({ isLoading: true, error: null })

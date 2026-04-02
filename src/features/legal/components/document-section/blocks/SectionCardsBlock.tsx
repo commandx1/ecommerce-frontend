@@ -13,7 +13,7 @@ export default function SectionCardsBlock({ cards }: SectionCardsProps) {
       {cards.map((card) => {
         const CardIcon = card.icon ? iconMap[card.icon] : null
         return (
-          <div key={card.title} className="bg-light-mint-gray p-6 rounded-xl">
+          <div key={card.title} className="bg-gray-50 p-6 rounded-xl">
             {CardIcon ? (
               <div className="w-10 h-10 bg-steel-blue rounded-lg flex items-center justify-center mb-4">
                 <CardIcon className="text-white w-5 h-5" />

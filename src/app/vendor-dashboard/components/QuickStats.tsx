@@ -18,22 +18,22 @@ const QuickStats = () => {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="text-center p-3 bg-light-mint-gray rounded-xl">
+          <div className="text-center p-3 bg-gray-50 rounded-xl">
             <div className="text-lg font-bold text-steel-blue">342</div>
             <div className="text-xs text-gray-600">Orders</div>
           </div>
-          <div className="text-center p-3 bg-light-mint-gray rounded-xl">
+          <div className="text-center p-3 bg-gray-50 rounded-xl">
             <div className="text-lg font-bold text-steel-blue">1,247</div>
             <div className="text-xs text-gray-600">Customers</div>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="text-center p-3 bg-light-mint-gray rounded-xl">
+          <div className="text-center p-3 bg-gray-50 rounded-xl">
             <div className="text-lg font-bold text-steel-blue">4.8</div>
             <div className="text-xs text-gray-600">Rating</div>
           </div>
-          <div className="text-center p-3 bg-light-mint-gray rounded-xl">
+          <div className="text-center p-3 bg-gray-50 rounded-xl">
             <div className="text-lg font-bold text-steel-blue">68%</div>
             <div className="text-xs text-gray-600">Conversion</div>
           </div>

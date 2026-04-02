@@ -15,7 +15,7 @@ import { Fragment, useEffect, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import { type VendorOrder, vendorOrdersAPI } from "@/lib/api/vendor-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
-import { connectQzAndGetPrinters, printShippingLabel, type QzPrintOptions } from "@/lib/qz/printLabel"
+import { getQzConnectionStatus, printShippingLabel, type QzPrintOptions } from "@/lib/qz/printLabel"
 import { useAuthStore } from "@/stores/authStore"
 
 export default function VendorOrdersPage() {
@@ -37,6 +37,7 @@ export default function VendorOrdersPage() {
   })
   const [isQzReady, setIsQzReady] = useState(false)
   const [qzError, setQzError] = useState<string | null>(null)
+  const [qzInfo, setQzInfo] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -59,25 +60,41 @@ export default function VendorOrdersPage() {
   }, [isAuthenticated, currentPage, pageSize, sortBy, sortDir])
 
   useEffect(() => {
-    if (!labelModalLinks || isQzReady) return
+    if (!labelModalLinks) return
 
     const initQz = async () => {
       try {
-        const foundPrinters = await connectQzAndGetPrinters()
-        if (foundPrinters.length > 0) {
-          setPrinters(foundPrinters)
-          setSelectedPrinter(foundPrinters[0] || "")
+        setQzError(null)
+        setQzInfo(null)
+
+        const status = await getQzConnectionStatus()
+        const infoParts = [status.version ? `QZ ${status.version}` : null, status.scriptSource]
+          .filter(Boolean)
+          .join(" • ")
+
+        setQzInfo(infoParts || null)
+
+        if (status.status === "connected" && status.printers.length > 0) {
+          setPrinters(status.printers)
+          setSelectedPrinter(status.printers[0] || "")
           setIsQzReady(true)
         } else {
-          setQzError("QZ Tray not connected. Labels will open in your browser.")
+          setIsQzReady(false)
+          setPrinters([])
+          setSelectedPrinter("")
+          setQzError(status.message)
         }
       } catch {
-        setQzError("QZ Tray not connected. Labels will open in your browser.")
+        setIsQzReady(false)
+        setPrinters([])
+        setSelectedPrinter("")
+        setQzInfo(null)
+        setQzError("QZ Tray could not be initialized. Labels will open in your browser.")
       }
     }
 
     void initQz()
-  }, [labelModalLinks, isQzReady])
+  }, [labelModalLinks])
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
@@ -216,7 +233,7 @@ export default function VendorOrdersPage() {
 
                   return (
                     <Fragment key={order.orderId}>
-                      <tr className="hover:bg-light-mint-gray transition-colors">
+                      <tr className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 text-sm">
                           <div className="font-mono text-xs text-steel-blue break-all">{order.orderId}</div>
                         </td>
@@ -335,7 +352,7 @@ export default function VendorOrdersPage() {
         </div>
 
         {/* Pagination */}
-        <div className="px-6 py-4 border-t border-gray-200 bg-light-mint-gray">
+        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">Show</span>
@@ -493,6 +510,7 @@ export default function VendorOrdersPage() {
                     </div>
                   </div>
                 )}
+                {qzInfo && <p className="text-[11px] text-gray-500 mt-1">{qzInfo}</p>}
                 {qzError && <p className="text-[11px] text-amber-700 mt-1">{qzError}</p>}
               </div>
 

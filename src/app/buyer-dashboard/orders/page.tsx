@@ -1,24 +1,30 @@
 "use client"
 
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ExternalLink, Search, X } from "lucide-react"
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ExternalLink, Loader2, X } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Fragment, useEffect, useState } from "react"
+import { showToast } from "@/components/ui/Toast"
 import { type BuyerOrder, buyerOrdersAPI } from "@/lib/api/buyer-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useAuthStore } from "@/stores/authStore"
+import { useCartStore } from "@/stores/cartStore"
 
 export default function BuyerOrdersPage() {
+  const router = useRouter()
   const { isAuthenticated } = useAuthStore()
+  const addToCart = useCartStore((state) => state.addToCart)
   const [orders, setOrders] = useState<BuyerOrder[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQuery] = useState("")
   const [pageSize, setPageSize] = useState<number>(10)
   const [currentPage, setCurrentPage] = useState<number>(0)
   const [totalPages, setTotalPages] = useState<number>(1)
-  const [totalElements, setTotalElements] = useState<number>(0)
+  const [, setTotalElements] = useState<number>(0)
   const [dateSortDir, setDateSortDir] = useState<"asc" | "desc">("desc")
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
   const [trackingModalLinks, setTrackingModalLinks] = useState<string[] | null>(null)
+  const [reorderingItemId, setReorderingItemId] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -29,8 +35,7 @@ export default function BuyerOrdersPage() {
         setOrders(response.orders)
         setTotalPages(response.totalPages)
         setTotalElements(response.totalElements)
-      } catch (error) {
-        console.error("Error fetching buyer orders:", error)
+      } catch (_error) {
         setOrders([])
         setTotalPages(0)
         setTotalElements(0)
@@ -54,6 +59,28 @@ export default function BuyerOrdersPage() {
   const handleDateSortToggle = () => {
     setDateSortDir((prev) => (prev === "desc" ? "asc" : "desc"))
     setCurrentPage(0)
+  }
+
+  const handleReorder = async (userProductId: string, quantity: number, productName: string) => {
+    setReorderingItemId(userProductId)
+
+    try {
+      await addToCart(userProductId, quantity)
+      showToast.success("Added to cart", `${productName} was added to your cart.`)
+      router.push("/cart")
+    } catch (error: unknown) {
+      const status = (error as { response?: { status?: number } })?.response?.status
+
+      if (status === 403) {
+        showToast.error("Please log in to reorder items.")
+        router.push("/login")
+        return
+      }
+
+      showToast.error("Reorder failed", "This item could not be added to your cart. Please try again.")
+    } finally {
+      setReorderingItemId(null)
+    }
   }
 
   const filteredOrders = orders.filter((order) => {
@@ -83,7 +110,7 @@ export default function BuyerOrdersPage() {
   return (
     <>
       {/* Page Header */}
-      <section id="page-header" className="mb-8">
+      <section className="mb-8">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-steel-blue">Your Orders</h1>
@@ -93,10 +120,7 @@ export default function BuyerOrdersPage() {
       </section>
 
       {/* Orders Table */}
-      <section
-        id="orders-table-section"
-        className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
-      >
+      <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg- border-b border-gray-200">
@@ -148,7 +172,7 @@ export default function BuyerOrdersPage() {
 
                   return (
                     <Fragment key={order.orderId}>
-                      <tr className="hover:bg-light-mint-gray transition-colors">
+                      <tr className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 text-sm">
                           <div className="font-mono text-xs text-steel-blue break-all">{order.orderId}</div>
                         </td>
@@ -216,7 +240,7 @@ export default function BuyerOrdersPage() {
                                       Supplier: {item.sellerName} {item.sellerSurname}
                                     </div>
                                   </div>
-                                  <div className="flex flex-wrap items-center gap-4 text-xs text-gray-600">
+                                  <div className="flex flex-wrap items-center justify-end gap-4 text-xs text-gray-600">
                                     <span>
                                       Qty: <span className="font-semibold text-gray-800">{item.quantity}</span>
                                     </span>
@@ -246,6 +270,21 @@ export default function BuyerOrdersPage() {
                                     ) : (
                                       <span className="text-[11px] text-gray-400">No tracking</span>
                                     )}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleReorder(item.userProductId, item.quantity, item.productName)}
+                                      disabled={reorderingItemId === item.userProductId}
+                                      className="inline-flex items-center justify-center gap-2 rounded-full bg-steel-blue px-4 py-2 text-[11px] font-semibold text-white transition-colors hover:bg-steel-blue/90 disabled:cursor-not-allowed disabled:opacity-70"
+                                    >
+                                      {reorderingItemId === item.userProductId ? (
+                                        <>
+                                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                          Adding...
+                                        </>
+                                      ) : (
+                                        "Reorder"
+                                      )}
+                                    </button>
                                   </div>
                                 </div>
                               ))}
@@ -262,7 +301,7 @@ export default function BuyerOrdersPage() {
         </div>
 
         {/* Pagination */}
-        <div className="px-6 py-4 bg-teal-50 border-t border-gray-200">
+        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">Show</span>
@@ -344,12 +383,12 @@ export default function BuyerOrdersPage() {
             <div className="px-6 py-4 max-h-80 overflow-y-auto space-y-3">
               {trackingModalLinks.map((link, index) => (
                 <div
-                  key={`${link}-${index}`}
+                  key={link}
                   className="flex items-center justify-between gap-3 border border-gray-200 rounded-lg px-3 py-2 text-xs"
                 >
                   <div className="flex-1 break-all text-gray-600">
                     <span className="font-semibold text-gray-800 mr-2">Link {index + 1}</span>
-                    {link.length > 50 ? link.substring(0, 50) + "..." : link}
+                    {link.length > 50 ? `${link.substring(0, 50)}...` : link}
                   </div>
                   <Link
                     href={link}

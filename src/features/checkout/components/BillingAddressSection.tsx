@@ -19,7 +19,7 @@ export default function BillingAddressSection({
       <div className="space-y-4">
         <label
           className={`flex items-start border rounded-xl p-4 transition-colors cursor-pointer ${
-            !showDifferentBilling ? "border-steel-blue bg-light-mint-gray" : "border-gray-300 hover:border-steel-blue"
+            !showDifferentBilling ? "border-steel-blue bg-gray-50" : "border-gray-300 hover:border-steel-blue"
           }`}
         >
           <input
@@ -51,7 +51,7 @@ export default function BillingAddressSection({
 
         <label
           className={`flex items-start border rounded-xl p-4 transition-colors cursor-pointer ${
-            showDifferentBilling ? "border-steel-blue bg-light-mint-gray" : "border-gray-300 hover:border-steel-blue"
+            showDifferentBilling ? "border-steel-blue bg-gray-50" : "border-gray-300 hover:border-steel-blue"
           }`}
         >
           <input

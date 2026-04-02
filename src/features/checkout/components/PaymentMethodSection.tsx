@@ -29,7 +29,7 @@ export default function PaymentMethodSection({
             key={option.type}
             className={`flex items-center border rounded-xl p-4 transition-colors cursor-pointer ${
               paymentMethod.type === option.type
-                ? "border-steel-blue bg-light-mint-gray"
+                ? "border-steel-blue bg-gray-50"
                 : "border-gray-300 hover:border-steel-blue"
             }`}
           >

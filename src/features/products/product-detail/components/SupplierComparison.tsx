@@ -35,7 +35,7 @@ const SupplierComparison = ({
         descriptionClassName="mt-4"
       />
 
-      <div className="bg-light-mint-gray rounded-2xl overflow-hidden">
+      <div className="bg-gray-50 rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-steel-blue text-white">

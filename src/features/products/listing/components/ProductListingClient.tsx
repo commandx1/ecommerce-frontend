@@ -53,7 +53,7 @@ const ProductListingClient = ({
   const buildUrl = createProductsUrlBuilder({ currentPage, pageSize, viewType })
 
   return (
-    <div className="bg-light-mint-gray min-h-screen font-inter">
+    <div className="bg-gray-50 min-h-screen font-inter">
       <MobileFilters brands={brands} manufacturers={manufacturers} />
       <ProductListingBreadcrumb />
       <ProductListingHeader totalElements={totalElements} />

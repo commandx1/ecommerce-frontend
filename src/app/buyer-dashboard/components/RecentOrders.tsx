@@ -33,7 +33,7 @@ const RecentOrders = () => {
             const statusColorClass = statusColorMap[order.statusColor] || "bg-gray-100 text-gray-700"
 
             return (
-              <div key={order.id} className="flex items-center justify-between p-4 bg-light-mint-gray rounded-lg">
+              <div key={order.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
                     {IconComponent && (

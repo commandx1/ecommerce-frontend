@@ -27,7 +27,7 @@ const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }:
       <td className="px-6 py-4">
         <div className="flex items-center space-x-4">
           {supplier.logo && (
-            <div className="relative w-12 h-12 bg-light-mint-gray rounded-lg flex items-center justify-center">
+            <div className="relative w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center">
               <ProductImageWithFallback
                 src={supplier.logo}
                 alt={supplier.alt}

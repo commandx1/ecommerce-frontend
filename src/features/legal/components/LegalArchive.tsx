@@ -6,7 +6,7 @@ import legalAdditionalData from "@/data/legal-additional.json"
 
 const LegalArchive = () => {
   return (
-    <PageSectionContainer as="section" className="py-16 bg-light-mint-gray">
+    <PageSectionContainer as="section" className="py-16 bg-gray-50">
       <SectionHeading
         title="Document Archive"
         titleClassName="text-4xl text-center mb-4"

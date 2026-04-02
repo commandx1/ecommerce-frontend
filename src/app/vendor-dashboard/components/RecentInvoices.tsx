@@ -24,7 +24,7 @@ const RecentInvoices = () => {
             const statusColorClass = statusColorMap[invoice.statusColor] || "bg-gray-100 text-gray-700"
 
             return (
-              <div key={invoice.id} className="flex items-center justify-between p-4 bg-light-mint-gray rounded-lg">
+              <div key={invoice.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-4">
                   <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
                     <FileText className="text-steel-blue w-5 h-5" />

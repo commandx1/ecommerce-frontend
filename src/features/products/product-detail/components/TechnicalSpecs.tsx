@@ -42,7 +42,7 @@ const badgeColorMap: Record<string, string> = {
 
 const TechnicalSpecs = ({ technicalSpecs, certifications }: TechnicalSpecsProps) => {
   return (
-    <section className="bg-light-mint-gray py-12">
+    <section className="bg-gray-50 py-12">
       <PageSectionContainer as="div">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div>

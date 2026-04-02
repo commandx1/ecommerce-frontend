@@ -15,7 +15,7 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
     <div className="space-y-6">
       <div>
         <div className="flex items-center space-x-3 mb-2">
-          <span className="bg-light-mint-gray text-steel-blue px-3 py-1 rounded-full text-sm font-medium">
+          <span className="bg-gray-50 text-steel-blue px-3 py-1 rounded-full text-sm font-medium">
             {product.category}
           </span>
           <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">Best Seller</span>

@@ -21,7 +21,7 @@ const ActionItems = () => {
           const priorityColor = priorityColorMap[item.priorityColor] || "text-gray-600"
 
           return (
-            <div key={item.id} className="flex items-center p-4 bg-light-mint-gray rounded-xl">
+            <div key={item.id} className="flex items-center p-4 bg-gray-50 rounded-xl">
               <input
                 type="checkbox"
                 checked={item.completed}

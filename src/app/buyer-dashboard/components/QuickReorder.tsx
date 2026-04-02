@@ -23,10 +23,10 @@ const QuickReorder = () => {
             return (
               <div
                 key={item.id}
-                className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-light-mint-gray transition-colors cursor-pointer"
+                className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
               >
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-light-mint-gray rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
                     {IconComponent && <IconComponent className="text-steel-blue w-5 h-5" />}
                   </div>
                   <div>

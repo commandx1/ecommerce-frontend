@@ -15,7 +15,7 @@ interface ProductCardProps {
 
 const ProductCard = ({ title, category, description, price, originalPrice, image, alt, href }: ProductCardProps) => {
   return (
-    <div className="bg-light-mint-gray border-steel-blue/20 border rounded-2xl overflow-hidden hover:shadow-lg transition-shadow group">
+    <div className="bg-gray-50 border-steel-blue/20 border rounded-2xl overflow-hidden hover:shadow-lg transition-shadow group">
       <Link href={href} className="block">
         <div className="h-48 overflow-hidden bg-white">
           <Image

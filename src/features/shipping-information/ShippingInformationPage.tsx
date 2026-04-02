@@ -9,7 +9,7 @@ import SupportCTASection from "@/features/shipping-information/components/Suppor
 
 export default function ShippingInformationPage() {
   return (
-    <div className="min-h-screen bg-light-mint-gray">
+    <div className="min-h-screen bg-gray-50">
       <ShippingHero />
       <ShippingMethodsComparison />
       <DeliveryTimelinesSection />

@@ -4,7 +4,7 @@ import PromotionalBannerCard from "./PromotionalBannerCard"
 
 const PromotionalBanners = () => {
   return (
-    <section className="py-16 bg-light-mint-gray">
+    <section className="py-16 bg-gray-50">
       <PageSectionContainer as="div">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {bannersData.map((banner) => (

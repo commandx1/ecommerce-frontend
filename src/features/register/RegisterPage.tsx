@@ -4,7 +4,7 @@ import RegisterSidebar from "@/features/register/components/RegisterSidebar"
 
 export default function RegisterPage() {
   return (
-    <div className="min-h-screen bg-light-mint-gray font-inter">
+    <div className="min-h-screen bg-gray-50 font-inter">
       <RegisterHeader />
 
       <section className="py-12">

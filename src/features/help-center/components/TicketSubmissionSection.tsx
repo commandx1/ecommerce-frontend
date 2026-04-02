@@ -6,7 +6,7 @@ import TicketSubmissionHighlights from "@/features/help-center/components/Ticket
 
 export default function TicketSubmissionSection() {
   return (
-    <PageSectionContainer as="section" className="py-16 bg-light-mint-gray">
+    <PageSectionContainer as="section" className="py-16 bg-gray-50">
       <SectionHeading
         title="Submit a Support Ticket"
         description="For complex issues or detailed requests, submit a support ticket. Our technical team will provide comprehensive assistance with tracking and follow-up."

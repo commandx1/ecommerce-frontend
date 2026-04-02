@@ -50,7 +50,7 @@ function SetupVendorContent() {
   }, [searchParams, router, setAuth])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-light-mint-gray">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-steel-blue mx-auto mb-4"></div>
         <h2 className="text-xl font-semibold text-steel-blue">Setting up your account...</h2>
