@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
+import { serverRequest } from "@/lib/api/server-request"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const backendUrl = `${BACKEND_URL}/api/barcode/products/ByBarcode/${encodeURIComponent(barcode.trim())}`
 
-    const response = await fetch(backendUrl, {
+    const response = await serverRequest(backendUrl, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

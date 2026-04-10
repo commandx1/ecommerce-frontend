@@ -1,5 +1,7 @@
 "use client"
 
+import { apiRequest } from "./request"
+
 export interface SearchProduct {
   productId: string
   productName: string
@@ -49,9 +51,20 @@ export async function searchPublicProducts(query: string, page = 0, size = 20): 
   const q = query.trim()
   if (!q) return []
 
-  const response = await fetch(`/api/products/public-search?Search=${encodeURIComponent(q)}&page=${page}&size=${size}`)
-  if (!response.ok) return []
-
-  const data: SearchResponse = await response.json()
-  return data.content || []
+  try {
+    const data = await apiRequest.requestJson<SearchResponse>({
+      client: "app",
+      method: "GET",
+      url: "/api/products/public-search",
+      params: {
+        Search: q,
+        page,
+        size,
+      },
+      fallbackMessage: "Failed to fetch products",
+    })
+    return data.content || []
+  } catch {
+    return []
+  }
 }

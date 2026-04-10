@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
+import { serverRequest } from "@/lib/api/server-request"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
@@ -8,7 +9,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   try {
     const { id } = await params
 
-    const response = await fetch(`${BACKEND_URL}/api/products/details/${id}`, {
+    const response = await serverRequest(`${BACKEND_URL}/api/products/details/${id}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -54,7 +55,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/products/details/${id}`, {
+    const response = await serverRequest(`${BACKEND_URL}/api/products/details/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -101,7 +102,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/products/details/${id}`, {
+    const response = await serverRequest(`${BACKEND_URL}/api/products/details/${id}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",

@@ -1,5 +1,7 @@
 "use client"
 
+import { apiRequest } from "./request"
+
 export type ImpersonationRefreshResponse = {
   accessToken: string
   refreshToken?: string
@@ -9,28 +11,11 @@ export type ImpersonationRefreshResponse = {
 }
 
 export async function refreshTokenForImpersonation(refreshToken: string): Promise<ImpersonationRefreshResponse> {
-  const response = await fetch("/api/auth/refresh-token", {
+  return apiRequest.requestJson<ImpersonationRefreshResponse>({
+    client: "app",
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ refreshToken }),
+    url: "/api/auth/refresh-token",
+    data: { refreshToken },
+    fallbackMessage: "Impersonation failed",
   })
-
-  let data: unknown = null
-  try {
-    data = await response.json()
-  } catch {
-    // ignore non-json responses
-  }
-
-  if (!response.ok) {
-    const message =
-      data && typeof data === "object" && "message" in data && typeof (data as any).message === "string"
-        ? (data as any).message
-        : "Impersonation failed"
-    throw new Error(message)
-  }
-
-  return data as ImpersonationRefreshResponse
 }

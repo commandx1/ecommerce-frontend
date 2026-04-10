@@ -1,7 +1,7 @@
 "use client"
 
-import { useRouter } from "next/navigation"
-import { type ChangeEvent, type FormEvent, useEffect, useMemo, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import { login } from "@/features/login/services/login"
 import type { LoginFormData } from "@/features/login/types"
@@ -13,7 +13,9 @@ const DEVICE_NAME = "windows"
 
 export const useLoginForm = () => {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { setUser, setError } = useAuthStore()
+  const hasShownAuthReasonToast = useRef(false)
 
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
@@ -37,6 +39,40 @@ export const useLoginForm = () => {
   }, [])
 
   const isFormValid = useMemo(() => formData.email.length > 0 && formData.password.length > 0, [formData])
+  const postLoginRedirect = useMemo(() => {
+    const redirect = searchParams.get("redirect")
+    if (!redirect) {
+      return "/"
+    }
+
+    if (!redirect.startsWith("/") || redirect.startsWith("//") || redirect.startsWith("/login")) {
+      return "/"
+    }
+
+    return redirect
+  }, [searchParams])
+
+  useEffect(() => {
+    if (hasShownAuthReasonToast.current) {
+      return
+    }
+
+    const reason = searchParams.get("reason")
+    if (!reason) {
+      return
+    }
+
+    hasShownAuthReasonToast.current = true
+
+    if (reason === "session-expired") {
+      showToast.error("Session expired", "Your session expired. Please sign in again.")
+      return
+    }
+
+    if (reason === "access-denied") {
+      showToast.error("Access denied", "Please sign in again to continue.")
+    }
+  }, [searchParams])
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target
@@ -111,7 +147,7 @@ export const useLoginForm = () => {
       }
 
       router.refresh()
-      router.push("/")
+      router.push(postLoginRedirect)
     } catch (error: unknown) {
       const err = error as { message?: string; requires2FA?: boolean }
 

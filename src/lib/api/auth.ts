@@ -1,4 +1,6 @@
 // Use Next.js API routes as proxy to avoid CORS issues
+import { apiRequest } from "./request"
+
 const API_BASE = "/api"
 
 export interface RegisterPayload {
@@ -82,170 +84,124 @@ export interface ErrorResponse {
 }
 
 class AuthAPI {
-  private getAuthHeaders(token?: string) {
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
+  private getAuthHeaders(token?: string): Record<string, string> {
+    if (!token) {
+      return {}
     }
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`
-    }
-    return headers
+
+    return { Authorization: `Bearer ${token}` }
   }
 
   async register(payload: RegisterPayload): Promise<RegisterResponse> {
-    const response = await fetch(`${API_BASE}/users/register`, {
+    return apiRequest.requestJson<RegisterResponse, RegisterPayload>({
+      client: "app",
       method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(payload),
+      url: `${API_BASE}/users/register`,
+      data: payload,
+      fallbackMessage: "Failed to register user",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    const data = await response.json()
-    return data
   }
 
   async login(payload: LoginPayload): Promise<LoginResponse> {
-    const response = await fetch(`${API_BASE}/auth/login`, {
+    return apiRequest.requestJson<LoginResponse, LoginPayload>({
+      client: "app",
       method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(payload),
+      url: `${API_BASE}/auth/login`,
+      data: payload,
+      fallbackMessage: "Failed to sign in",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    const data = await response.json()
-    return data
   }
 
   async logout(payload: LogoutPayload, token: string): Promise<void> {
-    const response = await fetch(`${API_BASE}/auth/logout`, {
+    await apiRequest.requestJson<void, LogoutPayload>({
+      client: "app",
       method: "POST",
       headers: this.getAuthHeaders(token),
-      body: JSON.stringify(payload),
+      url: `${API_BASE}/auth/logout`,
+      data: payload,
+      fallbackMessage: "Failed to log out",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
   }
 
   async refreshToken(payload: RefreshTokenPayload): Promise<LoginResponse> {
-    const response = await fetch(`${API_BASE}/auth/refresh-token`, {
+    return apiRequest.requestJson<LoginResponse, RefreshTokenPayload>({
+      client: "app",
       method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(payload),
+      url: `${API_BASE}/auth/refresh-token`,
+      data: payload,
+      fallbackMessage: "Failed to refresh token",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    const data = await response.json()
-    return data
   }
 
   async getMe(token: string): Promise<LoginResponse> {
-    const response = await fetch(`${API_BASE}/users/me`, {
+    return apiRequest.requestJson<LoginResponse>({
+      client: "app",
       method: "GET",
       headers: this.getAuthHeaders(token),
+      url: `${API_BASE}/users/me`,
+      fallbackMessage: "Failed to fetch user profile",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    return response.json()
   }
 
   async updateMe(payload: UpdateUserPayload, token: string): Promise<LoginResponse> {
-    const response = await fetch(`${API_BASE}/users/me`, {
+    return apiRequest.requestJson<LoginResponse, UpdateUserPayload>({
+      client: "app",
       method: "PUT",
       headers: this.getAuthHeaders(token),
-      body: JSON.stringify(payload),
+      url: `${API_BASE}/users/me`,
+      data: payload,
+      fallbackMessage: "Failed to update user profile",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    return response.json()
   }
 
   async deleteMe(token: string): Promise<void> {
-    const response = await fetch(`${API_BASE}/users/me`, {
+    await apiRequest.requestJson<void>({
+      client: "app",
       method: "DELETE",
       headers: this.getAuthHeaders(token),
+      url: `${API_BASE}/users/me`,
+      fallbackMessage: "Failed to delete user profile",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
   }
 
   async verifyEmail(payload: VerifyEmailPayload): Promise<void> {
-    const response = await fetch(`${API_BASE}/auth/verify-email`, {
+    await apiRequest.requestJson<void, VerifyEmailPayload>({
+      client: "app",
       method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(payload),
+      url: `${API_BASE}/auth/verify-email`,
+      data: payload,
+      fallbackMessage: "Failed to verify email",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
   }
 
   async forgotPassword(payload: ForgotPasswordPayload): Promise<void> {
-    const response = await fetch(`${API_BASE}/mail/forgot-password`, {
+    await apiRequest.requestJson<void, ForgotPasswordPayload>({
+      client: "app",
       method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(payload),
+      url: `${API_BASE}/mail/forgot-password`,
+      data: payload,
+      fallbackMessage: "Failed to request password reset",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
   }
 
   async resetPassword(payload: ResetPasswordPayload): Promise<void> {
-    const response = await fetch(`${API_BASE}/mail/reset-password`, {
+    await apiRequest.requestJson<void, ResetPasswordPayload>({
+      client: "app",
       method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(payload),
+      url: `${API_BASE}/mail/reset-password`,
+      data: payload,
+      fallbackMessage: "Failed to reset password",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
   }
 
   async verify2FA(payload: Verify2FAPayload): Promise<LoginResponse> {
-    const response = await fetch(`${API_BASE}/auth/login/verify-2fa`, {
+    return apiRequest.requestJson<LoginResponse, Verify2FAPayload>({
+      client: "app",
       method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(payload),
+      url: `${API_BASE}/auth/login/verify-2fa`,
+      data: payload,
+      fallbackMessage: "Failed to verify two-factor code",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    return response.json()
   }
 }
 

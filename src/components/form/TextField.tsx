@@ -1,9 +1,10 @@
 import type { ComponentProps } from "react"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import { textLikeControlClassName } from "./controlStyles"
 import { FormField } from "./FormField"
 
-const baseInputClassName = "w-full"
+const baseInputClassName = cn("w-full", textLikeControlClassName)
 
 interface TextFieldProps extends Omit<ComponentProps<"input">, "className"> {
   label: string

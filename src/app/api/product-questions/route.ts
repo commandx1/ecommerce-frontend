@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { serverRequest } from "@/lib/api/server-request"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
       headers.Authorization = authHeader
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/product-questions`, {
+    const response = await serverRequest(`${BACKEND_URL}/api/product-questions`, {
       method: "POST",
       headers,
       body: JSON.stringify(body),
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json()
     return NextResponse.json(data)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

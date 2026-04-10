@@ -6,6 +6,7 @@ import type {
   QuestionsResponse,
   ReviewsResponse,
 } from "@/features/products/product-detail/types"
+import { apiRequest } from "./request"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
@@ -34,26 +35,26 @@ async function getAccessTokenFromCookie(): Promise<string | null> {
   }
 }
 
-function buildFriendlyProductError(productResponse: Response, backendErrorMessage: string) {
-  if (productResponse.status === 403) {
+function buildFriendlyProductError(status: number, backendErrorMessage: string) {
+  if (status === 403) {
     return "You don't have permission to view this product. Please log in and try again."
   }
-  if (productResponse.status === 404) {
+  if (status === 404) {
     return "Product not found. The product may have been removed or doesn't exist."
   }
-  if (productResponse.status === 401) {
+  if (status === 401) {
     return "Authentication required. Please log in to view this product."
   }
-  if (productResponse.status === 500) {
+  if (status === 500) {
     return "Server error occurred. Please try again later."
   }
-  if (productResponse.status >= 400) {
+  if (status >= 400) {
     if (
       !backendErrorMessage ||
       backendErrorMessage === "Failed to fetch product" ||
       backendErrorMessage.toLowerCase().includes("failed to fetch")
     ) {
-      return `Unable to load product (Error ${productResponse.status}). Please try again later.`
+      return `Unable to load product (Error ${status}). Please try again later.`
     }
     return backendErrorMessage
   }
@@ -73,21 +74,31 @@ export async function fetchProductDetailPageData(id: string): Promise<ProductDet
 
   // Keep existing behavior (only attach token if /users/me doesn't say "User not found")
   if (accessToken) {
-    const me = await fetch(`${baseUrl}/api/users/me`, {
-      cache: "no-store",
+    const me = await apiRequest.requestResponse<{ message?: string }>({
+      client: "app",
+      method: "GET",
+      url: `${baseUrl}/api/users/me`,
       headers,
+      validateStatus: () => true,
+      fallbackMessage: "Failed to fetch user profile",
     })
-    const meData = await me.json()
+    const meData = me.data
     if (meData?.message !== "User not found") {
       headers.Authorization = `Bearer ${accessToken}`
     }
   }
 
-  let productResponse: Response
+  let productResponse: Awaited<
+    ReturnType<typeof apiRequest.requestResponse<(Record<string, unknown> & { product?: unknown }) | string>>
+  >
   try {
-    productResponse = await fetch(`${baseUrl}/api/products/${id}/with-user-products`, {
-      cache: "no-store",
+    productResponse = await apiRequest.requestResponse<(Record<string, unknown> & { product?: unknown }) | string>({
+      client: "app",
+      method: "GET",
+      url: `${baseUrl}/api/products/${id}/with-user-products`,
       headers,
+      validateStatus: () => true,
+      fallbackMessage: "Failed to fetch product",
     })
   } catch {
     throw new Error("Unable to connect to server. Please check your internet connection.")
@@ -95,41 +106,53 @@ export async function fetchProductDetailPageData(id: string): Promise<ProductDet
 
   // Reviews & questions are optional
   const [reviewsResponse, questionsResponse] = await Promise.all([
-    fetch(`${baseUrl}/api/reviews/product/${id}?page=0&size=10`, { cache: "no-store", headers }).catch(() => null),
-    fetch(`${baseUrl}/api/product-questions/product/${id}?page=0&size=10`, { cache: "no-store", headers }).catch(
-      () => null,
-    ),
+    apiRequest
+      .requestJson<ReviewsResponse>({
+        client: "app",
+        method: "GET",
+        url: `${baseUrl}/api/reviews/product/${id}`,
+        params: { page: 0, size: 10 },
+        headers,
+        fallbackMessage: "Failed to fetch reviews",
+      })
+      .catch(() => null),
+    apiRequest
+      .requestJson<QuestionsResponse>({
+        client: "app",
+        method: "GET",
+        url: `${baseUrl}/api/product-questions/product/${id}`,
+        params: { page: 0, size: 10 },
+        headers,
+        fallbackMessage: "Failed to fetch questions",
+      })
+      .catch(() => null),
   ])
 
-  if (!productResponse.ok) {
+  if (productResponse.status < 200 || productResponse.status >= 300) {
     let backendErrorMessage = ""
-    try {
-      const contentType = productResponse.headers.get("content-type")
-      if (contentType?.includes("application/json")) {
-        const errorData = await productResponse.json()
-        backendErrorMessage = errorData?.message || errorData?.error || ""
-      } else {
-        const errorText = await productResponse.text()
-        if (errorText.trim()) backendErrorMessage = errorText
+
+    const errorData = productResponse.data
+    if (typeof errorData === "string" && errorData.trim()) {
+      backendErrorMessage = errorData
+    } else if (errorData && typeof errorData === "object") {
+      if ("message" in errorData && typeof errorData.message === "string") {
+        backendErrorMessage = errorData.message
+      } else if ("error" in errorData && typeof errorData.error === "string") {
+        backendErrorMessage = errorData.error
       }
-    } catch {
-      // ignore
     }
 
-    throw new Error(buildFriendlyProductError(productResponse, backendErrorMessage))
+    throw new Error(buildFriendlyProductError(productResponse.status, backendErrorMessage))
   }
 
-  const productData = await productResponse.json()
-  if (!productData || !productData.product) {
+  const productData = productResponse.data
+  if (!productData || typeof productData !== "object" || !("product" in productData) || !productData.product) {
     throw new Error("Invalid product data received from server")
   }
 
-  const reviewsRaw = reviewsResponse?.ok ? await reviewsResponse.json() : null
-  const questionsRaw = questionsResponse?.ok ? await questionsResponse.json() : null
-
   return {
     productData,
-    reviews: reviewsRaw as ReviewsResponse | null,
-    questions: questionsRaw as QuestionsResponse | null,
+    reviews: reviewsResponse,
+    questions: questionsResponse,
   } as ProductDetailPageData
 }

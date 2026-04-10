@@ -1,3 +1,4 @@
+import { useId } from "react"
 import AddressAutocomplete from "@/components/AddressAutocomplete"
 import { TextField } from "@/components/form/TextField"
 import type { ParsedAddress, RegisterAddress, RegisterFormErrors } from "@/features/register/types"
@@ -17,6 +18,8 @@ export default function AddressSection({
   onAddressFieldChange,
   onPostalCodeChange,
 }: AddressSectionProps) {
+  const idBase = useId()
+
   const selectedAddress = address.placeId
     ? {
         country: address.country,
@@ -33,20 +36,20 @@ export default function AddressSection({
     : null
 
   return (
-    <div className="border-t pt-6">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">Address Information</h3>
+    <div className="border-t border-border-soft pt-6">
+      <h3 className="mb-4 text-lg font-semibold text-text-primary">Address Information</h3>
       <AddressAutocomplete onSelect={onAddressSelect} selectedAddress={selectedAddress} error={errors.address} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         <TextField
-          id="addressTitle"
+          id={`${idBase}-addressTitle`}
           label="Address Title"
           value={address.title}
           onChange={(event) => onAddressFieldChange("title", event.target.value)}
           placeholder="Home, Office, etc."
         />
         <TextField
-          id="addressFullName"
+          id={`${idBase}-addressFullName`}
           label="Full Name"
           value={address.fullName}
           onChange={(event) => onAddressFieldChange("fullName", event.target.value)}
@@ -56,24 +59,24 @@ export default function AddressSection({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         <TextField
-          id="addressState"
+          id={`${idBase}-addressState`}
           label="State"
           value={address.state}
           disabled
-          inputClassName="bg-gray-50 text-gray-600 cursor-not-allowed"
+          inputClassName="cursor-not-allowed bg-surface-muted text-text-muted"
         />
         <TextField
-          id="addressCity"
+          id={`${idBase}-addressCity`}
           label="City"
           value={address.city}
           disabled
-          inputClassName="bg-gray-50 text-gray-600 cursor-not-allowed"
+          inputClassName="cursor-not-allowed bg-surface-muted text-text-muted"
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         <TextField
-          id="addressPostalCode"
+          id={`${idBase}-addressPostalCode`}
           label="Zip Code"
           required
           value={address.postalCode}
@@ -82,11 +85,11 @@ export default function AddressSection({
           error={errors.addressPostalCode}
         />
         <TextField
-          id="addressLine"
+          id={`${idBase}-addressLine`}
           label="Address Line"
           value={address.addressLine}
           disabled
-          inputClassName="bg-gray-50 text-gray-600 cursor-not-allowed"
+          inputClassName="cursor-not-allowed bg-surface-muted text-text-muted"
         />
       </div>
     </div>

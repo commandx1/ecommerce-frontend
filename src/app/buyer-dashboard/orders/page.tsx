@@ -7,6 +7,7 @@ import { Fragment, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
+import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
 import { type BuyerOrder, buyerOrdersAPI } from "@/lib/api/buyer-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useAuthStore } from "@/stores/authStore"
@@ -37,7 +38,10 @@ export default function BuyerOrdersPage() {
         setOrders(response.orders)
         setTotalPages(response.totalPages)
         setTotalElements(response.totalElements)
-      } catch (_error) {
+      } catch (error: unknown) {
+        if (!isAuthHandledError(error)) {
+          showToast.error("Orders unavailable", "Your orders could not be loaded right now. Please try again.")
+        }
         setOrders([])
         setTotalPages(0)
         setTotalElements(0)
@@ -71,10 +75,13 @@ export default function BuyerOrdersPage() {
       showToast.success("Added to cart", `${productName} was added to your cart.`)
       router.push("/cart")
     } catch (error: unknown) {
-      const status = (error as { response?: { status?: number } })?.response?.status
+      if (isAuthHandledError(error)) {
+        return
+      }
 
-      if (status === 403) {
-        showToast.error("Please log in to reorder items.")
+      const status = extractErrorStatus(error)
+      if (isAuthErrorStatus(status)) {
+        showToast.error("Authentication required", "Please sign in to reorder items.")
         router.push("/login")
         return
       }

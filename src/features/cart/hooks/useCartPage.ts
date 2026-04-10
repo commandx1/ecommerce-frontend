@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { showToast } from "@/components/ui/Toast"
 import type { CartTotals } from "@/features/cart/types"
 import { useDebouncedPerKeyCallback } from "@/lib/hooks/useDebouncedPerKeyCallback"
 import type { CartItem } from "@/stores/cartStore"
@@ -28,8 +29,8 @@ interface UseCartPageResult {
 
 export function useCartPage(): UseCartPageResult {
   const router = useRouter()
-  const { cartId, items, fetchCart, isLoading, clearCart, updateQuantity, removeFromCart } = useCartStore()
-  const { selectedShippingCost, setStep } = useCheckoutStore()
+  const { cartId, items, fetchCart, isLoading, clearCart, updateQuantity, removeFromCart, error } = useCartStore()
+  const { setStep } = useCheckoutStore()
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false)
   const [pendingQuantities, setPendingQuantities] = useState<Record<string, number>>({})
 
@@ -52,6 +53,12 @@ export function useCartPage(): UseCartPageResult {
     void fetchCart()
   }, [fetchCart])
 
+  useEffect(() => {
+    if (error) {
+      showToast.error("Cart unavailable", error)
+    }
+  }, [error])
+
   const itemsWithPendingQuantity = useMemo<CartItem[]>(() => {
     return items.map((item) => {
       const pendingQuantity = pendingQuantities[item.userProduct.userProductId]
@@ -68,14 +75,17 @@ export function useCartPage(): UseCartPageResult {
 
   const totals = useMemo<CartTotals>(() => {
     const subtotal = itemsWithPendingQuantity.reduce((sum, item) => sum + item.userProduct.price * item.quantity, 0)
-    const shipping = selectedShippingCost
+    const shipping = itemsWithPendingQuantity.reduce(
+      (sum, item) => sum + (item.userProduct.shipmentFee ?? 0) * item.quantity,
+      0,
+    )
 
     return {
       subtotal,
       shipping,
       total: subtotal + shipping,
     }
-  }, [itemsWithPendingQuantity, selectedShippingCost])
+  }, [itemsWithPendingQuantity])
 
   const viewState: CartViewState = useMemo(() => {
     if (isLoading && itemsWithPendingQuantity.length === 0) {

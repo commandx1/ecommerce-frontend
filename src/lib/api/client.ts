@@ -1,4 +1,6 @@
-import axios from "axios"
+import axios, { type InternalAxiosRequestConfig } from "axios"
+import { useAuthStore } from "@/stores/authStore"
+import { type AuthErrorStatus, type AuthHandledAxiosError, isAuthErrorStatus } from "./auth-error"
 
 const apiClient = axios.create({
   baseURL: "/backend-api",
@@ -6,44 +8,106 @@ const apiClient = axios.create({
     "Content-Type": "application/json",
   },
 })
+export const appApiClient = axios.create()
 
-apiClient.interceptors.request.use(
-  (config) => {
-    let token: string | null = null
+let authFailurePromise: Promise<void> | null = null
 
-    if (typeof window !== "undefined") {
-      // Try to get token from auth-storage cookie (Zustand persist)
-      const name = "auth-storage="
-      const decodedCookie = decodeURIComponent(document.cookie)
-      const ca = decodedCookie.split(";")
-      for (let i = 0; i < ca.length; i++) {
-        let c = ca[i]
-        while (c.charAt(0) === " ") {
-          c = c.substring(1)
-        }
-        if (c.indexOf(name) === 0) {
-          try {
-            const authData = JSON.parse(c.substring(name.length, c.length))
-            token = authData.state?.accessToken || null
-          } catch (e) {
-            console.error("Error parsing auth-storage cookie", e)
-          }
-          break
-        }
+const buildLoginUrl = (status: AuthErrorStatus): string => {
+  if (typeof window === "undefined") {
+    return "/login"
+  }
+
+  const loginUrl = new URL("/login", window.location.origin)
+  const currentPath = `${window.location.pathname}${window.location.search}`
+
+  if (currentPath && currentPath !== "/" && !currentPath.startsWith("/login")) {
+    loginUrl.searchParams.set("redirect", currentPath)
+  }
+
+  loginUrl.searchParams.set("reason", status === 401 ? "session-expired" : "access-denied")
+  return loginUrl.toString()
+}
+
+const handleAuthFailure = async (status: AuthErrorStatus): Promise<void> => {
+  if (typeof window === "undefined") {
+    return
+  }
+
+  if (!authFailurePromise) {
+    authFailurePromise = (async () => {
+      const { logout } = useAuthStore.getState()
+      await logout()
+
+      const target = buildLoginUrl(status)
+      if (window.location.href !== target) {
+        window.location.assign(target)
       }
+    })().finally(() => {
+      authFailurePromise = null
+    })
+  }
 
-      // Fallback to localStorage if cookie not found (for backward compatibility)
-      if (!token) {
-        token = localStorage.getItem("token")
-      }
+  await authFailurePromise
+}
+
+const resolveAccessToken = (): string | null => {
+  if (typeof window === "undefined") {
+    return null
+  }
+
+  const name = "auth-storage="
+  const decodedCookie = decodeURIComponent(document.cookie)
+  const parts = decodedCookie.split(";")
+
+  for (let index = 0; index < parts.length; index++) {
+    let cookiePart = parts[index]
+    while (cookiePart.charAt(0) === " ") {
+      cookiePart = cookiePart.substring(1)
     }
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+    if (cookiePart.indexOf(name) !== 0) {
+      continue
     }
-    return config
-  },
-  (error) => Promise.reject(error),
-)
+
+    try {
+      const authData = JSON.parse(cookiePart.substring(name.length, cookiePart.length))
+      return authData.state?.accessToken || null
+    } catch {
+      return null
+    }
+  }
+
+  return localStorage.getItem("token")
+}
+
+const attachTokenInterceptor = (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
+  const token = resolveAccessToken()
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+
+  return config
+}
+
+const attachAuthInterceptors = (client: typeof apiClient): void => {
+  client.interceptors.request.use(attachTokenInterceptor, (error) => Promise.reject(error))
+
+  client.interceptors.response.use(
+    (response) => response,
+    async (error: AuthHandledAxiosError) => {
+      const status = error.response?.status
+
+      if (isAuthErrorStatus(status)) {
+        error.authHandled = true
+        await handleAuthFailure(status)
+      }
+
+      return Promise.reject(error)
+    },
+  )
+}
+
+attachAuthInterceptors(apiClient)
+attachAuthInterceptors(appApiClient)
 
 export default apiClient

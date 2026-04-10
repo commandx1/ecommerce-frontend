@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import type { UserProduct } from "@/lib/api/products"
+import { serverRequest } from "@/lib/api/server-request"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user products from backend
-    const response = await fetch(`${BACKEND_URL}/api/user-products`, {
+    const response = await serverRequest(`${BACKEND_URL}/api/user-products`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

@@ -9,8 +9,8 @@ export default function RegisterFormIntro({
 }: RegisterFormIntroProps) {
   return (
     <div className="mb-8">
-      <h1 className="text-4xl font-bold text-steel-blue mb-3">{title}</h1>
-      <p className="text-gray-600 text-lg">{subtitle}</p>
+      <h1 className="mb-3 text-4xl font-bold text-brand">{title}</h1>
+      <p className="text-lg text-text-secondary">{subtitle}</p>
     </div>
   )
 }

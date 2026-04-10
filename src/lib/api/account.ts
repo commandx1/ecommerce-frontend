@@ -1,6 +1,20 @@
 "use client"
 
-import { readApiErrorMessage } from "@/lib/api/api-error"
+import { apiRequest } from "@/lib/api/request"
+
+export type AccountUser = {
+  id: string
+  name: string
+  surname: string
+  email: string
+  phoneNumber: string
+  emailConfirmed: boolean
+  phoneNumberConfirmed: boolean
+  twoFactorEnabled: boolean
+  lockoutEnd: string | null
+  createdDate: string
+  roleName?: string
+}
 
 export type UpdateMePayload = {
   name: string
@@ -9,32 +23,23 @@ export type UpdateMePayload = {
   twoFactorEnabled?: boolean
 }
 
-export async function updateMe(accessToken: string, payload: UpdateMePayload) {
-  const response = await fetch("/backend-api/users/me", {
+export async function updateMe(accessToken: string, payload: UpdateMePayload): Promise<AccountUser> {
+  return apiRequest.requestJson<AccountUser, UpdateMePayload>({
+    client: "backend",
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(payload),
+    url: "/users/me",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    data: payload,
+    fallbackMessage: "Failed to update profile",
   })
-
-  if (!response.ok) {
-    throw new Error(await readApiErrorMessage(response, "Failed to update profile"))
-  }
-
-  return response.json()
 }
 
 export async function deleteMe(accessToken: string) {
-  const response = await fetch("/backend-api/users/me", {
+  await apiRequest.requestJson<void>({
+    client: "backend",
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
+    url: "/users/me",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    fallbackMessage: "Failed to delete account",
   })
-
-  if (!response.ok) {
-    throw new Error(await readApiErrorMessage(response, "Failed to delete account"))
-  }
 }

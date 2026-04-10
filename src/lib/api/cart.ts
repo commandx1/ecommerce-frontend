@@ -5,6 +5,7 @@ export interface UserProduct {
   oldPrice: number
   price: number
   discount: number
+  shipmentFee: number
   stock: number
   stockAlert: string | null
   userProductAlert: string | null

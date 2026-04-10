@@ -1,4 +1,6 @@
+import type { AxiosResponse } from "axios"
 import { NextResponse } from "next/server"
+import { apiRequest } from "@/lib/api/request"
 import type { ProductRequestMethod } from "./types"
 
 const BACKEND_URL = process.env.BACKEND_URL ?? process.env.NEXT_PUBLIC_BACKEND_URL
@@ -15,8 +17,8 @@ function requireBackendUrl() {
   return BACKEND_URL
 }
 
-function createHeaders(authHeader?: string, includeJsonContentType = false): HeadersInit {
-  const headers: HeadersInit = {
+function createHeaders(authHeader?: string, includeJsonContentType = false): Record<string, string> {
+  const headers: Record<string, string> = {
     ...DEFAULT_HEADERS,
   }
 
@@ -31,16 +33,15 @@ function createHeaders(authHeader?: string, includeJsonContentType = false): Hea
   return headers
 }
 
-export async function parseJsonOrText(response: Response) {
-  const contentType = response.headers.get("content-type")
-  const isJson = contentType?.includes("application/json")
+export async function parseJsonOrText(response: AxiosResponse) {
+  const contentType = response.headers["content-type"]
+  const isJson = typeof contentType === "string" && contentType.includes("application/json")
 
   if (isJson) {
-    const data = await response.json().catch(() => null)
-    return { isJson: true, data }
+    return { isJson: true, data: response.data }
   }
 
-  const text = await response.text().catch(() => "")
+  const text = typeof response.data === "string" ? response.data : ""
   return { isJson: false, data: text.trim() }
 }
 
@@ -57,15 +58,18 @@ export async function proxyRequest({
 }) {
   const baseUrl = requireBackendUrl()
 
-  return fetch(`${baseUrl}/api/products/${id}`, {
+  return apiRequest.requestResponse<unknown>({
+    client: "app",
     method,
-    cache: method === "GET" ? "no-store" : "default",
+    url: `${baseUrl}/api/products/${id}`,
     headers: createHeaders(authHeader ?? undefined, method === "PUT"),
-    body: body === undefined ? undefined : JSON.stringify(body),
+    data: body,
+    validateStatus: () => true,
+    fallbackMessage: "Product proxy request failed",
   })
 }
 
-export async function buildErrorResponse(response: Response) {
+export async function buildErrorResponse(response: AxiosResponse) {
   const parsed = await parseJsonOrText(response)
 
   if (parsed.isJson && parsed.data) {

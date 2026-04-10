@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { serverRequest } from "@/lib/api/server-request"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
@@ -10,7 +11,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Backend URL is not configured" }, { status: 500 })
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/mail/reset-password`, {
+    const response = await serverRequest(`${BACKEND_URL}/api/mail/reset-password`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -24,14 +25,13 @@ export async function POST(request: NextRequest) {
     }
 
     const contentType = response.headers.get("content-type")
-    if (contentType && contentType.includes("application/json")) {
+    if (contentType?.includes("application/json")) {
       const data = await response.json()
       return NextResponse.json(data)
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Reset Password Proxy Error:", error)
     return NextResponse.json({ error: (error as Error).message || "Internal server error" }, { status: 500 })
   }
 }

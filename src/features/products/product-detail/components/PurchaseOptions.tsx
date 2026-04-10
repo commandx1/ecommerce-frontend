@@ -5,6 +5,7 @@ import { useState } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import { showToast } from "@/components/ui/Toast"
+import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
 import { useCartStore } from "@/stores/cartStore"
 import { useSelectedSupplierStore } from "@/stores/selectedSupplierStore"
 import { usePurchaseCalculator } from "../hooks/usePurchaseCalculator"
@@ -85,9 +86,13 @@ const PurchaseOptions = ({ bulkPricing, warrantyOptions, orderSummary }: Purchas
     try {
       await addToCart(userProductId, quantity)
     } catch (err: unknown) {
-      const status = (err as { response?: { status?: number } })?.response?.status
-      if (status === 403) {
-        showToast.error("Please log in to add items to cart.")
+      if (isAuthHandledError(err)) {
+        return
+      }
+
+      const status = extractErrorStatus(err)
+      if (isAuthErrorStatus(status)) {
+        showToast.error("Authentication required", "Please sign in to add items to cart.")
         router.push("/login")
         return
       }

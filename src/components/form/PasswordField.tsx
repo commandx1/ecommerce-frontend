@@ -3,9 +3,10 @@ import type { ComponentProps } from "react"
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import { textLikeControlClassName } from "./controlStyles"
 import { FormField } from "./FormField"
 
-const baseInputClassName = "w-full pr-12"
+const baseInputClassName = cn("w-full pr-12", textLikeControlClassName)
 
 interface PasswordFieldProps extends Omit<ComponentProps<"input">, "className" | "type"> {
   label: string

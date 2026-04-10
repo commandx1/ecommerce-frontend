@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
+import { serverRequest } from "@/lib/api/server-request"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
@@ -13,7 +14,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/products/details`, {
+    const response = await serverRequest(`${BACKEND_URL}/api/products/details`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

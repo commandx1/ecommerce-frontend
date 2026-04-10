@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
+import { serverRequest } from "@/lib/api/server-request"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
@@ -8,7 +9,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const authHeader = request.headers.get("Authorization")
 
-    const response = await fetch(`${BACKEND_URL}/api/auth/logout`, {
+    const response = await serverRequest(`${BACKEND_URL}/api/auth/logout`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

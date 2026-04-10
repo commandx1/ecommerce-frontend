@@ -1,4 +1,5 @@
 // Google Maps Places API utility functions
+import { apiRequest } from "@/lib/api/request"
 
 export interface GooglePlacePrediction {
   place_id: string
@@ -39,26 +40,24 @@ export interface ParsedAddress {
 }
 
 export async function searchPlaces(query: string): Promise<GooglePlacePrediction[]> {
-  const response = await fetch(`/api/google-maps/autocomplete?query=${encodeURIComponent(query)}`)
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: "Failed to fetch places" }))
-    throw new Error(error.message || "Failed to fetch places")
-  }
-
-  const data = await response.json()
+  const data = await apiRequest.requestJson<{ predictions?: GooglePlacePrediction[] }>({
+    client: "app",
+    method: "GET",
+    url: "/api/google-maps/autocomplete",
+    params: { query },
+    fallbackMessage: "Failed to fetch places",
+  })
   return data.predictions || []
 }
 
 export async function getPlaceDetails(placeId: string): Promise<ParsedAddress> {
-  const response = await fetch(`/api/google-maps/place-details?placeId=${encodeURIComponent(placeId)}`)
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: "Failed to fetch place details" }))
-    throw new Error(error.message || "Failed to fetch place details")
-  }
-
-  const data = await response.json()
+  const data = await apiRequest.requestJson<{ result: GooglePlaceDetails }>({
+    client: "app",
+    method: "GET",
+    url: "/api/google-maps/place-details",
+    params: { placeId },
+    fallbackMessage: "Failed to fetch place details",
+  })
   const place: GooglePlaceDetails = data.result
   return parseAddressComponents(place)
 }

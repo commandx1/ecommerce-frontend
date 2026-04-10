@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
+import { serverRequest } from "@/lib/api/server-request"
 
 // Proxy endpoint to download images from external URLs (bypasses CORS)
 // GET /api/images/proxy?url=<encoded-image-url>
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch the image from external source
-    const response = await fetch(decodedUrl, {
+    const response = await serverRequest(decodedUrl, {
       method: "GET",
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",

@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { serverRequest } from "@/lib/api/server-request"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       headers.Authorization = `Bearer ${accessToken}`
     }
 
-    const response = await fetch(
+    const response = await serverRequest(
       `${BACKEND_URL}/api/product-questions/product/${productId}?page=${page}&size=${size}`,
       {
         method: "GET",

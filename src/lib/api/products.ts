@@ -1,4 +1,5 @@
 // Use Next.js API routes as proxy to avoid CORS issues
+import { apiRequest } from "./request"
 
 const BASE_URL = "" // Use Next.js API routes at /api/...
 const IMAGE_PROXY_URL = "/api/images" // Proxy path for images
@@ -206,21 +207,12 @@ export interface UserProduct {
 }
 
 class ProductsAPI {
-  private getAuthHeaders(token?: string) {
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
+  private getAuthHeaders(token?: string): Record<string, string> {
+    if (!token) {
+      return {}
     }
-    if (token) {
-      headers.Authorization = `Bearer ${token}`
-    }
-    return headers
-  }
 
-  private getFetchOptions(token?: string): RequestInit {
-    return {
-      headers: this.getAuthHeaders(token),
-      credentials: "include", // Include cookies for session-based auth
-    }
+    return { Authorization: `Bearer ${token}` }
   }
 
   // ==================== Product CRUD ====================
@@ -249,22 +241,17 @@ class ProductsAPI {
       }
     }
 
-    const response = await fetch(`${BASE_URL}/api/products`, {
+    return apiRequest.requestJson<Product>({
+      client: "app",
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
-        // Note: Don't set Content-Type for FormData, browser will set it with boundary
       },
-      credentials: "include",
-      body: formData,
+      url: `${BASE_URL}/api/products`,
+      withCredentials: true,
+      data: formData,
+      fallbackMessage: "Failed to create product",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    return response.json()
   }
 
   /**
@@ -272,17 +259,14 @@ class ProductsAPI {
    * GET /api/products/:id
    */
   async getProductById(id: string, token?: string): Promise<Product> {
-    const response = await fetch(`${BASE_URL}/api/products/${id}`, {
+    return apiRequest.requestJson<Product>({
+      client: "app",
       method: "GET",
-      ...this.getFetchOptions(token),
+      url: `${BASE_URL}/api/products/${id}`,
+      headers: this.getAuthHeaders(token),
+      withCredentials: true,
+      fallbackMessage: "Failed to fetch product",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    return response.json()
   }
 
   /**
@@ -290,18 +274,14 @@ class ProductsAPI {
    * PUT /api/products/:id
    */
   async updateProduct(id: string, payload: UpdateProductPayload, token: string): Promise<Product> {
-    const response = await fetch(`${BASE_URL}/api/products/${id}`, {
+    return apiRequest.requestJson<Product, UpdateProductPayload>({
+      client: "app",
       method: "PUT",
       headers: this.getAuthHeaders(token),
-      body: JSON.stringify(payload),
+      url: `${BASE_URL}/api/products/${id}`,
+      data: payload,
+      fallbackMessage: "Failed to update product",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    return response.json()
   }
 
   /**
@@ -309,15 +289,13 @@ class ProductsAPI {
    * DELETE /api/products/:id
    */
   async deleteProduct(id: string, token: string): Promise<void> {
-    const response = await fetch(`${BASE_URL}/api/products/${id}`, {
+    await apiRequest.requestJson<void>({
+      client: "app",
       method: "DELETE",
       headers: this.getAuthHeaders(token),
+      url: `${BASE_URL}/api/products/${id}`,
+      fallbackMessage: "Failed to delete product",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
   }
 
   // ==================== Product Details CRUD ====================
@@ -327,18 +305,15 @@ class ProductsAPI {
    * POST /api/products/details
    */
   async createProductDetails(payload: CreateProductDetailsPayload, token: string): Promise<ProductDetails> {
-    const response = await fetch(`${BASE_URL}/api/products/details`, {
+    return apiRequest.requestJson<ProductDetails, CreateProductDetailsPayload>({
+      client: "app",
       method: "POST",
-      ...this.getFetchOptions(token),
-      body: JSON.stringify(payload),
+      url: `${BASE_URL}/api/products/details`,
+      headers: this.getAuthHeaders(token),
+      withCredentials: true,
+      data: payload,
+      fallbackMessage: "Failed to create product details",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    return response.json()
   }
 
   /**
@@ -346,17 +321,13 @@ class ProductsAPI {
    * GET /api/products/details/:id
    */
   async getProductDetailsById(id: string): Promise<ProductDetails> {
-    const response = await fetch(`${BASE_URL}/api/products/details/${id}`, {
+    return apiRequest.requestJson<ProductDetails>({
+      client: "app",
       method: "GET",
       headers: this.getAuthHeaders(),
+      url: `${BASE_URL}/api/products/details/${id}`,
+      fallbackMessage: "Failed to fetch product details",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    return response.json()
   }
 
   /**
@@ -364,17 +335,13 @@ class ProductsAPI {
    * GET /api/products/details/by-product/:productId
    */
   async getProductDetailsByProductId(productId: string): Promise<ProductDetails> {
-    const response = await fetch(`${BASE_URL}/api/products/details/by-product/${productId}`, {
+    return apiRequest.requestJson<ProductDetails>({
+      client: "app",
       method: "GET",
       headers: this.getAuthHeaders(),
+      url: `${BASE_URL}/api/products/details/by-product/${productId}`,
+      fallbackMessage: "Failed to fetch product details",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    return response.json()
   }
 
   /**
@@ -382,18 +349,14 @@ class ProductsAPI {
    * PUT /api/products/details/:id
    */
   async updateProductDetails(id: string, payload: UpdateProductDetailsPayload, token: string): Promise<ProductDetails> {
-    const response = await fetch(`${BASE_URL}/api/products/details/${id}`, {
+    return apiRequest.requestJson<ProductDetails, UpdateProductDetailsPayload>({
+      client: "app",
       method: "PUT",
       headers: this.getAuthHeaders(token),
-      body: JSON.stringify(payload),
+      url: `${BASE_URL}/api/products/details/${id}`,
+      data: payload,
+      fallbackMessage: "Failed to update product details",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    return response.json()
   }
 
   /**
@@ -405,18 +368,14 @@ class ProductsAPI {
     payload: UpdateProductDetailsPayload,
     token: string,
   ): Promise<ProductDetails> {
-    const response = await fetch(`${BASE_URL}/api/products/details/by-product/${productId}`, {
+    return apiRequest.requestJson<ProductDetails, UpdateProductDetailsPayload>({
+      client: "app",
       method: "PUT",
       headers: this.getAuthHeaders(token),
-      body: JSON.stringify(payload),
+      url: `${BASE_URL}/api/products/details/by-product/${productId}`,
+      data: payload,
+      fallbackMessage: "Failed to update product details",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    return response.json()
   }
 
   /**
@@ -424,15 +383,13 @@ class ProductsAPI {
    * DELETE /api/products/details/:id
    */
   async deleteProductDetails(id: string, token: string): Promise<void> {
-    const response = await fetch(`${BASE_URL}/api/products/details/${id}`, {
+    await apiRequest.requestJson<void>({
+      client: "app",
       method: "DELETE",
       headers: this.getAuthHeaders(token),
+      url: `${BASE_URL}/api/products/details/${id}`,
+      fallbackMessage: "Failed to delete product details",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
   }
 
   /**
@@ -440,15 +397,13 @@ class ProductsAPI {
    * DELETE /api/products/details/by-product/:productId
    */
   async deleteProductDetailsByProductId(productId: string, token: string): Promise<void> {
-    const response = await fetch(`${BASE_URL}/api/products/details/by-product/${productId}`, {
+    await apiRequest.requestJson<void>({
+      client: "app",
       method: "DELETE",
       headers: this.getAuthHeaders(token),
+      url: `${BASE_URL}/api/products/details/by-product/${productId}`,
+      fallbackMessage: "Failed to delete product details",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
   }
 
   // ==================== Barcode Lookup ====================
@@ -458,17 +413,14 @@ class ProductsAPI {
    * GET /api/barcode/products/search?title=...
    */
   async searchProductsByTitle(title: string, token: string): Promise<ProductSearchResponse> {
-    const response = await fetch(`${BASE_URL}/api/barcode/products/search?title=${encodeURIComponent(title)}`, {
+    return apiRequest.requestJson<ProductSearchResponse>({
+      client: "app",
       method: "GET",
       headers: this.getAuthHeaders(token),
+      url: `${BASE_URL}/api/barcode/products/search`,
+      params: { title },
+      fallbackMessage: "Failed to search products",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    return response.json()
   }
 
   /**
@@ -476,24 +428,27 @@ class ProductsAPI {
    * GET /api/barcode/products/bybarcode/:barcode
    */
   async getProductByBarcode(barcode: string, token: string): Promise<Product | BarcodeLookupProduct> {
-    const response = await fetch(`${BASE_URL}/api/barcode/products/bybarcode/${encodeURIComponent(barcode)}`, {
+    const response = await apiRequest.requestResponse<Product | BarcodeLookupProduct | string>({
+      client: "app",
       method: "GET",
       headers: this.getAuthHeaders(token),
+      url: `${BASE_URL}/api/barcode/products/bybarcode/${encodeURIComponent(barcode)}`,
+      validateStatus: () => true,
+      fallbackMessage: "Failed to fetch product by barcode",
     })
 
-    if (!response.ok) {
-      const contentType = response.headers.get("content-type")
-      const hasJson = contentType?.includes("application/json")
+    if (response.status < 200 || response.status >= 300) {
+      const contentType = response.headers["content-type"]
+      const hasJson = typeof contentType === "string" && contentType.includes("application/json")
 
       if (hasJson) {
-        const error = await response.json()
-        throw error
+        throw response.data
       } else {
         throw new Error(`Product not found (${response.status})`)
       }
     }
 
-    return response.json()
+    return response.data as Product | BarcodeLookupProduct
   }
 
   /**
@@ -501,17 +456,13 @@ class ProductsAPI {
    * GET /api/barcode/products
    */
   async getAllBarcodeProducts(token: string): Promise<BarcodeProduct[]> {
-    const response = await fetch(`${BASE_URL}/api/barcode/products`, {
+    return apiRequest.requestJson<BarcodeProduct[]>({
+      client: "app",
       method: "GET",
       headers: this.getAuthHeaders(token),
+      url: `${BASE_URL}/api/barcode/products`,
+      fallbackMessage: "Failed to fetch barcode products",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    return response.json()
   }
 
   /**
@@ -571,18 +522,15 @@ class ProductsAPI {
    * POST /api/user-products
    */
   async createUserProduct(payload: CreateUserProductPayload, token: string): Promise<UserProduct> {
-    const response = await fetch(`${BASE_URL}/api/user-products`, {
+    return apiRequest.requestJson<UserProduct, CreateUserProductPayload>({
+      client: "app",
       method: "POST",
-      ...this.getFetchOptions(token),
-      body: JSON.stringify(payload),
+      url: `${BASE_URL}/api/user-products`,
+      headers: this.getAuthHeaders(token),
+      withCredentials: true,
+      data: payload,
+      fallbackMessage: "Failed to create user product",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    return response.json()
   }
 
   /**
@@ -590,17 +538,14 @@ class ProductsAPI {
    * GET /api/user-products
    */
   async getUserProducts(token: string): Promise<UserProduct[]> {
-    const response = await fetch(`${BASE_URL}/api/user-products`, {
+    return apiRequest.requestJson<UserProduct[]>({
+      client: "app",
       method: "GET",
-      ...this.getFetchOptions(token),
+      url: `${BASE_URL}/api/user-products`,
+      headers: this.getAuthHeaders(token),
+      withCredentials: true,
+      fallbackMessage: "Failed to fetch user products",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    return response.json()
   }
 
   /**
@@ -616,51 +561,43 @@ class ProductsAPI {
     stock?: boolean,
     search?: string,
   ): Promise<{ content: UserProduct[]; totalElements: number; totalPages: number; page: number; size: number }> {
-    const params = new URLSearchParams({
-      type,
-      page: String(page),
-      size: String(size),
-    })
-
-    // Only add price parameter if it's defined (sorting by price)
-    if (price !== undefined) {
-      params.append("price", String(price))
-    }
-
-    // Only add stock parameter if it's defined (sorting by stock)
-    if (stock !== undefined) {
-      params.append("stock", String(stock))
-    }
-
-    if (search !== undefined) {
-      params.append("search", search || "")
-    }
-
-    const response = await fetch(`${BASE_URL}/api/user-products/filter?${params.toString()}`, {
+    const response = await apiRequest.requestResponse<
+      | UserProduct[]
+      | { content: UserProduct[]; totalElements: number; totalPages: number; page: number; size: number }
+      | { message?: string; error?: string }
+    >({
+      client: "app",
       method: "GET",
-      ...this.getFetchOptions(token),
+      url: `${BASE_URL}/api/user-products/filter`,
+      headers: this.getAuthHeaders(token),
+      withCredentials: true,
+      params: {
+        type,
+        page,
+        size,
+        ...(price !== undefined ? { price } : {}),
+        ...(stock !== undefined ? { stock } : {}),
+        ...(search !== undefined ? { search: search || "" } : {}),
+      },
+      validateStatus: () => true,
+      fallbackMessage: "Failed to filter user products",
     })
 
-    if (!response.ok) {
+    if (response.status < 200 || response.status >= 300) {
       let error: { message?: string; status: number } = {
         message: `Request failed with status ${response.status}`,
         status: response.status,
       }
 
-      try {
-        const errorData = await response.json()
-        if (errorData && typeof errorData === "object") {
-          error = { ...errorData, status: response.status }
-        }
-      } catch {
-        // JSON parse başarısız olursa, sadece status ile devam et
-        error.status = response.status
+      const errorData = response.data
+      if (errorData && typeof errorData === "object") {
+        error = { ...errorData, status: response.status }
       }
 
       throw error
     }
 
-    const data = await response.json()
+    const data = response.data
 
     // Handle both array and pagination object responses
     if (Array.isArray(data)) {
@@ -672,10 +609,32 @@ class ProductsAPI {
         page: page,
         size: size,
       }
-    } else {
-      // If response is already pagination object
-      return data
     }
+
+    if (
+      data &&
+      typeof data === "object" &&
+      "content" in data &&
+      Array.isArray(data.content) &&
+      "totalElements" in data &&
+      typeof data.totalElements === "number" &&
+      "totalPages" in data &&
+      typeof data.totalPages === "number" &&
+      "page" in data &&
+      typeof data.page === "number" &&
+      "size" in data &&
+      typeof data.size === "number"
+    ) {
+      return {
+        content: data.content as UserProduct[],
+        totalElements: data.totalElements,
+        totalPages: data.totalPages,
+        page: data.page,
+        size: data.size,
+      }
+    }
+
+    throw new Error("Invalid user product filter response")
   }
 
   /**
@@ -687,18 +646,15 @@ class ProductsAPI {
     payload: { price: number; discount: number; stock: number; active: boolean },
     token: string,
   ): Promise<UserProduct> {
-    const response = await fetch(`${BASE_URL}/api/user-products/${id}`, {
+    return apiRequest.requestJson<UserProduct, { price: number; discount: number; stock: number; active: boolean }>({
+      client: "app",
       method: "PUT",
-      ...this.getFetchOptions(token),
-      body: JSON.stringify(payload),
+      url: `${BASE_URL}/api/user-products/${id}`,
+      headers: this.getAuthHeaders(token),
+      withCredentials: true,
+      data: payload,
+      fallbackMessage: "Failed to update user product",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    return response.json()
   }
 
   /**
@@ -706,15 +662,14 @@ class ProductsAPI {
    * DELETE /api/user-products/:id
    */
   async deleteUserProduct(id: string, token: string): Promise<void> {
-    const response = await fetch(`${BASE_URL}/api/user-products/${id}`, {
+    await apiRequest.requestJson<void>({
+      client: "app",
       method: "DELETE",
-      ...this.getFetchOptions(token),
+      url: `${BASE_URL}/api/user-products/${id}`,
+      headers: this.getAuthHeaders(token),
+      withCredentials: true,
+      fallbackMessage: "Failed to delete user product",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
   }
 
   /**

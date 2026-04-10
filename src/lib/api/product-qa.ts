@@ -1,6 +1,6 @@
 "use client"
 
-import { readApiErrorMessage } from "./api-error"
+import { apiRequest } from "./request"
 
 export async function submitProductQuestion(params: {
   accessToken: string | null
@@ -8,23 +8,20 @@ export async function submitProductQuestion(params: {
   userProductId: string
   question: string
 }): Promise<void> {
-  const response = await fetch("/api/product-questions", {
+  await apiRequest.requestJson<void>({
+    client: "app",
     method: "POST",
+    url: "/api/product-questions",
     headers: {
-      "Content-Type": "application/json",
       ...(params.accessToken ? { Authorization: `Bearer ${params.accessToken}` } : {}),
     },
-    body: JSON.stringify({
+    data: {
       productId: params.productId,
       userProductId: params.userProductId,
       question: params.question,
-    }),
+    },
+    fallbackMessage: "Failed to submit question",
   })
-
-  if (!response.ok) {
-    const message = await readApiErrorMessage(response, "Failed to submit question")
-    throw new Error(message)
-  }
 }
 
 export async function submitProductAnswer(params: {
@@ -32,20 +29,17 @@ export async function submitProductAnswer(params: {
   productQuestionId: string
   answer: string
 }): Promise<void> {
-  const response = await fetch("/api/product-answers", {
+  await apiRequest.requestJson<void>({
+    client: "app",
     method: "POST",
+    url: "/api/product-answers",
     headers: {
-      "Content-Type": "application/json",
       ...(params.accessToken ? { Authorization: `Bearer ${params.accessToken}` } : {}),
     },
-    body: JSON.stringify({
+    data: {
       productQuestionId: params.productQuestionId,
       answer: params.answer,
-    }),
+    },
+    fallbackMessage: "Failed to submit answer",
   })
-
-  if (!response.ok) {
-    const message = await readApiErrorMessage(response, "Failed to submit answer")
-    throw new Error(message)
-  }
 }

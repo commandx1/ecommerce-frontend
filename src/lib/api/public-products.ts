@@ -1,3 +1,5 @@
+import { apiRequest } from "./request"
+
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 export type PublicProductsResponse<TProduct = unknown> = {
@@ -18,38 +20,39 @@ export async function getPublicProducts<TProduct = unknown>(
   size = 10,
 ): Promise<PublicProductsResponse<TProduct>> {
   const baseUrl = requireBackendUrl()
-  const res = await fetch(`${baseUrl}/api/products/public?page=${page}&size=${size}`, {
-    cache: "no-store",
-    headers: {
-      "Content-Type": "application/json",
-    },
+  return apiRequest.requestJson<PublicProductsResponse<TProduct>>({
+    client: "app",
+    method: "GET",
+    url: `${baseUrl}/api/products/public`,
+    params: { page, size },
+    fallbackMessage: "Failed to fetch products",
   })
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch products")
-  }
-
-  return res.json()
 }
 
 export async function getProductBrands(): Promise<string[]> {
   const baseUrl = requireBackendUrl()
-  const res = await fetch(`${baseUrl}/api/products/brands`, {
-    cache: "no-store",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  })
-  return res.ok ? res.json() : []
+  try {
+    return await apiRequest.requestJson<string[]>({
+      client: "app",
+      method: "GET",
+      url: `${baseUrl}/api/products/brands`,
+      fallbackMessage: "Failed to fetch product brands",
+    })
+  } catch {
+    return []
+  }
 }
 
 export async function getProductManufacturers(): Promise<string[]> {
   const baseUrl = requireBackendUrl()
-  const res = await fetch(`${baseUrl}/api/products/manufacturers`, {
-    cache: "no-store",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  })
-  return res.ok ? res.json() : []
+  try {
+    return await apiRequest.requestJson<string[]>({
+      client: "app",
+      method: "GET",
+      url: `${baseUrl}/api/products/manufacturers`,
+      fallbackMessage: "Failed to fetch product manufacturers",
+    })
+  } catch {
+    return []
+  }
 }

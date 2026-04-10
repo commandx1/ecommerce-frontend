@@ -1,6 +1,6 @@
 "use client"
 
-import { readApiErrorMessage } from "./api-error"
+import { apiRequest } from "./request"
 
 export async function createReview(params: {
   accessToken: string | null
@@ -9,24 +9,21 @@ export async function createReview(params: {
   title: string
   comment: string
 }): Promise<void> {
-  const response = await fetch("/api/reviews", {
+  await apiRequest.requestJson<void>({
+    client: "app",
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
       ...(params.accessToken ? { Authorization: `Bearer ${params.accessToken}` } : {}),
     },
-    body: JSON.stringify({
+    url: "/api/reviews",
+    data: {
       productId: params.productId,
       star: params.star,
       title: params.title,
       comment: params.comment,
-    }),
+    },
+    fallbackMessage: "Failed to submit review",
   })
-
-  if (!response.ok) {
-    const message = await readApiErrorMessage(response, "Failed to submit review")
-    throw new Error(message)
-  }
 }
 
 export async function updateReview(params: {
@@ -36,21 +33,18 @@ export async function updateReview(params: {
   title: string
   comment: string
 }): Promise<void> {
-  const response = await fetch(`/api/reviews/${params.reviewId}`, {
+  await apiRequest.requestJson<void>({
+    client: "app",
     method: "PUT",
     headers: {
-      "Content-Type": "application/json",
       ...(params.accessToken ? { Authorization: `Bearer ${params.accessToken}` } : {}),
     },
-    body: JSON.stringify({
+    url: `/api/reviews/${params.reviewId}`,
+    data: {
       star: params.star,
       title: params.title,
       comment: params.comment,
-    }),
+    },
+    fallbackMessage: "Failed to update review",
   })
-
-  if (!response.ok) {
-    const message = await readApiErrorMessage(response, "Failed to update review")
-    throw new Error(message)
-  }
 }

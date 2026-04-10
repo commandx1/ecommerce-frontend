@@ -1,5 +1,7 @@
 // Direct API calls to backend through Next.js rewrites (proxy)
 // This bypasses CORS issues and Mixed Content (HTTPS -> HTTP) by routing through same-origin
+import { appApiClient } from "./client"
+import { apiRequest } from "./request"
 
 const BASE_URL = "/backend-api"
 
@@ -72,202 +74,171 @@ export interface UpdateUserPayload {
 }
 
 class AuthAPIDirect {
-  private getAuthHeaders(token?: string) {
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
+  private getAuthHeaders(token?: string): Record<string, string> {
+    if (!token) {
+      return {}
     }
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`
+
+    return { Authorization: `Bearer ${token}` }
+  }
+
+  private normalizeSoftResponse(data: unknown) {
+    if (!data) {
+      return { success: true }
     }
-    return headers
+
+    if (typeof data === "string") {
+      try {
+        return JSON.parse(data) as Record<string, unknown>
+      } catch {
+        return { success: true }
+      }
+    }
+
+    if (typeof data === "object") {
+      return data
+    }
+
+    return { success: true }
   }
 
   async register(payload: RegisterPayload) {
-    const response = await fetch(`${BASE_URL}/users/register`, {
+    return apiRequest.requestJson({
+      client: "backend",
       method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(payload),
+      url: "/users/register",
+      data: payload,
+      fallbackMessage: "Failed to register user",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    return response.json()
   }
 
   async login(payload: LoginPayload) {
-    const response = await fetch(`${BASE_URL}/auth/login`, {
+    const response = await apiRequest.requestResponse<Record<string, unknown>, LoginPayload>({
+      client: "backend",
       method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(payload),
+      url: "/auth/login",
+      data: payload,
+      fallbackMessage: "Failed to sign in",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    const data = await response.json()
+    const data = response.data
 
     // Try to extract tokens from headers first, then fallback to response body
     const accessToken =
-      response.headers.get("Authorization")?.replace("Bearer ", "") ||
-      data.accessToken ||
-      data.token ||
-      data.access_token
-    const refreshToken = response.headers.get("X-Refresh-Token") || data.refreshToken || data.refresh_token
+      response.headers.authorization?.replace("Bearer ", "") || data.accessToken || data.token || data.access_token
+    const refreshToken = response.headers["x-refresh-token"] || data.refreshToken || data.refresh_token
 
     return { ...data, accessToken, refreshToken }
   }
 
   async verifyEmail(payload: { email: string; code: string }) {
-    const response = await fetch(`${BASE_URL}/mail/verify-email`, {
+    await apiRequest.requestJson<void, { email: string; code: string }>({
+      client: "backend",
       method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(payload),
+      url: "/mail/verify-email",
+      data: payload,
+      fallbackMessage: "Failed to verify email",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
   }
 
   async logout(payload: { refreshToken: string }, token: string) {
-    const response = await fetch(`${BASE_URL}/auth/logout`, {
+    await apiRequest.requestJson<void, { refreshToken: string }>({
+      client: "backend",
       method: "POST",
       headers: this.getAuthHeaders(token),
-      body: JSON.stringify(payload),
+      url: "/auth/logout",
+      data: payload,
+      fallbackMessage: "Failed to log out",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
   }
 
   async forgotPassword(payload: ForgotPasswordPayload) {
-    const response = await fetch(`${BASE_URL}/mail/forgot-password`, {
+    const response = await appApiClient.request({
       method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(payload),
+      url: `${BASE_URL}/mail/forgot-password`,
+      data: payload,
+      validateStatus: () => true,
     })
 
     // Don't throw on errors - the email might still be sent
     // Also handle empty responses gracefully
-    try {
-      const text = await response.text()
-      if (text) {
-        return JSON.parse(text)
-      }
-      return { success: true }
-    } catch {
-      return { success: true }
-    }
+    return this.normalizeSoftResponse(response.data)
   }
 
   async resetPassword(payload: ResetPasswordPayload) {
-    const response = await fetch(`${BASE_URL}/mail/reset-password`, {
+    const response = await appApiClient.request({
       method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(payload),
+      url: `${BASE_URL}/mail/reset-password`,
+      data: payload,
+      validateStatus: () => true,
     })
 
     // Don't throw on errors - handle empty responses gracefully
-    try {
-      const text = await response.text()
-      if (text) {
-        return JSON.parse(text)
-      }
-      return { success: true }
-    } catch {
-      return { success: true }
-    }
+    return this.normalizeSoftResponse(response.data)
   }
 
   async verify2FA(payload: Verify2FAPayload) {
-    const response = await fetch(`${BASE_URL}/auth/login/verify-2fa`, {
+    const response = await apiRequest.requestResponse<Record<string, unknown>, Verify2FAPayload>({
+      client: "backend",
       method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(payload),
+      url: "/auth/login/verify-2fa",
+      data: payload,
+      fallbackMessage: "Failed to verify two-factor code",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    const data = await response.json()
+    const data = response.data
 
     // Try to extract tokens from headers
-    const accessToken = response.headers.get("Authorization")?.replace("Bearer ", "")
-    const refreshToken = response.headers.get("X-Refresh-Token")
+    const accessToken = response.headers.authorization?.replace("Bearer ", "")
+    const refreshToken = response.headers["x-refresh-token"]
 
     return { ...data, accessToken, refreshToken }
   }
 
   async refreshToken(payload: { refreshToken: string }) {
-    const response = await fetch(`${BASE_URL}/auth/refresh-token`, {
+    const response = await apiRequest.requestResponse<Record<string, unknown>, { refreshToken: string }>({
+      client: "backend",
       method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(payload),
+      url: "/auth/refresh-token",
+      data: payload,
+      fallbackMessage: "Failed to refresh token",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    const data = await response.json()
+    const data = response.data
 
     // Try to extract tokens from headers
-    const accessToken = response.headers.get("Authorization")?.replace("Bearer ", "")
-    const newRefreshToken = response.headers.get("X-Refresh-Token")
+    const accessToken = response.headers.authorization?.replace("Bearer ", "")
+    const newRefreshToken = response.headers["x-refresh-token"]
 
     return { ...data, accessToken, refreshToken: newRefreshToken }
   }
 
   async getMe(token: string): Promise<UserResponse> {
-    const response = await fetch(`${BASE_URL}/users/me`, {
+    return apiRequest.requestJson<UserResponse>({
+      client: "backend",
       method: "GET",
       headers: this.getAuthHeaders(token),
+      url: "/users/me",
+      fallbackMessage: "Failed to fetch user profile",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    return response.json()
   }
 
   async updateMe(payload: UpdateUserPayload, token: string): Promise<UserResponse> {
-    const response = await fetch(`${BASE_URL}/users/me`, {
+    return apiRequest.requestJson<UserResponse, UpdateUserPayload>({
+      client: "backend",
       method: "PUT",
       headers: this.getAuthHeaders(token),
-      body: JSON.stringify(payload),
+      url: "/users/me",
+      data: payload,
+      fallbackMessage: "Failed to update user profile",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
-
-    return response.json()
   }
 
   async deleteMe(token: string): Promise<void> {
-    const response = await fetch(`${BASE_URL}/users/me`, {
+    await apiRequest.requestJson<void>({
+      client: "backend",
       method: "DELETE",
       headers: this.getAuthHeaders(token),
+      url: "/users/me",
+      fallbackMessage: "Failed to delete user profile",
     })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw error
-    }
   }
 }
 

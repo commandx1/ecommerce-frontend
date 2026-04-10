@@ -17,9 +17,9 @@ const STATS: Array<{ value: string; label: string }> = [
 
 export default function LoginSidebar() {
   return (
-    <div className="flex flex-col justify-center bg-linear-to-br from-brand-surface via-brand to-brand-strong p-12">
+    <div className="flex flex-col justify-center bg-linear-to-br from-brand-surface via-brand to-brand-strong p-12 dark:from-surface dark:via-surface-elevated dark:to-surface-muted">
       <div className="mb-8 text-inverse-foreground">
-        <h2 className="text-3xl font-bold mb-4">Welcome to the Professional Network</h2>
+        <h2 className="text-3xl font-bold mb-4 text-inverse-muted">Welcome to the Professional Network</h2>
         <p className="mb-6 text-lg leading-relaxed text-inverse-muted">
           Connect with thousands of verified dental professionals and access exclusive pricing, certified suppliers, and
           industry-leading products.
@@ -29,15 +29,15 @@ export default function LoginSidebar() {
       <div className="space-y-4 mb-8">
         {BENEFITS.map(({ icon: Icon, label }) => (
           <div key={label} className="flex items-center text-inverse-foreground">
-            <div className="mr-4 flex h-8 w-8 items-center justify-center rounded-full bg-accent-strong/90">
-              <Icon className="h-4 w-4 text-brand-strong" />
+            <div className="mr-4 flex h-8 w-8 items-center justify-center rounded-full bg-accent-strong/90 dark:bg-brand/20">
+              <Icon className="h-4 w-4 text-brand-strong dark:text-accent-strong" />
             </div>
             <span>{label}</span>
           </div>
         ))}
       </div>
 
-      <div className="rounded-2xl border border-inverse-foreground/15 bg-inverse-foreground/10 p-6 backdrop-blur-sm">
+      <div className="rounded-2xl border border-inverse-foreground/15 bg-inverse-foreground/10 p-6 backdrop-blur-sm dark:border-border-soft/70 dark:bg-surface/70">
         <h3 className="mb-4 text-lg font-semibold text-inverse-foreground">Trusted by Professionals</h3>
         <div className="grid grid-cols-2 gap-4">
           {STATS.map(({ value, label }) => (

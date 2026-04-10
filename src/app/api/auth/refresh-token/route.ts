@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
+import { serverRequest } from "@/lib/api/server-request"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://51.20.96.242:8080"
 
@@ -9,7 +10,7 @@ export async function POST(request: NextRequest) {
     const refreshTokenValue = body.refreshToken
 
     // MIDDLEWARE'DA ÇALIŞAN MANTIK: Manuel Cookie Header'ı ekliyoruz
-    const response = await fetch(`${BACKEND_URL}/api/auth/refresh-token`, {
+    const response = await serverRequest(`${BACKEND_URL}/api/auth/refresh-token`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -46,8 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     return nextResponse
-  } catch (error) {
-    console.error("Refresh token error:", error)
+  } catch {
     return NextResponse.json({ message: "Internal server error" }, { status: 500 })
   }
 }

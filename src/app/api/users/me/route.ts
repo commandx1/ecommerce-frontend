@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { serverRequest } from "@/lib/api/server-request"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
@@ -11,7 +12,7 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json()
 
-    const response = await fetch(`${BACKEND_URL}/api/users/me`, {
+    const response = await serverRequest(`${BACKEND_URL}/api/users/me`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -27,7 +28,7 @@ export async function PUT(request: NextRequest) {
 
     const data = await response.json()
     return NextResponse.json(data)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
@@ -39,7 +40,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/users/me`, {
+    const response = await serverRequest(`${BACKEND_URL}/api/users/me`, {
       method: "DELETE",
       headers: {
         Authorization: authHeader,
@@ -52,7 +53,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

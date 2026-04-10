@@ -2,9 +2,10 @@ import type { ComponentProps } from "react"
 
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
+import { textLikeControlClassName } from "./controlStyles"
 import { FormField } from "./FormField"
 
-const baseTextAreaClassName = "w-full resize-none rounded-2xl px-4 py-3"
+const baseTextAreaClassName = cn("w-full resize-none rounded-2xl px-4 py-3", textLikeControlClassName)
 
 interface TextAreaFieldProps extends Omit<ComponentProps<"textarea">, "className"> {
   label: string

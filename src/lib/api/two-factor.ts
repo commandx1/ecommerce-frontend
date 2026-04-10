@@ -1,5 +1,7 @@
 "use client"
 
+import { apiRequest } from "./request"
+
 export type Verify2FAResponse = {
   accessToken?: string
   refreshToken?: string
@@ -23,16 +25,11 @@ export async function verifyTwoFactorLogin(params: {
   code: string
   device: string
 }): Promise<Verify2FAResponse> {
-  const response = await fetch("/api/auth/login/verify-2fa", {
+  return apiRequest.requestJson<Verify2FAResponse>({
+    client: "app",
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params),
+    url: "/api/auth/login/verify-2fa",
+    data: params,
+    fallbackMessage: "Invalid verification code.",
   })
-
-  const data: Verify2FAResponse = await response.json()
-  if (!response.ok) {
-    throw new Error(data.error || data.message || "Invalid verification code.")
-  }
-
-  return data
 }

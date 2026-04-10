@@ -13,7 +13,7 @@ export async function GET(_request: NextRequest, { params }: ProductRouteContext
       method: "GET",
     })
 
-    if (!response.ok) {
+    if (response.status < 200 || response.status >= 300) {
       return buildErrorResponse(response)
     }
 
@@ -47,7 +47,7 @@ export async function PUT(request: NextRequest, { params }: ProductRouteContext)
       body,
     })
 
-    if (!response.ok) {
+    if (response.status < 200 || response.status >= 300) {
       return buildErrorResponse(response)
     }
 
@@ -79,7 +79,7 @@ export async function DELETE(request: NextRequest, { params }: ProductRouteConte
       authHeader,
     })
 
-    if (!response.ok) {
+    if (response.status < 200 || response.status >= 300) {
       return buildErrorResponse(response)
     }
 

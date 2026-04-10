@@ -1,4 +1,5 @@
 import { create } from "zustand"
+import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
 import { type CartItem, cartAPI } from "@/lib/api/cart"
 
 interface CartStore {
@@ -42,12 +43,20 @@ export const useCartStore = create<CartStore>((set, get) => ({
         cartCount: cart.cartItems.reduce((acc, item) => acc + item.quantity, 0),
         isLoading: false,
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
+      if (isAuthHandledError(error)) {
+        set({ isLoading: false })
+        return
+      }
+
+      const status = extractErrorStatus(error)
+
       // If 400 or 404, it might mean no cart exists yet
-      if (error.status === 400 || error.status === 404) {
+      if (status === 400 || status === 404) {
         set({ items: [], cartCount: 0, cartId: null, isLoading: false })
       } else {
-        set({ error: error.message || "Failed to fetch cart", isLoading: false })
+        const message = error instanceof Error ? error.message : "Failed to fetch cart"
+        set({ error: message, isLoading: false })
       }
     }
   },
@@ -57,13 +66,19 @@ export const useCartStore = create<CartStore>((set, get) => ({
     try {
       await cartAPI.addItem(userProductId, quantity)
       await get().fetchCart()
-    } catch (error: any) {
-      const status = error?.response?.status
+    } catch (error: unknown) {
       set({ isLoading: false })
-      if (status === 403) {
+      if (isAuthHandledError(error)) {
         throw error
       }
-      set({ error: error?.message || "Failed to add item" })
+
+      const status = extractErrorStatus(error)
+      if (isAuthErrorStatus(status)) {
+        throw error
+      }
+
+      const message = error instanceof Error ? error.message : "Failed to add item"
+      set({ error: message })
     }
   },
 
@@ -72,8 +87,14 @@ export const useCartStore = create<CartStore>((set, get) => ({
     try {
       await cartAPI.removeItem(userProductId)
       await get().fetchCart()
-    } catch (error: any) {
-      set({ error: error.message || "Failed to remove item", isLoading: false })
+    } catch (error: unknown) {
+      if (isAuthHandledError(error)) {
+        set({ isLoading: false })
+        return
+      }
+
+      const message = error instanceof Error ? error.message : "Failed to remove item"
+      set({ error: message, isLoading: false })
     }
   },
 
@@ -86,8 +107,14 @@ export const useCartStore = create<CartStore>((set, get) => ({
     try {
       await cartAPI.updateItemQuantity(userProductId, quantity)
       await get().fetchCart()
-    } catch (error: any) {
-      set({ error: error.message || "Failed to update quantity", isLoading: false })
+    } catch (error: unknown) {
+      if (isAuthHandledError(error)) {
+        set({ isLoading: false })
+        return
+      }
+
+      const message = error instanceof Error ? error.message : "Failed to update quantity"
+      set({ error: message, isLoading: false })
     }
   },
 
@@ -98,8 +125,14 @@ export const useCartStore = create<CartStore>((set, get) => ({
     try {
       await cartAPI.clearCart(cartId)
       set({ items: [], cartCount: 0, cartId: null, isLoading: false })
-    } catch (error: any) {
-      set({ error: error.message || "Failed to clear cart", isLoading: false })
+    } catch (error: unknown) {
+      if (isAuthHandledError(error)) {
+        set({ isLoading: false })
+        return
+      }
+
+      const message = error instanceof Error ? error.message : "Failed to clear cart"
+      set({ error: message, isLoading: false })
     }
   },
 }))

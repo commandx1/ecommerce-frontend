@@ -1,9 +1,10 @@
 import { type ChangeEvent, Children, type ComponentProps, isValidElement } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { textLikeControlClassName } from "./controlStyles"
 import { FormField } from "./FormField"
 
-const baseSelectClassName = "w-full"
+const baseSelectClassName = cn("w-full", textLikeControlClassName)
 
 interface SelectFieldProps extends Omit<ComponentProps<"select">, "className"> {
   label: string
@@ -70,15 +71,7 @@ export const SelectField = ({
         disabled={disabled}
         required={required}
       >
-        <SelectTrigger
-          id={id}
-          className={cn(
-            baseSelectClassName,
-            error ? "border-danger" : "",
-            disabled ? "opacity-60" : "",
-            selectClassName,
-          )}
-        >
+        <SelectTrigger id={id} className={cn(baseSelectClassName, error ? "border-danger" : "", selectClassName)}>
           <SelectValue placeholder={fallbackPlaceholder} />
         </SelectTrigger>
         <SelectContent>

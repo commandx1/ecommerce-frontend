@@ -1,7 +1,7 @@
 "use client"
 
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime"
-import { handleApiError } from "@/lib/utils/api-error-handler"
+import { apiRequest } from "@/lib/api/request"
 
 export interface ProductStats {
   totalProducts: number
@@ -15,13 +15,15 @@ export async function fetchUserProductStats(params: {
   accessToken: string
   router: AppRouterInstance
 }): Promise<ProductStats> {
-  const response = await fetch("/api/user-products/stats", {
+  void params.router
+
+  return apiRequest.requestJson<ProductStats>({
+    client: "app",
+    method: "GET",
+    url: "/api/user-products/stats",
     headers: {
       Authorization: `Bearer ${params.accessToken}`,
-      "Content-Type": "application/json",
     },
+    fallbackMessage: "Failed to fetch product stats",
   })
-
-  await handleApiError(response, params.router)
-  return response.json()
 }
