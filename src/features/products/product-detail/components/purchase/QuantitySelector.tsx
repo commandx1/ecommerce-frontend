@@ -1,4 +1,5 @@
 import { Minus, Plus } from "lucide-react"
+import { useId } from "react"
 import { Input } from "@/components/ui/input"
 
 interface QuantitySelectorProps {
@@ -16,40 +17,42 @@ const QuantitySelector = ({
   onIncrement,
   onDecrement,
 }: QuantitySelectorProps) => {
+  const inputId = useId()
+
   return (
     <div>
-      <label htmlFor="quantity-input" className="block text-sm font-medium text-gray-700 mb-2">
+      <label htmlFor={inputId} className="mb-2 block text-sm font-medium text-text-primary">
         Quantity
       </label>
       <div className="flex items-center space-x-4">
-        <div className="flex items-center border border-gray-300 rounded-lg">
+        <div className="flex items-center rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
           <button
             type="button"
             onClick={onDecrement}
-            className="px-4 py-2 text-gray-600 hover:text-steel-blue transition-colors disabled:opacity-30"
+            className="px-4 py-2 text-text-secondary transition-colors hover:text-brand disabled:opacity-30"
             disabled={quantity <= 1}
           >
             <Minus className="w-4 h-4" />
           </button>
           <Input
-            id="quantity-input"
+            id={inputId}
             type="number"
             value={quantity}
             min={1}
             max={stockCount || 1}
             onChange={(event) => onQuantityChange(Number.parseInt(event.target.value, 10) || 1)}
-            className="h-10 w-20 px-4 py-2 text-center bg-white border-0 focus-visible:ring-2 focus-visible:ring-steel-blue"
+            className="h-10 w-20 border-x border-y-0 border-border-soft bg-transparent px-4 py-2 text-center shadow-none focus-visible:border-transparent focus-visible:ring-0"
           />
           <button
             type="button"
             onClick={onIncrement}
-            className="px-4 py-2 text-gray-600 hover:text-steel-blue transition-colors disabled:opacity-30"
+            className="px-4 py-2 text-text-secondary transition-colors hover:text-brand disabled:opacity-30"
             disabled={quantity >= stockCount}
           >
             <Plus className="w-4 h-4" />
           </button>
         </div>
-        <span className="text-gray-600">Units available: {stockCount}</span>
+        <span className="text-text-secondary">Units available: {stockCount}</span>
       </div>
     </div>
   )

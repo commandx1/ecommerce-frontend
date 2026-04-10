@@ -9,13 +9,13 @@ interface ContactSupportChannelCardProps {
 
 const ContactSupportChannelCard = ({ title, description, value, Icon }: ContactSupportChannelCardProps) => {
   return (
-    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-      <div className="w-12 h-12 bg-pale-lime rounded-lg flex items-center justify-center mb-4">
-        <Icon className="text-steel-blue w-6 h-6" />
+    <div className="rounded-[1.35rem] border border-white/12 bg-white/8 p-6 backdrop-blur-sm">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-strong text-accent-foreground">
+        <Icon className="h-6 w-6" />
       </div>
-      <h3 className="text-lg font-semibold mb-2">{title}</h3>
-      <p className="text-blue-100 text-sm mb-3">{description}</p>
-      <p className="text-pale-lime font-semibold">{value}</p>
+      <h3 className="text-lg font-semibold mb-2 text-inverse-muted">{title}</h3>
+      <p className="mb-3 text-sm text-inverse-muted">{description}</p>
+      <p className="font-semibold text-accent-strong">{value}</p>
     </div>
   )
 }

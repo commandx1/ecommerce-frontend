@@ -9,10 +9,10 @@ interface PaymentMethodSectionProps {
 }
 
 function PaymentMethodIcon({ icon }: { icon: PaymentMethodOption["icon"] }) {
-  if (icon === "card") return <CreditCard className="text-steel-blue w-5 h-5 mr-3" />
-  if (icon === "file") return <FileText className="text-steel-blue w-5 h-5 mr-3" />
-  if (icon === "bank") return <University className="text-steel-blue w-5 h-5 mr-3" />
-  return <TrendingUp className="text-steel-blue w-5 h-5 mr-3" />
+  if (icon === "card") return <CreditCard className="mr-3 h-5 w-5 text-brand" />
+  if (icon === "file") return <FileText className="mr-3 h-5 w-5 text-brand" />
+  if (icon === "bank") return <University className="mr-3 h-5 w-5 text-brand" />
+  return <TrendingUp className="mr-3 h-5 w-5 text-brand" />
 }
 
 export default function PaymentMethodSection({
@@ -22,15 +22,15 @@ export default function PaymentMethodSection({
 }: PaymentMethodSectionProps) {
   return (
     <div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">Payment Method</h3>
+      <h3 className="mb-6 text-lg font-semibold text-text-primary">Payment Method</h3>
       <div className="space-y-4">
         {paymentOptions.map((option) => (
           <label
             key={option.type}
-            className={`flex items-center border rounded-xl p-4 transition-colors cursor-pointer ${
+            className={`flex cursor-pointer items-center rounded-xl border p-4 transition-colors ${
               paymentMethod.type === option.type
-                ? "border-steel-blue bg-gray-50"
-                : "border-gray-300 hover:border-steel-blue"
+                ? "border-brand bg-accent"
+                : "border-border-soft bg-surface-elevated hover:border-brand"
             }`}
           >
             <input
@@ -39,19 +39,21 @@ export default function PaymentMethodSection({
               value={option.type}
               checked={paymentMethod.type === option.type}
               onChange={() => updatePaymentMethod({ type: option.type })}
-              className="w-5 h-5 text-steel-blue focus:ring-steel-blue border-gray-300"
+              className="h-5 w-5 border-border-strong text-brand focus:ring-brand"
             />
             <div className="ml-4 flex-1">
               <div className="flex items-center">
                 <PaymentMethodIcon icon={option.icon} />
-                <span className="font-medium text-gray-900">{option.title}</span>
+                <span className="font-medium text-text-primary">{option.title}</span>
                 {option.badge ? (
                   <span className={`ml-2 px-2 py-1 text-xs rounded-full font-medium ${option.badge.className}`}>
                     {option.badge.label}
                   </span>
                 ) : null}
               </div>
-              {option.description ? <div className="text-sm text-gray-600 mt-1 ml-8">{option.description}</div> : null}
+              {option.description ? (
+                <div className="ml-8 mt-1 text-sm text-text-secondary">{option.description}</div>
+              ) : null}
             </div>
           </label>
         ))}

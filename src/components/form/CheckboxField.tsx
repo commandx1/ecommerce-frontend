@@ -23,10 +23,10 @@ export const CheckboxField = ({
     <div className={cn("flex items-start gap-3", containerClassName)}>
       <Checkbox id={id} className={checkboxClassName} disabled={disabled} {...props} />
       <div className="space-y-1">
-        <Label htmlFor={id} className="text-sm font-medium text-gray-700">
+        <Label htmlFor={id} className="text-sm font-medium text-text-secondary">
           {label}
         </Label>
-        {description && <p className="text-xs text-gray-500">{description}</p>}
+        {description && <p className="text-xs text-text-muted">{description}</p>}
       </div>
     </div>
   )

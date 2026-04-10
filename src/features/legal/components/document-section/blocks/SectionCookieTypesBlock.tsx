@@ -7,18 +7,21 @@ interface SectionCookieTypesProps {
 
 export default function SectionCookieTypesBlock({ cookies }: SectionCookieTypesProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
       {cookies.map((cookie) => {
         const CookieIcon = iconMap[cookie.icon]
         return (
-          <div key={cookie.title} className="bg-gray-50 p-4 rounded-xl text-center">
+          <div
+            key={cookie.title}
+            className="rounded-[1.2rem] border border-border-soft bg-surface-muted/70 p-4 text-center"
+          >
             {CookieIcon ? (
-              <div className="w-12 h-12 bg-steel-blue rounded-full flex items-center justify-center mx-auto mb-3">
-                <CookieIcon className="text-white w-6 h-6" />
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand text-primary-foreground">
+                <CookieIcon className="h-6 w-6" />
               </div>
             ) : null}
-            <h4 className="font-semibold text-steel-blue mb-2">{cookie.title}</h4>
-            <p className="text-xs text-gray-600">{cookie.description}</p>
+            <h4 className="mb-2 font-semibold text-text-primary">{cookie.title}</h4>
+            <p className="text-xs text-text-secondary">{cookie.description}</p>
           </div>
         )
       })}

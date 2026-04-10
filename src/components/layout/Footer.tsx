@@ -3,175 +3,139 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Logo from "./Logo"
 
+const PRODUCT_LINKS = [
+  ["Dental Instruments", "/dental-instruments"],
+  ["Restorative Materials", "/restorative-materials"],
+  ["Digital Imaging", "/digital-imaging"],
+  ["Orthodontics", "/orthodontics"],
+  ["Lab Equipment", "/lab-equipment"],
+  ["Office Equipment", "/office-equipment"],
+] as const
+
+const SERVICE_LINKS = [
+  ["Supplier Network", "/supplier-network"],
+  ["Lab Services", "/lab-services"],
+  ["Equipment Installation", "/equipment-installation"],
+  ["Training Programs", "/training-programs"],
+  ["Technical Support", "/technical-support"],
+  ["Financing Options", "/financing-options"],
+] as const
+
+const SUPPORT_LINKS = [
+  ["Legal", "/legal"],
+  ["Help Center", "/help-center"],
+  ["Contact Us", "/contact-us"],
+  ["Order Tracking", "/order-tracking"],
+  ["Returns & Exchanges", "/returns-and-exchanges"],
+  ["Shipping Information", "/shipping-information"],
+  ["Account Management", "/account-management"],
+] as const
+
+const POLICY_LINKS = [
+  ["Privacy Policy", "/privacy-policy"],
+  ["Terms of Service", "/terms-of-service"],
+  ["HIPAA Compliance", "/hipaa-compliance"],
+  ["Cookie Policy", "/cookie-policy"],
+] as const
+
+const SOCIAL_LINKS = [
+  { icon: Facebook, label: "Facebook", href: "https://facebook.com" },
+  { icon: Twitter, label: "X", href: "https://x.com" },
+  { icon: Linkedin, label: "LinkedIn", href: "https://linkedin.com" },
+  { icon: Instagram, label: "Instagram", href: "https://instagram.com" },
+] as const
+
+function FooterLinkColumn({ title, links }: { title: string; links: readonly (readonly [string, string])[] }) {
+  return (
+    <div>
+      <h3 className="mb-4 text-lg font-semibold text-text-primary dark:text-inverse-foreground">{title}</h3>
+      <ul className="space-y-3">
+        {links.map(([label, href]) => (
+          <li key={href}>
+            <Link
+              href={href}
+              className="text-text-secondary transition-colors hover:text-brand dark:text-inverse-muted dark:hover:text-inverse-foreground"
+            >
+              {label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 const Footer = () => {
   return (
-    <footer id="footer" className="bg-gray-900 text-white py-16">
-      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+    <footer className="border-t border-border-soft bg-surface-muted/75 dark:bg-brand-surface">
+      <div className="app-container mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
+        <div className="grid grid-cols-1 gap-8 py-16 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
-            <div className="flex items-center mb-6">
+            <div className="mb-6 flex items-center gap-3">
               <Logo />
-              <span className="ml-3 text-2xl font-bold text-white">DentyPro</span>
+              <div>
+                <span className="block font-display text-3xl font-semibold text-text-primary dark:text-inverse-foreground">
+                  DentyPro
+                </span>
+                <span className="mt-1 block text-[0.7rem] uppercase tracking-[0.28em] text-text-muted dark:text-inverse-muted">
+                  Clinical Supply Network
+                </span>
+              </div>
             </div>
-            <p className="text-gray-300 mb-6 leading-relaxed">
+
+            <p className="mb-6 max-w-xl leading-relaxed text-text-secondary dark:text-inverse-muted">
               The leading B2B marketplace for dental professionals in the United States. Connect with verified
               suppliers, access competitive pricing, and streamline your practice procurement.
             </p>
-            <div className="flex space-x-4">
-              <Button
-                size="icon"
-                className="from-gray-700 via-gray-700/60 to-gray-700 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 bg-transparent bg-linear-to-r bg-size-[200%_auto] text-white hover:bg-transparent hover:bg-position-[99%_center]"
-              >
-                <Facebook />
-              </Button>
-              <Button
-                size="icon"
-                className="from-gray-700 via-gray-700/60 to-gray-700 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 bg-transparent bg-linear-to-r bg-size-[200%_auto] text-white hover:bg-transparent hover:bg-position-[99%_center]"
-              >
-                <Twitter />
-              </Button>
-              <Button
-                size="icon"
-                className="from-gray-700 via-gray-700/60 to-gray-700 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 bg-transparent bg-linear-to-r bg-size-[200%_auto] text-white hover:bg-transparent hover:bg-position-[99%_center]"
-              >
-                <Linkedin />
-              </Button>
-              <Button
-                size="icon"
-                className="from-gray-700 via-gray-700/60 to-gray-700 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 bg-transparent bg-linear-to-r bg-size-[200%_auto] text-white hover:bg-transparent hover:bg-position-[99%_center]"
-              >
-                <Instagram />
-              </Button>
+
+            <div className="mb-8 flex flex-wrap gap-3">
+              <span className="rounded-full border border-border-soft bg-surface-elevated px-3 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.24em] text-text-primary dark:border-white/14 dark:bg-white/12 dark:text-inverse-foreground">
+                Verified sourcing
+              </span>
+              <span className="rounded-full border border-border-soft bg-surface-elevated px-3 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.24em] text-text-primary dark:border-white/14 dark:bg-white/12 dark:text-inverse-foreground">
+                HIPAA-aware support
+              </span>
+              <span className="rounded-full border border-border-soft bg-surface-elevated px-3 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.24em] text-text-primary dark:border-white/14 dark:bg-white/12 dark:text-inverse-foreground">
+                Procurement ready
+              </span>
+            </div>
+
+            <div className="flex gap-4">
+              {SOCIAL_LINKS.map(({ icon: Icon, label, href }) => (
+                <Button
+                  key={label}
+                  asChild
+                  size="icon"
+                  variant="quiet"
+                  className="border border-border-soft bg-surface-elevated text-text-primary hover:border-brand/25 hover:bg-surface hover:text-brand dark:border-white/14 dark:bg-white/12 dark:text-inverse-foreground dark:hover:border-white/22 dark:hover:bg-white/18 dark:hover:text-inverse-foreground"
+                >
+                  <Link href={href} aria-label={label}>
+                    <Icon />
+                  </Link>
+                </Button>
+              ))}
             </div>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Products</h3>
-            <ul className="space-y-3">
-              <li>
-                <Link href="/dental-instruments" className="text-gray-300 hover:text-white transition-colors">
-                  Dental Instruments
-                </Link>
-              </li>
-              <li>
-                <Link href="/restorative-materials" className="text-gray-300 hover:text-white transition-colors">
-                  Restorative Materials
-                </Link>
-              </li>
-              <li>
-                <Link href="/digital-imaging" className="text-gray-300 hover:text-white transition-colors">
-                  Digital Imaging
-                </Link>
-              </li>
-              <li>
-                <Link href="/orthodontics" className="text-gray-300 hover:text-white transition-colors">
-                  Orthodontics
-                </Link>
-              </li>
-              <li>
-                <Link href="/lab-equipment" className="text-gray-300 hover:text-white transition-colors">
-                  Lab Equipment
-                </Link>
-              </li>
-              <li>
-                <Link href="/office-equipment" className="text-gray-300 hover:text-white transition-colors">
-                  Office Equipment
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Services</h3>
-            <ul className="space-y-3">
-              <li>
-                <Link href="/supplier-network" className="text-gray-300 hover:text-white transition-colors">
-                  Supplier Network
-                </Link>
-              </li>
-              <li>
-                <Link href="/lab-services" className="text-gray-300 hover:text-white transition-colors">
-                  Lab Services
-                </Link>
-              </li>
-              <li>
-                <Link href="/equipment-installation" className="text-gray-300 hover:text-white transition-colors">
-                  Equipment Installation
-                </Link>
-              </li>
-              <li>
-                <Link href="/training-programs" className="text-gray-300 hover:text-white transition-colors">
-                  Training Programs
-                </Link>
-              </li>
-              <li>
-                <Link href="/technical-support" className="text-gray-300 hover:text-white transition-colors">
-                  Technical Support
-                </Link>
-              </li>
-              <li>
-                <Link href="/financing-options" className="text-gray-300 hover:text-white transition-colors">
-                  Financing Options
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Support</h3>
-            <ul className="space-y-3">
-              <li>
-                <Link href="/legal" className="text-gray-300 hover:text-white transition-colors">
-                  Legal
-                </Link>
-              </li>
-              <li>
-                <Link href="/help-center" className="text-gray-300 hover:text-white transition-colors">
-                  Help Center
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact-us" className="text-gray-300 hover:text-white transition-colors">
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/order-tracking" className="text-gray-300 hover:text-white transition-colors">
-                  Order Tracking
-                </Link>
-              </li>
-              <li>
-                <Link href="/returns-and-exchanges" className="text-gray-300 hover:text-white transition-colors">
-                  Returns &amp; Exchanges
-                </Link>
-              </li>
-              <li>
-                <Link href="/shipping-information" className="text-gray-300 hover:text-white transition-colors">
-                  Shipping Information
-                </Link>
-              </li>
-              <li>
-                <Link href="/account-management" className="text-gray-300 hover:text-white transition-colors">
-                  Account Management
-                </Link>
-              </li>
-            </ul>
-          </div>
+
+          <FooterLinkColumn title="Products" links={PRODUCT_LINKS} />
+          <FooterLinkColumn title="Services" links={SERVICE_LINKS} />
+          <FooterLinkColumn title="Support" links={SUPPORT_LINKS} />
         </div>
-        <div className="border-t border-gray-800 mt-12 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex space-x-6 mb-4 md:mb-0">
-              <Link href="/privacy-policy" className="text-gray-300 hover:text-white text-sm transition-colors">
-                Privacy Policy
-              </Link>
-              <Link href="/terms-of-service" className="text-gray-300 hover:text-white text-sm transition-colors">
-                Terms of Service
-              </Link>
-              <Link href="/hipaa-compliance" className="text-gray-300 hover:text-white text-sm transition-colors">
-                HIPAA Compliance
-              </Link>
-              <Link href="/cookie-policy" className="text-gray-300 hover:text-white text-sm transition-colors">
-                Cookie Policy
-              </Link>
+
+        <div className="mt-4 border-t border-border-soft py-8 dark:border-white/10">
+          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+            <div className="flex flex-wrap justify-center gap-6 md:justify-start">
+              {POLICY_LINKS.map(([label, href]) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="text-sm text-text-muted transition-colors hover:text-brand dark:text-inverse-muted dark:hover:text-inverse-foreground"
+                >
+                  {label}
+                </Link>
+              ))}
             </div>
-            <div className="text-gray-300 text-sm">© 2025 DentyPro. All rights reserved.</div>
+            <div className="text-sm text-text-muted dark:text-inverse-muted">© 2026 DentyPro. All rights reserved.</div>
           </div>
         </div>
       </div>

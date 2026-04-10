@@ -85,12 +85,12 @@ export default function WriteReviewModal({ productId, isOpen, onClose, onSuccess
       closeOnOverlayClick={false}
     >
       <div>
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-          <h3 className="text-2xl font-bold text-steel-blue">Write a Review</h3>
+        <div className="flex items-center justify-between border-b border-border-soft p-6">
+          <h3 className="text-2xl font-semibold text-text-primary">Write a Review</h3>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-text-muted transition-colors hover:text-text-primary"
             disabled={isSubmitting}
           >
             <X className="w-6 h-6" />
@@ -105,7 +105,7 @@ export default function WriteReviewModal({ productId, isOpen, onClose, onSuccess
           {isAuthenticated && (
             <>
               <div>
-                <p className="block text-sm font-medium text-gray-700 mb-2">Your Rating *</p>
+                <p className="mb-2 block text-sm font-medium text-text-primary">Your Rating *</p>
                 <div className="flex items-center space-x-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
@@ -121,13 +121,13 @@ export default function WriteReviewModal({ productId, isOpen, onClose, onSuccess
                         className={`w-8 h-8 ${
                           star <= (hoveredRating || rating)
                             ? "fill-yellow-400 text-yellow-400"
-                            : "fill-none text-gray-300"
+                            : "fill-none text-text-muted"
                         }`}
                       />
                     </button>
                   ))}
                   {rating > 0 && (
-                    <span className="ml-2 text-gray-600 font-medium">
+                    <span className="ml-2 font-medium text-text-secondary">
                       {rating === 1 && "Poor"}
                       {rating === 2 && "Fair"}
                       {rating === 3 && "Good"}
@@ -159,7 +159,7 @@ export default function WriteReviewModal({ productId, isOpen, onClose, onSuccess
                   required
                   disabled={isSubmitting}
                 />
-                <p className="text-sm text-gray-500">{comment.length} characters</p>
+                <p className="text-sm text-text-muted">{comment.length} characters</p>
               </div>
 
               <div className="flex items-center justify-end space-x-4">

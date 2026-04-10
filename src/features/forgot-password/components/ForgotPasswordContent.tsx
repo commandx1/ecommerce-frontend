@@ -2,6 +2,7 @@
 
 import type { ChangeEvent } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
+import ThemeToggle from "@/components/theme/ThemeToggle"
 import ForgotPasswordForm from "@/features/forgot-password/components/ForgotPasswordForm"
 import ForgotPasswordInfoPanel from "@/features/forgot-password/components/ForgotPasswordInfoPanel"
 import ForgotPasswordSuccess from "@/features/forgot-password/components/ForgotPasswordSuccess"
@@ -16,6 +17,9 @@ export default function ForgotPasswordContent() {
 
   return (
     <div className="font-inter bg-gray-50 min-h-screen">
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
       <PageSectionContainer as="section" className="py-16 bg-gray-50 min-h-screen flex items-center">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center w-full">
           <ForgotPasswordInfoPanel />

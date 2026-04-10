@@ -12,9 +12,9 @@ interface ProductHeroProps {
 
 const ProductHero = ({ product, selectedSupplier }: ProductHeroProps) => {
   return (
-    <section className="bg-white py-8">
+    <section className="bg-canvas py-8 md:py-10">
       <PageSectionContainer as="div">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <div className="grid gap-12 lg:grid-cols-[0.95fr_1.05fr]">
           <ProductHeroGallery
             title={product.title}
             sku={product.sku}

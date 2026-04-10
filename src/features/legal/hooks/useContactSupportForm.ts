@@ -26,9 +26,13 @@ const isBlank = (value: string) => value.trim().length === 0
 export const useContactSupportForm = () => {
   const [formData, setFormData] = useState<ContactSupportFormData>(INITIAL_FORM_DATA)
 
-  const handleChange = useCallback((event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = useCallback((event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+  }, [])
+
+  const handleTopicChange = useCallback((topic: string) => {
+    setFormData((prev) => ({ ...prev, topic }))
   }, [])
 
   const handleSubmit = useCallback(
@@ -50,6 +54,7 @@ export const useContactSupportForm = () => {
   return {
     formData,
     handleChange,
+    handleTopicChange,
     handleSubmit,
   }
 }

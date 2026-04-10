@@ -78,15 +78,15 @@ function TrackingProviderCard({
         >
           <HeaderIcon className={`w-6 h-6 sm:w-8 sm:h-8 ${iconClass}`} />
         </div>
-        <h3 className="text-xl sm:text-2xl font-bold text-steel-blue">{title}</h3>
+        <h3 className="text-xl font-bold text-text-primary sm:text-2xl">{title}</h3>
       </div>
       <div className="space-y-4">
         {features.map(({ icon: Icon, title: featureTitle, description }) => (
           <div key={featureTitle} className="flex items-start">
-            <Icon className="text-steel-blue w-5 h-5 sm:w-6 sm:h-6 mr-3 mt-1 shrink-0" />
+            <Icon className="mr-3 mt-1 h-5 w-5 shrink-0 text-brand sm:h-6 sm:w-6" />
             <div>
-              <h4 className="font-semibold text-gray-800 mb-1 text-sm sm:text-base">{featureTitle}</h4>
-              <p className="text-xs sm:text-sm text-gray-600">{description}</p>
+              <h4 className="mb-1 text-sm font-semibold text-text-primary sm:text-base">{featureTitle}</h4>
+              <p className="text-xs text-text-secondary sm:text-sm">{description}</p>
             </div>
           </div>
         ))}
@@ -102,17 +102,17 @@ export default function OrderTrackingProviderCards() {
         title="Uber Direct Tracking"
         icon="uber"
         features={UBER_TRACKING_FEATURES}
-        wrapperClass="bg-gray-50 rounded-xl sm:rounded-2xl p-6 sm:p-8"
-        iconWrapperClass="bg-pale-lime"
-        iconClass="text-steel-blue"
+        wrapperClass="rounded-xl border border-border-soft bg-surface-muted/55 p-6 sm:rounded-2xl sm:p-8"
+        iconWrapperClass="bg-accent-strong/25"
+        iconClass="text-brand-strong"
       />
       <TrackingProviderCard
         title="Shippo Tracking"
         icon="shippo"
         features={SHIPPO_TRACKING_FEATURES}
-        wrapperClass="bg-white rounded-xl sm:rounded-2xl shadow-xl p-6 sm:p-8"
-        iconWrapperClass="bg-steel-blue"
-        iconClass="text-white"
+        wrapperClass="rounded-xl border border-border-soft bg-surface-elevated p-6 shadow-soft sm:rounded-2xl sm:p-8"
+        iconWrapperClass="bg-brand-surface"
+        iconClass="text-inverse-foreground"
       />
     </div>
   )

@@ -18,12 +18,12 @@ export default function ShippingMethodsSection({
   onRateSelect,
 }: ShippingMethodsSectionProps) {
   return (
-    <SurfaceCard className="p-8">
-      <div className="flex items-center mb-8">
-        <div className="w-8 h-8 bg-steel-blue rounded-full flex items-center justify-center mr-4">
-          <span className="text-white text-sm font-semibold">3</span>
+    <SurfaceCard variant="technical" className="p-8">
+      <div className="mb-8 flex items-center">
+        <div className="mr-4 flex h-8 w-8 items-center justify-center rounded-full bg-brand">
+          <span className="text-sm font-semibold text-white">3</span>
         </div>
-        <h2 className="text-2xl font-bold text-steel-blue">Shipping Methods</h2>
+        <h2 className="text-2xl font-bold text-text-primary">Shipping Methods</h2>
       </div>
 
       <div className="space-y-8">

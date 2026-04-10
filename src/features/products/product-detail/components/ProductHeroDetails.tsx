@@ -12,77 +12,85 @@ interface ProductHeroDetailsProps {
 
 const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsProps) => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 rounded-4xl border border-border-soft bg-surface-elevated p-7 shadow-soft md:p-8">
       <div>
-        <div className="flex items-center space-x-3 mb-2">
-          <span className="bg-gray-50 text-steel-blue px-3 py-1 rounded-full text-sm font-medium">
+        <div className="mb-3 flex flex-wrap items-center gap-3">
+          <span className="rounded-full border border-border-soft bg-surface px-3 py-1 text-sm font-medium text-brand">
             {product.category}
           </span>
-          <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">Best Seller</span>
+          <span className="rounded-full bg-warning/20 px-3 py-1 text-sm font-medium text-warning">Best Seller</span>
         </div>
-        <h1 className="text-4xl font-bold text-steel-blue mb-4">{product.title}</h1>
-        <p className="text-xl text-gray-600 leading-relaxed">{product.description}</p>
+        <h1 className="mb-4 text-4xl font-semibold text-text-primary md:text-5xl">{product.title}</h1>
+        <p className="text-lg leading-8 text-text-secondary">{product.description}</p>
       </div>
 
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2">
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2">
           <StarRating rating={product.rating} size="md" className="text-yellow-400" />
-          <span className="text-steel-blue font-semibold">{product.rating}</span>
-          <span className="text-gray-600">({product.reviewCount} reviews)</span>
+          <span className="font-semibold text-brand">{product.rating}</span>
+          <span className="text-text-secondary">({product.reviewCount} reviews)</span>
         </div>
-        <div className="h-6 w-px bg-gray-300" />
-        <span className="text-gray-600">SKU: {product.sku}</span>
+        <div className="hidden h-6 w-px bg-border-soft md:block" />
+        <span className="text-text-secondary">SKU: {product.sku}</span>
       </div>
 
-      <div className="flex items-center space-x-2">
-        <div className="text-2xl font-bold text-orange-500">{formatCurrency(product.price)}</div>
-        {selectedSupplier && <div className="text-sm text-gray-600">/ {selectedSupplier.shipping} Shipping</div>}
+      <div className="rounded-[1.5rem] border border-border-soft bg-surface p-5">
+        <div className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-text-muted">Selected pricing</div>
+        <div className="mt-2 flex items-center gap-2">
+          <div className="text-3xl font-semibold text-brand">{formatCurrency(product.price)}</div>
+          {selectedSupplier ? (
+            <div className="text-sm text-text-secondary">/ {selectedSupplier.shipping} Shipping</div>
+          ) : null}
+        </div>
       </div>
 
       {selectedSupplier ? (
         <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <div className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium">Selected Vendor</div>
-            <div className="font-semibold text-steel-blue">{selectedSupplier.name}</div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="rounded-full bg-success px-3 py-1 text-sm font-medium text-white">Selected Vendor</div>
+            <div className="font-semibold text-text-primary">{selectedSupplier.name}</div>
           </div>
 
-          <div className="flex items-center space-x-4 text-sm">
-            <div className="flex items-center space-x-2">
-              <span className="text-gray-600">Stock:</span>
+          <div className="flex flex-wrap items-center gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-text-secondary">Stock:</span>
               <span className={`${getStockColorClass(selectedSupplier.stockColor)} px-2 py-1 rounded-full font-medium`}>
                 {selectedSupplier.stock}
               </span>
             </div>
             {selectedSupplier.distance && (
-              <div className="flex items-center space-x-2">
-                <span className="text-gray-600">Distance:</span>
-                <span className="font-medium text-steel-blue">{selectedSupplier.distance}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-text-secondary">Distance:</span>
+                <span className="font-medium text-brand">{selectedSupplier.distance}</span>
               </div>
             )}
             {selectedSupplier.distanceTime && (
-              <div className="flex items-center space-x-2">
-                <span className="text-gray-600">Delivery:</span>
-                <span className="font-medium text-steel-blue">{selectedSupplier.distanceTime}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-text-secondary">Delivery:</span>
+                <span className="font-medium text-brand">{selectedSupplier.distanceTime}</span>
               </div>
             )}
           </div>
         </div>
       ) : (
         product.bestPriceVendor && (
-          <div className="flex items-center space-x-2">
-            <div className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium">Lowest Price</div>
+          <div className="flex items-center gap-2">
+            <div className="rounded-full bg-success px-3 py-1 text-sm font-medium text-white">Lowest Price</div>
             <div>{product.bestPriceVendor}</div>
           </div>
         )
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {product.features.map((feature) => (
-          <div key={feature} className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-              <Check className="w-4 h-4 text-green-600" />
+          <div
+            key={feature}
+            className="flex items-center gap-3 rounded-[1.15rem] border border-border-soft bg-surface px-3 py-3"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-success/15">
+              <Check className="h-4 w-4 text-success" />
             </div>
-            <span className="text-gray-700">{feature}</span>
+            <span className="text-text-secondary">{feature}</span>
           </div>
         ))}
       </div>

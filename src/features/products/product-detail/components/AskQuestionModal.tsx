@@ -90,12 +90,12 @@ export default function AskQuestionModal({
       closeOnOverlayClick={false}
     >
       <div>
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-          <h3 className="text-2xl font-bold text-steel-blue">Ask a Question</h3>
+        <div className="flex items-center justify-between border-b border-border-soft p-6">
+          <h3 className="text-2xl font-semibold text-text-primary">Ask a Question</h3>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-text-muted transition-colors hover:text-text-primary"
             disabled={isSubmitting}
           >
             <X className="w-6 h-6" />
@@ -118,7 +118,7 @@ export default function AskQuestionModal({
           {isAuthenticated && preSelectedUserProductId && (
             <>
               <NoticeBanner tone="info" className="rounded-lg" title="Question destination">
-                <p className="text-sm font-medium text-blue-900">
+                <p className="text-sm font-medium text-text-primary">
                   Question will be sent to:{" "}
                   <span className="font-bold">{selectedVendor?.vendor || "Selected Vendor"}</span>
                 </p>
@@ -135,7 +135,7 @@ export default function AskQuestionModal({
                   required
                   disabled={isSubmitting}
                 />
-                <p className="text-sm text-gray-500">{question.length} characters</p>
+                <p className="text-sm text-text-muted">{question.length} characters</p>
               </div>
 
               <div className="flex items-center justify-end space-x-4">

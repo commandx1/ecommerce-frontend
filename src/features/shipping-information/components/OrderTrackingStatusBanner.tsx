@@ -9,23 +9,23 @@ const TRACKING_STEPS = [
 
 export default function OrderTrackingStatusBanner() {
   return (
-    <div className="bg-linear-to-br from-steel-blue to-blue-800 rounded-2xl sm:rounded-3xl p-8 sm:p-12 mb-8 sm:mb-12">
-      <div className="max-w-5xl mx-auto">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8">
+    <div className="mb-8 rounded-2xl border border-border-soft bg-brand-surface p-8 text-inverse-foreground sm:mb-12 sm:rounded-3xl sm:p-12">
+      <div className="mx-auto max-w-5xl">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-8">
           {TRACKING_STEPS.map(({ icon: Icon, title, description, active }, index) => (
             <div key={title} className="text-center">
               <div
-                className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 ${
-                  active ? "bg-pale-lime" : "bg-white/20"
+                className={`mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full sm:mb-4 sm:h-20 sm:w-20 ${
+                  active ? "bg-accent-strong/90" : "bg-brand/30"
                 }`}
               >
-                <Icon className={`${active ? "text-steel-blue" : "text-white"} w-5 h-5 sm:w-6 sm:h-6`} />
+                <Icon className={`${active ? "text-brand-strong" : "text-inverse-foreground"} h-5 w-5 sm:h-6 sm:w-6`} />
               </div>
               {index < TRACKING_STEPS.length - 1 ? (
-                <div className={`h-1 mb-3 sm:mb-4 hidden sm:block ${active ? "bg-pale-lime" : "bg-white/30"}`} />
+                <div className={`mb-3 hidden h-1 sm:mb-4 sm:block ${active ? "bg-accent-strong/90" : "bg-brand/35"}`} />
               ) : null}
-              <h3 className="text-white font-semibold mb-1 sm:mb-2 text-sm sm:text-base">{title}</h3>
-              <p className="text-blue-100 text-xs sm:text-sm">{description}</p>
+              <h3 className="mb-1 text-sm font-semibold sm:mb-2 sm:text-base">{title}</h3>
+              <p className="text-xs text-inverse-muted sm:text-sm">{description}</p>
             </div>
           ))}
         </div>

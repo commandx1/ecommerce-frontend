@@ -13,16 +13,16 @@ export default function SectionCardsBlock({ cards }: SectionCardsProps) {
       {cards.map((card) => {
         const CardIcon = card.icon ? iconMap[card.icon] : null
         return (
-          <div key={card.title} className="bg-gray-50 p-6 rounded-xl">
+          <div key={card.title} className="rounded-[1.35rem] border border-border-soft bg-surface-muted/70 p-6">
             {CardIcon ? (
-              <div className="w-10 h-10 bg-steel-blue rounded-lg flex items-center justify-center mb-4">
-                <CardIcon className="text-white w-5 h-5" />
+              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-brand text-primary-foreground">
+                <CardIcon className="h-5 w-5" />
               </div>
             ) : null}
-            <h4 className="font-semibold text-steel-blue mb-3">{card.title}</h4>
-            {card.text ? <p className="text-sm text-gray-700 mb-3">{card.text}</p> : null}
+            <h4 className="mb-3 font-semibold text-text-primary">{card.title}</h4>
+            {card.text ? <p className="mb-3 text-sm text-text-secondary">{card.text}</p> : null}
             {card.items ? (
-              <ul className="text-sm text-gray-700 space-y-2">
+              <ul className="space-y-2 text-sm text-text-secondary">
                 {card.items.map((item) => (
                   <li key={item}>• {item}</li>
                 ))}

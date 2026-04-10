@@ -55,18 +55,18 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
   })
 
   return (
-    <section className="bg-gray-50 py-12">
+    <section className="bg-surface-muted/45 py-12">
       <PageSectionContainer as="div">
-        <div className="flex items-center justify-between mb-8">
+        <div className="mb-8 flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold text-steel-blue mb-2">Customer Reviews</h2>
+            <h2 className="mb-2 text-3xl font-semibold text-text-primary">Customer Reviews</h2>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <StarRating rating={averageRating} size="lg" className="text-yellow-400" />
-                <span className="text-2xl font-bold text-steel-blue">{averageRating.toFixed(1)}</span>
-                <span className="text-gray-600">out of 5</span>
+                <span className="text-2xl font-bold text-brand">{averageRating.toFixed(1)}</span>
+                <span className="text-text-secondary">out of 5</span>
               </div>
-              <span className="text-gray-600">Based on {reviewsData.totalElements} reviews</span>
+              <span className="text-text-secondary">Based on {reviewsData.totalElements} reviews</span>
             </div>
           </div>
           <WriteReviewButton productId={productId} />
@@ -74,17 +74,17 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
 
         {/* Rating Breakdown */}
         {reviews.length > 0 && (
-          <SurfaceCard className="p-8 mb-8">
+          <SurfaceCard className="mb-8 w-full p-8 lg:w-1/2">
             <div>
-              <h3 className="text-xl font-semibold text-steel-blue mb-6">Rating Breakdown</h3>
+              <h3 className="mb-6 text-xl font-semibold text-text-primary">Rating Breakdown</h3>
               <div className="space-y-4">
                 {ratingBreakdown.map((breakdown) => (
                   <div key={breakdown.stars} className="flex items-center space-x-4">
-                    <span className="text-sm font-medium w-8">{breakdown.stars}★</span>
-                    <div className="flex-1 bg-gray-200 rounded-full h-2">
+                    <span className="w-8 text-sm font-medium text-text-primary">{breakdown.stars}★</span>
+                    <div className="h-2 flex-1 rounded-full bg-surface-muted">
                       <div className="bg-yellow-400 h-2 rounded-full" style={{ width: `${breakdown.percentage}%` }} />
                     </div>
-                    <span className="text-sm text-gray-600 w-12">{breakdown.count}</span>
+                    <span className="w-12 text-sm text-text-secondary">{breakdown.count}</span>
                   </div>
                 ))}
               </div>
@@ -98,43 +98,37 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
             {reviews.map((review) => (
               <SurfaceCard key={review.id} className="p-8">
                 <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-steel-blue rounded-full flex items-center justify-center shrink-0">
-                    <span className="text-white font-semibold text-lg">{review.username.charAt(0).toUpperCase()}</span>
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand text-primary-foreground">
+                    <span className="text-lg font-semibold">{review.username.charAt(0).toUpperCase()}</span>
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="mb-2 flex items-center justify-between">
                       <div>
-                        <div className="font-semibold text-steel-blue">{review.username}</div>
+                        <div className="font-semibold text-text-primary">{review.username}</div>
                       </div>
                       <div className="text-right">
                         <StarRating rating={review.star} size="sm" className="text-yellow-400 mb-1" />
-                        <div className="text-sm text-gray-500">{formatRelativeDate(review.createdDate)}</div>
+                        <div className="text-sm text-text-muted">{formatRelativeDate(review.createdDate)}</div>
                       </div>
                     </div>
-                    <h4 className="font-semibold text-gray-900 mb-3">{review.title}</h4>
-                    <p className="text-gray-700 leading-relaxed mb-4">{review.comment}</p>
-                    <div className="flex items-center space-x-6 text-sm text-gray-600">
+                    <h4 className="mb-3 font-semibold text-text-primary">{review.title}</h4>
+                    <p className="mb-4 leading-relaxed text-text-secondary">{review.comment}</p>
+                    <div className="flex items-center space-x-6 text-sm text-text-secondary">
                       {user?.id === review.userId && (
                         <button
                           type="button"
                           onClick={() => setEditingReview(review)}
-                          className="flex items-center space-x-1 hover:text-steel-blue transition-colors"
+                          className="flex items-center space-x-1 transition-colors hover:text-brand"
                         >
                           <Edit2 className="w-4 h-4" />
                           <span>Edit</span>
                         </button>
                       )}
-                      <button
-                        type="button"
-                        className="flex items-center space-x-1 hover:text-steel-blue transition-colors"
-                      >
+                      <button type="button" className="flex items-center space-x-1 transition-colors hover:text-brand">
                         <ThumbsUp className="w-4 h-4" />
                         <span>Helpful ({review.peopleFoundHelpful})</span>
                       </button>
-                      <button
-                        type="button"
-                        className="flex items-center space-x-1 hover:text-steel-blue transition-colors"
-                      >
+                      <button type="button" className="flex items-center space-x-1 transition-colors hover:text-brand">
                         <Reply className="w-4 h-4" />
                         <span>Reply</span>
                       </button>
@@ -146,15 +140,15 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
           </div>
         ) : (
           <SurfaceCard className="p-8 text-center">
-            <p className="text-gray-600">No reviews yet. Be the first to review this product!</p>
+            <p className="text-text-secondary">No reviews yet. Be the first to review this product!</p>
           </SurfaceCard>
         )}
 
         {!reviewsData.last && (
-          <div className="text-center mt-8">
+          <div className="mt-8 text-center">
             <button
               type="button"
-              className="bg-steel-blue text-white px-8 py-3 rounded-lg hover:bg-opacity-90 font-medium transition-colors"
+              className="rounded-full bg-brand px-8 py-3 font-medium text-primary-foreground transition-colors hover:bg-brand-strong"
             >
               Load More Reviews
             </button>

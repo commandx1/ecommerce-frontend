@@ -15,19 +15,19 @@ interface SupplierComparisonRowProps {
 const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }: SupplierComparisonRowProps) => {
   return (
     <tr
-      className={`hover:bg-gray-50 transition-colors cursor-pointer ${
+      className={`cursor-pointer text-text-primary transition-colors ${
         isSelected
-          ? "bg-blue-50 border-l-4 border-blue-500"
+          ? "bg-accent/80 shadow-[inset_4px_0_0_0_var(--brand)]"
           : isBestSeller
-            ? "bg-yellow-50 border-l-4 border-yellow-400"
-            : ""
+            ? "bg-warning/10 shadow-[inset_4px_0_0_0_var(--warning)]"
+            : "hover:bg-surface-muted/70"
       }`}
       onClick={() => onSelect(supplier)}
     >
       <td className="px-6 py-4">
         <div className="flex items-center space-x-4">
           {supplier.logo && (
-            <div className="relative w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center">
+            <div className="relative flex h-12 w-12 items-center justify-center rounded-xl border border-border-soft bg-surface-muted">
               <ProductImageWithFallback
                 src={supplier.logo}
                 alt={supplier.alt}
@@ -39,9 +39,9 @@ const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }:
           )}
           <div>
             <div className="flex items-center space-x-2">
-              <div className="font-semibold text-steel-blue">{supplier.name}</div>
+              <div className="font-semibold text-text-primary">{supplier.name}</div>
               {isBestSeller && (
-                <span className="whitespace-nowrap bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-xs font-semibold">
+                <span className="whitespace-nowrap rounded-full bg-warning/14 px-2 py-0.5 text-xs font-semibold text-warning">
                   Best Seller
                 </span>
               )}
@@ -50,30 +50,30 @@ const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }:
         </div>
       </td>
       <td className="px-6 py-4 text-center">
-        <div className="font-bold text-2xl text-steel-blue">{supplier.price}</div>
-        {supplier.originalPrice && <div className="text-sm text-gray-500 line-through">{supplier.originalPrice}</div>}
+        <div className="text-2xl font-bold text-brand">{supplier.price}</div>
+        {supplier.originalPrice && <div className="text-sm text-text-muted line-through">{supplier.originalPrice}</div>}
       </td>
       <td className="px-6 py-4 text-center">
         <span
-          className={`${getStockColorClass(supplier.stockColor)} px-3 py-1 rounded-full text-sm font-medium truncate`}
+          className={`${getStockColorClass(supplier.stockColor)} truncate rounded-full px-3 py-1 text-sm font-medium`}
         >
           {supplier.stock}
         </span>
       </td>
       <td className="px-6 py-4 text-center">
-        <div className="text-sm font-medium">{supplier.shipping}</div>
-        <div className="text-xs text-gray-500">{supplier.shippingNote}</div>
+        <div className="text-sm font-medium text-text-primary">{supplier.shipping}</div>
+        <div className="text-xs text-text-muted">{supplier.shippingNote}</div>
       </td>
       <td className="px-6 py-4">
         <div className="flex flex-col items-center justify-center">
-          <div className="text-sm font-medium">{supplier.distance || "-"}</div>
-          <div className="text-xs text-gray-500">{supplier.distanceTime || "-"}</div>
+          <div className="text-sm font-medium text-text-primary">{supplier.distance || "-"}</div>
+          <div className="text-xs text-text-muted">{supplier.distanceTime || "-"}</div>
         </div>
       </td>
       <td className="px-6 py-4 text-center">
         <div className="flex items-center justify-center space-x-1">
           <StarRating rating={supplier.starCount} size="sm" className="text-yellow-400" />
-          <span className="text-sm text-gray-600">{supplier.rating}</span>
+          <span className="text-sm text-text-secondary">{supplier.rating}</span>
         </div>
       </td>
       <td className="px-6 py-4 text-center">
@@ -83,8 +83,10 @@ const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }:
             event.stopPropagation()
             onSelect(supplier)
           }}
-          className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-            isSelected ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-steel-blue text-white hover:bg-opacity-90"
+          className={`rounded-full px-6 py-2 font-medium transition-colors ${
+            isSelected
+              ? "bg-accent-strong text-accent-foreground"
+              : "bg-brand text-primary-foreground hover:bg-brand-strong"
           }`}
         >
           {isSelected ? "Selected" : "Select"}

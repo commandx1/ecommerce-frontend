@@ -16,20 +16,20 @@ const PACKAGING_ITEMS = [
 
 export default function ProfessionalPackagingCard() {
   return (
-    <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-6 sm:p-8">
-      <div className="flex items-center mb-6">
-        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-steel-blue rounded-xl flex items-center justify-center mr-4">
-          <Box className="text-white w-6 h-6 sm:w-8 sm:h-8" />
+    <div className="rounded-xl border border-border-soft bg-surface-elevated p-6 shadow-soft sm:rounded-2xl sm:p-8">
+      <div className="mb-6 flex items-center">
+        <div className="mr-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-surface sm:h-14 sm:w-14">
+          <Box className="h-6 w-6 text-inverse-foreground sm:h-8 sm:w-8" />
         </div>
-        <h3 className="text-xl sm:text-2xl font-bold text-steel-blue">Professional Packaging</h3>
+        <h3 className="text-xl font-bold text-text-primary sm:text-2xl">Professional Packaging</h3>
       </div>
       <div className="space-y-4">
         {PACKAGING_ITEMS.map((item) => (
           <div key={item.title} className="flex items-start">
-            <CheckCircle className="text-green-500 w-5 h-5 sm:w-6 sm:h-6 mr-3 mt-1 shrink-0" />
+            <CheckCircle className="mr-3 mt-1 h-5 w-5 shrink-0 text-success sm:h-6 sm:w-6" />
             <div>
-              <h4 className="font-semibold text-gray-800 mb-1 text-sm sm:text-base">{item.title}</h4>
-              <p className="text-xs sm:text-sm text-gray-600">{item.description}</p>
+              <h4 className="mb-1 text-sm font-semibold text-text-primary sm:text-base">{item.title}</h4>
+              <p className="text-xs text-text-secondary sm:text-sm">{item.description}</p>
             </div>
           </div>
         ))}

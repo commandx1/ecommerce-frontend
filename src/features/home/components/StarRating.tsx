@@ -16,7 +16,7 @@ export default function StarRating({
   ariaLabel = "Star rating",
 }: StarRatingProps) {
   return (
-    <div className="flex" aria-label={ariaLabel}>
+    <div className="flex" role="img" aria-label={ariaLabel}>
       {Array.from({ length: total }, (_, index) => {
         const isFilled = index < filledCount
         return (

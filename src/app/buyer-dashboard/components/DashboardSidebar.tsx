@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react"
 import {
   CheckCircle,
   Clock,
@@ -20,260 +21,190 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
+
+interface NavItem {
+  href: string
+  label: string
+  icon: LucideIcon
+  badge?: {
+    label: string
+    tone: "neutral" | "warning" | "info"
+  }
+}
+
+const NAV_GROUPS: Array<{ title: string; items: NavItem[] }> = [
+  {
+    title: "Dashboard",
+    items: [
+      { href: "/buyer-dashboard", label: "Overview", icon: Home },
+      { href: "/buyer-dashboard/analytics", label: "Analytics", icon: TrendingUp },
+    ],
+  },
+  {
+    title: "Orders",
+    items: [
+      {
+        href: "/buyer-dashboard/orders",
+        label: "All Orders",
+        icon: ShoppingBag,
+        badge: { label: "24", tone: "neutral" },
+      },
+      {
+        href: "/buyer-dashboard/orders/pending",
+        label: "Pending",
+        icon: Clock,
+        badge: { label: "3", tone: "warning" },
+      },
+      {
+        href: "/buyer-dashboard/orders/transit",
+        label: "In Transit",
+        icon: Truck,
+        badge: { label: "7", tone: "info" },
+      },
+      { href: "/buyer-dashboard/orders/completed", label: "Completed", icon: CheckCircle },
+    ],
+  },
+  {
+    title: "Suppliers",
+    items: [
+      {
+        href: "/buyer-dashboard/suppliers/favorites",
+        label: "Favorites",
+        icon: Heart,
+        badge: { label: "12", tone: "neutral" },
+      },
+      { href: "/buyer-dashboard/suppliers", label: "All Suppliers", icon: Store },
+      { href: "/buyer-dashboard/suppliers/top-rated", label: "Top Rated", icon: Star },
+    ],
+  },
+  {
+    title: "Account",
+    items: [
+      { href: "/buyer-dashboard/invoices", label: "Invoices", icon: FileText },
+      { href: "/buyer-dashboard/payment-methods", label: "Payment Methods", icon: CreditCard },
+    ],
+  },
+  {
+    title: "Support",
+    items: [
+      { href: "/buyer-dashboard/help", label: "Help Center", icon: HelpCircle },
+      { href: "/buyer-dashboard/support", label: "Contact Support", icon: HeadphonesIcon },
+    ],
+  },
+]
+
+const SETTINGS_ITEMS: NavItem[] = [
+  { href: "/buyer-dashboard/settings", label: "Account", icon: User },
+  { href: "/buyer-dashboard/settings/addresses", label: "Addresses", icon: MapPin },
+]
+
+const navItemClass = (active: boolean) =>
+  cn(
+    "flex items-center rounded-lg px-3 py-2 text-sm transition-colors",
+    active ? "bg-brand/10 text-brand" : "text-text-secondary hover:bg-surface-muted hover:text-text-primary",
+  )
+
+const iconClass = (active: boolean) => cn("mr-3 h-4 w-4", active ? "text-brand" : "text-text-muted")
+
+const badgeClassMap = {
+  neutral: "bg-surface-muted text-text-secondary",
+  warning: "bg-warning/20 text-warning",
+  info: "bg-brand/15 text-brand",
+} as const
 
 const DashboardSidebar = () => {
   const pathname = usePathname()
-
-  const isActive = (path: string) => pathname === path
 
   return (
     <aside
       id="sidebar"
       style={{ flex: "0 0 256px" }}
-      className="bg-white shadow-sm border-r border-gray-200 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto z-40"
+      className="sticky top-16 z-40 h-[calc(100vh-4rem)] overflow-y-auto border-r border-border-soft bg-surface-elevated shadow-soft"
     >
       <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-steel-blue">Quick Actions</h3>
-          <button type="button" className="text-gray-400 hover:text-steel-blue">
-            <Plus className="w-4 h-4" />
-          </button>
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-text-primary">Quick Actions</h3>
+          <Button type="button" variant="quiet" size="icon-sm" className="text-text-muted hover:text-brand">
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
-        <div className="space-y-3 mb-8">
-          <button
+
+        <div className="mb-8 space-y-3">
+          <Button
             type="button"
-            className="w-full bg-steel-blue text-white py-3 px-4 rounded-lg hover:bg-opacity-90 font-medium flex items-center"
+            variant="unstyled"
+            className="flex w-full items-center rounded-lg bg-brand px-4 py-3 font-medium text-primary-foreground transition-colors hover:bg-brand-strong"
           >
-            <Plus className="mr-2 w-4 h-4" />
+            <Plus className="mr-2 h-4 w-4" />
             New Order
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="w-full bg-pale-lime text-steel-blue py-3 px-4 rounded-lg hover:bg-opacity-90 font-medium flex items-center"
+            variant="unstyled"
+            className="flex w-full items-center rounded-lg bg-accent-strong px-4 py-3 font-medium text-accent-foreground transition-colors hover:brightness-95"
           >
-            <RotateCcw className="mr-2 w-4 h-4" />
+            <RotateCcw className="mr-2 h-4 w-4" />
             Reorder Items
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="w-full border border-steel-blue text-steel-blue py-3 px-4 rounded-lg hover:bg-steel-blue hover:text-white font-medium flex items-center transition-colors"
+            variant="unstyled"
+            className="flex w-full items-center rounded-lg border border-border-strong bg-surface px-4 py-3 font-medium text-text-primary transition-colors hover:border-brand/40 hover:text-brand"
           >
-            <Search className="mr-2 w-4 h-4" />
+            <Search className="mr-2 h-4 w-4" />
             Find Suppliers
-          </button>
+          </Button>
         </div>
 
         <nav className="space-y-2">
-          <div className="pb-2 border-b border-gray-200">
-            <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Dashboard</h4>
-            <Link
-              href="/buyer-dashboard"
-              className={`flex items-center px-3 py-2 rounded-lg font-medium transition-colors ${
-                isActive("/buyer-dashboard") ? "text-steel-blue bg-gray-50" : "text-gray-700 hover:bg-gray-100"
-              }`}
+          {NAV_GROUPS.map((group, groupIndex) => (
+            <div
+              key={group.title}
+              className={cn(groupIndex === NAV_GROUPS.length - 1 ? "py-2" : "border-b border-border-soft py-2")}
             >
-              <Home className={`mr-3 w-4 h-4 ${isActive("/buyer-dashboard") ? "text-steel-blue" : "text-gray-500"}`} />
-              <span>Overview</span>
-            </Link>
-            <Link
-              href="/buyer-dashboard/analytics"
-              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/analytics") ? "text-steel-blue bg-gray-50" : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <TrendingUp className={`mr-3 w-4 h-4 ${isActive("/analytics") ? "text-steel-blue" : "text-gray-500"}`} />
-              <span>Analytics</span>
-            </Link>
-          </div>
+              <h4 className="mb-3 text-sm font-medium uppercase tracking-wider text-text-muted">{group.title}</h4>
+              <div className="space-y-1">
+                {group.items.map((item) => {
+                  const isActive = pathname === item.href
+                  const Icon = item.icon
 
-          <div className="py-2 border-b border-gray-200">
-            <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Orders</h4>
-            <Link
-              href="/buyer-dashboard/orders"
-              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/buyer-dashboard/orders")
-                  ? "text-steel-blue bg-gray-50"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <ShoppingBag
-                className={`mr-3 w-4 h-4 ${isActive("/buyer-dashboard/orders") ? "text-steel-blue" : "text-gray-500"}`}
-              />
-              <span>All Orders</span>
-              <span className="ml-auto bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">24</span>
-            </Link>
-            <Link
-              href="/buyer-dashboard/orders/pending"
-              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/buyer-dashboard/orders/pending")
-                  ? "text-steel-blue bg-gray-50"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <Clock
-                className={`mr-3 w-4 h-4 ${isActive("/buyer-dashboard/orders/pending") ? "text-steel-blue" : "text-gray-500"}`}
-              />
-              <span>Pending</span>
-              <span className="ml-auto bg-coral-orange text-white text-xs px-2 py-1 rounded-full">3</span>
-            </Link>
-            <Link
-              href="/buyer-dashboard/orders/transit"
-              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/buyer-dashboard/orders/transit")
-                  ? "text-steel-blue bg-gray-50"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <Truck
-                className={`mr-3 w-4 h-4 ${isActive("/buyer-dashboard/orders/transit") ? "text-steel-blue" : "text-gray-500"}`}
-              />
-              <span>In Transit</span>
-              <span className="ml-auto bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full">7</span>
-            </Link>
-            <Link
-              href="/buyer-dashboard/orders/completed"
-              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/buyer-dashboard/orders/completed")
-                  ? "text-steel-blue bg-gray-50"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <CheckCircle
-                className={`mr-3 w-4 h-4 ${isActive("/buyer-dashboard/orders/completed") ? "text-steel-blue" : "text-gray-500"}`}
-              />
-              <span>Completed</span>
-            </Link>
-          </div>
+                  return (
+                    <Link key={item.href} href={item.href} className={navItemClass(isActive)}>
+                      <Icon className={iconClass(isActive)} />
+                      <span>{item.label}</span>
+                      {item.badge ? (
+                        <span className={cn("ml-auto rounded-full px-2 py-1 text-xs", badgeClassMap[item.badge.tone])}>
+                          {item.badge.label}
+                        </span>
+                      ) : null}
+                    </Link>
+                  )
+                })}
+              </div>
 
-          <div className="py-2 border-b border-gray-200">
-            <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Suppliers</h4>
-            <Link
-              href="/buyer-dashboard/suppliers/favorites"
-              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/buyer-dashboard/suppliers/favorites")
-                  ? "text-steel-blue bg-gray-50"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <Heart
-                className={`mr-3 w-4 h-4 ${isActive("/buyer-dashboard/suppliers/favorites") ? "text-steel-blue" : "text-gray-500"}`}
-              />
-              <span>Favorites</span>
-              <span className="ml-auto bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">12</span>
-            </Link>
-            <Link
-              href="/buyer-dashboard/suppliers"
-              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/buyer-dashboard/suppliers")
-                  ? "text-steel-blue bg-gray-50"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <Store className={`mr-3 w-4 h-4 ${isActive("/suppliers") ? "text-steel-blue" : "text-gray-500"}`} />
-              <span>All Suppliers</span>
-            </Link>
-            <Link
-              href="/buyer-dashboard/suppliers/top-rated"
-              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/buyer-dashboard/suppliers/top-rated")
-                  ? "text-steel-blue bg-gray-50"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <Star
-                className={`mr-3 w-4 h-4 ${isActive("/suppliers/top-rated") ? "text-steel-blue" : "text-gray-500"}`}
-              />
-              <span>Top Rated</span>
-            </Link>
-          </div>
-
-          <div className="py-2 border-b border-gray-200">
-            <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Account</h4>
-            <Link
-              href="/buyer-dashboard/invoices"
-              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/invoices") ? "text-steel-blue bg-gray-50" : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <FileText className={`mr-3 w-4 h-4 ${isActive("/invoices") ? "text-steel-blue" : "text-gray-500"}`} />
-              <span>Invoices</span>
-            </Link>
-            <Link
-              href="/buyer-dashboard/payment-methods"
-              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/payment-methods") ? "text-steel-blue bg-gray-50" : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <CreditCard
-                className={`mr-3 w-4 h-4 ${isActive("/payment-methods") ? "text-steel-blue" : "text-gray-500"}`}
-              />
-              <span>Payment Methods</span>
-            </Link>
-
-            <div className="mt-4">
-              <h5 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2">Settings</h5>
-              <Link
-                href="/buyer-dashboard/settings"
-                className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                  pathname === "/buyer-dashboard/settings"
-                    ? "text-steel-blue bg-gray-50"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                <User
-                  className={`mr-3 w-4 h-4 ${
-                    pathname === "/buyer-dashboard/settings" ? "text-steel-blue" : "text-gray-500"
-                  }`}
-                />
-                <span className="text-sm">Account</span>
-              </Link>
-              <Link
-                href="/buyer-dashboard/settings/addresses"
-                className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                  pathname === "/buyer-dashboard/settings/addresses"
-                    ? "text-steel-blue bg-gray-50"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                <MapPin
-                  className={`mr-3 w-4 h-4 ${
-                    pathname === "/buyer-dashboard/settings/addresses" ? "text-steel-blue" : "text-gray-500"
-                  }`}
-                />
-                <span className="text-sm">Addresses</span>
-              </Link>
+              {group.title === "Account" ? (
+                <div className="mt-4">
+                  <h5 className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+                    Settings
+                  </h5>
+                  <div className="space-y-1">
+                    {SETTINGS_ITEMS.map((item) => {
+                      const isActive = pathname === item.href
+                      const Icon = item.icon
+                      return (
+                        <Link key={item.href} href={item.href} className={navItemClass(isActive)}>
+                          <Icon className={iconClass(isActive)} />
+                          <span>{item.label}</span>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </div>
+              ) : null}
             </div>
-          </div>
-
-          <div className="py-2">
-            <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Support</h4>
-            <Link
-              href="/buyer-dashboard/help"
-              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/buyer-dashboard/help")
-                  ? "text-steel-blue bg-gray-50"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <HelpCircle
-                className={`mr-3 w-4 h-4 ${isActive("/buyer-dashboard/help") ? "text-steel-blue" : "text-gray-500"}`}
-              />
-              <span>Help Center</span>
-            </Link>
-            <Link
-              href="/buyer-dashboard/support"
-              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                isActive("/buyer-dashboard/support")
-                  ? "text-steel-blue bg-gray-50"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <HeadphonesIcon
-                className={`mr-3 w-4 h-4 ${isActive("/buyer-dashboard/support") ? "text-steel-blue" : "text-gray-500"}`}
-              />
-              <span>Contact Support</span>
-            </Link>
-          </div>
+          ))}
         </nav>
       </div>
     </aside>

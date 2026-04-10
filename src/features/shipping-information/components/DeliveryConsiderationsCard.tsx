@@ -11,10 +11,10 @@ const CONSIDERATIONS = [
 export default function DeliveryConsiderationsCard() {
   return (
     <NoticeBanner tone="warning" title="Important Considerations" className="p-6 sm:rounded-2xl sm:p-8">
-      <ul className="mt-3 space-y-2 text-sm text-yellow-800 sm:text-base">
+      <ul className="mt-3 space-y-2 text-sm text-text-secondary sm:text-base">
         {CONSIDERATIONS.map((item) => (
           <li key={item} className="flex items-start">
-            <Circle className="mr-2 mt-2 h-2 w-2 shrink-0 fill-current text-yellow-600" />
+            <Circle className="mr-2 mt-2 h-2 w-2 shrink-0 fill-current text-warning" />
             <span>{item}</span>
           </li>
         ))}

@@ -20,27 +20,27 @@ const REPORTING_ITEMS: Array<{ label?: string; icon?: typeof Camera; title: stri
 
 export default function DamagedGoodsReportingCard() {
   return (
-    <div className="bg-linear-to-br from-steel-blue to-blue-800 rounded-2xl sm:rounded-3xl p-8 sm:p-12 text-white">
-      <h3 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-center">Damaged Goods Reporting</h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+    <div className="rounded-2xl border border-border-soft bg-brand-surface p-8 text-inverse-foreground sm:rounded-3xl sm:p-12">
+      <h3 className="mb-6 text-center text-2xl font-bold sm:mb-8 sm:text-3xl text-inverse-muted">Damaged Goods Reporting</h3>
+      <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-3">
         {REPORTING_ITEMS.map((item) => (
           <div key={item.title} className="text-center">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-pale-lime rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-accent-strong/90 sm:h-20 sm:w-20">
               {item.label ? (
-                <span className="text-steel-blue font-bold text-xl sm:text-2xl">{item.label}</span>
+                <span className="text-xl font-bold text-brand-strong sm:text-2xl">{item.label}</span>
               ) : item.icon ? (
-                <item.icon className="text-steel-blue w-6 h-6 sm:w-8 sm:h-8" />
+                <item.icon className="h-6 w-6 text-brand-strong sm:h-8 sm:w-8" />
               ) : null}
             </div>
-            <h4 className="font-semibold mb-2 text-base sm:text-lg">{item.title}</h4>
-            <p className="text-blue-100 text-xs sm:text-sm">{item.description}</p>
+            <h4 className="mb-2 text-base font-semibold sm:text-lg text-inverse-muted">{item.title}</h4>
+            <p className="text-xs text-inverse-muted sm:text-sm">{item.description}</p>
           </div>
         ))}
       </div>
       <div className="mt-8 text-center">
         <button
           type="button"
-          className="bg-pale-lime text-steel-blue px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-semibold hover:bg-opacity-90 transition-colors text-sm sm:text-base"
+          className="rounded-lg bg-accent-strong px-6 py-3 text-sm font-semibold text-brand-strong transition-colors hover:brightness-95 sm:px-8 sm:py-4 sm:text-base"
         >
           Report Damaged Shipment
         </button>

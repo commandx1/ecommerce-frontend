@@ -23,7 +23,7 @@ export default function TicketFormSubmitActions({ isUrgentCallback, onChange }: 
       />
       <button
         type="submit"
-        className="flex items-center rounded-lg bg-steel-blue px-8 py-3 font-semibold text-white transition-colors hover:bg-opacity-90"
+        className="flex items-center rounded-full bg-brand px-8 py-3 font-semibold text-primary-foreground transition-colors hover:bg-brand-strong"
       >
         Submit Ticket
         <Ticket className="ml-2 h-4 w-4" />

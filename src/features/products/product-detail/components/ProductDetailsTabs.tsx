@@ -39,19 +39,19 @@ const ProductDetailsTabs = ({ description }: ProductDetailsTabsProps) => {
     : [{ icon: "box", text: "Protective case and accessories" }]
 
   return (
-    <section className="bg-white py-12">
+    <section className="bg-canvas py-12">
       <PageSectionContainer as="div">
-        <div className="border-b border-gray-200">
+        <div className="border-b border-border-soft">
           <nav className="flex space-x-8">
             {tabs.map((tab) => (
               <button
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`border-b-2 py-4 px-1 font-medium transition-colors ${
+                className={`border-b-2 px-1 py-4 font-medium transition-colors ${
                   activeTab === tab
-                    ? "border-steel-blue text-steel-blue font-semibold"
-                    : "border-transparent text-gray-500 hover:text-steel-blue"
+                    ? "border-brand text-brand font-semibold"
+                    : "border-transparent text-text-secondary hover:text-brand"
                 }`}
               >
                 {tab}
@@ -62,22 +62,22 @@ const ProductDetailsTabs = ({ description }: ProductDetailsTabsProps) => {
 
         <div className="py-8">
           {activeTab === "Description" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
               <div className="space-y-6">
-                <h3 className="text-2xl font-bold text-steel-blue">Product Description</h3>
+                <h3 className="text-2xl font-semibold text-text-primary">Product Description</h3>
                 {paragraphs.map((paragraph) => (
-                  <p key={paragraph.substring(0, 30)} className="text-gray-700 leading-relaxed">
+                  <p key={paragraph.substring(0, 30)} className="leading-relaxed text-text-secondary">
                     {paragraph}
                   </p>
                 ))}
 
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <h4 className="font-semibold text-steel-blue mb-4">Key Benefits</h4>
+                <div className="rounded-[1.5rem] border border-border-soft bg-surface-elevated p-6 shadow-soft">
+                  <h4 className="mb-4 font-semibold text-text-primary">Key Benefits</h4>
                   <ul className="space-y-3">
                     {benefits.map((benefit) => (
                       <li key={benefit} className="flex items-start space-x-3">
-                        <CheckCircle className="text-green-500 mt-1 shrink-0" />
-                        <span className="text-gray-700">{benefit}</span>
+                        <CheckCircle className="mt-1 shrink-0 text-success" />
+                        <span className="text-text-secondary">{benefit}</span>
                       </li>
                     ))}
                   </ul>
@@ -85,29 +85,29 @@ const ProductDetailsTabs = ({ description }: ProductDetailsTabsProps) => {
               </div>
 
               <div className="space-y-6">
-                <h3 className="text-2xl font-bold text-steel-blue">What's Included</h3>
-                <div className="bg-gray-50 rounded-xl p-6">
+                <h3 className="text-2xl font-semibold text-text-primary">What's Included</h3>
+                <div className="rounded-[1.5rem] border border-border-soft bg-surface-elevated p-6 shadow-soft">
                   <div className="grid grid-cols-1 gap-4">
                     {includedItems.map((item) => {
                       const IconComponent = iconMap[item.icon]
                       return (
                         <div key={item.text} className="flex items-center space-x-3">
-                          <div className="w-8 h-8 bg-steel-blue rounded-full flex items-center justify-center shrink-0">
-                            {IconComponent && <IconComponent className="text-white text-sm w-4 h-4" />}
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-primary-foreground">
+                            {IconComponent && <IconComponent className="h-4 w-4 text-sm" />}
                           </div>
-                          <span className="text-gray-700">{item.text}</span>
+                          <span className="text-text-secondary">{item.text}</span>
                         </div>
                       )
                     })}
                   </div>
                 </div>
 
-                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+                <div className="rounded-[1.5rem] border border-warning/25 bg-warning/10 p-6">
                   <div className="flex items-start space-x-3">
-                    <Info className="text-yellow-600 text-lg mt-0.5 shrink-0" />
+                    <Info className="mt-0.5 shrink-0 text-lg text-warning" />
                     <div>
-                      <h4 className="font-semibold text-yellow-800 mb-2">{description.installationNote.title}</h4>
-                      <p className="text-yellow-700 text-sm">{description.installationNote.text}</p>
+                      <h4 className="mb-2 font-semibold text-text-primary">{description.installationNote.title}</h4>
+                      <p className="text-sm text-text-secondary">{description.installationNote.text}</p>
                     </div>
                   </div>
                 </div>
@@ -116,7 +116,7 @@ const ProductDetailsTabs = ({ description }: ProductDetailsTabsProps) => {
           )}
 
           {activeTab !== "Description" && (
-            <div className="py-8 text-center text-gray-600">
+            <div className="py-8 text-center text-text-secondary">
               <p>{activeTab} content coming soon...</p>
             </div>
           )}

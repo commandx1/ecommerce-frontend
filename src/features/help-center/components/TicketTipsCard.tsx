@@ -10,7 +10,7 @@ const TIPS = [
 const TicketTipsCard = () => {
   return (
     <NoticeBanner tone="info" title="Tips for faster resolution:" className="rounded-lg">
-      <ul className="mt-1 space-y-1 text-sm text-blue-800">
+      <ul className="mt-1 space-y-1 text-sm text-text-secondary">
         {TIPS.map((tip) => (
           <li key={tip}>• {tip}</li>
         ))}

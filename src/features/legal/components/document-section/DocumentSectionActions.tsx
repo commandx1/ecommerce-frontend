@@ -11,7 +11,7 @@ export default function DocumentSectionActions() {
       <button
         type="button"
         onClick={handlePrint}
-        className="bg-gray-50 text-steel-blue px-4 py-2 rounded-lg hover:bg-opacity-80 font-medium flex items-center transition-colors"
+        className="flex items-center rounded-full bg-surface-muted px-4 py-2 font-medium text-brand transition-colors hover:bg-accent"
       >
         <Printer className="w-4 h-4 mr-2" />
         Print
@@ -19,7 +19,7 @@ export default function DocumentSectionActions() {
       <button
         type="button"
         onClick={handleDownload}
-        className="bg-steel-blue text-white px-4 py-2 rounded-lg hover:bg-opacity-90 font-medium flex items-center transition-colors"
+        className="flex items-center rounded-full bg-brand px-4 py-2 font-medium text-primary-foreground transition-colors hover:bg-brand-strong"
       >
         <Download className="w-4 h-4 mr-2" />
         Download PDF

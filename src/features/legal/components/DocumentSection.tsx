@@ -9,10 +9,13 @@ interface DocumentSectionProps {
 
 const DocumentSection = ({ document }: DocumentSectionProps) => {
   return (
-    <section id={document.id} className="bg-white rounded-2xl shadow-lg p-8 mb-8 scroll-mt-24">
+    <section
+      id={document.id}
+      className="mb-8 scroll-mt-24 rounded-[1.75rem] border border-border-soft bg-surface-elevated p-8 shadow-soft"
+    >
       <DocumentSectionHeader document={document} />
 
-      <div className="prose max-w-none">
+      <div className="max-w-none">
         {document.notice && <DocumentNotice notice={document.notice} />}
         {document.sections?.map((section) => (
           <DocumentSectionContent key={section.title} section={section} />

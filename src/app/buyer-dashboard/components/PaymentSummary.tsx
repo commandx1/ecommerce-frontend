@@ -1,68 +1,73 @@
 import { CreditCard } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import dashboardInvoicesData from "@/data/dashboard-invoices.json"
 
 const PaymentSummary = () => {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-      <div className="p-6 border-b border-gray-200">
-        <h2 className="text-xl font-semibold text-steel-blue">Payment Summary</h2>
-        <p className="text-sm text-gray-600 mt-1">Current month overview</p>
+    <div className="rounded-xl border border-border-soft bg-surface-elevated shadow-soft">
+      <div className="border-b border-border-soft p-6">
+        <h2 className="text-xl font-semibold text-text-primary">Payment Summary</h2>
+        <p className="mt-1 text-sm text-text-secondary">Current month overview</p>
       </div>
       <div className="p-6 space-y-6">
         <div className="grid grid-cols-2 gap-4">
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <div className="text-2xl font-bold text-steel-blue">{dashboardInvoicesData.paymentSummary.totalSpent}</div>
-            <div className="text-sm text-gray-600 mt-1">Total Spent</div>
+          <div className="rounded-lg bg-surface-muted/60 p-4 text-center">
+            <div className="text-2xl font-bold text-text-primary">
+              {dashboardInvoicesData.paymentSummary.totalSpent}
+            </div>
+            <div className="mt-1 text-sm text-text-secondary">Total Spent</div>
           </div>
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <div className="text-2xl font-bold text-steel-blue">{dashboardInvoicesData.paymentSummary.outstanding}</div>
-            <div className="text-sm text-gray-600 mt-1">Outstanding</div>
+          <div className="rounded-lg bg-surface-muted/60 p-4 text-center">
+            <div className="text-2xl font-bold text-text-primary">
+              {dashboardInvoicesData.paymentSummary.outstanding}
+            </div>
+            <div className="mt-1 text-sm text-text-secondary">Outstanding</div>
           </div>
         </div>
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-700">Payment Methods</span>
+            <span className="text-sm text-text-primary">Payment Methods</span>
           </div>
 
           {dashboardInvoicesData.paymentSummary.paymentMethods.map((method) => {
             const iconColorClass =
               method.iconColor === "blue"
-                ? "bg-blue-100"
+                ? "bg-brand/15"
                 : method.iconColor === "orange"
-                  ? "bg-orange-100"
-                  : "bg-gray-100"
+                  ? "bg-warning/20"
+                  : "bg-surface-muted"
             const textColorClass =
               method.iconColor === "blue"
-                ? "text-blue-600"
+                ? "text-brand"
                 : method.iconColor === "orange"
-                  ? "text-orange-600"
-                  : "text-gray-600"
+                  ? "text-warning"
+                  : "text-text-secondary"
 
             return (
-              <div key={method.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+              <div
+                key={method.id}
+                className="flex items-center justify-between rounded-lg border border-border-soft p-3"
+              >
                 <div className="flex items-center space-x-3">
-                  <div className={`w-8 h-8 ${iconColorClass} rounded flex items-center justify-center`}>
-                    <CreditCard className={`${textColorClass} w-4 h-4`} />
+                  <div className={`flex h-8 w-8 items-center justify-center rounded ${iconColorClass}`}>
+                    <CreditCard className={`h-4 w-4 ${textColorClass}`} />
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-steel-blue">**** {method.last4}</div>
-                    <div className="text-xs text-gray-500">{method.label}</div>
+                    <div className="text-sm font-medium text-text-primary">**** {method.last4}</div>
+                    <div className="text-xs text-text-muted">{method.label}</div>
                   </div>
                 </div>
-                <button type="button" className="text-steel-blue hover:underline text-xs">
+                <Button type="button" variant="link" size="sm" className="h-auto p-0 text-xs">
                   Edit
-                </button>
+                </Button>
               </div>
             )
           })}
 
-          <button
-            type="button"
-            className="w-full border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 font-medium text-sm"
-          >
+          <Button type="button" variant="outline" className="w-full rounded-lg">
             + Add Payment Method
-          </button>
+          </Button>
         </div>
       </div>
     </div>

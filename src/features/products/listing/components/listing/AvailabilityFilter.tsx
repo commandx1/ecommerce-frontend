@@ -1,12 +1,15 @@
+import { useId } from "react"
 import { CheckboxField } from "@/components/form/CheckboxField"
 
 const AvailabilityFilter = () => {
+  const id = useId()
+
   return (
-    <div className="p-6 border-b border-gray-200">
-      <h3 className="text-lg font-semibold text-steel-blue mb-4">Availability</h3>
+    <div className="border-b border-border-soft p-6">
+      <h3 className="mb-4 text-lg font-semibold text-text-primary">Availability</h3>
       <div className="space-y-3">
-        <CheckboxField id="availability-in-stock" label="In Stock" defaultChecked />
-        <CheckboxField id="availability-ship-today" label="Ships Today" />
+        <CheckboxField id={`${id}-availability-in-stock`} label="In Stock" defaultChecked />
+        <CheckboxField id={`${id}-availability-ship-today`} label="Ships Today" />
       </div>
     </div>
   )

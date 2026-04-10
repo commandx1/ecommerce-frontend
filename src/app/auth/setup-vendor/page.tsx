@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect } from "react"
+import ThemeToggle from "@/components/theme/ThemeToggle"
 import { showToast } from "@/components/ui/Toast"
 import { refreshTokenForVendorSetup } from "@/lib/api/setup-vendor"
 import { useAuthStore } from "@/stores/authStore"
@@ -51,6 +52,9 @@ function SetupVendorContent() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-steel-blue mx-auto mb-4"></div>
         <h2 className="text-xl font-semibold text-steel-blue">Setting up your account...</h2>

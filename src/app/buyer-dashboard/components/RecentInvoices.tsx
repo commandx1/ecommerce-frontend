@@ -1,19 +1,20 @@
 import { FileText } from "lucide-react"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
 import dashboardInvoicesData from "@/data/dashboard-invoices.json"
 
 const statusColorMap: Record<string, string> = {
-  green: "bg-green-100 text-green-700",
+  green: "bg-success/15 text-success",
   "coral-orange": "bg-coral-orange/20 text-coral-orange",
 }
 
 const RecentInvoices = () => {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-      <div className="p-6 border-b border-gray-200">
+    <div className="rounded-xl border border-border-soft bg-surface-elevated shadow-soft">
+      <div className="border-b border-border-soft p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-steel-blue">Recent Invoices</h2>
-          <Link href="/invoices" className="text-steel-blue hover:underline font-medium">
+          <h2 className="text-xl font-semibold text-text-primary">Recent Invoices</h2>
+          <Link href="/invoices" className="font-medium text-brand hover:underline">
             View All
           </Link>
         </div>
@@ -21,28 +22,28 @@ const RecentInvoices = () => {
       <div className="p-6">
         <div className="space-y-4">
           {dashboardInvoicesData.recentInvoices.map((invoice) => {
-            const statusColorClass = statusColorMap[invoice.statusColor] || "bg-gray-100 text-gray-700"
+            const statusColorClass = statusColorMap[invoice.statusColor] || "bg-surface-muted text-text-secondary"
 
             return (
-              <div key={invoice.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div key={invoice.id} className="flex items-center justify-between rounded-lg bg-surface-muted/55 p-4">
                 <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                    <FileText className="text-steel-blue w-5 h-5" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-elevated">
+                    <FileText className="h-5 w-5 text-brand" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-steel-blue text-sm">{invoice.id}</h3>
-                    <p className="text-xs text-gray-600">
+                    <h3 className="text-sm font-semibold text-text-primary">{invoice.id}</h3>
+                    <p className="text-xs text-text-secondary">
                       {invoice.date} • {invoice.supplier}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-semibold text-steel-blue">{invoice.amount}</div>
+                  <div className="text-sm font-semibold text-text-primary">{invoice.amount}</div>
                   <div className="flex items-center space-x-2">
                     <span className={`${statusColorClass} text-xs px-2 py-1 rounded-full`}>{invoice.status}</span>
-                    <button type="button" className="text-steel-blue hover:underline text-xs">
+                    <Button type="button" variant="link" size="sm" className="h-auto p-0 text-xs">
                       {invoice.action}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>

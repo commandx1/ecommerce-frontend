@@ -3,7 +3,7 @@ import FormAttachmentDropzone from "@/features/help-center/components/FormAttach
 export default function TicketFormAttachmentField() {
   return (
     <div>
-      <p className="mb-2 block text-sm font-semibold text-gray-700">Attachments</p>
+      <p className="mb-2 block text-sm font-semibold text-text-primary">Attachments</p>
       <FormAttachmentDropzone
         title="Drag and drop files here or"
         actionLabel="browse your computer"

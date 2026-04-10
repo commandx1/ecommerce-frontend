@@ -23,20 +23,20 @@ import PageSectionContainer from "@/components/layout/PageSectionContainer"
 
 export default function NotFound() {
   return (
-    <div className="bg-gray-50 min-h-screen font-inter">
+    <div className="min-h-screen bg-canvas">
       {/* 404 Main Section */}
-      <section className="min-h-[80vh] flex items-center justify-center py-16">
+      <section className="flex min-h-[80vh] items-center justify-center py-16">
         <PageSectionContainer as="div" containerClassName="w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
             <div className="order-2 lg:order-1">
               <div className="mb-8">
-                <div className="inline-block bg-coral-orange/10 rounded-2xl px-6 py-3 mb-6">
-                  <span className="text-coral-orange font-bold text-lg">Error 404</span>
+                <div className="mb-6 inline-block rounded-2xl bg-danger/10 px-6 py-3">
+                  <span className="text-lg font-bold text-danger">Error 404</span>
                 </div>
-                <h1 className="text-6xl lg:text-7xl font-bold text-steel-blue mb-6 leading-tight">
+                <h1 className="mb-6 text-6xl leading-tight font-bold text-text-primary lg:text-7xl">
                   Oops! Page Not Found
                 </h1>
-                <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                <p className="mb-8 text-xl leading-relaxed text-text-secondary">
                   The page you're looking for doesn't exist or has been moved. Don't worry, we'll help you get back on
                   track to finding the dental supplies you need.
                 </p>
@@ -45,14 +45,14 @@ export default function NotFound() {
               <div className="flex flex-wrap gap-4">
                 <Link
                   href="/"
-                  className="bg-steel-blue text-white px-8 py-4 rounded-lg hover:bg-opacity-90 font-semibold flex items-center"
+                  className="flex items-center rounded-full bg-brand px-8 py-4 font-semibold text-primary-foreground transition-colors hover:bg-brand-strong"
                 >
                   <Home className="w-4 h-4 mr-2" />
                   Back to Home
                 </Link>
                 <Link
                   href="/contact"
-                  className="bg-white border-2 border-steel-blue text-steel-blue px-8 py-4 rounded-lg hover:bg-steel-blue hover:text-white transition-colors font-semibold flex items-center"
+                  className="flex items-center rounded-full border border-border-strong bg-surface-elevated px-8 py-4 font-semibold text-brand transition-colors hover:border-brand/40 hover:bg-accent"
                 >
                   <Headset className="w-4 h-4 mr-2" />
                   Contact Support
@@ -62,18 +62,18 @@ export default function NotFound() {
 
             <div className="order-1 lg:order-2 relative">
               <div className="relative">
-                <div className="absolute -top-8 -left-8 w-32 h-32 bg-pale-lime rounded-full opacity-20" />
-                <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-coral-orange rounded-full opacity-20" />
-                <div className="relative bg-white rounded-3xl shadow-2xl p-12 text-center">
-                  <div className="w-64 h-64 mx-auto mb-8 flex items-center justify-center">
+                <div className="absolute -top-8 -left-8 h-32 w-32 rounded-full bg-accent-strong/20" />
+                <div className="absolute -right-8 -bottom-8 h-40 w-40 rounded-full bg-danger/16" />
+                <div className="relative rounded-4xl border border-border-soft bg-surface-elevated p-12 text-center shadow-panel">
+                  <div className="mx-auto mb-8 flex h-64 w-64 items-center justify-center">
                     <div className="relative">
-                      <div className="text-9xl font-bold text-steel-blue opacity-10 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-pulse">
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse text-9xl font-bold text-brand/14">
                         404
                       </div>{" "}
                     </div>
                   </div>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-center space-x-2 text-gray-500">
+                    <div className="flex items-center justify-center space-x-2 text-text-muted">
                       <MapPin className="w-4 h-4" />
                       <span className="text-sm italic">You seem to be lost</span>
                     </div>
@@ -86,11 +86,11 @@ export default function NotFound() {
       </section>
 
       {/* Popular Pages */}
-      <section className="py-16 bg-white">
+      <section className="bg-canvas py-16">
         <PageSectionContainer as="div">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-steel-blue mb-4">Popular Pages</h2>
-            <p className="text-lg text-gray-600">Here are some pages you might be looking for</p>
+            <h2 className="mb-4 text-3xl font-bold text-text-primary">Popular Pages</h2>
+            <p className="text-lg text-text-secondary">Here are some pages you might be looking for</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
@@ -126,14 +126,14 @@ export default function NotFound() {
               <Link
                 key={page.title}
                 href={page.link}
-                className="bg-gray-50 rounded-2xl p-6 hover:shadow-lg transition-shadow group"
+                className="group rounded-[1.5rem] border border-border-soft bg-surface-elevated p-6 transition-shadow hover:shadow-soft"
               >
-                <div className="w-12 h-12 bg-steel-blue rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform text-white">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand text-primary-foreground transition-transform group-hover:scale-110">
                   <page.icon className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-semibold text-steel-blue mb-2">{page.title}</h3>
-                <p className="text-sm text-gray-600 mb-3">{page.desc}</p>
-                <div className="flex items-center text-steel-blue text-sm font-medium">
+                <h3 className="mb-2 text-lg font-semibold text-text-primary">{page.title}</h3>
+                <p className="mb-3 text-sm text-text-secondary">{page.desc}</p>
+                <div className="flex items-center text-sm font-medium text-brand">
                   {page.btnText} <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </div>
               </Link>
@@ -143,11 +143,11 @@ export default function NotFound() {
       </section>
 
       {/* Categories */}
-      <section className="py-16 bg-gray-50">
+      <section className="bg-surface-muted/45 py-16">
         <PageSectionContainer as="div">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-steel-blue mb-4">Browse by Category</h2>
-            <p className="text-lg text-gray-600">Find what you need in our organized product categories</p>
+            <h2 className="mb-4 text-3xl font-bold text-text-primary">Browse by Category</h2>
+            <p className="text-lg text-text-secondary">Find what you need in our organized product categories</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
@@ -161,12 +161,12 @@ export default function NotFound() {
               <Link
                 key={cat.title}
                 href={cat.link}
-                className="bg-white rounded-xl p-6 text-center hover:shadow-lg transition-shadow group"
+                className="group rounded-[1.35rem] border border-border-soft bg-surface-elevated p-6 text-center transition-shadow hover:shadow-soft"
               >
-                <div className="w-16 h-16 bg-steel-blue/10 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-steel-blue group-hover:scale-110 transition-all text-steel-blue group-hover:text-white">
+                <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-accent text-brand transition-all group-hover:scale-110 group-hover:bg-brand group-hover:text-primary-foreground">
                   <cat.icon className="w-8 h-8" />
                 </div>
-                <h3 className="text-sm font-semibold text-steel-blue">{cat.title}</h3>
+                <h3 className="text-sm font-semibold text-text-primary">{cat.title}</h3>
               </Link>
             ))}
           </div>
@@ -174,13 +174,13 @@ export default function NotFound() {
       </section>
 
       {/* Help Section */}
-      <section className="py-16 bg-white">
+      <section className="bg-canvas py-16">
         <PageSectionContainer as="div">
-          <div className="bg-linear-to-r from-steel-blue to-blue-700 rounded-3xl overflow-hidden shadow-2xl">
+          <div className="overflow-hidden rounded-4xl bg-brand text-inverse-foreground shadow-panel dark:bg-brand-surface">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-              <div className="p-12 text-white">
+              <div className="p-12 text-inverse-foreground">
                 <h2 className="text-4xl font-bold mb-6">Need Help?</h2>
-                <p className="text-blue-100 text-lg mb-8 leading-relaxed">
+                <p className="mb-8 text-lg leading-relaxed text-inverse-muted">
                   Our support team is here to assist you 24/7. Whether you have questions about products, orders, or
                   your account, we're ready to help.
                 </p>
@@ -195,21 +195,21 @@ export default function NotFound() {
                       detail: "Available 24/7",
                     },
                   ].map((item) => (
-                    <div key={item.title} className="flex items-start space-x-4 text-white">
-                      <div className="w-12 h-12 bg-pale-lime rounded-lg flex items-center justify-center shrink-0 text-steel-blue">
+                    <div key={item.title} className="flex items-start space-x-4 text-inverse-foreground">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent-strong text-accent-foreground">
                         <item.icon className="w-6 h-6" />
                       </div>
                       <div>
                         <div className="font-semibold mb-1">{item.title}</div>
-                        <div className="text-blue-100">{item.desc}</div>
-                        <div className="text-sm text-blue-200">{item.detail}</div>
+                        <div className="text-inverse-muted">{item.desc}</div>
+                        <div className="text-sm text-inverse-muted/85">{item.detail}</div>
                       </div>
                     </div>
                   ))}
                 </div>
                 <button
                   type="button"
-                  className="bg-pale-lime text-steel-blue px-8 py-4 rounded-lg font-semibold hover:bg-opacity-90 transition-colors flex items-center"
+                  className="flex items-center rounded-full bg-accent-strong px-8 py-4 font-semibold text-accent-foreground transition-colors hover:brightness-105"
                 >
                   Contact Support
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -229,11 +229,11 @@ export default function NotFound() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="bg-surface-muted/45 py-16">
         <PageSectionContainer as="div" containerClassName="max-w-4xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-steel-blue mb-4">Frequently Asked Questions</h2>
-            <p className="text-lg text-gray-600">Quick answers to common questions</p>
+            <h2 className="mb-4 text-3xl font-bold text-text-primary">Frequently Asked Questions</h2>
+            <p className="text-lg text-text-secondary">Quick answers to common questions</p>
           </div>
           <div className="space-y-4">
             {[
@@ -254,22 +254,22 @@ export default function NotFound() {
                 a: "We offer 30-day returns on most products. Items must be unused and in original packaging.",
               },
             ].map((faq) => (
-              <div key={faq.q} className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div
+                key={faq.q}
+                className="rounded-[1.35rem] border border-border-soft bg-surface-elevated p-6 shadow-soft transition-shadow hover:shadow-panel"
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-steel-blue mb-2">{faq.q}</h3>
-                    <p className="text-gray-600">{faq.a}</p>
+                    <h3 className="mb-2 text-lg font-semibold text-text-primary">{faq.q}</h3>
+                    <p className="text-text-secondary">{faq.a}</p>
                   </div>
-                  <ChevronDown className="w-5 h-5 text-steel-blue ml-4" />
+                  <ChevronDown className="ml-4 h-5 w-5 text-brand" />
                 </div>
               </div>
             ))}
           </div>
           <div className="text-center mt-8">
-            <Link
-              href="/faq"
-              className="text-steel-blue font-semibold hover:underline flex items-center justify-center"
-            >
+            <Link href="/faq" className="flex items-center justify-center font-semibold text-brand hover:underline">
               View All FAQs <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
           </div>

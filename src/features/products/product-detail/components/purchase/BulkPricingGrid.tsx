@@ -14,22 +14,22 @@ interface BulkPricingGridProps {
 const BulkPricingGrid = ({ options, activeOptionId }: BulkPricingGridProps) => {
   return (
     <div>
-      <div className="block text-sm font-medium text-gray-700 mb-3">Bulk Pricing</div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="mb-3 block text-sm font-medium text-text-primary">Bulk Pricing</div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {options.map((option) => (
           <div
             key={option.id}
-            className={`bg-white border rounded-lg p-4 transition-colors text-left ${
+            className={`rounded-2xl border p-4 text-left transition-colors ${
               activeOptionId === option.id
-                ? "border-2 border-steel-blue ring-1 ring-steel-blue"
-                : "border-gray-200 opacity-60"
+                ? "border-brand bg-accent/70 shadow-soft ring-1 ring-brand/15"
+                : "border-border-soft bg-surface-elevated"
             }`}
           >
             <div className="text-center">
-              <div className="font-semibold text-steel-blue">{option.range}</div>
-              <div className="text-2xl font-bold text-gray-900">{option.price}</div>
+              <div className="font-semibold text-brand">{option.range}</div>
+              <div className="text-2xl font-bold text-text-primary">{option.price}</div>
               <div
-                className={`text-sm ${option.note.includes("Save") ? "text-green-600 font-medium" : "text-gray-600"}`}
+                className={`text-sm ${option.note.includes("Save") ? "font-medium text-success" : "text-text-secondary"}`}
               >
                 {option.note}
               </div>

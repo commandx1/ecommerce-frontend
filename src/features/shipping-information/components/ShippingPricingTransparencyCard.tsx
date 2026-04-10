@@ -9,13 +9,13 @@ const TRANSPARENCY_ITEMS = [
 
 export default function ShippingPricingTransparencyCard() {
   return (
-    <div className="bg-gradient-to-br from-pale-lime to-lime-200 rounded-xl sm:rounded-2xl p-6 sm:p-8">
-      <h3 className="text-xl sm:text-2xl font-bold text-steel-blue mb-4">Pricing Transparency</h3>
+    <div className="rounded-xl border border-accent-strong/25 bg-accent-strong/12 p-6 sm:rounded-2xl sm:p-8">
+      <h3 className="mb-4 text-xl font-bold text-brand-strong sm:text-2xl">Pricing Transparency</h3>
       <div className="space-y-4">
         {TRANSPARENCY_ITEMS.map((item) => (
           <div key={item} className="flex items-start">
-            <CheckCircle className="text-steel-blue w-5 h-5 sm:w-6 sm:h-6 mr-3 mt-1 shrink-0" />
-            <p className="text-sm sm:text-base text-gray-800">{item}</p>
+            <CheckCircle className="mr-3 mt-1 h-5 w-5 shrink-0 text-brand sm:h-6 sm:w-6" />
+            <p className="text-sm text-text-primary sm:text-base">{item}</p>
           </div>
         ))}
       </div>

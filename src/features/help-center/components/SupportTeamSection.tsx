@@ -31,7 +31,7 @@ const team = [
 
 export default function SupportTeamSection() {
   return (
-    <PageSectionContainer as="section" className="py-16 bg-gray-50">
+    <PageSectionContainer as="section" className="bg-surface-muted/45 py-16">
       <SectionHeading
         title="Meet Our Support Team"
         description="Our experienced team of dental industry professionals is here to help you succeed"
@@ -40,7 +40,7 @@ export default function SupportTeamSection() {
         descriptionClassName="text-xl max-w-3xl mx-auto text-center"
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
         {team.map((member) => (
           <SupportTeamMemberCard
             key={member.name}

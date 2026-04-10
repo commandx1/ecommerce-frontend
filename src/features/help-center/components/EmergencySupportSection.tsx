@@ -27,18 +27,18 @@ const EMERGENCY_CHANNELS = [
 
 export default function EmergencySupportSection() {
   return (
-    <PageSectionContainer as="section" className="py-16 bg-coral-orange">
-      <div className="text-center text-white">
-        <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
-          <AlertTriangle className="text-white w-10 h-10" />
+    <PageSectionContainer as="section" className="bg-brand-surface py-16">
+      <div className="text-center text-inverse-foreground">
+        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-white/14">
+          <AlertTriangle className="h-10 w-10 text-inverse-foreground" />
         </div>
-        <h2 className="text-4xl font-bold mb-4">Emergency Support</h2>
-        <p className="text-xl text-orange-100 mb-8 max-w-3xl mx-auto">
+        <h2 className="mb-4 text-4xl font-bold">Emergency Support</h2>
+        <p className="mx-auto mb-8 max-w-3xl text-xl text-inverse-muted">
           Need immediate assistance with a critical issue? Our emergency support line is available 24/7 for urgent
           matters that impact patient care.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+        <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 md:grid-cols-3">
           {EMERGENCY_CHANNELS.map((channel) => (
             <EmergencySupportCard
               key={channel.title}
@@ -50,8 +50,8 @@ export default function EmergencySupportSection() {
           ))}
         </div>
 
-        <div className="mt-8 bg-white/10 backdrop-blur-sm rounded-xl p-6 max-w-2xl mx-auto">
-          <p className="text-orange-100 text-sm">
+        <div className="mx-auto mt-8 max-w-2xl rounded-[1.35rem] border border-white/12 bg-white/8 p-6 backdrop-blur-sm">
+          <p className="text-sm text-inverse-muted">
             <strong>Emergency support is reserved for:</strong> Equipment failures affecting patient care, critical
             order issues, payment processing emergencies, and system outages preventing essential operations.
           </p>

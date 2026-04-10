@@ -8,17 +8,17 @@ interface FAQItemCardProps {
 
 const FAQItemCard = ({ item }: FAQItemCardProps) => {
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm">
+    <div className="rounded-[1.25rem] border border-border-soft bg-surface-elevated p-6 shadow-soft">
       <details className="group">
         <summary className="flex list-none items-start justify-between cursor-pointer w-full text-left">
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold text-steel-blue">{item.question}</h3>
+            <h3 className="text-lg font-semibold text-text-primary">{item.question}</h3>
           </div>
-          <ChevronDown className="text-gray-400 ml-4 w-5 h-5 shrink-0 transition-transform duration-300 ease-in-out group-open:rotate-180" />
+          <ChevronDown className="ml-4 h-5 w-5 shrink-0 text-text-muted transition-transform duration-300 ease-in-out group-open:rotate-180" />
         </summary>
         <div className="grid transition-[grid-template-rows] duration-300 ease-in-out [grid-template-rows:0fr] group-open:[grid-template-rows:1fr]">
           <div className="min-h-0 overflow-hidden">
-            <div className="text-gray-600 pt-4">{item.answer}</div>
+            <div className="pt-4 text-text-secondary">{item.answer}</div>
           </div>
         </div>
       </details>

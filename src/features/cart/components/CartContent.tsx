@@ -31,10 +31,10 @@ export default function CartContent({
   totals,
 }: CartContentProps) {
   return (
-    <PageSectionContainer as="main" className="min-h-screen bg-gray-50 py-8">
+    <PageSectionContainer as="main" className="min-h-screen bg-canvas py-8">
       <SectionHeading titleAs="h1" title="Shopping Cart" className="mb-8" />
-      <div className="flex flex-col lg:flex-row gap-8">
-        <div className="flex-1 lg:w-2/3 mx-auto">
+      <div className="flex flex-col gap-8 lg:flex-row">
+        <div className="mx-auto flex-1 lg:w-2/3">
           <CartItemsPanel
             cartId={cartId}
             isClearConfirmOpen={isClearConfirmOpen}

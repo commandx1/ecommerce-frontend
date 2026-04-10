@@ -22,8 +22,8 @@ interface DocumentSectionContentProps {
 export default function DocumentSectionContent({ section }: DocumentSectionContentProps) {
   return (
     <div className="mb-8">
-      <h3 className="text-xl font-semibold text-steel-blue mb-4">{section.title}</h3>
-      {section.content ? <p className="text-gray-700 mb-6 leading-relaxed">{section.content}</p> : null}
+      <h3 className="mb-4 text-xl font-semibold text-text-primary">{section.title}</h3>
+      {section.content ? <p className="mb-6 leading-relaxed text-text-secondary">{section.content}</p> : null}
       {section.list ? <SectionList items={section.list} /> : null}
       {section.items && section.warning ? <SectionWarningItems items={section.items} /> : null}
       {section.items && !section.warning ? <SectionItems items={section.items} /> : null}

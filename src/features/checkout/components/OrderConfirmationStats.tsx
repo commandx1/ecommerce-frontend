@@ -10,15 +10,15 @@ export default function OrderConfirmationStats({ orderResult }: OrderConfirmatio
   const itemCount = orderResult.orderItems.reduce((sum, item) => sum + item.quantity, 0)
 
   return (
-    <div className="grid gap-6 mb-10 lg:grid-cols-3">
-      <div className="bg-gray-50 rounded-xl p-6">
-        <div className="text-sm text-gray-600 mb-2">Order ID</div>
-        <div className="text-base font-mono break-all text-gray-900 mb-4">{orderResult.orderId}</div>
-        <div className="flex items-center justify-between text-sm text-gray-600">
+    <div className="mb-10 grid gap-6 lg:grid-cols-3">
+      <div className="rounded-xl border border-border-soft bg-surface p-6">
+        <div className="mb-2 text-sm text-text-secondary">Order ID</div>
+        <div className="mb-4 break-all font-mono text-base text-text-primary">{orderResult.orderId}</div>
+        <div className="flex items-center justify-between text-sm text-text-secondary">
           <span>Status</span>
           <span
             className={`px-3 py-1 rounded-full text-xs font-semibold ${
-              orderResult.status === "PAYMENT_SUCCESS" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+              orderResult.status === "PAYMENT_SUCCESS" ? "bg-success/15 text-success" : "bg-warning/15 text-warning"
             }`}
           >
             {orderResult.status}
@@ -26,19 +26,19 @@ export default function OrderConfirmationStats({ orderResult }: OrderConfirmatio
         </div>
       </div>
 
-      <div className="bg-gray-50 rounded-xl p-6">
-        <div className="text-sm text-gray-600 mb-2">Order Date</div>
-        <div className="text-base font-semibold text-gray-900 mb-4">
+      <div className="rounded-xl border border-border-soft bg-surface p-6">
+        <div className="mb-2 text-sm text-text-secondary">Order Date</div>
+        <div className="mb-4 text-base font-semibold text-text-primary">
           {createdDate ? createdDate.toLocaleString() : "-"}
         </div>
-        <div className="text-sm text-gray-600 mb-2">Total Price</div>
-        <div className="text-2xl font-bold text-steel-blue">{formatCurrency(orderResult.totalPrice)}</div>
+        <div className="mb-2 text-sm text-text-secondary">Total Price</div>
+        <div className="text-2xl font-bold text-brand">{formatCurrency(orderResult.totalPrice)}</div>
       </div>
 
-      <div className="bg-gray-50 rounded-xl p-6">
-        <div className="text-sm text-gray-600 mb-2">Items Count</div>
-        <div className="text-2xl font-bold text-steel-blue mb-4">{itemCount}</div>
-        <div className="text-xs text-gray-600">
+      <div className="rounded-xl border border-border-soft bg-surface p-6">
+        <div className="mb-2 text-sm text-text-secondary">Items Count</div>
+        <div className="mb-4 text-2xl font-bold text-brand">{itemCount}</div>
+        <div className="text-xs text-text-secondary">
           You will receive an email confirmation shortly with your order details and tracking information.
         </div>
       </div>

@@ -6,11 +6,11 @@ interface SectionDeviceClassesProps {
 
 export default function SectionDeviceClassesBlock({ deviceClasses }: SectionDeviceClassesProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
       {deviceClasses.map((deviceClass) => (
-        <div key={deviceClass.class} className="bg-gray-50 p-6 rounded-xl">
-          <h4 className="font-semibold text-steel-blue mb-4">{deviceClass.class}</h4>
-          <ul className="text-sm text-gray-700 space-y-2">
+        <div key={deviceClass.class} className="rounded-[1.35rem] border border-border-soft bg-surface-muted/70 p-6">
+          <h4 className="mb-4 font-semibold text-text-primary">{deviceClass.class}</h4>
+          <ul className="space-y-2 text-sm text-text-secondary">
             {deviceClass.items.map((item) => (
               <li key={item}>• {item}</li>
             ))}

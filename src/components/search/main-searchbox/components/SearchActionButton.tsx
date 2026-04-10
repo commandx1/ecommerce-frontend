@@ -10,7 +10,8 @@ const SearchActionButton = ({ isLoading }: SearchActionButtonProps) => {
   return (
     <button
       type="button"
-      className="bg-steel-blue text-white px-5 rounded-r-lg hover:bg-opacity-90 flex items-center justify-center"
+      aria-label="Search products"
+      className="rounded-r-2xl flex h-11 items-center justify-center border-l border-border-soft bg-surface-muted/70 px-5 text-brand transition-[background-color,color] hover:bg-surface-muted"
     >
       {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
     </button>

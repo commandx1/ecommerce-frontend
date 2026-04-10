@@ -103,12 +103,13 @@ const PurchaseOptions = ({ bulkPricing, warrantyOptions, orderSummary }: Purchas
   }
 
   return (
-    <section className="bg-white py-12 border-t border-gray-200">
+    <section className="border-t border-border-soft/70 bg-surface-muted/35 py-14">
       <PageSectionContainer as="div">
-        <SurfaceCard variant="subtle" className="p-8">
+        <SurfaceCard variant="editorial" className="p-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
-              <h2 className="text-2xl font-bold text-steel-blue mb-6">Purchase Options</h2>
+              <div className="section-kicker mb-4">Commercial terms</div>
+              <h2 className="mb-6 text-3xl font-semibold text-text-primary">Purchase Options</h2>
 
               <div className="space-y-6">
                 <QuantitySelector

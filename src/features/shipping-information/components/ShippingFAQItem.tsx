@@ -7,15 +7,15 @@ interface ShippingFAQItemProps {
 
 export default function ShippingFAQItem({ answer, question }: ShippingFAQItemProps) {
   return (
-    <div className="bg-gray-50 rounded-xl overflow-hidden">
+    <div className="overflow-hidden rounded-xl border border-border-soft bg-surface-elevated">
       <details className="group">
-        <summary className="w-full list-none text-left p-4 sm:p-6 focus:outline-none cursor-pointer">
+        <summary className="w-full cursor-pointer list-none p-4 text-left focus:outline-none sm:p-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-base sm:text-lg font-semibold text-steel-blue pr-4">{question}</h3>
-            <ChevronDown className="text-gray-400 shrink-0 transition-transform duration-300 ease-in-out group-open:rotate-180" />
+            <h3 className="pr-4 text-base font-semibold text-text-primary sm:text-lg">{question}</h3>
+            <ChevronDown className="shrink-0 text-text-muted transition-transform duration-300 ease-in-out group-open:rotate-180" />
           </div>
         </summary>
-        <div className="px-4 sm:px-6 pb-4 sm:pb-6 text-sm sm:text-base text-gray-600">
+        <div className="px-4 pb-4 text-sm text-text-secondary sm:px-6 sm:pb-6 sm:text-base">
           <p>{answer}</p>
         </div>
       </details>

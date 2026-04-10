@@ -11,96 +11,134 @@ import {
   Tooltip,
   type TooltipItem,
 } from "chart.js"
+import { useEffect, useMemo, useState } from "react"
 import { Line } from "react-chartjs-2"
+import { Button } from "@/components/ui/button"
 import dashboardChartData from "@/data/dashboard-chart.json"
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
 
 const SpendingChart = () => {
+  const [palette, setPalette] = useState({
+    brand: "#3B82F6",
+    textPrimary: "#111827",
+    textMuted: "#6B7280",
+    borderSoft: "#E5E7EB",
+    surfaceElevated: "#FFFFFF",
+  })
+
+  useEffect(() => {
+    const syncPalette = () => {
+      const styles = getComputedStyle(document.documentElement)
+      const read = (name: string, fallback: string) => styles.getPropertyValue(name).trim() || fallback
+
+      setPalette({
+        brand: read("--brand", "#3B82F6"),
+        textPrimary: read("--text-primary", "#111827"),
+        textMuted: read("--text-muted", "#6B7280"),
+        borderSoft: read("--border-soft", "#E5E7EB"),
+        surfaceElevated: read("--surface-elevated", "#FFFFFF"),
+      })
+    }
+
+    syncPalette()
+
+    const observer = new MutationObserver(syncPalette)
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "style"],
+    })
+
+    return () => observer.disconnect()
+  }, [])
+
   const data = {
     labels: dashboardChartData.spendingChart.categories,
     datasets: [
       {
         label: "Monthly Spending",
         data: dashboardChartData.spendingChart.data,
-        borderColor: dashboardChartData.spendingChart.color,
-        backgroundColor: `${dashboardChartData.spendingChart.color}20`,
+        borderColor: palette.brand,
+        backgroundColor: palette.brand,
         borderWidth: 3,
         pointRadius: 5,
-        pointBackgroundColor: dashboardChartData.spendingChart.color,
-        pointBorderColor: "#ffffff",
+        pointBackgroundColor: palette.brand,
+        pointBorderColor: palette.surfaceElevated,
         pointBorderWidth: 2,
-        tension: 0.1,
+        tension: 0.2,
       },
     ],
   }
 
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        backgroundColor: "#1F2937",
-        borderColor: "#374151",
-        borderWidth: 1,
-        padding: 12,
-        titleColor: "#ffffff",
-        bodyColor: "#ffffff",
-        callbacks: {
-          label(tooltipItem: TooltipItem<"line">) {
-            const value = tooltipItem.parsed.y
-            if (value === null || value === undefined) return ""
-            return `$${value.toLocaleString()}`
-          },
-        },
-      },
-    },
-    scales: {
-      x: {
-        grid: {
+  const options = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
           display: false,
         },
-        ticks: {
-          color: "#6B7280",
-        },
-      },
-      y: {
-        title: {
-          display: true,
-          text: "Amount ($)",
-          color: "#6B7280",
-        },
-        grid: {
-          color: "#F3F4F6",
-        },
-        ticks: {
-          color: "#6B7280",
-          callback(value: number | string) {
-            return `$${Number(value) / 1000}k`
+        tooltip: {
+          backgroundColor: palette.surfaceElevated,
+          borderColor: palette.borderSoft,
+          borderWidth: 1,
+          padding: 12,
+          titleColor: palette.textPrimary,
+          bodyColor: palette.textPrimary,
+          callbacks: {
+            label(tooltipItem: TooltipItem<"line">) {
+              const value = tooltipItem.parsed.y
+              if (value === null || value === undefined) return ""
+              return `$${value.toLocaleString()}`
+            },
           },
         },
       },
-    },
-  }
+      scales: {
+        x: {
+          grid: {
+            display: false,
+          },
+          ticks: {
+            color: palette.textMuted,
+          },
+        },
+        y: {
+          title: {
+            display: true,
+            text: "Amount ($)",
+            color: palette.textMuted,
+          },
+          grid: {
+            color: palette.borderSoft,
+          },
+          ticks: {
+            color: palette.textMuted,
+            callback(value: number | string) {
+              return `$${Number(value) / 1000}k`
+            },
+          },
+        },
+      },
+    }),
+    [palette],
+  )
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-      <div className="p-6 border-b border-gray-200">
+    <div className="rounded-xl border border-border-soft bg-surface-elevated shadow-soft">
+      <div className="border-b border-border-soft p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-steel-blue">Monthly Spending</h2>
+          <h2 className="text-xl font-semibold text-text-primary">Monthly Spending</h2>
           <div className="flex space-x-2">
-            <button type="button" className="text-steel-blue text-sm hover:underline">
+            <Button type="button" variant="link" size="sm" className="h-auto p-0 text-sm">
               6M
-            </button>
-            <button type="button" className="text-gray-500 text-sm hover:underline">
+            </Button>
+            <Button type="button" variant="link" size="sm" className="h-auto p-0 text-sm text-text-muted">
               1Y
-            </button>
-            <button type="button" className="text-gray-500 text-sm hover:underline">
+            </Button>
+            <Button type="button" variant="link" size="sm" className="h-auto p-0 text-sm text-text-muted">
               All
-            </button>
+            </Button>
           </div>
         </div>
       </div>

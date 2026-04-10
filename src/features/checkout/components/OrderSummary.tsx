@@ -16,13 +16,13 @@ export default function OrderSummary() {
   if (currentStep === 5) return null
 
   return (
-    <SurfaceCard className="sticky top-8 p-6">
+    <SurfaceCard variant="technical" className="sticky top-28 p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold text-steel-blue">Order Summary</h3>
+        <h3 className="text-xl font-semibold text-text-primary">Order Summary</h3>
         <button
           type="button"
           onClick={() => router.push("/cart")}
-          className="text-steel-blue hover:underline text-sm font-medium"
+          className="text-sm font-medium text-brand hover:underline"
         >
           Edit Cart
         </button>

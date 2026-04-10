@@ -34,7 +34,7 @@ const resources = [
 
 export default function SupportResourcesSection() {
   return (
-    <PageSectionContainer as="section" className="py-16 bg-white">
+    <PageSectionContainer as="section" className="bg-canvas py-16">
       <SectionHeading
         title="Additional Support Resources"
         description="Explore our comprehensive library of resources designed to help you get the most out of DentalHub"
@@ -43,7 +43,7 @@ export default function SupportResourcesSection() {
         descriptionClassName="text-xl max-w-3xl mx-auto text-center"
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         {resources.map((item) => (
           <SupportResourceCard
             key={item.title}

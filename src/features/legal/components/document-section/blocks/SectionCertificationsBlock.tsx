@@ -7,19 +7,22 @@ interface SectionCertificationsProps {
 
 export default function SectionCertificationsBlock({ certifications }: SectionCertificationsProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
       {certifications.map((cert) => {
         const CertIcon = iconMap[cert.icon]
         return (
-          <div key={cert.title} className="bg-gray-50 p-6 rounded-xl text-center">
+          <div
+            key={cert.title}
+            className="rounded-[1.35rem] border border-border-soft bg-surface-muted/70 p-6 text-center"
+          >
             {CertIcon ? (
-              <div className="w-16 h-16 bg-steel-blue rounded-full flex items-center justify-center mx-auto mb-4">
-                <CertIcon className="text-white w-8 h-8" />
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand text-primary-foreground">
+                <CertIcon className="h-8 w-8" />
               </div>
             ) : null}
-            <h4 className="font-semibold text-steel-blue mb-2">{cert.title}</h4>
-            <p className="text-xs text-gray-600 mb-3">{cert.description}</p>
-            <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">{cert.status}</span>
+            <h4 className="mb-2 font-semibold text-text-primary">{cert.title}</h4>
+            <p className="mb-3 text-xs text-text-secondary">{cert.description}</p>
+            <span className="rounded-full bg-success/14 px-2 py-1 text-xs text-success">{cert.status}</span>
           </div>
         )
       })}

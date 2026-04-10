@@ -11,19 +11,19 @@ export default function OrderConfirmationItems({ orderResult }: OrderConfirmatio
 
   return (
     <div className="mb-10">
-      <h3 className="text-xl font-semibold text-steel-blue mb-4">Order Items</h3>
+      <h3 className="mb-4 text-xl font-semibold text-text-primary">Order Items</h3>
       <div className="space-y-4">
         {orderResult.orderItems.map((item) => (
           <div
             key={item.id}
-            className="border border-gray-100 rounded-xl p-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4"
+            className="flex flex-col gap-4 rounded-xl border border-border-soft bg-surface p-4 sm:flex-row sm:items-start sm:justify-between"
           >
             <div>
-              <div className="text-sm text-gray-500 mb-1">Item ID</div>
-              <div className="text-sm font-mono break-all text-gray-900 mb-2">{item.id}</div>
-              <div className="text-xs text-gray-500 mb-1">User Product ID</div>
-              <div className="text-xs font-mono break-all text-gray-700 mb-2">{item.userProductId}</div>
-              <div className="flex items-center gap-4 text-sm text-gray-700 mt-2">
+              <div className="mb-1 text-sm text-text-muted">Item ID</div>
+              <div className="mb-2 break-all font-mono text-sm text-text-primary">{item.id}</div>
+              <div className="mb-1 text-xs text-text-muted">User Product ID</div>
+              <div className="mb-2 break-all font-mono text-xs text-text-secondary">{item.userProductId}</div>
+              <div className="mt-2 flex items-center gap-4 text-sm text-text-secondary">
                 <span>
                   Qty: <span className="font-semibold">{item.quantity}</span>
                 </span>
@@ -32,7 +32,9 @@ export default function OrderConfirmationItems({ orderResult }: OrderConfirmatio
                 </span>
                 <span
                   className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                    item.status === "WAITING_FOR_SHIPMENT" ? "bg-amber-50 text-amber-700" : "bg-gray-100 text-gray-700"
+                    item.status === "WAITING_FOR_SHIPMENT"
+                      ? "bg-warning/15 text-warning"
+                      : "bg-surface-muted text-text-secondary"
                   }`}
                 >
                   {item.status}
@@ -42,7 +44,7 @@ export default function OrderConfirmationItems({ orderResult }: OrderConfirmatio
 
             {item.trackingLink && item.trackingLink.length > 0 ? (
               <div>
-                <div className="text-xs font-medium text-gray-600 mb-1">Tracking Links</div>
+                <div className="mb-1 text-xs font-medium text-text-secondary">Tracking Links</div>
                 <div className="flex flex-wrap gap-2">
                   {item.trackingLink.map((link, index) => (
                     <a
@@ -50,10 +52,10 @@ export default function OrderConfirmationItems({ orderResult }: OrderConfirmatio
                       href={link}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium hover:bg-green-200"
+                      className="inline-flex items-center rounded-full bg-success/15 px-3 py-1 text-xs font-medium text-success transition-colors hover:bg-success/20"
                     >
                       Tracking Link {index + 1}
-                      <ExternalLink className="w-4 h-4 ml-3" />
+                      <ExternalLink className="ml-3 h-4 w-4" />
                     </a>
                   ))}
                 </div>

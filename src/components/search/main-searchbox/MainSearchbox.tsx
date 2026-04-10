@@ -26,9 +26,11 @@ const MainSearchbox = ({ className = "" }: MainSearchboxProps) => {
   } = useMainSearch()
 
   return (
-    <div className={`flex w-full max-w-2xl mx-auto relative ${className}`}>
+    <div
+      className={`relative mx-auto flex w-full max-w-2xl rounded-2xl border border-border-soft bg-surface-elevated/95 shadow-soft backdrop-blur-sm transition-[border-color,box-shadow] focus-within:border-brand/40 focus-within:ring-3 focus-within:ring-ring/50 ${className}`}
+    >
       <CategorySelect />
-      <div className="flex-1 relative">
+      <div className="relative flex-1">
         <SearchInput inputRef={inputRef} value={searchQuery} onChange={handleInputChange} onFocus={handleInputFocus} />
         <SearchResultsDropdown
           dropdownRef={dropdownRef}

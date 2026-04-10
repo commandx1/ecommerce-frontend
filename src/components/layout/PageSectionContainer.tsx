@@ -17,7 +17,7 @@ export default function PageSectionContainer({
 
   return (
     <Component className={className}>
-      <div className={cn("app-container mx-auto px-4 sm:px-6 lg:px-8", containerClassName)}>{children}</div>
+      <div className={cn("app-container mx-auto px-4 sm:px-6 lg:px-8 xl:px-10", containerClassName)}>{children}</div>
     </Component>
   )
 }

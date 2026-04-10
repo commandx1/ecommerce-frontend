@@ -17,25 +17,25 @@ export default function OrderSummaryShippingInfo({
   if (currentStep < 2) return null
 
   return (
-    <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-gray-700">Shipping to:</span>
+    <div className="mb-6 rounded-[1.25rem] border border-border-soft bg-surface p-4">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-sm font-medium text-text-primary">Shipping to:</span>
         {currentStep === 2 ? (
-          <button type="button" className="text-steel-blue hover:underline text-xs" onClick={onChangeAddress}>
+          <button type="button" className="text-xs text-brand hover:underline" onClick={onChangeAddress}>
             Change
           </button>
         ) : null}
       </div>
-      <div className="text-sm text-gray-600">
-        <div className="font-medium">{shippingAddress.company}</div>
+      <div className="text-sm text-text-secondary">
+        <div className="font-medium text-text-primary">{shippingAddress.company}</div>
         <div>{shippingAddress.street}</div>
         <div>
           {shippingAddress.city}, {shippingAddress.state} {shippingAddress.zipCode}
         </div>
       </div>
       <div className="mt-3 flex items-center text-sm">
-        <Truck className="w-4 h-4 text-steel-blue mr-2" />
-        <span className="text-gray-700">{etaText}</span>
+        <Truck className="mr-2 h-4 w-4 text-brand" />
+        <span className="text-text-primary">{etaText}</span>
       </div>
     </div>
   )

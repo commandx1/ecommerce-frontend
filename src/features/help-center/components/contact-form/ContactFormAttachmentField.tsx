@@ -3,7 +3,7 @@ import FormAttachmentDropzone from "@/features/help-center/components/FormAttach
 export default function ContactFormAttachmentField() {
   return (
     <div>
-      <p className="mb-2 block text-sm font-semibold text-gray-700">Attachment (Optional)</p>
+      <p className="mb-2 block text-sm font-semibold text-text-primary">Attachment (Optional)</p>
       <FormAttachmentDropzone
         title="Drop files here or"
         actionLabel="browse"

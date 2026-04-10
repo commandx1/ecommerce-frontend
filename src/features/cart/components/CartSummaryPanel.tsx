@@ -27,19 +27,19 @@ export default function CartSummaryPanel({
   ]
 
   return (
-    <SurfaceCard className="sticky top-6 p-6">
-      <h3 className="text-xl font-bold text-steel-blue mb-6">Order Summary</h3>
-      <div className="space-y-3 mb-6">
+    <SurfaceCard variant="technical" className="sticky top-6 p-6">
+      <h3 className="mb-6 text-xl font-bold text-text-primary">Order Summary</h3>
+      <div className="mb-6 space-y-3">
         {summaryRows.map((row) => (
           <div key={row.label} className="flex justify-between text-sm">
-            <span className="text-gray-600">{row.label}</span>
-            <span className="font-medium">{row.value}</span>
+            <span className="text-text-secondary">{row.label}</span>
+            <span className="font-medium text-text-primary">{row.value}</span>
           </div>
         ))}
-        <div className="border-t border-gray-200 pt-3">
+        <div className="border-t border-border-soft pt-3">
           <div className="flex justify-between">
-            <span className="text-lg font-bold text-gray-900">Total</span>
-            <span className="text-lg font-bold text-steel-blue">{formatCurrency(totals.total)}</span>
+            <span className="text-lg font-bold text-text-primary">Total</span>
+            <span className="text-lg font-bold text-brand">{formatCurrency(totals.total)}</span>
           </div>
         </div>
       </div>
@@ -48,7 +48,7 @@ export default function CartSummaryPanel({
         disabled={isCheckoutDisabled}
         onClick={onCheckout}
         fullWidth
-        className="text-lg disabled:bg-gray-300"
+        className="text-lg disabled:bg-surface-muted disabled:text-text-muted"
       >
         Proceed to Checkout
       </ActionButton>

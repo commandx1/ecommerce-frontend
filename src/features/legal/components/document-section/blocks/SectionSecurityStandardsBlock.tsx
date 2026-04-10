@@ -6,11 +6,11 @@ interface SectionSecurityStandardsProps {
 
 export default function SectionSecurityStandardsBlock({ standards }: SectionSecurityStandardsProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+    <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-2">
       {standards.map((standard) => (
-        <div key={standard.title} className="bg-gray-50 p-6 rounded-xl">
-          <h4 className="font-semibold text-steel-blue mb-4">{standard.title}</h4>
-          <ul className="text-sm text-gray-700 space-y-2">
+        <div key={standard.title} className="rounded-[1.35rem] border border-border-soft bg-surface-muted/70 p-6">
+          <h4 className="mb-4 font-semibold text-text-primary">{standard.title}</h4>
+          <ul className="space-y-2 text-sm text-text-secondary">
             {standard.items.map((item) => (
               <li key={item}>• {item}</li>
             ))}

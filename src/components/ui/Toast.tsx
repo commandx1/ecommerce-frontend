@@ -19,39 +19,33 @@ interface ToastProps {
 const toastConfig = {
   success: {
     icon: Check,
-    color: "from-green-500 to-emerald-600",
-    bg: "bg-green-50",
-    border: "border-green-200",
+    iconWrap: "bg-success/14 text-success",
+    progress: "bg-success",
   },
   error: {
     icon: X,
-    color: "from-red-500 to-rose-600",
-    bg: "bg-red-50",
-    border: "border-red-200",
+    iconWrap: "bg-danger/14 text-danger",
+    progress: "bg-danger",
   },
   warning: {
     icon: TriangleAlert,
-    color: "from-amber-500 to-yellow-600",
-    bg: "bg-amber-50",
-    border: "border-amber-200",
+    iconWrap: "bg-warning/14 text-warning",
+    progress: "bg-warning",
   },
   info: {
     icon: Info,
-    color: "from-blue-500 to-cyan-600",
-    bg: "bg-blue-50",
-    border: "border-blue-200",
+    iconWrap: "bg-accent text-brand",
+    progress: "bg-brand",
   },
   love: {
     icon: Heart,
-    color: "from-rose-500 to-pink-600",
-    bg: "bg-pink-50",
-    border: "border-pink-200",
+    iconWrap: "bg-brand/12 text-brand",
+    progress: "bg-brand",
   },
   loading: {
     icon: Loader2,
-    color: "from-purple-500 to-indigo-600",
-    bg: "bg-purple-50",
-    border: "border-purple-200",
+    iconWrap: "bg-brand-surface/14 text-brand",
+    progress: "bg-brand-strong",
   },
 }
 
@@ -100,36 +94,33 @@ export function Toast({ id, type, title, message, duration = 4000 }: ToastProps)
   const Icon = config.icon
 
   return (
-    <div
-      className={`bg-white rounded-2xl shadow-2xl border-2 ${config.border} overflow-hidden min-w-[320px] pointer-events-auto font-indie-flower`}
-    >
+    <div className="min-w-[320px] overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated/98 font-indie-flower shadow-panel backdrop-blur-xl pointer-events-auto">
       <div className="flex items-start p-4">
         <div className="shrink-0">
-          <div
-            className={`w-10 h-10 bg-linear-to-br ${config.color} rounded-full flex items-center justify-center shadow-lg`}
-          >
+          <div className={`flex h-10 w-10 items-center justify-center rounded-full ${config.iconWrap}`}>
             <Icon
-              className={`text-white ${type === "loading" ? "animate-spin" : ""}`}
+              className={type === "loading" ? "animate-spin" : ""}
               size={20}
-              fill={type === "love" ? "white" : "none"}
+              fill={type === "love" ? "currentColor" : "none"}
             />
           </div>
         </div>
         <div className="ml-4 flex-1">
-          <h4 className="font-bold text-gray-900 text-sm mb-1">{title}</h4>
-          <p className="text-gray-600 text-xs leading-relaxed">{message}</p>
+          <h4 className="mb-1 text-sm font-bold text-text-primary">{title}</h4>
+          <p className="text-xs leading-relaxed text-text-secondary">{message}</p>
         </div>
         <button
+          type="button"
           onClick={() => toast.dismiss(id)}
-          className="shrink-0 ml-4 text-gray-400 hover:text-gray-600 transition-colors"
+          className="ml-4 shrink-0 text-text-muted transition-colors hover:text-text-primary"
         >
           <X size={16} />
         </button>
       </div>
       {type !== "loading" && (
-        <div className={`h-1 ${config.bg}`}>
+        <div className="h-1 bg-surface-muted">
           <div
-            className={`h-full bg-linear-to-r ${config.color} toast-progress`}
+            className={`h-full ${config.progress} toast-progress`}
             style={{ "--duration": `${duration}ms` } as React.CSSProperties}
           />
         </div>

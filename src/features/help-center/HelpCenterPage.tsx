@@ -11,7 +11,7 @@ import TicketSubmissionSection from "@/features/help-center/components/TicketSub
 
 export default function HelpCenterPage() {
   return (
-    <main className="min-h-screen bg-gray-50 font-(--font-inter)">
+    <main className="min-h-screen bg-canvas">
       <HelpCenterBreadcrumb />
       <HelpCenterHero />
       <QuickSupportOptions />

@@ -15,11 +15,13 @@ export default function BillingAddressSection({
 }: BillingAddressSectionProps) {
   return (
     <div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Billing Address</h3>
+      <h3 className="mb-4 text-lg font-semibold text-text-primary">Billing Address</h3>
       <div className="space-y-4">
         <label
-          className={`flex items-start border rounded-xl p-4 transition-colors cursor-pointer ${
-            !showDifferentBilling ? "border-steel-blue bg-gray-50" : "border-gray-300 hover:border-steel-blue"
+          className={`flex cursor-pointer items-start rounded-xl border p-4 transition-colors ${
+            !showDifferentBilling
+              ? "border-brand bg-accent"
+              : "border-border-soft bg-surface-elevated hover:border-brand"
           }`}
         >
           <input
@@ -31,11 +33,11 @@ export default function BillingAddressSection({
               setShowDifferentBilling(false)
               setBillingSameAsShipping(true)
             }}
-            className="mt-1 w-5 h-5 text-steel-blue focus:ring-steel-blue border-gray-300"
+            className="mt-1 h-5 w-5 border-border-strong text-brand focus:ring-brand"
           />
           <div className="ml-4 flex-1">
-            <div className="font-medium text-gray-900">Same as shipping address</div>
-            <div className="text-sm text-gray-600 mt-1">
+            <div className="font-medium text-text-primary">Same as shipping address</div>
+            <div className="mt-1 text-sm text-text-secondary">
               {shippingAddress.firstName} {shippingAddress.lastName}
               <br />
               {shippingAddress.company}
@@ -50,8 +52,10 @@ export default function BillingAddressSection({
         </label>
 
         <label
-          className={`flex items-start border rounded-xl p-4 transition-colors cursor-pointer ${
-            showDifferentBilling ? "border-steel-blue bg-gray-50" : "border-gray-300 hover:border-steel-blue"
+          className={`flex cursor-pointer items-start rounded-xl border p-4 transition-colors ${
+            showDifferentBilling
+              ? "border-brand bg-accent"
+              : "border-border-soft bg-surface-elevated hover:border-brand"
           }`}
         >
           <input
@@ -63,11 +67,11 @@ export default function BillingAddressSection({
               setShowDifferentBilling(true)
               setBillingSameAsShipping(false)
             }}
-            className="mt-1 w-5 h-5 text-steel-blue focus:ring-steel-blue border-gray-300"
+            className="mt-1 h-5 w-5 border-border-strong text-brand focus:ring-brand"
           />
           <div className="ml-4 flex-1">
-            <div className="font-medium text-gray-900">Use a different billing address</div>
-            <div className="text-sm text-gray-600 mt-1">Enter a different address for billing purposes</div>
+            <div className="font-medium text-text-primary">Use a different billing address</div>
+            <div className="mt-1 text-sm text-text-secondary">Enter a different address for billing purposes</div>
           </div>
         </label>
       </div>

@@ -8,9 +8,9 @@ interface CartItemPriceProps {
 export default function CartItemPrice({ oldPrice, price }: CartItemPriceProps) {
   return (
     <div className="text-right">
-      <span className="block font-semibold text-steel-blue">{formatCurrency(price)}</span>
+      <span className="block font-semibold text-brand">{formatCurrency(price)}</span>
       {oldPrice > price ? (
-        <span className="block text-xs text-gray-400 line-through">{formatCurrency(oldPrice)}</span>
+        <span className="block text-xs text-text-muted line-through">{formatCurrency(oldPrice)}</span>
       ) : null}
     </div>
   )

@@ -9,10 +9,10 @@ export default function CartItemCard({ item, onQuantityChange, onRemoveItem }: C
   const { userProduct, product, quantity } = item
 
   return (
-    <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+    <div className="flex items-center space-x-4 rounded-[1.25rem] border border-border-soft bg-surface p-4 shadow-soft">
       <Link
         href={`/products/${product.id}`}
-        className="w-16 h-16 bg-white rounded-lg flex items-center justify-center shrink-0"
+        className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-border-soft bg-surface-elevated"
       >
         <Image
           src={product.coverPhotoPath}
@@ -25,10 +25,12 @@ export default function CartItemCard({ item, onQuantityChange, onRemoveItem }: C
 
       <div className="flex-1 min-w-0">
         <Link href={`/products/${product.id}`}>
-          <h3 className="font-medium text-gray-900 text-sm hover:text-steel-blue truncate">{product.name}</h3>
+          <h3 className="truncate text-sm font-medium text-text-primary transition-colors hover:text-brand">
+            {product.name}
+          </h3>
         </Link>
 
-        <div className="flex items-center justify-between mt-2">
+        <div className="mt-2 flex items-center justify-between">
           <CartItemQuantityControl
             quantity={quantity}
             onDecrease={() => onQuantityChange(userProduct.userProductId, quantity, -1)}
@@ -39,10 +41,10 @@ export default function CartItemCard({ item, onQuantityChange, onRemoveItem }: C
             <button
               type="button"
               onClick={() => onRemoveItem(userProduct.userProductId)}
-              className="text-red-500 hover:text-red-700"
+              className="text-danger transition-colors hover:brightness-90"
               aria-label="Remove item"
             >
-              <Trash2 className="w-5 h-5" />
+              <Trash2 className="h-5 w-5" />
             </button>
           </div>
         </div>

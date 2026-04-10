@@ -11,7 +11,8 @@ import {
   X,
 } from "lucide-react"
 import Link from "next/link"
-import { Fragment, useEffect, useState } from "react"
+import { Fragment, useEffect, useId, useState } from "react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
 import { type VendorOrder, vendorOrdersAPI } from "@/lib/api/vendor-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
@@ -19,6 +20,7 @@ import { getQzConnectionStatus, printShippingLabel, type QzPrintOptions } from "
 import { useAuthStore } from "@/stores/authStore"
 
 export default function VendorOrdersPage() {
+  const id = useId()
   const { isAuthenticated } = useAuthStore()
   const [orders, setOrders] = useState<VendorOrder[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -139,7 +141,7 @@ export default function VendorOrdersPage() {
   return (
     <>
       {/* Page Header */}
-      <section id="page-header" className="mb-8">
+      <section id={`${id}-page-header`} className="mb-8">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-steel-blue">Orders</h1>
@@ -150,7 +152,7 @@ export default function VendorOrdersPage() {
 
       {/* Orders Table */}
       <section
-        id="orders-table-section"
+        id={`${id}-orders-table-section`}
         className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
       >
         <div className="overflow-x-auto">
@@ -356,15 +358,16 @@ export default function VendorOrdersPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">Show</span>
-              <select
-                value={pageSize}
-                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-              >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-              </select>
+              <Select value={String(pageSize)} onValueChange={(value) => handlePageSizeChange(Number(value))}>
+                <SelectTrigger className="h-9 w-20 rounded-lg border-gray-300 bg-white px-3 py-1 text-sm text-gray-700 shadow-none focus-visible:ring-2 focus-visible:ring-steel-blue">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
               <span className="text-sm text-gray-600">per page</span>
             </div>
 
@@ -452,22 +455,37 @@ export default function VendorOrdersPage() {
                 {isQzReady && (
                   <div className="flex flex-wrap gap-3 mt-2 text-xs">
                     <div className="flex-1 min-w-[140px]">
-                      <label className="block text-[11px] font-medium text-gray-600 mb-1">Printer</label>
-                      <select
-                        value={selectedPrinter}
-                        onChange={(e) => setSelectedPrinter(e.target.value)}
-                        className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-steel-blue/60"
+                      <label
+                        htmlFor={`${id}-printer-select`}
+                        className="block text-[11px] font-medium text-gray-600 mb-1"
                       >
-                        {printers.map((printer) => (
-                          <option key={printer} value={printer}>
-                            {printer}
-                          </option>
-                        ))}
-                      </select>
+                        Printer
+                      </label>
+                      <Select value={selectedPrinter} onValueChange={setSelectedPrinter}>
+                        <SelectTrigger
+                          id={`${id}-printer-select`}
+                          className="h-8 w-full rounded-lg border-gray-300 bg-white px-2 py-1.5 text-xs text-gray-700 shadow-none focus-visible:ring-2 focus-visible:ring-steel-blue/60"
+                        >
+                          <SelectValue placeholder="Select printer" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {printers.map((printer) => (
+                            <SelectItem key={printer} value={printer}>
+                              {printer}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
-                      <label className="block text-[11px] font-medium text-gray-600 mb-1">Copies</label>
+                      <label
+                        htmlFor={`${id}-print-copies`}
+                        className="block text-[11px] font-medium text-gray-600 mb-1"
+                      >
+                        Copies
+                      </label>
                       <input
+                        id={`${id}-print-copies`}
                         type="number"
                         min={1}
                         max={10}
@@ -528,7 +546,7 @@ export default function VendorOrdersPage() {
                       >
                         <div className="flex-1 break-all text-gray-600">
                           <span className="font-semibold text-gray-800 mr-2">Label {index + 1}</span>
-                          {link.length > 50 ? link.substring(0, 50) + "..." : link}
+                          {link.length > 50 ? `${link.substring(0, 50)}...` : link}
                         </div>
                         <div className="flex items-center gap-2">
                           <button
@@ -569,7 +587,7 @@ export default function VendorOrdersPage() {
                       >
                         <div className="flex-1 break-all text-gray-600">
                           <span className="font-semibold text-gray-800 mr-2">Link {index + 1}</span>
-                          {link.length > 50 ? link.substring(0, 50) + "..." : link}
+                          {link.length > 50 ? `${link.substring(0, 50)}...` : link}
                         </div>
                         <Link
                           href={link}

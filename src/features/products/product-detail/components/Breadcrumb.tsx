@@ -10,7 +10,7 @@ interface BreadcrumbProps {
 }
 
 const Breadcrumb = ({ product }: BreadcrumbProps) => {
-  const defaultItems = [
+  const breadcrumbItems = [
     { label: "Home", href: "/" },
     {
       label: product?.category || "Products",
@@ -19,21 +19,22 @@ const Breadcrumb = ({ product }: BreadcrumbProps) => {
     { label: product?.title || "Product" },
   ]
 
-  const breadcrumbItems = defaultItems
-
   return (
-    <section className="bg-white border-b border-gray-200">
+    <section className="border-b border-border-soft/70 bg-canvas">
       <PageSectionContainer as="div" containerClassName="py-4">
-        <div className="flex items-center space-x-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 text-sm">
           {breadcrumbItems.map((item, index) => (
-            <div key={`${item.label}-${index}`} className="flex items-center space-x-2">
-              {index > 0 && <ChevronRight className="w-3 h-3 text-gray-400" />}
+            <div key={`${item.label}-${index}`} className="flex items-center gap-2">
+              {index > 0 ? <ChevronRight className="h-3 w-3 text-text-muted" /> : null}
               {item.href ? (
-                <Link href={item.href} className="text-steel-blue hover:underline">
+                <Link
+                  href={item.href}
+                  className="text-text-secondary transition-colors hover:text-brand hover:underline"
+                >
                   {item.label}
                 </Link>
               ) : (
-                <span className="text-gray-600">{item.label}</span>
+                <span className="text-text-muted">{item.label}</span>
               )}
             </div>
           ))}

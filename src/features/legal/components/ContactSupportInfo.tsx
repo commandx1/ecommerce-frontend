@@ -20,13 +20,13 @@ const SUPPORT_CHANNELS = [
 
 const ContactSupportInfo = () => {
   return (
-    <div className="text-white">
-      <h2 className="text-4xl font-bold mb-6">Need Legal Assistance?</h2>
-      <p className="text-blue-100 text-lg mb-8 leading-relaxed">
+    <div className="text-inverse-foreground">
+      <h2 className="text-4xl font-bold mb-6 text-inverse-muted">Need Legal Assistance?</h2>
+      <p className="mb-8 text-lg leading-relaxed text-inverse-muted">
         Our legal and compliance team is available to help you understand our policies, answer questions about
         regulatory requirements, and provide guidance on platform usage.
       </p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {SUPPORT_CHANNELS.map(({ title, description, value, icon }) => (
           <ContactSupportChannelCard key={title} title={title} description={description} value={value} Icon={icon} />
         ))}

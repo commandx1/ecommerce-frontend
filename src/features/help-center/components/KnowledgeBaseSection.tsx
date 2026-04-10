@@ -5,10 +5,10 @@ import { KNOWLEDGE_BASE_CATEGORIES } from "@/features/help-center/components/kno
 
 export default function KnowledgeBaseSection() {
   return (
-    <PageSectionContainer as="section" className="py-16 bg-gray-50">
+    <PageSectionContainer as="section" className="bg-surface-muted/45 py-16">
       <KnowledgeBaseHeader />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
         {KNOWLEDGE_BASE_CATEGORIES.map((category) => (
           <KnowledgeBaseCategoryCard
             key={category.title}

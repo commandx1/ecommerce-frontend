@@ -35,8 +35,8 @@ const PurchaseActions = ({ onAddToCart, isAddingToCart, stockCount }: PurchaseAc
       </div>
 
       <div className="mt-6 text-center">
-        <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
-          <ShieldCheck className="w-4 h-4 text-green-500" />
+        <div className="flex items-center justify-center space-x-2 text-sm text-text-secondary">
+          <ShieldCheck className="h-4 w-4 text-success" />
           <span>Secure Checkout</span>
         </div>
       </div>

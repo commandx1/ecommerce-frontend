@@ -17,8 +17,8 @@ interface QuickNavigationCardsProps {
 
 const QuickNavigationCards = ({ selectedId }: QuickNavigationCardsProps) => {
   return (
-    <PageSectionContainer as="section" className="pt-12 bg-white">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+    <PageSectionContainer as="section" className="bg-canvas pt-12">
+      <div className="mb-12 grid grid-cols-1 gap-6 md:grid-cols-4">
         {legalDocumentsData.quickNav.map((item) => {
           const IconComponent = iconMap[item.icon]
           const isActive = selectedId === item.id
@@ -27,23 +27,25 @@ const QuickNavigationCards = ({ selectedId }: QuickNavigationCardsProps) => {
               key={item.id}
               href={`/legal?doc=${item.id}`}
               scroll={false}
-              className={`rounded-2xl p-6 text-center hover:shadow-lg transition-shadow cursor-pointer group ${
-                isActive ? "bg-steel-blue text-white" : "bg-gray-50"
+              className={`group cursor-pointer rounded-[1.5rem] border p-6 text-center transition-shadow ${
+                isActive
+                  ? "border-brand bg-brand text-inverse-foreground shadow-panel dark:bg-brand-surface"
+                  : "border-border-soft bg-surface-elevated hover:shadow-soft"
               }`}
             >
               <div
-                className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform ${
-                  isActive ? "bg-pale-lime" : "bg-steel-blue"
+                className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full transition-transform group-hover:scale-110 ${
+                  isActive ? "bg-accent-strong text-accent-foreground" : "bg-brand text-primary-foreground"
                 }`}
               >
-                {IconComponent && (
-                  <IconComponent className={`w-8 h-8 ${isActive ? "text-steel-blue" : "text-white"}`} />
-                )}
+                {IconComponent && <IconComponent className="h-8 w-8" />}
               </div>
-              <h3 className={`text-lg font-semibold mb-2 ${isActive ? "text-white" : "text-steel-blue"}`}>
+              <h3
+                className={`mb-2 text-lg font-semibold ${isActive ? "text-inverse-foreground" : "text-text-primary"}`}
+              >
                 {item.title}
               </h3>
-              <p className={`text-sm ${isActive ? "text-blue-100" : "text-gray-600"}`}>{item.description}</p>
+              <p className={`text-sm ${isActive ? "text-inverse-muted" : "text-text-secondary"}`}>{item.description}</p>
             </Link>
           )
         })}

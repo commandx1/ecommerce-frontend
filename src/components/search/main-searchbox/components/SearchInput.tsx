@@ -18,7 +18,7 @@ const SearchInput = ({ inputRef, value, onChange, onFocus }: SearchInputProps) =
         ref={inputRef}
         type="text"
         placeholder="Search products, brands, or suppliers..."
-        className="rounded-none flex-1 w-full px-4 py-2.5 border-t border-b border-gray-300 focus:outline-none focus:ring-2 focus:ring-steel-blue text-gray-700"
+        className="h-11 w-full rounded-none border-0 bg-transparent px-4 py-2.5 text-text-primary shadow-none placeholder:text-text-muted focus-visible:border-transparent focus-visible:ring-0"
         value={value}
         onChange={onChange}
         onFocus={onFocus}

@@ -1,11 +1,11 @@
+import { Eye, EyeOff } from "lucide-react"
 import type { ComponentProps } from "react"
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { FormField } from "./FormField"
 
-const baseInputClassName =
-  "w-full px-4 py-3 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
+const baseInputClassName = "w-full pr-12"
 
 interface PasswordFieldProps extends Omit<ComponentProps<"input">, "className" | "type"> {
   label: string
@@ -24,6 +24,7 @@ export const PasswordField = ({
   ...props
 }: PasswordFieldProps) => {
   const [showPassword, setShowPassword] = useState(false)
+  const ariaInvalid = Boolean(error) || props["aria-invalid"]
 
   return (
     <FormField label={label} htmlFor={id} required={required} error={error} className={containerClassName}>
@@ -31,15 +32,17 @@ export const PasswordField = ({
         <Input
           id={id}
           type={showPassword ? "text" : "password"}
-          className={cn(baseInputClassName, error ? "border-red-500" : "border-gray-300", inputClassName)}
+          aria-invalid={ariaInvalid}
+          className={cn(baseInputClassName, error ? "border-danger" : "", inputClassName)}
           {...props}
         />
         <button
           type="button"
           onClick={() => setShowPassword((value) => !value)}
-          className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+          className="absolute top-1/2 right-3 -translate-y-1/2 text-text-muted transition-colors hover:text-text-secondary"
+          aria-label={showPassword ? "Hide password" : "Show password"}
         >
-          {showPassword ? "👁️" : "👁️‍🗨️"}
+          {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
         </button>
       </div>
     </FormField>

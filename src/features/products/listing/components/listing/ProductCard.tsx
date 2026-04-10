@@ -1,8 +1,6 @@
 import { Eye, Heart, Scale, Star, Truck } from "lucide-react"
 import Link from "next/link"
-
 import { getFullImageUrl } from "@/lib/api/products"
-
 import ProductImageWithFallback from "../ProductImageWithFallback"
 import type { APIProduct } from "../ProductListingClient"
 
@@ -18,96 +16,100 @@ const ProductCard = ({ product, viewType }: ProductCardProps) => {
 
   return (
     <div
-      className={`bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all group ${viewType === "list" ? "shrink-0 flex" : ""}`}
+      className={`flex flex-col group overflow-hidden rounded-[1.75rem] border border-border-soft bg-surface-elevated shadow-soft transition-all hover:-translate-y-1 hover:shadow-panel ${viewType === "list" ? "flex shrink-0" : ""}`}
     >
-      <div className={`relative bg-gray-50 ${viewType === "list" ? "w-64 shrink-0" : "h-64"}`}>
+      <div className={`relative bg-surface-muted ${viewType === "list" ? "w-64 shrink-0" : "h-64"}`}>
         <ProductImageWithFallback
           src={imageSrc}
           alt={product.productName}
           fill
-          className="object-contain p-6 group-hover:scale-105 transition-transform duration-500"
+          className="object-contain p-6 transition-transform duration-500 group-hover:scale-105"
         />
         <button
           type="button"
-          className="absolute top-4 right-4 w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-white text-gray-400 hover:text-red-500 transition-all"
+          className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-border-soft bg-surface-elevated/90 text-text-muted shadow-soft backdrop-blur-sm transition-colors hover:text-danger"
         >
-          <Heart className="w-5 h-5" />
+          <Heart className="h-5 w-5" />
         </button>
-        <div className="absolute bottom-4 right-4">
+        <div className="absolute bottom-4 left-4">
           <div
-            className={`px-2 py-1 rounded text-xs font-bold flex items-center shadow-sm ${product.stock > 0 ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}
+            className={`flex items-center rounded-full border px-3 py-1 text-[0.7rem] font-bold uppercase tracking-[0.16em] shadow-soft backdrop-blur-sm ${
+              product.stock > 0
+                ? "border-success/25 bg-surface-elevated/95 text-success"
+                : "border-border-soft bg-surface-elevated/95 text-text-muted"
+            }`}
           >
-            <div className={`w-2 h-2 rounded-full mr-1.5 ${product.stock > 0 ? "bg-green-500" : "bg-gray-500"}`} />
+            <div className={`mr-2 h-2 w-2 rounded-full ${product.stock > 0 ? "bg-success" : "bg-text-muted"}`} />
             {product.stock > 0 ? "In Stock" : "Out of Stock"}
           </div>
         </div>
       </div>
 
-      <div className="p-6 flex-1 flex flex-col">
+      <div className="flex flex-1 flex-col p-6">
         <div className="mb-4">
-          <span className="text-xs font-bold text-steel-blue bg-steel-blue/10 px-2 py-1 rounded uppercase tracking-wider">
+          <span className="rounded-full border border-border-soft bg-surface px-3 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-text-muted">
             {product.brand || "Generic"}
           </span>
-          <h3 className="text-lg font-bold text-steel-blue mt-2 mb-1 group-hover:text-blue-700 transition-colors">
+          <h3 className="mt-3 mb-2 text-xl font-semibold text-text-primary transition-colors group-hover:text-brand">
             <Link href={`/products/${product.productId}`}>{product.productName}</Link>
           </h3>
-          <p className="text-sm text-gray-500 line-clamp-2">
-            High-quality product from {product.brand || "verified supplier"}
+          <p className="line-clamp-2 text-sm leading-6 text-text-secondary">
+            High-quality product from {product.brand || "verified supplier"} with clinical-grade procurement support.
           </p>
         </div>
 
-        <div className="flex items-center mb-4">
-          <div className="flex text-yellow-400 mr-2">
+        <div className="mb-4 flex items-center">
+          <div className="mr-2 flex text-warning">
             {[1, 2, 3, 4, 5].map((star) => (
               <Star
                 key={star}
-                className={`w-4 h-4 ${star <= Math.floor(product.overallStar) ? "fill-current" : "text-gray-300"}`}
+                className={`h-4 w-4 ${star <= Math.floor(product.overallStar) ? "fill-current" : "text-border-strong"}`}
               />
             ))}
           </div>
-          <span className="text-sm font-medium text-gray-600">
+          <span className="text-sm font-medium text-text-secondary">
             {product.overallStar} ({product.reviewCount} reviews)
           </span>
         </div>
 
         <div className="mt-auto">
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4 flex items-center justify-between gap-4">
             <div>
-              <span className="text-2xl font-bold text-steel-blue">${product.price.toFixed(2)}</span>
-              {product.oldPrice > product.price && (
-                <span className="text-sm text-gray-400 line-through ml-2">${product.oldPrice.toFixed(2)}</span>
-              )}
+              <span className="text-3xl font-semibold text-brand">${product.price.toFixed(2)}</span>
+              {product.oldPrice > product.price ? (
+                <span className="ml-2 text-sm text-text-muted line-through">${product.oldPrice.toFixed(2)}</span>
+              ) : null}
             </div>
-            {product.oldPrice > product.price && (
-              <div className="text-sm text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded">
+            {product.oldPrice > product.price ? (
+              <div className="rounded-full bg-success/15 px-3 py-1 text-sm font-bold text-success">
                 Save {Math.round((1 - product.price / product.oldPrice) * 100)}%
               </div>
-            )}
+            ) : null}
           </div>
 
-          <div className="flex items-center text-xs text-gray-500 mb-4 bg-gray-50 p-2 rounded-lg">
-            <Truck className="w-3.5 h-3.5 text-steel-blue mr-2" />
+          <div className="mb-4 flex items-center rounded-2xl border border-border-soft bg-surface px-3 py-2 text-xs text-text-secondary">
+            <Truck className="mr-2 h-3.5 w-3.5 text-brand" />
             <span>Free shipping available</span>
           </div>
 
           <div className="flex gap-2">
             <button
               type="button"
-              className="flex-1 bg-steel-blue text-white py-2.5 rounded-xl hover:bg-opacity-90 font-bold text-sm transition-all shadow-md active:scale-95"
+              className="flex-1 rounded-full bg-brand py-3 text-sm font-bold text-white shadow-soft transition-all hover:-translate-y-0.5 hover:bg-brand-strong"
             >
               Add to Cart
             </button>
             <Link
               href={`/products/${product.productId}`}
-              className="w-11 h-11 border border-steel-blue/30 text-steel-blue rounded-xl hover:bg-steel-blue hover:text-white transition-all flex items-center justify-center"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-border-strong text-brand transition-colors hover:bg-accent"
             >
-              <Eye className="w-5 h-5" />
+              <Eye className="h-5 w-5" />
             </Link>
             <button
               type="button"
-              className="w-11 h-11 border border-gray-200 text-gray-400 rounded-xl hover:border-steel-blue hover:text-steel-blue transition-all flex items-center justify-center"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-border-soft text-text-muted transition-colors hover:border-brand/35 hover:text-brand"
             >
-              <Scale className="w-5 h-5" />
+              <Scale className="h-5 w-5" />
             </button>
           </div>
         </div>

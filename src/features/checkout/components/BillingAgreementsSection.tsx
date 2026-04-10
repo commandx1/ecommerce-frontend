@@ -21,7 +21,7 @@ export default function BillingAgreementsSection({
   const id = useId()
 
   return (
-    <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+    <div className="rounded-xl border border-border-soft bg-surface p-6">
       <div className="space-y-4">
         <div className="flex items-start">
           <input
@@ -29,15 +29,15 @@ export default function BillingAgreementsSection({
             type="checkbox"
             checked={termsAgreed}
             onChange={(event) => setTermsAgreed(event.target.checked)}
-            className="w-4 h-4 text-steel-blue focus:ring-steel-blue border-gray-300 rounded mt-1"
+            className="mt-1 h-4 w-4 rounded border-border-strong text-brand focus:ring-brand"
           />
-          <label htmlFor={`${id}-terms`} className="ml-3 text-sm text-gray-700">
+          <label htmlFor={`${id}-terms`} className="ml-3 text-sm text-text-secondary">
             I agree to the{" "}
-            <Link href="/legal" className="text-steel-blue hover:underline font-medium">
+            <Link href="/legal" className="font-medium text-brand hover:underline">
               Terms and Conditions
             </Link>{" "}
             and{" "}
-            <Link href="/legal" className="text-steel-blue hover:underline font-medium">
+            <Link href="/legal" className="font-medium text-brand hover:underline">
               Privacy Policy
             </Link>
           </label>
@@ -49,9 +49,9 @@ export default function BillingAgreementsSection({
             type="checkbox"
             checked={marketingAgreed}
             onChange={(event) => setMarketingAgreed(event.target.checked)}
-            className="w-4 h-4 text-steel-blue focus:ring-steel-blue border-gray-300 rounded mt-1"
+            className="mt-1 h-4 w-4 rounded border-border-strong text-brand focus:ring-brand"
           />
-          <label htmlFor={`${id}-marketing`} className="ml-3 text-sm text-gray-700">
+          <label htmlFor={`${id}-marketing`} className="ml-3 text-sm text-text-secondary">
             I would like to receive promotional emails about new products and special offers
           </label>
         </div>
@@ -62,11 +62,11 @@ export default function BillingAgreementsSection({
             type="checkbox"
             checked={hipaaAgreed}
             onChange={(event) => setHipaaAgreed(event.target.checked)}
-            className="w-4 h-4 text-steel-blue focus:ring-steel-blue border-gray-300 rounded mt-1"
+            className="mt-1 h-4 w-4 rounded border-border-strong text-brand focus:ring-brand"
           />
-          <label htmlFor={`${id}-hipaa`} className="ml-3 text-sm text-gray-700">
+          <label htmlFor={`${id}-hipaa`} className="ml-3 text-sm text-text-secondary">
             I acknowledge the{" "}
-            <Link href="/legal" className="text-steel-blue hover:underline font-medium">
+            <Link href="/legal" className="font-medium text-brand hover:underline">
               HIPAA compliance notice
             </Link>{" "}
             for healthcare-related purchases

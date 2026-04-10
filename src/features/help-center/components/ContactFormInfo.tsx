@@ -26,8 +26,8 @@ const CONTACT_INFO_ITEMS = [
 const ContactFormInfo = () => {
   return (
     <div>
-      <h2 className="text-4xl font-bold text-steel-blue mb-6">Get in Touch</h2>
-      <p className="text-xl text-gray-600 mb-8">
+      <h2 className="mb-6 text-4xl font-bold text-text-primary">Get in Touch</h2>
+      <p className="mb-8 text-xl text-text-secondary">
         Can&apos;t find what you&apos;re looking for? Our support team is here to help. Send us a message and we&apos;ll
         get back to you within 2 hours during business hours.
       </p>

@@ -11,10 +11,10 @@ const iconMap: Record<string, LucideIcon> = {
 
 const AccountSettings = () => {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-      <div className="p-6 border-b border-gray-200">
-        <h2 className="text-xl font-semibold text-steel-blue">Account Settings</h2>
-        <p className="text-sm text-gray-600 mt-1">Manage your profile and preferences</p>
+    <div className="rounded-xl border border-border-soft bg-surface-elevated shadow-soft">
+      <div className="border-b border-border-soft p-6">
+        <h2 className="text-xl font-semibold text-text-primary">Account Settings</h2>
+        <p className="mt-1 text-sm text-text-secondary">Manage your profile and preferences</p>
       </div>
       <div className="p-6">
         <div className="space-y-4">
@@ -24,26 +24,26 @@ const AccountSettings = () => {
             return (
               <div
                 key={setting.id}
-                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                className="flex cursor-pointer items-center justify-between rounded-lg border border-border-soft p-4 transition-colors hover:bg-surface-muted/55"
               >
                 <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-steel-blue/10 rounded-lg flex items-center justify-center">
-                    {IconComponent && <IconComponent className="text-steel-blue w-5 h-5" />}
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand/15">
+                    {IconComponent && <IconComponent className="h-5 w-5 text-brand" />}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-steel-blue text-sm">{setting.title}</h3>
-                    <p className="text-xs text-gray-600">{setting.description}</p>
+                    <h3 className="text-sm font-semibold text-text-primary">{setting.title}</h3>
+                    <p className="text-xs text-text-secondary">{setting.description}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   {setting.badge && (
                     <span
-                      className={`${setting.badgeColor === "green" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"} text-xs px-2 py-1 rounded-full`}
+                      className={`${setting.badgeColor === "green" ? "bg-success/15 text-success" : "bg-surface-muted text-text-secondary"} text-xs px-2 py-1 rounded-full`}
                     >
                       {setting.badge}
                     </span>
                   )}
-                  <ChevronRight className="text-gray-400 w-4 h-4" />
+                  <ChevronRight className="h-4 w-4 text-text-muted" />
                 </div>
               </div>
             )

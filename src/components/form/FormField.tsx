@@ -14,11 +14,11 @@ interface FormFieldProps {
 export const FormField = ({ label, htmlFor, required, error, className, children }: FormFieldProps) => {
   return (
     <div className={cn(className)}>
-      <Label htmlFor={htmlFor} className="block text-sm font-medium text-gray-700 mb-2">
+      <Label htmlFor={htmlFor} className="mb-2 block text-sm font-medium text-text-primary">
         {label} {required ? "*" : ""}
       </Label>
       {children}
-      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+      {error && <p className="mt-1 text-sm text-danger">{error}</p>}
     </div>
   )
 }

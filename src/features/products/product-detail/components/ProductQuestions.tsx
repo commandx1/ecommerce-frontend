@@ -36,9 +36,10 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
   const hasMoreQuestions = false // Since we're filtering client-side
 
   return (
-    <PageSectionContainer as="section" className="bg-white py-12">
+    <PageSectionContainer as="section" className="bg-canvas py-12">
       <SectionHeading
         title="Questions & Answers"
+        titleClassName="mb-2 md:text-3xl font-semibold text-text-primary"
         description={totalQuestions > 0 ? `Showing ${questions.length} of ${totalQuestions} questions` : undefined}
         className="mb-8"
         actions={
@@ -54,12 +55,15 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
         <div className="space-y-6">
           {questions.map((qa) => {
             return (
-              <div key={qa.id} className="bg-gray-50 rounded-2xl p-8">
+              <div
+                key={qa.id}
+                className="rounded-[1.75rem] border border-border-soft bg-surface-elevated p-8 shadow-soft"
+              >
                 <div className="mb-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-steel-blue mb-2">{qa.question}</h3>
-                      <div className="text-sm text-gray-600 mb-3">
+                      <h3 className="mb-2 font-semibold text-text-primary">{qa.question}</h3>
+                      <div className="mb-3 text-sm text-text-secondary">
                         Asked by {qa.questionerName} • {formatRelativeDate(qa.createdDate)}
                       </div>
                     </div>
@@ -68,15 +72,15 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
                 {qa.answers && qa.answers.length > 0 ? (
                   <div className="space-y-4">
                     {qa.answers.map((answer) => (
-                      <div key={answer.id} className="bg-white rounded-xl p-6">
+                      <div key={answer.id} className="rounded-[1.35rem] border border-border-soft bg-surface p-6">
                         <div className="flex items-start space-x-3">
-                          <div className="w-8 h-8 bg-steel-blue rounded-full flex items-center justify-center shrink-0">
-                            <User className="text-white text-sm w-4 h-4" />
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-primary-foreground">
+                            <User className="h-4 w-4 text-sm" />
                           </div>
                           <div className="flex-1">
-                            <div className="font-semibold text-steel-blue mb-1">{answer.answererName}</div>
-                            <p className="text-gray-700 mb-3">{answer.answer}</p>
-                            <div className="text-sm text-gray-500 mt-2">
+                            <div className="mb-1 font-semibold text-text-primary">{answer.answererName}</div>
+                            <p className="mb-3 text-text-secondary">{answer.answer}</p>
+                            <div className="mt-2 text-sm text-text-muted">
                               Answered {formatRelativeDate(answer.createdDate)}
                             </div>
                           </div>
@@ -85,8 +89,8 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
                     ))}
                   </div>
                 ) : (
-                  <div className="bg-white rounded-xl p-6">
-                    <p className="text-gray-600 italic">No answer yet.</p>
+                  <div className="rounded-[1.35rem] border border-border-soft bg-surface p-6">
+                    <p className="italic text-text-secondary">No answer yet.</p>
                   </div>
                 )}
               </div>
@@ -94,8 +98,8 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
           })}
         </div>
       ) : (
-        <div className="bg-gray-50 rounded-2xl p-8 text-center">
-          <p className="text-gray-600">
+        <div className="rounded-[1.75rem] border border-border-soft bg-surface-elevated p-8 text-center shadow-soft">
+          <p className="text-text-secondary">
             {selectedSupplierUserProductId
               ? "No questions have been asked to this vendor yet."
               : "No questions yet. Be the first to ask a question!"}
@@ -104,10 +108,10 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
       )}
 
       {hasMoreQuestions && (
-        <div className="text-center mt-8">
+        <div className="mt-8 text-center">
           <button
             type="button"
-            className="bg-steel-blue text-white px-8 py-3 rounded-lg hover:bg-opacity-90 font-medium transition-colors"
+            className="rounded-full bg-brand px-8 py-3 font-medium text-primary-foreground transition-colors hover:bg-brand-strong"
           >
             View All {totalQuestions} Questions
           </button>

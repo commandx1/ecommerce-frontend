@@ -1,96 +1,86 @@
 "use client"
 
 import type { ChangeEventHandler, FormEventHandler } from "react"
-import { useId } from "react"
 import ActionButton from "@/components/ui/ActionButton"
+import { Input } from "@/components/ui/input"
 import SurfaceCard from "@/components/ui/SurfaceCard"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 
 import legalAdditionalData from "@/data/legal-additional.json"
 import { useContactSupportForm } from "@/features/legal/hooks/useContactSupportForm"
 
 const ContactSupportForm = () => {
-  const { formData, handleChange, handleSubmit } = useContactSupportForm()
-  const id = useId()
+  const { formData, handleChange, handleTopicChange, handleSubmit } = useContactSupportForm()
+  const idPrefix = "legal-support-form"
 
-  const onChange: ChangeEventHandler<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement> = handleChange
+  const onChange: ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = handleChange
   const onSubmit: FormEventHandler<HTMLFormElement> = handleSubmit
 
   return (
-    <SurfaceCard className="p-8 shadow-2xl">
-      <h3 className="text-2xl font-bold text-steel-blue mb-6">Request Legal Consultation</h3>
+    <SurfaceCard className="p-8 shadow-panel">
+      <h3 className="mb-6 text-2xl font-semibold text-text-primary">Request Legal Consultation</h3>
       <form onSubmit={onSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label htmlFor={`${id}-first-name`} className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor={`${idPrefix}-first-name`} className="mb-2 block text-sm font-medium text-text-primary">
               First Name
             </label>
-            <input
-              id={`${id}-first-name`}
+            <Input
+              id={`${idPrefix}-first-name`}
               name="firstName"
               type="text"
               value={formData.firstName}
               onChange={onChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
             />
           </div>
           <div>
-            <label htmlFor={`${id}-last-name`} className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor={`${idPrefix}-last-name`} className="mb-2 block text-sm font-medium text-text-primary">
               Last Name
             </label>
-            <input
-              id={`${id}-last-name`}
+            <Input
+              id={`${idPrefix}-last-name`}
               name="lastName"
               type="text"
               value={formData.lastName}
               onChange={onChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
             />
           </div>
         </div>
         <div>
-          <label htmlFor={`${id}-email`} className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor={`${idPrefix}-email`} className="mb-2 block text-sm font-medium text-text-primary">
             Email Address
           </label>
-          <input
-            id={`${id}-email`}
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={onChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-          />
+          <Input id={`${idPrefix}-email`} name="email" type="email" value={formData.email} onChange={onChange} />
         </div>
         <div>
-          <label htmlFor={`${id}-topic`} className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor={`${idPrefix}-topic`} className="mb-2 block text-sm font-medium text-text-primary">
             Legal Topic
           </label>
-          <select
-            id={`${id}-topic`}
-            name="topic"
-            value={formData.topic}
-            onChange={onChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-          >
-            <option value="">Select a topic</option>
-            {legalAdditionalData.contactInfo.topics.map((topic) => (
-              <option key={topic} value={topic}>
-                {topic}
-              </option>
-            ))}
-          </select>
+          <Select name="topic" value={formData.topic} onValueChange={handleTopicChange}>
+            <SelectTrigger id={`${idPrefix}-topic`} className="w-full">
+              <SelectValue placeholder="Select a topic" />
+            </SelectTrigger>
+            <SelectContent id={`${idPrefix}-topic-content`}>
+              {legalAdditionalData.contactInfo.topics.map((topic) => (
+                <SelectItem key={topic} value={topic}>
+                  {topic}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
-          <label htmlFor={`${id}-message`} className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor={`${idPrefix}-message`} className="mb-2 block text-sm font-medium text-text-primary">
             Message
           </label>
-          <textarea
-            id={`${id}-message`}
+          <Textarea
+            id={`${idPrefix}-message`}
             name="message"
             rows={4}
             value={formData.message}
             onChange={onChange}
             placeholder="Please describe your legal question or concern..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
           />
         </div>
         <ActionButton type="submit" fullWidth>

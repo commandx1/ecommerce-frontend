@@ -4,8 +4,8 @@ import ContactSupportInfo from "@/features/legal/components/ContactSupportInfo"
 
 const ContactSupport = () => {
   return (
-    <PageSectionContainer as="section" className="py-16 bg-steel-blue">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+    <PageSectionContainer as="section" className="bg-brand py-16 text-inverse-foreground dark:bg-brand-surface">
+      <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
         <ContactSupportInfo />
         <ContactSupportForm />
       </div>

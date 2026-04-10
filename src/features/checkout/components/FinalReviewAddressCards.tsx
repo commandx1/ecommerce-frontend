@@ -33,16 +33,16 @@ function AddressBlock({
 export default function FinalReviewAddressCards({ billingAddress, shippingAddress }: FinalReviewAddressCardsProps) {
   return (
     <>
-      <div className="p-6 bg-gray-50 rounded-xl">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Shipping Address</h3>
-        <div className="text-sm text-gray-600">
+      <div className="rounded-xl border border-border-soft bg-surface p-6">
+        <h3 className="mb-4 text-lg font-semibold text-text-primary">Shipping Address</h3>
+        <div className="text-sm text-text-secondary">
           <AddressBlock {...shippingAddress} />
         </div>
       </div>
 
-      <div className="p-6 bg-gray-50 rounded-xl">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Billing Address</h3>
-        <div className="text-sm text-gray-600">
+      <div className="rounded-xl border border-border-soft bg-surface p-6">
+        <h3 className="mb-4 text-lg font-semibold text-text-primary">Billing Address</h3>
+        <div className="text-sm text-text-secondary">
           {billingAddress.sameAsShipping ? <div>Same as shipping address</div> : <AddressBlock {...billingAddress} />}
         </div>
       </div>

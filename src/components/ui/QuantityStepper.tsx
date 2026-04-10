@@ -23,20 +23,20 @@ export default function QuantityStepper({
         type="button"
         onClick={onDecrease}
         disabled={disabled}
-        className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-soft bg-surface-elevated text-text-primary transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50"
         aria-label={decreaseLabel}
       >
-        <Minus className="w-4 h-4" />
+        <Minus className="h-4 w-4" />
       </button>
-      <span className="text-sm font-medium w-8 text-center">{value}</span>
+      <span className="w-8 text-center text-sm font-medium text-text-primary">{value}</span>
       <button
         type="button"
         onClick={onIncrease}
         disabled={disabled}
-        className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-soft bg-surface-elevated text-text-primary transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50"
         aria-label={increaseLabel}
       >
-        <Plus className="w-4 h-4" />
+        <Plus className="h-4 w-4" />
       </button>
     </div>
   )

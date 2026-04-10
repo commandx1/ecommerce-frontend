@@ -1,4 +1,5 @@
 import { useId } from "react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { BillingAddress } from "@/stores/checkoutStore"
 
 interface BillingAddressFormProps {
@@ -17,10 +18,10 @@ export default function BillingAddressForm({ billingAddress, updateBillingAddres
   const id = useId()
 
   return (
-    <div className="p-6 bg-gray-50 rounded-xl">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="rounded-xl border border-border-soft bg-surface p-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div>
-          <label htmlFor={`${id}-first-name`} className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor={`${id}-first-name`} className="mb-2 block text-sm font-medium text-text-secondary">
             First Name *
           </label>
           <input
@@ -29,12 +30,12 @@ export default function BillingAddressForm({ billingAddress, updateBillingAddres
             required
             value={billingAddress.firstName}
             onChange={(event) => updateBillingAddress({ firstName: event.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
+            className="w-full rounded-lg border border-border-soft bg-surface-elevated px-4 py-3 text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/25"
             placeholder="Enter first name"
           />
         </div>
         <div>
-          <label htmlFor={`${id}-last-name`} className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor={`${id}-last-name`} className="mb-2 block text-sm font-medium text-text-secondary">
             Last Name *
           </label>
           <input
@@ -43,12 +44,12 @@ export default function BillingAddressForm({ billingAddress, updateBillingAddres
             required
             value={billingAddress.lastName}
             onChange={(event) => updateBillingAddress({ lastName: event.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
+            className="w-full rounded-lg border border-border-soft bg-surface-elevated px-4 py-3 text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/25"
             placeholder="Enter last name"
           />
         </div>
         <div className="md:col-span-2">
-          <label htmlFor={`${id}-company`} className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor={`${id}-company`} className="mb-2 block text-sm font-medium text-text-secondary">
             Company/Practice Name
           </label>
           <input
@@ -56,12 +57,12 @@ export default function BillingAddressForm({ billingAddress, updateBillingAddres
             type="text"
             value={billingAddress.company}
             onChange={(event) => updateBillingAddress({ company: event.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
+            className="w-full rounded-lg border border-border-soft bg-surface-elevated px-4 py-3 text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/25"
             placeholder="Enter company name"
           />
         </div>
         <div className="md:col-span-2">
-          <label htmlFor={`${id}-street`} className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor={`${id}-street`} className="mb-2 block text-sm font-medium text-text-secondary">
             Street Address *
           </label>
           <input
@@ -70,12 +71,12 @@ export default function BillingAddressForm({ billingAddress, updateBillingAddres
             required
             value={billingAddress.street}
             onChange={(event) => updateBillingAddress({ street: event.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
+            className="w-full rounded-lg border border-border-soft bg-surface-elevated px-4 py-3 text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/25"
             placeholder="Enter street address"
           />
         </div>
         <div>
-          <label htmlFor={`${id}-city`} className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor={`${id}-city`} className="mb-2 block text-sm font-medium text-text-secondary">
             City *
           </label>
           <input
@@ -84,31 +85,34 @@ export default function BillingAddressForm({ billingAddress, updateBillingAddres
             required
             value={billingAddress.city}
             onChange={(event) => updateBillingAddress({ city: event.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
+            className="w-full rounded-lg border border-border-soft bg-surface-elevated px-4 py-3 text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/25"
             placeholder="Enter city"
           />
         </div>
         <div>
-          <label htmlFor={`${id}-state`} className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor={`${id}-state`} className="mb-2 block text-sm font-medium text-text-secondary">
             State *
           </label>
-          <select
-            id={`${id}-state`}
+          <Select
+            name="state"
             required
             value={billingAddress.state}
-            onChange={(event) => updateBillingAddress({ state: event.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
+            onValueChange={(value) => updateBillingAddress({ state: value })}
           >
-            <option value="">Select state</option>
-            {STATE_OPTIONS.map((stateOption) => (
-              <option key={stateOption.value} value={stateOption.value}>
-                {stateOption.label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger id={`${id}-state`} className="w-full rounded-lg">
+              <SelectValue placeholder="Select state" />
+            </SelectTrigger>
+            <SelectContent>
+              {STATE_OPTIONS.map((stateOption) => (
+                <SelectItem key={stateOption.value} value={stateOption.value}>
+                  {stateOption.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
-          <label htmlFor={`${id}-zip`} className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor={`${id}-zip`} className="mb-2 block text-sm font-medium text-text-secondary">
             ZIP Code *
           </label>
           <input
@@ -117,12 +121,12 @@ export default function BillingAddressForm({ billingAddress, updateBillingAddres
             required
             value={billingAddress.zipCode}
             onChange={(event) => updateBillingAddress({ zipCode: event.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
+            className="w-full rounded-lg border border-border-soft bg-surface-elevated px-4 py-3 text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/25"
             placeholder="Enter ZIP code"
           />
         </div>
         <div>
-          <label htmlFor={`${id}-phone`} className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor={`${id}-phone`} className="mb-2 block text-sm font-medium text-text-secondary">
             Phone Number
           </label>
           <input
@@ -130,7 +134,7 @@ export default function BillingAddressForm({ billingAddress, updateBillingAddres
             type="tel"
             value={billingAddress.phone}
             onChange={(event) => updateBillingAddress({ phone: event.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
+            className="w-full rounded-lg border border-border-soft bg-surface-elevated px-4 py-3 text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/25"
             placeholder="(555) 123-4567"
           />
         </div>

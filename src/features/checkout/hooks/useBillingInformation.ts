@@ -10,7 +10,7 @@ const PAYMENT_METHOD_OPTIONS: PaymentMethodOption[] = [
     type: "net30",
     title: "Net 30 Terms",
     description: "Pay within 30 days of invoice date",
-    badge: { label: "Approved", className: "bg-pale-lime text-steel-blue" },
+    badge: { label: "Approved", className: "bg-accent-strong text-accent-foreground" },
     icon: "file",
   },
   {

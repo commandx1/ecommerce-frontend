@@ -8,18 +8,18 @@ const ACCESS_OPTIONS = [
 
 export default function OrderTrackingAccessCard() {
   return (
-    <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-6 sm:p-8">
-      <h3 className="text-xl sm:text-2xl font-bold text-steel-blue mb-6 text-center">
+    <div className="rounded-xl border border-border-soft bg-surface-elevated p-6 shadow-soft sm:rounded-2xl sm:p-8">
+      <h3 className="mb-6 text-center text-xl font-bold text-text-primary sm:text-2xl">
         Access Your Tracking Information
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+      <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-3">
         {ACCESS_OPTIONS.map(({ icon: Icon, title, description }) => (
           <div key={title} className="text-center">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Icon className="text-steel-blue w-8 h-8 sm:w-10 sm:h-10" />
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface-muted sm:h-20 sm:w-20">
+              <Icon className="h-8 w-8 text-brand sm:h-10 sm:w-10" />
             </div>
-            <h4 className="font-semibold text-gray-800 mb-2 text-sm sm:text-base">{title}</h4>
-            <p className="text-xs sm:text-sm text-gray-600">{description}</p>
+            <h4 className="mb-2 text-sm font-semibold text-text-primary sm:text-base">{title}</h4>
+            <p className="text-xs text-text-secondary sm:text-sm">{description}</p>
           </div>
         ))}
       </div>

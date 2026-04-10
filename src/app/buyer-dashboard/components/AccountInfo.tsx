@@ -1,5 +1,6 @@
 import { Bell, CreditCard, FileText, MapPin, ShieldCheck } from "lucide-react"
 import Image from "next/image"
+import { Button } from "@/components/ui/button"
 import dashboardAccountData from "@/data/dashboard-account.json"
 
 const iconMap: Record<string, typeof CreditCard> = {
@@ -11,12 +12,12 @@ const iconMap: Record<string, typeof CreditCard> = {
 
 const AccountInfo = () => {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-      <div className="p-6 border-b border-gray-200">
-        <h2 className="text-xl font-semibold text-steel-blue">Account Information</h2>
+    <div className="rounded-xl border border-border-soft bg-surface-elevated shadow-soft">
+      <div className="border-b border-border-soft p-6">
+        <h2 className="text-xl font-semibold text-text-primary">Account Information</h2>
       </div>
       <div className="p-6 space-y-6">
-        <div className="text-center pb-6 border-b border-gray-200">
+        <div className="border-b border-border-soft pb-6 text-center">
           <Image
             src={dashboardAccountData.user.avatar}
             alt="Profile"
@@ -24,11 +25,11 @@ const AccountInfo = () => {
             height={64}
             className="w-16 h-16 rounded-full mx-auto mb-3"
           />
-          <h3 className="font-semibold text-steel-blue">{dashboardAccountData.user.name}</h3>
-          <p className="text-sm text-gray-600">{dashboardAccountData.user.clinic}</p>
+          <h3 className="font-semibold text-text-primary">{dashboardAccountData.user.name}</h3>
+          <p className="text-sm text-text-secondary">{dashboardAccountData.user.clinic}</p>
           <div className="flex items-center justify-center mt-2">
-            <ShieldCheck className="text-green-500 mr-2 w-4 h-4" />
-            <span className="text-sm text-green-600">Verified Professional</span>
+            <ShieldCheck className="mr-2 h-4 w-4 text-success" />
+            <span className="text-sm text-success">Verified Professional</span>
           </div>
         </div>
 
@@ -38,28 +39,29 @@ const AccountInfo = () => {
             return (
               <div key={info.id} className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  {IconComponent && <IconComponent className="text-gray-500 w-4 h-4" />}
-                  <span className="text-sm text-gray-700">{info.label}</span>
+                  {IconComponent && <IconComponent className="h-4 w-4 text-text-muted" />}
+                  <span className="text-sm text-text-secondary">{info.label}</span>
                 </div>
                 {info.value ? (
-                  <span className="text-sm text-steel-blue">{info.value}</span>
+                  <span className="text-sm text-brand">{info.value}</span>
                 ) : (
-                  <button type="button" className="text-sm text-steel-blue hover:underline">
+                  <Button type="button" variant="link" size="sm" className="h-auto p-0 text-sm">
                     {info.action}
-                  </button>
+                  </Button>
                 )}
               </div>
             )
           })}
         </div>
 
-        <div className="pt-4 border-t border-gray-200">
-          <button
+        <div className="border-t border-border-soft pt-4">
+          <Button
             type="button"
-            className="w-full bg-gray-50 text-steel-blue py-2 px-4 rounded-lg hover:bg-opacity-80 font-medium"
+            variant="unstyled"
+            className="w-full rounded-lg bg-surface-muted px-4 py-2 font-medium text-brand transition-colors hover:bg-surface"
           >
             Manage Account
-          </button>
+          </Button>
         </div>
       </div>
     </div>

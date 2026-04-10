@@ -15,10 +15,10 @@ export default function ProductError({ message }: ProductErrorProps) {
   }, [message])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center bg-white rounded-2xl shadow-lg p-12 max-w-md">
-        <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="flex py-36 items-center justify-center bg-canvas px-6">
+      <div className="max-w-md rounded-[1.75rem] border border-border-soft bg-surface-elevated p-12 text-center shadow-panel">
+        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-danger/12">
+          <svg className="h-10 w-10 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <title>Error</title>
             <path
               strokeLinecap="round"
@@ -28,11 +28,11 @@ export default function ProductError({ message }: ProductErrorProps) {
             />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-steel-blue mb-4">Product Not Found</h1>
-        <p className="text-gray-600 mb-6">{message || "The product you're looking for doesn't exist."}</p>
+        <h1 className="mb-4 text-2xl font-semibold text-text-primary">Product Not Found</h1>
+        <p className="mb-6 text-text-secondary">{message || "The product you're looking for doesn't exist."}</p>
         <a
           href="/"
-          className="inline-block bg-steel-blue text-white px-6 py-3 rounded-lg hover:bg-opacity-90 transition-colors font-medium"
+          className="inline-block rounded-full bg-brand px-6 py-3 font-medium text-primary-foreground transition-colors hover:bg-brand-strong"
         >
           Back to Home
         </a>

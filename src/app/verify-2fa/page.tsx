@@ -3,7 +3,8 @@
 import { ArrowLeft, Loader2, Lock, ShieldCheck } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Suspense, useEffect, useState } from "react"
+import { Suspense, useEffect, useId, useState } from "react"
+import ThemeToggle from "@/components/theme/ThemeToggle"
 import { showToast } from "@/components/ui/Toast"
 import { verifyTwoFactorLogin } from "@/lib/api/two-factor"
 import { useAuthStore } from "@/stores/authStore"
@@ -16,6 +17,7 @@ function Verify2FAContent() {
 
   const [code, setCode] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const codeInputId = useId()
 
   useEffect(() => {
     if (!email) {
@@ -79,6 +81,9 @@ function Verify2FAContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 font-inter">
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
       <div className="bg-white rounded-3xl shadow-2xl p-8 lg:p-12 max-w-md w-full">
         <div className="text-center mb-8">
           <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-steel-blue">
@@ -93,13 +98,13 @@ function Verify2FAContent() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="code" className="block text-sm font-semibold text-gray-700 mb-2">
+            <label htmlFor={codeInputId} className="block text-sm font-semibold text-gray-700 mb-2">
               Verification Code
             </label>
             <div className="relative">
               <input
                 type="text"
-                id="code"
+                id={codeInputId}
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                 className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent text-center text-2xl tracking-[0.5em] font-bold text-steel-blue"
@@ -150,6 +155,9 @@ export default function Verify2FAPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="fixed top-4 right-4 z-50">
+            <ThemeToggle />
+          </div>
           <Loader2 className="w-10 h-10 text-steel-blue animate-spin" />
         </div>
       }

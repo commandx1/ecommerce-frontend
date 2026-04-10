@@ -3,12 +3,12 @@ import SurfaceCard from "@/components/ui/SurfaceCard"
 
 export default function FinalReviewUnavailable() {
   return (
-    <SurfaceCard className="mb-8 p-8">
-      <div className="flex items-center mb-8">
-        <div className="w-8 h-8 bg-steel-blue rounded-full flex items-center justify-center mr-4">
-          <span className="text-white text-sm font-semibold">4</span>
+    <SurfaceCard variant="editorial" className="mb-8 p-8">
+      <div className="mb-8 flex items-center">
+        <div className="mr-4 flex h-8 w-8 items-center justify-center rounded-full bg-brand">
+          <span className="text-sm font-semibold text-white">4</span>
         </div>
-        <h2 className="text-2xl font-bold text-steel-blue">Final Review</h2>
+        <h2 className="text-2xl font-bold text-text-primary">Final Review</h2>
       </div>
       <NoticeBanner
         tone="error"

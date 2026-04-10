@@ -5,7 +5,7 @@ import { FAQ_ITEMS } from "@/features/help-center/data/faqItems"
 
 export default function FAQSection() {
   return (
-    <PageSectionContainer as="section" className="py-16 bg-gray-50">
+    <PageSectionContainer as="section" className="bg-surface-muted/45 py-16">
       <SectionHeading
         title="Frequently Asked Questions"
         description="Find quick answers to common questions about ordering, shipping, returns, and account management"
@@ -13,7 +13,7 @@ export default function FAQSection() {
         titleClassName="text-4xl text-center mb-4"
         descriptionClassName="text-xl max-w-3xl mx-auto text-center"
       />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
         {FAQ_ITEMS.map((item) => (
           <FAQItemCard key={item.id} item={item} />
         ))}

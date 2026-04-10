@@ -9,9 +9,9 @@ const iconMap: Record<string, LucideIcon> = {
 }
 
 const colorMap: Record<string, string> = {
-  orange: "bg-orange-100 text-orange-600",
-  blue: "bg-blue-100 text-blue-600",
-  purple: "bg-purple-100 text-purple-600",
+  orange: "bg-coral-orange/20 text-coral-orange",
+  blue: "bg-brand/15 text-brand",
+  purple: "bg-warning/20 text-warning",
 }
 
 const TopSuppliers = () => {
@@ -21,23 +21,23 @@ const TopSuppliers = () => {
       return (
         <Star
           key={starId}
-          className={`w-3 h-3 ${i < starCount ? "fill-yellow-400 text-yellow-400" : "fill-none text-gray-300"}`}
+          className={`h-3 w-3 ${i < starCount ? "fill-accent-strong text-accent-strong" : "fill-none text-border-strong"}`}
         />
       )
     })
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-      <div className="p-6 border-b border-gray-200">
-        <h2 className="text-xl font-semibold text-steel-blue">Top Suppliers</h2>
-        <p className="text-sm text-gray-600 mt-1">Your most frequently used suppliers</p>
+    <div className="rounded-xl border border-border-soft bg-surface-elevated shadow-soft">
+      <div className="border-b border-border-soft p-6">
+        <h2 className="text-xl font-semibold text-text-primary">Top Suppliers</h2>
+        <p className="mt-1 text-sm text-text-secondary">Your most frequently used suppliers</p>
       </div>
       <div className="p-6">
         <div className="space-y-4">
           {dashboardSuppliersData.topSuppliers.map((supplier) => {
             const IconComponent = iconMap[supplier.icon]
-            const iconColorClass = colorMap[supplier.iconColor] || "bg-gray-100 text-gray-600"
+            const iconColorClass = colorMap[supplier.iconColor] || "bg-surface-muted text-text-secondary"
 
             return (
               <div key={supplier.id} className="flex items-center justify-between">
@@ -46,23 +46,23 @@ const TopSuppliers = () => {
                     {IconComponent && <IconComponent className="w-5 h-5" />}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-steel-blue">{supplier.name}</h3>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <div className="flex text-yellow-400 mr-2">{renderStars(supplier.starCount)}</div>
+                    <h3 className="font-semibold text-text-primary">{supplier.name}</h3>
+                    <div className="flex items-center text-sm text-text-secondary">
+                      <div className="mr-2 flex">{renderStars(supplier.starCount)}</div>
                       <span>{supplier.rating}</span>
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-lg font-semibold text-steel-blue">{supplier.totalSpent}</div>
-                  <div className="text-sm text-gray-500">{supplier.orderCount}</div>
+                  <div className="text-lg font-semibold text-text-primary">{supplier.totalSpent}</div>
+                  <div className="text-sm text-text-muted">{supplier.orderCount}</div>
                 </div>
               </div>
             )
           })}
 
-          <div className="pt-4 border-t border-gray-200">
-            <Link href="/suppliers" className="w-full text-steel-blue hover:underline font-medium block text-center">
+          <div className="border-t border-border-soft pt-4">
+            <Link href="/suppliers" className="block w-full text-center font-medium text-brand hover:underline">
               View All Suppliers
             </Link>
           </div>

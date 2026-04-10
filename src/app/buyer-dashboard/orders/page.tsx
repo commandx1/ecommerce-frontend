@@ -4,6 +4,8 @@ import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ExternalLink, Loader
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Fragment, useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
 import { type BuyerOrder, buyerOrdersAPI } from "@/lib/api/buyer-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
@@ -101,8 +103,8 @@ export default function BuyerOrdersPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-600">Please log in to view your orders.</p>
+      <div className="flex min-h-screen items-center justify-center bg-canvas">
+        <p className="text-text-secondary">Please log in to view your orders.</p>
       </div>
     )
   }
@@ -111,58 +113,59 @@ export default function BuyerOrdersPage() {
     <>
       {/* Page Header */}
       <section className="mb-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-steel-blue">Your Orders</h1>
-            <p className="text-gray-600 mt-1">Track and review all orders placed from your account</p>
+            <h1 className="text-3xl font-bold text-text-primary">Your Orders</h1>
+            <p className="mt-1 text-text-secondary">Track and review all orders placed from your account</p>
           </div>
         </div>
       </section>
 
       {/* Orders Table */}
-      <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <section className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg- border-b border-gray-200">
+            <thead className="border-b border-border-soft bg-surface-muted/60">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   Order
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  <button
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                  <Button
                     type="button"
+                    variant="unstyled"
                     onClick={handleDateSortToggle}
-                    className="inline-flex items-center gap-1 hover:text-steel-blue"
+                    className="inline-flex items-center gap-1 transition-colors hover:text-brand"
                     aria-label={`Sort by date ${dateSortDir === "desc" ? "ascending" : "descending"}`}
                   >
                     Placed On
                     {dateSortDir === "desc" ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
-                  </button>
+                  </Button>
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   Shipping Address
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   Items
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   Total
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   Status
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-border-soft">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-text-muted">
                     Loading orders...
                   </td>
                 </tr>
               ) : filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-text-muted">
                     No orders found.
                   </td>
                 </tr>
@@ -172,11 +175,11 @@ export default function BuyerOrdersPage() {
 
                   return (
                     <Fragment key={order.orderId}>
-                      <tr className="hover:bg-gray-50 transition-colors">
+                      <tr className="transition-colors hover:bg-surface-muted/55">
                         <td className="px-6 py-4 text-sm">
-                          <div className="font-mono text-xs text-steel-blue break-all">{order.orderId}</div>
+                          <div className="break-all font-mono text-xs text-brand">{order.orderId}</div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
+                        <td className="px-6 py-4 text-sm text-text-secondary">
                           {created.toLocaleString(undefined, {
                             year: "numeric",
                             month: "short",
@@ -185,20 +188,21 @@ export default function BuyerOrdersPage() {
                             minute: "2-digit",
                           })}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
+                        <td className="px-6 py-4 text-sm text-text-secondary">
                           <div className="font-medium">{order.addressTitle}</div>
                           <div
-                            className="text-xs text-gray-500 max-w-xs truncate"
+                            className="max-w-xs truncate text-xs text-text-muted"
                             title={order.addressFormattedAddress}
                           >
                             {order.addressFormattedAddress}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          <button
+                        <td className="px-6 py-4 text-sm text-text-secondary">
+                          <Button
                             type="button"
+                            variant="unstyled"
                             onClick={() => setExpandedOrderId(expandedOrderId === order.orderId ? null : order.orderId)}
-                            className="inline-flex items-center gap-2 text-sm text-steel-blue hover:text-steel-blue/80"
+                            className="inline-flex items-center gap-2 text-sm text-brand transition-colors hover:opacity-80"
                           >
                             <span className="font-medium">
                               {order.orderItems.length} item{order.orderItems.length > 1 ? "s" : ""}
@@ -208,17 +212,17 @@ export default function BuyerOrdersPage() {
                             ) : (
                               <ChevronDown className="w-4 h-4" />
                             )}
-                          </button>
+                          </Button>
                         </td>
-                        <td className="px-6 py-4 text-sm font-semibold text-steel-blue">
+                        <td className="px-6 py-4 text-sm font-semibold text-text-primary">
                           {formatCurrency(order.totalPrice)}
                         </td>
                         <td className="px-6 py-4 text-sm">
                           <span
                             className={`px-3 py-1 text-xs font-medium rounded-full ${
                               order.orderStatus === "PAYMENT_SUCCESS"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-gray-100 text-gray-800"
+                                ? "bg-success/15 text-success"
+                                : "bg-surface-muted text-text-secondary"
                             }`}
                           >
                             {order.orderStatus}
@@ -226,55 +230,59 @@ export default function BuyerOrdersPage() {
                         </td>
                       </tr>
                       {expandedOrderId === order.orderId && (
-                        <tr className="bg-gray-50/60">
+                        <tr className="bg-surface-muted/50">
                           <td colSpan={6} className="p-4">
-                            <div className="border border-gray-200 rounded-xl bg-white p-4 space-y-3 text-sm">
+                            <div className="space-y-3 rounded-xl border border-border-soft bg-surface-elevated p-4 text-sm">
                               {order.orderItems.map((item) => (
                                 <div
                                   key={item.id}
-                                  className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b last:border-b-0 border-gray-100 pb-3 last:pb-0"
+                                  className="flex flex-col gap-3 border-b border-border-soft pb-3 last:border-b-0 last:pb-0 md:flex-row md:items-center md:justify-between"
                                 >
                                   <div className="space-y-1">
-                                    <div className="font-medium text-steel-blue">{item.productName}</div>
-                                    <div className="text-xs text-gray-500">
+                                    <div className="font-medium text-text-primary">{item.productName}</div>
+                                    <div className="text-xs text-text-muted">
                                       Supplier: {item.sellerName} {item.sellerSurname}
                                     </div>
                                   </div>
-                                  <div className="flex flex-wrap items-center justify-end gap-4 text-xs text-gray-600">
+                                  <div className="flex flex-wrap items-center justify-end gap-4 text-xs text-text-secondary">
                                     <span>
-                                      Qty: <span className="font-semibold text-gray-800">{item.quantity}</span>
+                                      Qty: <span className="font-semibold text-text-primary">{item.quantity}</span>
                                     </span>
                                     <span>
                                       Price:{" "}
-                                      <span className="font-semibold text-gray-800">{formatCurrency(item.price)}</span>
+                                      <span className="font-semibold text-text-primary">
+                                        {formatCurrency(item.price)}
+                                      </span>
                                     </span>
                                     <span
                                       className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
                                         item.status === "WAITING_FOR_SHIPMENT"
-                                          ? "bg-amber-50 text-amber-700"
-                                          : "bg-gray-100 text-gray-700"
+                                          ? "bg-warning/15 text-warning"
+                                          : "bg-surface-muted text-text-secondary"
                                       }`}
                                     >
                                       {item.status}
                                     </span>
                                     {item.trackingLink && item.trackingLink.length > 0 ? (
-                                      <button
+                                      <Button
                                         type="button"
+                                        variant="unstyled"
                                         onClick={() => setTrackingModalLinks(item.trackingLink)}
-                                        className="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-700 text-[11px] font-medium hover:bg-green-200"
+                                        className="inline-flex items-center rounded-full bg-success/15 px-3 py-1 text-[11px] font-medium text-success transition-colors hover:bg-success/25"
                                       >
                                         View {item.trackingLink.length} tracking link
                                         {item.trackingLink.length > 1 ? "s" : ""}
                                         <ExternalLink className="w-3 h-3 ml-2" />
-                                      </button>
+                                      </Button>
                                     ) : (
-                                      <span className="text-[11px] text-gray-400">No tracking</span>
+                                      <span className="text-[11px] text-text-muted">No tracking</span>
                                     )}
-                                    <button
+                                    <Button
                                       type="button"
+                                      variant="unstyled"
                                       onClick={() => handleReorder(item.userProductId, item.quantity, item.productName)}
                                       disabled={reorderingItemId === item.userProductId}
-                                      className="inline-flex items-center justify-center gap-2 rounded-full bg-steel-blue px-4 py-2 text-[11px] font-semibold text-white transition-colors hover:bg-steel-blue/90 disabled:cursor-not-allowed disabled:opacity-70"
+                                      className="inline-flex items-center justify-center gap-2 rounded-full bg-brand px-4 py-2 text-[11px] font-semibold text-primary-foreground transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
                                     >
                                       {reorderingItemId === item.userProductId ? (
                                         <>
@@ -284,7 +292,7 @@ export default function BuyerOrdersPage() {
                                       ) : (
                                         "Reorder"
                                       )}
-                                    </button>
+                                    </Button>
                                   </div>
                                 </div>
                               ))}
@@ -301,31 +309,33 @@ export default function BuyerOrdersPage() {
         </div>
 
         {/* Pagination */}
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+        <div className="border-t border-border-soft bg-surface-muted/55 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Show</span>
-              <select
-                value={pageSize}
-                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-              >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-              </select>
-              <span className="text-sm text-gray-600">per page</span>
+              <span className="text-sm text-text-secondary">Show</span>
+              <Select value={String(pageSize)} onValueChange={(value) => handlePageSizeChange(Number(value))}>
+                <SelectTrigger className="h-9 w-20 rounded-lg border-border-soft bg-surface-elevated px-3 py-1 text-sm text-text-primary shadow-none focus-visible:ring-2 focus-visible:ring-ring/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-text-secondary">per page</span>
             </div>
 
             <div className="flex items-center space-x-2">
-              <button
+              <Button
                 type="button"
+                variant="unstyled"
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 0}
-                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-white text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded-lg border border-border-strong px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <ChevronLeft className="w-4 h-4" />
-              </button>
+              </Button>
 
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNumber: number
@@ -340,61 +350,65 @@ export default function BuyerOrdersPage() {
                 }
 
                 return (
-                  <button
+                  <Button
                     key={pageNumber}
                     type="button"
+                    variant="unstyled"
                     onClick={() => handlePageChange(pageNumber)}
                     className={`px-3 py-2 rounded-lg text-sm font-medium ${
                       currentPage === pageNumber
-                        ? "bg-steel-blue text-white"
-                        : "border border-gray-300 hover:bg-white text-gray-700"
+                        ? "bg-brand text-primary-foreground"
+                        : "border border-border-strong text-text-secondary hover:bg-surface"
                     }`}
                   >
                     {pageNumber + 1}
-                  </button>
+                  </Button>
                 )
               })}
 
-              <button
+              <Button
                 type="button"
+                variant="unstyled"
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages - 1}
-                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-white text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded-lg border border-border-strong px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <ChevronRight className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           </div>
         </div>
       </section>
       {trackingModalLinks && trackingModalLinks.length > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full mx-4">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-steel-blue">Tracking links ({trackingModalLinks.length})</h2>
-              <button
+          <div className="mx-4 w-full max-w-2xl rounded-2xl border border-border-soft bg-surface-elevated shadow-panel">
+            <div className="flex items-center justify-between border-b border-border-soft px-6 py-4">
+              <h2 className="text-lg font-semibold text-text-primary">Tracking links ({trackingModalLinks.length})</h2>
+              <Button
                 type="button"
+                variant="quiet"
+                size="icon-sm"
                 onClick={() => setTrackingModalLinks(null)}
-                className="p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                className="text-text-muted hover:bg-surface-muted hover:text-text-secondary"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
-            <div className="px-6 py-4 max-h-80 overflow-y-auto space-y-3">
+            <div className="max-h-80 space-y-3 overflow-y-auto px-6 py-4">
               {trackingModalLinks.map((link, index) => (
                 <div
                   key={link}
-                  className="flex items-center justify-between gap-3 border border-gray-200 rounded-lg px-3 py-2 text-xs"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-border-soft px-3 py-2 text-xs"
                 >
-                  <div className="flex-1 break-all text-gray-600">
-                    <span className="font-semibold text-gray-800 mr-2">Link {index + 1}</span>
+                  <div className="flex-1 break-all text-text-secondary">
+                    <span className="mr-2 font-semibold text-text-primary">Link {index + 1}</span>
                     {link.length > 50 ? `${link.substring(0, 50)}...` : link}
                   </div>
                   <Link
                     href={link}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center px-2 py-1 rounded-full bg-steel-blue text-white text-[11px] font-medium hover:bg-opacity-90 whitespace-nowrap"
+                    className="inline-flex items-center whitespace-nowrap rounded-full bg-brand px-2 py-1 text-[11px] font-medium text-primary-foreground transition-colors hover:bg-brand-strong"
                   >
                     Open
                     <ExternalLink className="w-3 h-3 ml-1" />
@@ -402,14 +416,15 @@ export default function BuyerOrdersPage() {
                 </div>
               ))}
             </div>
-            <div className="px-6 py-3 border-t border-gray-200 flex justify-end">
-              <button
+            <div className="flex justify-end border-t border-border-soft px-6 py-3">
+              <Button
                 type="button"
+                variant="outline"
                 onClick={() => setTrackingModalLinks(null)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="rounded-lg"
               >
                 Close
-              </button>
+              </Button>
             </div>
           </div>
         </div>

@@ -18,39 +18,39 @@ export default function ShippingAddressSection({
   onSelectAddress,
 }: ShippingAddressSectionProps) {
   return (
-    <SurfaceCard className="p-8">
-      <div className="flex items-center justify-between mb-8">
+    <SurfaceCard variant="editorial" className="p-8">
+      <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center">
-          <div className="w-8 h-8 bg-steel-blue rounded-full flex items-center justify-center mr-4">
-            <span className="text-white text-sm font-semibold">2</span>
+          <div className="mr-4 flex h-8 w-8 items-center justify-center rounded-full bg-brand">
+            <span className="text-sm font-semibold text-white">2</span>
           </div>
-          <h2 className="text-2xl font-bold text-steel-blue">Select Shipping Address</h2>
+          <h2 className="text-2xl font-bold text-text-primary">Select Shipping Address</h2>
         </div>
         <button
           type="button"
           onClick={onAddAddress}
-          className="flex items-center text-steel-blue hover:underline text-sm font-medium"
+          className="flex items-center text-sm font-medium text-brand hover:underline"
         >
-          <Plus className="w-4 h-4 mr-1" />
+          <Plus className="mr-1 h-4 w-4" />
           Add New Address
         </button>
       </div>
 
       {isLoading ? (
         <div className="space-y-4 animate-pulse">
-          <div className="h-24 bg-gray-100 rounded-xl" />
-          <div className="h-24 bg-gray-100 rounded-xl" />
+          <div className="h-24 rounded-xl bg-surface-muted" />
+          <div className="h-24 rounded-xl bg-surface-muted" />
         </div>
       ) : null}
 
       {!isLoading && addresses.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-          <MapPin className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 mb-6">No addresses found in your account.</p>
+        <div className="rounded-2xl border-2 border-dashed border-border-soft bg-surface-muted px-6 py-12 text-center">
+          <MapPin className="mx-auto mb-4 h-12 w-12 text-text-muted" />
+          <p className="mb-6 text-text-secondary">No addresses found in your account.</p>
           <button
             type="button"
             onClick={onAddAddress}
-            className="px-6 py-2 bg-steel-blue text-white rounded-lg hover:bg-opacity-90 transition-colors"
+            className="rounded-full bg-brand px-6 py-2 font-semibold text-white transition-colors hover:bg-brand-strong"
           >
             Add Your First Address
           </button>
@@ -58,14 +58,14 @@ export default function ShippingAddressSection({
       ) : null}
 
       {!isLoading && addresses.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {addresses.map((address) => (
             <label
               key={address.id}
-              className={`relative p-6 border rounded-2xl cursor-pointer transition-all hover:border-steel-blue/50 ${
+              className={`relative cursor-pointer rounded-2xl border p-6 transition-all hover:border-brand/50 ${
                 selectedAddressId === address.id
-                  ? "border-steel-blue bg-blue-50/50 ring-1 ring-steel-blue"
-                  : "border-gray-200 bg-white"
+                  ? "border-brand bg-accent ring-1 ring-brand/25"
+                  : "border-border-soft bg-surface-elevated"
               }`}
             >
               <input
@@ -75,18 +75,18 @@ export default function ShippingAddressSection({
                 checked={selectedAddressId === address.id}
                 onChange={() => onSelectAddress(address)}
               />
-              <div className="flex justify-between items-start">
+              <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="font-bold text-gray-900 mb-1">{address.title}</h3>
-                  <p className="text-sm text-gray-600 font-medium">{address.fullName}</p>
-                  <div className="text-sm text-gray-500 mt-2 space-y-1">
+                  <h3 className="mb-1 font-bold text-text-primary">{address.title}</h3>
+                  <p className="text-sm font-medium text-text-secondary">{address.fullName}</p>
+                  <div className="mt-2 space-y-1 text-sm text-text-muted">
                     <p>{address.formattedAddress || address.addressLine}</p>
                     <p>{address.phoneNumber}</p>
                   </div>
                 </div>
                 {selectedAddressId === address.id ? (
-                  <div className="bg-steel-blue rounded-full p-1">
-                    <Check className="w-4 h-4 text-white" />
+                  <div className="rounded-full bg-brand p-1">
+                    <Check className="h-4 w-4 text-white" />
                   </div>
                 ) : null}
               </div>

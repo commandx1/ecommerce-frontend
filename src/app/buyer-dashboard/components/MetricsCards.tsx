@@ -9,10 +9,10 @@ const iconMap: Record<string, LucideIcon> = {
 }
 
 const colorMap: Record<string, string> = {
-  blue: "bg-blue-100 text-blue-600",
-  green: "bg-green-100 text-green-600",
+  blue: "bg-brand/15 text-brand",
+  green: "bg-success/15 text-success",
   "coral-orange": "bg-coral-orange/20 text-coral-orange",
-  purple: "bg-purple-100 text-purple-600",
+  purple: "bg-warning/20 text-warning",
 }
 
 const MetricsCards = () => {
@@ -21,25 +21,25 @@ const MetricsCards = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {dashboardMetricsData.metrics.map((metric) => {
           const IconComponent = iconMap[metric.icon]
-          const iconColorClass = colorMap[metric.iconColor] || "bg-gray-100 text-gray-600"
+          const iconColorClass = colorMap[metric.iconColor] || "bg-surface-muted text-text-secondary"
           const changeColorClass =
             metric.changeType === "positive"
-              ? "text-green-500"
+              ? "text-success"
               : metric.changeType === "warning"
                 ? "text-coral-orange"
-                : "text-gray-500"
+                : "text-text-muted"
 
           return (
-            <div key={metric.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center justify-between mb-4">
-                <div className={`w-12 h-12 ${iconColorClass} rounded-lg flex items-center justify-center`}>
+            <div key={metric.id} className="rounded-xl border border-border-soft bg-surface-elevated p-6 shadow-soft">
+              <div className="mb-4 flex items-center justify-between">
+                <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${iconColorClass}`}>
                   {IconComponent && <IconComponent className="text-xl w-6 h-6" />}
                 </div>
                 <span className={`${changeColorClass} text-sm font-medium`}>{metric.change}</span>
               </div>
-              <h3 className="text-2xl font-bold text-steel-blue mb-1">{metric.value}</h3>
-              <p className="text-gray-600">{metric.title}</p>
-              <p className="text-sm text-gray-500 mt-2">{metric.description}</p>
+              <h3 className="mb-1 text-2xl font-bold text-text-primary">{metric.value}</h3>
+              <p className="text-text-secondary">{metric.title}</p>
+              <p className="mt-2 text-sm text-text-muted">{metric.description}</p>
             </div>
           )
         })}

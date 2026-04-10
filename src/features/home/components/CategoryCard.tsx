@@ -1,4 +1,7 @@
+import { ArrowUpRight } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
+import { cn } from "@/lib/utils"
 
 interface CategoryCardProps {
   title: string
@@ -6,37 +9,59 @@ interface CategoryCardProps {
   productCount: string
   image: string
   alt: string
+  eyebrow?: string
+  href?: string
+  featured?: boolean
+  className?: string
 }
 
-export default function CategoryCard({ title, description, productCount, image, alt }: CategoryCardProps) {
+export default function CategoryCard({
+  title,
+  description,
+  productCount,
+  image,
+  alt,
+  eyebrow = "Category",
+  href = "/products",
+  featured = false,
+  className,
+}: CategoryCardProps) {
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow cursor-pointer group">
-      <div className="h-48 overflow-hidden">
+    <Link
+      href={href}
+      className={cn(
+        "group relative block h-full overflow-hidden rounded-[1.75rem] border border-border-soft bg-surface-elevated shadow-soft transition-all hover:-translate-y-1 hover:shadow-panel",
+        featured ? "min-h-[26rem]" : "min-h-[23.5rem]",
+        className,
+      )}
+    >
+      <div className={`${featured ? "h-72 md:h-[22rem]" : "h-48"} overflow-hidden bg-surface-muted`}>
         <Image
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           src={image}
           alt={alt}
-          width={400}
-          height={192}
+          width={featured ? 800 : 400}
+          height={featured ? 480 : 192}
         />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_35%,color-mix(in_oklab,var(--brand-strong)_34%,transparent)_100%)] opacity-80" />
       </div>
-      <div className="p-6">
-        <h3 className="text-xl font-semibold text-steel-blue mb-2">{title}</h3>
-        <p className="text-gray-600 mb-4">{description}</p>
+      <div className={`relative ${featured ? "p-7 md:p-8" : "p-6"}`}>
+        <div className="mb-3 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-text-muted">{eyebrow}</div>
+        <h3
+          className={`${featured ? "text-3xl md:text-[2rem]" : "min-h-[3.5rem] text-2xl"} mb-2 font-semibold text-text-primary`}
+        >
+          {title}
+        </h3>
+        <p
+          className={`mb-4 max-w-xl text-sm leading-6 text-text-secondary md:text-[0.95rem] ${featured ? "" : "min-h-[4.5rem]"}`}
+        >
+          {description}
+        </p>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-500">{productCount} products</span>
-          <svg
-            className="w-5 h-5 text-steel-blue group-hover:translate-x-1 transition-transform"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-label="View category"
-          >
-            <title>View category</title>
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
+          <span className="text-sm text-text-muted">{productCount} products</span>
+          <ArrowUpRight className="h-5 w-5 text-brand transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </div>
       </div>
-    </div>
+    </Link>
   )
 }

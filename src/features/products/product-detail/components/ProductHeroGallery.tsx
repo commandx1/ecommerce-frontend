@@ -23,7 +23,7 @@ const ProductHeroGallery = ({ title, sku, mainImage, thumbnailImages, badge }: P
   return (
     <div className="space-y-4">
       <div
-        className="relative bg-gray-50 rounded-2xl overflow-hidden"
+        className="relative overflow-hidden rounded-4xl border border-border-soft bg-surface-elevated shadow-panel"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         role="img"
@@ -42,24 +42,24 @@ const ProductHeroGallery = ({ title, sku, mainImage, thumbnailImages, badge }: P
         </div>
         {badge && (
           <div className="absolute top-4 left-4">
-            <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">{badge}</span>
+            <span className="rounded-full bg-success px-3 py-1 text-sm font-medium text-white">{badge}</span>
           </div>
         )}
         <div className="absolute top-4 right-4">
           <button
             type="button"
-            className="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-border-soft bg-surface shadow-soft transition-colors hover:text-danger"
             aria-label="Add to favorites"
           >
-            <Heart className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" />
+            <Heart className="h-5 w-5 text-text-secondary" fill="none" stroke="currentColor" />
           </button>
         </div>
         <div className="absolute bottom-4 right-4">
           <button
             type="button"
             onClick={toggleMagnifier}
-            className={`w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center transition-colors ${
-              isEnabled ? "text-blue-600 bg-blue-50" : "text-gray-600 hover:bg-gray-50"
+            className={`flex h-10 w-10 items-center justify-center rounded-full border border-border-soft bg-surface shadow-soft transition-colors ${
+              isEnabled ? "bg-accent text-brand" : "text-text-secondary hover:bg-surface-muted"
             }`}
             aria-label="Toggle magnifier"
             title="Toggle magnifier"
@@ -78,8 +78,8 @@ const ProductHeroGallery = ({ title, sku, mainImage, thumbnailImages, badge }: P
             key={`${sku}-thumbnail-${index}-${image}`}
             type="button"
             onClick={() => setSelectedImage(image)}
-            className={`relative bg-gray-50 rounded-lg overflow-hidden aspect-square cursor-pointer border-2 transition-colors ${
-              selectedImage === image ? "border-steel-blue" : "border-transparent hover:border-steel-blue"
+            className={`relative aspect-square cursor-pointer overflow-hidden rounded-2xl border bg-surface-muted transition-colors ${
+              selectedImage === image ? "border-brand" : "border-border-soft hover:border-brand/35"
             }`}
           >
             <LoadableImage

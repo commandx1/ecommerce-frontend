@@ -14,37 +14,37 @@ const HIGHLIGHTS: HighlightItem[] = [
     title: "Quick Response",
     description: "Average response time: 2 hours",
     icon: Clock,
-    iconBg: "bg-green-100",
-    iconColor: "text-green-600",
+    iconBg: "bg-success/14",
+    iconColor: "text-success",
   },
   {
     title: "Expert Support",
     description: "Dental industry specialists",
     icon: User,
-    iconBg: "bg-blue-100",
-    iconColor: "text-blue-600",
+    iconBg: "bg-brand/12",
+    iconColor: "text-brand",
   },
   {
     title: "Full Tracking",
     description: "Track your ticket status",
     icon: TrendingUp,
-    iconBg: "bg-purple-100",
-    iconColor: "text-purple-600",
+    iconBg: "bg-accent",
+    iconColor: "text-brand",
   },
 ]
 
 const TicketSubmissionHighlights = () => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+    <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-3">
       {HIGHLIGHTS.map((item) => {
         const Icon = item.icon
         return (
           <div key={item.title} className="text-center">
-            <div className={`w-16 h-16 ${item.iconBg} rounded-full flex items-center justify-center mx-auto mb-4`}>
-              <Icon className={`${item.iconColor} w-6 h-6`} />
+            <div className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${item.iconBg}`}>
+              <Icon className={`h-6 w-6 ${item.iconColor}`} />
             </div>
-            <h3 className="text-lg font-semibold text-steel-blue mb-2">{item.title}</h3>
-            <p className="text-gray-600">{item.description}</p>
+            <h3 className="mb-2 text-lg font-semibold text-text-primary">{item.title}</h3>
+            <p className="text-text-secondary">{item.description}</p>
           </div>
         )
       })}

@@ -24,10 +24,10 @@ export const RadioField = ({
     <div className={cn("flex items-start gap-3", containerClassName)}>
       <Radio id={id} className={radioClassName} disabled={disabled} {...props} />
       <div className="space-y-1">
-        <Label htmlFor={id} className="text-sm font-medium text-gray-700">
+        <Label htmlFor={id} className="text-sm font-medium text-text-primary">
           {label}
         </Label>
-        {description && <p className="text-xs text-gray-500">{description}</p>}
+        {description && <p className="text-xs text-text-secondary">{description}</p>}
       </div>
     </div>
   )

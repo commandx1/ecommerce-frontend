@@ -4,7 +4,8 @@ import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Download, Edit, Search, 
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useId, useState } from "react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getFullImageUrl, type Product, productsAPI, type UserProduct } from "@/lib/api/products"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
@@ -83,6 +84,7 @@ interface ProductWithDetails extends UserProduct {
 }
 
 export default function ProductsPage() {
+  const id = useId()
   const router = useRouter()
   const { accessToken, isAuthenticated } = useAuthStore()
   const [products, setProducts] = useState<ProductWithDetails[]>([])
@@ -334,7 +336,7 @@ export default function ProductsPage() {
   return (
     <>
       {/* Page Header */}
-      <section id="page-header" className="mb-8">
+      <section id={`${id}-page-header`} className="mb-8">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-steel-blue">Product Management</h1>
@@ -370,7 +372,7 @@ export default function ProductsPage() {
       </section>
 
       {/* Filters and Search */}
-      <section id="filters-section" className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6">
+      <section id={`${id}-filters-section`} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6">
         <div className="max-w-lg">
           <div className="relative">
             <input
@@ -572,16 +574,17 @@ export default function ProductsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">Show</span>
-              <select
-                value={pageSize}
-                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-              >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
+              <Select value={String(pageSize)} onValueChange={(value) => handlePageSizeChange(Number(value))}>
+                <SelectTrigger className="h-9 w-24 rounded-lg border-gray-300 bg-white px-3 py-1 text-sm text-gray-700 shadow-none focus-visible:ring-2 focus-visible:ring-steel-blue">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
               <span className="text-sm text-gray-600">per page</span>
             </div>
 

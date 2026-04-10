@@ -15,19 +15,19 @@ const CUT_OFF_WINDOWS = [
 
 export default function DeliveryCutoffTimesCard() {
   return (
-    <div className="bg-linear-to-br from-steel-blue to-blue-800 rounded-xl sm:rounded-2xl p-6 sm:p-8 text-white">
-      <div className="flex items-center mb-4">
-        <Clock className="text-pale-lime w-8 h-8 sm:w-10 sm:h-10 mr-4" />
-        <h3 className="text-xl sm:text-2xl font-bold">Same-Day Cut-Off Times</h3>
+    <div className="rounded-xl border border-border-soft bg-brand-surface p-6 text-inverse-foreground sm:rounded-2xl sm:p-8">
+      <div className="mb-4 flex items-center">
+        <Clock className="mr-4 h-8 w-8 text-accent-strong sm:h-10 sm:w-10" />
+        <h3 className="text-xl font-bold sm:text-2xl">Same-Day Cut-Off Times</h3>
       </div>
       <div className="space-y-4">
         {CUT_OFF_WINDOWS.map((window) => (
-          <div key={window.title} className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-            <div className="flex justify-between items-center mb-2">
-              <span className="font-semibold text-sm sm:text-base">{window.title}</span>
-              <span className="text-pale-lime font-bold text-base sm:text-lg">{window.value}</span>
+          <div key={window.title} className="rounded-lg border border-inverse-muted/20 bg-brand/20 p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-sm font-semibold sm:text-base">{window.title}</span>
+              <span className="text-base font-bold text-accent-strong sm:text-lg">{window.value}</span>
             </div>
-            <p className="text-blue-100 text-xs sm:text-sm">{window.description}</p>
+            <p className="text-xs text-inverse-muted sm:text-sm">{window.description}</p>
           </div>
         ))}
       </div>

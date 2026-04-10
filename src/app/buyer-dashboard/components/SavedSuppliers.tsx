@@ -15,6 +15,7 @@ import {
   Truck,
   Wrench,
 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import dashboardSuppliersData from "@/data/dashboard-suppliers.json"
 
 const iconMap: Record<string, LucideIcon> = {
@@ -36,15 +37,15 @@ const featureIconMap: Record<string, LucideIcon> = {
 }
 
 const colorMap: Record<string, string> = {
-  orange: "bg-orange-100 text-orange-600",
-  blue: "bg-blue-100 text-blue-600",
-  purple: "bg-purple-100 text-purple-600",
-  green: "bg-green-100 text-green-600",
+  orange: "bg-coral-orange/20 text-coral-orange",
+  blue: "bg-brand/15 text-brand",
+  purple: "bg-warning/20 text-warning",
+  green: "bg-success/15 text-success",
 }
 
 const featureColorMap: Record<string, string> = {
-  green: "text-green-500",
-  "steel-blue": "text-steel-blue",
+  green: "text-success",
+  "steel-blue": "text-brand",
 }
 
 const SavedSuppliers = () => {
@@ -54,54 +55,54 @@ const SavedSuppliers = () => {
       return (
         <Star
           key={starId}
-          className={`w-3 h-3 ${i < starCount ? "fill-yellow-400 text-yellow-400" : "fill-none text-gray-300"}`}
+          className={`h-3 w-3 ${i < starCount ? "fill-accent-strong text-accent-strong" : "fill-none text-border-strong"}`}
         />
       )
     })
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-      <div className="p-6 border-b border-gray-200">
+    <div className="rounded-xl border border-border-soft bg-surface-elevated shadow-soft">
+      <div className="border-b border-border-soft p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-steel-blue">Saved Suppliers</h2>
-          <button type="button" className="text-steel-blue hover:underline font-medium">
+          <h2 className="text-xl font-semibold text-text-primary">Saved Suppliers</h2>
+          <Button type="button" variant="link" size="sm" className="h-auto p-0">
             Manage All
-          </button>
+          </Button>
         </div>
       </div>
       <div className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {dashboardSuppliersData.savedSuppliers.map((supplier) => {
             const IconComponent = iconMap[supplier.icon]
-            const iconColorClass = colorMap[supplier.iconColor] || "bg-gray-100 text-gray-600"
+            const iconColorClass = colorMap[supplier.iconColor] || "bg-surface-muted text-text-secondary"
 
             return (
               <div
                 key={supplier.id}
-                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                className="rounded-lg border border-border-soft p-4 transition-shadow hover:shadow-soft"
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-3">
-                    <div className={`w-10 h-10 ${iconColorClass} rounded-lg flex items-center justify-center`}>
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconColorClass}`}>
                       {IconComponent && <IconComponent className="w-5 h-5" />}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-steel-blue text-sm">{supplier.name}</h3>
-                      <div className="flex items-center text-xs text-gray-600">
-                        <div className="flex text-yellow-400 mr-1">{renderStars(supplier.starCount)}</div>
+                      <h3 className="text-sm font-semibold text-text-primary">{supplier.name}</h3>
+                      <div className="flex items-center text-xs text-text-secondary">
+                        <div className="mr-1 flex">{renderStars(supplier.starCount)}</div>
                         <span>{supplier.rating}</span>
                       </div>
                     </div>
                   </div>
-                  <button type="button" className="text-red-500 hover:text-red-700">
+                  <Button type="button" variant="quiet" size="icon-sm" className="text-danger hover:opacity-80">
                     <Heart className="w-5 h-5 fill-current" />
-                  </button>
+                  </Button>
                 </div>
-                <div className="text-xs text-gray-600 mb-3">
+                <div className="mb-3 text-xs text-text-secondary">
                   {supplier.features.map((feature) => {
                     const FeatureIcon = featureIconMap[feature.icon]
-                    const featureColorClass = featureColorMap[feature.color] || "text-gray-500"
+                    const featureColorClass = featureColorMap[feature.color] || "text-text-muted"
                     return (
                       <div key={feature.text} className="flex items-center mb-1">
                         {FeatureIcon && <FeatureIcon className={`${featureColorClass} mr-1 w-3 h-3`} />}
@@ -110,12 +111,13 @@ const SavedSuppliers = () => {
                     )
                   })}
                 </div>
-                <button
+                <Button
                   type="button"
-                  className="w-full bg-steel-blue text-white py-2 px-3 rounded text-xs hover:bg-opacity-90"
+                  variant="unstyled"
+                  className="w-full rounded bg-brand px-3 py-2 text-xs text-primary-foreground transition-colors hover:bg-brand-strong"
                 >
                   View Catalog
-                </button>
+                </Button>
               </div>
             )
           })}

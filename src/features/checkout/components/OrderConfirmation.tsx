@@ -21,7 +21,7 @@ export default function OrderConfirmation() {
   }
 
   return (
-    <SurfaceCard className="mb-8 p-12">
+    <SurfaceCard variant="editorial" className="mb-8 p-12">
       <OrderConfirmationHeader />
       {orderResult ? <OrderConfirmationStats orderResult={orderResult} /> : null}
       {orderResult ? <OrderConfirmationItems orderResult={orderResult} /> : null}

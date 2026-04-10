@@ -18,15 +18,17 @@ interface WarrantyOptionsProps {
 const WarrantyOptions = ({ options, selectedValue, onChange }: WarrantyOptionsProps) => {
   return (
     <div>
-      <div className="block text-sm font-medium text-gray-700 mb-3">Extended Warranty</div>
+      <div className="mb-3 block text-sm font-medium text-text-primary">Extended Warranty</div>
       <div className="space-y-3">
         {options.map((option) => {
           const isSelected = selectedValue === option.value
           return (
             <div
               key={option.id}
-              className={`flex items-start justify-between gap-4 rounded-lg p-3 hover:bg-gray-50 ${
-                isSelected ? "bg-emerald-50/40 ring-1 ring-emerald-200" : ""
+              className={`flex items-start justify-between gap-4 rounded-2xl border p-4 transition-colors ${
+                isSelected
+                  ? "border-success/30 bg-success/8 ring-1 ring-success/15"
+                  : "border-border-soft bg-surface-elevated hover:bg-surface-muted/70"
               }`}
             >
               <RadioField
@@ -40,7 +42,7 @@ const WarrantyOptions = ({ options, selectedValue, onChange }: WarrantyOptionsPr
                 radioClassName="mt-1"
                 containerClassName="items-start"
               />
-              <div className="font-semibold text-steel-blue whitespace-nowrap">{option.price}</div>
+              <div className="whitespace-nowrap font-semibold text-brand">{option.price}</div>
             </div>
           )
         })}

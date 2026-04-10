@@ -11,25 +11,25 @@ interface SupportTeamMemberCardProps {
 
 const SupportTeamMemberCard = ({ name, role, bio, avatar }: SupportTeamMemberCardProps) => {
   return (
-    <SurfaceCard className="p-6 text-center hover:shadow-lg transition-shadow">
+    <SurfaceCard className="p-6 text-center transition-shadow hover:shadow-soft">
       <div className="w-20 h-20 mx-auto mb-4 overflow-hidden rounded-full relative">
         <Image src={avatar} alt={name} fill className="object-cover" unoptimized />
       </div>
-      <h3 className="text-lg font-semibold text-steel-blue mb-1">{name}</h3>
-      <p className="text-gray-600 mb-2">{role}</p>
-      <p className="text-sm text-gray-500 mb-4">{bio}</p>
+      <h3 className="mb-1 text-lg font-semibold text-text-primary">{name}</h3>
+      <p className="mb-2 text-text-secondary">{role}</p>
+      <p className="mb-4 text-sm text-text-muted">{bio}</p>
       <div className="flex justify-center space-x-3">
         <button
           type="button"
-          className="w-8 h-8 bg-steel-blue rounded-full flex items-center justify-center hover:bg-opacity-90"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-primary-foreground hover:bg-brand-strong"
         >
-          <Mail className="text-white w-3 h-3" />
+          <Mail className="h-3 w-3" />
         </button>
         <button
           type="button"
-          className="w-8 h-8 bg-steel-blue rounded-full flex items-center justify-center hover:bg-opacity-90"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-primary-foreground hover:bg-brand-strong"
         >
-          <Linkedin className="text-white w-3 h-3" />
+          <Linkedin className="h-3 w-3" />
         </button>
       </div>
     </SurfaceCard>

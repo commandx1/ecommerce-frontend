@@ -38,26 +38,26 @@ const TIMELINE_STEPS = [
 
 export default function DeliveryTimelineProcessCard() {
   return (
-    <div className="bg-gray-50 rounded-xl sm:rounded-2xl p-6 sm:p-8">
-      <h3 className="text-xl sm:text-2xl font-bold text-steel-blue mb-6">Standard Processing Timeline</h3>
+    <div className="rounded-xl border border-border-soft bg-surface-muted/55 p-6 sm:rounded-2xl sm:p-8">
+      <h3 className="mb-6 text-xl font-bold text-text-primary sm:text-2xl">Standard Processing Timeline</h3>
       <div className="space-y-6">
         {TIMELINE_STEPS.map((step) => (
           <div key={step.step} className="flex items-start">
             <div
-              className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mr-4 shrink-0 ${
-                step.isLast ? "bg-pale-lime" : "bg-steel-blue"
+              className={`mr-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${
+                step.isLast ? "bg-accent-strong/30" : "bg-brand"
               }`}
             >
               {step.isLast ? (
-                <Check className="text-steel-blue w-5 h-5 sm:w-6 sm:h-6" />
+                <Check className="h-5 w-5 text-brand sm:h-6 sm:w-6" />
               ) : (
-                <span className="text-white font-bold text-sm sm:text-base">{step.step}</span>
+                <span className="text-sm font-bold text-inverse-foreground sm:text-base">{step.step}</span>
               )}
             </div>
             <div>
-              <h4 className="font-semibold text-gray-800 mb-1 text-sm sm:text-base">{step.title}</h4>
-              <p className="text-sm sm:text-base text-gray-600">{step.description}</p>
-              <p className="text-xs sm:text-sm text-gray-500 mt-1">{step.note}</p>
+              <h4 className="mb-1 text-sm font-semibold text-text-primary sm:text-base">{step.title}</h4>
+              <p className="text-sm text-text-secondary sm:text-base">{step.description}</p>
+              <p className="mt-1 text-xs text-text-muted sm:text-sm">{step.note}</p>
             </div>
           </div>
         ))}

@@ -32,12 +32,12 @@ function FinalReviewContent() {
   } = useFinalReview()
 
   return (
-    <SurfaceCard className="mb-8 p-8">
+    <SurfaceCard variant="editorial" className="mb-8 p-8">
       <div className="flex items-center mb-8">
-        <div className="w-8 h-8 bg-steel-blue rounded-full flex items-center justify-center mr-4">
+        <div className="mr-4 flex h-8 w-8 items-center justify-center rounded-full bg-brand">
           <span className="text-white text-sm font-semibold">4</span>
         </div>
-        <h2 className="text-2xl font-bold text-steel-blue">Final Review</h2>
+        <h2 className="text-2xl font-semibold text-text-primary">Final Review</h2>
       </div>
 
       <div className="space-y-6 mb-8">

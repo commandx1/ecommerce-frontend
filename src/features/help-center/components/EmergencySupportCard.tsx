@@ -9,11 +9,11 @@ interface EmergencySupportCardProps {
 
 const EmergencySupportCard = ({ title, value, note, Icon }: EmergencySupportCardProps) => {
   return (
-    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-      <Icon className="text-white w-8 h-8 mb-3" />
-      <h3 className="text-lg font-semibold mb-2">{title}</h3>
-      <p className="text-orange-100 text-lg font-medium">{value}</p>
-      <p className="text-orange-200 text-sm mt-1">{note}</p>
+    <div className="rounded-[1.35rem] border border-white/12 bg-white/8 p-6 backdrop-blur-sm">
+      <Icon className="mb-3 h-8 w-8 text-inverse-foreground" />
+      <h3 className="mb-2 text-lg font-semibold">{title}</h3>
+      <p className="text-lg font-medium text-inverse-foreground">{value}</p>
+      <p className="mt-1 text-sm text-inverse-muted">{note}</p>
     </div>
   )
 }

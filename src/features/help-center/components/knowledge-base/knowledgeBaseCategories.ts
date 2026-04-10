@@ -12,8 +12,8 @@ interface KnowledgeBaseCategory {
 export const KNOWLEDGE_BASE_CATEGORIES: KnowledgeBaseCategory[] = [
   {
     icon: UserPlus,
-    iconBg: "bg-blue-100",
-    iconColor: "text-blue-600",
+    iconBg: "bg-accent",
+    iconColor: "text-brand",
     title: "Getting Started",
     articles: [
       "Creating Your Account",
@@ -26,8 +26,8 @@ export const KNOWLEDGE_BASE_CATEGORIES: KnowledgeBaseCategory[] = [
   },
   {
     icon: ShoppingCart,
-    iconBg: "bg-green-100",
-    iconColor: "text-green-600",
+    iconBg: "bg-success/14",
+    iconColor: "text-success",
     title: "Ordering & Purchasing",
     articles: [
       "How to Place an Order",
@@ -40,8 +40,8 @@ export const KNOWLEDGE_BASE_CATEGORIES: KnowledgeBaseCategory[] = [
   },
   {
     icon: Truck,
-    iconBg: "bg-purple-100",
-    iconColor: "text-purple-600",
+    iconBg: "bg-brand/12",
+    iconColor: "text-brand",
     title: "Shipping & Delivery",
     articles: [
       "Shipping Options & Costs",
@@ -54,8 +54,8 @@ export const KNOWLEDGE_BASE_CATEGORIES: KnowledgeBaseCategory[] = [
   },
   {
     icon: Undo2,
-    iconBg: "bg-red-100",
-    iconColor: "text-red-600",
+    iconBg: "bg-danger/12",
+    iconColor: "text-danger",
     title: "Returns & Exchanges",
     articles: [
       "Return Policy Overview",
@@ -68,8 +68,8 @@ export const KNOWLEDGE_BASE_CATEGORIES: KnowledgeBaseCategory[] = [
   },
   {
     icon: CreditCard,
-    iconBg: "bg-yellow-100",
-    iconColor: "text-yellow-600",
+    iconBg: "bg-warning/14",
+    iconColor: "text-warning",
     title: "Billing & Payment",
     articles: [
       "Payment Methods Accepted",
@@ -82,8 +82,8 @@ export const KNOWLEDGE_BASE_CATEGORIES: KnowledgeBaseCategory[] = [
   },
   {
     icon: Settings,
-    iconBg: "bg-indigo-100",
-    iconColor: "text-indigo-600",
+    iconBg: "bg-surface-muted",
+    iconColor: "text-text-secondary",
     title: "Account Management",
     articles: [
       "Profile Settings",

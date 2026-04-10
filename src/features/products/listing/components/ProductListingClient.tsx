@@ -1,6 +1,5 @@
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import { createProductsUrlBuilder } from "./listing/buildProductsUrl"
-import FeaturedBanner from "./listing/FeaturedBanner"
 import MobileFilters from "./listing/MobileFilters"
 import PaginationBar from "./listing/PaginationBar"
 import ProductFiltersPanel from "./listing/ProductFiltersPanel"
@@ -53,29 +52,28 @@ const ProductListingClient = ({
   const buildUrl = createProductsUrlBuilder({ currentPage, pageSize, viewType })
 
   return (
-    <div className="bg-gray-50 min-h-screen font-inter">
+    <div className="min-h-screen bg-canvas font-sans">
       <MobileFilters brands={brands} manufacturers={manufacturers} />
       <ProductListingBreadcrumb />
       <ProductListingHeader totalElements={totalElements} />
       <ProductListingToolbar buildUrl={buildUrl} viewType={viewType} pageSize={pageSize} />
 
-      <PageSectionContainer as="div" containerClassName="py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar Filters */}
-          <aside className="hidden lg:block w-68 shrink-0">
+      <PageSectionContainer as="div" containerClassName="py-8 md:py-10">
+        <div className="flex flex-col gap-8 lg:flex-row">
+          <aside className="hidden w-72 shrink-0 lg:block">
             <div
-              style={{ maxHeight: "calc(100vh - 4rem)" }}
-              className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-y-auto sticky top-8 custom-scrollbar"
+              style={{ maxHeight: "calc(100vh - 8rem)" }}
+              className="sticky top-28 overflow-y-auto rounded-[1.75rem] border border-border-soft bg-surface-elevated shadow-soft"
             >
               <ProductFiltersPanel brands={brands} manufacturers={manufacturers} />
             </div>
           </aside>
 
-          {/* Main Product Grid */}
           <main className="flex-1">
-            <ResultsSummary totalElements={totalElements} />
-            <FeaturedBanner />
-            <ProductGrid products={initialProducts} viewType={viewType} />
+            <div className="rounded-4xl border border-border-soft/80 bg-surface-elevated p-4 shadow-soft md:p-6">
+              <ResultsSummary totalElements={totalElements} />
+              <ProductGrid products={initialProducts} viewType={viewType} />
+            </div>
             <PaginationBar
               currentPage={currentPage}
               pageSize={pageSize}

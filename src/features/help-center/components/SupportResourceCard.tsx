@@ -10,13 +10,13 @@ interface SupportResourceCardProps {
 
 const SupportResourceCard = ({ title, description, label, Icon }: SupportResourceCardProps) => {
   return (
-    <div className="bg-gray-50 rounded-2xl p-6 hover:shadow-lg transition-shadow cursor-pointer group">
-      <div className="w-14 h-14 bg-steel-blue rounded-xl flex items-center justify-center mb-4 group-hover:bg-opacity-90 transition-colors">
-        <Icon className="text-white w-6 h-6" />
+    <div className="group cursor-pointer rounded-[1.4rem] border border-border-soft bg-surface-elevated p-6 transition-shadow hover:shadow-soft">
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-brand text-primary-foreground transition-colors group-hover:bg-brand-strong">
+        <Icon className="h-6 w-6" />
       </div>
-      <h3 className="text-lg font-semibold text-steel-blue mb-3">{title}</h3>
-      <p className="text-gray-600 mb-4">{description}</p>
-      <Link href="#" className="text-steel-blue font-medium hover:underline">
+      <h3 className="mb-3 text-lg font-semibold text-text-primary">{title}</h3>
+      <p className="mb-4 text-text-secondary">{description}</p>
+      <Link href="#" className="font-medium text-brand hover:underline">
         {label}
       </Link>
     </div>

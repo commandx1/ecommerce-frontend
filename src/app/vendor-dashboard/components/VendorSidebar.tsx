@@ -46,9 +46,7 @@ const SidebarLink = ({
   size = "default",
 }: SidebarLinkProps) => {
   const baseClasses = "flex items-center rounded-lg transition-colors px-3 py-2"
-  const activeClasses = isActive
-    ? "text-steel-blue bg-gray-50 font-medium"
-    : "text-gray-700 hover:bg-gray-50"
+  const activeClasses = isActive ? "text-steel-blue bg-gray-50 font-medium" : "text-gray-700 hover:bg-gray-50"
   const disabledClasses = disabled ? "opacity-50 pointer-events-none" : ""
   const iconClasses = `w-5 mr-3 ${isActive ? "text-steel-blue" : "text-gray-500"}`
   const labelClasses = size === "compact" ? "text-sm" : "text-base"

@@ -21,6 +21,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useCallback, useEffect, useRef, useState } from "react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
 import { downloadImageAsFileViaProxy } from "@/lib/api/image-proxy"
 import {
@@ -1163,20 +1164,26 @@ function CreateProductPageContent() {
                       <label htmlFor="barcodeFormats" className="block text-sm font-medium text-gray-700 mb-2">
                         Barcode Format
                       </label>
-                      <select
-                        id="barcodeFormats"
+                      <Select
                         name="barcodeFormats"
                         value={formData.barcodeFormats}
-                        onChange={handleInputChange}
                         disabled={isProductSelected}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        onValueChange={(value) => setFormData((prev) => ({ ...prev, barcodeFormats: value }))}
                       >
-                        {barcodeFormatOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
+                        <SelectTrigger
+                          id="barcodeFormats"
+                          className="w-full rounded-lg border-gray-300 bg-white px-4 py-3 text-gray-700 shadow-none focus-visible:ring-2 focus-visible:ring-steel-blue disabled:bg-gray-100 disabled:opacity-60"
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {barcodeFormatOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="flex items-center">

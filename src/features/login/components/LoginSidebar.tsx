@@ -17,10 +17,10 @@ const STATS: Array<{ value: string; label: string }> = [
 
 export default function LoginSidebar() {
   return (
-    <div className="bg-linear-to-br from-steel-blue to-blue-800 p-12 flex flex-col justify-center">
-      <div className="text-white mb-8">
+    <div className="flex flex-col justify-center bg-linear-to-br from-brand-surface via-brand to-brand-strong p-12">
+      <div className="mb-8 text-inverse-foreground">
         <h2 className="text-3xl font-bold mb-4">Welcome to the Professional Network</h2>
-        <p className="text-blue-100 text-lg leading-relaxed mb-6">
+        <p className="mb-6 text-lg leading-relaxed text-inverse-muted">
           Connect with thousands of verified dental professionals and access exclusive pricing, certified suppliers, and
           industry-leading products.
         </p>
@@ -28,22 +28,22 @@ export default function LoginSidebar() {
 
       <div className="space-y-4 mb-8">
         {BENEFITS.map(({ icon: Icon, label }) => (
-          <div key={label} className="flex items-center text-white">
-            <div className="w-8 h-8 bg-pale-lime rounded-full flex items-center justify-center mr-4">
-              <Icon className="text-steel-blue w-4 h-4" />
+          <div key={label} className="flex items-center text-inverse-foreground">
+            <div className="mr-4 flex h-8 w-8 items-center justify-center rounded-full bg-accent-strong/90">
+              <Icon className="h-4 w-4 text-brand-strong" />
             </div>
             <span>{label}</span>
           </div>
         ))}
       </div>
 
-      <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
-        <h3 className="text-white text-lg font-semibold mb-4">Trusted by Professionals</h3>
+      <div className="rounded-2xl border border-inverse-foreground/15 bg-inverse-foreground/10 p-6 backdrop-blur-sm">
+        <h3 className="mb-4 text-lg font-semibold text-inverse-foreground">Trusted by Professionals</h3>
         <div className="grid grid-cols-2 gap-4">
           {STATS.map(({ value, label }) => (
             <div key={label} className="text-center">
-              <div className="text-2xl font-bold text-pale-lime">{value}</div>
-              <div className="text-sm text-blue-100">{label}</div>
+              <div className="text-2xl font-bold text-accent-strong">{value}</div>
+              <div className="text-sm text-inverse-muted">{label}</div>
             </div>
           ))}
         </div>

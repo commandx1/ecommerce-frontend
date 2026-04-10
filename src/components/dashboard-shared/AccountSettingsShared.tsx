@@ -2,7 +2,11 @@
 
 import { AlertTriangle, Fingerprint, Lock, Phone, Save, Shield, Trash2, User } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useId, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { showToast } from "@/components/ui/Toast"
 import { deleteMe, updateMe } from "@/lib/api/account"
 import { useAuthStore } from "@/stores/authStore"
@@ -22,6 +26,11 @@ export default function AccountSettingsShared({
 }: AccountSettingsSharedProps) {
   const { user, setUser, clearAuth, accessToken } = useAuthStore()
   const router = useRouter()
+  const idBase = useId()
+  const firstNameId = `${idBase}-first-name`
+  const lastNameId = `${idBase}-last-name`
+  const phoneId = `${idBase}-phone`
+  const twoFactorId = `${idBase}-two-factor`
 
   const [formData, setFormData] = useState({
     name: user?.name || "",
@@ -106,166 +115,164 @@ export default function AccountSettingsShared({
   return (
     <div className="max-w-4xl space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-steel-blue">{title}</h1>
-        <p className="text-gray-600 mt-2">{description}</p>
+        <h1 className="text-3xl font-bold text-text-primary">{title}</h1>
+        <p className="mt-2 text-text-secondary">{description}</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Profile Section */}
         <div className="lg:col-span-2 space-y-6">
-          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-6 border-b border-gray-100 flex items-center space-x-3">
-              <User className="w-5 h-5 text-steel-blue" />
-              <h2 className="text-xl font-semibold text-gray-900">Personal Information</h2>
+          <section className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
+            <div className="flex items-center space-x-3 border-b border-border-soft p-6">
+              <User className="h-5 w-5 text-brand" />
+              <h2 className="text-xl font-semibold text-text-primary">Personal Information</h2>
             </div>
             <form onSubmit={handleUpdate} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label htmlFor="name" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor={firstNameId} className="text-sm font-medium text-text-secondary">
                     First Name
-                  </label>
-                  <input
-                    id="name"
+                  </Label>
+                  <Input
+                    id={firstNameId}
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-steel-blue"
+                    className="rounded-lg border border-border-soft bg-surface"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="surname" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor={lastNameId} className="text-sm font-medium text-text-secondary">
                     Last Name
-                  </label>
-                  <input
-                    id="surname"
+                  </Label>
+                  <Input
+                    id={lastNameId}
                     type="text"
                     value={formData.surname}
                     onChange={(e) => setFormData({ ...formData, surname: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-steel-blue"
+                    className="rounded-lg border border-border-soft bg-surface"
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                <Label htmlFor={phoneId} className="text-sm font-medium text-text-secondary">
                   Phone Number
-                </label>
+                </Label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
-                  <input
-                    id="phone"
+                  <Phone className="absolute left-3 top-2.5 h-5 w-5 text-text-muted" />
+                  <Input
+                    id={phoneId}
                     type="tel"
                     value={formData.phoneNumber}
                     onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-steel-blue"
+                    className="rounded-lg border border-border-soft bg-surface py-2 pl-10 pr-4"
                     placeholder="5xx xxx xxxx"
                   />
                 </div>
               </div>
 
               <div className="pt-4">
-                <button
-                  type="submit"
-                  disabled={isUpdating}
-                  className="flex items-center px-6 py-2 bg-steel-blue text-white rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50"
-                >
+                <Button type="submit" disabled={isUpdating} className="rounded-lg">
                   <Save className="w-4 h-4 mr-2" />
                   {isUpdating ? "Saving..." : "Save Changes"}
-                </button>
+                </Button>
               </div>
             </form>
           </section>
 
           {/* Security Section */}
-          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-6 border-b border-gray-100 flex items-center space-x-3">
-              <Shield className="w-5 h-5 text-steel-blue" />
-              <h2 className="text-xl font-semibold text-gray-900">Security</h2>
+          <section className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
+            <div className="flex items-center space-x-3 border-b border-border-soft p-6">
+              <Shield className="h-5 w-5 text-brand" />
+              <h2 className="text-xl font-semibold text-text-primary">Security</h2>
             </div>
             <div className="p-6 space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-start space-x-3">
-                  <div className="mt-1 bg-gray-50 p-2 rounded-lg">
-                    <Fingerprint className="w-5 h-5 text-steel-blue" />
+                  <div className="mt-1 rounded-lg bg-surface-muted p-2">
+                    <Fingerprint className="h-5 w-5 text-brand" />
                   </div>
                   <div>
-                    <h3 className="font-medium text-gray-900">Two-Factor Authentication</h3>
-                    <p className="text-sm text-gray-500">Add an extra layer of security to your account.</p>
+                    <h3 className="font-medium text-text-primary">Two-Factor Authentication</h3>
+                    <p className="text-sm text-text-muted">Add an extra layer of security to your account.</p>
                   </div>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id={twoFactorId}
                     checked={formData.twoFactorEnabled}
                     onChange={(e) => handle2FAToggle(e.target.checked)}
                     disabled={isUpdating2FA}
-                    className="sr-only peer"
                   />
-                  <div
-                    className={`w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-steel-blue ${isUpdating2FA ? "opacity-50" : ""}`}
-                  />
-                </label>
+                  <Label htmlFor={twoFactorId} className="text-sm text-text-secondary">
+                    {formData.twoFactorEnabled ? "Enabled" : "Enable"}
+                  </Label>
+                </div>
               </div>
 
-              <div className="flex items-center justify-between border-t border-gray-50 pt-6">
+              <div className="flex items-center justify-between border-t border-border-soft pt-6">
                 <div className="flex items-start space-x-3">
-                  <div className="mt-1 bg-gray-50 p-2 rounded-lg">
-                    <Lock className="w-5 h-5 text-steel-blue" />
+                  <div className="mt-1 rounded-lg bg-surface-muted p-2">
+                    <Lock className="h-5 w-5 text-brand" />
                   </div>
                   <div>
-                    <h3 className="font-medium text-gray-900">Password</h3>
-                    <p className="text-sm text-gray-500">Manage your account password.</p>
+                    <h3 className="font-medium text-text-primary">Password</h3>
+                    <p className="text-sm text-text-muted">Manage your account password.</p>
                   </div>
                 </div>
-                <button type="button" className="text-sm font-semibold text-steel-blue hover:underline">
+                <Button type="button" variant="link" size="sm" className="h-auto p-0 text-sm font-semibold">
                   Change Password
-                </button>
+                </Button>
               </div>
             </div>
           </section>
 
           {/* Danger Zone */}
-          <section className="bg-red-50 rounded-2xl border border-red-100 overflow-hidden">
-            <div className="p-6 border-b border-red-100 flex items-center space-x-3">
-              <AlertTriangle className="w-5 h-5 text-red-600" />
-              <h2 className="text-xl font-semibold text-red-900">Danger Zone</h2>
+          <section className="overflow-hidden rounded-2xl border border-danger/20 bg-danger/10">
+            <div className="flex items-center space-x-3 border-b border-danger/20 p-6">
+              <AlertTriangle className="h-5 w-5 text-danger" />
+              <h2 className="text-xl font-semibold text-danger">Danger Zone</h2>
             </div>
             <div className="p-6">
-              <p className="text-sm text-red-700 mb-4">
+              <p className="mb-4 text-sm text-danger">
                 Once you delete your account, there is no going back. Please be certain.
               </p>
               {!showDeleteConfirm ? (
-                <button
+                <Button
                   type="button"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  variant="unstyled"
+                  className="flex items-center rounded-lg bg-danger px-4 py-2 text-primary-foreground transition-colors hover:opacity-90"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete Account
-                </button>
+                </Button>
               ) : (
-                <div className="bg-white p-4 rounded-xl border border-red-200 space-y-4">
-                  <p className="text-sm font-medium text-gray-900">
+                <div className="space-y-4 rounded-xl border border-danger/20 bg-surface-elevated p-4">
+                  <p className="text-sm font-medium text-text-primary">
                     Are you absolutely sure you want to delete your account?
                   </p>
                   <div className="flex space-x-3">
-                    <button
+                    <Button
                       type="button"
                       onClick={handleDeleteAccount}
                       disabled={isDeleting}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                      variant="unstyled"
+                      className="rounded-lg bg-danger px-4 py-2 text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-50"
                     >
                       {isDeleting ? "Deleting..." : "Yes, Delete Everything"}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
                       onClick={() => setShowDeleteConfirm(false)}
-                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                      variant="unstyled"
+                      className="rounded-lg bg-surface-muted px-4 py-2 text-text-secondary transition-colors hover:bg-surface"
                     >
                       Cancel
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
@@ -275,33 +282,33 @@ export default function AccountSettingsShared({
 
         {/* Info Sidebar */}
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Account Status</h3>
+          <div className="rounded-2xl border border-border-soft bg-surface-elevated p-6 shadow-soft">
+            <h3 className="mb-4 font-semibold text-text-primary">Account Status</h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">Email Verified</span>
+                <span className="text-text-muted">Email Verified</span>
                 {user?.emailConfirmed ? (
-                  <span className="text-green-600 font-medium">Verified</span>
+                  <span className="font-medium text-success">Verified</span>
                 ) : (
-                  <span className="text-yellow-600 font-medium">Pending</span>
+                  <span className="font-medium text-warning">Pending</span>
                 )}
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">Member Since</span>
-                <span className="text-gray-900 font-medium">
+                <span className="text-text-muted">Member Since</span>
+                <span className="font-medium text-text-primary">
                   {user?.createdDate ? new Date(user.createdDate).toLocaleDateString() : "-"}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">Account Type</span>
-                <span className="text-gray-900 font-medium font-mono">{user?.roleName || "User"}</span>
+                <span className="text-text-muted">Account Type</span>
+                <span className="font-mono font-medium text-text-primary">{user?.roleName || "User"}</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-gray-50 rounded-2xl p-6">
-            <h3 className="font-semibold text-steel-blue mb-2">{infoSidebarTitle}</h3>
-            <p className="text-sm text-gray-700 leading-relaxed">{infoSidebarContent}</p>
+          <div className="rounded-2xl bg-surface-muted/70 p-6">
+            <h3 className="mb-2 font-semibold text-brand">{infoSidebarTitle}</h3>
+            <p className="text-sm leading-relaxed text-text-secondary">{infoSidebarContent}</p>
           </div>
         </div>
       </div>

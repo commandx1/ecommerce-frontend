@@ -4,7 +4,7 @@ interface SectionListProps {
 
 export function SectionList({ items }: SectionListProps) {
   return (
-    <ul className="list-disc list-inside text-gray-700 mb-6 space-y-2 ml-4">
+    <ul className="mb-6 ml-4 list-inside list-disc space-y-2 text-text-secondary">
       {items.map((item) => (
         <li key={item}>{item}</li>
       ))}
@@ -14,7 +14,7 @@ export function SectionList({ items }: SectionListProps) {
 
 export function SectionItems({ items }: SectionListProps) {
   return (
-    <ul className="text-gray-700 mb-6 space-y-2">
+    <ul className="mb-6 space-y-2 text-text-secondary">
       {items.map((item) => (
         <li key={item}>• {item}</li>
       ))}
@@ -26,15 +26,15 @@ export function SectionWarningItems({ items }: SectionListProps) {
   const midpoint = Math.ceil(items.length / 2)
 
   return (
-    <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
-      <h4 className="font-semibold text-red-800 mb-3">You may not use our Service:</h4>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ul className="text-sm text-red-700 space-y-2">
+    <div className="mb-6 rounded-2xl border border-danger/25 bg-danger/10 p-6">
+      <h4 className="mb-3 font-semibold text-danger">You may not use our Service:</h4>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <ul className="space-y-2 text-sm text-text-secondary">
           {items.slice(0, midpoint).map((item) => (
             <li key={item}>• {item}</li>
           ))}
         </ul>
-        <ul className="text-sm text-red-700 space-y-2">
+        <ul className="space-y-2 text-sm text-text-secondary">
           {items.slice(midpoint).map((item) => (
             <li key={item}>• {item}</li>
           ))}

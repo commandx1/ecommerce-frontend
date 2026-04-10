@@ -11,24 +11,24 @@ interface TicketDescriptionFieldProps {
 const TicketDescriptionField = ({ textareaId, value, onChange }: TicketDescriptionFieldProps) => {
   return (
     <div>
-      <label htmlFor={textareaId} className="block text-sm font-semibold text-gray-700 mb-2">
+      <label htmlFor={textareaId} className="mb-2 block text-sm font-semibold text-text-primary">
         Detailed Description *
       </label>
-      <div className="border border-gray-300 rounded-lg">
-        <div className="border-b border-gray-200 px-4 py-2 flex items-center space-x-2 bg-gray-50">
-          <button type="button" className="p-1 text-gray-500 hover:text-gray-700 rounded">
+      <div className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
+        <div className="flex items-center space-x-2 border-b border-border-soft bg-surface-muted/80 px-4 py-2">
+          <button type="button" className="rounded p-1 text-text-muted hover:text-text-primary">
             <Bold className="w-4 h-4" />
           </button>
-          <button type="button" className="p-1 text-gray-500 hover:text-gray-700 rounded">
+          <button type="button" className="rounded p-1 text-text-muted hover:text-text-primary">
             <Italic className="w-4 h-4" />
           </button>
-          <button type="button" className="p-1 text-gray-500 hover:text-gray-700 rounded">
+          <button type="button" className="rounded p-1 text-text-muted hover:text-text-primary">
             <List className="w-4 h-4" />
           </button>
-          <button type="button" className="p-1 text-gray-500 hover:text-gray-700 rounded">
+          <button type="button" className="rounded p-1 text-text-muted hover:text-text-primary">
             <ListOrdered className="w-4 h-4" />
           </button>
-          <button type="button" className="p-1 text-gray-500 hover:text-gray-700 rounded">
+          <button type="button" className="rounded p-1 text-text-muted hover:text-text-primary">
             <LinkIcon className="w-4 h-4" />
           </button>
         </div>
@@ -38,7 +38,7 @@ const TicketDescriptionField = ({ textareaId, value, onChange }: TicketDescripti
           rows={6}
           value={value}
           onChange={onChange}
-          className="w-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-steel-blue resize-none rounded-b-lg"
+          className="w-full resize-none rounded-none border-0 px-4 py-3 shadow-none focus-visible:ring-0"
           placeholder={`Please provide detailed information about your issue, including:
 • What you were trying to do
 • What happened instead

@@ -38,7 +38,7 @@ export default function BillingInformation() {
   const { paymentOptions, showDifferentBilling, onSubmit, setShowDifferentBilling } = useBillingInformation()
 
   return (
-    <SurfaceCard className="mb-8 p-8">
+    <SurfaceCard variant="editorial" className="mb-8 p-8">
       <BillingHeader />
       <form onSubmit={onSubmit} className="space-y-8">
         <BillingAddressSection

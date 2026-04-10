@@ -1,4 +1,6 @@
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import ShippingFAQItem from "@/features/shipping-information/components/ShippingFAQItem"
+import ShippingSectionHeading from "@/features/shipping-information/components/ShippingSectionHeading"
 
 const FAQ_ITEMS = [
   {
@@ -53,20 +55,13 @@ const FAQ_ITEMS = [
 
 export default function ShippingFAQSection() {
   return (
-    <section className="py-12 sm:py-16 lg:py-20 bg-white">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-8 sm:mb-12">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-steel-blue mb-3 sm:mb-4">
-            Frequently Asked Questions
-          </h2>
-          <p className="text-base sm:text-lg lg:text-xl text-gray-600">Common shipping questions answered</p>
-        </div>
-        <div className="space-y-4">
-          {FAQ_ITEMS.map((item) => (
-            <ShippingFAQItem key={item.id} question={item.question} answer={item.answer} />
-          ))}
-        </div>
+    <PageSectionContainer as="section" className="bg-canvas py-12 sm:py-16 lg:py-20" containerClassName="max-w-4xl">
+      <ShippingSectionHeading title="Frequently Asked Questions" description="Common shipping questions answered" />
+      <div className="space-y-4">
+        {FAQ_ITEMS.map((item) => (
+          <ShippingFAQItem key={item.id} question={item.question} answer={item.answer} />
+        ))}
       </div>
-    </section>
+    </PageSectionContainer>
   )
 }

@@ -3,8 +3,7 @@ import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { FormField } from "./FormField"
 
-const baseInputClassName =
-  "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
+const baseInputClassName = "w-full"
 
 interface TextFieldProps extends Omit<ComponentProps<"input">, "className"> {
   label: string
@@ -22,11 +21,14 @@ export const TextField = ({
   required,
   ...props
 }: TextFieldProps) => {
+  const ariaInvalid = Boolean(error) || props["aria-invalid"]
+
   return (
     <FormField label={label} htmlFor={id} required={required} error={error} className={containerClassName}>
       <Input
         id={id}
-        className={cn(baseInputClassName, error ? "border-red-500" : "border-gray-300", inputClassName)}
+        aria-invalid={ariaInvalid}
+        className={cn(baseInputClassName, error ? "border-danger" : "", inputClassName)}
         {...props}
       />
     </FormField>

@@ -75,18 +75,18 @@ export default function BuyerDashboardLayout({ children }: { children: React.Rea
   // Show loading while checking or if not authenticated/vendor
   if (isChecking || !isAuthenticated || !user || user.roleName === "Vendor") {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-600">Loading...</div>
+      <div className="flex min-h-screen items-center justify-center bg-canvas">
+        <div className="text-text-secondary">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col bg-gray-50">
+    <div className="flex min-h-screen flex-col bg-canvas">
       <BuyerHeader />
       <div className="flex flex-1">
         <DashboardSidebar />
-        <main id="main-content" className="flex-1 p-6 overflow-auto">
+        <main id="main-content" className="flex-1 overflow-auto p-6">
           {children}
         </main>
       </div>

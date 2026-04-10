@@ -1,14 +1,20 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Fraunces, Manrope } from "next/font/google"
 import { cookies } from "next/headers"
 import { Toaster } from "sonner"
 import "./globals.css"
 import AuthHydration from "@/components/auth/AuthHydration"
 import ConditionalFooter from "@/components/layout/ConditionalFooter"
 import ConditionalNavbar from "@/components/layout/ConditionalNavbar"
+import ThemeProvider from "@/components/theme/ThemeProvider"
 
-const inter = Inter({
-  variable: "--font-inter",
+const manrope = Manrope({
+  variable: "--font-denty-sans",
+  subsets: ["latin"],
+})
+
+const fraunces = Fraunces({
+  variable: "--font-denty-display",
   subsets: ["latin"],
 })
 
@@ -44,12 +50,14 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className}`} suppressHydrationWarning>
-        <AuthHydration />
-        <ConditionalNavbar initialAuthState={initialState} />
-        {children}
-        <ConditionalFooter />
-        <Toaster position="top-right" richColors />
+      <body className={`${manrope.variable} ${fraunces.variable} font-sans antialiased`} suppressHydrationWarning>
+        <ThemeProvider>
+          <AuthHydration />
+          <ConditionalNavbar initialAuthState={initialState} />
+          {children}
+          <ConditionalFooter />
+          <Toaster position="top-right" richColors />
+        </ThemeProvider>
       </body>
     </html>
   )

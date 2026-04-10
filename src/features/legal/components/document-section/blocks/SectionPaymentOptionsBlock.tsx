@@ -6,12 +6,12 @@ interface SectionPaymentOptionsProps {
 
 export default function SectionPaymentOptionsBlock({ options }: SectionPaymentOptionsProps) {
   return (
-    <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="mb-6 rounded-2xl border border-success/25 bg-success/10 p-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         {options.map((option) => (
           <div key={option.title}>
-            <h4 className="font-semibold text-green-800 mb-3">{option.title}</h4>
-            <ul className="text-sm text-green-700 space-y-1">
+            <h4 className="mb-3 font-semibold text-text-primary">{option.title}</h4>
+            <ul className="space-y-1 text-sm text-text-secondary">
               {option.items.map((item) => (
                 <li key={item}>• {item}</li>
               ))}

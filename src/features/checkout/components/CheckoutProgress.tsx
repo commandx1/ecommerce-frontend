@@ -32,36 +32,38 @@ function CheckoutProgressItem({
     <div className="flex items-center">
       <div className="flex items-center">
         <div
-          className={`min-w-10 h-10 rounded-full flex items-center justify-center ${
-            isCompleted || isCurrent ? "bg-steel-blue" : "bg-gray-200"
+          className={`flex h-10 min-w-10 items-center justify-center rounded-full ${
+            isCompleted || isCurrent ? "bg-brand" : "bg-surface-muted"
           }`}
         >
           {isCompleted ? (
-            <Check className="text-white w-5 h-5" />
+            <Check className="h-5 w-5 text-white" />
           ) : (
-            <span className={`text-sm font-semibold ${isCurrent ? "text-white" : "text-gray-500"}`}>{step.number}</span>
+            <span className={`text-sm font-semibold ${isCurrent ? "text-white" : "text-text-muted"}`}>
+              {step.number}
+            </span>
           )}
         </div>
         <div className="ml-3 hidden md:block">
-          <div className={`text-sm font-medium ${isCurrent || isCompleted ? "text-steel-blue" : "text-gray-500"}`}>
+          <div className={`text-sm font-medium ${isCurrent || isCompleted ? "text-brand" : "text-text-muted"}`}>
             {step.title}
           </div>
-          <div className={`text-xs ${isCurrent ? "text-gray-500" : "text-gray-400"}`}>
+          <div className={`text-xs ${isCurrent ? "text-text-secondary" : "text-text-muted"}`}>
             {isCurrent ? step.subtitle : isCompleted ? "Completed" : step.subtitle}
           </div>
         </div>
       </div>
 
-      {!isLast ? <div className={`w-8 md:w-16 h-0.5 mx-2 ${isCompleted ? "bg-steel-blue" : "bg-gray-300"}`} /> : null}
+      {!isLast ? <div className={`mx-2 h-0.5 w-8 md:w-16 ${isCompleted ? "bg-brand" : "bg-border-soft"}`} /> : null}
     </div>
   )
 }
 
 export default function CheckoutProgress({ currentStep }: CheckoutProgressProps) {
   return (
-    <PageSectionContainer as="section" className="bg-white border-b border-gray-200" containerClassName="py-6">
+    <PageSectionContainer as="section" className="border-b border-border-soft bg-surface" containerClassName="py-6">
       <div className="flex items-center justify-center">
-        <div className="flex items-center space-x-4 md:space-x-8 overflow-x-auto">
+        <div className="flex items-center overflow-x-auto rounded-full border border-border-soft bg-surface-elevated px-4 py-4 shadow-soft md:space-x-8">
           {CHECKOUT_STEPS.map((step, index) => (
             <CheckoutProgressItem
               key={step.number}

@@ -13,7 +13,7 @@ interface LegalPageProps {
 
 export default function LegalPage({ selectedDocument, selectedId }: LegalPageProps) {
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-canvas">
       <LegalHero />
       <QuickNavigationCards selectedId={selectedId} />
       <PageSectionContainer as="section" className="pb-16">

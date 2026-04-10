@@ -38,7 +38,7 @@ const options = [
 
 export default function QuickSupportOptions() {
   return (
-    <PageSectionContainer as="section" className="py-16 bg-white">
+    <PageSectionContainer as="section" className="bg-canvas py-16">
       <SectionHeading
         title="Get Help Fast"
         description="Choose the support option that works best for you"
@@ -46,7 +46,7 @@ export default function QuickSupportOptions() {
         titleClassName="text-4xl text-center mb-4"
         descriptionClassName="text-xl max-w-3xl mx-auto text-center"
       />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         {options.map((item) => (
           <QuickSupportOptionCard
             key={item.title}

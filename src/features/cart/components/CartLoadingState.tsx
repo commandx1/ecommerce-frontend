@@ -1,7 +1,7 @@
 export default function CartLoadingState() {
   return (
-    <div className="min-h-screen bg-gray-50 py-12 flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-steel-blue" />
+    <div className="flex min-h-screen items-center justify-center bg-canvas py-12">
+      <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-brand" />
     </div>
   )
 }

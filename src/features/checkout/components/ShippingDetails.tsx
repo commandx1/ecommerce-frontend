@@ -46,7 +46,7 @@ export default function ShippingDetails() {
           disabled={!selectedAddressId}
           size="lg"
           fullWidth={false}
-          className="rounded-xl px-10 font-bold shadow-lg shadow-blue-900/20"
+          className="px-10 font-bold"
         >
           Continue to Billing
           <ArrowRight className="ml-2 w-6 h-6" />

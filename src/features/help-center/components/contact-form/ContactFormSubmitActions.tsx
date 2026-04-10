@@ -24,7 +24,7 @@ export default function ContactFormSubmitActions({ isSubscribed, onChange }: Con
 
       <button
         type="submit"
-        className="flex w-full items-center justify-center rounded-lg bg-steel-blue px-6 py-4 text-lg font-semibold text-white transition-colors hover:bg-opacity-90"
+        className="flex w-full items-center justify-center rounded-full bg-brand px-6 py-4 text-lg font-semibold text-primary-foreground transition-colors hover:bg-brand-strong"
       >
         Send Message
         <Send className="ml-2 h-5 w-5" />

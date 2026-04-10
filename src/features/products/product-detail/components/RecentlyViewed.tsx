@@ -7,17 +7,17 @@ import ProductImageWithFallback from "@/features/products/listing/components/Pro
 
 const RecentlyViewed = () => {
   return (
-    <section className="bg-white py-12">
+    <section className="bg-canvas py-12">
       <PageSectionContainer as="div">
-        <h2 className="text-3xl font-bold text-steel-blue mb-8">Recently Viewed</h2>
+        <h2 className="mb-8 text-3xl font-semibold text-text-primary">Recently Viewed</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           {recentlyViewedData.map((product) => (
             <Link
               key={product.id}
               href={`/products/${product.id}`}
-              className="bg-gray-50 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer block"
+              className="block cursor-pointer rounded-[1.4rem] border border-border-soft bg-surface-elevated p-4 transition-shadow hover:shadow-soft"
             >
-              <div className="relative h-32 overflow-hidden bg-white rounded-lg mb-3">
+              <div className="relative mb-3 h-32 overflow-hidden rounded-xl border border-border-soft bg-surface-muted">
                 <ProductImageWithFallback
                   className="object-contain p-2"
                   src={product.image}
@@ -26,9 +26,9 @@ const RecentlyViewed = () => {
                   sizes="(min-width: 1024px) 14vw, 40vw"
                 />
               </div>
-              <h3 className="font-semibold text-steel-blue text-sm mb-1 hover:underline">{product.title}</h3>
-              <p className="text-gray-600 text-xs mb-2">{product.description}</p>
-              <div className="text-steel-blue font-bold">{product.price}</div>
+              <h3 className="mb-1 text-sm font-semibold text-text-primary hover:underline">{product.title}</h3>
+              <p className="mb-2 text-xs text-text-secondary">{product.description}</p>
+              <div className="font-bold text-brand">{product.price}</div>
             </Link>
           ))}
         </div>

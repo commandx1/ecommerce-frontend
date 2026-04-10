@@ -24,11 +24,11 @@ export default function ProductCard({
   href,
 }: ProductCardProps) {
   return (
-    <div className="bg-gray-50 border-steel-blue/20 border rounded-2xl overflow-hidden hover:shadow-lg transition-shadow group">
+    <div className="group overflow-hidden rounded-[1.75rem] border border-border-soft bg-surface-elevated shadow-soft transition-all hover:-translate-y-1 hover:shadow-panel">
       <Link href={href} className="block">
-        <div className="h-48 overflow-hidden bg-white">
+        <div className="h-52 overflow-hidden bg-surface">
           <Image
-            className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+            className="h-full w-full object-contain p-4 transition-transform duration-300 group-hover:scale-105"
             src={image}
             alt={alt}
             width={400}
@@ -37,28 +37,30 @@ export default function ProductCard({
         </div>
       </Link>
       <div className="p-6">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-gray-600 bg-white px-2 py-1 rounded">{category}</span>
+        <div className="mb-2 flex items-center justify-between">
+          <span className="rounded-full border border-border-soft bg-surface px-3 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-text-muted">
+            {category}
+          </span>
           <button
             type="button"
-            className="text-gray-400 hover:text-red-500 transition-colors"
+            className="text-text-muted transition-colors hover:text-danger"
             aria-label="Add to favorites"
           >
-            <Heart className="w-5 h-5" fill="none" stroke="currentColor" />
+            <Heart className="h-5 w-5" fill="none" stroke="currentColor" />
           </button>
         </div>
         <Link href={href} className="block">
-          <h3 className="text-lg font-semibold text-steel-blue mb-2 hover:underline">{title}</h3>
-          <p className="text-sm text-gray-600 mb-3">{description}</p>
+          <h3 className="mb-2 text-xl font-semibold text-text-primary hover:text-brand">{title}</h3>
+          <p className="mb-4 text-sm leading-6 text-text-secondary">{description}</p>
         </Link>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <div>
-            <span className="text-2xl font-bold text-steel-blue">{price}</span>
-            {originalPrice && <span className="text-sm text-gray-500 line-through ml-2">{originalPrice}</span>}
+            <span className="text-2xl font-semibold text-brand">{price}</span>
+            {originalPrice ? <span className="ml-2 text-sm text-text-muted line-through">{originalPrice}</span> : null}
           </div>
           <Link
             href={href}
-            className="bg-steel-blue text-white px-4 py-2 rounded-lg hover:bg-opacity-90 text-sm font-medium transition-colors inline-block"
+            className="inline-block rounded-full bg-brand px-4 py-2.5 text-sm font-medium text-white shadow-soft transition-all hover:-translate-y-0.5 hover:bg-brand-strong"
           >
             View Details
           </Link>

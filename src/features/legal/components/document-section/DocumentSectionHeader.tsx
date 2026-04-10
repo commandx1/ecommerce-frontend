@@ -13,13 +13,13 @@ const DocumentSectionHeader = ({ document }: DocumentSectionHeaderProps) => {
   return (
     <div className="flex items-center justify-between" style={{ marginBottom: headerSpacing }}>
       <div className="flex items-center">
-        <div className="w-12 h-12 bg-steel-blue rounded-lg flex items-center justify-center mr-4">
-          {IconComponent && <IconComponent className="text-white w-6 h-6" />}
+        <div className="mr-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand text-primary-foreground">
+          {IconComponent && <IconComponent className="h-6 w-6" />}
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-steel-blue">{document.title}</h2>
-          {document.subtitle && <p className="text-gray-600">{document.subtitle}</p>}
-          {document.lastUpdated && <p className="text-gray-600">Last updated: {document.lastUpdated}</p>}
+          <h2 className="text-2xl font-bold text-text-primary">{document.title}</h2>
+          {document.subtitle && <p className="text-text-secondary">{document.subtitle}</p>}
+          {document.lastUpdated && <p className="text-text-secondary">Last updated: {document.lastUpdated}</p>}
         </div>
       </div>
       <DocumentSectionActions />
