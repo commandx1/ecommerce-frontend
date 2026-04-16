@@ -1,30 +1,17 @@
-import { AlertTriangle, CheckCircle2, CircleX, Info } from "lucide-react"
-import type { ReactNode } from "react"
-import { cn } from "@/lib/utils"
+import NotificationCard, {
+  type NotificationCardProps,
+  type NotificationTone,
+} from "@/components/feedback/NotificationCard"
 
-type NoticeTone = "info" | "success" | "warning" | "error"
+type NoticeTone = NotificationTone
 
 interface NoticeBannerProps {
   tone?: NoticeTone
-  title?: ReactNode
-  description?: ReactNode
-  icon?: ReactNode
-  className?: string
-  children?: ReactNode
-}
-
-const noticeStyleMap: Record<NoticeTone, string> = {
-  info: "border-brand/20 bg-accent text-text-primary",
-  success: "border-success/20 bg-success/10 text-text-primary",
-  warning: "border-warning/20 bg-warning/10 text-text-primary",
-  error: "border-danger/20 bg-danger/10 text-text-primary",
-}
-
-const iconMap: Record<NoticeTone, ReactNode> = {
-  info: <Info className="mt-0.5 h-5 w-5 shrink-0 text-brand" />,
-  success: <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" />,
-  warning: <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-warning" />,
-  error: <CircleX className="mt-0.5 h-5 w-5 shrink-0 text-danger" />,
+  title?: NotificationCardProps["title"]
+  description?: NotificationCardProps["description"]
+  icon?: NotificationCardProps["icon"]
+  className?: NotificationCardProps["className"]
+  children?: NotificationCardProps["children"]
 }
 
 export default function NoticeBanner({
@@ -36,15 +23,8 @@ export default function NoticeBanner({
   children,
 }: NoticeBannerProps) {
   return (
-    <div className={cn("rounded-xl border p-4", noticeStyleMap[tone], className)}>
-      <div className="flex items-start gap-3">
-        {icon ?? iconMap[tone]}
-        <div className="min-w-0">
-          {title ? <p className="font-semibold">{title}</p> : null}
-          {description ? <p className="text-sm text-text-secondary">{description}</p> : null}
-          {children}
-        </div>
-      </div>
-    </div>
+    <NotificationCard tone={tone} title={title} description={description} icon={icon} className={className}>
+      {children}
+    </NotificationCard>
   )
 }
