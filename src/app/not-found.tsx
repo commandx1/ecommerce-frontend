@@ -126,7 +126,7 @@ export default function NotFound() {
               <Link
                 key={page.title}
                 href={page.link}
-                className="group rounded-[1.5rem] border border-border-soft bg-surface-elevated p-6 transition-shadow hover:shadow-soft"
+                className="group rounded-3xl border border-border-soft bg-surface-elevated p-6 transition-shadow hover:shadow-soft"
               >
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand text-primary-foreground transition-transform group-hover:scale-110">
                   <page.icon className="w-6 h-6" />
