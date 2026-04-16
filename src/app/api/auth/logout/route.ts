@@ -6,25 +6,20 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const body = await request.json().catch(() => ({}))
     const authHeader = request.headers.get("Authorization")
 
-    const response = await serverRequest(`${BACKEND_URL}/api/auth/logout`, {
+    await serverRequest(`${BACKEND_URL}/api/auth/logout`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...(authHeader ? { Authorization: authHeader } : {}),
       },
       body: JSON.stringify(body),
-    })
-
-    if (!response.ok) {
-      const data = await response.json()
-      return NextResponse.json(data, { status: response.status })
-    }
+    }).catch(() => null)
 
     return NextResponse.json({ success: true })
   } catch {
-    return NextResponse.json({ message: "Internal server error" }, { status: 500 })
+    return NextResponse.json({ success: true })
   }
 }
