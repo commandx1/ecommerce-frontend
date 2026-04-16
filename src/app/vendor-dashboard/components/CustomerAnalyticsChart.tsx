@@ -11,28 +11,35 @@ import {
   Title,
   Tooltip,
 } from "chart.js"
+import { useMemo } from "react"
 import { Line } from "react-chartjs-2"
+import { Button } from "@/components/ui/button"
 import vendorCustomerAnalyticsData from "@/data/vendor-customer-analytics.json"
+import { getVendorChartPalette } from "./shared/chartTheme"
+import DashboardPanel from "./shared/DashboardPanel"
+import { STATUS_TONE_CLASS_MAP } from "./shared/dashboardToneMaps"
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)
 
 const CustomerAnalyticsChart = () => {
+  const palette = useMemo(() => getVendorChartPalette(), [])
+
   const data = {
     labels: vendorCustomerAnalyticsData.chartData.categories,
     datasets: [
       {
         label: "New Customers",
         data: vendorCustomerAnalyticsData.chartData.newCustomers,
-        borderColor: "#3E6C88",
-        backgroundColor: "rgba(62, 108, 136, 0.3)",
+        borderColor: palette.brand,
+        backgroundColor: "rgba(62, 108, 136, 0.22)",
         fill: true,
         tension: 0.4,
       },
       {
         label: "Returning Customers",
         data: vendorCustomerAnalyticsData.chartData.returningCustomers,
-        borderColor: "#D4ED6A",
-        backgroundColor: "rgba(212, 237, 106, 0.3)",
+        borderColor: palette.success,
+        backgroundColor: "rgba(79, 169, 122, 0.22)",
         fill: true,
         tension: 0.4,
       },
@@ -47,13 +54,16 @@ const CustomerAnalyticsChart = () => {
         display: true,
         position: "bottom" as const,
         align: "center" as const,
+        labels: {
+          color: palette.textSecondary,
+        },
       },
       tooltip: {
-        backgroundColor: "#ffffff",
-        borderColor: "#e5e7eb",
+        backgroundColor: palette.surfaceMuted,
+        borderColor: palette.borderSoft,
         borderWidth: 1,
-        titleColor: "#374151",
-        bodyColor: "#374151",
+        titleColor: palette.textPrimary,
+        bodyColor: palette.textPrimary,
         padding: 12,
       },
     },
@@ -63,57 +73,64 @@ const CustomerAnalyticsChart = () => {
           display: false,
         },
         border: {
-          color: "#e5e7eb",
+          color: palette.borderSoft,
         },
+        ticks: { color: palette.textSecondary },
       },
       y: {
         grid: {
-          color: "#f3f4f6",
+          color: palette.surfaceMuted,
         },
         border: {
-          color: "#e5e7eb",
+          color: palette.borderSoft,
         },
         ticks: {
-          color: "#6b7280",
+          color: palette.textSecondary,
         },
         title: {
           display: true,
           text: "Customers",
-          color: "#6b7280",
+          color: palette.textSecondary,
         },
       },
     },
   }
 
   return (
-    <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-steel-blue">Customer Analytics</h2>
+    <DashboardPanel
+      title="Customer Analytics"
+      className="lg:col-span-2"
+      action={
         <div className="flex items-center space-x-2">
-          <button type="button" className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
+          <Button type="button" variant="quiet" size="sm" className="rounded-lg border border-border-soft px-3">
             Week
-          </button>
-          <button type="button" className="px-3 py-1 text-sm bg-steel-blue text-white rounded-lg">
+          </Button>
+          <Button type="button" variant="default" size="sm" className="rounded-lg px-3">
             Month
-          </button>
-          <button type="button" className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
+          </Button>
+          <Button type="button" variant="quiet" size="sm" className="rounded-lg border border-border-soft px-3">
             Year
-          </button>
+          </Button>
         </div>
-      </div>
+      }
+    >
       <div className="h-64">
         <Line data={data} options={options} />
       </div>
       <div className="grid grid-cols-4 gap-4 mt-6">
         {vendorCustomerAnalyticsData.stats.map((stat) => (
-          <div key={stat.id} className="text-center p-4 bg-gray-50 rounded-xl">
-            <div className="text-2xl font-bold text-steel-blue">{stat.value}</div>
-            <div className="text-sm text-gray-600">{stat.label}</div>
-            <div className="text-xs text-green-600 mt-1">{stat.description}</div>
+          <div key={stat.id} className="rounded-xl border border-border-soft bg-surface-muted/70 p-4 text-center">
+            <div className="text-2xl font-bold text-text-primary">{stat.value}</div>
+            <div className="text-sm text-text-secondary">{stat.label}</div>
+            <div
+              className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-xs ${STATUS_TONE_CLASS_MAP.success}`}
+            >
+              {stat.description}
+            </div>
           </div>
         ))}
       </div>
-    </div>
+    </DashboardPanel>
   )
 }
 

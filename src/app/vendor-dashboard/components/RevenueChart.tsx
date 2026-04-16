@@ -10,24 +10,31 @@ import {
   Title,
   Tooltip,
 } from "chart.js"
+import { useId, useMemo } from "react"
 import { Line } from "react-chartjs-2"
+import { Button } from "@/components/ui/button"
 import vendorChartsData from "@/data/vendor-charts.json"
+import { getVendorChartPalette } from "./shared/chartTheme"
+import DashboardPanel from "./shared/DashboardPanel"
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
 
 const RevenueChart = () => {
+  const sectionId = useId()
+  const palette = useMemo(() => getVendorChartPalette(), [])
+
   const data = {
     labels: vendorChartsData.revenue.categories,
     datasets: [
       {
         label: "Revenue",
         data: vendorChartsData.revenue.data,
-        borderColor: vendorChartsData.revenue.color,
+        borderColor: palette.brand,
         backgroundColor: "transparent",
         borderWidth: 3,
         pointRadius: 5,
-        pointBackgroundColor: vendorChartsData.revenue.color,
-        pointBorderColor: "#ffffff",
+        pointBackgroundColor: palette.brand,
+        pointBorderColor: palette.surfaceMuted,
         pointBorderWidth: 2,
       },
     ],
@@ -41,11 +48,11 @@ const RevenueChart = () => {
         display: false,
       },
       tooltip: {
-        backgroundColor: "#ffffff",
-        borderColor: "#e5e7eb",
+        backgroundColor: palette.surfaceMuted,
+        borderColor: palette.borderSoft,
         borderWidth: 1,
-        titleColor: "#374151",
-        bodyColor: "#374151",
+        titleColor: palette.textPrimary,
+        bodyColor: palette.textPrimary,
         padding: 12,
       },
     },
@@ -55,52 +62,52 @@ const RevenueChart = () => {
           display: false,
         },
         border: {
-          color: "#e5e7eb",
+          color: palette.borderSoft,
         },
+        ticks: { color: palette.textSecondary },
       },
       y: {
         grid: {
-          color: "#f3f4f6",
+          color: palette.surfaceMuted,
         },
         border: {
-          color: "#e5e7eb",
+          color: palette.borderSoft,
         },
         ticks: {
-          color: "#6b7280",
+          color: palette.textSecondary,
         },
         title: {
           display: true,
           text: "Revenue ($)",
-          color: "#6b7280",
+          color: palette.textSecondary,
         },
       },
     },
   }
 
   return (
-    <section id="revenue-chart-section" className="mb-8">
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-xl font-semibold text-steel-blue">Revenue Analytics</h2>
-            <p className="text-gray-600 text-sm">Monthly revenue performance over the past 12 months</p>
-          </div>
+    <section id={sectionId} className="mb-8">
+      <DashboardPanel
+        title="Revenue Analytics"
+        description="Monthly revenue performance over the past 12 months"
+        action={
           <div className="flex items-center space-x-2">
-            <button type="button" className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
+            <Button type="button" variant="quiet" size="sm" className="rounded-lg border border-border-soft px-3">
               6M
-            </button>
-            <button type="button" className="px-3 py-1 text-sm bg-steel-blue text-white rounded-lg">
+            </Button>
+            <Button type="button" variant="default" size="sm" className="rounded-lg px-3">
               12M
-            </button>
-            <button type="button" className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
+            </Button>
+            <Button type="button" variant="quiet" size="sm" className="rounded-lg border border-border-soft px-3">
               All
-            </button>
+            </Button>
           </div>
-        </div>
+        }
+      >
         <div className="h-80">
           <Line data={data} options={options} />
         </div>
-      </div>
+      </DashboardPanel>
     </section>
   )
 }

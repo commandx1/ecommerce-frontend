@@ -1,61 +1,64 @@
 import { Expand } from "lucide-react"
 import vendorGeographicData from "@/data/vendor-geographic.json"
+import DashboardPanel from "./shared/DashboardPanel"
+import { DOT_TONE_CLASS_MAP } from "./shared/dashboardToneMaps"
 
 const colorMap: Record<string, string> = {
-  "steel-blue": "bg-steel-blue",
-  blue: "bg-blue-500",
-  green: "bg-green-500",
-  yellow: "bg-yellow-500",
-  purple: "bg-purple-500",
-  gray: "bg-gray-400",
+  "steel-blue": DOT_TONE_CLASS_MAP.info,
+  blue: DOT_TONE_CLASS_MAP.info,
+  green: DOT_TONE_CLASS_MAP.success,
+  yellow: DOT_TONE_CLASS_MAP.warning,
+  purple: "bg-brand-strong",
+  gray: DOT_TONE_CLASS_MAP.neutral,
 }
 
 const GeographicDistribution = () => {
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-steel-blue">Geographic Distribution</h2>
-        <button type="button" className="text-steel-blue hover:text-opacity-80">
+    <DashboardPanel
+      title="Geographic Distribution"
+      action={
+        <button type="button" className="text-text-muted transition-colors hover:text-brand">
           <Expand className="w-4 h-4" />
         </button>
-      </div>
+      }
+    >
       <div className="space-y-4">
         {vendorGeographicData.regions.map((region) => {
-          const dotColor = colorMap[region.color] || "bg-gray-400"
-          const barColor = colorMap[region.color] || "bg-gray-400"
+          const dotColor = colorMap[region.color] || DOT_TONE_CLASS_MAP.neutral
+          const barColor = colorMap[region.color] || DOT_TONE_CLASS_MAP.neutral
 
           return (
             <div key={region.id} className="flex items-center justify-between">
               <div className="flex items-center">
                 <div className={`w-3 h-3 ${dotColor} rounded-full mr-3`}></div>
-                <span className="text-sm font-medium">{region.name}</span>
+                <span className="text-sm font-medium text-text-primary">{region.name}</span>
               </div>
               <div className="flex items-center">
-                <div className="w-20 bg-gray-200 rounded-full h-2 mr-3">
+                <div className="mr-3 h-2 w-20 rounded-full bg-surface-muted">
                   <div
                     className={`${barColor} h-2 rounded-full`}
                     style={{ width: `${region.percentage * 3.57}%` }}
                   ></div>
                 </div>
-                <span className="text-sm font-semibold text-steel-blue">{region.percentage}%</span>
+                <span className="text-sm font-semibold text-text-primary">{region.percentage}%</span>
               </div>
             </div>
           )
         })}
       </div>
 
-      <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-        <div className="text-sm font-medium text-steel-blue mb-2">Top Growth Markets</div>
+      <div className="mt-6 rounded-xl border border-border-soft bg-surface-muted/70 p-4">
+        <div className="mb-2 text-sm font-medium text-text-primary">Top Growth Markets</div>
         <div className="space-y-2">
           {vendorGeographicData.growthMarkets.map((market) => (
             <div key={market.id} className="flex justify-between text-sm">
-              <span className="text-gray-700">{market.name}</span>
-              <span className="text-green-600 font-medium">{market.growth}</span>
+              <span className="text-text-secondary">{market.name}</span>
+              <span className="font-medium text-success">{market.growth}</span>
             </div>
           ))}
         </div>
       </div>
-    </div>
+    </DashboardPanel>
   )
 }
 

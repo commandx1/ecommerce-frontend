@@ -1,24 +1,30 @@
 "use client"
 
 import { BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip } from "chart.js"
+import { MoreVertical } from "lucide-react"
+import { useMemo } from "react"
 import { Bar } from "react-chartjs-2"
 import vendorChartsData from "@/data/vendor-charts.json"
+import { getVendorChartPalette } from "./shared/chartTheme"
+import DashboardPanel from "./shared/DashboardPanel"
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 const SalesPerformanceChart = () => {
+  const palette = useMemo(() => getVendorChartPalette(), [])
+
   const data = {
     labels: vendorChartsData.salesPerformance.categories,
     datasets: [
       {
         label: "Sales",
         data: vendorChartsData.salesPerformance.sales,
-        backgroundColor: vendorChartsData.salesPerformance.salesColor,
+        backgroundColor: palette.brand,
       },
       {
         label: "Target",
         data: vendorChartsData.salesPerformance.target,
-        backgroundColor: vendorChartsData.salesPerformance.targetColor,
+        backgroundColor: palette.warning,
       },
     ],
   }
@@ -31,11 +37,11 @@ const SalesPerformanceChart = () => {
         display: false,
       },
       tooltip: {
-        backgroundColor: "#ffffff",
-        borderColor: "#e5e7eb",
+        backgroundColor: palette.surfaceMuted,
+        borderColor: palette.borderSoft,
         borderWidth: 1,
-        titleColor: "#374151",
-        bodyColor: "#374151",
+        titleColor: palette.textPrimary,
+        bodyColor: palette.textPrimary,
         padding: 12,
       },
     },
@@ -45,57 +51,56 @@ const SalesPerformanceChart = () => {
           display: false,
         },
         border: {
-          color: "#e5e7eb",
+          color: palette.borderSoft,
         },
+        ticks: { color: palette.textSecondary },
       },
       y: {
         grid: {
-          color: "#f3f4f6",
+          color: palette.surfaceMuted,
         },
         border: {
-          color: "#e5e7eb",
+          color: palette.borderSoft,
         },
         ticks: {
-          color: "#6b7280",
+          color: palette.textSecondary,
         },
         title: {
           display: true,
           text: "Sales",
-          color: "#6b7280",
+          color: palette.textSecondary,
         },
       },
     },
   }
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-steel-blue">Sales Performance</h2>
-        <button type="button" className="text-steel-blue hover:text-opacity-80" aria-label="More options">
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-            <title>More options</title>
-            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-          </svg>
+    <DashboardPanel
+      title="Sales Performance"
+      action={
+        <button type="button" className="text-text-muted transition-colors hover:text-brand" aria-label="More options">
+          <MoreVertical className="h-5 w-5" />
         </button>
-      </div>
+      }
+    >
       <div className="h-64">
         <Bar data={data} options={options} />
       </div>
       <div className="grid grid-cols-3 gap-4 mt-6">
         <div className="text-center">
-          <div className="text-2xl font-bold text-steel-blue">{vendorChartsData.performance.conversionRate}</div>
-          <div className="text-sm text-gray-600">Conversion Rate</div>
+          <div className="text-2xl font-bold text-text-primary">{vendorChartsData.performance.conversionRate}</div>
+          <div className="text-sm text-text-secondary">Conversion Rate</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-steel-blue">{vendorChartsData.performance.avgOrderValue}</div>
-          <div className="text-sm text-gray-600">Avg. Order Value</div>
+          <div className="text-2xl font-bold text-text-primary">{vendorChartsData.performance.avgOrderValue}</div>
+          <div className="text-sm text-text-secondary">Avg. Order Value</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-steel-blue">{vendorChartsData.performance.ordersPerCustomer}</div>
-          <div className="text-sm text-gray-600">Orders per Customer</div>
+          <div className="text-2xl font-bold text-text-primary">{vendorChartsData.performance.ordersPerCustomer}</div>
+          <div className="text-sm text-text-secondary">Orders per Customer</div>
         </div>
       </div>
-    </div>
+    </DashboardPanel>
   )
 }
 

@@ -51,8 +51,7 @@ export default function VendorOrdersPage() {
         const response = await vendorOrdersAPI.getVendorOrders(currentPage, pageSize, sortBy, sortDir)
         setOrders(response.orders)
         setTotalPages(response.totalPages)
-      } catch (error) {
-        console.error("Error fetching vendor orders:", error)
+      } catch {
         setOrders([])
         setTotalPages(0)
       } finally {
@@ -135,7 +134,7 @@ export default function VendorOrdersPage() {
   if (!isAuthenticated) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-600">Please log in to view your orders.</p>
+        <p className="text-text-secondary">Please log in to view your orders.</p>
       </div>
     )
   }
@@ -146,8 +145,8 @@ export default function VendorOrdersPage() {
       <section id={`${id}-page-header`} className="mb-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-steel-blue">Orders</h1>
-            <p className="text-gray-600 mt-1">View and manage orders placed for your products</p>
+            <h1 className="text-3xl font-bold text-text-primary">Orders</h1>
+            <p className="text-text-secondary mt-1">View and manage orders placed for your products</p>
           </div>
         </div>
       </section>
@@ -155,23 +154,23 @@ export default function VendorOrdersPage() {
       {/* Orders Table */}
       <section
         id={`${id}-orders-table-section`}
-        className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+        className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
       >
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg- border-b border-gray-200">
+            <thead className="border-b border-border-soft bg-surface-muted/70">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
                   Buyer
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
                   Created
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
                   <button
                     type="button"
                     onClick={() => handleSortToggle("quantity")}
-                    className="inline-flex items-center gap-1 hover:text-steel-blue"
+                    className="inline-flex items-center gap-1 hover:text-brand"
                     aria-label={`Sort by quantity ${sortBy === "quantity" && sortDir === "desc" ? "ascending" : "descending"}`}
                   >
                     Quantity
@@ -186,14 +185,14 @@ export default function VendorOrdersPage() {
                     )}
                   </button>
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
                   Items
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
                   <button
                     type="button"
                     onClick={() => handleSortToggle("price")}
-                    className="inline-flex items-center gap-1 hover:text-steel-blue"
+                    className="inline-flex items-center gap-1 hover:text-brand"
                     aria-label={`Sort by price ${sortBy === "price" && sortDir === "desc" ? "ascending" : "descending"}`}
                   >
                     Price
@@ -208,24 +207,24 @@ export default function VendorOrdersPage() {
                     )}
                   </button>
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
                   Shipping
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
                   Status
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-border-soft">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-12 text-center text-text-muted">
                     Loading orders...
                   </td>
                 </tr>
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-12 text-center text-text-muted">
                     No orders found.
                   </td>
                 </tr>
@@ -237,13 +236,13 @@ export default function VendorOrdersPage() {
 
                   return (
                     <Fragment key={order.orderId}>
-                      <tr className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 text-sm text-gray-700">
+                      <tr className="hover:bg-surface-muted transition-colors">
+                        <td className="px-6 py-4 text-sm text-text-secondary">
                           <div className="font-medium">
                             {order.buyerName} {order.buyerSurname}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
+                        <td className="px-6 py-4 text-sm text-text-secondary">
                           {created.toLocaleString(undefined, {
                             year: "numeric",
                             month: "short",
@@ -252,14 +251,14 @@ export default function VendorOrdersPage() {
                             minute: "2-digit",
                           })}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
+                        <td className="px-6 py-4 text-sm text-text-secondary">
                           <span className="font-medium">{quantity}</span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
+                        <td className="px-6 py-4 text-sm text-text-secondary">
                           <button
                             type="button"
                             onClick={() => setExpandedOrderId(expandedOrderId === order.orderId ? null : order.orderId)}
-                            className="inline-flex items-center gap-2 text-sm text-steel-blue hover:text-steel-blue/80"
+                            className="inline-flex items-center gap-2 text-sm text-brand hover:text-brand-strong"
                           >
                             <span className="font-medium">
                               {order.orderItems.length} item
@@ -272,16 +271,16 @@ export default function VendorOrdersPage() {
                             )}
                           </button>
                         </td>
-                        <td className="px-6 py-4 text-sm font-semibold text-steel-blue">{formatCurrency(total)}</td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
+                        <td className="px-6 py-4 text-sm font-semibold text-brand">{formatCurrency(total)}</td>
+                        <td className="px-6 py-4 text-sm text-text-secondary">
                           {formatCurrency(order.totalShippingCost ?? 0)}
                         </td>
                         <td className="px-6 py-4 text-sm">
                           <span
                             className={`px-3 py-1 text-xs font-medium rounded-full ${
                               order.orderStatus === "PAYMENT_SUCCESS"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-gray-100 text-gray-800"
+                                ? "border border-success/20 bg-success/14 text-success"
+                                : "border border-border-soft bg-surface-muted text-text-primary"
                             }`}
                           >
                             {order.orderStatus}
@@ -289,16 +288,16 @@ export default function VendorOrdersPage() {
                         </td>
                       </tr>
                       {expandedOrderId === order.orderId && (
-                        <tr className="bg-gray-50/60">
+                        <tr className="bg-surface-muted/60">
                           <td colSpan={7} className="p-4">
-                            <div className="border border-gray-200 rounded-xl bg-white p-4 space-y-3 text-sm">
+                            <div className="border border-border-soft rounded-xl bg-surface-elevated p-4 space-y-3 text-sm">
                               {order.orderItems.map((item) => (
                                 <div
                                   key={item.id}
-                                  className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b last:border-b-0 border-gray-100 pb-3 last:pb-0"
+                                  className="flex flex-col gap-3 border-b border-border-soft pb-3 last:border-b-0 last:pb-0 md:flex-row md:items-center md:justify-between"
                                 >
                                   <div className="flex items-center gap-3 min-w-0">
-                                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border-soft bg-surface-muted">
                                       <ProductImageWithFallback
                                         src={
                                           getFullImageUrl(item.productCoverPhotoPath) ||
@@ -310,27 +309,29 @@ export default function VendorOrdersPage() {
                                         className="h-12 w-12 object-cover"
                                       />
                                     </div>
-                                    <div className="font-medium text-steel-blue truncate">{item.productName}</div>
+                                    <div className="truncate font-medium text-text-primary">{item.productName}</div>
                                   </div>
-                                  <div className="flex flex-wrap justify-end items-center gap-4 text-xs text-gray-600">
+                                  <div className="flex flex-wrap justify-end items-center gap-4 text-xs text-text-secondary">
                                     <span>
-                                      Qty: <span className="font-semibold text-gray-800">{item.quantity}</span>
+                                      Qty: <span className="font-semibold text-text-primary">{item.quantity}</span>
                                     </span>
                                     <span>
                                       Price:{" "}
-                                      <span className="font-semibold text-gray-800">{formatCurrency(item.price)}</span>
+                                      <span className="font-semibold text-text-primary">
+                                        {formatCurrency(item.price)}
+                                      </span>
                                     </span>
                                     <span>
                                       Total:{" "}
-                                      <span className="font-semibold text-gray-800">
+                                      <span className="font-semibold text-text-primary">
                                         {formatCurrency(item.totalPrice)}
                                       </span>
                                     </span>
                                     <span
                                       className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
                                         item.status === "WAITING_FOR_SHIPMENT"
-                                          ? "bg-amber-50 text-amber-700"
-                                          : "bg-gray-100 text-gray-700"
+                                          ? "border border-warning/20 bg-warning/14 text-warning"
+                                          : "border border-border-soft bg-surface-muted text-text-secondary"
                                       }`}
                                     >
                                       {item.status}
@@ -344,7 +345,7 @@ export default function VendorOrdersPage() {
                                             tracking: item.trackingLink || [],
                                           })
                                         }
-                                        className="inline-flex items-center px-3 py-1 rounded-full bg-steel-blue/10 text-steel-blue text-[11px] font-medium hover:bg-steel-blue/20"
+                                        className="inline-flex items-center px-3 py-1 rounded-full bg-brand/10 text-brand text-[11px] font-medium hover:bg-brand/20"
                                       >
                                         View {item.shippingLink?.length || 0} label
                                         {item.shippingLink && item.shippingLink.length !== 1 ? "s" : ""} &amp;{" "}
@@ -352,7 +353,7 @@ export default function VendorOrdersPage() {
                                         <ExternalLink className="w-3 h-3 ml-2" />
                                       </button>
                                     ) : (
-                                      <span className="text-[11px] text-gray-400">No labels or tracking</span>
+                                      <span className="text-[11px] text-text-muted">No labels or tracking</span>
                                     )}
                                   </div>
                                 </div>
@@ -370,12 +371,12 @@ export default function VendorOrdersPage() {
         </div>
 
         {/* Pagination */}
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+        <div className="px-6 py-4 border-t border-border-soft bg-surface-muted">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Show</span>
+              <span className="text-sm text-text-secondary">Show</span>
               <Select value={String(pageSize)} onValueChange={(value) => handlePageSizeChange(Number(value))}>
-                <SelectTrigger className="h-9 w-20 rounded-lg border-gray-300 bg-white px-3 py-1 text-sm text-gray-700 shadow-none focus-visible:ring-2 focus-visible:ring-steel-blue">
+                <SelectTrigger className="h-9 w-20 rounded-lg border-border-strong bg-surface-elevated px-3 py-1 text-sm text-text-secondary shadow-none focus-visible:ring-2 focus-visible:ring-brand/50">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -384,7 +385,7 @@ export default function VendorOrdersPage() {
                   <SelectItem value="50">50</SelectItem>
                 </SelectContent>
               </Select>
-              <span className="text-sm text-gray-600">per page</span>
+              <span className="text-sm text-text-secondary">per page</span>
             </div>
 
             <div className="flex items-center space-x-2">
@@ -392,7 +393,7 @@ export default function VendorOrdersPage() {
                 type="button"
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 0}
-                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-white text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 border border-border-strong rounded-lg hover:bg-surface-elevated text-sm font-medium text-text-secondary disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -416,8 +417,8 @@ export default function VendorOrdersPage() {
                     onClick={() => handlePageChange(pageNumber)}
                     className={`px-3 py-2 rounded-lg text-sm font-medium ${
                       currentPage === pageNumber
-                        ? "bg-steel-blue text-white"
-                        : "border border-gray-300 hover:bg-white text-gray-700"
+                        ? "bg-brand text-white"
+                        : "border border-border-strong hover:bg-surface-elevated text-text-secondary"
                     }`}
                   >
                     {pageNumber + 1}
@@ -429,7 +430,7 @@ export default function VendorOrdersPage() {
                 type="button"
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages - 1}
-                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-white text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 border border-border-strong rounded-lg hover:bg-surface-elevated text-sm font-medium text-text-secondary disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -439,31 +440,31 @@ export default function VendorOrdersPage() {
       </section>
       {labelModalLinks && (labelModalLinks.shipping.length > 0 || labelModalLinks.tracking.length > 0) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full mx-4">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-steel-blue">Labels &amp; tracking</h2>
+          <div className="bg-surface-elevated rounded-2xl shadow-xl max-w-4xl w-full mx-4">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border-soft">
+              <h2 className="text-lg font-semibold text-brand">Labels &amp; tracking</h2>
               <button
                 type="button"
                 onClick={() => setLabelModalLinks(null)}
-                className="p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                className="p-1 rounded-full text-text-muted hover:text-text-secondary hover:bg-surface-muted"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="px-6 py-4 max-h-[80vh] overflow-y-auto space-y-4">
               {/* Print settings inside modal */}
-              <div className="border border-gray-200 rounded-lg p-3 space-y-2">
+              <div className="border border-border-soft rounded-lg p-3 space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
-                    <Printer className="w-4 h-4 text-steel-blue" />
-                    <span className="text-sm font-semibold text-gray-800">Label printing</span>
+                    <Printer className="w-4 h-4 text-brand" />
+                    <span className="text-sm font-semibold text-text-primary">Label printing</span>
                   </div>
                   {isQzReady ? (
-                    <span className="text-[11px] font-medium text-green-700 bg-green-100 px-2 py-1 rounded-full">
+                    <span className="rounded-full border border-success/20 bg-success/14 px-2 py-1 text-[11px] font-medium text-success">
                       QZ Tray connected • {selectedPrinter || "Default printer"}
                     </span>
                   ) : (
-                    <span className="text-[11px] font-medium text-amber-700 bg-amber-100 px-2 py-1 rounded-full">
+                    <span className="rounded-full border border-warning/20 bg-warning/14 px-2 py-1 text-[11px] font-medium text-warning">
                       QZ Tray not connected • labels open as PDF
                     </span>
                   )}
@@ -473,14 +474,14 @@ export default function VendorOrdersPage() {
                     <div className="flex-1 min-w-[140px]">
                       <label
                         htmlFor={`${id}-printer-select`}
-                        className="block text-[11px] font-medium text-gray-600 mb-1"
+                        className="block text-[11px] font-medium text-text-secondary mb-1"
                       >
                         Printer
                       </label>
                       <Select value={selectedPrinter} onValueChange={setSelectedPrinter}>
                         <SelectTrigger
                           id={`${id}-printer-select`}
-                          className="h-8 w-full rounded-lg border-gray-300 bg-white px-2 py-1.5 text-xs text-gray-700 shadow-none focus-visible:ring-2 focus-visible:ring-steel-blue/60"
+                          className="h-8 w-full rounded-lg border-border-strong bg-surface-elevated px-2 py-1.5 text-xs text-text-secondary shadow-none focus-visible:ring-2 focus-visible:ring-brand/40"
                         >
                           <SelectValue placeholder="Select printer" />
                         </SelectTrigger>
@@ -496,7 +497,7 @@ export default function VendorOrdersPage() {
                     <div>
                       <label
                         htmlFor={`${id}-print-copies`}
-                        className="block text-[11px] font-medium text-gray-600 mb-1"
+                        className="block text-[11px] font-medium text-text-secondary mb-1"
                       >
                         Copies
                       </label>
@@ -512,13 +513,13 @@ export default function VendorOrdersPage() {
                             copies: Number(e.target.value) || 1,
                           }))
                         }
-                        className="w-20 rounded-lg border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-steel-blue/60"
+                        className="w-20 rounded-lg border border-border-strong px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand/40"
                       />
                     </div>
                     <div>
-                      <span className="block text-[11px] font-medium text-gray-600 mb-1">Color</span>
+                      <span className="block text-[11px] font-medium text-text-secondary mb-1">Color</span>
                       <div className="flex items-center gap-3 mt-0.5">
-                        <label className="inline-flex items-center gap-1 text-[11px] text-gray-700">
+                        <label className="inline-flex items-center gap-1 text-[11px] text-text-secondary">
                           <input
                             type="radio"
                             name="vendorColorMode"
@@ -529,7 +530,7 @@ export default function VendorOrdersPage() {
                           />
                           <span>Color</span>
                         </label>
-                        <label className="inline-flex items-center gap-1 text-[11px] text-gray-700">
+                        <label className="inline-flex items-center gap-1 text-[11px] text-text-secondary">
                           <input
                             type="radio"
                             name="vendorColorMode"
@@ -544,31 +545,31 @@ export default function VendorOrdersPage() {
                     </div>
                   </div>
                 )}
-                {qzInfo && <p className="text-[11px] text-gray-500 mt-1">{qzInfo}</p>}
-                {qzError && <p className="text-[11px] text-amber-700 mt-1">{qzError}</p>}
+                {qzInfo && <p className="text-[11px] text-text-muted mt-1">{qzInfo}</p>}
+                {qzError && <p className="mt-1 text-[11px] text-warning">{qzError}</p>}
               </div>
 
               {/* Shipping labels */}
               {labelModalLinks.shipping.length > 0 && (
                 <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-steel-blue">
+                  <h3 className="text-sm font-semibold text-brand">
                     Shipping labels ({labelModalLinks.shipping.length})
                   </h3>
                   <div className="space-y-2">
                     {labelModalLinks.shipping.map((link, index) => (
                       <div
                         key={`ship-${index}-${link}`}
-                        className="flex items-center justify-between gap-3 border border-gray-200 rounded-lg px-3 py-2 text-xs"
+                        className="flex items-center justify-between gap-3 border border-border-soft rounded-lg px-3 py-2 text-xs"
                       >
-                        <div className="flex-1 break-all text-gray-600">
-                          <span className="font-semibold text-gray-800 mr-2">Label {index + 1}</span>
+                        <div className="flex-1 break-all text-text-secondary">
+                          <span className="font-semibold text-text-primary mr-2">Label {index + 1}</span>
                           {link.length > 50 ? `${link.substring(0, 50)}...` : link}
                         </div>
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
                             onClick={() => handlePrintLabel(link)}
-                            className="inline-flex items-center px-2 py-1 rounded-full bg-steel-blue text-white text-[11px] font-medium hover:bg-opacity-90 whitespace-nowrap"
+                            className="inline-flex items-center px-2 py-1 rounded-full bg-brand text-white text-[11px] font-medium hover:bg-opacity-90 whitespace-nowrap"
                           >
                             Print
                             <Printer className="w-3 h-3 ml-1" />
@@ -577,7 +578,7 @@ export default function VendorOrdersPage() {
                             href={link}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 text-gray-700 text-[11px] font-medium hover:bg-gray-200 whitespace-nowrap"
+                            className="inline-flex items-center whitespace-nowrap rounded-full border border-border-soft bg-surface-muted px-2 py-1 text-[11px] font-medium text-text-secondary hover:bg-surface"
                           >
                             Open
                             <ExternalLink className="w-3 h-3 ml-1" />
@@ -592,24 +593,24 @@ export default function VendorOrdersPage() {
               {/* Tracking links */}
               {labelModalLinks.tracking.length > 0 && (
                 <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-steel-blue">
+                  <h3 className="text-sm font-semibold text-brand">
                     Tracking links ({labelModalLinks.tracking.length})
                   </h3>
                   <div className="space-y-2">
                     {labelModalLinks.tracking.map((link, index) => (
                       <div
                         key={`trk-${index}-${link}`}
-                        className="flex items-center justify-between gap-3 border border-gray-200 rounded-lg px-3 py-2 text-xs"
+                        className="flex items-center justify-between gap-3 border border-border-soft rounded-lg px-3 py-2 text-xs"
                       >
-                        <div className="flex-1 break-all text-gray-600">
-                          <span className="font-semibold text-gray-800 mr-2">Link {index + 1}</span>
+                        <div className="flex-1 break-all text-text-secondary">
+                          <span className="font-semibold text-text-primary mr-2">Link {index + 1}</span>
                           {link.length > 50 ? `${link.substring(0, 50)}...` : link}
                         </div>
                         <Link
                           href={link}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center px-2 py-1 rounded-full bg-green-100 text-green-700 text-[11px] font-medium hover:bg-green-200 whitespace-nowrap"
+                          className="inline-flex items-center whitespace-nowrap rounded-full border border-success/20 bg-success/14 px-2 py-1 text-[11px] font-medium text-success hover:bg-success/20"
                         >
                           Open
                           <ExternalLink className="w-3 h-3 ml-1" />
@@ -620,11 +621,11 @@ export default function VendorOrdersPage() {
                 </div>
               )}
             </div>
-            <div className="px-6 py-3 border-t border-gray-200 flex justify-end">
+            <div className="px-6 py-3 border-t border-border-soft flex justify-end">
               <button
                 type="button"
                 onClick={() => setLabelModalLinks(null)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-text-secondary border border-border-strong rounded-lg hover:bg-surface-muted"
               >
                 Close
               </button>

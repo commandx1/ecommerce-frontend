@@ -1,47 +1,51 @@
 import vendorRecentOrdersData from "@/data/vendor-recent-orders.json"
+import DashboardPanel from "./shared/DashboardPanel"
 
 const statusColorMap: Record<string, { bg: string; text: string }> = {
   green: {
-    bg: "bg-green-100",
-    text: "text-green-800",
+    bg: "bg-success/14",
+    text: "text-success",
   },
   blue: {
-    bg: "bg-blue-100",
-    text: "text-blue-800",
+    bg: "bg-brand/14",
+    text: "text-brand",
   },
   yellow: {
-    bg: "bg-yellow-100",
-    text: "text-yellow-800",
+    bg: "bg-warning/14",
+    text: "text-warning",
   },
 }
 
 const VendorRecentOrders = () => {
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-steel-blue">Recent Orders</h2>
-        <button type="button" className="text-steel-blue hover:text-opacity-80 text-sm">
+    <DashboardPanel
+      title="Recent Orders"
+      action={
+        <button type="button" className="text-sm text-brand transition-colors hover:text-brand-strong">
           View All Orders
         </button>
-      </div>
+      }
+    >
       <div className="space-y-4">
         {vendorRecentOrdersData.orders.map((order) => {
           const statusColors = statusColorMap[order.statusColor]
 
           return (
-            <div key={order.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-xl">
+            <div key={order.id} className="flex items-center justify-between rounded-xl border border-border-soft p-4">
               <div className="flex items-center">
-                <div className="w-10 h-10 bg-steel-blue rounded-full flex items-center justify-center mr-3">
-                  <span className="text-white text-sm font-semibold">{order.customerInitials}</span>
+                <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-brand text-primary-foreground">
+                  <span className="text-sm font-semibold">{order.customerInitials}</span>
                 </div>
                 <div>
-                  <div className="font-medium text-steel-blue">{order.customer}</div>
-                  <div className="text-sm text-gray-600">Order {order.orderNumber}</div>
+                  <div className="font-medium text-text-primary">{order.customer}</div>
+                  <div className="text-sm text-text-secondary">Order {order.orderNumber}</div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-semibold text-steel-blue">{order.amount}</div>
-                <span className={`text-xs ${statusColors.bg} ${statusColors.text} px-2 py-1 rounded-full`}>
+                <div className="font-semibold text-text-primary">{order.amount}</div>
+                <span
+                  className={`inline-flex rounded-full border px-2 py-1 text-xs ${statusColors.bg} ${statusColors.text}`}
+                >
                   {order.status}
                 </span>
               </div>
@@ -49,7 +53,10 @@ const VendorRecentOrders = () => {
           )
         })}
       </div>
-    </div>
+      <div className="mt-4 rounded-xl border border-border-soft bg-surface-muted/70 p-3 text-xs text-text-secondary">
+        24h success rate is stable, and order completion trend remains positive.
+      </div>
+    </DashboardPanel>
   )
 }
 
