@@ -51,9 +51,9 @@ const SupplierComparison = ({
                 <th className="px-6 py-4 text-center text-sm font-semibold tracking-[0.08em] text-inverse-foreground uppercase">
                   Stock
                 </th>
-                <th className="px-6 py-4 text-center text-sm font-semibold tracking-[0.08em] text-inverse-foreground uppercase">
+                {/* <th className="px-6 py-4 text-center text-sm font-semibold tracking-[0.08em] text-inverse-foreground uppercase">
                   Shipping
-                </th>
+                </th> */}
                 <th className="px-6 py-4 text-center text-sm font-semibold tracking-[0.08em] text-inverse-foreground uppercase">
                   Distance
                 </th>

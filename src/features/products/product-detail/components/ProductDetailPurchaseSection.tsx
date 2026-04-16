@@ -61,6 +61,8 @@ export default function ProductDetailPurchaseSection({ viewModel }: ProductDetai
         tax: "0",
         total: String(unitPrice),
       }}
+      suppliers={viewModel.suppliers}
+      bestPriceVendorUserProductId={viewModel.bestPriceVendorUserProductId}
     />
   )
 }

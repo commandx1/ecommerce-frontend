@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from "react"
-
-import { useSelectedSupplierStore } from "@/stores/selectedSupplierStore"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { useCallback, useEffect, useMemo } from "react"
 
 import type { SupplierViewModel } from "../types"
 
@@ -9,21 +8,48 @@ const parsePrice = (priceString: string): number => {
 }
 
 export const useSupplierSelection = (suppliers: SupplierViewModel[], bestPriceVendorUserProductId?: string | null) => {
-  const defaultSupplier = useMemo(() => {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const vendorIdFromUrl = searchParams.get("vendorId")
+
+  const fallbackSupplier = useMemo(() => {
     return suppliers.find((supplier) => supplier.userProductId === bestPriceVendorUserProductId) || suppliers[0] || null
   }, [bestPriceVendorUserProductId, suppliers])
 
-  const [selectedSupplier, setSelectedSupplier] = useState<SupplierViewModel | null>(defaultSupplier)
-  const setGlobalSelectedSupplier = useSelectedSupplierStore((state) => state.setSelectedSupplier)
+  const selectedSupplier = useMemo(() => {
+    if (vendorIdFromUrl) {
+      const supplierFromUrl = suppliers.find((supplier) => supplier.userProductId === vendorIdFromUrl)
+      if (supplierFromUrl) {
+        return supplierFromUrl
+      }
+    }
+    return fallbackSupplier
+  }, [fallbackSupplier, suppliers, vendorIdFromUrl])
+
+  const selectedVendorId = selectedSupplier?.userProductId
+
+  const setSelectedSupplier = useCallback(
+    (supplier: SupplierViewModel | null) => {
+      const nextVendorId = supplier?.userProductId
+      if (!nextVendorId || nextVendorId === vendorIdFromUrl) return
+
+      const params = new URLSearchParams(searchParams.toString())
+      params.set("vendorId", nextVendorId)
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+    },
+    [pathname, router, searchParams, vendorIdFromUrl],
+  )
 
   useEffect(() => {
-    setGlobalSelectedSupplier(selectedSupplier)
-  }, [selectedSupplier, setGlobalSelectedSupplier])
+    if (!selectedVendorId || selectedVendorId === vendorIdFromUrl) {
+      return
+    }
 
-  useEffect(() => {
-    setSelectedSupplier(defaultSupplier)
-    setGlobalSelectedSupplier(defaultSupplier)
-  }, [defaultSupplier, setGlobalSelectedSupplier])
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("vendorId", selectedVendorId)
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+  }, [pathname, router, searchParams, selectedVendorId, vendorIdFromUrl])
 
   const selectedPrice = selectedSupplier ? parsePrice(selectedSupplier.price) : 0
 

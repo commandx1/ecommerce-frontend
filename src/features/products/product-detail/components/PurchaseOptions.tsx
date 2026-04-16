@@ -1,14 +1,14 @@
 "use client"
 
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useMemo, useState } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import { showToast } from "@/components/ui/Toast"
 import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
 import { useCartStore } from "@/stores/cartStore"
-import { useSelectedSupplierStore } from "@/stores/selectedSupplierStore"
 import { usePurchaseCalculator } from "../hooks/usePurchaseCalculator"
+import type { SupplierViewModel } from "../types"
 import BulkPricingGrid from "./purchase/BulkPricingGrid"
 import OrderSummaryCard from "./purchase/OrderSummaryCard"
 import PurchaseActions from "./purchase/PurchaseActions"
@@ -46,12 +46,31 @@ interface PurchaseOptionsProps {
   bulkPricing: BulkPricing[]
   warrantyOptions: WarrantyOption[]
   orderSummary: OrderSummary
+  suppliers: SupplierViewModel[]
+  bestPriceVendorUserProductId?: string | null
 }
 
-const PurchaseOptions = ({ bulkPricing, warrantyOptions, orderSummary }: PurchaseOptionsProps) => {
+const PurchaseOptions = ({
+  bulkPricing,
+  warrantyOptions,
+  orderSummary,
+  suppliers,
+  bestPriceVendorUserProductId,
+}: PurchaseOptionsProps) => {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const addToCart = useCartStore((state) => state.addToCart)
-  const selectedSupplier = useSelectedSupplierStore((state) => state.selectedSupplier)
+  const selectedVendorId = searchParams.get("vendorId")
+  const selectedSupplier = useMemo(() => {
+    if (selectedVendorId) {
+      const supplierFromUrl = suppliers.find((supplier) => supplier.userProductId === selectedVendorId)
+      if (supplierFromUrl) {
+        return supplierFromUrl
+      }
+    }
+
+    return suppliers.find((supplier) => supplier.userProductId === bestPriceVendorUserProductId) || suppliers[0] || null
+  }, [bestPriceVendorUserProductId, selectedVendorId, suppliers])
   const stockCount = selectedSupplier?.stockCount ?? 15
   const [isAddingToCart, setIsAddingToCart] = useState(false)
 

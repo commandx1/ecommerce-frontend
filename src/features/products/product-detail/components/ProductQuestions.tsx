@@ -1,9 +1,9 @@
 "use client"
 
 import { User } from "lucide-react"
+import { useSearchParams } from "next/navigation"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import SectionHeading from "@/components/layout/SectionHeading"
-import { useSelectedSupplierStore } from "@/stores/selectedSupplierStore"
 import type { Question, QuestionsResponse } from "../types"
 import { formatRelativeDate } from "../utils/relativeDate"
 import AskQuestionButton from "./AskQuestionButton"
@@ -20,9 +20,11 @@ interface ProductQuestionsProps {
 }
 
 export default function ProductQuestions({ productId, initialQuestions, userProducts }: ProductQuestionsProps) {
-  // Get selected supplier from Zustand store
-  const selectedSupplier = useSelectedSupplierStore((state) => state.selectedSupplier)
-  const selectedSupplierUserProductId = selectedSupplier?.userProductId
+  const searchParams = useSearchParams()
+  const vendorIdFromUrl = searchParams.get("vendorId")
+  const selectedSupplierUserProductId = userProducts.some((userProduct) => userProduct.id === vendorIdFromUrl)
+    ? vendorIdFromUrl || undefined
+    : undefined
 
   // Extract questions from response
   const allQuestions: Question[] = initialQuestions?.content || []

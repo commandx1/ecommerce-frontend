@@ -10,7 +10,27 @@ interface ProductHeroDetailsProps {
   selectedSupplier?: SupplierViewModel | null
 }
 
+const parseCurrencyLabel = (value?: string | null): number | null => {
+  if (!value) {
+    return null
+  }
+
+  const parsed = Number.parseFloat(value.replace(/[^0-9.-]/g, ""))
+  return Number.isFinite(parsed) ? parsed : null
+}
+
 const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsProps) => {
+  const selectedPriceLabel = selectedSupplier?.price || formatCurrency(product.price)
+  const selectedOldPriceLabel = selectedSupplier?.originalPrice || null
+  const selectedPriceValue = parseCurrencyLabel(selectedPriceLabel)
+  const selectedOldPriceValue = parseCurrencyLabel(selectedOldPriceLabel)
+  const hasDiscount = Boolean(
+    selectedOldPriceValue !== null && selectedPriceValue !== null && selectedOldPriceValue > selectedPriceValue,
+  )
+  const discountPercent = hasDiscount
+    ? Math.round(((selectedOldPriceValue - selectedPriceValue) / selectedOldPriceValue) * 100)
+    : 0
+
   return (
     <div className="space-y-6 rounded-4xl border border-border-soft bg-surface-elevated p-7 shadow-soft md:p-8">
       <div>
@@ -36,10 +56,27 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
 
       <div className="rounded-[1.5rem] border border-border-soft bg-surface p-5">
         <div className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-text-muted">Selected pricing</div>
-        <div className="mt-2 flex items-center gap-2">
-          <div className="text-3xl font-semibold text-brand">{formatCurrency(product.price)}</div>
+        <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="text-3xl font-semibold text-brand">{selectedPriceLabel}</div>
+              {hasDiscount ? (
+                <>
+                  <span className="text-base font-medium text-text-muted line-through">{selectedOldPriceLabel}</span>
+                  <span className="rounded-full bg-success/15 px-2.5 py-1 text-xs font-semibold text-success">
+                    Save {discountPercent}%
+                  </span>
+                </>
+              ) : null}
+            </div>
+            <div className="mt-1 text-xs uppercase tracking-[0.16em] text-text-muted">
+              {selectedSupplier ? `From ${selectedSupplier.name}` : "Base price"}
+            </div>
+          </div>
           {selectedSupplier ? (
-            <div className="text-sm text-text-secondary">/ {selectedSupplier.shipping} Shipping</div>
+            <div className="rounded-full border border-border-soft bg-surface-elevated px-3 py-1.5 text-sm text-text-secondary">
+              Shipping: <span className="font-semibold text-text-primary">{selectedSupplier.shipping}</span>
+            </div>
           ) : null}
         </div>
       </div>

@@ -16,10 +16,7 @@ export default function ProductWithSuppliers({
   suppliers,
   bestPriceVendorUserProductId,
 }: ProductWithSuppliersProps) {
-  const { selectedSupplier, setSelectedSupplier, selectedPrice } = useSupplierSelection(
-    suppliers,
-    bestPriceVendorUserProductId,
-  )
+  const { selectedSupplier, setSelectedSupplier, selectedPrice } = useSupplierSelection(suppliers, bestPriceVendorUserProductId)
 
   return (
     <>
