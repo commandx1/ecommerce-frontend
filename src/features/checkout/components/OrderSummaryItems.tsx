@@ -1,5 +1,6 @@
-import Image from "next/image"
 import Link from "next/link"
+import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
+import { getFullImageUrl } from "@/lib/api/products"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import type { CartItem } from "@/stores/cartStore"
 
@@ -19,6 +20,7 @@ export default function OrderSummaryItems({ items }: OrderSummaryItemsProps) {
         const { product, userProduct, quantity } = item
         const sellerMeta = userProduct as UserProductSellerMeta
         const totalPrice = userProduct.price * quantity
+        const productImageSrc = getFullImageUrl(product.coverPhotoPath) || "/dentypro-product-placeholder.png"
 
         return (
           <div
@@ -26,8 +28,8 @@ export default function OrderSummaryItems({ items }: OrderSummaryItemsProps) {
             className="flex items-center space-x-4 rounded-[1.25rem] border border-border-soft bg-surface p-4"
           >
             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-border-soft bg-surface-elevated">
-              <Image
-                src={product.coverPhotoPath}
+              <ProductImageWithFallback
+                src={productImageSrc}
                 alt={product.name}
                 width={64}
                 height={64}

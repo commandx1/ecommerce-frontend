@@ -30,7 +30,7 @@ export default function ShippingDetails() {
         onSelectAddress={onAddressChange}
       />
 
-      {selectedAddressId && Object.keys(sellerGroups).length > 0 ? (
+      {selectedAddressId && cartId && Object.keys(sellerGroups).length > 0 ? (
         <ShippingMethodsSection
           addressId={selectedAddressId}
           cartId={cartId}

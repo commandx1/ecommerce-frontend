@@ -14,6 +14,10 @@ interface VendorShipmentRatesProps {
   selectedRateId?: string
 }
 
+function formatShippingAmount(amount: number): string {
+  return amount === 0 ? "Free" : formatCurrency(amount)
+}
+
 function ShippingRatesSkeleton() {
   return (
     <div className="animate-pulse rounded-xl border border-border-soft bg-surface-muted p-4">
@@ -46,6 +50,7 @@ export default function VendorShipmentRates({
 }: VendorShipmentRatesProps) {
   const [rates, setRates] = useState<ShipmentRate[]>([])
   const [uberQuote, setUberQuote] = useState<UberQuote | null>(null)
+  const [defaultShipmentFee, setDefaultShipmentFee] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [hasError, setHasError] = useState(false)
 
@@ -79,12 +84,26 @@ export default function VendorShipmentRates({
         const filteredRates = response.shippoRates.filter(
           (rate) => !rate.servicelevel.name.includes("Air") && !rate.servicelevel.name.includes("Ground"),
         )
+        const responseDefaultShipmentFee =
+          typeof response.defaultShipmentFee === "number" && Number.isFinite(response.defaultShipmentFee)
+            ? response.defaultShipmentFee
+            : null
 
         setRates(filteredRates)
         setUberQuote(response.uberQuote)
+        setDefaultShipmentFee(responseDefaultShipmentFee)
 
         if (!selectedRateIdRef.current && filteredRates.length > 0) {
-          onSelectRef.current(sellerId, filteredRates[0])
+          const baseAmount = Number(filteredRates[0].amount)
+          const effectiveAmount =
+            responseDefaultShipmentFee !== null && Number.isFinite(baseAmount) && responseDefaultShipmentFee < baseAmount
+              ? responseDefaultShipmentFee
+              : baseAmount
+
+          onSelectRef.current(sellerId, {
+            ...filteredRates[0],
+            amount: effectiveAmount.toFixed(2),
+          })
         }
       } catch (_error) {
         if (!isMounted) return
@@ -96,7 +115,7 @@ export default function VendorShipmentRates({
       }
     }
 
-    if (addressId && items.length > 0) {
+    if (addressId && cartId && items.length > 0) {
       void fetchRates()
     }
 
@@ -122,86 +141,126 @@ export default function VendorShipmentRates({
 
       <div className="grid grid-cols-1 gap-3">
         {rates.map((rate) => (
-          <label
-            key={rate.objectId}
-            className={`relative flex cursor-pointer items-center rounded-xl border p-4 transition-all hover:border-brand/50 ${
-              selectedRateId === rate.objectId
-                ? "border-brand bg-accent ring-1 ring-brand/25"
-                : "border-border-soft bg-surface-elevated"
-            }`}
-          >
-            <input
-              type="radio"
-              name={`shipment-${sellerId}`}
-              className="sr-only"
-              checked={selectedRateId === rate.objectId}
-              onChange={() => onSelect(sellerId, rate)}
-            />
-            <div className="flex flex-1 items-center">
-              <div className="mr-4 flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-border-soft bg-surface p-1">
-                <Image
-                  src={rate.providerImage75}
-                  alt={rate.provider}
-                  width={40}
-                  height={40}
-                  className="object-contain"
+          (() => {
+            const methodAmount = Number(rate.amount)
+            const effectiveAmount =
+              defaultShipmentFee !== null && Number.isFinite(methodAmount) && defaultShipmentFee < methodAmount
+                ? defaultShipmentFee
+                : methodAmount
+            const usesDefaultShipmentFee =
+              defaultShipmentFee !== null && Number.isFinite(methodAmount) && defaultShipmentFee < methodAmount
+            const isGreatDeal =
+              defaultShipmentFee !== null && Number.isFinite(methodAmount) && methodAmount < defaultShipmentFee
+            const discountAmount = isGreatDeal && defaultShipmentFee !== null ? defaultShipmentFee - methodAmount : 0
+            const selectableRate: ShipmentRate =
+              Number.isFinite(effectiveAmount) && effectiveAmount >= 0
+                ? { ...rate, amount: effectiveAmount.toFixed(2) }
+                : rate
+
+            return (
+              <label
+                key={rate.objectId}
+                className={`relative flex cursor-pointer items-center rounded-xl border p-4 transition-all hover:border-brand/50 ${
+                  selectedRateId === rate.objectId
+                    ? "border-brand bg-accent ring-1 ring-brand/25"
+                    : "border-border-soft bg-surface-elevated"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name={`shipment-${sellerId}`}
+                  className="sr-only"
+                  checked={selectedRateId === rate.objectId}
+                  onChange={() => onSelect(sellerId, selectableRate)}
                 />
-              </div>
-              <div className="mr-3 min-w-0 flex-1">
-                <div className="flex items-center justify-between">
-                  <span className="truncate font-bold text-text-primary">{rate.servicelevel.name}</span>
-                  <span className="ml-2 font-bold text-brand">{formatCurrency(Number(rate.amount))}</span>
+                <div className="flex flex-1 items-center">
+                  <div className="mr-4 flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-border-soft bg-surface p-1">
+                    <Image
+                      src={rate.providerImage75}
+                      alt={rate.provider}
+                      width={40}
+                      height={40}
+                      className="object-contain"
+                    />
+                  </div>
+                  <div className="mr-3 min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="truncate font-bold text-text-primary">{rate.servicelevel.name}</span>
+                      <div className="ml-2 text-right">
+                        <div className="font-bold text-brand">{formatShippingAmount(effectiveAmount)}</div>
+                      </div>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between">
+                      <span className="truncate text-xs text-text-muted">{rate.durationTerms}</span>
+                      <span className="text-xs font-medium text-success">Est. {rate.estimatedDays} days</span>
+                    </div>
+                    {usesDefaultShipmentFee ? (
+                      <div className="mt-1 text-[11px] font-medium text-brand">
+                        Standart gonderim ucreti uygulandi: {formatShippingAmount(defaultShipmentFee)}
+                      </div>
+                    ) : null}
+                    {isGreatDeal && discountAmount > 0 ? (
+                      <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success">
+                        Mukemmel firsat: {formatCurrency(discountAmount)} gonderim indirimi
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
-                <div className="mt-1 flex items-center justify-between">
-                  <span className="truncate text-xs text-text-muted">{rate.durationTerms}</span>
-                  <span className="text-xs font-medium text-success">Est. {rate.estimatedDays} days</span>
-                </div>
-              </div>
-            </div>
-            {selectedRateId === rate.objectId ? (
-              <div className="absolute top-2 right-2 rounded-full bg-brand p-0.5">
-                <Check className="h-3 w-3 text-white" />
-              </div>
-            ) : null}
-          </label>
+                {selectedRateId === rate.objectId ? (
+                  <div className="absolute top-2 right-2 rounded-full bg-brand p-0.5">
+                    <Check className="h-3 w-3 text-white" />
+                  </div>
+                ) : null}
+              </label>
+            )
+          })()
         ))}
 
         {uberQuote ? (
-          <label
-            className={`relative flex cursor-pointer items-center rounded-xl border p-4 transition-all hover:border-brand/50 ${
-              selectedRateId === uberQuote.id
-                ? "border-brand bg-accent ring-1 ring-brand/25"
-                : "border-border-soft bg-surface-elevated"
-            }`}
-          >
-            <input
-              type="radio"
-              name={`shipment-${sellerId}`}
-              className="sr-only"
-              checked={selectedRateId === uberQuote.id}
-              onChange={() => onSelect(sellerId, uberQuote)}
-            />
-            <div className="flex flex-1 items-center">
-              <div className="mr-4 flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-border-soft bg-surface p-1 text-xs font-bold text-text-primary">
-                UBER
-              </div>
-              <div className="mr-3 min-w-0 flex-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-text-primary">Uber Direct</span>
-                  <span className="ml-2 font-bold text-brand">{formatCurrency(uberQuote.fee / 100)}</span>
+          (() => {
+            const methodAmount = uberQuote.fee / 100
+            const displayAmount = Number.isFinite(methodAmount) && methodAmount >= 0 ? methodAmount : 0
+
+            return (
+              <label
+                className={`relative flex cursor-pointer items-center rounded-xl border p-4 transition-all hover:border-brand/50 ${
+                  selectedRateId === uberQuote.id
+                    ? "border-brand bg-accent ring-1 ring-brand/25"
+                    : "border-border-soft bg-surface-elevated"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name={`shipment-${sellerId}`}
+                  className="sr-only"
+                  checked={selectedRateId === uberQuote.id}
+                  onChange={() => onSelect(sellerId, uberQuote)}
+                />
+                <div className="flex flex-1 items-center">
+                  <div className="mr-4 flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-border-soft bg-surface p-1 text-xs font-bold text-text-primary">
+                    UBER
+                  </div>
+                  <div className="mr-3 min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-text-primary">Uber Direct</span>
+                      <div className="ml-2 text-right">
+                        <div className="font-bold text-brand">{formatShippingAmount(displayAmount)}</div>
+                      </div>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between">
+                      <span className="text-xs text-text-muted">Same-day delivery</span>
+                      <span className="text-xs font-medium text-success">{uberQuote.duration} mins</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-1 flex items-center justify-between">
-                  <span className="text-xs text-text-muted">Same-day delivery</span>
-                  <span className="text-xs font-medium text-success">{uberQuote.duration} mins</span>
-                </div>
-              </div>
-            </div>
-            {selectedRateId === uberQuote.id ? (
-              <div className="absolute top-2 right-2 rounded-full bg-brand p-0.5">
-                <Check className="h-3 w-3 text-white" />
-              </div>
-            ) : null}
-          </label>
+                {selectedRateId === uberQuote.id ? (
+                  <div className="absolute top-2 right-2 rounded-full bg-brand p-0.5">
+                    <Check className="h-3 w-3 text-white" />
+                  </div>
+                ) : null}
+              </label>
+            )
+          })()
         ) : null}
       </div>
     </div>
