@@ -11,7 +11,9 @@ const WelcomeSection = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2 text-inverse-foreground">Welcome back, Dr. Johnson!</h1>
-            <p className="text-lg text-inverse-muted">Here&apos;s what&apos;s happening with your dental supply orders</p>
+            <p className="text-lg text-inverse-muted">
+              Here&apos;s what&apos;s happening with your dental supply orders
+            </p>
           </div>
           <div className="text-right">
             <div className="mb-1 text-sm text-inverse-muted">Today&apos;s Date</div>

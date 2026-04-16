@@ -24,9 +24,8 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
   const selectedOldPriceLabel = selectedSupplier?.originalPrice || null
   const selectedPriceValue = parseCurrencyLabel(selectedPriceLabel)
   const selectedOldPriceValue = parseCurrencyLabel(selectedOldPriceLabel)
-  const hasDiscount = Boolean(
-    selectedOldPriceValue !== null && selectedPriceValue !== null && selectedOldPriceValue > selectedPriceValue,
-  )
+  const hasDiscount =
+    selectedOldPriceValue !== null && selectedPriceValue !== null && selectedOldPriceValue > selectedPriceValue
   const discountPercent = hasDiscount
     ? Math.round(((selectedOldPriceValue - selectedPriceValue) / selectedOldPriceValue) * 100)
     : 0
@@ -54,7 +53,7 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
         <span className="text-text-secondary">SKU: {product.sku}</span>
       </div>
 
-      <div className="rounded-[1.5rem] border border-border-soft bg-surface p-5">
+      <div className="rounded-3xl border border-border-soft bg-surface p-5">
         <div className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-text-muted">Selected pricing</div>
         <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
           <div>

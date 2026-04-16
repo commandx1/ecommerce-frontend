@@ -653,7 +653,11 @@ class ProductsAPI {
       const resolvedSize = toNumber(record.size) ?? toNumber(record.pageSize) ?? toNumber(pageable?.pageSize) ?? size
       const totalPages = toNumber(record.totalPages) ?? Math.ceil(totalElements / Math.max(1, resolvedSize))
       const resolvedPage =
-        toNumber(record.page) ?? toNumber(record.number) ?? toNumber(record.currentPage) ?? toNumber(pageable?.pageNumber) ?? page
+        toNumber(record.page) ??
+        toNumber(record.number) ??
+        toNumber(record.currentPage) ??
+        toNumber(pageable?.pageNumber) ??
+        page
 
       return {
         content: content as UserProduct[],

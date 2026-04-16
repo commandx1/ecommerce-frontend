@@ -24,8 +24,11 @@ const parsePriceLabel = (value?: string | null): number | null => {
 const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }: SupplierComparisonRowProps) => {
   const currentPrice = parsePriceLabel(supplier.price)
   const originalPrice = parsePriceLabel(supplier.originalPrice)
-  const hasDiscount = Boolean(originalPrice !== null && currentPrice !== null && originalPrice > currentPrice)
-  const discountPercent = hasDiscount ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100) : 0
+  const hasDiscount = originalPrice !== null && currentPrice !== null && originalPrice > currentPrice
+  const discountPercent =
+    hasDiscount && originalPrice !== null && currentPrice !== null
+      ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
+      : 0
 
   return (
     <tr

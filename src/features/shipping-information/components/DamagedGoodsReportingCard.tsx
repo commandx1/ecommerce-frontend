@@ -21,7 +21,9 @@ const REPORTING_ITEMS: Array<{ label?: string; icon?: typeof Camera; title: stri
 export default function DamagedGoodsReportingCard() {
   return (
     <div className="rounded-2xl border border-border-soft bg-brand-surface p-8 text-inverse-foreground sm:rounded-3xl sm:p-12">
-      <h3 className="mb-6 text-center text-2xl font-bold sm:mb-8 sm:text-3xl text-inverse-muted">Damaged Goods Reporting</h3>
+      <h3 className="mb-6 text-center text-2xl font-bold sm:mb-8 sm:text-3xl text-inverse-muted">
+        Damaged Goods Reporting
+      </h3>
       <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-3">
         {REPORTING_ITEMS.map((item) => (
           <div key={item.title} className="text-center">

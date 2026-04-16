@@ -96,7 +96,9 @@ export default function VendorShipmentRates({
         if (!selectedRateIdRef.current && filteredRates.length > 0) {
           const baseAmount = Number(filteredRates[0].amount)
           const effectiveAmount =
-            responseDefaultShipmentFee !== null && Number.isFinite(baseAmount) && responseDefaultShipmentFee < baseAmount
+            responseDefaultShipmentFee !== null &&
+            Number.isFinite(baseAmount) &&
+            responseDefaultShipmentFee < baseAmount
               ? responseDefaultShipmentFee
               : baseAmount
 
@@ -140,7 +142,7 @@ export default function VendorShipmentRates({
       </div>
 
       <div className="grid grid-cols-1 gap-3">
-        {rates.map((rate) => (
+        {rates.map((rate) =>
           (() => {
             const methodAmount = Number(rate.amount)
             const effectiveAmount =
@@ -213,55 +215,55 @@ export default function VendorShipmentRates({
                 ) : null}
               </label>
             )
-          })()
-        ))}
+          })(),
+        )}
 
-        {uberQuote ? (
-          (() => {
-            const methodAmount = uberQuote.fee / 100
-            const displayAmount = Number.isFinite(methodAmount) && methodAmount >= 0 ? methodAmount : 0
+        {uberQuote
+          ? (() => {
+              const methodAmount = uberQuote.fee / 100
+              const displayAmount = Number.isFinite(methodAmount) && methodAmount >= 0 ? methodAmount : 0
 
-            return (
-              <label
-                className={`relative flex cursor-pointer items-center rounded-xl border p-4 transition-all hover:border-brand/50 ${
-                  selectedRateId === uberQuote.id
-                    ? "border-brand bg-accent ring-1 ring-brand/25"
-                    : "border-border-soft bg-surface-elevated"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name={`shipment-${sellerId}`}
-                  className="sr-only"
-                  checked={selectedRateId === uberQuote.id}
-                  onChange={() => onSelect(sellerId, uberQuote)}
-                />
-                <div className="flex flex-1 items-center">
-                  <div className="mr-4 flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-border-soft bg-surface p-1 text-xs font-bold text-text-primary">
-                    UBER
-                  </div>
-                  <div className="mr-3 min-w-0 flex-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-text-primary">Uber Direct</span>
-                      <div className="ml-2 text-right">
-                        <div className="font-bold text-brand">{formatShippingAmount(displayAmount)}</div>
+              return (
+                <label
+                  className={`relative flex cursor-pointer items-center rounded-xl border p-4 transition-all hover:border-brand/50 ${
+                    selectedRateId === uberQuote.id
+                      ? "border-brand bg-accent ring-1 ring-brand/25"
+                      : "border-border-soft bg-surface-elevated"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name={`shipment-${sellerId}`}
+                    className="sr-only"
+                    checked={selectedRateId === uberQuote.id}
+                    onChange={() => onSelect(sellerId, uberQuote)}
+                  />
+                  <div className="flex flex-1 items-center">
+                    <div className="mr-4 flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-border-soft bg-surface p-1 text-xs font-bold text-text-primary">
+                      UBER
+                    </div>
+                    <div className="mr-3 min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-text-primary">Uber Direct</span>
+                        <div className="ml-2 text-right">
+                          <div className="font-bold text-brand">{formatShippingAmount(displayAmount)}</div>
+                        </div>
+                      </div>
+                      <div className="mt-1 flex items-center justify-between">
+                        <span className="text-xs text-text-muted">Same-day delivery</span>
+                        <span className="text-xs font-medium text-success">{uberQuote.duration} mins</span>
                       </div>
                     </div>
-                    <div className="mt-1 flex items-center justify-between">
-                      <span className="text-xs text-text-muted">Same-day delivery</span>
-                      <span className="text-xs font-medium text-success">{uberQuote.duration} mins</span>
+                  </div>
+                  {selectedRateId === uberQuote.id ? (
+                    <div className="absolute top-2 right-2 rounded-full bg-brand p-0.5">
+                      <Check className="h-3 w-3 text-white" />
                     </div>
-                  </div>
-                </div>
-                {selectedRateId === uberQuote.id ? (
-                  <div className="absolute top-2 right-2 rounded-full bg-brand p-0.5">
-                    <Check className="h-3 w-3 text-white" />
-                  </div>
-                ) : null}
-              </label>
-            )
-          })()
-        ) : null}
+                  ) : null}
+                </label>
+              )
+            })()
+          : null}
       </div>
     </div>
   )
