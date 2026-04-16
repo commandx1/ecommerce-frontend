@@ -8,29 +8,29 @@ interface ForgotPasswordSuccessProps {
 
 export default function ForgotPasswordSuccess({ email, onSendAgain }: ForgotPasswordSuccessProps) {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="flex min-h-screen items-center justify-center bg-canvas p-4">
       <div className="fixed top-4 right-4 z-50">
         <ThemeToggle />
       </div>
-      <div className="bg-white rounded-3xl shadow-2xl p-8 lg:p-12 max-w-md w-full text-center">
-        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <Check className="w-10 h-10 text-green-600" />
+      <div className="w-full max-w-md rounded-3xl border border-border-soft bg-surface-elevated p-8 text-center shadow-panel lg:p-12">
+        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-success/15">
+          <Check className="h-10 w-10 text-success" />
         </div>
-        <h3 className="text-2xl font-bold text-steel-blue mb-4">Reset Link Sent!</h3>
-        <p className="text-gray-600 mb-6">
+        <h3 className="mb-4 text-2xl font-bold text-text-primary">Reset Link Sent!</h3>
+        <p className="mb-6 text-text-secondary">
           We've sent password reset instructions to <strong>{email}</strong>. Please check your inbox and follow the
           instructions.
         </p>
-        <div className="bg-gray-50 rounded-xl p-4 mb-6">
-          <p className="text-sm text-gray-600">
-            <Info className="inline-block w-4 h-4 text-steel-blue mr-2" />
+        <div className="mb-6 rounded-xl border border-border-soft bg-surface-muted p-4">
+          <p className="text-sm text-text-secondary">
+            <Info className="mr-2 inline-block h-4 w-4 text-brand" />
             The reset link is valid for 24 hours for security reasons.
           </p>
         </div>
         <button
           type="button"
           onClick={onSendAgain}
-          className="w-full bg-steel-blue text-white py-4 px-6 rounded-xl hover:bg-opacity-90 font-semibold"
+          className="w-full rounded-xl bg-brand px-6 py-4 font-semibold text-primary-foreground transition-colors hover:bg-brand-strong"
         >
           Send Again
         </button>

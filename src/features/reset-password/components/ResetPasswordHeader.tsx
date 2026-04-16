@@ -11,11 +11,11 @@ export default function ResetPasswordHeader({
 }: ResetPasswordHeaderProps) {
   return (
     <div className="text-center mb-8">
-      <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-        <Lock className="text-steel-blue w-8 h-8" />
+      <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-surface-muted">
+        <Lock className="h-8 w-8 text-brand" />
       </div>
-      <h1 className="text-3xl font-bold text-steel-blue mb-3">{title}</h1>
-      <p className="text-gray-600">{description}</p>
+      <h1 className="mb-3 text-3xl font-bold text-text-primary">{title}</h1>
+      <p className="text-text-secondary">{description}</p>
     </div>
   )
 }

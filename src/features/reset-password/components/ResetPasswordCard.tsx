@@ -19,7 +19,7 @@ export default function ResetPasswordCard({
   onSubmit,
 }: ResetPasswordCardProps) {
   return (
-    <div className="bg-white rounded-3xl shadow-2xl p-8 lg:p-12 max-w-md w-full">
+    <div className="w-full max-w-md rounded-3xl border border-border-soft bg-surface-elevated p-8 shadow-panel lg:p-12">
       <ResetPasswordHeader />
       <ResetPasswordForm
         password={password}

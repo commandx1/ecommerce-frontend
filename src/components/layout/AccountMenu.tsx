@@ -34,33 +34,33 @@ export default function AccountMenu({ displayName, email, items = [], className 
   }, [])
 
   return (
-    <div
-      ref={rootRef}
-      className={`relative flex items-center gap-3 ${className ?? ""}`}
-      onClick={() => setOpen((prev) => !prev)}
-    >
-      <div className="w-8 h-8 rounded-full bg-steel-blue text-white flex items-center justify-center">
-        <User className="w-4 h-4" />
-      </div>
-      <div className="hidden md:block">
-        <div className="text-sm font-semibold text-steel-blue">My Account</div>
-        <div className="text-xs text-gray-600">{displayName}</div>
-      </div>
-      <button type="button" className="text-gray-400 hover:text-steel-blue" aria-expanded={open}>
-        <ChevronDown
-          className="w-4 h-4 transition-transform duration-200"
-          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
-        />
+    <div ref={rootRef} className={`relative ${className ?? ""}`}>
+      <button
+        type="button"
+        className="flex items-center gap-3"
+        onClick={() => setOpen((prev) => !prev)}
+        aria-expanded={open}
+      >
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-inverse-foreground">
+          <User className="w-4 h-4" />
+        </div>
+        <div className="hidden md:block">
+          <div className="text-sm font-semibold text-text-primary">My Account</div>
+          <div className="text-xs text-text-muted">{displayName}</div>
+        </div>
+        <span className="text-text-muted transition-colors hover:text-brand">
+          <ChevronDown
+            className="w-4 h-4 transition-transform duration-200"
+            style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+          />
+        </span>
       </button>
 
       {open && (
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className="absolute right-0 top-12 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
-        >
-          <div className="px-4 py-3 border-b border-gray-200">
-            <p className="text-sm font-medium text-gray-900">{displayName}</p>
-            {email && <p className="text-sm text-gray-500 truncate">{email}</p>}
+        <div className="absolute right-0 top-12 z-50 w-56 rounded-2xl border border-border-soft bg-surface-elevated/95 py-2 shadow-panel backdrop-blur-sm">
+          <div className="border-b border-border-soft px-4 py-3">
+            <p className="text-sm font-semibold text-text-primary">{displayName}</p>
+            {email && <p className="truncate text-xs text-text-muted">{email}</p>}
           </div>
           {items.map((item) => (
             <button
@@ -70,8 +70,10 @@ export default function AccountMenu({ displayName, email, items = [], className 
                 item.onClick()
                 setOpen(false)
               }}
-              className={`w-full flex items-center px-4 py-2 text-left text-sm font-medium ${
-                item.variant === "danger" ? "text-red-600 hover:bg-red-50" : "text-gray-700 hover:bg-gray-100"
+              className={`flex w-full items-center px-4 py-2 text-left text-sm font-medium transition-colors ${
+                item.variant === "danger"
+                  ? "text-danger hover:bg-danger/10"
+                  : "text-text-secondary hover:bg-surface-muted hover:text-text-primary"
               }`}
             >
               {item.icon ? <span className="w-4 h-4 mr-3 flex items-center justify-center">{item.icon}</span> : null}

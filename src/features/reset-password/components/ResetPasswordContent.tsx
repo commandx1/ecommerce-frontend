@@ -13,7 +13,7 @@ export default function ResetPasswordContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="flex min-h-screen items-center justify-center bg-canvas p-4">
       <div className="fixed top-4 right-4 z-50">
         <ThemeToggle />
       </div>

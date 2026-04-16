@@ -10,7 +10,6 @@ import {
   Megaphone,
   PieChart,
   Plus,
-  Settings,
   ShoppingBag,
   Star,
   Tag,
@@ -23,6 +22,8 @@ import {
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useId } from "react"
+import { cn } from "@/lib/utils"
 
 type SidebarLinkProps = {
   href: string
@@ -45,48 +46,51 @@ const SidebarLink = ({
   disabled,
   size = "default",
 }: SidebarLinkProps) => {
-  const baseClasses = "flex items-center rounded-lg transition-colors px-3 py-2"
-  const activeClasses = isActive ? "text-steel-blue bg-gray-50 font-medium" : "text-gray-700 hover:bg-gray-50"
+  const baseClasses = "flex items-center rounded-lg px-3 py-2 transition-colors"
+  const activeClasses = isActive
+    ? "bg-brand/10 font-medium text-brand"
+    : "text-text-secondary hover:bg-surface-muted hover:text-text-primary"
   const disabledClasses = disabled ? "opacity-50 pointer-events-none" : ""
-  const iconClasses = `w-5 mr-3 ${isActive ? "text-steel-blue" : "text-gray-500"}`
+  const iconClasses = `mr-3 w-5 ${isActive ? "text-brand" : "text-text-muted"}`
   const labelClasses = size === "compact" ? "text-sm" : "text-base"
 
   return (
-    <Link href={href} className={`${baseClasses} ${activeClasses} ${disabledClasses}`}>
+    <Link href={href} className={cn(baseClasses, activeClasses, disabledClasses)}>
       <Icon className={iconClasses} />
       <span className={labelClasses}>{label}</span>
-      {trailingText && <span className="ml-auto text-gray-500 text-sm">{trailingText}</span>}
-      {badge && <span className="ml-auto bg-pale-lime text-steel-blue text-xs px-2 py-1 rounded-full">{badge}</span>}
+      {trailingText && <span className="ml-auto text-sm text-text-muted">{trailingText}</span>}
+      {badge && <span className="ml-auto rounded-full bg-brand/15 px-2 py-1 text-xs text-brand">{badge}</span>}
     </Link>
   )
 }
 
 const VendorSidebar = () => {
+  const sidebarId = useId()
   const pathname = usePathname()
 
   const isActive = (path: string) => pathname === path
 
   return (
     <aside
-      id="sidebar"
-      className="w-64 bg-white shadow-sm border-r border-gray-200 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto z-40"
+      id={sidebarId}
+      className="sticky top-16 z-40 h-[calc(100vh-4rem)] w-64 overflow-y-auto border-r border-border-soft bg-surface-elevated shadow-soft"
     >
       <div className="p-6">
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-steel-blue">Quick Actions</h3>
+            <h3 className="text-lg font-semibold text-text-primary">Quick Actions</h3>
           </div>
           <div className="space-y-2">
             <Link
               href="/vendor-dashboard/products/create"
-              className="w-full bg-steel-blue text-white px-4 py-2 rounded-lg hover:bg-opacity-90 font-medium flex items-center"
+              className="flex w-full items-center rounded-lg bg-brand px-4 py-2 font-medium text-primary-foreground transition-colors hover:bg-brand-strong"
             >
               <Plus className="mr-2 w-4 h-4" />
               Add Product
             </Link>
             <button
               type="button"
-              className="w-full bg-pale-lime text-steel-blue px-4 py-2 rounded-lg hover:bg-opacity-90 font-medium flex items-center"
+              className="flex w-full items-center rounded-lg bg-accent-strong px-4 py-2 font-medium text-accent-foreground transition-colors hover:brightness-95"
             >
               <Tag className="mr-2 w-4 h-4" />
               Create Promotion
@@ -95,7 +99,7 @@ const VendorSidebar = () => {
         </div>
 
         <nav className="space-y-2">
-          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Overview</div>
+          <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">Overview</div>
           <SidebarLink
             href="/vendor-dashboard"
             label="Dashboard"
@@ -115,7 +119,7 @@ const VendorSidebar = () => {
             isActive={isActive("/vendor-dashboard/performance")}
           />
 
-          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">Sales</div>
+          <div className="mb-3 mt-6 text-xs font-semibold uppercase tracking-wider text-text-muted">Sales</div>
           <SidebarLink
             href="/vendor-dashboard/orders"
             label="Orders"
@@ -135,7 +139,7 @@ const VendorSidebar = () => {
             isActive={isActive("/vendor-dashboard/customers")}
           />
 
-          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">Catalog</div>
+          <div className="mb-3 mt-6 text-xs font-semibold uppercase tracking-wider text-text-muted">Catalog</div>
           <SidebarLink
             href="/vendor-dashboard/products"
             label="Products"
@@ -156,7 +160,7 @@ const VendorSidebar = () => {
             isActive={isActive("/vendor-dashboard/categories")}
           />
 
-          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">Marketing</div>
+          <div className="mb-3 mt-6 text-xs font-semibold uppercase tracking-wider text-text-muted">Marketing</div>
           <SidebarLink
             href="/vendor-dashboard/promotions"
             label="Promotions"
@@ -171,10 +175,10 @@ const VendorSidebar = () => {
             badge="4.8"
           />
 
-          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">Account</div>
+          <div className="mb-3 mt-6 text-xs font-semibold uppercase tracking-wider text-text-muted">Account</div>
 
           <div className="mt-4">
-            <h5 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2">Settings</h5>
+            <h5 className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-text-muted">Settings</h5>
             <SidebarLink
               href="/vendor-dashboard/settings"
               label="Account"

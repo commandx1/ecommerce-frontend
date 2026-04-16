@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useId, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import { cookieStorage } from "@/lib/storage/cookie-storage"
 import { useAuthStore } from "@/stores/authStore"
@@ -9,6 +9,7 @@ import VendorHeader from "./components/VendorHeader"
 import VendorSidebar from "./components/VendorSidebar"
 
 export default function VendorDashboardLayout({ children }: { children: React.ReactNode }) {
+  const mainContentId = useId()
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, isAuthenticated } = useAuthStore()
@@ -101,18 +102,18 @@ export default function VendorDashboardLayout({ children }: { children: React.Re
   // Show loading while checking or if not authenticated/vendor
   if (isChecking || !isAuthenticated || !user || user.roleName !== "Vendor") {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-600">Loading...</div>
+      <div className="flex min-h-screen items-center justify-center bg-canvas">
+        <div className="text-text-secondary">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex min-h-screen flex-col bg-canvas">
       <VendorHeader />
       <div className="flex flex-1">
         <VendorSidebar />
-        <main id="main-content" className="flex-1 p-8">
+        <main id={mainContentId} className="flex-1 p-8">
           {children}
         </main>
       </div>
