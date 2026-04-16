@@ -10,25 +10,12 @@ interface ProductHeroDetailsProps {
   selectedSupplier?: SupplierViewModel | null
 }
 
-const parseCurrencyLabel = (value?: string | null): number | null => {
-  if (!value) {
-    return null
-  }
-
-  const parsed = Number.parseFloat(value.replace(/[^0-9.-]/g, ""))
-  return Number.isFinite(parsed) ? parsed : null
-}
-
 const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsProps) => {
   const selectedPriceLabel = selectedSupplier?.price || formatCurrency(product.price)
   const selectedOldPriceLabel = selectedSupplier?.originalPrice || null
-  const selectedPriceValue = parseCurrencyLabel(selectedPriceLabel)
-  const selectedOldPriceValue = parseCurrencyLabel(selectedOldPriceLabel)
-  const hasDiscount =
-    selectedOldPriceValue !== null && selectedPriceValue !== null && selectedOldPriceValue > selectedPriceValue
-  const discountPercent = hasDiscount
-    ? Math.round(((selectedOldPriceValue - selectedPriceValue) / selectedOldPriceValue) * 100)
-    : 0
+  const hasDiscount = Boolean(selectedSupplier && selectedSupplier.discount > 0)
+  const discountPercent = selectedSupplier ? selectedSupplier.discount : 0
+  const formattedDiscount = Number.isInteger(discountPercent) ? `${discountPercent}` : discountPercent.toFixed(1)
 
   return (
     <div className="space-y-6 rounded-4xl border border-border-soft bg-surface-elevated p-7 shadow-soft md:p-8">
@@ -63,7 +50,7 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
                 <>
                   <span className="text-base font-medium text-text-muted line-through">{selectedOldPriceLabel}</span>
                   <span className="rounded-full bg-success/15 px-2.5 py-1 text-xs font-semibold text-success">
-                    Save {discountPercent}%
+                    Save {formattedDiscount}%
                   </span>
                 </>
               ) : null}

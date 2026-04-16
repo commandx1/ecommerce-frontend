@@ -97,6 +97,7 @@ export const buildSuppliers = (userProducts: UserProduct[], bestPriceVendorUserP
         badge: up.id === bestPriceVendorUserProductId ? "Best Seller" : "Verified",
         price: `$${up.price.toFixed(2)}`,
         originalPrice: up.oldPrice && up.oldPrice !== up.price ? `$${up.oldPrice.toFixed(2)}` : null,
+        discount: typeof up.discount === "number" ? up.discount : 0,
         stock: up.stock > 0 ? "In Stock" : "Out of Stock",
         stockColor: up.stock > 0 ? "green" : "gray",
         stockCount: up.stock || 0,

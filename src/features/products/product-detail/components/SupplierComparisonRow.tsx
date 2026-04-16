@@ -12,23 +12,9 @@ interface SupplierComparisonRowProps {
   onSelect: (supplier: SupplierViewModel) => void
 }
 
-const parsePriceLabel = (value?: string | null): number | null => {
-  if (!value) {
-    return null
-  }
-
-  const parsed = Number.parseFloat(value.replace(/[^0-9.-]/g, ""))
-  return Number.isFinite(parsed) ? parsed : null
-}
-
 const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }: SupplierComparisonRowProps) => {
-  const currentPrice = parsePriceLabel(supplier.price)
-  const originalPrice = parsePriceLabel(supplier.originalPrice)
-  const hasDiscount = originalPrice !== null && currentPrice !== null && originalPrice > currentPrice
-  const discountPercent =
-    hasDiscount && originalPrice !== null && currentPrice !== null
-      ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
-      : 0
+  const hasDiscount = supplier.discount > 0
+  const formattedDiscount = Number.isInteger(supplier.discount) ? `${supplier.discount}` : supplier.discount.toFixed(1)
 
   return (
     <tr
@@ -67,7 +53,7 @@ const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }:
         {supplier.originalPrice && <div className="text-sm text-text-muted line-through">{supplier.originalPrice}</div>}
         {hasDiscount ? (
           <div className="mt-1 inline-flex rounded-full bg-success/15 px-2.5 py-1 text-xs font-semibold text-success">
-            Save {discountPercent}%
+            Save {formattedDiscount}%
           </div>
         ) : null}
       </td>

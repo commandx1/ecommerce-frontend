@@ -29,6 +29,7 @@ export interface UserProduct {
   vendorLogo?: string
   price: number
   oldPrice?: number
+  discount?: number
   stock: number
   vendorDistance?: string
   vendorDistanceTime?: string
@@ -130,6 +131,7 @@ export interface SupplierViewModel {
   badge: string
   price: string
   originalPrice: string | null
+  discount: number
   stock: string
   stockColor: "green" | "gray"
   stockCount: number
