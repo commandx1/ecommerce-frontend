@@ -6,6 +6,11 @@ export interface CartTotals {
   total: number
 }
 
+export interface CartSellerGroup {
+  name: string
+  items: CartItem[]
+}
+
 export interface CartItemCardProps {
   item: CartItem
   onQuantityChange: (userProductId: string, currentQuantity: number, delta: number) => void

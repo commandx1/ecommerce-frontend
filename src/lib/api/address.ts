@@ -1,5 +1,9 @@
 import apiClient from "./client"
 
+const ADDRESSES_DEDUP_WINDOW_MS = 2000
+let inFlightAddressesRequest: Promise<Address[]> | null = null
+let recentAddressesCache: { data: Address[]; fetchedAt: number } | null = null
+
 export interface Address {
   id: string
   title: string
@@ -21,24 +25,52 @@ export interface Address {
 export type CreateAddressPayload = Omit<Address, "id">
 export type UpdateAddressPayload = Partial<CreateAddressPayload>
 
+function clearAddressesCache() {
+  inFlightAddressesRequest = null
+  recentAddressesCache = null
+}
+
 class AddressAPI {
   async getAddresses(): Promise<Address[]> {
-    const response = await apiClient.get<Address[] | Address | { items?: Address[] }>("/address")
-    const data = response.data as Address[] | Address | { items?: Address[] } | null | undefined
-
-    if (Array.isArray(data)) {
-      return data
+    const now = Date.now()
+    if (recentAddressesCache && now - recentAddressesCache.fetchedAt <= ADDRESSES_DEDUP_WINDOW_MS) {
+      return recentAddressesCache.data
     }
 
-    if (data && "items" in data && Array.isArray(data.items)) {
-      return data.items
+    if (inFlightAddressesRequest) {
+      return inFlightAddressesRequest
     }
 
-    if (!data) {
-      return []
-    }
+    const requestPromise = (async () => {
+      const response = await apiClient.get<Address[] | Address | { items?: Address[] }>("/address")
+      const data = response.data as Address[] | Address | { items?: Address[] } | null | undefined
 
-    return [data as Address]
+      if (Array.isArray(data)) {
+        recentAddressesCache = { data, fetchedAt: Date.now() }
+        return data
+      }
+
+      if (data && "items" in data && Array.isArray(data.items)) {
+        recentAddressesCache = { data: data.items, fetchedAt: Date.now() }
+        return data.items
+      }
+
+      if (!data) {
+        recentAddressesCache = { data: [], fetchedAt: Date.now() }
+        return []
+      }
+
+      const normalized = [data as Address]
+      recentAddressesCache = { data: normalized, fetchedAt: Date.now() }
+      return normalized
+    })()
+
+    inFlightAddressesRequest = requestPromise
+    try {
+      return await requestPromise
+    } finally {
+      inFlightAddressesRequest = null
+    }
   }
 
   async getAddress(id: string): Promise<Address> {
@@ -48,16 +80,19 @@ class AddressAPI {
 
   async createAddress(payload: CreateAddressPayload): Promise<Address> {
     const response = await apiClient.post<Address>("/address", payload)
+    clearAddressesCache()
     return response.data
   }
 
   async updateAddress(id: string, payload: UpdateAddressPayload): Promise<Address> {
     const response = await apiClient.put<Address>(`/address/${id}`, payload)
+    clearAddressesCache()
     return response.data
   }
 
   async deleteAddress(id: string): Promise<void> {
     await apiClient.delete(`/address/${id}`)
+    clearAddressesCache()
   }
 }
 

@@ -4,6 +4,17 @@ import { apiRequest } from "./request"
 const BASE_URL = "" // Use Next.js API routes at /api/...
 const IMAGE_PROXY_URL = "/api/images" // Proxy path for images
 
+function normalizeBackendImagePath(path: string): string {
+  const cleanPath = path.startsWith("/") ? path : `/${path}`
+
+  // Uploads may arrive as `/uploads/...` from backend DTOs, but backend serves them under `/api/uploads/...`.
+  if (cleanPath.startsWith("/uploads/")) {
+    return `/api${cleanPath}`
+  }
+
+  return cleanPath
+}
+
 // Helper function to get full image URL
 export function getFullImageUrl(path: string | null | undefined): string {
   if (!path || typeof path !== "string" || path.trim() === "") return ""
@@ -15,8 +26,8 @@ export function getFullImageUrl(path: string | null | undefined): string {
     fullUrl = trimmedPath
   } else {
     // Use the image proxy to avoid Mixed Content (HTTPS -> HTTP) issues
-    const cleanPath = trimmedPath.startsWith("/") ? trimmedPath : `/${trimmedPath}`
-    fullUrl = `${IMAGE_PROXY_URL}${cleanPath}`
+    const normalizedPath = normalizeBackendImagePath(trimmedPath)
+    fullUrl = `${IMAGE_PROXY_URL}${normalizedPath}`
   }
 
   return fullUrl
@@ -71,6 +82,8 @@ export interface CreateProductData {
   brand: string
   packaging: string
   primaryMarket: string
+  distanceUnit: string
+  massUnit: string
   scent: string
   size: string
   type: string
@@ -204,6 +217,14 @@ export interface UserProduct {
   discount: number
   stock: number
   active: boolean
+}
+
+export interface UserProductsFilterResponse {
+  content: UserProduct[]
+  totalElements: number
+  totalPages: number
+  page: number
+  size: number
 }
 
 class ProductsAPI {
@@ -560,12 +581,8 @@ class ProductsAPI {
     price?: boolean,
     stock?: boolean,
     search?: string,
-  ): Promise<{ content: UserProduct[]; totalElements: number; totalPages: number; page: number; size: number }> {
-    const response = await apiRequest.requestResponse<
-      | UserProduct[]
-      | { content: UserProduct[]; totalElements: number; totalPages: number; page: number; size: number }
-      | { message?: string; error?: string }
-    >({
+  ): Promise<UserProductsFilterResponse> {
+    const response = await apiRequest.requestResponse<unknown>({
       client: "app",
       method: "GET",
       url: `${BASE_URL}/api/user-products/filter`,
@@ -598,6 +615,54 @@ class ProductsAPI {
     }
 
     const data = response.data
+    const toNumber = (value: unknown): number | null => {
+      if (typeof value === "number" && Number.isFinite(value)) {
+        return value
+      }
+
+      if (typeof value === "string" && value.trim() !== "") {
+        const parsed = Number(value)
+        if (Number.isFinite(parsed)) {
+          return parsed
+        }
+      }
+
+      return null
+    }
+
+    const parseFromRecord = (record: Record<string, unknown>): UserProductsFilterResponse | null => {
+      const pageable =
+        record.pageable && typeof record.pageable === "object" && !Array.isArray(record.pageable)
+          ? (record.pageable as Record<string, unknown>)
+          : null
+
+      const content =
+        Array.isArray(record.content) && record.content
+          ? record.content
+          : Array.isArray(record.userProducts) && record.userProducts
+            ? record.userProducts
+            : Array.isArray(record.items) && record.items
+              ? record.items
+              : null
+
+      if (!content) {
+        return null
+      }
+
+      const totalElements = toNumber(record.totalElements) ?? toNumber(record.total) ?? content.length
+      const resolvedSize = toNumber(record.size) ?? toNumber(record.pageSize) ?? toNumber(pageable?.pageSize) ?? size
+      const totalPages = toNumber(record.totalPages) ?? Math.ceil(totalElements / Math.max(1, resolvedSize))
+      const resolvedPage =
+        toNumber(record.page) ?? toNumber(record.number) ?? toNumber(record.currentPage) ?? toNumber(pageable?.pageNumber) ?? page
+
+      return {
+        content: content as UserProduct[],
+        totalElements,
+        totalPages,
+        page: resolvedPage,
+        size: resolvedSize,
+      }
+    }
 
     // Handle both array and pagination object responses
     if (Array.isArray(data)) {
@@ -611,26 +676,18 @@ class ProductsAPI {
       }
     }
 
-    if (
-      data &&
-      typeof data === "object" &&
-      "content" in data &&
-      Array.isArray(data.content) &&
-      "totalElements" in data &&
-      typeof data.totalElements === "number" &&
-      "totalPages" in data &&
-      typeof data.totalPages === "number" &&
-      "page" in data &&
-      typeof data.page === "number" &&
-      "size" in data &&
-      typeof data.size === "number"
-    ) {
-      return {
-        content: data.content as UserProduct[],
-        totalElements: data.totalElements,
-        totalPages: data.totalPages,
-        page: data.page,
-        size: data.size,
+    if (data && typeof data === "object" && !Array.isArray(data)) {
+      const directParsed = parseFromRecord(data as Record<string, unknown>)
+      if (directParsed) {
+        return directParsed
+      }
+
+      const nested = (data as Record<string, unknown>).data
+      if (nested && typeof nested === "object" && !Array.isArray(nested)) {
+        const nestedParsed = parseFromRecord(nested as Record<string, unknown>)
+        if (nestedParsed) {
+          return nestedParsed
+        }
       }
     }
 

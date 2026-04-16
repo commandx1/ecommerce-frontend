@@ -4,6 +4,7 @@ export interface VendorOrderItem {
   id: string
   userProductId: string
   productName: string
+  productCoverPhotoPath?: string | null
   price: number
   quantity: number
   totalPrice: number
@@ -20,6 +21,7 @@ export interface VendorOrder {
   buyerId: string
   buyerName: string
   buyerSurname: string
+  totalShippingCost?: number | null
   orderItems: VendorOrderItem[]
 }
 

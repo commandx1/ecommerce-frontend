@@ -2,6 +2,7 @@ import apiClient from "./client"
 
 export interface BuyerOrderItem {
   id: string
+  productId?: string
   userProductId: string
   price: number
   quantity: number

@@ -14,6 +14,8 @@ import Link from "next/link"
 import { Fragment, useEffect, useId, useState } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
+import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
+import { getFullImageUrl } from "@/lib/api/products"
 import { type VendorOrder, vendorOrdersAPI } from "@/lib/api/vendor-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { getQzConnectionStatus, printShippingLabel, type QzPrintOptions } from "@/lib/qz/printLabel"
@@ -160,9 +162,6 @@ export default function VendorOrdersPage() {
             <thead className="bg- border-b border-gray-200">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  Order
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Buyer
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -210,6 +209,9 @@ export default function VendorOrdersPage() {
                   </button>
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Shipping
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Status
                 </th>
               </tr>
@@ -236,9 +238,6 @@ export default function VendorOrdersPage() {
                   return (
                     <Fragment key={order.orderId}>
                       <tr className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 text-sm">
-                          <div className="font-mono text-xs text-steel-blue break-all">{order.orderId}</div>
-                        </td>
                         <td className="px-6 py-4 text-sm text-gray-700">
                           <div className="font-medium">
                             {order.buyerName} {order.buyerSurname}
@@ -274,6 +273,9 @@ export default function VendorOrdersPage() {
                           </button>
                         </td>
                         <td className="px-6 py-4 text-sm font-semibold text-steel-blue">{formatCurrency(total)}</td>
+                        <td className="px-6 py-4 text-sm text-gray-700">
+                          {formatCurrency(order.totalShippingCost ?? 0)}
+                        </td>
                         <td className="px-6 py-4 text-sm">
                           <span
                             className={`px-3 py-1 text-xs font-medium rounded-full ${
@@ -295,7 +297,21 @@ export default function VendorOrdersPage() {
                                   key={item.id}
                                   className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b last:border-b-0 border-gray-100 pb-3 last:pb-0"
                                 >
-                                  <div className="font-medium text-steel-blue">{item.productName}</div>
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                                      <ProductImageWithFallback
+                                        src={
+                                          getFullImageUrl(item.productCoverPhotoPath) ||
+                                          "/dentypro-product-placeholder.png"
+                                        }
+                                        alt={item.productName}
+                                        width={48}
+                                        height={48}
+                                        className="h-12 w-12 object-cover"
+                                      />
+                                    </div>
+                                    <div className="font-medium text-steel-blue truncate">{item.productName}</div>
+                                  </div>
                                   <div className="flex flex-wrap justify-end items-center gap-4 text-xs text-gray-600">
                                     <span>
                                       Qty: <span className="font-semibold text-gray-800">{item.quantity}</span>
@@ -423,7 +439,7 @@ export default function VendorOrdersPage() {
       </section>
       {labelModalLinks && (labelModalLinks.shipping.length > 0 || labelModalLinks.tracking.length > 0) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full mx-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full mx-4">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-steel-blue">Labels &amp; tracking</h2>
               <button

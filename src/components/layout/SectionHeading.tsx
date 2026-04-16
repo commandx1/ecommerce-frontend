@@ -31,7 +31,7 @@ export default function SectionHeading({
         {kicker ? <div className="section-kicker mb-4">{kicker}</div> : null}
         <TitleTag
           className={cn(
-            variant === "editorial" ? "text-4xl md:text-5xl" : "font-sans text-3xl md:text-[2rem] tracking-[-0.02em]",
+            variant === "editorial" ? "text-2xl md:text-3xl" : "font-sans text-3xl md:text-[2rem] tracking-[-0.02em]",
             "font-semibold text-text-primary",
             titleClassName,
           )}

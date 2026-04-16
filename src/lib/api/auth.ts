@@ -119,6 +119,7 @@ class AuthAPI {
       headers: this.getAuthHeaders(token),
       url: `${API_BASE}/auth/logout`,
       data: payload,
+      validateStatus: () => true,
       fallbackMessage: "Failed to log out",
     })
   }

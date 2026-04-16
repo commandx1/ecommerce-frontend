@@ -147,6 +147,7 @@ class AuthAPIDirect {
       headers: this.getAuthHeaders(token),
       url: "/auth/logout",
       data: payload,
+      validateStatus: () => true,
       fallbackMessage: "Failed to log out",
     })
   }
