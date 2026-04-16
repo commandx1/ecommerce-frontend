@@ -1,14 +1,16 @@
-import { Trash2 } from "lucide-react"
+import { Trash2, Truck } from "lucide-react"
 import ConfirmationModal from "@/components/feedback/ConfirmationModal"
 import SectionHeading from "@/components/layout/SectionHeading"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import CartItemCard from "@/features/cart/components/CartItemCard"
+import type { CartSellerGroup } from "@/features/cart/types"
 import type { CartItem } from "@/stores/cartStore"
 
 interface CartItemsPanelProps {
   cartId: string | null
   isClearConfirmOpen: boolean
   items: CartItem[]
+  sellerGroups: Record<string, CartSellerGroup>
   onCloseClearConfirm: () => void
   onConfirmClearCart: () => Promise<void>
   onOpenClearConfirm: () => void
@@ -20,6 +22,7 @@ export default function CartItemsPanel({
   cartId,
   isClearConfirmOpen,
   items,
+  sellerGroups,
   onCloseClearConfirm,
   onConfirmClearCart,
   onOpenClearConfirm,
@@ -46,9 +49,30 @@ export default function CartItemsPanel({
         }
       />
 
-      <div className="space-y-4">
-        {items.map((item) => (
-          <CartItemCard key={item.id} item={item} onQuantityChange={onQuantityChange} onRemoveItem={onRemoveItem} />
+      <div className="space-y-6">
+        {Object.entries(sellerGroups).map(([sellerId, group]) => (
+          <div key={sellerId} className="space-y-4">
+            <div className="flex items-center justify-between border-b border-border-soft pb-3">
+              <h4 className="flex items-center text-sm font-semibold text-text-secondary">
+                <Truck className="mr-2 h-4 w-4 text-brand" />
+                Shipping from: <span className="ml-1 text-brand">{group.name}</span>
+              </h4>
+              <span className="rounded-full bg-surface-muted px-2 py-1 text-xs font-medium text-text-muted">
+                {group.items.length} items
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              {group.items.map((item) => (
+                <CartItemCard
+                  key={item.id}
+                  item={item}
+                  onQuantityChange={onQuantityChange}
+                  onRemoveItem={onRemoveItem}
+                />
+              ))}
+            </div>
+          </div>
         ))}
       </div>
 

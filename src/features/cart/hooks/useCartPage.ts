@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
-import type { CartTotals } from "@/features/cart/types"
+import type { CartSellerGroup, CartTotals } from "@/features/cart/types"
+import { getBlockingCartItems } from "@/features/cart/utils/cart-alerts"
 import { useDebouncedPerKeyCallback } from "@/lib/hooks/useDebouncedPerKeyCallback"
 import type { CartItem } from "@/stores/cartStore"
 import { useCartStore } from "@/stores/cartStore"
@@ -12,10 +13,20 @@ import { useCheckoutStore } from "@/stores/checkoutStore"
 type CartViewState = "loading" | "empty" | "ready"
 const QUANTITY_DEBOUNCE_MS = 450
 
+interface UserProductSellerMeta {
+  sellerName?: string
+  sellerId?: string
+  userId?: string
+  vendor?: string
+}
+
 interface UseCartPageResult {
   cartId: string | null
+  blockingItemsCount: number
+  hasBlockingItems: boolean
   isClearConfirmOpen: boolean
   items: CartItem[]
+  sellerGroups: Record<string, CartSellerGroup>
   totals: CartTotals
   viewState: CartViewState
   onCheckout: () => void
@@ -87,6 +98,30 @@ export function useCartPage(): UseCartPageResult {
     }
   }, [itemsWithPendingQuantity])
 
+  const sellerGroups = useMemo<Record<string, CartSellerGroup>>(() => {
+    return itemsWithPendingQuantity.reduce<Record<string, CartSellerGroup>>((groups, item) => {
+      const userProduct = item.userProduct as UserProductSellerMeta
+      const sellerName = userProduct.sellerName || userProduct.vendor || "Standard Seller"
+      const sellerId = userProduct.sellerId || userProduct.userId || sellerName
+
+      if (!groups[sellerId]) {
+        groups[sellerId] = {
+          name: sellerName,
+          items: [],
+        }
+      }
+
+      groups[sellerId].items.push(item)
+      return groups
+    }, {})
+  }, [itemsWithPendingQuantity])
+
+  const blockingItemsCount = useMemo(() => {
+    return getBlockingCartItems(itemsWithPendingQuantity).length
+  }, [itemsWithPendingQuantity])
+
+  const hasBlockingItems = blockingItemsCount > 0
+
   const viewState: CartViewState = useMemo(() => {
     if (isLoading && itemsWithPendingQuantity.length === 0) {
       return "loading"
@@ -105,9 +140,20 @@ export function useCartPage(): UseCartPageResult {
 
   const onCheckout = useCallback(() => {
     if (itemsWithPendingQuantity.length === 0) return
+
+    const blockingItems = getBlockingCartItems(itemsWithPendingQuantity)
+    if (blockingItems.length > 0) {
+      const itemWord = blockingItems.length > 1 ? "items" : "item"
+      showToast.warning(
+        "Checkout unavailable",
+        `Please remove ${blockingItems.length} unavailable ${itemWord} from your cart before checkout.`,
+      )
+      return
+    }
+
     setStep(2)
     router.push("/checkout")
-  }, [itemsWithPendingQuantity.length, router, setStep])
+  }, [itemsWithPendingQuantity, router, setStep])
 
   const onQuantityChange = useCallback(
     (userProductId: string, currentQuantity: number, delta: number) => {
@@ -155,8 +201,11 @@ export function useCartPage(): UseCartPageResult {
 
   return {
     cartId,
+    blockingItemsCount,
+    hasBlockingItems,
     isClearConfirmOpen,
     items: itemsWithPendingQuantity,
+    sellerGroups,
     totals,
     viewState,
     onCheckout,

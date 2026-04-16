@@ -2,13 +2,16 @@ import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import SectionHeading from "@/components/layout/SectionHeading"
 import CartItemsPanel from "@/features/cart/components/CartItemsPanel"
 import CartSummaryPanel from "@/features/cart/components/CartSummaryPanel"
-import type { CartTotals } from "@/features/cart/types"
+import type { CartSellerGroup, CartTotals } from "@/features/cart/types"
 import type { CartItem } from "@/stores/cartStore"
 
 interface CartContentProps {
   cartId: string | null
+  blockingItemsCount: number
+  hasBlockingItems: boolean
   isClearConfirmOpen: boolean
   items: CartItem[]
+  sellerGroups: Record<string, CartSellerGroup>
   onCheckout: () => void
   onCloseClearConfirm: () => void
   onConfirmClearCart: () => Promise<void>
@@ -20,8 +23,11 @@ interface CartContentProps {
 
 export default function CartContent({
   cartId,
+  blockingItemsCount,
+  hasBlockingItems,
   isClearConfirmOpen,
   items,
+  sellerGroups,
   onCheckout,
   onCloseClearConfirm,
   onConfirmClearCart,
@@ -39,6 +45,7 @@ export default function CartContent({
             cartId={cartId}
             isClearConfirmOpen={isClearConfirmOpen}
             items={items}
+            sellerGroups={sellerGroups}
             onCloseClearConfirm={onCloseClearConfirm}
             onConfirmClearCart={onConfirmClearCart}
             onOpenClearConfirm={onOpenClearConfirm}
@@ -48,6 +55,8 @@ export default function CartContent({
         </div>
         <div className="lg:w-1/3">
           <CartSummaryPanel
+            blockingItemsCount={blockingItemsCount}
+            hasBlockingItems={hasBlockingItems}
             isCheckoutDisabled={items.length === 0}
             itemsCount={items.length}
             onCheckout={onCheckout}

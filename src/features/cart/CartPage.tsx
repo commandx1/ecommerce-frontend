@@ -19,8 +19,11 @@ export default function CartPage() {
   return (
     <CartContent
       cartId={cartPage.cartId}
+      blockingItemsCount={cartPage.blockingItemsCount}
+      hasBlockingItems={cartPage.hasBlockingItems}
       isClearConfirmOpen={cartPage.isClearConfirmOpen}
       items={cartPage.items}
+      sellerGroups={cartPage.sellerGroups}
       onCheckout={cartPage.onCheckout}
       onCloseClearConfirm={cartPage.onCloseClearConfirm}
       onConfirmClearCart={cartPage.onConfirmClearCart}

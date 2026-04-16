@@ -1,9 +1,12 @@
+import NotificationCard from "@/components/feedback/NotificationCard"
 import ActionButton from "@/components/ui/ActionButton"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import type { CartTotals } from "@/features/cart/types"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 
 interface CartSummaryPanelProps {
+  blockingItemsCount: number
+  hasBlockingItems: boolean
   isCheckoutDisabled: boolean
   itemsCount: number
   onCheckout: () => void
@@ -16,6 +19,8 @@ interface SummaryRow {
 }
 
 export default function CartSummaryPanel({
+  blockingItemsCount,
+  hasBlockingItems,
   isCheckoutDisabled,
   itemsCount,
   onCheckout,
@@ -43,6 +48,14 @@ export default function CartSummaryPanel({
           </div>
         </div>
       </div>
+      {hasBlockingItems ? (
+        <NotificationCard
+          tone="error"
+          title="Checkout is blocked"
+          description={`Remove ${blockingItemsCount} unavailable item${blockingItemsCount > 1 ? "s" : ""} to continue.`}
+          className="mb-4 rounded-lg px-3 py-2"
+        />
+      ) : null}
       <ActionButton
         type="button"
         disabled={isCheckoutDisabled}
