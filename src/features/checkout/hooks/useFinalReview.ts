@@ -4,6 +4,7 @@ import { CardNumberElement, useElements, useStripe } from "@stripe/react-stripe-
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import { ordersAPI, type SavedCard } from "@/lib/api/orders"
+import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
 interface UseFinalReviewResult {
@@ -48,6 +49,7 @@ export function useFinalReview(): UseFinalReviewResult {
     cardName,
     setCardName,
   } = useCheckoutStore()
+  const { cartId } = useCartStore()
 
   const stripe = useStripe()
   const elements = useElements()
@@ -109,7 +111,10 @@ export function useFinalReview(): UseFinalReviewResult {
 
     try {
       setIsPlacingOrder(true)
-      const payload = { ...orderPayload }
+      const payload = {
+        ...orderPayload,
+        cartId: cartId || "",
+      }
 
       if (paymentMethod.type === "card") {
         if (selectedSavedCardId) {
@@ -217,6 +222,7 @@ export function useFinalReview(): UseFinalReviewResult {
     orderPayload,
     paymentMethod.type,
     saveCard,
+    cartId,
     selectedSavedCardId,
     setOrderResult,
     shippingAddress.firstName,

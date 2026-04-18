@@ -19,6 +19,7 @@ export interface UberRateOrder {
 
 export interface PlaceOrderPayload {
   addressId: string
+  cartId?: string
   shippoRateOrders: ShippoRateOrder[]
   uberRateOrders: UberRateOrder[]
   paymentMethodId?: string
