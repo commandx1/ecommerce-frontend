@@ -1,5 +1,26 @@
 import apiClient from "./client"
 
+export interface BuyerOrderAddress {
+  title: string
+  fullName: string
+  phoneNumber: string
+  country: string
+  city: string
+  district: string
+  postalCode: string
+  addressLine: string
+  formattedAddress: string
+  latitude: number
+  longitude: number
+  placeId: string
+}
+
+export interface BuyerOrderTrackingLink {
+  trackingUrl: string
+  status?: string
+  updatedDate?: string | null
+}
+
 export interface BuyerOrderItem {
   id: string
   productId?: string
@@ -11,7 +32,8 @@ export interface BuyerOrderItem {
   productCoverPhotoPath: string
   sellerName: string
   sellerSurname: string
-  trackingLink: string[]
+  trackingLink?: string[]
+  trackingLinks?: BuyerOrderTrackingLink[]
   updatedDate: string
 }
 
@@ -22,6 +44,13 @@ export interface BuyerOrder {
   createdDate: string
   addressTitle: string
   addressFormattedAddress: string
+  shipmentAddress?: BuyerOrderAddress
+  billingAddress?: BuyerOrderAddress
+  cardName?: string | null
+  cardBrand?: string | null
+  cardLast4?: string | null
+  cardExpMonth?: number | null
+  cardExpYear?: number | null
   orderItems: BuyerOrderItem[]
 }
 

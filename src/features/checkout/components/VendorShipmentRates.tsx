@@ -7,11 +7,80 @@ import formatCurrency from "@/lib/helpers/formatCurrency"
 interface VendorShipmentRatesProps {
   sellerId: string
   sellerName: string
-  items: { userProductId: string; name: string; quantity: number }[]
+  items: { userProductId: string; productId: string; name: string; quantity: number }[]
   addressId: string
   cartId: string
   onSelect: (sellerId: string, rate: ShipmentRate | UberQuote) => void
   selectedRateId?: string
+}
+
+const SHIPPING_RATES_CACHE_KEY_PREFIX = "checkout:shipping-rates:v1"
+const SHIPPING_RATES_CACHE_TTL_MS = 15 * 60 * 1000
+
+interface ShippingRatesCacheValue {
+  fetchedAt: number
+  data: {
+    shippoRates: ShipmentRate[]
+    uberQuote: UberQuote | null
+    defaultShipmentFee: number | null
+  }
+}
+
+function buildShippingRatesCacheKey(args: {
+  addressId: string
+  cartId: string
+  sellerId: string
+  items: { userProductId: string; productId: string; quantity: number }[]
+}): string {
+  const normalizedItems = [...args.items]
+    .sort((a, b) => {
+      if (a.userProductId === b.userProductId) {
+        if (a.productId === b.productId) {
+          return a.quantity - b.quantity
+        }
+        return a.productId.localeCompare(b.productId)
+      }
+      return a.userProductId.localeCompare(b.userProductId)
+    })
+    .map((item) => `${item.userProductId}:${item.productId}:${item.quantity}`)
+    .join("|")
+
+  return `${SHIPPING_RATES_CACHE_KEY_PREFIX}:${args.addressId}:${args.cartId}:${args.sellerId}:${normalizedItems}`
+}
+
+function readShippingRatesFromCache(cacheKey: string): ShippingRatesCacheValue["data"] | null {
+  if (typeof window === "undefined") return null
+
+  const rawValue = window.localStorage.getItem(cacheKey)
+  if (!rawValue) return null
+
+  try {
+    const parsed = JSON.parse(rawValue) as ShippingRatesCacheValue
+    if (!parsed?.fetchedAt || !parsed.data) {
+      window.localStorage.removeItem(cacheKey)
+      return null
+    }
+
+    if (Date.now() - parsed.fetchedAt > SHIPPING_RATES_CACHE_TTL_MS) {
+      window.localStorage.removeItem(cacheKey)
+      return null
+    }
+
+    return parsed.data
+  } catch {
+    window.localStorage.removeItem(cacheKey)
+    return null
+  }
+}
+
+function writeShippingRatesToCache(cacheKey: string, data: ShippingRatesCacheValue["data"]) {
+  if (typeof window === "undefined") return
+
+  const payload: ShippingRatesCacheValue = {
+    fetchedAt: Date.now(),
+    data,
+  }
+  window.localStorage.setItem(cacheKey, JSON.stringify(payload))
 }
 
 function formatShippingAmount(amount: number): string {
@@ -62,16 +131,60 @@ export default function VendorShipmentRates({
   useEffect(() => {
     let isMounted = true
 
+    const applyRatesData = (data: {
+      shippoRates: ShipmentRate[]
+      uberQuote: UberQuote | null
+      defaultShipmentFee: number | null
+    }) => {
+      const filteredRates = data.shippoRates.filter(
+        (rate) => !rate.servicelevel.name.includes("Air") && !rate.servicelevel.name.includes("Ground"),
+      )
+
+      setRates(filteredRates)
+      setUberQuote(data.uberQuote)
+      setDefaultShipmentFee(data.defaultShipmentFee)
+
+      if (!selectedRateIdRef.current && filteredRates.length > 0) {
+        const baseAmount = Number(filteredRates[0].amount)
+        const effectiveAmount =
+          data.defaultShipmentFee !== null && Number.isFinite(baseAmount) && data.defaultShipmentFee < baseAmount
+            ? data.defaultShipmentFee
+            : baseAmount
+
+        onSelectRef.current(sellerId, {
+          ...filteredRates[0],
+          amount: effectiveAmount.toFixed(2),
+        })
+      }
+    }
+
     const fetchRates = async () => {
       const parcels = items.map((item) => ({
         userProductId: item.userProductId,
         quantity: item.quantity,
       }))
+      const cacheKey = buildShippingRatesCacheKey({
+        addressId,
+        cartId,
+        sellerId,
+        items: items.map((item) => ({
+          userProductId: item.userProductId,
+          productId: item.productId,
+          quantity: item.quantity,
+        })),
+      })
 
       setIsLoading(true)
       setHasError(false)
 
       try {
+        const cached = readShippingRatesFromCache(cacheKey)
+        if (cached) {
+          if (!isMounted) return
+          applyRatesData(cached)
+          return
+        }
+
         const response = await shipmentAPI.getRates({
           addressId,
           userId: sellerId,
@@ -89,24 +202,13 @@ export default function VendorShipmentRates({
             ? response.defaultShipmentFee
             : null
 
-        setRates(filteredRates)
-        setUberQuote(response.uberQuote)
-        setDefaultShipmentFee(responseDefaultShipmentFee)
-
-        if (!selectedRateIdRef.current && filteredRates.length > 0) {
-          const baseAmount = Number(filteredRates[0].amount)
-          const effectiveAmount =
-            responseDefaultShipmentFee !== null &&
-            Number.isFinite(baseAmount) &&
-            responseDefaultShipmentFee < baseAmount
-              ? responseDefaultShipmentFee
-              : baseAmount
-
-          onSelectRef.current(sellerId, {
-            ...filteredRates[0],
-            amount: effectiveAmount.toFixed(2),
-          })
+        const dataForCache: ShippingRatesCacheValue["data"] = {
+          shippoRates: filteredRates,
+          uberQuote: response.uberQuote,
+          defaultShipmentFee: responseDefaultShipmentFee,
         }
+        writeShippingRatesToCache(cacheKey, dataForCache)
+        applyRatesData(dataForCache)
       } catch (_error) {
         if (!isMounted) return
         setHasError(true)
@@ -203,7 +305,7 @@ export default function VendorShipmentRates({
                     ) : null}
                     {isGreatDeal && discountAmount > 0 ? (
                       <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success">
-                        Mukemmel firsat: {formatCurrency(discountAmount)} gonderim indirimi
+                        Great deal: {formatCurrency(discountAmount)} shipping discount
                       </div>
                     ) : null}
                   </div>

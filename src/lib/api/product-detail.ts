@@ -74,11 +74,16 @@ export async function fetchProductDetailPageData(id: string): Promise<ProductDet
 
   // Keep existing behavior (only attach token if /users/me doesn't say "User not found")
   if (accessToken) {
+    const authHeaders: HeadersInit = {
+      ...headers,
+      Authorization: `Bearer ${accessToken}`,
+    }
+
     const me = await apiRequest.requestResponse<{ message?: string }>({
       client: "app",
       method: "GET",
       url: `${baseUrl}/api/users/me`,
-      headers,
+      headers: authHeaders,
       validateStatus: () => true,
       fallbackMessage: "Failed to fetch user profile",
     })

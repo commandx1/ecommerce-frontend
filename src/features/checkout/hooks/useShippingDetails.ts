@@ -99,6 +99,7 @@ export function useShippingDetails(): UseShippingDetailsResult {
 
       groups[sellerId].items.push({
         userProductId: item.userProduct.userProductId,
+        productId: item.product.id,
         name: item.product.name,
         quantity: item.quantity,
       })

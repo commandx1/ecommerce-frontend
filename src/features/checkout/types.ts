@@ -4,6 +4,7 @@ export type ShippingRate = ShipmentRate | UberQuote
 
 export interface SellerGroupItem {
   userProductId: string
+  productId: string
   name: string
   quantity: number
 }
