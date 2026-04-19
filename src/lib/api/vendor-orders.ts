@@ -33,6 +33,19 @@ export interface VendorOrdersResponse {
   pageSize: number
 }
 
+export interface ProcessUberDeliveriesPayload {
+  orderItemIds: string[]
+}
+
+export interface ProcessUberDeliveriesResponse {
+  message: string
+  successCount: number
+  failureCount: number
+  deliveryId: string
+  shippingPrice: number
+  trackingUrl: string
+}
+
 class VendorOrdersAPI {
   async getVendorOrders(page = 0, size = 10, sortBy?: string, sortDir?: "asc" | "desc"): Promise<VendorOrdersResponse> {
     const response = await apiClient.get<VendorOrdersResponse>("/orders/seller", {
@@ -43,6 +56,11 @@ class VendorOrdersAPI {
         sortDir,
       },
     })
+    return response.data
+  }
+
+  async processUberDeliveries(payload: ProcessUberDeliveriesPayload): Promise<ProcessUberDeliveriesResponse> {
+    const response = await apiClient.post<ProcessUberDeliveriesResponse>("/orders/uber/process-deliveries", payload)
     return response.data
   }
 }
