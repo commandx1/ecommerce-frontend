@@ -19,6 +19,7 @@ export type AccountUser = {
 export type UpdateMePayload = {
   name: string
   surname: string
+  email?: string
   phoneNumber?: string
   twoFactorEnabled?: boolean
 }
@@ -31,15 +32,5 @@ export async function updateMe(accessToken: string, payload: UpdateMePayload): P
     headers: { Authorization: `Bearer ${accessToken}` },
     data: payload,
     fallbackMessage: "Failed to update profile",
-  })
-}
-
-export async function deleteMe(accessToken: string) {
-  await apiRequest.requestJson<void>({
-    client: "backend",
-    method: "DELETE",
-    url: "/users/me",
-    headers: { Authorization: `Bearer ${accessToken}` },
-    fallbackMessage: "Failed to delete account",
   })
 }
