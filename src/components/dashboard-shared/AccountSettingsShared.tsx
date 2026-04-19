@@ -1,21 +1,20 @@
 "use client"
 
-import { AlertTriangle, Fingerprint, Lock, Phone, Save, Shield, Trash2, User } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { Fingerprint, Lock, Mail, Phone, Save, Shield, User } from "lucide-react"
 import { useEffect, useId, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { showToast } from "@/components/ui/Toast"
-import { deleteMe, updateMe } from "@/lib/api/account"
+import { updateMe } from "@/lib/api/account"
 import { useAuthStore } from "@/stores/authStore"
 
 interface AccountSettingsSharedProps {
   title: string
   description: string
-  infoSidebarTitle: string
-  infoSidebarContent: string
+  infoSidebarTitle?: string
+  infoSidebarContent?: string
 }
 
 export default function AccountSettingsShared({
@@ -24,25 +23,31 @@ export default function AccountSettingsShared({
   infoSidebarTitle,
   infoSidebarContent,
 }: AccountSettingsSharedProps) {
-  const { user, setUser, clearAuth, accessToken } = useAuthStore()
-  const router = useRouter()
+  const { user, setUser, accessToken } = useAuthStore()
   const idBase = useId()
   const firstNameId = `${idBase}-first-name`
   const lastNameId = `${idBase}-last-name`
+  const emailId = `${idBase}-email`
   const phoneId = `${idBase}-phone`
   const twoFactorId = `${idBase}-two-factor`
 
   const [formData, setFormData] = useState({
     name: user?.name || "",
     surname: user?.surname || "",
+    email: user?.email || "",
     phoneNumber: user?.phoneNumber || "",
     twoFactorEnabled: user?.twoFactorEnabled || false,
   })
 
   const [isUpdating, setIsUpdating] = useState(false)
   const [isUpdating2FA, setIsUpdating2FA] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const memberSince = user?.createdDate
+    ? new Date(user.createdDate).toLocaleDateString("en-US", {
+        month: "2-digit",
+        day: "2-digit",
+        year: "numeric",
+      })
+    : "-"
 
   // Sync with store if user changes
   useEffect(() => {
@@ -50,6 +55,7 @@ export default function AccountSettingsShared({
       setFormData({
         name: user.name,
         surname: user.surname,
+        email: user.email || "",
         phoneNumber: user.phoneNumber || "",
         twoFactorEnabled: user.twoFactorEnabled || false,
       })
@@ -91,24 +97,6 @@ export default function AccountSettingsShared({
       showToast.error("Failed to update security settings.")
     } finally {
       setIsUpdating2FA(false)
-    }
-  }
-
-  const handleDeleteAccount = async () => {
-    setIsDeleting(true)
-    try {
-      if (!accessToken) {
-        throw new Error("Authentication required. Please log in again.")
-      }
-      await deleteMe(accessToken)
-
-      showToast.success("Account deleted successfully.")
-      clearAuth()
-      router.push("/")
-    } catch (error) {
-      showToast.error((error as Error).message || "Failed to delete account. Please contact support.")
-    } finally {
-      setIsDeleting(false)
     }
   }
 
@@ -158,6 +146,24 @@ export default function AccountSettingsShared({
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor={emailId} className="text-sm font-medium text-text-secondary">
+                  Email Address
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-2.5 h-5 w-5 text-text-muted" />
+                  <Input
+                    id={emailId}
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="rounded-lg border border-border-soft bg-surface py-2 pl-10 pr-4"
+                    placeholder="name@company.com"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor={phoneId} className="text-sm font-medium text-text-secondary">
                   Phone Number
                 </Label>
@@ -172,6 +178,10 @@ export default function AccountSettingsShared({
                     placeholder="5xx xxx xxxx"
                   />
                 </div>
+              </div>
+
+              <div className="rounded-lg border border-border-soft bg-surface p-3 text-sm text-text-secondary">
+                <span className="font-medium text-text-primary">Member Since:</span> {memberSince}
               </div>
 
               <div className="pt-4">
@@ -229,87 +239,16 @@ export default function AccountSettingsShared({
               </div>
             </div>
           </section>
-
-          {/* Danger Zone */}
-          <section className="overflow-hidden rounded-2xl border border-danger/20 bg-danger/10">
-            <div className="flex items-center space-x-3 border-b border-danger/20 p-6">
-              <AlertTriangle className="h-5 w-5 text-danger" />
-              <h2 className="text-xl font-semibold text-danger">Danger Zone</h2>
-            </div>
-            <div className="p-6">
-              <p className="mb-4 text-sm text-danger">
-                Once you delete your account, there is no going back. Please be certain.
-              </p>
-              {!showDeleteConfirm ? (
-                <Button
-                  type="button"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  variant="unstyled"
-                  className="flex items-center rounded-lg bg-danger px-4 py-2 text-primary-foreground transition-colors hover:opacity-90"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete Account
-                </Button>
-              ) : (
-                <div className="space-y-4 rounded-xl border border-danger/20 bg-surface-elevated p-4">
-                  <p className="text-sm font-medium text-text-primary">
-                    Are you absolutely sure you want to delete your account?
-                  </p>
-                  <div className="flex space-x-3">
-                    <Button
-                      type="button"
-                      onClick={handleDeleteAccount}
-                      disabled={isDeleting}
-                      variant="unstyled"
-                      className="rounded-lg bg-danger px-4 py-2 text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-50"
-                    >
-                      {isDeleting ? "Deleting..." : "Yes, Delete Everything"}
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={() => setShowDeleteConfirm(false)}
-                      variant="unstyled"
-                      className="rounded-lg bg-surface-muted px-4 py-2 text-text-secondary transition-colors hover:bg-surface"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </section>
         </div>
 
         {/* Info Sidebar */}
         <div className="space-y-6">
-          <div className="rounded-2xl border border-border-soft bg-surface-elevated p-6 shadow-soft">
-            <h3 className="mb-4 font-semibold text-text-primary">Account Status</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-text-muted">Email Verified</span>
-                {user?.emailConfirmed ? (
-                  <span className="font-medium text-success">Verified</span>
-                ) : (
-                  <span className="font-medium text-warning">Pending</span>
-                )}
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-text-muted">Member Since</span>
-                <span className="font-medium text-text-primary">
-                  {user?.createdDate ? new Date(user.createdDate).toLocaleDateString() : "-"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-text-muted">Account Type</span>
-                <span className="font-mono font-medium text-text-primary">{user?.roleName || "User"}</span>
-              </div>
+          {infoSidebarContent && infoSidebarTitle && (
+            <div className="rounded-2xl bg-surface-muted/70 p-6">
+              <h3 className="mb-2 font-semibold text-brand">{infoSidebarTitle}</h3>
+              <p className="text-sm leading-relaxed text-text-secondary">{infoSidebarContent}</p>
             </div>
-          </div>
-
-          <div className="rounded-2xl bg-surface-muted/70 p-6">
-            <h3 className="mb-2 font-semibold text-brand">{infoSidebarTitle}</h3>
-            <p className="text-sm leading-relaxed text-text-secondary">{infoSidebarContent}</p>
-          </div>
+          )}
         </div>
       </div>
     </div>
