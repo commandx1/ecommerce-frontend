@@ -3,14 +3,19 @@
 import { useRouter, useSearchParams } from "next/navigation"
 import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
+import { login } from "@/features/login/services/login"
 import { verifyEmail } from "@/features/verify-email/services/verifyEmail"
+import { useAuthStore } from "@/stores/authStore"
 
 const CODE_LENGTH = 6
+const DEVICE_NAME = "windows"
+const VERIFY_EMAIL_AUTLOGIN_KEY = "verify_email_autologin_credentials"
 
 export const useVerifyEmailForm = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get("email") || ""
+  const { setError } = useAuthStore()
 
   const [code, setCode] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -47,9 +52,57 @@ export const useVerifyEmailForm = () => {
     }
 
     setIsLoading(true)
+    setError(null)
 
     try {
       await verifyEmail({ email, code })
+
+      const rawCredentials =
+        typeof window !== "undefined" ? sessionStorage.getItem(VERIFY_EMAIL_AUTLOGIN_KEY) : null
+
+      if (rawCredentials) {
+        try {
+          const parsed = JSON.parse(rawCredentials) as { email?: string; password?: string }
+          if (parsed.email && parsed.password && parsed.email === email) {
+            const response = await login({
+              email: parsed.email,
+              password: parsed.password,
+              device: DEVICE_NAME,
+            })
+
+            const userData = {
+              id: response.id,
+              name: response.name,
+              surname: response.surname,
+              email: response.email,
+              phoneNumber: response.phoneNumber,
+              emailConfirmed: response.emailConfirmed,
+              phoneNumberConfirmed: response.phoneNumberConfirmed,
+              twoFactorEnabled: response.twoFactorEnabled,
+              lockoutEnd: response.lockoutEnd,
+              createdDate: response.createdDate,
+              roleName: response.roleName,
+            }
+
+            if (response.accessToken && response.refreshToken) {
+              const { setAuth } = useAuthStore.getState()
+              setAuth(userData, response.accessToken, response.refreshToken)
+            } else {
+              const { setUser } = useAuthStore.getState()
+              setUser(userData)
+            }
+
+            sessionStorage.removeItem(VERIFY_EMAIL_AUTLOGIN_KEY)
+            showToast.success("Email verified", "You are now signed in.")
+            router.refresh()
+            router.push("/")
+            return
+          }
+        } catch {
+          // Fallback to login redirect if parsing or auto-login fails
+        }
+      }
+
       showToast.success("Email verified", "Redirecting you to the login page.")
       setIsRedirecting(true)
       redirectTimeoutRef.current = setTimeout(() => {
