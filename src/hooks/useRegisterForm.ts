@@ -3,7 +3,10 @@ import { useState } from "react"
 import { z } from "zod"
 import { authAPIDirect as authAPI, type RegisterPayload } from "@/lib/api/auth-direct"
 import type { ParsedAddress } from "@/lib/utils/google-maps"
+import { normalizePhoneNumber } from "@/lib/utils/phone-number"
 import { useAuthStore } from "@/stores/authStore"
+
+const VERIFY_EMAIL_AUTLOGIN_KEY = "verify_email_autologin_credentials"
 
 const registerSchema = z
   .object({
@@ -15,7 +18,7 @@ const registerSchema = z
       .trim()
       .min(1, "Phone number is required")
       .refine((value) => /^\d{10}$/.test(value.replace(/\s/g, "")), "Please enter a valid 10-digit phone number"),
-    password: z.string().min(1, "Password is required").min(8, "Password must be at least 8 characters"),
+    password: z.string().min(1, "Password is required").min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string().min(1, "Confirm password is required"),
     businessDescribe: z.string().min(1, "Business type is required"),
     address: z.object({
@@ -66,6 +69,12 @@ const initialFormData: RegisterPayload = {
 }
 
 type ErrorMap = Record<string, string>
+
+const capitalizeWords = (input: string) =>
+  input
+    .split(" ")
+    .map((word) => (word ? word.charAt(0).toLocaleUpperCase() + word.slice(1).toLocaleLowerCase() : word))
+    .join(" ")
 
 const mapZodErrors = (errors: z.ZodIssue[]) => {
   const fieldErrors: ErrorMap = {}
@@ -132,17 +141,47 @@ export const useRegisterForm = () => {
     setError(null)
 
     try {
-      await authAPI.register(formData)
+      const fullName = `${formData.name} ${formData.surname}`.trim()
+
+      await authAPI.register({
+        ...formData,
+        address: {
+          ...formData.address,
+          city: formData.address.state,
+          fullName: fullName || formData.address.fullName,
+        },
+      })
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(
+          VERIFY_EMAIL_AUTLOGIN_KEY,
+          JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+          }),
+        )
+      }
       router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`)
     } catch (error: unknown) {
-      const err = error as { message?: string; password?: string }
+      const err = error as { message?: string; data?: unknown }
+      const errorData = err.data
+
+      if (errorData && typeof errorData === "object") {
+        const fieldError = Object.entries(errorData).find(
+          ([key, value]) => key !== "message" && typeof value === "string" && value.trim(),
+        )
+
+        if (fieldError) {
+          setErrors({ [fieldError[0]]: fieldError[1] as string })
+          return
+        }
+      }
+
       if (err.message) {
         setErrors({ submit: err.message })
-      } else if (err.password) {
-        setErrors({ password: err.password })
-      } else {
-        setErrors({ submit: "An error occurred during registration" })
+        return
       }
+
+      setErrors({ submit: "An error occurred during registration" })
     } finally {
       setIsLoading(false)
     }
@@ -150,10 +189,12 @@ export const useRegisterForm = () => {
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = event.target
+    const normalizedValue = name === "name" || name === "surname" ? capitalizeWords(value) : value
+
     setFormData((prev) => {
       const updated = {
         ...prev,
-        [name]: value,
+        [name]: normalizedValue,
       }
 
       if (name === "name" || name === "surname") {
@@ -171,12 +212,14 @@ export const useRegisterForm = () => {
   }
 
   const handlePhoneNumberChange = (value: string) => {
+    const normalizedPhoneNumber = normalizePhoneNumber(value)
+
     setFormData((prev) => ({
       ...prev,
-      phoneNumber: value,
+      phoneNumber: normalizedPhoneNumber,
       address: {
         ...prev.address,
-        phoneNumber: value,
+        phoneNumber: normalizedPhoneNumber,
       },
     }))
     clearError("phoneNumber")
@@ -209,8 +252,8 @@ export const useRegisterForm = () => {
         phoneNumber: prev.phoneNumber,
         country: parsedAddress.country,
         state: parsedAddress.state,
-        city: parsedAddress.state,
-        district: parsedAddress.city,
+        city: parsedAddress.city,
+        district: parsedAddress.district,
         postalCode: parsedAddress.postalCode,
         addressLine: parsedAddress.addressLine,
         defaultAddress: true,
