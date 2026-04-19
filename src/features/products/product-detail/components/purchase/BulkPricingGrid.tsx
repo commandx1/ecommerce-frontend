@@ -14,7 +14,7 @@ interface BulkPricingGridProps {
 const BulkPricingGrid = ({ options, activeOptionId }: BulkPricingGridProps) => {
   return (
     <div>
-      <div className="mb-3 block text-sm font-medium text-text-primary">Bulk Pricing</div>
+      <div className="mb-3 block text-sm font-medium text-text-primary">Pricing</div>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {options.map((option) => (
           <div
