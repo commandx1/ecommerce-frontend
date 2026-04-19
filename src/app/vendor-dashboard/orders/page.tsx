@@ -1,12 +1,14 @@
 "use client"
 
 import {
+  CheckCircle2,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronsUpDown,
   ChevronUp,
   ExternalLink,
+  Loader2,
   Printer,
   X,
 } from "lucide-react"
@@ -16,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { showToast } from "@/components/ui/Toast"
 import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
 import { getFullImageUrl } from "@/lib/api/products"
-import { type VendorOrder, vendorOrdersAPI } from "@/lib/api/vendor-orders"
+import { type ProcessUberDeliveriesResponse, type VendorOrder, vendorOrdersAPI } from "@/lib/api/vendor-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { getQzConnectionStatus, printShippingLabel, type QzPrintOptions } from "@/lib/qz/printLabel"
 import { useAuthStore } from "@/stores/authStore"
@@ -42,6 +44,9 @@ export default function VendorOrdersPage() {
   const [isQzReady, setIsQzReady] = useState(false)
   const [qzError, setQzError] = useState<string | null>(null)
   const [qzInfo, setQzInfo] = useState<string | null>(null)
+  const [processingOrderId, setProcessingOrderId] = useState<string | null>(null)
+  const [uberResult, setUberResult] = useState<ProcessUberDeliveriesResponse | null>(null)
+  const [uberProcessedOrderIds, setUberProcessedOrderIds] = useState<string[]>([])
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -131,6 +136,30 @@ export default function VendorOrdersPage() {
     void printShippingLabel(url, options)
   }
 
+  const handleCallUber = async (order: VendorOrder) => {
+    const orderItemIds = order.orderItems
+      .filter((item) => item.status === "WAITING_FOR_UBER_DIRECT" || item.status === "UBER_ERROR")
+      .map((item) => item.id)
+
+    if (orderItemIds.length === 0) {
+      showToast.info("No eligible items", "This order has no Uber-waiting or Uber-error items.")
+      return
+    }
+
+    try {
+      setProcessingOrderId(order.orderId)
+      const response = await vendorOrdersAPI.processUberDeliveries({ orderItemIds })
+      setUberResult(response)
+      setUberProcessedOrderIds((prev) => (prev.includes(order.orderId) ? prev : [...prev, order.orderId]))
+      showToast.success("Uber request sent", response.message || "Uber delivery has been created.")
+    } catch (error: unknown) {
+      const err = error as { message?: string }
+      showToast.error("Call Uber failed", err.message || "Uber delivery could not be created.")
+    } finally {
+      setProcessingOrderId(null)
+    }
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -213,18 +242,21 @@ export default function VendorOrdersPage() {
                 <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
                   Status
                 </th>
+                <th className="px-6 py-4 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-soft">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-text-muted">
+                  <td colSpan={8} className="px-6 py-12 text-center text-text-muted">
                     Loading orders...
                   </td>
                 </tr>
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-text-muted">
+                  <td colSpan={8} className="px-6 py-12 text-center text-text-muted">
                     No orders found.
                   </td>
                 </tr>
@@ -233,6 +265,10 @@ export default function VendorOrdersPage() {
                   const total = order.orderItems.reduce((sum, item) => sum + item.totalPrice, 0)
                   const quantity = order.orderItems.reduce((sum, item) => sum + item.quantity, 0)
                   const created = new Date(order.orderCreatedDate)
+                  const canCallUber = order.orderItems.some(
+                    (item) => item.status === "WAITING_FOR_UBER_DIRECT" || item.status === "UBER_ERROR",
+                  )
+                  const isUberProcessed = uberProcessedOrderIds.includes(order.orderId)
 
                   return (
                     <Fragment key={order.orderId}>
@@ -286,10 +322,27 @@ export default function VendorOrdersPage() {
                             {order.orderStatus}
                           </span>
                         </td>
+                        <td className="px-6 py-4 text-right text-sm">
+                          <button
+                            type="button"
+                            onClick={() => void handleCallUber(order)}
+                            disabled={!canCallUber || isUberProcessed || processingOrderId === order.orderId}
+                            className="rounded-full truncate bg-brand px-4 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
+                          >
+                            {processingOrderId === order.orderId ? (
+                              <span className="inline-flex items-center gap-1">
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                Processing...
+                              </span>
+                            ) : (
+                              "Call Uber"
+                            )}
+                          </button>
+                        </td>
                       </tr>
                       {expandedOrderId === order.orderId && (
                         <tr className="bg-surface-muted/60">
-                          <td colSpan={7} className="p-4">
+                          <td colSpan={8} className="p-4">
                             <div className="border border-border-soft rounded-xl bg-surface-elevated p-4 space-y-3 text-sm">
                               {order.orderItems.map((item) => (
                                 <div
@@ -626,6 +679,81 @@ export default function VendorOrdersPage() {
                 type="button"
                 onClick={() => setLabelModalLinks(null)}
                 className="px-4 py-2 text-sm font-medium text-text-secondary border border-border-strong rounded-lg hover:bg-surface-muted"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {uberResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="mx-4 w-full max-w-xl rounded-2xl bg-surface-elevated shadow-xl">
+            <div className="flex items-center justify-between border-b border-border-soft px-6 py-4">
+              <h2 className="text-lg font-semibold text-brand">Uber Delivery Result</h2>
+              <button
+                type="button"
+                onClick={() => setUberResult(null)}
+                className="rounded-full p-1 text-text-muted hover:bg-surface-muted hover:text-text-secondary"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4 px-6 py-5">
+              <div className="flex items-start gap-3 rounded-xl border border-success/20 bg-success/10 p-4">
+                <CheckCircle2 className="mt-0.5 h-5 w-5 text-success" />
+                <div>
+                  <div className="font-semibold text-text-primary">{uberResult.message}</div>
+                  <div className="mt-1 text-sm text-text-secondary">Uber delivery request processed successfully.</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="rounded-lg border border-border-soft bg-surface px-3 py-2.5">
+                  <div className="text-xs uppercase tracking-wide text-text-muted">Success Count</div>
+                  <div className="text-base font-semibold text-success">{uberResult.successCount}</div>
+                </div>
+                <div className="rounded-lg border border-border-soft bg-surface px-3 py-2.5">
+                  <div className="text-xs uppercase tracking-wide text-text-muted">Failure Count</div>
+                  <div className="text-base font-semibold text-warning">{uberResult.failureCount}</div>
+                </div>
+                <div className="rounded-lg border border-border-soft bg-surface px-3 py-2.5">
+                  <div className="text-xs uppercase tracking-wide text-text-muted">Delivery ID</div>
+                  <div className="break-all text-sm font-medium text-text-primary">{uberResult.deliveryId}</div>
+                </div>
+                <div className="rounded-lg border border-border-soft bg-surface px-3 py-2.5">
+                  <div className="text-xs uppercase tracking-wide text-text-muted">Shipping Price</div>
+                  <div className="text-base font-semibold text-text-primary">{formatCurrency(uberResult.shippingPrice)}</div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-border-soft bg-surface px-3 py-2.5">
+                <div className="mb-1 text-xs uppercase tracking-wide text-text-muted">Tracking URL</div>
+                <div className="break-all text-sm text-text-secondary">
+                  {uberResult.trackingUrl.length > 72
+                    ? `${uberResult.trackingUrl.slice(0, 72)}...`
+                    : uberResult.trackingUrl}
+                </div>
+                <div className="mt-3">
+                  <Link
+                    href={uberResult.trackingUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center rounded-full border border-brand/30 bg-brand/10 px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand/20"
+                  >
+                    Open Tracking
+                    <ExternalLink className="ml-1.5 h-3 w-3" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end border-t border-border-soft px-6 py-3">
+              <button
+                type="button"
+                onClick={() => setUberResult(null)}
+                className="rounded-lg border border-border-strong px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted"
               >
                 Close
               </button>
