@@ -34,7 +34,9 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
         <div className="flex items-center gap-2">
           <StarRating rating={product.rating} size="md" className="text-yellow-400" />
           <span className="font-semibold text-brand">{product.rating}</span>
-          <span className="text-text-secondary">({product.reviewCount} reviews)</span>
+          <a href="#product-reviews" className="text-text-secondary transition-colors hover:text-brand">
+            ({product.reviewCount} reviews)
+          </a>
         </div>
         <div className="hidden h-6 w-px bg-border-soft md:block" />
         <span className="text-text-secondary">SKU: {product.sku}</span>
