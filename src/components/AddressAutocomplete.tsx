@@ -33,7 +33,7 @@ export default function AddressAutocomplete({ onSelect, selectedAddress, error }
 
   useEffect(() => {
     if (selectedAddress) {
-      setQuery(selectedAddress.formattedAddress)
+      setQuery(selectedAddress.addressLine || selectedAddress.formattedAddress)
     }
   }, [selectedAddress])
 
@@ -75,7 +75,7 @@ export default function AddressAutocomplete({ onSelect, selectedAddress, error }
     try {
       const addressDetails = await getPlaceDetails(placeId)
       onSelect(addressDetails)
-      setQuery(description)
+      setQuery(addressDetails.addressLine || description)
       setShowSuggestions(false)
     } catch (err) {
       console.error("Error fetching place details:", err)
@@ -101,7 +101,6 @@ export default function AddressAutocomplete({ onSelect, selectedAddress, error }
         }}
         className={`w-full px-4 py-3 border ${error ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent`}
         placeholder="Search address..."
-        disabled={isLoading}
       />
       {isLoading && (
         <div className="absolute right-3 top-10 text-gray-400">
