@@ -1,6 +1,7 @@
 import type { ChangeEvent } from "react"
 import { TextField } from "@/components/form/TextField"
 import type { RegisterFormData, RegisterFormErrors } from "@/features/register/types"
+import { formatPhoneNumber } from "@/lib/utils/phone-number"
 
 interface PersonalInfoFieldsProps {
   formData: RegisterFormData
@@ -58,7 +59,7 @@ export default function PersonalInfoFields({
         name="phoneNumber"
         type="tel"
         required
-        value={formData.phoneNumber}
+        value={formatPhoneNumber(formData.phoneNumber)}
         onChange={(event) => onPhoneNumberChange(event.target.value)}
         placeholder="(555) 123-4567"
         error={errors.phoneNumber}
