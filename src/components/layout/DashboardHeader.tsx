@@ -1,7 +1,6 @@
 "use client"
 
-import { LogOut } from "lucide-react"
-import { ShoppingCart } from "lucide-react"
+import { LogOut, ShoppingCart } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useId } from "react"

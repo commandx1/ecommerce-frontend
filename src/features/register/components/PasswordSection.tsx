@@ -1,5 +1,5 @@
-import type { ChangeEvent } from "react"
 import { Check, Circle } from "lucide-react"
+import type { ChangeEvent } from "react"
 import zxcvbn from "zxcvbn"
 import { PasswordField } from "@/components/form/PasswordField"
 import type { RegisterFormErrors } from "@/features/register/types"

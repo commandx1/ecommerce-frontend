@@ -6,10 +6,7 @@ interface BillingAgreementsSectionProps {
   setTermsAgreed: (value: boolean) => void
 }
 
-export default function BillingAgreementsSection({
-  termsAgreed,
-  setTermsAgreed,
-}: BillingAgreementsSectionProps) {
+export default function BillingAgreementsSection({ termsAgreed, setTermsAgreed }: BillingAgreementsSectionProps) {
   const id = useId()
 
   return (

@@ -724,7 +724,9 @@ export default function VendorOrdersPage() {
                 </div>
                 <div className="rounded-lg border border-border-soft bg-surface px-3 py-2.5">
                   <div className="text-xs uppercase tracking-wide text-text-muted">Shipping Price</div>
-                  <div className="text-base font-semibold text-text-primary">{formatCurrency(uberResult.shippingPrice)}</div>
+                  <div className="text-base font-semibold text-text-primary">
+                    {formatCurrency(uberResult.shippingPrice)}
+                  </div>
                 </div>
               </div>
 

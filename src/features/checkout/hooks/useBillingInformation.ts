@@ -4,9 +4,7 @@ import { useCallback, useMemo, useState } from "react"
 import type { PaymentMethodOption } from "@/features/checkout/types"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
-const PAYMENT_METHOD_OPTIONS: PaymentMethodOption[] = [
-  { type: "card", title: "Credit/Debit Card", icon: "card" },
-]
+const PAYMENT_METHOD_OPTIONS: PaymentMethodOption[] = [{ type: "card", title: "Credit/Debit Card", icon: "card" }]
 
 interface UseBillingInformationResult {
   paymentOptions: PaymentMethodOption[]

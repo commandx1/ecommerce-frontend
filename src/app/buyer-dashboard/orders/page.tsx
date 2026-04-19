@@ -94,7 +94,9 @@ function resolvePaymentSummary(order: BuyerOrder): { title: string; detail: stri
   if (order.cardBrand && order.cardLast4) {
     const brand = order.cardBrand.toUpperCase()
     const expiration =
-      order.cardExpMonth && order.cardExpYear ? `Exp ${String(order.cardExpMonth).padStart(2, "0")}/${order.cardExpYear}` : ""
+      order.cardExpMonth && order.cardExpYear
+        ? `Exp ${String(order.cardExpMonth).padStart(2, "0")}/${order.cardExpYear}`
+        : ""
     return {
       title: `${brand} •••• ${order.cardLast4}`,
       detail: [order.cardName || "", expiration].filter(Boolean).join(" • ") || "Card payment",
@@ -284,16 +286,22 @@ export default function BuyerOrdersPage() {
                 </tr>
               ) : (
                 filteredOrders.map((order) => {
-                  const shippingAddress = getAddressSummary(order.shipmentAddress, order.addressTitle, order.addressFormattedAddress)
-                  const billingAddress = getAddressSummary(order.billingAddress, order.addressTitle, order.addressFormattedAddress)
+                  const shippingAddress = getAddressSummary(
+                    order.shipmentAddress,
+                    order.addressTitle,
+                    order.addressFormattedAddress,
+                  )
+                  const billingAddress = getAddressSummary(
+                    order.billingAddress,
+                    order.addressTitle,
+                    order.addressFormattedAddress,
+                  )
                   const payment = resolvePaymentSummary(order)
 
                   return (
                     <Fragment key={order.orderId}>
                       <tr className="transition-colors hover:bg-surface-muted/55">
-                        <td className="px-6 py-4 text-sm text-text-secondary">
-                          {formatDateTime(order.createdDate)}
-                        </td>
+                        <td className="px-6 py-4 text-sm text-text-secondary">{formatDateTime(order.createdDate)}</td>
                         <td className="px-6 py-4 text-sm text-text-secondary">
                           <div className="font-medium">{shippingAddress.title}</div>
                           <div className="max-w-xs truncate text-xs text-text-muted" title={shippingAddress.line}>
@@ -348,20 +356,36 @@ export default function BuyerOrdersPage() {
                             <div className="space-y-5 rounded-2xl border border-border-soft bg-surface-elevated p-5 text-sm shadow-soft md:p-6">
                               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                                 <div className="rounded-xl border border-border-soft bg-surface-muted/55 p-4">
-                                  <div className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Order Status</div>
-                                  <div className="mt-1 text-sm font-semibold text-text-primary">{order.orderStatus}</div>
+                                  <div className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                                    Order Status
+                                  </div>
+                                  <div className="mt-1 text-sm font-semibold text-text-primary">
+                                    {order.orderStatus}
+                                  </div>
                                 </div>
                                 <div className="rounded-xl border border-border-soft bg-surface-muted/55 p-4">
-                                  <div className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Placed On</div>
-                                  <div className="mt-1 text-sm font-semibold text-text-primary">{formatDateTime(order.createdDate)}</div>
+                                  <div className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                                    Placed On
+                                  </div>
+                                  <div className="mt-1 text-sm font-semibold text-text-primary">
+                                    {formatDateTime(order.createdDate)}
+                                  </div>
                                 </div>
                                 <div className="rounded-xl border border-border-soft bg-surface-muted/55 p-4">
-                                  <div className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Shipping Address</div>
-                                  <div className="mt-1 text-sm leading-relaxed text-text-primary">{shippingAddress.line}</div>
+                                  <div className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                                    Shipping Address
+                                  </div>
+                                  <div className="mt-1 text-sm leading-relaxed text-text-primary">
+                                    {shippingAddress.line}
+                                  </div>
                                 </div>
                                 <div className="rounded-xl border border-border-soft bg-surface-muted/55 p-4">
-                                  <div className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Billing Address</div>
-                                  <div className="mt-1 text-sm leading-relaxed text-text-primary">{billingAddress.line}</div>
+                                  <div className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                                    Billing Address
+                                  </div>
+                                  <div className="mt-1 text-sm leading-relaxed text-text-primary">
+                                    {billingAddress.line}
+                                  </div>
                                 </div>
                               </div>
 
@@ -374,12 +398,18 @@ export default function BuyerOrdersPage() {
                                   const trackingLinks = resolveTrackingLinks(item)
 
                                   return (
-                                    <article key={item.id} className="rounded-xl border border-border-soft bg-surface p-4 md:p-5">
+                                    <article
+                                      key={item.id}
+                                      className="rounded-xl border border-border-soft bg-surface p-4 md:p-5"
+                                    >
                                       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                                         <div className="flex min-w-0 items-start gap-4">
                                           <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-border-soft bg-surface-muted">
                                             <ProductImageWithFallback
-                                              src={getFullImageUrl(item.productCoverPhotoPath) || "/dentypro-product-placeholder.png"}
+                                              src={
+                                                getFullImageUrl(item.productCoverPhotoPath) ||
+                                                "/dentypro-product-placeholder.png"
+                                              }
                                               alt={item.productName}
                                               width={64}
                                               height={64}
@@ -408,14 +438,20 @@ export default function BuyerOrdersPage() {
 
                                         <div className="flex flex-wrap items-center gap-2.5 text-xs">
                                           <span className="rounded-full border border-border-soft bg-surface-muted px-3 py-1.5 text-text-secondary">
-                                            Qty: <span className="font-semibold text-text-primary">{item.quantity}</span>
+                                            Qty:{" "}
+                                            <span className="font-semibold text-text-primary">{item.quantity}</span>
                                           </span>
                                           <span className="rounded-full border border-border-soft bg-surface-muted px-3 py-1.5 text-text-secondary">
-                                            Price: <span className="font-semibold text-text-primary">{formatCurrency(item.price)}</span>
+                                            Price:{" "}
+                                            <span className="font-semibold text-text-primary">
+                                              {formatCurrency(item.price)}
+                                            </span>
                                           </span>
                                           <span className="rounded-full border border-border-soft bg-surface-muted px-3 py-1.5 text-text-secondary">
                                             Updated:{" "}
-                                            <span className="font-semibold text-text-primary">{formatDateTime(item.updatedDate)}</span>
+                                            <span className="font-semibold text-text-primary">
+                                              {formatDateTime(item.updatedDate)}
+                                            </span>
                                           </span>
                                           <span
                                             className={`rounded-full px-3 py-1.5 text-[11px] font-semibold ${
@@ -437,7 +473,8 @@ export default function BuyerOrdersPage() {
                                             onClick={() => setTrackingModalLinks(trackingLinks)}
                                             className="inline-flex items-center rounded-full bg-success/15 px-3 py-1.5 text-[11px] font-medium text-success transition-colors hover:bg-success/25"
                                           >
-                                            View {trackingLinks.length} tracking link{trackingLinks.length > 1 ? "s" : ""}
+                                            View {trackingLinks.length} tracking link
+                                            {trackingLinks.length > 1 ? "s" : ""}
                                             <ExternalLink className="ml-2 h-3 w-3" />
                                           </Button>
                                         ) : (
@@ -447,7 +484,9 @@ export default function BuyerOrdersPage() {
                                         <Button
                                           type="button"
                                           variant="unstyled"
-                                          onClick={() => handleReorder(item.userProductId, item.quantity, item.productName)}
+                                          onClick={() =>
+                                            handleReorder(item.userProductId, item.quantity, item.productName)
+                                          }
                                           disabled={reorderingItemId === item.userProductId}
                                           className="inline-flex items-center justify-center gap-2 rounded-full bg-brand px-4 py-2 text-[11px] font-semibold text-primary-foreground transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
                                         >
@@ -574,7 +613,9 @@ export default function BuyerOrdersPage() {
                     {link.trackingUrl.length > 50 ? `${link.trackingUrl.substring(0, 50)}...` : link.trackingUrl}
                     {(link.status || link.updatedDate) && (
                       <div className="mt-1 text-[11px] text-text-muted">
-                        {[link.status, formatDateTime(link.updatedDate)].filter((part) => part && part !== "-").join(" • ")}
+                        {[link.status, formatDateTime(link.updatedDate)]
+                          .filter((part) => part && part !== "-")
+                          .join(" • ")}
                       </div>
                     )}
                   </div>

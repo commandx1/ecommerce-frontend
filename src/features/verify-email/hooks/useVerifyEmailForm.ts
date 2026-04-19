@@ -57,8 +57,7 @@ export const useVerifyEmailForm = () => {
     try {
       await verifyEmail({ email, code })
 
-      const rawCredentials =
-        typeof window !== "undefined" ? sessionStorage.getItem(VERIFY_EMAIL_AUTLOGIN_KEY) : null
+      const rawCredentials = typeof window !== "undefined" ? sessionStorage.getItem(VERIFY_EMAIL_AUTLOGIN_KEY) : null
 
       if (rawCredentials) {
         try {

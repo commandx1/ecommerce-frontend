@@ -101,7 +101,12 @@ export const buildSuppliers = (userProducts: UserProduct[], bestPriceVendorUserP
         stock: up.stock > 0 ? "In Stock" : "Out of Stock",
         stockColor: up.stock > 0 ? "green" : "gray",
         stockCount: up.stock || 0,
-        shipping: typeof up.shipmentFee === "number" ? (up.shipmentFee <= 0 ? "Free" : `$${up.shipmentFee.toFixed(2)}`) : "Free",
+        shipping:
+          typeof up.shipmentFee === "number"
+            ? up.shipmentFee <= 0
+              ? "Free"
+              : `$${up.shipmentFee.toFixed(2)}`
+            : "Free",
         shippingNote: "Standard shipping",
         distance: up.vendorDistance,
         distanceTime: up.vendorDistanceTime,
