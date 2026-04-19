@@ -416,12 +416,12 @@ export default function BuyerOrdersPage() {
                                               className="h-16 w-16 object-cover"
                                             />
                                           </div>
-                                          <div className="max-w-[30rem] space-y-1.5">
-                                            <div className="break-words text-sm font-semibold leading-5 whitespace-normal text-text-primary">
+                                          <div style={{ maxWidth: '30rem' }} className="space-y-1.5">
+                                            <div className="wrap-break-word text-sm font-semibold leading-5 whitespace-normal text-text-primary">
                                               {productHref ? (
                                                 <Link
                                                   href={productHref}
-                                                  className="break-words whitespace-normal transition-colors hover:text-brand"
+                                                  className="wrap-break-word whitespace-normal transition-colors hover:text-brand"
                                                   title="Open product details"
                                                 >
                                                   {item.productName}
