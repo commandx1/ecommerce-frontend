@@ -55,11 +55,11 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
   })
 
   return (
-    <section className="bg-surface-muted/45 py-12">
+    <section id="product-reviews" className="bg-surface-muted/45 py-12">
       <PageSectionContainer as="div">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h2 className="mb-2 text-3xl font-semibold text-text-primary">Customer Reviews</h2>
+            <h2 className="mb-2 text-3xl font-semibold text-text-primary">Product Reviews</h2>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <StarRating rating={averageRating} size="lg" className="text-yellow-400" />
