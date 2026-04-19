@@ -1,5 +1,6 @@
 import { useId } from "react"
 import AddressAutocomplete from "@/components/AddressAutocomplete"
+import { SelectField } from "@/components/form/SelectField"
 import { TextField } from "@/components/form/TextField"
 import type { ParsedAddress, RegisterAddress, RegisterFormErrors } from "@/features/register/types"
 
@@ -41,19 +42,22 @@ export default function AddressSection({
       <AddressAutocomplete onSelect={onAddressSelect} selectedAddress={selectedAddress} error={errors.address} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        <TextField
+        <SelectField
           id={`${idBase}-addressTitle`}
           label="Address Title"
+          name="addressTitle"
           value={address.title}
           onChange={(event) => onAddressFieldChange("title", event.target.value)}
-          placeholder="Home, Office, etc."
-        />
+        >
+          <option value="Home">Home</option>
+          <option value="Business">Business</option>
+        </SelectField>
         <TextField
-          id={`${idBase}-addressFullName`}
-          label="Full Name"
-          value={address.fullName}
-          onChange={(event) => onAddressFieldChange("fullName", event.target.value)}
-          placeholder="Full name for delivery"
+          id={`${idBase}-addressCity`}
+          label="City"
+          value={address.city}
+          disabled
+          inputClassName="cursor-not-allowed bg-surface-muted text-text-muted"
         />
       </div>
 
@@ -66,30 +70,13 @@ export default function AddressSection({
           inputClassName="cursor-not-allowed bg-surface-muted text-text-muted"
         />
         <TextField
-          id={`${idBase}-addressCity`}
-          label="City"
-          value={address.city}
-          disabled
-          inputClassName="cursor-not-allowed bg-surface-muted text-text-muted"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        <TextField
           id={`${idBase}-addressPostalCode`}
           label="Zip Code"
           required
           value={address.postalCode}
-          onChange={(event) => onPostalCodeChange(event.target.value)}
-          placeholder="Enter zip code"
-          error={errors.addressPostalCode}
-        />
-        <TextField
-          id={`${idBase}-addressLine`}
-          label="Address Line"
-          value={address.addressLine}
           disabled
           inputClassName="cursor-not-allowed bg-surface-muted text-text-muted"
+          error={errors.addressPostalCode}
         />
       </div>
     </div>
