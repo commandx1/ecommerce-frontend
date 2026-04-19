@@ -206,8 +206,13 @@
   }
 
   ::selection {
-    background: color-mix(in oklab, var(--brand) 22%, white);
-    color: var(--text-primary);
+    background: var(--primary);
+    color: #fff;
+  }
+
+  ::-moz-selection {
+    background: var(--primary);
+    color: #fff;
   }
 }
 
