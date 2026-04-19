@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Fraunces, Manrope } from "next/font/google"
+import { Manrope, Sora } from "next/font/google"
 import { cookies } from "next/headers"
 import { Toaster } from "sonner"
 import "./globals.css"
@@ -13,7 +13,7 @@ const manrope = Manrope({
   subsets: ["latin"],
 })
 
-const fraunces = Fraunces({
+const sora = Sora({
   variable: "--font-denty-display",
   subsets: ["latin"],
 })
@@ -50,7 +50,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${manrope.variable} ${fraunces.variable} font-sans antialiased`} suppressHydrationWarning>
+      <body className={`${manrope.variable} ${sora.variable} font-sans antialiased`} suppressHydrationWarning>
         <ThemeProvider>
           <AuthHydration />
           <ConditionalNavbar initialAuthState={initialState} />
