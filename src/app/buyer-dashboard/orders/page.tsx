@@ -44,7 +44,9 @@ function resolveOrderItemProductId(item: BuyerOrderItem): string | null {
 
 function formatDateTime(value?: string | null): string {
   if (!value) return "-"
-  const parsed = new Date(value)
+  const hasTimeZoneInfo = /[zZ]|[+-]\d{2}:\d{2}$/.test(value)
+  const normalizedValue = hasTimeZoneInfo ? value : `${value.replace(" ", "T")}Z`
+  const parsed = new Date(normalizedValue)
   if (Number.isNaN(parsed.getTime())) return "-"
 
   return parsed.toLocaleString(undefined, {
@@ -166,7 +168,6 @@ export default function BuyerOrdersPage() {
     try {
       await addToCart(userProductId, quantity)
       showToast.success("Added to cart", `${productName} was added to your cart.`)
-      router.push("/cart")
     } catch (error: unknown) {
       if (isAuthHandledError(error)) {
         return
@@ -244,7 +245,7 @@ export default function BuyerOrdersPage() {
                     className="inline-flex items-center gap-1 transition-colors hover:text-brand"
                     aria-label={`Sort by date ${dateSortDir === "desc" ? "ascending" : "descending"}`}
                   >
-                    Placed On
+                    Order Date
                     {dateSortDir === "desc" ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
                   </Button>
                 </th>
