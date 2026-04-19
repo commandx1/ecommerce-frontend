@@ -1,6 +1,7 @@
-import { Check, MapPin, Plus } from "lucide-react"
+import { Check, MapPin, Phone, Plus } from "lucide-react"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import type { Address } from "@/lib/api/address"
+import { formatPhoneNumber } from "@/lib/utils/phone-number"
 
 interface ShippingAddressSectionProps {
   addresses: Address[]
@@ -78,10 +79,15 @@ export default function ShippingAddressSection({
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="mb-1 font-bold text-text-primary">{address.title}</h3>
-                  <p className="text-sm font-medium text-text-secondary">{address.fullName}</p>
-                  <div className="mt-2 space-y-1 text-sm text-text-muted">
-                    <p>{address.formattedAddress || address.addressLine}</p>
-                    <p>{address.phoneNumber}</p>
+                  <div className="mt-3 space-y-2.5">
+                    <div className="flex items-start gap-2 text-sm text-text-primary">
+                      <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-text-muted" />
+                      <p className="leading-relaxed">{address.formattedAddress || address.addressLine}</p>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm font-medium text-text-primary">
+                      <Phone className="h-4 w-4 shrink-0 text-text-muted" />
+                      <p>{address.phoneNumber ? formatPhoneNumber(address.phoneNumber) : "-"}</p>
+                    </div>
                   </div>
                 </div>
                 {selectedAddressId === address.id ? (
