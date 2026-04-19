@@ -1,4 +1,3 @@
-import ProductDetailsTabs from "@/features/products/product-detail/components/ProductDetailsTabs"
 import ProductQuestions from "@/features/products/product-detail/components/ProductQuestions"
 import ProductReviews from "@/features/products/product-detail/components/ProductReviews"
 import type { ProductDetailPageViewModel } from "../server/build-product-detail-view-model"
@@ -10,7 +9,6 @@ interface ProductDetailCommunitySectionProps {
 export default function ProductDetailCommunitySection({ viewModel }: ProductDetailCommunitySectionProps) {
   return (
     <>
-      <ProductDetailsTabs description={viewModel.description} />
       <ProductReviews productId={viewModel.productId} initialReviews={viewModel.reviews} />
       <ProductQuestions
         productId={viewModel.productId}
