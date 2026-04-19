@@ -44,8 +44,6 @@ interface CheckoutStore {
   saveCard: boolean
   cardName: string
   termsAgreed: boolean
-  marketingAgreed: boolean
-  hipaaAgreed: boolean
   selectedShippingEtaText: string
   selectedShippingCost: number
   setStep: (step: CheckoutStep) => void
@@ -62,8 +60,6 @@ interface CheckoutStore {
   setSaveCard: (save: boolean) => void
   setCardName: (name: string) => void
   setTermsAgreed: (agreed: boolean) => void
-  setMarketingAgreed: (agreed: boolean) => void
-  setHipaaAgreed: (agreed: boolean) => void
   setSelectedShippingEtaText: (etaText: string) => void
   setSelectedShippingCost: (cost: number) => void
   setOrderPayload: (payload: PlaceOrderPayload) => void
@@ -112,8 +108,6 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
   saveCard: false,
   cardName: "",
   termsAgreed: false,
-  marketingAgreed: false,
-  hipaaAgreed: false,
   selectedShippingEtaText: "",
   selectedShippingCost: 0,
   setStep: (step) => set({ currentStep: step }),
@@ -137,8 +131,6 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
   setSaveCard: (save) => set({ saveCard: save }),
   setCardName: (name) => set({ cardName: name }),
   setTermsAgreed: (agreed) => set({ termsAgreed: agreed }),
-  setMarketingAgreed: (agreed) => set({ marketingAgreed: agreed }),
-  setHipaaAgreed: (agreed) => set({ hipaaAgreed: agreed }),
   setSelectedShippingEtaText: (etaText) => set({ selectedShippingEtaText: etaText }),
   setSelectedShippingCost: (cost) => set({ selectedShippingCost: cost }),
   setOrderPayload: (payload) => set({ orderPayload: payload }),
@@ -156,8 +148,6 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
       saveCard: false,
       cardName: "",
       termsAgreed: false,
-      marketingAgreed: false,
-      hipaaAgreed: false,
       selectedShippingEtaText: "Express Delivery - 2-3 business days",
       selectedShippingCost: 0,
       orderPayload: null,
