@@ -33,7 +33,6 @@ const SupplierComparison = ({
         description="Multiple verified suppliers offer this product. Compare pricing, shipping, and terms to find the best deal."
         className="mb-8"
         descriptionClassName="mt-4"
-        kicker="Technical comparison"
         variant="technical"
       />
 
