@@ -298,11 +298,6 @@ export default function VendorShipmentRates({
                       <span className="truncate text-xs text-text-muted">{rate.durationTerms}</span>
                       <span className="text-xs font-medium text-success">Est. {rate.estimatedDays} days</span>
                     </div>
-                    {usesDefaultShipmentFee ? (
-                      <div className="mt-1 text-[11px] font-medium text-brand">
-                        Standart gonderim ucreti uygulandi: {formatShippingAmount(defaultShipmentFee)}
-                      </div>
-                    ) : null}
                     {isGreatDeal && discountAmount > 0 ? (
                       <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success">
                         Great deal: {formatCurrency(discountAmount)} shipping discount
