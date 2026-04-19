@@ -1,12 +1,14 @@
 "use client"
 
 import { LogOut } from "lucide-react"
+import { ShoppingCart } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useId } from "react"
+import { useEffect, useId } from "react"
 import ThemeToggle from "@/components/theme/ThemeToggle"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
+import { useCartStore } from "@/stores/cartStore"
 import AccountMenu from "./AccountMenu"
 import Logo from "./Logo"
 
@@ -21,19 +23,28 @@ interface DashboardHeaderProps {
   navItems: DashboardHeaderNavItem[]
   accountFallbackName?: string
   accountMenuClassName?: string
+  showCart?: boolean
 }
 
 export default function DashboardHeader({
   navItems,
   accountFallbackName = "Account",
   accountMenuClassName,
+  showCart = false,
 }: DashboardHeaderProps) {
   const headerId = useId()
   const pathname = usePathname()
   const router = useRouter()
   const { user, logout } = useAuthStore()
+  const cartCount = useCartStore((state) => state.cartCount)
+  const fetchCart = useCartStore((state) => state.fetchCart)
 
   const displayName = user ? `${user.name} ${user.surname}`.trim() || user.email : accountFallbackName
+
+  useEffect(() => {
+    if (!showCart || !user) return
+    void fetchCart()
+  }, [showCart, user, fetchCart])
 
   const handleLogout = async () => {
     await logout()
@@ -79,6 +90,20 @@ export default function DashboardHeader({
           </div>
 
           <div className="flex items-center gap-3">
+            {showCart ? (
+              <Link
+                href="/cart"
+                className="relative flex items-center gap-2 rounded-full border border-border-soft bg-surface px-3 py-2 text-sm text-text-secondary shadow-soft transition-colors hover:text-brand"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                <span className="font-semibold">Cart</span>
+                {cartCount > 0 ? (
+                  <span className="absolute -top-2 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent-strong px-1 text-[10px] font-bold text-accent-foreground">
+                    {cartCount}
+                  </span>
+                ) : null}
+              </Link>
+            ) : null}
             <ThemeToggle />
             <AccountMenu
               className={accountMenuClassName}
