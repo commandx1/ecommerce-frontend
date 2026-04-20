@@ -91,7 +91,7 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
             )}
             {selectedSupplier.distanceTime && (
               <div className="flex items-center gap-2">
-                <span className="text-text-secondary">Delivery:</span>
+                <span className="text-text-secondary">Estimated Time:</span>
                 <span className="font-medium text-brand">{selectedSupplier.distanceTime}</span>
               </div>
             )}
