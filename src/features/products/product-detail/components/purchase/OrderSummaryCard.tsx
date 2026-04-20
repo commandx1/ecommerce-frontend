@@ -9,7 +9,7 @@ interface OrderSummaryCardProps {
   quantity: number
   unitPrice: number
   productTotal: number
-  warrantyPrice: number
+  warrantyPrice?: number
   shippingPrice: number
   subtotal: number
   tax: number
@@ -21,7 +21,7 @@ const OrderSummaryCard = ({
   quantity,
   unitPrice,
   productTotal,
-  warrantyPrice,
+  //warrantyPrice,
   shippingPrice,
   subtotal,
   tax,
@@ -44,10 +44,10 @@ const OrderSummaryCard = ({
             <span className="font-bold text-brand">{formatCurrency(productTotal)}</span>
           </div>
         </div>
-        <div className="flex justify-between">
+        {/* <div className="flex justify-between">
           <span className="text-text-secondary">Extended Warranty</span>
           <span className="font-semibold">{formatCurrency(warrantyPrice)}</span>
-        </div>
+        </div> */}
         <div className="flex justify-between">
           <span className="text-text-secondary">Shipping</span>
           <span className="font-semibold text-success">
