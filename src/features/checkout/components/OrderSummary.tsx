@@ -38,7 +38,7 @@ export default function OrderSummary() {
       />
 
       <OrderSummaryTotals
-        itemCount={items.length}
+        itemCount={items.reduce((totalQuantity, item) => totalQuantity + item.quantity, 0)}
         subtotal={subtotal}
         shipping={shipping}
         total={total}

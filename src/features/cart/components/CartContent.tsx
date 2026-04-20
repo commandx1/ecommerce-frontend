@@ -58,7 +58,7 @@ export default function CartContent({
             blockingItemsCount={blockingItemsCount}
             hasBlockingItems={hasBlockingItems}
             isCheckoutDisabled={items.length === 0}
-            itemsCount={items.length}
+            itemsCount={items.reduce((totalQuantity, item) => totalQuantity + item.quantity, 0)}
             onCheckout={onCheckout}
             totals={totals}
           />
