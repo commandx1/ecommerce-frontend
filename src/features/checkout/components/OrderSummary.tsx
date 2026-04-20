@@ -10,8 +10,17 @@ import { useOrderSummary } from "@/features/checkout/hooks/useOrderSummary"
 
 export default function OrderSummary() {
   const router = useRouter()
-  const { currentStep, items, selectedShippingEtaText, shipping, shippingAddress, subtotal, total, volumeDiscount } =
-    useOrderSummary()
+  const {
+    currentStep,
+    items,
+    selectedShippingEtaText,
+    selectedVendorShippingMethods,
+    shipping,
+    shippingAddress,
+    subtotal,
+    total,
+    volumeDiscount,
+  } = useOrderSummary()
 
   if (currentStep === 5) return null
 
@@ -33,6 +42,7 @@ export default function OrderSummary() {
       <OrderSummaryShippingInfo
         currentStep={currentStep}
         etaText={selectedShippingEtaText}
+        vendorShippingMethods={selectedVendorShippingMethods}
         shippingAddress={shippingAddress}
         onChangeAddress={() => router.push("/checkout")}
       />

@@ -38,8 +38,14 @@ interface UseShippingDetailsResult {
 
 export function useShippingDetails(): UseShippingDetailsResult {
   const router = useRouter()
-  const { updateShippingAddress, nextStep, setOrderPayload, setSelectedShippingEtaText, setSelectedShippingCost } =
-    useCheckoutStore()
+  const {
+    updateShippingAddress,
+    nextStep,
+    setOrderPayload,
+    setSelectedShippingEtaText,
+    setSelectedShippingCost,
+    setSelectedVendorShippingMethods,
+  } = useCheckoutStore()
   const { items, cartId } = useCartStore()
   const { user } = useAuthStore()
 
@@ -127,8 +133,15 @@ export function useShippingDetails(): UseShippingDetailsResult {
 
       // `setSelectedRates` updater timing'i ile senkron `didChange` bayrağı güvenilir değil; ETA her seçimde güncellenmeli.
       setSelectedShippingEtaText(etaText)
+      setSelectedVendorShippingMethods((prev) => ({
+        ...prev,
+        [vendorId]: {
+          sellerName: sellerGroups[vendorId]?.name || "Seller",
+          methodText: etaText,
+        },
+      }))
     },
-    [setSelectedShippingEtaText],
+    [sellerGroups, setSelectedShippingEtaText, setSelectedVendorShippingMethods],
   )
 
   useEffect(() => {

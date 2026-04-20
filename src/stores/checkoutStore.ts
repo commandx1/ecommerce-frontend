@@ -18,6 +18,11 @@ export interface PaymentMethod {
   type: "card" | "net30" | "wire" | "financing"
 }
 
+export interface VendorShippingSelection {
+  sellerName: string
+  methodText: string
+}
+
 interface CheckoutStore {
   currentStep: CheckoutStep
   shippingAddress: ShippingAddress
@@ -35,6 +40,7 @@ interface CheckoutStore {
   paymentMethodSummary: string
   termsAgreed: boolean
   selectedShippingEtaText: string
+  selectedVendorShippingMethods: Record<string, VendorShippingSelection>
   selectedShippingCost: number
   setStep: (step: CheckoutStep) => void
   nextStep: () => void
@@ -52,6 +58,11 @@ interface CheckoutStore {
   setPaymentMethodSummary: (summary: string) => void
   setTermsAgreed: (agreed: boolean) => void
   setSelectedShippingEtaText: (etaText: string) => void
+  setSelectedVendorShippingMethods: (
+    methods:
+      | Record<string, VendorShippingSelection>
+      | ((prev: Record<string, VendorShippingSelection>) => Record<string, VendorShippingSelection>),
+  ) => void
   setSelectedShippingCost: (cost: number) => void
   setOrderPayload: (payload: PlaceOrderPayload) => void
   setOrderResult: (result: PlaceOrderResponse) => void
@@ -90,6 +101,7 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
   paymentMethodSummary: "",
   termsAgreed: false,
   selectedShippingEtaText: "",
+  selectedVendorShippingMethods: {},
   selectedShippingCost: 0,
   setStep: (step) => set({ currentStep: step }),
   nextStep: () => set((state) => ({ currentStep: Math.min(5, state.currentStep + 1) as CheckoutStep })),
@@ -107,6 +119,11 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
   setPaymentMethodSummary: (summary) => set({ paymentMethodSummary: summary }),
   setTermsAgreed: (agreed) => set({ termsAgreed: agreed }),
   setSelectedShippingEtaText: (etaText) => set({ selectedShippingEtaText: etaText }),
+  setSelectedVendorShippingMethods: (methods) =>
+    set((state) => ({
+      selectedVendorShippingMethods:
+        typeof methods === "function" ? methods(state.selectedVendorShippingMethods) : methods,
+    })),
   setSelectedShippingCost: (cost) => set({ selectedShippingCost: cost }),
   setOrderPayload: (payload) => set({ orderPayload: payload }),
   setOrderResult: (result) => set({ orderResult: result }),
@@ -126,6 +143,7 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
       paymentMethodSummary: "",
       termsAgreed: false,
       selectedShippingEtaText: "Express Delivery - 2-3 business days",
+      selectedVendorShippingMethods: {},
       selectedShippingCost: 0,
       orderPayload: null,
       orderResult: null,

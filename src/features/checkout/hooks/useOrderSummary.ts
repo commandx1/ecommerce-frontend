@@ -7,6 +7,7 @@ import { useCheckoutStore } from "@/stores/checkoutStore"
 interface UseOrderSummaryResult {
   currentStep: number
   selectedShippingEtaText: string
+  selectedVendorShippingMethods: ReturnType<typeof useCheckoutStore.getState>["selectedVendorShippingMethods"]
   shippingAddress: ReturnType<typeof useCheckoutStore.getState>["shippingAddress"]
   items: ReturnType<typeof useCartStore.getState>["items"]
   subtotal: number
@@ -17,7 +18,8 @@ interface UseOrderSummaryResult {
 
 export function useOrderSummary(): UseOrderSummaryResult {
   const { items } = useCartStore()
-  const { shippingAddress, currentStep, selectedShippingEtaText, selectedShippingCost } = useCheckoutStore()
+  const { shippingAddress, currentStep, selectedShippingEtaText, selectedVendorShippingMethods, selectedShippingCost } =
+    useCheckoutStore()
 
   const subtotal = useMemo(() => {
     return items.reduce((sum, item) => sum + item.userProduct.price * item.quantity, 0)
@@ -30,6 +32,7 @@ export function useOrderSummary(): UseOrderSummaryResult {
   return {
     currentStep,
     selectedShippingEtaText,
+    selectedVendorShippingMethods,
     shippingAddress,
     items,
     subtotal,
