@@ -56,7 +56,7 @@ export function useShippingDetails(): UseShippingDetailsResult {
         lastName: address.fullName.split(" ").slice(1).join(" ") || "",
         street: address.addressLine,
         city: address.city,
-        state: "CA",
+        state: address.state,
         zipCode: address.postalCode,
         phone: address.phoneNumber,
         company: address.title,
