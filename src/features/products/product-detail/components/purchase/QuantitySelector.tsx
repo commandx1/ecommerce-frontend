@@ -36,12 +36,9 @@ const QuantitySelector = ({
           </button>
           <Input
             id={inputId}
-            type="number"
             value={quantity}
-            min={1}
-            max={stockCount || 1}
-            onChange={(event) => onQuantityChange(Number.parseInt(event.target.value, 10) || 1)}
-            className="h-10 w-20 border-x border-y-0 border-border-soft bg-transparent px-4 py-2 text-center shadow-none focus-visible:border-transparent focus-visible:ring-0"
+            readOnly
+            className="h-10 w-20 rounded-none pointer-events-none border-x border-y-0 border-border-soft bg-transparent px-4 py-2 text-center shadow-none focus-visible:border-transparent focus-visible:ring-0"
           />
           <button
             type="button"
