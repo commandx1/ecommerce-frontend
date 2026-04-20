@@ -28,7 +28,7 @@ const OrderSummaryCard = ({
   total,
 }: OrderSummaryCardProps) => {
   return (
-    <div className="h-fit rounded-[1.5rem] border border-border-soft bg-surface p-6 shadow-soft">
+    <div className="h-fit rounded-3xl border border-border-soft bg-surface p-6 shadow-soft">
       <h3 className="mb-4 text-xl font-semibold text-text-primary">Order Summary</h3>
       <div className="space-y-3">
         <div className="space-y-2 border-b border-border-soft pb-3">
