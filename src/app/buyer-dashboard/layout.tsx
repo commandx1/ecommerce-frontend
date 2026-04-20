@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { cookieStorage } from "@/lib/storage/cookie-storage"
 import { useAuthStore } from "@/stores/authStore"
 import BuyerHeader from "./components/BuyerHeader"
@@ -11,6 +11,12 @@ export default function BuyerDashboardLayout({ children }: { children: React.Rea
   const router = useRouter()
   const { user, isAuthenticated } = useAuthStore()
   const [isChecking, setIsChecking] = useState(true)
+  const wasAuthenticatedRef = useRef(false)
+
+  // Track if they were authenticated in this session context
+  if (isAuthenticated && user) {
+    wasAuthenticatedRef.current = true
+  }
 
   useEffect(() => {
     // Check cookie directly first (before hydration completes)
@@ -33,7 +39,7 @@ export default function BuyerDashboardLayout({ children }: { children: React.Rea
             setTimeout(() => {
               const currentUser = useAuthStore.getState().user
               if (!currentUser) {
-                router.push("/login")
+                router.push(wasAuthenticatedRef.current ? "/" : "/login")
               } else if (currentUser.roleName === "Vendor") {
                 router.push("/vendor-dashboard")
               } else {
@@ -46,7 +52,7 @@ export default function BuyerDashboardLayout({ children }: { children: React.Rea
 
         // No cookie or no user in cookie
         if (!isAuthenticated || !user) {
-          router.push("/login")
+          router.push(wasAuthenticatedRef.current ? "/" : "/login")
           return
         }
 
@@ -60,7 +66,7 @@ export default function BuyerDashboardLayout({ children }: { children: React.Rea
       } catch {
         // Error reading cookie, check store
         if (!isAuthenticated || !user) {
-          router.push("/login")
+          router.push(wasAuthenticatedRef.current ? "/" : "/login")
         } else if (user.roleName === "Vendor") {
           router.push("/vendor-dashboard")
         } else {
