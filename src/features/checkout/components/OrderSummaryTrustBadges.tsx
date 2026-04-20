@@ -19,7 +19,7 @@ const TRUST_BADGES = [
     bodyClass: "text-text-secondary",
     title: "Satisfaction Guarantee",
   },
-  {
+  /* {
     body: "Dedicated account manager and 24/7 technical support for all equipment purchases.",
     containerClass: "border-warning/20 bg-warning/10",
     icon: HeadphonesIcon,
@@ -27,7 +27,7 @@ const TRUST_BADGES = [
     textClass: "text-text-primary",
     bodyClass: "text-text-secondary",
     title: "Expert Support",
-  },
+  }, */
 ] as const
 
 export default function OrderSummaryTrustBadges() {
