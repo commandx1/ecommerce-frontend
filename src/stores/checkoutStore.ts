@@ -14,18 +14,6 @@ export interface ShippingAddress {
   phone: string
 }
 
-export interface BillingAddress {
-  sameAsShipping: boolean
-  firstName: string
-  lastName: string
-  company: string
-  street: string
-  city: string
-  state: string
-  zipCode: string
-  phone: string
-}
-
 export interface PaymentMethod {
   type: "card" | "net30" | "wire" | "financing"
 }
@@ -33,7 +21,6 @@ export interface PaymentMethod {
 interface CheckoutStore {
   currentStep: CheckoutStep
   shippingAddress: ShippingAddress
-  billingAddress: BillingAddress
   paymentMethod: PaymentMethod
   orderPayload: PlaceOrderPayload | null
   orderResult: PlaceOrderResponse | null
@@ -43,6 +30,9 @@ interface CheckoutStore {
   applyTaxExemption: boolean
   saveCard: boolean
   cardName: string
+  selectedSavedCardId: string
+  paymentMethodId: string
+  paymentMethodSummary: string
   termsAgreed: boolean
   selectedShippingEtaText: string
   selectedShippingCost: number
@@ -50,8 +40,6 @@ interface CheckoutStore {
   nextStep: () => void
   previousStep: () => void
   updateShippingAddress: (address: Partial<ShippingAddress>) => void
-  updateBillingAddress: (address: Partial<BillingAddress>) => void
-  setBillingSameAsShipping: (same: boolean) => void
   updatePaymentMethod: (method: Partial<PaymentMethod>) => void
   updatePONumber: (po: string) => void
   updateDepartment: (dept: string) => void
@@ -59,6 +47,9 @@ interface CheckoutStore {
   setApplyTaxExemption: (apply: boolean) => void
   setSaveCard: (save: boolean) => void
   setCardName: (name: string) => void
+  setSelectedSavedCardId: (cardId: string) => void
+  setPaymentMethodId: (paymentMethodId: string) => void
+  setPaymentMethodSummary: (summary: string) => void
   setTermsAgreed: (agreed: boolean) => void
   setSelectedShippingEtaText: (etaText: string) => void
   setSelectedShippingCost: (cost: number) => void
@@ -78,18 +69,6 @@ const initialShippingAddress: ShippingAddress = {
   phone: "(415) 555-0123",
 }
 
-const initialBillingAddress: BillingAddress = {
-  sameAsShipping: true,
-  firstName: "",
-  lastName: "",
-  company: "",
-  street: "",
-  city: "",
-  state: "",
-  zipCode: "",
-  phone: "",
-}
-
 const initialPaymentMethod: PaymentMethod = {
   type: "card",
 }
@@ -97,7 +76,6 @@ const initialPaymentMethod: PaymentMethod = {
 export const useCheckoutStore = create<CheckoutStore>((set) => ({
   currentStep: 1,
   shippingAddress: initialShippingAddress,
-  billingAddress: initialBillingAddress,
   paymentMethod: initialPaymentMethod,
   orderPayload: null,
   orderResult: null,
@@ -107,6 +85,9 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
   applyTaxExemption: true,
   saveCard: false,
   cardName: "",
+  selectedSavedCardId: "",
+  paymentMethodId: "",
+  paymentMethodSummary: "",
   termsAgreed: false,
   selectedShippingEtaText: "",
   selectedShippingCost: 0,
@@ -114,15 +95,6 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
   nextStep: () => set((state) => ({ currentStep: Math.min(5, state.currentStep + 1) as CheckoutStep })),
   previousStep: () => set((state) => ({ currentStep: Math.max(1, state.currentStep - 1) as CheckoutStep })),
   updateShippingAddress: (address) => set((state) => ({ shippingAddress: { ...state.shippingAddress, ...address } })),
-  updateBillingAddress: (address) => set((state) => ({ billingAddress: { ...state.billingAddress, ...address } })),
-  setBillingSameAsShipping: (same) =>
-    set((state) => ({
-      billingAddress: {
-        ...state.billingAddress,
-        sameAsShipping: same,
-        ...(same ? {} : initialBillingAddress),
-      },
-    })),
   updatePaymentMethod: (method) => set((state) => ({ paymentMethod: { ...state.paymentMethod, ...method } })),
   updatePONumber: (po) => set({ poNumber: po }),
   updateDepartment: (dept) => set({ department: dept }),
@@ -130,6 +102,9 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
   setApplyTaxExemption: (apply) => set({ applyTaxExemption: apply }),
   setSaveCard: (save) => set({ saveCard: save }),
   setCardName: (name) => set({ cardName: name }),
+  setSelectedSavedCardId: (cardId) => set({ selectedSavedCardId: cardId }),
+  setPaymentMethodId: (paymentMethodId) => set({ paymentMethodId }),
+  setPaymentMethodSummary: (summary) => set({ paymentMethodSummary: summary }),
   setTermsAgreed: (agreed) => set({ termsAgreed: agreed }),
   setSelectedShippingEtaText: (etaText) => set({ selectedShippingEtaText: etaText }),
   setSelectedShippingCost: (cost) => set({ selectedShippingCost: cost }),
@@ -139,7 +114,6 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
     set({
       currentStep: 1,
       shippingAddress: initialShippingAddress,
-      billingAddress: initialBillingAddress,
       paymentMethod: initialPaymentMethod,
       poNumber: "",
       department: "",
@@ -147,6 +121,9 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
       applyTaxExemption: true,
       saveCard: false,
       cardName: "",
+      selectedSavedCardId: "",
+      paymentMethodId: "",
+      paymentMethodSummary: "",
       termsAgreed: false,
       selectedShippingEtaText: "Express Delivery - 2-3 business days",
       selectedShippingCost: 0,

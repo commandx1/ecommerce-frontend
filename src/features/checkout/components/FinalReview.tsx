@@ -5,7 +5,7 @@ import { loadStripe } from "@stripe/stripe-js"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import FinalReviewAddressCards from "@/features/checkout/components/FinalReviewAddressCards"
 import FinalReviewNavigation from "@/features/checkout/components/FinalReviewNavigation"
-import FinalReviewPaymentSection from "@/features/checkout/components/FinalReviewPaymentSection"
+import FinalReviewPaymentSummary from "@/features/checkout/components/FinalReviewPaymentSummary"
 import FinalReviewReadyNotice from "@/features/checkout/components/FinalReviewReadyNotice"
 import FinalReviewUnavailable from "@/features/checkout/components/FinalReviewUnavailable"
 import { useFinalReview } from "@/features/checkout/hooks/useFinalReview"
@@ -15,20 +15,12 @@ const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null
 
 function FinalReviewContent() {
-  const { billingAddress, shippingAddress, previousStep } = useCheckoutStore()
+  const { shippingAddress, previousStep } = useCheckoutStore()
   const {
-    cardName,
-    isLoadingCards,
     isPlacingOrder,
-    paymentType,
-    saveCard,
-    savedCards,
-    selectedSavedCardId,
+    paymentMethodSummary,
     submitDisabled,
     onPlaceOrder,
-    setCardName,
-    setSaveCard,
-    setSelectedSavedCardId,
   } = useFinalReview()
 
   return (
@@ -41,18 +33,8 @@ function FinalReviewContent() {
       </div>
 
       <div className="space-y-6 mb-8">
-        <FinalReviewAddressCards billingAddress={billingAddress} shippingAddress={shippingAddress} />
-        <FinalReviewPaymentSection
-          cardName={cardName}
-          isLoadingCards={isLoadingCards}
-          paymentType={paymentType}
-          saveCard={saveCard}
-          savedCards={savedCards}
-          selectedSavedCardId={selectedSavedCardId}
-          setCardName={setCardName}
-          setSaveCard={setSaveCard}
-          setSelectedSavedCardId={setSelectedSavedCardId}
-        />
+        <FinalReviewAddressCards shippingAddress={shippingAddress} />
+        <FinalReviewPaymentSummary paymentMethodSummary={paymentMethodSummary} />
       </div>
 
       <FinalReviewReadyNotice />

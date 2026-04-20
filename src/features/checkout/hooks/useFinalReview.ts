@@ -1,26 +1,17 @@
 "use client"
 
-import { CardNumberElement, useElements, useStripe } from "@stripe/react-stripe-js"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useStripe } from "@stripe/react-stripe-js"
+import { useCallback, useMemo, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
-import { ordersAPI, type SavedCard } from "@/lib/api/orders"
+import { ordersAPI } from "@/lib/api/orders"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
 interface UseFinalReviewResult {
-  cardName: string
-  isLoadingCards: boolean
   isPlacingOrder: boolean
-  isStripeReady: boolean
-  paymentType: "card" | "net30" | "wire" | "financing"
-  saveCard: boolean
-  savedCards: SavedCard[]
-  selectedSavedCardId: string
+  paymentMethodSummary: string
   submitDisabled: boolean
   onPlaceOrder: () => Promise<void>
-  setCardName: (name: string) => void
-  setSaveCard: (save: boolean) => void
-  setSelectedSavedCardId: (cardId: string) => void
 }
 
 const SUCCESSFUL_PAYMENT_INTENT_STATUSES = new Set(["succeeded", "processing", "requires_capture"])
@@ -39,69 +30,26 @@ function mapPaymentIntentStatusToOrderStatus(paymentIntentStatus: string): strin
 
 export function useFinalReview(): UseFinalReviewResult {
   const {
-    shippingAddress,
     paymentMethod,
+    paymentMethodId,
+    paymentMethodSummary,
     nextStep,
     orderPayload,
     setOrderResult,
     saveCard,
-    setSaveCard,
     cardName,
-    setCardName,
   } = useCheckoutStore()
   const { cartId } = useCartStore()
-
   const stripe = useStripe()
-  const elements = useElements()
+
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
-  const [savedCards, setSavedCards] = useState<SavedCard[]>([])
-  const [isLoadingCards, setIsLoadingCards] = useState(false)
-  const [selectedSavedCardId, setSelectedSavedCardId] = useState("")
 
-  useEffect(() => {
-    if (paymentMethod.type !== "card") return
-
-    let isMounted = true
-    setIsLoadingCards(true)
-
-    ordersAPI
-      .getSavedCards()
-      .then((response) => {
-        if (!isMounted) return
-        setSavedCards(response.cards || [])
-      })
-      .catch((error: unknown) => {
-        if (!isMounted) return
-        const maybeError = error as { response?: { data?: { message?: string } } }
-        const message = maybeError.response?.data?.message
-        if (message?.includes("No active cards")) {
-          setSavedCards([])
-          return
-        }
-        showToast.error("Failed to load saved cards.")
-      })
-      .finally(() => {
-        if (isMounted) {
-          setIsLoadingCards(false)
-        }
-      })
-
-    return () => {
-      isMounted = false
-    }
-  }, [paymentMethod.type])
-
-  const isStripeReady = useMemo(() => Boolean(stripe && elements), [elements, stripe])
-
-  // Stripe Element mount / doldurulma durumu React state'e yansimaz; getElement ile useMemo'da
-  // kontrol etmek butonu kalici disabled birakabilir. Stripe dogrulamasi onPlaceOrder icinde.
   const submitDisabled = useMemo(() => {
     if (isPlacingOrder) return true
-    if (paymentMethod.type !== "card") return false
-    if (!isStripeReady) return true
-    if (isLoadingCards) return true
+    if (paymentMethod.type === "card" && !stripe) return true
+    if (paymentMethod.type === "card" && !paymentMethodId) return true
     return false
-  }, [isLoadingCards, isPlacingOrder, isStripeReady, paymentMethod.type])
+  }, [isPlacingOrder, paymentMethod.type, paymentMethodId, stripe])
 
   const onPlaceOrder = useCallback(async () => {
     if (!orderPayload) {
@@ -117,11 +65,13 @@ export function useFinalReview(): UseFinalReviewResult {
       }
 
       if (paymentMethod.type === "card") {
-        if (selectedSavedCardId) {
-          payload.paymentMethodId = selectedSavedCardId
-          payload.cardName = ""
-          payload.cardSave = 0
-        } else if (saveCard) {
+        if (!paymentMethodId) {
+          showToast.error("Payment details are missing. Please go back to Billing and re-enter your card.")
+          return
+        }
+
+        payload.paymentMethodId = paymentMethodId
+        if (saveCard) {
           const trimmedCardName = cardName.trim()
           if (!trimmedCardName) {
             showToast.error("Please enter a card name to save this card.")
@@ -140,70 +90,35 @@ export function useFinalReview(): UseFinalReviewResult {
       let finalOrderStatus = response.status
 
       if (paymentMethod.type === "card") {
-        if (!stripe || !elements) {
-          showToast.error("Stripe is not ready. Please refresh and try again.")
-          return
-        }
-
         if (!response.clientSecret) {
           showToast.error("Payment could not be initiated. Missing client secret.")
           return
         }
 
-        if (selectedSavedCardId) {
-          const savedCardResult = await stripe.confirmCardPayment(response.clientSecret, {
-            payment_method: selectedSavedCardId,
-          })
-
-          if (savedCardResult.error) {
-            showToast.error(savedCardResult.error.message || "Payment failed. Please try again.")
-            return
-          }
-
-          if (!savedCardResult.paymentIntent) {
-            showToast.error("Payment could not be completed. Please try again.")
-            return
-          }
-
-          if (!SUCCESSFUL_PAYMENT_INTENT_STATUSES.has(savedCardResult.paymentIntent.status)) {
-            showToast.error("Payment could not be completed. Please use a different card and try again.")
-            return
-          }
-
-          finalOrderStatus = mapPaymentIntentStatusToOrderStatus(savedCardResult.paymentIntent.status)
-        } else {
-          const cardNumberElement = elements.getElement(CardNumberElement)
-          if (!cardNumberElement) {
-            showToast.error("Please enter your card details.")
-            return
-          }
-
-          const cardResult = await stripe.confirmCardPayment(response.clientSecret, {
-            payment_method: {
-              card: cardNumberElement,
-              billing_details: {
-                name: `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim() || undefined,
-              },
-            },
-          })
-
-          if (cardResult.error) {
-            showToast.error(cardResult.error.message || "Payment failed. Please try again.")
-            return
-          }
-
-          if (!cardResult.paymentIntent) {
-            showToast.error("Payment could not be completed. Please try again.")
-            return
-          }
-
-          if (!SUCCESSFUL_PAYMENT_INTENT_STATUSES.has(cardResult.paymentIntent.status)) {
-            showToast.error("Payment could not be completed. Please use a different card and try again.")
-            return
-          }
-
-          finalOrderStatus = mapPaymentIntentStatusToOrderStatus(cardResult.paymentIntent.status)
+        if (!paymentMethodId) {
+          showToast.error("Payment method is missing. Please go back to Billing.")
+          return
         }
+
+        if (!stripe) {
+          showToast.error("Stripe is not ready. Please refresh and try again.")
+          return
+        }
+
+        const cardResult = await stripe.confirmCardPayment(response.clientSecret, {
+          payment_method: paymentMethodId,
+        })
+        if (cardResult.error) {
+          showToast.error(cardResult.error.message || "Payment failed. Please try again.")
+          return
+        }
+
+        if (!cardResult.paymentIntent || !SUCCESSFUL_PAYMENT_INTENT_STATUSES.has(cardResult.paymentIntent.status)) {
+          showToast.error("Payment could not be completed. Please use a different card and try again.")
+          return
+        }
+
+        finalOrderStatus = mapPaymentIntentStatusToOrderStatus(cardResult.paymentIntent.status)
       }
 
       showToast.success(`Order placed successfully. Order ID: ${response.orderId}`)
@@ -217,32 +132,20 @@ export function useFinalReview(): UseFinalReviewResult {
     }
   }, [
     cardName,
-    elements,
     nextStep,
     orderPayload,
+    paymentMethodId,
     paymentMethod.type,
     saveCard,
     cartId,
-    selectedSavedCardId,
     setOrderResult,
-    shippingAddress.firstName,
-    shippingAddress.lastName,
     stripe,
   ])
 
   return {
-    cardName,
-    isLoadingCards,
     isPlacingOrder,
-    isStripeReady,
-    paymentType: paymentMethod.type,
-    saveCard,
-    savedCards,
-    selectedSavedCardId,
+    paymentMethodSummary,
     submitDisabled,
     onPlaceOrder,
-    setCardName,
-    setSaveCard,
-    setSelectedSavedCardId,
   }
 }

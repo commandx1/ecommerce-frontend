@@ -41,6 +41,7 @@ export default function FinalReviewPaymentSection({
 
   const cardElementOptions = useMemo(
     () => ({
+      disableLink: true,
       style: {
         base: {
           fontFamily: "Manrope, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",

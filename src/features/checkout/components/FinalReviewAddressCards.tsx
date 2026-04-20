@@ -1,51 +1,21 @@
-import type { BillingAddress, ShippingAddress } from "@/stores/checkoutStore"
+import AddressContactInfo from "@/features/checkout/components/AddressContactInfo"
+import type { ShippingAddress } from "@/stores/checkoutStore"
 
 interface FinalReviewAddressCardsProps {
-  billingAddress: BillingAddress
   shippingAddress: ShippingAddress
 }
 
-function AddressBlock({
-  city,
-  company,
-  firstName,
-  lastName,
-  phone,
-  state,
-  street,
-  zipCode,
-}: ShippingAddress | BillingAddress) {
+export default function FinalReviewAddressCards({ shippingAddress }: FinalReviewAddressCardsProps) {
   return (
-    <>
-      <div className="font-medium">
-        {firstName} {lastName}
+    <div className="rounded-xl border border-border-soft bg-surface p-6">
+      <h3 className="mb-4 text-lg font-semibold text-text-primary">Shipping Address</h3>
+      <div className="text-sm text-text-secondary">
+        <AddressContactInfo
+          title={shippingAddress.company}
+          address={`${shippingAddress.street}, ${shippingAddress.city}, ${shippingAddress.state} ${shippingAddress.zipCode}`}
+          phone={shippingAddress.phone}
+        />
       </div>
-      <div>{company}</div>
-      <div>{street}</div>
-      <div>
-        {city}, {state} {zipCode}
-      </div>
-      <div>{phone}</div>
-    </>
-  )
-}
-
-export default function FinalReviewAddressCards({ billingAddress, shippingAddress }: FinalReviewAddressCardsProps) {
-  return (
-    <>
-      <div className="rounded-xl border border-border-soft bg-surface p-6">
-        <h3 className="mb-4 text-lg font-semibold text-text-primary">Shipping Address</h3>
-        <div className="text-sm text-text-secondary">
-          <AddressBlock {...shippingAddress} />
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-border-soft bg-surface p-6">
-        <h3 className="mb-4 text-lg font-semibold text-text-primary">Billing Address</h3>
-        <div className="text-sm text-text-secondary">
-          {billingAddress.sameAsShipping ? <div>Same as shipping address</div> : <AddressBlock {...billingAddress} />}
-        </div>
-      </div>
-    </>
+    </div>
   )
 }
