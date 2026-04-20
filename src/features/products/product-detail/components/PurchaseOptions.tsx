@@ -13,7 +13,7 @@ import BulkPricingGrid from "./purchase/BulkPricingGrid"
 import OrderSummaryCard from "./purchase/OrderSummaryCard"
 import PurchaseActions from "./purchase/PurchaseActions"
 import QuantitySelector from "./purchase/QuantitySelector"
-import WarrantyOptions from "./purchase/WarrantyOptions"
+// import WarrantyOptions from "./purchase/WarrantyOptions"
 
 interface BulkPricing {
   id: number
@@ -77,8 +77,8 @@ const PurchaseOptions = ({
   const {
     quantity,
     setQuantity,
-    selectedWarranty,
-    setSelectedWarranty,
+    // selectedWarranty,
+    // setSelectedWarranty,
     activeTier,
     unitPrice,
     warrantyPrice,
@@ -146,11 +146,11 @@ const PurchaseOptions = ({
 
                 <BulkPricingGrid options={bulkPricing} activeOptionId={activeTier?.id} />
 
-                <WarrantyOptions
+                {/* <WarrantyOptions
                   options={warrantyOptions}
                   selectedValue={selectedWarranty}
                   onChange={setSelectedWarranty}
-                />
+                /> */}
               </div>
             </div>
 
