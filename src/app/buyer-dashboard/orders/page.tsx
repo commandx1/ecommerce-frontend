@@ -255,9 +255,6 @@ export default function BuyerOrdersPage() {
                   Shipping Address
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
-                  Billing Address
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   Payment
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
@@ -291,11 +288,6 @@ export default function BuyerOrdersPage() {
                     order.addressTitle,
                     order.addressFormattedAddress,
                   )
-                  const billingAddress = getAddressSummary(
-                    order.billingAddress,
-                    order.addressTitle,
-                    order.addressFormattedAddress,
-                  )
                   const payment = resolvePaymentSummary(order)
 
                   return (
@@ -306,12 +298,6 @@ export default function BuyerOrdersPage() {
                           <div className="font-medium">{shippingAddress.title}</div>
                           <div className="max-w-xs truncate text-xs text-text-muted" title={shippingAddress.line}>
                             {shippingAddress.line}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-text-secondary">
-                          <div className="font-medium">{billingAddress.title}</div>
-                          <div className="max-w-xs truncate text-xs text-text-muted" title={billingAddress.line}>
-                            {billingAddress.line}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-text-secondary">
