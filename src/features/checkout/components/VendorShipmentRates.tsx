@@ -1,5 +1,5 @@
 import { Check, Info, Truck } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { type ShipmentRate, shipmentAPI, type UberQuote } from "@/lib/api/shipment"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 
@@ -86,6 +86,19 @@ function formatShippingAmount(amount: number): string {
   return amount === 0 ? "Free" : formatCurrency(amount)
 }
 
+function getEffectiveRateAmount(rate: ShipmentRate, defaultShipmentFee: number | null): number {
+  const methodAmount = Number(rate.amount)
+  if (!Number.isFinite(methodAmount)) return Number.POSITIVE_INFINITY
+  if (defaultShipmentFee !== null && defaultShipmentFee < methodAmount) return defaultShipmentFee
+  return methodAmount
+}
+
+function getUberQuoteAmount(quote: UberQuote): number {
+  const amount = quote.fee / 100
+  if (!Number.isFinite(amount) || amount < 0) return Number.POSITIVE_INFINITY
+  return amount
+}
+
 function ShippingRatesSkeleton() {
   return (
     <div className="animate-pulse rounded-xl border border-border-soft bg-surface-muted p-4">
@@ -143,17 +156,26 @@ export default function VendorShipmentRates({
       setUberQuote(data.uberQuote)
       setDefaultShipmentFee(data.defaultShipmentFee)
 
-      if (!selectedRateIdRef.current && filteredRates.length > 0) {
-        const baseAmount = Number(filteredRates[0].amount)
-        const effectiveAmount =
-          data.defaultShipmentFee !== null && Number.isFinite(baseAmount) && data.defaultShipmentFee < baseAmount
-            ? data.defaultShipmentFee
-            : baseAmount
+      if (!selectedRateIdRef.current && (filteredRates.length > 0 || data.uberQuote)) {
+        const cheapestRate = [...filteredRates].sort(
+          (a, b) => getEffectiveRateAmount(a, data.defaultShipmentFee) - getEffectiveRateAmount(b, data.defaultShipmentFee),
+        )[0]
+        const cheapestRateAmount = cheapestRate
+          ? getEffectiveRateAmount(cheapestRate, data.defaultShipmentFee)
+          : Number.POSITIVE_INFINITY
+        const uberAmount = data.uberQuote ? getUberQuoteAmount(data.uberQuote) : Number.POSITIVE_INFINITY
 
-        onSelectRef.current(sellerId, {
-          ...filteredRates[0],
-          amount: effectiveAmount.toFixed(2),
-        })
+        if (data.uberQuote && uberAmount < cheapestRateAmount) {
+          onSelectRef.current(sellerId, data.uberQuote)
+          return
+        }
+
+        if (cheapestRate) {
+          onSelectRef.current(sellerId, {
+            ...cheapestRate,
+            amount: cheapestRateAmount.toFixed(2),
+          })
+        }
       }
     }
 
@@ -227,6 +249,31 @@ export default function VendorShipmentRates({
     }
   }, [addressId, cartId, items, sellerId])
 
+  const sortedRates = useMemo(
+    () => [...rates].sort((a, b) => getEffectiveRateAmount(a, defaultShipmentFee) - getEffectiveRateAmount(b, defaultShipmentFee)),
+    [rates, defaultShipmentFee],
+  )
+  const sortedShipmentOptions = useMemo(() => {
+    const shippoOptions = sortedRates.map((rate) => ({
+      type: "shippo" as const,
+      id: rate.objectId,
+      amount: getEffectiveRateAmount(rate, defaultShipmentFee),
+      rate,
+    }))
+    const uberOptions = uberQuote
+      ? [
+          {
+            type: "uber" as const,
+            id: uberQuote.id,
+            amount: getUberQuoteAmount(uberQuote),
+            quote: uberQuote,
+          },
+        ]
+      : []
+
+    return [...shippoOptions, ...uberOptions].sort((a, b) => a.amount - b.amount)
+  }, [defaultShipmentFee, sortedRates, uberQuote])
+
   if (isLoading) return <ShippingRatesSkeleton />
   if (hasError) return <ShippingRatesError />
 
@@ -243,8 +290,52 @@ export default function VendorShipmentRates({
       </div>
 
       <div className="grid grid-cols-1 gap-3">
-        {rates.map((rate) =>
+        {sortedShipmentOptions.map((option) =>
           (() => {
+            if (option.type === "uber") {
+              const quote = option.quote
+              const displayAmount = Number.isFinite(option.amount) && option.amount >= 0 ? option.amount : 0
+
+              return (
+                <label
+                  key={quote.id}
+                  className={`relative flex cursor-pointer items-center rounded-xl border p-4 transition-all hover:border-brand/50 ${
+                    selectedRateId === quote.id
+                      ? "border-brand bg-accent ring-1 ring-brand/25"
+                      : "border-border-soft bg-surface-elevated"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name={`shipment-${sellerId}`}
+                    className="sr-only"
+                    checked={selectedRateId === quote.id}
+                    onChange={() => onSelect(sellerId, quote)}
+                  />
+                  <div className="flex flex-1 items-center">
+                    <div className="mr-3 min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-text-primary">Uber Direct</span>
+                        <div className="ml-2 text-right">
+                          <div className="font-bold text-brand">{formatShippingAmount(displayAmount)}</div>
+                        </div>
+                      </div>
+                      <div className="mt-1 flex items-center justify-between">
+                        <span className="text-xs text-text-muted">Same-day delivery</span>
+                        <span className="text-xs font-medium text-success">{quote.duration} mins</span>
+                      </div>
+                    </div>
+                  </div>
+                  {selectedRateId === quote.id ? (
+                    <div className="absolute top-2 right-2 rounded-full bg-brand p-0.5">
+                      <Check className="h-3 w-3 text-white" />
+                    </div>
+                  ) : null}
+                </label>
+              )
+            }
+
+            const rate = option.rate
             const methodAmount = Number(rate.amount)
             const effectiveAmount =
               defaultShipmentFee !== null && Number.isFinite(methodAmount) && defaultShipmentFee < methodAmount
@@ -302,53 +393,6 @@ export default function VendorShipmentRates({
             )
           })(),
         )}
-
-        {uberQuote
-          ? (() => {
-              const methodAmount = uberQuote.fee / 100
-              const displayAmount = Number.isFinite(methodAmount) && methodAmount >= 0 ? methodAmount : 0
-
-              return (
-                <label
-                  className={`relative flex cursor-pointer items-center rounded-xl border p-4 transition-all hover:border-brand/50 ${
-                    selectedRateId === uberQuote.id
-                      ? "border-brand bg-accent ring-1 ring-brand/25"
-                      : "border-border-soft bg-surface-elevated"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name={`shipment-${sellerId}`}
-                    className="sr-only"
-                    checked={selectedRateId === uberQuote.id}
-                    onChange={() => onSelect(sellerId, uberQuote)}
-                  />
-                  <div className="flex flex-1 items-center">
-                    <div className="mr-4 flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-border-soft bg-surface p-1 text-xs font-bold text-text-primary">
-                      UBER
-                    </div>
-                    <div className="mr-3 min-w-0 flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-text-primary">Uber Direct</span>
-                        <div className="ml-2 text-right">
-                          <div className="font-bold text-brand">{formatShippingAmount(displayAmount)}</div>
-                        </div>
-                      </div>
-                      <div className="mt-1 flex items-center justify-between">
-                        <span className="text-xs text-text-muted">Same-day delivery</span>
-                        <span className="text-xs font-medium text-success">{uberQuote.duration} mins</span>
-                      </div>
-                    </div>
-                  </div>
-                  {selectedRateId === uberQuote.id ? (
-                    <div className="absolute top-2 right-2 rounded-full bg-brand p-0.5">
-                      <Check className="h-3 w-3 text-white" />
-                    </div>
-                  ) : null}
-                </label>
-              )
-            })()
-          : null}
       </div>
     </div>
   )
