@@ -70,7 +70,7 @@ export default function FinalReviewPaymentSection({
               Only card payments are supported for checkout.
             </div>
           ) : null}
-          <div className="font-medium text-text-primary">Credit/Debit Card (Stripe)</div>
+          <div className="font-medium text-text-primary">Credit/Debit Card</div>
           {isLoadingCards ? (
             <div className="text-xs text-text-muted">Loading saved cards...</div>
           ) : (
