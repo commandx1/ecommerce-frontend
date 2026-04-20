@@ -60,7 +60,10 @@ export default function ShippingAddressSection({
 
       {!isLoading && addresses.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {addresses.map((address) => (
+          {addresses.map((address) => {
+            const displayAddress = (address.formattedAddress || address.addressLine).replace(/,\s*USA\s*$/i, "")
+
+            return (
             <label
               key={address.id}
               className={`relative cursor-pointer rounded-2xl border p-6 transition-all hover:border-brand/50 ${
@@ -82,7 +85,7 @@ export default function ShippingAddressSection({
                   <div className="mt-3 space-y-2.5">
                     <div className="flex items-start gap-2 text-sm text-text-primary">
                       <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-text-muted" />
-                      <p className="leading-relaxed">{address.formattedAddress || address.addressLine}</p>
+                      <p className="leading-relaxed">{displayAddress}</p>
                     </div>
                     <div className="flex items-center gap-2 text-sm font-medium text-text-primary">
                       <Phone className="h-4 w-4 shrink-0 text-text-muted" />
@@ -97,7 +100,8 @@ export default function ShippingAddressSection({
                 ) : null}
               </div>
             </label>
-          ))}
+            )
+          })}
         </div>
       ) : null}
     </SurfaceCard>
