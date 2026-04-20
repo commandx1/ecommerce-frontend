@@ -88,6 +88,7 @@ export const useMainSearch = ({
 
   const handleResultClick = useCallback(() => {
     setShowDropdown(false)
+    setSearchQuery("")
   }, [])
 
   const handleImageError = useCallback((productId: string) => {
