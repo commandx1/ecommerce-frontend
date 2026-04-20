@@ -98,7 +98,8 @@ export const usePurchaseCalculator = ({
     return parsePrice(selected?.price || orderSummary.warranty)
   }, [orderSummary.warranty, selectedWarranty, warrantyOptions])
 
-  const shippingPrice = parsePrice(orderSummary.shipping)
+  const shippingUnitPrice = parsePrice(orderSummary.shipping)
+  const shippingPrice = shippingUnitPrice * quantity
   const productTotal = unitPrice * quantity
   const subtotal = productTotal + warrantyPrice
   const tax = subtotal * 0.1

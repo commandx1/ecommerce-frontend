@@ -73,6 +73,13 @@ const PurchaseOptions = ({
   }, [bestPriceVendorUserProductId, selectedVendorId, suppliers])
   const stockCount = selectedSupplier?.stockCount ?? 15
   const [isAddingToCart, setIsAddingToCart] = useState(false)
+  const orderSummaryWithSelectedShipping = useMemo(
+    () => ({
+      ...orderSummary,
+      shipping: selectedSupplier?.shipping ?? orderSummary.shipping,
+    }),
+    [orderSummary, selectedSupplier?.shipping],
+  )
 
   const {
     quantity,
@@ -90,7 +97,7 @@ const PurchaseOptions = ({
   } = usePurchaseCalculator({
     bulkPricing,
     warrantyOptions,
-    orderSummary,
+    orderSummary: orderSummaryWithSelectedShipping,
     selectedSupplierPrice: selectedSupplier?.price,
     stockCount,
   })
