@@ -1,7 +1,7 @@
-import { Check, MapPin, Phone, Plus } from "lucide-react"
+import { Check, MapPin, Plus } from "lucide-react"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import type { Address } from "@/lib/api/address"
-import { formatPhoneNumber } from "@/lib/utils/phone-number"
+import AddressContactInfo from "./AddressContactInfo"
 
 interface ShippingAddressSectionProps {
   addresses: Address[]
@@ -64,42 +64,30 @@ export default function ShippingAddressSection({
             const displayAddress = (address.formattedAddress || address.addressLine).replace(/,\s*USA\s*$/i, "")
 
             return (
-            <label
-              key={address.id}
-              className={`relative cursor-pointer rounded-2xl border p-6 transition-all hover:border-brand/50 ${
-                selectedAddressId === address.id
-                  ? "border-brand bg-accent ring-1 ring-brand/25"
-                  : "border-border-soft bg-surface-elevated"
-              }`}
-            >
-              <input
-                type="radio"
-                name="shippingAddress"
-                className="sr-only"
-                checked={selectedAddressId === address.id}
-                onChange={() => onSelectAddress(address)}
-              />
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="mb-1 font-bold text-text-primary">{address.title}</h3>
-                  <div className="mt-3 space-y-2.5">
-                    <div className="flex items-start gap-2 text-sm text-text-primary">
-                      <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-text-muted" />
-                      <p className="leading-relaxed">{displayAddress}</p>
+              <label
+                key={address.id}
+                className={`relative cursor-pointer rounded-2xl border p-6 transition-all hover:border-brand/50 ${
+                  selectedAddressId === address.id
+                    ? "border-brand bg-accent ring-1 ring-brand/25"
+                    : "border-border-soft bg-surface-elevated"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="shippingAddress"
+                  className="sr-only"
+                  checked={selectedAddressId === address.id}
+                  onChange={() => onSelectAddress(address)}
+                />
+                <div className="flex items-start justify-between">
+                  <AddressContactInfo title={address.title} address={displayAddress} phone={address.phoneNumber} />
+                  {selectedAddressId === address.id ? (
+                    <div className="rounded-full bg-brand p-1">
+                      <Check className="h-4 w-4 text-white" />
                     </div>
-                    <div className="flex items-center gap-2 text-sm font-medium text-text-primary">
-                      <Phone className="h-4 w-4 shrink-0 text-text-muted" />
-                      <p>{address.phoneNumber ? formatPhoneNumber(address.phoneNumber) : "-"}</p>
-                    </div>
-                  </div>
+                  ) : null}
                 </div>
-                {selectedAddressId === address.id ? (
-                  <div className="rounded-full bg-brand p-1">
-                    <Check className="h-4 w-4 text-white" />
-                  </div>
-                ) : null}
-              </div>
-            </label>
+              </label>
             )
           })}
         </div>

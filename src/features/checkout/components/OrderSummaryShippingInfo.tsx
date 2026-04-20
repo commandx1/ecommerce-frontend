@@ -1,5 +1,6 @@
 import { Truck } from "lucide-react"
 import type { ShippingAddress } from "@/stores/checkoutStore"
+import AddressContactInfo from "./AddressContactInfo"
 
 interface OrderSummaryShippingInfoProps {
   currentStep: number
@@ -26,15 +27,13 @@ export default function OrderSummaryShippingInfo({
           </button>
         ) : null}
       </div>
-      <div className="text-sm text-text-secondary">
-        <div className="font-medium text-text-primary">{shippingAddress.company}</div>
-        <div>{shippingAddress.street}</div>
-        <div>
-          {shippingAddress.city}, {shippingAddress.state} {shippingAddress.zipCode}
-        </div>
-      </div>
+      <AddressContactInfo
+        title={shippingAddress.company}
+        address={`${shippingAddress.street}, ${shippingAddress.city}, ${shippingAddress.state} ${shippingAddress.zipCode}`}
+        phone={shippingAddress.phone}
+      />
       <div className="mt-3 flex items-center text-sm">
-        <Truck className="mr-2 h-4 w-4 text-brand" />
+        <Truck className="mr-2 h-4 w-4 text-text-muted" />
         <span className="text-text-primary">{etaText}</span>
       </div>
     </div>
