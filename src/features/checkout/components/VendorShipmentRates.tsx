@@ -1,5 +1,4 @@
 import { Check, Info, Truck } from "lucide-react"
-import Image from "next/image"
 import { useEffect, useRef, useState } from "react"
 import { type ShipmentRate, shipmentAPI, type UberQuote } from "@/lib/api/shipment"
 import formatCurrency from "@/lib/helpers/formatCurrency"
@@ -251,8 +250,6 @@ export default function VendorShipmentRates({
               defaultShipmentFee !== null && Number.isFinite(methodAmount) && defaultShipmentFee < methodAmount
                 ? defaultShipmentFee
                 : methodAmount
-            const usesDefaultShipmentFee =
-              defaultShipmentFee !== null && Number.isFinite(methodAmount) && defaultShipmentFee < methodAmount
             const isGreatDeal =
               defaultShipmentFee !== null && Number.isFinite(methodAmount) && methodAmount < defaultShipmentFee
             const discountAmount = isGreatDeal && defaultShipmentFee !== null ? defaultShipmentFee - methodAmount : 0
@@ -278,15 +275,6 @@ export default function VendorShipmentRates({
                   onChange={() => onSelect(sellerId, selectableRate)}
                 />
                 <div className="flex flex-1 items-center">
-                  <div className="mr-4 flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-border-soft bg-surface p-1">
-                    <Image
-                      src={rate.providerImage75}
-                      alt={rate.provider}
-                      width={40}
-                      height={40}
-                      className="object-contain"
-                    />
-                  </div>
                   <div className="mr-3 min-w-0 flex-1">
                     <div className="flex items-center justify-between">
                       <span className="truncate font-bold text-text-primary">{rate.servicelevel.name}</span>
