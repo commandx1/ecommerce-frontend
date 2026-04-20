@@ -13,6 +13,7 @@ import BulkPricingGrid from "./purchase/BulkPricingGrid"
 import OrderSummaryCard from "./purchase/OrderSummaryCard"
 import PurchaseActions from "./purchase/PurchaseActions"
 import QuantitySelector from "./purchase/QuantitySelector"
+
 // import WarrantyOptions from "./purchase/WarrantyOptions"
 
 interface BulkPricing {

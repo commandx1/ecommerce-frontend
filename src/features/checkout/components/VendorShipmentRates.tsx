@@ -158,7 +158,8 @@ export default function VendorShipmentRates({
 
       if (!selectedRateIdRef.current && (filteredRates.length > 0 || data.uberQuote)) {
         const cheapestRate = [...filteredRates].sort(
-          (a, b) => getEffectiveRateAmount(a, data.defaultShipmentFee) - getEffectiveRateAmount(b, data.defaultShipmentFee),
+          (a, b) =>
+            getEffectiveRateAmount(a, data.defaultShipmentFee) - getEffectiveRateAmount(b, data.defaultShipmentFee),
         )[0]
         const cheapestRateAmount = cheapestRate
           ? getEffectiveRateAmount(cheapestRate, data.defaultShipmentFee)
@@ -250,7 +251,10 @@ export default function VendorShipmentRates({
   }, [addressId, cartId, items, sellerId])
 
   const sortedRates = useMemo(
-    () => [...rates].sort((a, b) => getEffectiveRateAmount(a, defaultShipmentFee) - getEffectiveRateAmount(b, defaultShipmentFee)),
+    () =>
+      [...rates].sort(
+        (a, b) => getEffectiveRateAmount(a, defaultShipmentFee) - getEffectiveRateAmount(b, defaultShipmentFee),
+      ),
     [rates, defaultShipmentFee],
   )
   const sortedShipmentOptions = useMemo(() => {

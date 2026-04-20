@@ -1,8 +1,8 @@
 "use client"
 
-import NoticeBanner from "@/components/feedback/NoticeBanner"
 import { Elements } from "@stripe/react-stripe-js"
 import { loadStripe } from "@stripe/stripe-js"
+import NoticeBanner from "@/components/feedback/NoticeBanner"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import BillingAgreementsSection from "@/features/checkout/components/BillingAgreementsSection"
 import BillingHeader from "@/features/checkout/components/BillingHeader"
@@ -16,13 +16,7 @@ const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null
 
 function BillingInformationContent() {
-  const {
-    paymentMethod,
-    termsAgreed,
-    updatePaymentMethod,
-    setTermsAgreed,
-    previousStep,
-  } = useCheckoutStore()
+  const { paymentMethod, termsAgreed, updatePaymentMethod, setTermsAgreed, previousStep } = useCheckoutStore()
 
   const {
     cardName,

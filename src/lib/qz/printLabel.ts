@@ -102,12 +102,12 @@ function isQzApi(value: unknown): value is QzApi {
   const maybeQz = value as Partial<QzApi>
   return Boolean(
     maybeQz.websocket &&
-      typeof maybeQz.websocket.connect === "function" &&
-      maybeQz.printers &&
-      typeof maybeQz.printers.find === "function" &&
-      maybeQz.configs &&
-      typeof maybeQz.configs.create === "function" &&
-      typeof maybeQz.print === "function",
+    typeof maybeQz.websocket.connect === "function" &&
+    maybeQz.printers &&
+    typeof maybeQz.printers.find === "function" &&
+    maybeQz.configs &&
+    typeof maybeQz.configs.create === "function" &&
+    typeof maybeQz.print === "function",
   )
 }
 

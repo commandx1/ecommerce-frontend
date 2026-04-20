@@ -130,17 +130,7 @@ export function useFinalReview(): UseFinalReviewResult {
     } finally {
       setIsPlacingOrder(false)
     }
-  }, [
-    cardName,
-    nextStep,
-    orderPayload,
-    paymentMethodId,
-    paymentMethod.type,
-    saveCard,
-    cartId,
-    setOrderResult,
-    stripe,
-  ])
+  }, [cardName, nextStep, orderPayload, paymentMethodId, paymentMethod.type, saveCard, cartId, setOrderResult, stripe])
 
   return {
     isPlacingOrder,

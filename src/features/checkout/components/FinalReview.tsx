@@ -16,12 +16,7 @@ const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : 
 
 function FinalReviewContent() {
   const { shippingAddress, previousStep } = useCheckoutStore()
-  const {
-    isPlacingOrder,
-    paymentMethodSummary,
-    submitDisabled,
-    onPlaceOrder,
-  } = useFinalReview()
+  const { isPlacingOrder, paymentMethodSummary, submitDisabled, onPlaceOrder } = useFinalReview()
 
   return (
     <SurfaceCard variant="editorial" className="mb-8 p-8">

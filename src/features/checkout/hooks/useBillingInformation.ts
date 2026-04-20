@@ -90,9 +90,7 @@ export function useBillingInformation(): UseBillingInformationResult {
           const selectedCard = savedCards.find((card) => card.stripeCardId === selectedSavedCardId)
           setPaymentMethodId(selectedSavedCardId)
           setPaymentMethodSummary(
-            selectedCard
-              ? `${selectedCard.brand?.toUpperCase()} •••• ${selectedCard.last4}`
-              : "Saved card",
+            selectedCard ? `${selectedCard.brand?.toUpperCase()} •••• ${selectedCard.last4}` : "Saved card",
           )
           setSaveCard(false)
           nextStep()
