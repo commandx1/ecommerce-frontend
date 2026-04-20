@@ -258,13 +258,13 @@ export default function BuyerOrdersPage() {
                   Payment
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
-                  Items
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   Total
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   Status
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                  Items
                 </th>
               </tr>
             </thead>
@@ -289,6 +289,7 @@ export default function BuyerOrdersPage() {
                     order.addressFormattedAddress,
                   )
                   const payment = resolvePaymentSummary(order)
+                  const totalQuantity = order.orderItems.reduce((sum, item) => sum + item.quantity, 0)
 
                   return (
                     <Fragment key={order.orderId}>
@@ -304,23 +305,6 @@ export default function BuyerOrdersPage() {
                           <div className="font-medium text-text-primary">{payment.title}</div>
                           {payment.detail ? <div className="text-xs text-text-muted">{payment.detail}</div> : null}
                         </td>
-                        <td className="px-6 py-4 text-sm text-text-secondary">
-                          <Button
-                            type="button"
-                            variant="unstyled"
-                            onClick={() => setExpandedOrderId(expandedOrderId === order.orderId ? null : order.orderId)}
-                            className="inline-flex items-center gap-2 text-sm text-brand transition-colors hover:opacity-80"
-                          >
-                            <span className="font-medium">
-                              {order.orderItems.length} item{order.orderItems.length > 1 ? "s" : ""}
-                            </span>
-                            {expandedOrderId === order.orderId ? (
-                              <ChevronUp className="w-4 h-4" />
-                            ) : (
-                              <ChevronDown className="w-4 h-4" />
-                            )}
-                          </Button>
-                        </td>
                         <td className="px-6 py-4 text-sm font-semibold text-text-primary">
                           {formatCurrency(order.totalPrice)}
                         </td>
@@ -335,12 +319,29 @@ export default function BuyerOrdersPage() {
                             {order.orderStatus}
                           </span>
                         </td>
+                        <td className="px-6 py-4 text-sm text-text-secondary">
+                          <Button
+                            type="button"
+                            variant="unstyled"
+                            onClick={() => setExpandedOrderId(expandedOrderId === order.orderId ? null : order.orderId)}
+                            className="inline-flex p-0! items-center gap-2 text-sm text-brand transition-colors hover:opacity-80"
+                          >
+                            <span className="font-medium">
+                              {totalQuantity} item{totalQuantity > 1 ? "s" : ""}
+                            </span>
+                            {expandedOrderId === order.orderId ? (
+                              <ChevronUp className="w-4 h-4" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </td>
                       </tr>
                       {expandedOrderId === order.orderId && (
                         <tr className="bg-surface-muted/35">
                           <td colSpan={7} className="px-6 pb-6 pt-2">
                             <div className="space-y-5 rounded-2xl border border-border-soft bg-surface-elevated p-5 text-sm shadow-soft md:p-6">
-                              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                              <div className="grid gap-3 md:grid-cols-3">
                                 <div className="rounded-xl border border-border-soft bg-surface-muted/55 p-4">
                                   <div className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                                     Order Status
@@ -351,7 +352,7 @@ export default function BuyerOrdersPage() {
                                 </div>
                                 <div className="rounded-xl border border-border-soft bg-surface-muted/55 p-4">
                                   <div className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-                                    Placed On
+                                    Order Date
                                   </div>
                                   <div className="mt-1 text-sm font-semibold text-text-primary">
                                     {formatDateTime(order.createdDate)}
@@ -363,14 +364,6 @@ export default function BuyerOrdersPage() {
                                   </div>
                                   <div className="mt-1 text-sm leading-relaxed text-text-primary">
                                     {shippingAddress.line}
-                                  </div>
-                                </div>
-                                <div className="rounded-xl border border-border-soft bg-surface-muted/55 p-4">
-                                  <div className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-                                    Billing Address
-                                  </div>
-                                  <div className="mt-1 text-sm leading-relaxed text-text-primary">
-                                    {billingAddress.line}
                                   </div>
                                 </div>
                               </div>
@@ -402,7 +395,7 @@ export default function BuyerOrdersPage() {
                                               className="h-16 w-16 object-cover"
                                             />
                                           </div>
-                                          <div style={{ maxWidth: '30rem' }} className="space-y-1.5">
+                                          <div style={{ maxWidth: "30rem" }} className="space-y-1.5">
                                             <div className="wrap-break-word text-sm font-semibold leading-5 whitespace-normal text-text-primary">
                                               {productHref ? (
                                                 <Link
