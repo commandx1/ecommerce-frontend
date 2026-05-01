@@ -3,9 +3,7 @@
 import {
   BarChart3,
   Box,
-  CreditCard,
   DollarSign,
-  HeadphonesIcon,
   MapPin,
   Megaphone,
   PieChart,
@@ -75,22 +73,7 @@ const VENDOR_NAV_GROUPS: DashboardSidebarGroup[] = [
   },
   {
     title: "Account",
-    items: [
-      {
-        href: "/vendor-dashboard/billing",
-        label: "Billing",
-        icon: CreditCard,
-        size: "compact",
-        matchMode: "startsWith",
-      },
-      {
-        href: "/vendor-dashboard/support",
-        label: "Support",
-        icon: HeadphonesIcon,
-        size: "compact",
-        matchMode: "startsWith",
-      },
-    ],
+    items: [],
     subgroupsFirst: true,
     subgroups: [
       {
