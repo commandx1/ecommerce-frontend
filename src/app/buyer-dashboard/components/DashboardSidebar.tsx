@@ -12,8 +12,6 @@ import {
   RotateCcw,
   Search,
   ShoppingBag,
-  Star,
-  Store,
   User,
 } from "lucide-react"
 import CommonDashboardSidebar, {
@@ -34,16 +32,7 @@ const NAV_GROUPS: DashboardSidebarGroup[] = [
   },
   {
     title: "Suppliers",
-    items: [
-      {
-        href: "/buyer-dashboard/suppliers/favorites",
-        label: "Favorites",
-        icon: Heart,
-        badge: { label: "12", tone: "neutral" },
-      },
-      { href: "/buyer-dashboard/suppliers", label: "All Suppliers", icon: Store },
-      { href: "/buyer-dashboard/suppliers/top-rated", label: "Top Rated", icon: Star },
-    ],
+    items: [{ href: "/buyer-dashboard/suppliers/favorites", label: "Favorites", icon: Heart }],
   },
   {
     title: "Account",
