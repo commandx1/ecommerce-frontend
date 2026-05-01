@@ -66,7 +66,9 @@ export default function FavoriteSuppliersPage() {
         </div>
       ) : null}
 
-      {favoriteSuppliers.length > 0 && viewMode === "table" ? <SupplierDirectoryTable suppliers={favoriteSuppliers} /> : null}
+      {favoriteSuppliers.length > 0 && viewMode === "table" ? (
+        <SupplierDirectoryTable suppliers={favoriteSuppliers} />
+      ) : null}
     </section>
   )
 }

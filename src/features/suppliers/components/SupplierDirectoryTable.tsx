@@ -77,7 +77,9 @@ export default function SupplierDirectoryTable({ suppliers }: SupplierDirectoryT
                       ))}
                     </div>
                     <span className="text-sm font-semibold text-text-primary">{supplier.rating.toFixed(1)}</span>
-                    <span className="text-xs text-text-secondary">({numericFormatter.format(supplier.reviewCount)})</span>
+                    <span className="text-xs text-text-secondary">
+                      ({numericFormatter.format(supplier.reviewCount)})
+                    </span>
                   </div>
                 </td>
                 <td className="px-5 py-4">
