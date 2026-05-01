@@ -3,7 +3,6 @@
 import {
   CreditCard,
   FileText,
-  HeadphonesIcon,
   Heart,
   HelpCircle,
   Home,
@@ -43,10 +42,7 @@ const NAV_GROUPS: DashboardSidebarGroup[] = [
   },
   {
     title: "Support",
-    items: [
-      { href: "/buyer-dashboard/help", label: "Help Center", icon: HelpCircle },
-      { href: "/buyer-dashboard/support", label: "Contact Support", icon: HeadphonesIcon },
-    ],
+    items: [{ href: "/help-center", label: "Help Center", icon: HelpCircle }],
   },
 ]
 
