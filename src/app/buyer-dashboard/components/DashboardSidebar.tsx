@@ -1,8 +1,6 @@
 "use client"
 
 import {
-  CheckCircle,
-  Clock,
   CreditCard,
   FileText,
   HeadphonesIcon,
@@ -16,8 +14,6 @@ import {
   ShoppingBag,
   Star,
   Store,
-  TrendingUp,
-  Truck,
   User,
 } from "lucide-react"
 import CommonDashboardSidebar, {
@@ -30,34 +26,11 @@ import { Button } from "@/components/ui/button"
 const NAV_GROUPS: DashboardSidebarGroup[] = [
   {
     title: "Dashboard",
-    items: [
-      { href: "/buyer-dashboard", label: "Overview", icon: Home },
-      { href: "/buyer-dashboard/analytics", label: "Analytics", icon: TrendingUp },
-    ],
+    items: [{ href: "/buyer-dashboard", label: "Overview", icon: Home }],
   },
   {
     title: "Orders",
-    items: [
-      {
-        href: "/buyer-dashboard/orders",
-        label: "All Orders",
-        icon: ShoppingBag,
-        badge: { label: "24", tone: "neutral" },
-      },
-      {
-        href: "/buyer-dashboard/orders/pending",
-        label: "Pending",
-        icon: Clock,
-        badge: { label: "3", tone: "warning" },
-      },
-      {
-        href: "/buyer-dashboard/orders/transit",
-        label: "In Transit",
-        icon: Truck,
-        badge: { label: "7", tone: "info" },
-      },
-      { href: "/buyer-dashboard/orders/completed", label: "Completed", icon: CheckCircle },
-    ],
+    items: [{ href: "/buyer-dashboard/orders", label: "All Orders", icon: ShoppingBag }],
   },
   {
     title: "Suppliers",
