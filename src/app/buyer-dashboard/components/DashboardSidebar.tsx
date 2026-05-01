@@ -52,9 +52,9 @@ const SETTINGS_ITEMS: DashboardSidebarNavItem[] = [
 ]
 
 const BUYER_QUICK_ACTIONS: DashboardSidebarQuickAction[] = [
-  { label: "New Order", icon: Plus, tone: "brand" },
-  { label: "Reorder Items", icon: RotateCcw, tone: "accent" },
-  { label: "Find Suppliers", icon: Search, tone: "surface" },
+  { label: "New Order", icon: Plus, tone: "brand", href: "/products" },
+  { label: "Reorder Items", icon: RotateCcw, tone: "accent", href: "/buyer-dashboard/orders" },
+  { label: "Find Suppliers", icon: Search, tone: "surface", href: "/suppliers" },
 ]
 
 const DashboardSidebar = () => {
