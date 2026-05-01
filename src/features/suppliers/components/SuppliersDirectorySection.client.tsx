@@ -275,10 +275,7 @@ export default function SuppliersDirectorySection() {
         </div>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {supplierTestimonials.map((testimonial) => (
-            <article
-              key={testimonial.id}
-              className="rounded-[1.5rem] border border-border-soft bg-surface p-7 shadow-soft"
-            >
+            <article key={testimonial.id} className="rounded-4xl border border-border-soft bg-surface p-7 shadow-soft">
               <div className="mb-4 flex items-center gap-1 text-amber-400">
                 {Array.from({ length: 5 }, (_, index) => (
                   <Star key={`${testimonial.id}-star-${index + 1}`} className="h-4 w-4 fill-current" />
@@ -288,7 +285,7 @@ export default function SuppliersDirectorySection() {
               <div className="mt-6 flex items-center gap-3">
                 <div
                   className={cn(
-                    "flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br text-sm font-semibold text-white",
+                    "flex h-12 w-12 items-center justify-center rounded-full bg-linear-to-br text-sm font-semibold text-white",
                     testimonial.avatarGradient,
                   )}
                 >
@@ -344,7 +341,7 @@ export default function SuppliersDirectorySection() {
 
 function HeroMetric({ value, label }: { value: string; label: string }) {
   return (
-    <div className="rounded-[1rem] border border-white/25 bg-white/10 px-5 py-4 backdrop-blur-sm">
+    <div className="rounded-2xl border border-white/25 bg-white/10 px-5 py-4 backdrop-blur-sm">
       <p className="text-3xl font-semibold text-inverse-foreground">{value}</p>
       <p className="mt-1 text-sm text-inverse-muted">{label}</p>
     </div>

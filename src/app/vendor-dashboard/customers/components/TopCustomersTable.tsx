@@ -20,7 +20,7 @@ const healthToneMap: Record<VendorCustomer["health"], string> = {
 
 export default function TopCustomersTable({ customers, title, description, action }: TopCustomersTableProps) {
   return (
-    <section className="rounded-[1.5rem] border border-border-soft bg-surface shadow-soft">
+    <section className="rounded-4xl border border-border-soft bg-surface shadow-soft">
       <div className="mb-1 flex items-center justify-between gap-4 border-b border-border-soft px-6 py-5">
         <div>
           <h2 className="text-xl font-semibold text-text-primary">{title}</h2>
