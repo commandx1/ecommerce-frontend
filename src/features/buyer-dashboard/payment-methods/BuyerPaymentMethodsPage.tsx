@@ -21,10 +21,10 @@ import Modal from "@/components/ui/Modal"
 import { showToast } from "@/components/ui/Toast"
 import { cn } from "@/lib/utils"
 import {
+  type ActivityStatus,
   bankMethods,
   initialSavedPaymentMethods,
   paymentActivities,
-  type ActivityStatus,
   type SavedPaymentMethod,
 } from "./paymentMethodsData"
 
@@ -269,7 +269,11 @@ export default function BuyerPaymentMethodsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <IconButton label="Edit" onClick={() => openEditModal(method)} icon={<Edit3 className="h-4 w-4" />} />
-                  <IconButton label="Remove" onClick={() => removeMethod(method.id)} icon={<Trash2 className="h-4 w-4" />} />
+                  <IconButton
+                    label="Remove"
+                    onClick={() => removeMethod(method.id)}
+                    icon={<Trash2 className="h-4 w-4" />}
+                  />
                 </div>
               </div>
 
@@ -330,22 +334,39 @@ export default function BuyerPaymentMethodsPage() {
             <table className="w-full min-w-[640px]">
               <thead className="border-b border-border-soft bg-surface-muted/60">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">Invoice</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">Amount</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">Method</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+                    Date
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+                    Invoice
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+                    Amount
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+                    Method
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+                    Status
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {filteredActivity.map((activity) => (
                   <tr key={activity.id} className="border-b border-border-soft/70 last:border-b-0">
-                    <td className="px-4 py-3 text-sm text-text-secondary">{new Date(activity.date).toLocaleDateString("en-US")}</td>
+                    <td className="px-4 py-3 text-sm text-text-secondary">
+                      {new Date(activity.date).toLocaleDateString("en-US")}
+                    </td>
                     <td className="px-4 py-3 text-sm font-semibold text-text-primary">{activity.invoiceId}</td>
                     <td className="px-4 py-3 text-sm text-text-primary">{currency.format(activity.amount)}</td>
                     <td className="px-4 py-3 text-sm text-text-secondary">{activity.methodLabel}</td>
                     <td className="px-4 py-3">
-                      <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", activityBadgeClassMap[activity.status])}>
+                      <span
+                        className={cn(
+                          "rounded-full px-2.5 py-1 text-xs font-semibold",
+                          activityBadgeClassMap[activity.status],
+                        )}
+                      >
                         {activity.status}
                       </span>
                     </td>
@@ -462,7 +483,9 @@ export default function BuyerPaymentMethodsPage() {
         maxWidthClassName="max-w-xl"
       >
         <div className="p-6">
-          <h3 className="text-xl font-semibold text-text-primary">{editingMethodId ? "Edit payment method" : "Add new payment method"}</h3>
+          <h3 className="text-xl font-semibold text-text-primary">
+            {editingMethodId ? "Edit payment method" : "Add new payment method"}
+          </h3>
           <p className="mt-1 text-sm text-text-secondary">
             {editingMethodId
               ? "Update method details and optional default status."
@@ -488,7 +511,10 @@ export default function BuyerPaymentMethodsPage() {
               <Input
                 value={formState.last4}
                 onChange={(event) =>
-                  setFormState((current) => ({ ...current, last4: event.target.value.replace(/[^\d]/g, "").slice(0, 4) }))
+                  setFormState((current) => ({
+                    ...current,
+                    last4: event.target.value.replace(/[^\d]/g, "").slice(0, 4),
+                  }))
                 }
                 placeholder="1234"
               />
@@ -498,7 +524,10 @@ export default function BuyerPaymentMethodsPage() {
                 <Input
                   value={formState.expiryMonth}
                   onChange={(event) =>
-                    setFormState((current) => ({ ...current, expiryMonth: event.target.value.replace(/[^\d]/g, "").slice(0, 2) }))
+                    setFormState((current) => ({
+                      ...current,
+                      expiryMonth: event.target.value.replace(/[^\d]/g, "").slice(0, 2),
+                    }))
                   }
                   placeholder="09"
                 />
@@ -507,7 +536,10 @@ export default function BuyerPaymentMethodsPage() {
                 <Input
                   value={formState.expiryYear}
                   onChange={(event) =>
-                    setFormState((current) => ({ ...current, expiryYear: event.target.value.replace(/[^\d]/g, "").slice(0, 4) }))
+                    setFormState((current) => ({
+                      ...current,
+                      expiryYear: event.target.value.replace(/[^\d]/g, "").slice(0, 4),
+                    }))
                   }
                   placeholder="2028"
                 />
@@ -579,15 +611,7 @@ function Meta({ label, value }: { label: string; value: string }) {
   )
 }
 
-function IconButton({
-  icon,
-  onClick,
-  label,
-}: {
-  icon: React.ReactNode
-  onClick: () => void
-  label: string
-}) {
+function IconButton({ icon, onClick, label }: { icon: React.ReactNode; onClick: () => void; label: string }) {
   return (
     <button
       type="button"
@@ -624,15 +648,7 @@ function ToggleRow({
   )
 }
 
-function SecurityCard({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode
-  title: string
-  description: string
-}) {
+function SecurityCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
     <article className="rounded-xl border border-border-soft bg-surface-elevated p-4">
       <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-surface-muted">{icon}</div>
@@ -642,15 +658,7 @@ function SecurityCard({
   )
 }
 
-function FormField({
-  label,
-  className,
-  children,
-}: {
-  label: string
-  className?: string
-  children: React.ReactNode
-}) {
+function FormField({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
   return (
     <div className={className}>
       <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">{label}</label>
