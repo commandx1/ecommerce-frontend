@@ -14,7 +14,7 @@ const RecentInvoices = () => {
       <div className="border-b border-border-soft p-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-text-primary">Recent Invoices</h2>
-          <Link href="/invoices" className="font-medium text-brand hover:underline">
+          <Link href="/buyer-dashboard/invoices" className="font-medium text-brand hover:underline">
             View All
           </Link>
         </div>
