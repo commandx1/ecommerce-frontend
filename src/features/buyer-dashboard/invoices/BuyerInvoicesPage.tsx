@@ -19,14 +19,20 @@ import {
 import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { buyerInvoices, type BuyerInvoice, type InvoiceStatus } from "./invoicesData"
+import { type BuyerInvoice, buyerInvoices, type InvoiceStatus } from "./invoicesData"
 
 const PAGE_SIZE = 6
 const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" })
 
 const dateRangeOptions = ["Last 30 days", "Last 60 days", "Last 90 days", "This Year"] as const
 const statusOptions = ["All Statuses", "Paid", "Pending", "Overdue", "Disputed"] as const
-const sortOptions = ["Date (Newest)", "Date (Oldest)", "Amount (High to Low)", "Amount (Low to High)", "Status"] as const
+const sortOptions = [
+  "Date (Newest)",
+  "Date (Oldest)",
+  "Amount (High to Low)",
+  "Amount (Low to High)",
+  "Status",
+] as const
 
 type DateRangeOption = (typeof dateRangeOptions)[number]
 type StatusOption = (typeof statusOptions)[number]
@@ -62,7 +68,10 @@ function formatDate(value: string): string {
 }
 
 function getSupplierOptions(invoices: ReadonlyArray<BuyerInvoice>): string[] {
-  return ["All Suppliers", ...Array.from(new Set(invoices.map((invoice) => invoice.supplier))).sort((a, b) => a.localeCompare(b))]
+  return [
+    "All Suppliers",
+    ...Array.from(new Set(invoices.map((invoice) => invoice.supplier))).sort((a, b) => a.localeCompare(b)),
+  ]
 }
 
 export default function BuyerInvoicesPage() {
@@ -137,10 +146,18 @@ export default function BuyerInvoicesPage() {
     pagedInvoices.length > 0 && pagedInvoices.every((invoice) => selectedInvoiceIds.has(invoice.id))
 
   const activeFilters = [
-    dateRange !== "Last 30 days" ? { key: "date", label: `Date: ${dateRange}`, onClear: () => setDateRange("Last 30 days") } : null,
-    status !== "All Statuses" ? { key: "status", label: `Status: ${status}`, onClear: () => setStatus("All Statuses") } : null,
-    supplier !== "All Suppliers" ? { key: "supplier", label: `Supplier: ${supplier}`, onClear: () => setSupplier("All Suppliers") } : null,
-    searchText.trim().length > 0 ? { key: "search", label: `Search: ${searchText}`, onClear: () => setSearchText("") } : null,
+    dateRange !== "Last 30 days"
+      ? { key: "date", label: `Date: ${dateRange}`, onClear: () => setDateRange("Last 30 days") }
+      : null,
+    status !== "All Statuses"
+      ? { key: "status", label: `Status: ${status}`, onClear: () => setStatus("All Statuses") }
+      : null,
+    supplier !== "All Suppliers"
+      ? { key: "supplier", label: `Supplier: ${supplier}`, onClear: () => setSupplier("All Suppliers") }
+      : null,
+    searchText.trim().length > 0
+      ? { key: "search", label: `Search: ${searchText}`, onClear: () => setSearchText("") }
+      : null,
   ].filter((item): item is { key: string; label: string; onClear: () => void } => Boolean(item))
 
   const toggleSelectAllVisible = () => {
@@ -186,7 +203,11 @@ export default function BuyerInvoicesPage() {
 
         <div className="mt-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-wrap items-center gap-3">
-            <StatChip label="Total Outstanding" value={currency.format(totalOutstanding)} valueClassName="text-danger" />
+            <StatChip
+              label="Total Outstanding"
+              value={currency.format(totalOutstanding)}
+              valueClassName="text-danger"
+            />
             <StatChip label="Paid This Month" value={currency.format(paidThisMonth)} valueClassName="text-success" />
           </div>
           <div className="flex flex-wrap gap-3">
@@ -206,11 +227,19 @@ export default function BuyerInvoicesPage() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
           <div className="lg:col-span-3">
             <Label>Select Date Range</Label>
-            <SelectField value={dateRange} onChange={(value) => setDateRange(value as DateRangeOption)} options={dateRangeOptions} />
+            <SelectField
+              value={dateRange}
+              onChange={(value) => setDateRange(value as DateRangeOption)}
+              options={dateRangeOptions}
+            />
           </div>
           <div className="lg:col-span-2">
             <Label>Status</Label>
-            <SelectField value={status} onChange={(value) => setStatus(value as StatusOption)} options={statusOptions} />
+            <SelectField
+              value={status}
+              onChange={(value) => setStatus(value as StatusOption)}
+              options={statusOptions}
+            />
           </div>
           <div className="lg:col-span-2">
             <Label>Supplier</Label>
@@ -316,7 +345,12 @@ export default function BuyerInvoicesPage() {
           </label>
           <div className="flex items-center gap-3">
             <span className="text-sm text-text-secondary">Sort by:</span>
-            <SelectField value={sortBy} onChange={(value) => setSortBy(value as SortOption)} options={sortOptions} compact />
+            <SelectField
+              value={sortBy}
+              onChange={(value) => setSortBy(value as SortOption)}
+              options={sortOptions}
+              compact
+            />
           </div>
         </div>
       </section>
@@ -443,15 +477,7 @@ function SelectField({
   )
 }
 
-function StatChip({
-  label,
-  value,
-  valueClassName,
-}: {
-  label: string
-  value: string
-  valueClassName?: string
-}) {
+function StatChip({ label, value, valueClassName }: { label: string; value: string; valueClassName?: string }) {
   return (
     <div className="rounded-lg border border-border-soft bg-surface px-4 py-2">
       <span className="text-sm text-text-secondary">{label}:</span>
