@@ -1,34 +1,14 @@
 "use client"
 
-import {
-  AlertTriangle,
-  Banknote,
-  CheckCircle2,
-  CreditCard,
-  Edit3,
-  Landmark,
-  Plus,
-  Save,
-  Search,
-  ShieldCheck,
-  Trash2,
-} from "lucide-react"
-import { useMemo, useState } from "react"
+import { Banknote, CheckCircle2, CreditCard, Edit3, Plus, Trash2 } from "lucide-react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import Modal from "@/components/ui/Modal"
 import { showToast } from "@/components/ui/Toast"
 import { cn } from "@/lib/utils"
-import {
-  type ActivityStatus,
-  bankMethods,
-  initialSavedPaymentMethods,
-  paymentActivities,
-  type SavedPaymentMethod,
-} from "./paymentMethodsData"
-
-const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" })
+import { initialSavedPaymentMethods, type SavedPaymentMethod } from "./paymentMethodsData"
 
 interface PaymentMethodFormState {
   nickname: string
@@ -50,12 +30,6 @@ const initialFormState: PaymentMethodFormState = {
   makeDefault: true,
 }
 
-const activityBadgeClassMap: Record<ActivityStatus, string> = {
-  Completed: "bg-success/15 text-success border border-success/30",
-  Scheduled: "bg-warning/15 text-warning border border-warning/30",
-  Failed: "bg-danger/15 text-danger border border-danger/30",
-}
-
 const methodToneMap: Record<SavedPaymentMethod["type"], string> = {
   visa: "bg-brand/15 text-brand",
   mastercard: "bg-warning/18 text-warning",
@@ -68,29 +42,8 @@ export default function BuyerPaymentMethodsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingMethodId, setEditingMethodId] = useState<string | null>(null)
   const [formState, setFormState] = useState<PaymentMethodFormState>(initialFormState)
-  const [autoPayEnabled, setAutoPayEnabled] = useState(true)
-  const [backupOnFailure, setBackupOnFailure] = useState(true)
-  const [requiresApproval, setRequiresApproval] = useState(true)
-  const [approvalThreshold, setApprovalThreshold] = useState("5000")
-  const [activityStatusFilter, setActivityStatusFilter] = useState<"All" | ActivityStatus>("All")
-  const [activitySearch, setActivitySearch] = useState("")
 
   const defaultMethod = methods.find((method) => method.status === "default") ?? null
-  const scheduledActivities = paymentActivities.filter((activity) => activity.status === "Scheduled")
-  const scheduledAmount = scheduledActivities.reduce((total, activity) => total + activity.amount, 0)
-
-  const filteredActivity = useMemo(() => {
-    const normalizedSearch = activitySearch.trim().toLowerCase()
-    return paymentActivities.filter((activity) => {
-      const statusMatch = activityStatusFilter === "All" || activity.status === activityStatusFilter
-      const searchMatch =
-        normalizedSearch.length === 0 ||
-        activity.invoiceId.toLowerCase().includes(normalizedSearch) ||
-        activity.methodLabel.toLowerCase().includes(normalizedSearch)
-
-      return statusMatch && searchMatch
-    })
-  }, [activitySearch, activityStatusFilter])
 
   const openAddModal = () => {
     setEditingMethodId(null)
@@ -243,8 +196,8 @@ export default function BuyerPaymentMethodsPage() {
           <KpiCard
             icon={<Banknote className="h-5 w-5 text-warning" />}
             label="Upcoming Payments"
-            value={currency.format(scheduledAmount)}
-            hint={`${scheduledActivities.length} scheduled invoices`}
+            value="$0.00"
+            hint="Scheduled activity hidden"
           />
         </div>
       </section>
@@ -300,179 +253,6 @@ export default function BuyerPaymentMethodsPage() {
               </div>
             </article>
           ))}
-        </div>
-      </section>
-
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <section className="rounded-[1.25rem] border border-border-soft bg-surface p-6 shadow-soft xl:col-span-2">
-          <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <h2 className="text-xl font-semibold text-text-primary">Recent Payment Activity</h2>
-            <div className="flex flex-wrap gap-2">
-              <div className="relative">
-                <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-text-muted" />
-                <Input
-                  value={activitySearch}
-                  onChange={(event) => setActivitySearch(event.target.value)}
-                  placeholder="Search invoice id..."
-                  className="h-10 w-52 pl-9"
-                />
-              </div>
-              <select
-                value={activityStatusFilter}
-                onChange={(event) => setActivityStatusFilter(event.target.value as "All" | ActivityStatus)}
-                className="h-10 rounded-xl border border-border-soft bg-surface-elevated px-3 text-sm text-text-primary outline-none"
-              >
-                <option value="All">All Statuses</option>
-                <option value="Completed">Completed</option>
-                <option value="Scheduled">Scheduled</option>
-                <option value="Failed">Failed</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="overflow-hidden rounded-xl border border-border-soft">
-            <table className="w-full min-w-[640px]">
-              <thead className="border-b border-border-soft bg-surface-muted/60">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
-                    Date
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
-                    Invoice
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
-                    Amount
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
-                    Method
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredActivity.map((activity) => (
-                  <tr key={activity.id} className="border-b border-border-soft/70 last:border-b-0">
-                    <td className="px-4 py-3 text-sm text-text-secondary">
-                      {new Date(activity.date).toLocaleDateString("en-US")}
-                    </td>
-                    <td className="px-4 py-3 text-sm font-semibold text-text-primary">{activity.invoiceId}</td>
-                    <td className="px-4 py-3 text-sm text-text-primary">{currency.format(activity.amount)}</td>
-                    <td className="px-4 py-3 text-sm text-text-secondary">{activity.methodLabel}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={cn(
-                          "rounded-full px-2.5 py-1 text-xs font-semibold",
-                          activityBadgeClassMap[activity.status],
-                        )}
-                      >
-                        {activity.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <div className="space-y-6">
-          <section className="rounded-[1.25rem] border border-border-soft bg-surface p-6 shadow-soft">
-            <h2 className="text-xl font-semibold text-text-primary">Bank / ACH Methods</h2>
-            <div className="mt-4 space-y-3">
-              {bankMethods.map((bankMethod) => (
-                <article key={bankMethod.id} className="rounded-xl border border-border-soft bg-surface-elevated p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-brand/12 p-2">
-                        <Landmark className="h-4 w-4 text-brand" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-text-primary">{bankMethod.accountNickname}</p>
-                        <p className="text-xs text-text-secondary">
-                          {bankMethod.bankName} •••• {bankMethod.last4}
-                        </p>
-                      </div>
-                    </div>
-                    <span
-                      className={cn(
-                        "rounded-full px-2 py-1 text-[11px] font-semibold",
-                        bankMethod.verificationStatus === "Verified"
-                          ? "bg-success/15 text-success"
-                          : "bg-warning/15 text-warning",
-                      )}
-                    >
-                      {bankMethod.verificationStatus}
-                    </span>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-[1.25rem] border border-border-soft bg-surface p-6 shadow-soft">
-            <h2 className="text-xl font-semibold text-text-primary">Payment Rules</h2>
-            <div className="mt-4 space-y-4">
-              <ToggleRow
-                label="Auto-pay enabled"
-                description="Automatically charge due invoices using your default method."
-                checked={autoPayEnabled}
-                onChange={setAutoPayEnabled}
-              />
-              <ToggleRow
-                label="Use backup method on failure"
-                description="Retry failed attempts with your backup card."
-                checked={backupOnFailure}
-                onChange={setBackupOnFailure}
-              />
-              <ToggleRow
-                label="Require manual approval for high-value payments"
-                description="Payments above threshold will wait for approval."
-                checked={requiresApproval}
-                onChange={setRequiresApproval}
-              />
-              <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
-                  Approval Threshold (USD)
-                </label>
-                <Input
-                  value={approvalThreshold}
-                  onChange={(event) => setApprovalThreshold(event.target.value.replace(/[^\d]/g, ""))}
-                  placeholder="5000"
-                />
-              </div>
-              <Button
-                type="button"
-                className="w-full"
-                onClick={() => showToast.success("Rules updated", "Payment rule changes were saved.")}
-              >
-                <Save className="h-4 w-4" />
-                Save Rules
-              </Button>
-            </div>
-          </section>
-        </div>
-      </div>
-
-      <section className="rounded-[1.25rem] border border-border-soft bg-surface p-6 shadow-soft">
-        <h2 className="text-xl font-semibold text-text-primary">Security & Compliance</h2>
-        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-          <SecurityCard
-            icon={<ShieldCheck className="h-5 w-5 text-success" />}
-            title="PCI Tokenization"
-            description="Card details are tokenized and never stored as raw PAN values in dashboard storage."
-          />
-          <SecurityCard
-            icon={<AlertTriangle className="h-5 w-5 text-warning" />}
-            title="Step-up Verification"
-            description="Sensitive actions such as method deletion can require additional identity verification."
-          />
-          <SecurityCard
-            icon={<Landmark className="h-5 w-5 text-brand" />}
-            title="Audit Log Ready"
-            description="Payment method updates and rule changes are recorded with actor and timestamp metadata."
-          />
         </div>
       </section>
 
@@ -554,13 +334,13 @@ export default function BuyerPaymentMethodsPage() {
             </FormField>
           </div>
 
-          <label className="mt-4 inline-flex items-center gap-2 text-sm text-text-secondary">
+          <div className="mt-4 inline-flex items-center gap-2 text-sm text-text-secondary">
             <Checkbox
               checked={formState.makeDefault}
               onChange={(event) => setFormState((current) => ({ ...current, makeDefault: event.target.checked }))}
             />
             Make this my default payment method
-          </label>
+          </div>
 
           <div className="mt-6 flex justify-end gap-3">
             <Button type="button" variant="outline" onClick={resetModal}>
@@ -624,44 +404,10 @@ function IconButton({ icon, onClick, label }: { icon: React.ReactNode; onClick: 
   )
 }
 
-function ToggleRow({
-  label,
-  description,
-  checked,
-  onChange,
-}: {
-  label: string
-  description: string
-  checked: boolean
-  onChange: (value: boolean) => void
-}) {
-  return (
-    <div className="rounded-lg border border-border-soft bg-surface-elevated p-3">
-      <label className="flex items-start gap-3">
-        <Checkbox checked={checked} onChange={(event) => onChange(event.target.checked)} />
-        <div>
-          <p className="text-sm font-semibold text-text-primary">{label}</p>
-          <p className="text-xs text-text-secondary">{description}</p>
-        </div>
-      </label>
-    </div>
-  )
-}
-
-function SecurityCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
-  return (
-    <article className="rounded-xl border border-border-soft bg-surface-elevated p-4">
-      <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-surface-muted">{icon}</div>
-      <h3 className="text-sm font-semibold text-text-primary">{title}</h3>
-      <p className="mt-1 text-xs leading-5 text-text-secondary">{description}</p>
-    </article>
-  )
-}
-
 function FormField({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
   return (
     <div className={className}>
-      <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">{label}</label>
+      <p className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">{label}</p>
       {children}
     </div>
   )
