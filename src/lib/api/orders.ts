@@ -30,6 +30,9 @@ export interface PlaceOrderPayload {
 export interface OrderItem {
   id: string
   userProductId: string
+  productId?: string
+  productName?: string
+  productCoverPhotoPath?: string
   price: number
   quantity: number
   status: string
@@ -42,6 +45,7 @@ export interface PlaceOrderResponse {
   orderId: string
   totalPrice: number
   status: string
+  paymentStatus?: string
   createdDate: string | null
   clientSecret?: string
   orderItems: OrderItem[]
@@ -63,9 +67,23 @@ export interface SavedCardsResponse {
   total: number
 }
 
+export interface GetPaymentStatusResponse {
+  paymentIntentId: string
+  status: "requires_confirmation" | "canceled" | "succeeded" | string
+  amount: number
+  currency: string
+  clientSecret: string
+  error: string | null
+}
+
 class OrdersAPI {
   async placeOrder(payload: PlaceOrderPayload): Promise<PlaceOrderResponse> {
     const response = await apiClient.post<PlaceOrderResponse>("/orders", payload)
+    return response.data
+  }
+
+  async getPaymentStatus(paymentIntentId: string): Promise<GetPaymentStatusResponse> {
+    const response = await apiClient.get<GetPaymentStatusResponse>(`/orders/payment/${paymentIntentId}`)
     return response.data
   }
 
