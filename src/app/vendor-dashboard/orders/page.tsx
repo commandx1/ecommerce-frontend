@@ -19,6 +19,7 @@ import { showToast } from "@/components/ui/Toast"
 import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
 import { getFullImageUrl } from "@/lib/api/products"
 import { type ProcessUberDeliveriesResponse, type VendorOrder, vendorOrdersAPI } from "@/lib/api/vendor-orders"
+import { isWarningOrderItemStatus } from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { getQzConnectionStatus, printShippingLabel, type QzPrintOptions } from "@/lib/qz/printLabel"
 import { useAuthStore } from "@/stores/authStore"
@@ -248,13 +249,7 @@ export default function VendorOrdersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border-soft">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-text-muted">
-                    Loading orders...
-                  </td>
-                </tr>
-              ) : orders.length === 0 ? (
+              {!isLoading && orders.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-12 text-center text-text-muted">
                     No orders found.
@@ -382,7 +377,7 @@ export default function VendorOrdersPage() {
                                     </span>
                                     <span
                                       className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
-                                        item.status === "WAITING_FOR_SHIPMENT"
+                                        isWarningOrderItemStatus(item.status)
                                           ? "border border-warning/20 bg-warning/14 text-warning"
                                           : "border border-border-soft bg-surface-muted text-text-secondary"
                                       }`}
