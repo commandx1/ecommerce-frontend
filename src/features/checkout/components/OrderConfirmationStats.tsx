@@ -28,7 +28,9 @@ export default function OrderConfirmationStats({ orderResult }: OrderConfirmatio
     <div className="h-full rounded-xl border border-border-soft bg-surface p-6">
       <div className="mb-2 text-sm text-text-secondary">Payment Status</div>
       <div className="mb-4">
-        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusToneClass(paymentStatus)}`}>
+        <span
+          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusToneClass(paymentStatus)}`}
+        >
           {formatStatusLabel(paymentStatus)}
         </span>
       </div>

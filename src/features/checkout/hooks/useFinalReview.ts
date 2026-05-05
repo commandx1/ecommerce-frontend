@@ -158,7 +158,10 @@ export function useFinalReview(): UseFinalReviewResult {
         const resolvedPaymentIntentStatus = terminalPolledStatus ?? initialPaymentIntentStatus
         paymentStatus = resolvedPaymentIntentStatus
 
-        if (!SUCCESSFUL_PAYMENT_INTENT_STATUSES.has(resolvedPaymentIntentStatus) && resolvedPaymentIntentStatus !== "canceled") {
+        if (
+          !SUCCESSFUL_PAYMENT_INTENT_STATUSES.has(resolvedPaymentIntentStatus) &&
+          resolvedPaymentIntentStatus !== "canceled"
+        ) {
           finalOrderStatus = "PENDING_PAYMENT"
         } else {
           finalOrderStatus = mapPaymentIntentStatusToOrderStatus(resolvedPaymentIntentStatus)
