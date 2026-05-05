@@ -138,6 +138,7 @@ export function useShippingDetails(): UseShippingDetailsResult {
         [vendorId]: {
           sellerName: sellerGroups[vendorId]?.name || "Seller",
           methodText: etaText,
+          amount,
         },
       }))
     },
