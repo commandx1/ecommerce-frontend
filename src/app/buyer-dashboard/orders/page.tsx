@@ -17,6 +17,11 @@ import {
   buyerOrdersAPI,
 } from "@/lib/api/buyer-orders"
 import { getFullImageUrl } from "@/lib/api/products"
+import {
+  isCancelableOrderItemStatus,
+  isWarningOrderItemStatus,
+  OrderItemStatus,
+} from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
@@ -110,6 +115,52 @@ function resolvePaymentSummary(order: BuyerOrder): { title: string; detail: stri
   return { title: "-", detail: "" }
 }
 
+function extractApiErrorMessage(error: unknown): string | null {
+  if (!error || typeof error !== "object") return null
+
+  const maybeError = error as {
+    message?: unknown
+    response?: { data?: unknown }
+  }
+
+  const data = maybeError.response?.data
+  if (typeof data === "string" && data.trim()) {
+    return data
+  }
+
+  if (data && typeof data === "object") {
+    const payload = data as { message?: unknown; error?: unknown }
+
+    if (typeof payload.message === "string" && payload.message.trim()) {
+      return payload.message
+    }
+
+    if (typeof payload.error === "string" && payload.error.trim()) {
+      if (payload.error.startsWith("{")) {
+        try {
+          const nested = JSON.parse(payload.error) as { message?: unknown; error?: unknown }
+          if (typeof nested.message === "string" && nested.message.trim()) {
+            return nested.message
+          }
+          if (typeof nested.error === "string" && nested.error.trim()) {
+            return nested.error
+          }
+        } catch {
+          // ignore invalid nested JSON
+        }
+      }
+
+      return payload.error
+    }
+  }
+
+  if (typeof maybeError.message === "string" && maybeError.message.trim()) {
+    return maybeError.message
+  }
+
+  return null
+}
+
 export default function BuyerOrdersPage() {
   const router = useRouter()
   const { isAuthenticated } = useAuthStore()
@@ -125,6 +176,7 @@ export default function BuyerOrdersPage() {
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
   const [trackingModalLinks, setTrackingModalLinks] = useState<BuyerOrderTrackingLink[] | null>(null)
   const [reorderingItemId, setReorderingItemId] = useState<string | null>(null)
+  const [cancelingItemId, setCancelingItemId] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -185,6 +237,49 @@ export default function BuyerOrdersPage() {
       showToast.error("Reorder failed", "This item could not be added to your cart. Please try again.")
     } finally {
       setReorderingItemId(null)
+    }
+  }
+
+  const handleCancelDuringDelivery = async (orderItemId: string, productName: string, trackingUrls: string[]) => {
+    if (trackingUrls.length === 0) {
+      showToast.error("Cancellation unavailable", "No tracking URL is available for this item yet.")
+      return
+    }
+
+    setCancelingItemId(orderItemId)
+
+    try {
+      const response = await buyerOrdersAPI.cancelDuringDeliveryByCustomer({ trackingUrls })
+      setOrders((prev) =>
+        prev.map((order) => ({
+          ...order,
+          orderItems: order.orderItems.map((orderItem) =>
+            orderItem.id === orderItemId && response.successCount > 0
+              ? { ...orderItem, status: OrderItemStatus.CANCEL_REQUESTED }
+              : orderItem,
+          ),
+        })),
+      )
+      showToast.success("Cancellation sent", response.message || `${productName} cancellation request was submitted.`)
+    } catch (error: unknown) {
+      if (isAuthHandledError(error)) {
+        return
+      }
+
+      const status = extractErrorStatus(error)
+      const apiErrorMessage = extractApiErrorMessage(error)
+      if (isAuthErrorStatus(status)) {
+        showToast.error("Authentication required", apiErrorMessage || "Please sign in to cancel this order item.")
+        router.push("/login")
+        return
+      }
+
+      showToast.error(
+        "Cancellation failed",
+        apiErrorMessage || "Your cancellation request could not be submitted. Please try again.",
+      )
+    } finally {
+      setCancelingItemId(null)
     }
   }
 
@@ -434,7 +529,7 @@ export default function BuyerOrdersPage() {
                                           </span>
                                           <span
                                             className={`rounded-full px-3 py-1.5 text-[11px] font-semibold ${
-                                              item.status === "WAITING_FOR_SHIPMENT"
+                                              isWarningOrderItemStatus(item.status)
                                                 ? "bg-warning/15 text-warning"
                                                 : "bg-surface-muted text-text-secondary"
                                             }`}
@@ -450,7 +545,7 @@ export default function BuyerOrdersPage() {
                                             type="button"
                                             variant="unstyled"
                                             onClick={() => setTrackingModalLinks(trackingLinks)}
-                                            className="inline-flex items-center rounded-full bg-success/15 px-3 py-1.5 text-[11px] font-medium text-success transition-colors hover:bg-success/25"
+                                            className="inline-flex items-center rounded-sm bg-success/15 px-3 py-1.5 text-[11px] font-medium text-success transition-colors hover:bg-success/25"
                                           >
                                             View {trackingLinks.length} tracking link
                                             {trackingLinks.length > 1 ? "s" : ""}
@@ -460,14 +555,17 @@ export default function BuyerOrdersPage() {
                                           <span className="text-[11px] text-text-muted">No tracking</span>
                                         )}
 
+                                        <div className="flex-1" />
                                         <Button
                                           type="button"
                                           variant="unstyled"
                                           onClick={() =>
                                             handleReorder(item.userProductId, item.quantity, item.productName)
                                           }
-                                          disabled={reorderingItemId === item.userProductId}
-                                          className="inline-flex items-center justify-center gap-2 rounded-full bg-brand px-4 py-2 text-[11px] font-semibold text-primary-foreground transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
+                                          disabled={
+                                            reorderingItemId === item.userProductId || cancelingItemId === item.id
+                                          }
+                                          className="inline-flex items-center rounded-sm justify-center gap-2 bg-brand px-4 py-2 text-[11px] font-semibold text-primary-foreground transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
                                         >
                                           {reorderingItemId === item.userProductId ? (
                                             <>
@@ -478,6 +576,35 @@ export default function BuyerOrdersPage() {
                                             "Reorder"
                                           )}
                                         </Button>
+
+                                        {isCancelableOrderItemStatus(item.status) && (
+                                          <Button
+                                            type="button"
+                                            variant="unstyled"
+                                            onClick={() =>
+                                              handleCancelDuringDelivery(
+                                                item.id,
+                                                item.productName,
+                                                trackingLinks.map((link) => link.trackingUrl),
+                                              )
+                                            }
+                                            disabled={
+                                              cancelingItemId === item.id ||
+                                              reorderingItemId === item.userProductId ||
+                                              trackingLinks.length === 0
+                                            }
+                                            className="inline-flex items-center rounded-sm justify-center gap-2 border border-danger/25 bg-danger/10 px-4 py-2 text-[11px] font-semibold text-danger transition-colors hover:bg-danger/15 disabled:cursor-not-allowed disabled:opacity-70"
+                                          >
+                                            {cancelingItemId === item.id ? (
+                                              <>
+                                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                Canceling...
+                                              </>
+                                            ) : (
+                                              "Cancel"
+                                            )}
+                                          </Button>
+                                        )}
                                       </div>
                                     </article>
                                   )
