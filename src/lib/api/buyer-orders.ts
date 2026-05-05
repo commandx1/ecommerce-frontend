@@ -62,6 +62,17 @@ export interface BuyerOrdersResponse {
   pageSize: number
 }
 
+export interface CancelDuringDeliveryByCustomerPayload {
+  trackingUrls: string[]
+}
+
+export interface CancelDuringDeliveryByCustomerResponse {
+  message: string
+  successCount: number
+  failureCount: number
+  cancelledTrackingUrls: string[]
+}
+
 class BuyerOrdersAPI {
   async getBuyerOrders(page = 0, size = 10, sortBy?: string, sortDir?: "asc" | "desc"): Promise<BuyerOrdersResponse> {
     const response = await apiClient.get<BuyerOrdersResponse>("/orders/buyer", {
@@ -72,6 +83,16 @@ class BuyerOrdersAPI {
         sortDir,
       },
     })
+    return response.data
+  }
+
+  async cancelDuringDeliveryByCustomer(
+    payload: CancelDuringDeliveryByCustomerPayload,
+  ): Promise<CancelDuringDeliveryByCustomerResponse> {
+    const response = await apiClient.post<CancelDuringDeliveryByCustomerResponse>(
+      "/orders/cancelDuringDeliveryByCustomer",
+      payload,
+    )
     return response.data
   }
 }
