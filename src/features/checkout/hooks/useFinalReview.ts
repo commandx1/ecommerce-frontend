@@ -15,8 +15,14 @@ interface UseFinalReviewResult {
 }
 
 const SUCCESSFUL_PAYMENT_INTENT_STATUSES = new Set(["succeeded", "processing", "requires_capture"])
+const POLL_INTERVAL_MS = 3000
+const MAX_PAYMENT_STATUS_RETRIES = 3
 
 function mapPaymentIntentStatusToOrderStatus(paymentIntentStatus: string): string {
+  if (paymentIntentStatus === "canceled") {
+    return "PAYMENT_FAILED"
+  }
+
   if (paymentIntentStatus === "succeeded" || paymentIntentStatus === "requires_capture") {
     return "PAYMENT_SUCCESS"
   }
@@ -26,6 +32,12 @@ function mapPaymentIntentStatusToOrderStatus(paymentIntentStatus: string): strin
   }
 
   return "PENDING_PAYMENT"
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
 }
 
 export function useFinalReview(): UseFinalReviewResult {
@@ -50,6 +62,27 @@ export function useFinalReview(): UseFinalReviewResult {
     if (paymentMethod.type === "card" && !paymentMethodId) return true
     return false
   }, [isPlacingOrder, paymentMethod.type, paymentMethodId, stripe])
+
+  const pollPaymentStatus = useCallback(async (paymentIntentId: string): Promise<string | null> => {
+    for (let attempt = 1; attempt <= MAX_PAYMENT_STATUS_RETRIES; attempt += 1) {
+      try {
+        const paymentStatusResponse = await ordersAPI.getPaymentStatus(paymentIntentId)
+        const normalizedStatus = paymentStatusResponse.status.toLowerCase()
+
+        if (normalizedStatus === "canceled" || normalizedStatus === "succeeded") {
+          return normalizedStatus
+        }
+      } catch {
+        // Continue retry loop for transient polling failures.
+      }
+
+      if (attempt < MAX_PAYMENT_STATUS_RETRIES) {
+        await wait(POLL_INTERVAL_MS)
+      }
+    }
+
+    return null
+  }, [])
 
   const onPlaceOrder = useCallback(async () => {
     if (!orderPayload) {
@@ -88,6 +121,8 @@ export function useFinalReview(): UseFinalReviewResult {
       const response = await ordersAPI.placeOrder(payload)
 
       let finalOrderStatus = response.status
+      let paymentStatus = response.status
+      let isPaymentCanceled = false
 
       if (paymentMethod.type === "card") {
         if (!response.clientSecret) {
@@ -113,16 +148,32 @@ export function useFinalReview(): UseFinalReviewResult {
           return
         }
 
-        if (!cardResult.paymentIntent || !SUCCESSFUL_PAYMENT_INTENT_STATUSES.has(cardResult.paymentIntent.status)) {
+        if (!cardResult.paymentIntent) {
           showToast.error("Payment could not be completed. Please use a different card and try again.")
           return
         }
 
-        finalOrderStatus = mapPaymentIntentStatusToOrderStatus(cardResult.paymentIntent.status)
+        const initialPaymentIntentStatus = cardResult.paymentIntent.status
+        const terminalPolledStatus = await pollPaymentStatus(cardResult.paymentIntent.id)
+        const resolvedPaymentIntentStatus = terminalPolledStatus ?? initialPaymentIntentStatus
+        paymentStatus = resolvedPaymentIntentStatus
+
+        if (!SUCCESSFUL_PAYMENT_INTENT_STATUSES.has(resolvedPaymentIntentStatus) && resolvedPaymentIntentStatus !== "canceled") {
+          finalOrderStatus = "PENDING_PAYMENT"
+        } else {
+          finalOrderStatus = mapPaymentIntentStatusToOrderStatus(resolvedPaymentIntentStatus)
+        }
+
+        isPaymentCanceled = resolvedPaymentIntentStatus === "canceled"
       }
 
-      showToast.success(`Order placed successfully. Order ID: ${response.orderId}`)
-      setOrderResult({ ...response, status: finalOrderStatus })
+      if (isPaymentCanceled) {
+        showToast.error(`Order placed but payment was canceled. Order ID: ${response.orderId}`)
+      } else {
+        showToast.success(`Order placed successfully. Order ID: ${response.orderId}`)
+      }
+
+      setOrderResult({ ...response, status: finalOrderStatus, paymentStatus })
       nextStep()
     } catch (error: unknown) {
       const maybeError = error as { response?: { data?: { message?: string } } }
@@ -130,7 +181,18 @@ export function useFinalReview(): UseFinalReviewResult {
     } finally {
       setIsPlacingOrder(false)
     }
-  }, [cardName, nextStep, orderPayload, paymentMethodId, paymentMethod.type, saveCard, cartId, setOrderResult, stripe])
+  }, [
+    cardName,
+    cartId,
+    nextStep,
+    orderPayload,
+    paymentMethod.type,
+    paymentMethodId,
+    pollPaymentStatus,
+    saveCard,
+    setOrderResult,
+    stripe,
+  ])
 
   return {
     isPlacingOrder,
