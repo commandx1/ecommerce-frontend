@@ -21,7 +21,7 @@ const SearchResultItem = ({ product, imageSrc, onImageError, onClick }: SearchRe
       onClick={onClick}
     >
       <div className="flex items-center space-x-3">
-        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-border-soft bg-surface-muted">
+        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xs border border-border-soft bg-surface-muted">
           <Image
             src={imageSrc}
             alt={product.productName}
