@@ -21,6 +21,7 @@ export interface PaymentMethod {
 export interface VendorShippingSelection {
   sellerName: string
   methodText: string
+  amount?: number
 }
 
 interface CheckoutStore {
