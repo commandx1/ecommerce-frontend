@@ -1,22 +1,6 @@
 "use client"
 
-import {
-  BarChart3,
-  Box,
-  DollarSign,
-  MapPin,
-  Megaphone,
-  PieChart,
-  Plus,
-  ShoppingBag,
-  Star,
-  Tag,
-  Tags,
-  TrendingUp,
-  User,
-  Users,
-  Warehouse,
-} from "lucide-react"
+import { Box, MapPin, Megaphone, Plus, ShoppingBag, Star, Tag, Tags, TrendingUp, User, Warehouse } from "lucide-react"
 import CommonDashboardSidebar, {
   type DashboardSidebarGroup,
   type DashboardSidebarQuickAction,
@@ -32,16 +16,16 @@ const VENDOR_NAV_GROUPS: DashboardSidebarGroup[] = [
     title: "Overview",
     items: [
       { href: "/vendor-dashboard", label: "Dashboard", icon: TrendingUp, matchMode: "exact" },
-      { href: "/vendor-dashboard/analytics", label: "Analytics", icon: BarChart3, matchMode: "startsWith" },
-      { href: "/vendor-dashboard/performance", label: "Performance", icon: PieChart, matchMode: "startsWith" },
+      //{ href: "/vendor-dashboard/analytics", label: "Analytics", icon: BarChart3, matchMode: "startsWith" },
+      //{ href: "/vendor-dashboard/performance", label: "Performance", icon: PieChart, matchMode: "startsWith" },
     ],
   },
   {
     title: "Sales",
     items: [
       { href: "/vendor-dashboard/orders", label: "Orders", icon: ShoppingBag, matchMode: "startsWith" },
-      { href: "/vendor-dashboard/revenue", label: "Revenue", icon: DollarSign, matchMode: "startsWith" },
-      { href: "/vendor-dashboard/customers", label: "Customers", icon: Users, matchMode: "startsWith" },
+      //{ href: "/vendor-dashboard/revenue", label: "Revenue", icon: DollarSign, matchMode: "startsWith" },
+      //{ href: "/vendor-dashboard/customers", label: "Customers", icon: Users, matchMode: "startsWith" },
     ],
   },
   {
