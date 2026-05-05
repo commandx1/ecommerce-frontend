@@ -5,6 +5,7 @@ import { useEffect, useId, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import { cookieStorage } from "@/lib/storage/cookie-storage"
 import { useAuthStore } from "@/stores/authStore"
+import VendorDashboardLayoutSkeleton from "./components/VendorDashboardLayoutSkeleton"
 import VendorHeader from "./components/VendorHeader"
 import VendorSidebar from "./components/VendorSidebar"
 
@@ -99,13 +100,13 @@ export default function VendorDashboardLayout({ children }: { children: React.Re
     checkAuth()
   }, [user, isAuthenticated, router])
 
-  // Show loading while checking or if not authenticated/vendor
-  if (isChecking || !isAuthenticated || !user || user.roleName !== "Vendor") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-canvas">
-        <div className="text-text-secondary">Loading...</div>
-      </div>
-    )
+  // Show full-page skeleton while auth state is being resolved.
+  if (isChecking) {
+    return <VendorDashboardLayoutSkeleton />
+  }
+
+  if (!isAuthenticated || !user || user.roleName !== "Vendor") {
+    return null
   }
 
   return (

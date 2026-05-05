@@ -1,14 +1,16 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 import { cookieStorage } from "@/lib/storage/cookie-storage"
 import { useAuthStore } from "@/stores/authStore"
+import BuyerDashboardLayoutSkeleton from "./components/BuyerDashboardLayoutSkeleton"
 import BuyerHeader from "./components/BuyerHeader"
 import DashboardSidebar from "./components/DashboardSidebar"
 
 export default function BuyerDashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
+  const mainContentId = useId()
   const { user, isAuthenticated } = useAuthStore()
   const [isChecking, setIsChecking] = useState(true)
   const wasAuthenticatedRef = useRef(false)
@@ -80,11 +82,7 @@ export default function BuyerDashboardLayout({ children }: { children: React.Rea
 
   // Show loading while checking or if not authenticated/vendor
   if (isChecking || !isAuthenticated || !user || user.roleName === "Vendor") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-canvas">
-        <div className="text-text-secondary">Loading...</div>
-      </div>
-    )
+    return <BuyerDashboardLayoutSkeleton />
   }
 
   return (
@@ -92,7 +90,7 @@ export default function BuyerDashboardLayout({ children }: { children: React.Rea
       <BuyerHeader />
       <div className="flex flex-1">
         <DashboardSidebar />
-        <main id="main-content" className="flex-1 overflow-auto p-6">
+        <main id={mainContentId} className="flex-1 overflow-auto p-6">
           {children}
         </main>
       </div>
