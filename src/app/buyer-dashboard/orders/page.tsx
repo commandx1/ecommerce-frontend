@@ -478,16 +478,16 @@ export default function BuyerOrdersPage() {
                                     >
                                       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                                         <div className="flex min-w-0 items-start gap-4">
-                                          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-border-soft bg-surface-muted">
+                                          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xs border border-border-soft bg-surface-muted">
                                             <ProductImageWithFallback
                                               src={
                                                 getFullImageUrl(item.productCoverPhotoPath) ||
                                                 "/dentypro-product-placeholder.png"
                                               }
                                               alt={item.productName}
-                                              width={64}
-                                              height={64}
-                                              className="h-16 w-16 object-cover"
+                                              width={48}
+                                              height={48}
+                                              className="h-full w-full object-cover"
                                             />
                                           </div>
                                           <div style={{ maxWidth: "30rem" }} className="space-y-1.5">

@@ -354,7 +354,7 @@ export default function VendorOrdersPage() {
                                         alt={item.productName}
                                         width={48}
                                         height={48}
-                                        className="h-12 w-12 object-cover"
+                                        className="h-full w-full object-cover"
                                       />
                                     </div>
                                     <div className="truncate font-medium text-text-primary">{item.productName}</div>
