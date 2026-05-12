@@ -34,6 +34,8 @@ export interface BuyerOrderItem {
   sellerSurname: string
   shipmentPrice?: number | null
   shipmentFreeBySeller?: boolean | null
+  cancelledByCustomer?: boolean | null
+  cancelledBySeller?: boolean | null
   sellerConfirmedReturn?: boolean | null
   refundStatus?: string | null
   trackingLink?: string[]
