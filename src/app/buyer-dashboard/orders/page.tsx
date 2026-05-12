@@ -1,11 +1,11 @@
 "use client"
 
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ExternalLink, Loader2, X } from "lucide-react"
+import { ChevronDown, ChevronUp, ExternalLink, Loader2, LucideTimer, X } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Fragment, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import Modal from "@/components/ui/Modal"
 import { showToast } from "@/components/ui/Toast"
 import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
 import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
@@ -13,15 +13,12 @@ import {
   type BuyerOrder,
   type BuyerOrderAddress,
   type BuyerOrderItem,
+  type BuyerOrderSellerGroup,
   type BuyerOrderTrackingLink,
   buyerOrdersAPI,
 } from "@/lib/api/buyer-orders"
 import { getFullImageUrl } from "@/lib/api/products"
-import {
-  isCancelableOrderItemStatus,
-  isWarningOrderItemStatus,
-  OrderItemStatus,
-} from "@/lib/constants/order-item-status"
+import { isCancelableOrderItemStatus, OrderItemStatus } from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
@@ -63,6 +60,33 @@ function formatDateTime(value?: string | null): string {
   })
 }
 
+function formatDateOnly(value?: string | null): string {
+  if (!value) return "-"
+  const hasTimeZoneInfo = /[zZ]|[+-]\d{2}:\d{2}$/.test(value)
+  const normalizedValue = hasTimeZoneInfo ? value : `${value.replace(" ", "T")}Z`
+  const parsed = new Date(normalizedValue)
+  if (Number.isNaN(parsed.getTime())) return "-"
+
+  return parsed.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+  })
+}
+
+function formatTimeOnly(value?: string | null): string {
+  if (!value) return "-"
+  const hasTimeZoneInfo = /[zZ]|[+-]\d{2}:\d{2}$/.test(value)
+  const normalizedValue = hasTimeZoneInfo ? value : `${value.replace(" ", "T")}Z`
+  const parsed = new Date(normalizedValue)
+  if (Number.isNaN(parsed.getTime())) return "-"
+
+  return parsed.toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+}
+
 function getAddressSummary(
   address: BuyerOrderAddress | undefined,
   fallbackTitle?: string,
@@ -95,6 +119,58 @@ function resolveTrackingLinks(item: BuyerOrderItem): BuyerOrderTrackingLink[] {
   return []
 }
 
+function getOrderItems(order: BuyerOrder): BuyerOrderItem[] {
+  if (Array.isArray(order.orderItems) && order.orderItems.length > 0) {
+    return order.orderItems
+  }
+
+  if (Array.isArray(order.sellerGroups) && order.sellerGroups.length > 0) {
+    return order.sellerGroups.reduce<BuyerOrderItem[]>((items, group) => {
+      if (Array.isArray(group.orderItems) && group.orderItems.length > 0) {
+        items.push(...group.orderItems)
+      }
+      return items
+    }, [])
+  }
+
+  return []
+}
+
+function getOrderSellerGroups(order: BuyerOrder): BuyerOrderSellerGroup[] {
+  if (Array.isArray(order.sellerGroups) && order.sellerGroups.length > 0) {
+    return order.sellerGroups.map((group) => ({
+      ...group,
+      orderItems: Array.isArray(group.orderItems) ? group.orderItems : [],
+    }))
+  }
+
+  const legacyItems = Array.isArray(order.orderItems) ? order.orderItems : []
+  if (legacyItems.length === 0) return []
+
+  const groupedMap = new Map<string, BuyerOrderSellerGroup>()
+
+  for (const item of legacyItems) {
+    const sellerName = item.sellerName || "Seller"
+    const sellerSurname = item.sellerSurname || ""
+    const key = `${sellerName}::${sellerSurname}`
+
+    if (!groupedMap.has(key)) {
+      groupedMap.set(key, {
+        sellerId: key,
+        sellerName,
+        sellerSurname,
+        cancellationShipmentFee: null,
+        cancellationShipmentRefundFee: null,
+        orderItems: [],
+      })
+    }
+
+    groupedMap.get(key)?.orderItems.push(item)
+  }
+
+  return Array.from(groupedMap.values())
+}
+
 function resolvePaymentSummary(order: BuyerOrder): { title: string; detail: string } {
   if (order.cardBrand && order.cardLast4) {
     const brand = order.cardBrand.toUpperCase()
@@ -113,6 +189,95 @@ function resolvePaymentSummary(order: BuyerOrder): { title: string; detail: stri
   }
 
   return { title: "-", detail: "" }
+}
+
+type OrderViewStatus = "processing" | "shipped" | "delivered" | "shipping"
+
+function resolveOrderViewStatus(order: BuyerOrder, orderItems: BuyerOrderItem[]): OrderViewStatus {
+  const normalizedOrderStatus = order.orderStatus.toUpperCase()
+  const itemStatuses = orderItems.map((item) => item.status.toUpperCase())
+
+  if (normalizedOrderStatus.includes("DELIVERED") || itemStatuses.some((status) => status.includes("DELIVERED"))) {
+    return "delivered"
+  }
+
+  if (itemStatuses.some((status) => status.includes("ON_WAY"))) {
+    return "shipping"
+  }
+
+  if (
+    normalizedOrderStatus.includes("SHIPPED") ||
+    itemStatuses.some((status) =>
+      ["SHIPPED", "IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERY"].some((token) => status.includes(token)),
+    )
+  ) {
+    return "shipped"
+  }
+
+  return "processing"
+}
+
+function getOrderStatusBadgeClasses(status: OrderViewStatus): string {
+  if (status === "delivered") {
+    return "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+  }
+
+  if (status === "shipped") {
+    return "bg-blue-50 text-blue-700 border border-blue-200/60"
+  }
+
+  return "bg-amber-50 text-amber-700 border border-amber-200/60"
+}
+
+function getOrderStatusLabel(status: OrderViewStatus): string {
+  if (status === "delivered") return "Delivered"
+  if (status === "shipped") return "Shipped"
+  return "Processing"
+}
+
+function getSellerFirstTwoLetters(value: string): string {
+  const words = value
+    .split(/\s+/)
+    .map((word) => word.trim())
+    .filter(Boolean)
+
+  if (words.length === 0) return "SE"
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase()
+
+  return `${words[0][0] ?? ""}${words[1][0] ?? ""}`.toUpperCase()
+}
+
+function getOrderItemStatusTagClass(status: string): string {
+  const normalizedStatus = status.toUpperCase()
+
+  if (normalizedStatus.includes("CANCEL")) {
+    return "border border-red-200 bg-red-50 text-red-700"
+  }
+  if (normalizedStatus.includes("DELIVER")) {
+    return "border border-emerald-200 bg-emerald-50 text-emerald-700"
+  }
+  if (normalizedStatus.includes("SHIP")) {
+    return "border border-blue-200 bg-blue-50 text-blue-700"
+  }
+  if (normalizedStatus.includes("REFUND") || normalizedStatus.includes("RETURN")) {
+    return "border border-violet-200 bg-violet-50 text-violet-700"
+  }
+
+  return "border border-amber-200 bg-amber-50 text-amber-700"
+}
+
+function formatOrderItemStatus(status: string): string {
+  return status
+    .toLowerCase()
+    .split("_")
+    .map((part) => (part ? `${part[0].toUpperCase()}${part.slice(1)}` : ""))
+    .join(" ")
+}
+
+function getOrderItemShipmentFee(item: BuyerOrderItem): number {
+  if (item.shipmentFreeBySeller) return 0
+  const shipmentUnitPrice = typeof item.shipmentPrice === "number" ? item.shipmentPrice : 0
+  return shipmentUnitPrice * item.quantity
 }
 
 function extractApiErrorMessage(error: unknown): string | null {
@@ -161,6 +326,12 @@ function extractApiErrorMessage(error: unknown): string | null {
   return null
 }
 
+interface PendingCancelAction {
+  description: string
+  orderItemIds: string[]
+  options?: { cancelingItemId?: string; cancelingSellerKey?: string }
+}
+
 export default function BuyerOrdersPage() {
   const router = useRouter()
   const { isAuthenticated } = useAuthStore()
@@ -168,15 +339,19 @@ export default function BuyerOrdersPage() {
   const [orders, setOrders] = useState<BuyerOrder[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery] = useState("")
-  const [pageSize, setPageSize] = useState<number>(10)
+  const [statusFilter] = useState<"all" | OrderViewStatus>("all")
+  const [pageSize, _setPageSize] = useState<number>(10)
   const [currentPage, setCurrentPage] = useState<number>(0)
   const [totalPages, setTotalPages] = useState<number>(1)
-  const [, setTotalElements] = useState<number>(0)
+  const [totalElements, setTotalElements] = useState<number>(0)
   const [dateSortDir, setDateSortDir] = useState<"asc" | "desc">("desc")
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
   const [trackingModalLinks, setTrackingModalLinks] = useState<BuyerOrderTrackingLink[] | null>(null)
   const [reorderingItemId, setReorderingItemId] = useState<string | null>(null)
   const [cancelingItemId, setCancelingItemId] = useState<string | null>(null)
+  const [cancelingSellerKey, setCancelingSellerKey] = useState<string | null>(null)
+  const [pendingCancelAction, setPendingCancelAction] = useState<PendingCancelAction | null>(null)
+  const [isConfirmingCancel, setIsConfirmingCancel] = useState(false)
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -204,11 +379,6 @@ export default function BuyerOrdersPage() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
-  }
-
-  const handlePageSizeChange = (newPageSize: number) => {
-    setPageSize(newPageSize)
-    setCurrentPage(0)
   }
 
   const handleDateSortToggle = () => {
@@ -240,27 +410,46 @@ export default function BuyerOrdersPage() {
     }
   }
 
-  const handleCancelDuringDelivery = async (orderItemId: string, productName: string, trackingUrls: string[]) => {
-    if (trackingUrls.length === 0) {
-      showToast.error("Cancellation unavailable", "No tracking URL is available for this item yet.")
-      return
+  const handleCancelDuringDelivery = async (
+    orderItemIds: string[],
+    successFallbackMessage: string,
+    options?: { cancelingItemId?: string; cancelingSellerKey?: string },
+  ) => {
+    if (orderItemIds.length === 0) return
+    if (options?.cancelingItemId) {
+      setCancelingItemId(options.cancelingItemId)
+    }
+    if (options?.cancelingSellerKey) {
+      setCancelingSellerKey(options.cancelingSellerKey)
     }
 
-    setCancelingItemId(orderItemId)
-
     try {
-      const response = await buyerOrdersAPI.cancelDuringDeliveryByCustomer({ trackingUrls })
+      const response = await buyerOrdersAPI.cancelDuringDeliveryByCustomer({ orderItemIds })
       setOrders((prev) =>
         prev.map((order) => ({
           ...order,
-          orderItems: order.orderItems.map((orderItem) =>
-            orderItem.id === orderItemId && response.successCount > 0
-              ? { ...orderItem, status: OrderItemStatus.CANCEL_REQUESTED }
-              : orderItem,
-          ),
+          sellerGroups: Array.isArray(order.sellerGroups)
+            ? order.sellerGroups.map((group) => ({
+                ...group,
+                orderItems: Array.isArray(group.orderItems)
+                  ? group.orderItems.map((orderItem) =>
+                      response.cancelledOrderItemIds.includes(orderItem.id)
+                        ? { ...orderItem, status: OrderItemStatus.CANCEL_REQUESTED }
+                        : orderItem,
+                    )
+                  : [],
+              }))
+            : order.sellerGroups,
+          orderItems: Array.isArray(order.orderItems)
+            ? order.orderItems.map((orderItem) =>
+                response.cancelledOrderItemIds.includes(orderItem.id)
+                  ? { ...orderItem, status: OrderItemStatus.CANCEL_REQUESTED }
+                  : orderItem,
+              )
+            : order.orderItems,
         })),
       )
-      showToast.success("Cancellation sent", response.message || `${productName} cancellation request was submitted.`)
+      showToast.success("Cancellation sent", response.message || successFallbackMessage)
     } catch (error: unknown) {
       if (isAuthHandledError(error)) {
         return
@@ -279,11 +468,36 @@ export default function BuyerOrdersPage() {
         apiErrorMessage || "Your cancellation request could not be submitted. Please try again.",
       )
     } finally {
-      setCancelingItemId(null)
+      if (options?.cancelingItemId) {
+        setCancelingItemId(null)
+      }
+      if (options?.cancelingSellerKey) {
+        setCancelingSellerKey(null)
+      }
+    }
+  }
+
+  const confirmPendingCancelAction = async () => {
+    if (!pendingCancelAction) return
+
+    setIsConfirmingCancel(true)
+    try {
+      await handleCancelDuringDelivery(
+        pendingCancelAction.orderItemIds,
+        pendingCancelAction.description,
+        pendingCancelAction.options,
+      )
+    } finally {
+      setIsConfirmingCancel(false)
+      setPendingCancelAction(null)
     }
   }
 
   const filteredOrders = orders.filter((order) => {
+    const orderItems = getOrderItems(order)
+    const statusMatches = statusFilter === "all" ? true : resolveOrderViewStatus(order, orderItems) === statusFilter
+    if (!statusMatches) return false
+
     if (!searchQuery.trim()) return true
     const query = searchQuery.toLowerCase()
     const shipmentAddress = getAddressSummary(order.shipmentAddress, order.addressTitle, order.addressFormattedAddress)
@@ -299,7 +513,7 @@ export default function BuyerOrdersPage() {
       billingAddress.title.toLowerCase().includes(query) ||
       billingAddress.line.toLowerCase().includes(query) ||
       payment.title.toLowerCase().includes(query) ||
-      order.orderItems.some(
+      orderItems.some(
         (item) =>
           item.productName.toLowerCase().includes(query) ||
           item.sellerName.toLowerCase().includes(query) ||
@@ -331,48 +545,38 @@ export default function BuyerOrdersPage() {
       {/* Orders Table */}
       <section className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b border-border-soft bg-surface-muted/60">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
+          <table className="w-full min-w-[1180px] border-collapse text-left">
+            <thead>
+              <tr className="border-b border-border-soft bg-surface-elevated text-xs font-semibold tracking-wider text-text-muted uppercase">
+                <th className="px-6 py-4">
                   <Button
                     type="button"
                     variant="unstyled"
                     onClick={handleDateSortToggle}
-                    className="inline-flex items-center gap-1 transition-colors hover:text-brand"
+                    className="inline-flex items-center gap-1 text-xs font-semibold tracking-wider text-text-muted uppercase hover:text-text-secondary"
                     aria-label={`Sort by date ${dateSortDir === "desc" ? "ascending" : "descending"}`}
                   >
-                    Order Date
-                    {dateSortDir === "desc" ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
+                    Date
+                    {dateSortDir === "desc" ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
                   </Button>
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
-                  Shipping Address
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
-                  Payment
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
-                  Total
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
-                  Status
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
-                  Items
-                </th>
+                <th className="px-6 py-4">Payment</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Total Amount</th>
+                <th className="px-6 py-4 text-right">Total Shipment Fee</th>
+                <th className="w-12 px-6 py-4" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-border-soft">
+            <tbody className="text-sm text-text-secondary">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-text-muted">
+                  <td colSpan={6} className="px-6 py-12 text-center text-text-muted">
                     Loading orders...
                   </td>
                 </tr>
               ) : filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-text-muted">
+                  <td colSpan={6} className="px-6 py-12 text-center text-text-muted">
                     No orders found.
                   </td>
                 </tr>
@@ -384,231 +588,405 @@ export default function BuyerOrdersPage() {
                     order.addressFormattedAddress,
                   )
                   const payment = resolvePaymentSummary(order)
-                  const totalQuantity = order.orderItems.reduce((sum, item) => sum + item.quantity, 0)
+                  const orderItems = getOrderItems(order)
+                  const sellerGroups = getOrderSellerGroups(order)
+                  const uiStatus = resolveOrderViewStatus(order, orderItems)
+                  const totalQuantity = orderItems.reduce((sum, item) => sum + item.quantity, 0)
+                  const orderDate = formatDateOnly(order.createdDate)
+                  const orderTime = formatTimeOnly(order.createdDate)
+                  const sellerCount = sellerGroups.length
+                  const customerLabel = order.shipmentAddress?.fullName || payment.title || "Customer"
+                  const isExpanded = expandedOrderId === order.orderId
+                  const shippingTotal = orderItems.reduce((sum, item) => sum + getOrderItemShipmentFee(item), 0)
+                  const itemTotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
                   return (
                     <Fragment key={order.orderId}>
-                      <tr className="transition-colors hover:bg-surface-muted/55">
-                        <td className="px-6 py-4 text-sm text-text-secondary">{formatDateTime(order.createdDate)}</td>
-                        <td className="px-6 py-4 text-sm text-text-secondary">
-                          <div className="font-medium">{shippingAddress.title}</div>
-                          <div className="max-w-xs truncate text-xs text-text-muted" title={shippingAddress.line}>
-                            {shippingAddress.line}
-                          </div>
+                      <tr
+                        className={`cursor-pointer border-b border-border-soft hover:bg-surface-muted/55 ${isExpanded ? "bg-surface-muted/40" : ""}`}
+                      >
+                        <td className="px-6 py-4 text-text-muted">
+                          <p>{orderDate}</p>
+                          <p className="text-xs">{orderTime}</p>
                         </td>
-                        <td className="px-6 py-4 text-sm text-text-secondary">
-                          <div className="font-medium text-text-primary">{payment.title}</div>
-                          {payment.detail ? <div className="text-xs text-text-muted">{payment.detail}</div> : null}
+                        <td className="px-6 py-4 text-text-secondary">
+                          <p className="font-medium text-text-primary">{payment.title}</p>
+                          {payment.detail ? <p className="text-xs text-text-muted">{payment.detail}</p> : null}
                         </td>
-                        <td className="px-6 py-4 text-sm font-semibold text-text-primary">
-                          {formatCurrency(order.totalPrice)}
-                        </td>
-                        <td className="px-6 py-4 text-sm">
+                        <td className="px-6 py-4">
                           <span
-                            className={`px-3 py-1 text-xs font-medium rounded-full ${
-                              order.orderStatus === "PAYMENT_SUCCESS"
-                                ? "bg-success/15 text-success"
-                                : "bg-surface-muted text-text-secondary"
-                            }`}
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getOrderStatusBadgeClasses(uiStatus)}`}
                           >
-                            {order.orderStatus}
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full ${
+                                uiStatus === "delivered"
+                                  ? "bg-emerald-500"
+                                  : uiStatus === "shipped"
+                                    ? "bg-blue-500"
+                                    : "bg-amber-500"
+                              }`}
+                            />
+                            {getOrderStatusLabel(uiStatus)}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-text-secondary">
+                        <td className="px-6 py-4 text-right font-medium text-text-primary">
+                          <p className="text-3sm">{formatCurrency(order.totalPrice)}</p>
+                          <p className="text-xs text-text-muted">
+                            {totalQuantity} item{totalQuantity > 1 ? "s" : ""}
+                          </p>
+                        </td>
+                        <td className="px-6 py-4 text-right font-medium text-text-primary">
+                          <p className="text-3sm">{formatCurrency(shippingTotal)}</p>
+                        </td>
+                        <td className="px-6 py-4 text-text-muted">
                           <Button
                             type="button"
                             variant="unstyled"
-                            onClick={() => setExpandedOrderId(expandedOrderId === order.orderId ? null : order.orderId)}
-                            className="inline-flex p-0! items-center gap-2 text-sm text-brand transition-colors hover:opacity-80"
+                            onClick={() => setExpandedOrderId(isExpanded ? null : order.orderId)}
+                            className="inline-flex items-center p-0! text-text-muted hover:text-text-secondary"
                           >
-                            <span className="font-medium">
-                              {totalQuantity} item{totalQuantity > 1 ? "s" : ""}
-                            </span>
-                            {expandedOrderId === order.orderId ? (
-                              <ChevronUp className="w-4 h-4" />
-                            ) : (
-                              <ChevronDown className="w-4 h-4" />
-                            )}
+                            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                           </Button>
                         </td>
                       </tr>
-                      {expandedOrderId === order.orderId && (
-                        <tr className="bg-surface-muted/35">
-                          <td colSpan={7} className="px-6 pb-6 pt-2">
-                            <div className="space-y-5 rounded-2xl border border-border-soft bg-surface-elevated p-5 text-sm shadow-soft md:p-6">
-                              <div className="grid gap-3 md:grid-cols-3">
-                                <div className="rounded-xl border border-border-soft bg-surface-muted/55 p-4">
-                                  <div className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-                                    Order Status
-                                  </div>
-                                  <div className="mt-1 text-sm font-semibold text-text-primary">
-                                    {order.orderStatus}
-                                  </div>
-                                </div>
-                                <div className="rounded-xl border border-border-soft bg-surface-muted/55 p-4">
-                                  <div className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-                                    Order Date
-                                  </div>
-                                  <div className="mt-1 text-sm font-semibold text-text-primary">
-                                    {formatDateTime(order.createdDate)}
-                                  </div>
-                                </div>
-                                <div className="rounded-xl border border-border-soft bg-surface-muted/55 p-4">
-                                  <div className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-                                    Shipping Address
-                                  </div>
-                                  <div className="mt-1 text-sm leading-relaxed text-text-primary">
-                                    {shippingAddress.line}
-                                  </div>
-                                </div>
-                              </div>
 
-                              <div className="space-y-4">
-                                {order.orderItems.map((item) => {
-                                  const productId = resolveOrderItemProductId(item)
-                                  const productHref = productId
-                                    ? `/products/${encodeURIComponent(productId)}?vendorId=${encodeURIComponent(item.userProductId)}`
-                                    : null
-                                  const trackingLinks = resolveTrackingLinks(item)
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan={6} className="border-b border-border-soft p-0">
+                            <div className="bg-surface-muted/55 p-6 shadow-inner">
+                              <div className="flex flex-col gap-8 rounded-xl border border-border-soft bg-surface-elevated p-6 lg:flex-row">
+                                <div className="flex-1">
+                                  <div className="mb-4 flex items-center justify-between">
+                                    <h4 className="text-xl font-semibold text-text-primary">Order Items</h4>
+                                    <p className="text-sm font-medium text-text-muted">
+                                      {totalQuantity} items from {sellerCount} seller{sellerCount > 1 ? "s" : ""}
+                                    </p>
+                                  </div>
 
-                                  return (
-                                    <article
-                                      key={item.id}
-                                      className="rounded-xl border border-border-soft bg-surface p-4 md:p-5"
-                                    >
-                                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                                        <div className="flex min-w-0 items-start gap-4">
-                                          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xs border border-border-soft bg-surface-muted">
-                                            <ProductImageWithFallback
-                                              src={
-                                                getFullImageUrl(item.productCoverPhotoPath) ||
-                                                "/dentypro-product-placeholder.png"
-                                              }
-                                              alt={item.productName}
-                                              width={48}
-                                              height={48}
-                                              className="h-full w-full object-cover"
-                                            />
-                                          </div>
-                                          <div style={{ maxWidth: "30rem" }} className="space-y-1.5">
-                                            <div className="wrap-break-word text-sm font-semibold leading-5 whitespace-normal text-text-primary">
-                                              {productHref ? (
-                                                <Link
-                                                  href={productHref}
-                                                  className="wrap-break-word whitespace-normal transition-colors hover:text-brand"
-                                                  title="Open product details"
-                                                >
-                                                  {item.productName}
-                                                </Link>
-                                              ) : (
-                                                item.productName
-                                              )}
-                                            </div>
-                                            <div className="text-xs text-text-muted">
-                                              Supplier: {item.sellerName} {item.sellerSurname}
-                                            </div>
-                                          </div>
-                                        </div>
+                                  <div className="space-y-6">
+                                    {sellerGroups.map((group) => {
+                                      const sellerDisplayName = [group.sellerName, group.sellerSurname]
+                                        .filter(Boolean)
+                                        .join(" ")
+                                        .trim()
+                                      const sellerTotal = group.orderItems.reduce(
+                                        (sum, item) => sum + item.price * item.quantity,
+                                        0,
+                                      )
+                                      const sellerItemCount = group.orderItems.reduce(
+                                        (sum, item) => sum + item.quantity,
+                                        0,
+                                      )
+                                      const cancelableItemIds = group.orderItems
+                                        .filter((item) => isCancelableOrderItemStatus(item.status))
+                                        .map((item) => item.id)
+                                      const hasCancelableItems = cancelableItemIds.length > 0
+                                      const sellerKey = `${order.orderId}:${group.sellerId}`
+                                      const isCancelingSellerGroup = cancelingSellerKey === sellerKey
 
-                                        <div className="flex flex-wrap items-center gap-2.5 text-xs">
-                                          <span className="rounded-full border border-border-soft bg-surface-muted px-3 py-1.5 text-text-secondary">
-                                            Qty:{" "}
-                                            <span className="font-semibold text-text-primary">{item.quantity}</span>
-                                          </span>
-                                          <span className="rounded-full border border-border-soft bg-surface-muted px-3 py-1.5 text-text-secondary">
-                                            Price:{" "}
-                                            <span className="font-semibold text-text-primary">
-                                              {formatCurrency(item.price)}
-                                            </span>
-                                          </span>
-                                          <span className="rounded-full border border-border-soft bg-surface-muted px-3 py-1.5 text-text-secondary">
-                                            Updated:{" "}
-                                            <span className="font-semibold text-text-primary">
-                                              {formatDateTime(item.updatedDate)}
-                                            </span>
-                                          </span>
-                                          <span
-                                            className={`rounded-full px-3 py-1.5 text-[11px] font-semibold ${
-                                              isWarningOrderItemStatus(item.status)
-                                                ? "bg-warning/15 text-warning"
-                                                : "bg-surface-muted text-text-secondary"
-                                            }`}
-                                          >
-                                            {item.status}
-                                          </span>
-                                        </div>
-                                      </div>
-
-                                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border-soft pt-4">
-                                        {trackingLinks.length > 0 ? (
-                                          <Button
-                                            type="button"
-                                            variant="unstyled"
-                                            onClick={() => setTrackingModalLinks(trackingLinks)}
-                                            className="inline-flex items-center rounded-sm bg-success/15 px-3 py-1.5 text-[11px] font-medium text-success transition-colors hover:bg-success/25"
-                                          >
-                                            View {trackingLinks.length} tracking link
-                                            {trackingLinks.length > 1 ? "s" : ""}
-                                            <ExternalLink className="ml-2 h-3 w-3" />
-                                          </Button>
-                                        ) : (
-                                          <span className="text-[11px] text-text-muted">No tracking</span>
-                                        )}
-
-                                        <div className="flex-1" />
-                                        <Button
-                                          type="button"
-                                          variant="unstyled"
-                                          onClick={() =>
-                                            handleReorder(item.userProductId, item.quantity, item.productName)
-                                          }
-                                          disabled={
-                                            reorderingItemId === item.userProductId || cancelingItemId === item.id
-                                          }
-                                          className="inline-flex items-center rounded-sm justify-center gap-2 bg-brand px-4 py-2 text-[11px] font-semibold text-primary-foreground transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-70"
+                                      return (
+                                        <section
+                                          key={group.sellerId}
+                                          className="overflow-hidden rounded-xl border border-border-soft"
                                         >
-                                          {reorderingItemId === item.userProductId ? (
-                                            <>
-                                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                              Adding...
-                                            </>
-                                          ) : (
-                                            "Reorder"
-                                          )}
-                                        </Button>
+                                          <div className="flex items-center justify-between border-b border-border-soft bg-linear-to-r from-surface-muted/45 to-surface-muted/75 px-4 py-3">
+                                            <div className="flex items-center gap-3">
+                                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand text-xs font-bold text-primary-foreground shadow-sm">
+                                                {getSellerFirstTwoLetters(sellerDisplayName)}
+                                              </div>
+                                              <div>
+                                                <p className="text-sm font-semibold text-text-primary">
+                                                  {sellerDisplayName || "Seller"}
+                                                </p>
+                                              </div>
+                                            </div>
+                                            <div className="text-right">
+                                              <p className="text-sm font-semibold text-text-primary">
+                                                {formatCurrency(sellerTotal)}
+                                              </p>
+                                              <p className="text-xs text-text-muted">
+                                                {sellerItemCount} item{sellerItemCount > 1 ? "s" : ""}
+                                              </p>
+                                            </div>
+                                          </div>
 
-                                        {isCancelableOrderItemStatus(item.status) && (
-                                          <Button
-                                            type="button"
-                                            variant="unstyled"
-                                            onClick={() =>
-                                              handleCancelDuringDelivery(
-                                                item.id,
-                                                item.productName,
-                                                trackingLinks.map((link) => link.trackingUrl),
+                                          <div className="space-y-3 bg-surface-elevated p-3">
+                                            {group.orderItems.map((item) => {
+                                              const productId = resolveOrderItemProductId(item)
+                                              const productHref = productId
+                                                ? `/products/${encodeURIComponent(productId)}?vendorId=${encodeURIComponent(item.userProductId)}`
+                                                : null
+                                              const trackingLinks = resolveTrackingLinks(item)
+
+                                              return (
+                                                <div
+                                                  key={item.id}
+                                                  className="rounded-lg border border-border-soft bg-surface-muted/30 p-3 transition-colors hover:border-border-soft"
+                                                >
+                                                  <div className="flex items-center gap-4">
+                                                    <div className="h-12 w-12 overflow-hidden rounded-md bg-surface-elevated shadow-sm">
+                                                      <ProductImageWithFallback
+                                                        src={
+                                                          getFullImageUrl(item.productCoverPhotoPath) ||
+                                                          "/dentypro-product-placeholder.png"
+                                                        }
+                                                        alt={item.productName}
+                                                        width={48}
+                                                        height={48}
+                                                        className="h-full w-full object-cover"
+                                                      />
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                      <p className="truncate text-sm font-medium text-text-primary">
+                                                        {productHref ? (
+                                                          <Link
+                                                            href={productHref}
+                                                            className="transition-colors hover:text-emerald-600"
+                                                          >
+                                                            {item.productName}
+                                                          </Link>
+                                                        ) : (
+                                                          item.productName
+                                                        )}
+                                                      </p>
+                                                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-muted">
+                                                        <span className="rounded bg-surface-muted px-2 py-0.5">
+                                                          Qty: {item.quantity} unit{item.quantity > 1 ? "s" : ""}
+                                                        </span>
+                                                        <span>•</span>
+                                                        <span
+                                                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${getOrderItemStatusTagClass(item.status)}`}
+                                                        >
+                                                          {formatOrderItemStatus(item.status)}
+                                                        </span>
+                                                        <span>•</span>
+                                                        {item.shipmentFreeBySeller ? (
+                                                          <span className="font-semibold text-emerald-600">
+                                                            Free Shipping
+                                                          </span>
+                                                        ) : (
+                                                          <span className="font-semibold text-text-secondary">
+                                                            Shipment Fee:{" "}
+                                                            {formatCurrency(getOrderItemShipmentFee(item))}
+                                                          </span>
+                                                        )}
+                                                      </div>
+                                                      <div className="mt-3 flex w-fit flex-wrap items-center gap-2 border-t border-border-soft pt-3">
+                                                        <Button
+                                                          type="button"
+                                                          variant="unstyled"
+                                                          onClick={() =>
+                                                            handleReorder(
+                                                              item.userProductId,
+                                                              item.quantity,
+                                                              item.productName,
+                                                            )
+                                                          }
+                                                          disabled={
+                                                            reorderingItemId === item.userProductId ||
+                                                            cancelingItemId === item.id ||
+                                                            isCancelingSellerGroup
+                                                          }
+                                                          className="rounded-md bg-emerald-600 px-2.5 py-1 text-[11px] font-semibold text-primary-foreground hover:bg-emerald-700 disabled:opacity-70"
+                                                        >
+                                                          {reorderingItemId === item.userProductId
+                                                            ? "Adding..."
+                                                            : "Reorder"}
+                                                        </Button>
+                                                        {isCancelableOrderItemStatus(item.status) ? (
+                                                          <Button
+                                                            type="button"
+                                                            variant="unstyled"
+                                                            onClick={() =>
+                                                              setPendingCancelAction({
+                                                                orderItemIds: [item.id],
+                                                                description: `${item.productName} cancellation request was submitted.`,
+                                                                options: { cancelingItemId: item.id },
+                                                              })
+                                                            }
+                                                            disabled={
+                                                              cancelingItemId === item.id ||
+                                                              reorderingItemId === item.userProductId ||
+                                                              isCancelingSellerGroup
+                                                            }
+                                                            className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-100 disabled:opacity-70"
+                                                          >
+                                                            {cancelingItemId === item.id ? "Canceling..." : "Cancel"}
+                                                          </Button>
+                                                        ) : null}
+                                                        {trackingLinks.length > 0 ? (
+                                                          <Button
+                                                            type="button"
+                                                            variant="unstyled"
+                                                            onClick={() => setTrackingModalLinks(trackingLinks)}
+                                                            className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100"
+                                                          >
+                                                            Track
+                                                            <ExternalLink className="h-3 w-3" />
+                                                          </Button>
+                                                        ) : null}
+                                                      </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                      <p className="text-sm font-semibold text-text-primary">
+                                                        {item.price * item.quantity === 0
+                                                          ? "FREE"
+                                                          : formatCurrency(item.price * item.quantity)}
+                                                      </p>
+                                                      {item.quantity > 1 && (
+                                                        <p className="text-xs text-text-muted">
+                                                          {formatCurrency(item.price)} each
+                                                        </p>
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                </div>
                                               )
-                                            }
-                                            disabled={
-                                              cancelingItemId === item.id ||
-                                              reorderingItemId === item.userProductId ||
-                                              trackingLinks.length === 0
-                                            }
-                                            className="inline-flex items-center rounded-sm justify-center gap-2 border border-danger/25 bg-danger/10 px-4 py-2 text-[11px] font-semibold text-danger transition-colors hover:bg-danger/15 disabled:cursor-not-allowed disabled:opacity-70"
-                                          >
-                                            {cancelingItemId === item.id ? (
-                                              <>
-                                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                                Canceling...
-                                              </>
+                                            })}
+                                          </div>
+
+                                          <div className="flex items-center justify-between border-t border-border-soft bg-surface-muted/55 px-4 py-3 text-sm text-text-muted">
+                                            <span>Updated: {formatDateTime(group.orderItems[0]?.updatedDate)}</span>
+                                            {hasCancelableItems ? (
+                                              <Button
+                                                type="button"
+                                                variant="unstyled"
+                                                onClick={() =>
+                                                  setPendingCancelAction({
+                                                    orderItemIds: cancelableItemIds,
+                                                    description: `${sellerDisplayName} items cancellation request was submitted.`,
+                                                    options: { cancelingSellerKey: sellerKey },
+                                                  })
+                                                }
+                                                disabled={isCancelingSellerGroup}
+                                                className="font-semibold text-red-600 hover:text-red-700 disabled:opacity-70"
+                                              >
+                                                {isCancelingSellerGroup ? "Canceling items..." : "Cancel Seller Items"}
+                                              </Button>
                                             ) : (
-                                              "Cancel"
+                                              <span className="font-semibold text-emerald-600">
+                                                All items already canceled
+                                              </span>
                                             )}
-                                          </Button>
-                                        )}
+                                          </div>
+                                        </section>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+
+                                <div className="flex w-full flex-col gap-6 lg:w-80">
+                                  <div>
+                                    <div className="flex items-center gap-2 mb-4">
+                                      <LucideTimer className="text-emerald-500" />
+                                      <h4 className="text-sm font-semibold text-text-primary mt-1">
+                                        Fulfillment Status
+                                      </h4>
+                                    </div>
+                                    <div className="relative space-y-4 before:absolute before:top-2 before:bottom-2 before:left-[7px] before:w-0.5 before:bg-border-soft before:content-['']">
+                                      <div className="relative z-10 flex items-start gap-3">
+                                        <div className="mt-0.5 h-4 w-4 rounded-full border-2 border-surface-elevated bg-emerald-500 shadow-sm" />
+                                        <div>
+                                          <p className="text-sm font-medium text-text-primary">Order Placed</p>
+                                          <p className="mt-0.5 text-xs text-text-muted">
+                                            {orderDate}, {orderTime}
+                                          </p>
+                                          <p className="mt-1 text-xs text-text-muted">
+                                            Payment confirmed via{" "}
+                                            {order.cardBrand && order.cardLast4
+                                              ? `${order.cardBrand.toUpperCase()} ****${order.cardLast4}`
+                                              : payment.title !== "-"
+                                                ? payment.title
+                                                : "saved card"}
+                                          </p>
+                                        </div>
                                       </div>
-                                    </article>
-                                  )
-                                })}
+                                      <div className="relative z-10 flex items-start gap-3">
+                                        <div
+                                          className={`mt-0.5 h-4 w-4 rounded-full border-2 border-surface-elevated shadow-sm ${
+                                            uiStatus === "processing" ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
+                                          }`}
+                                        />
+                                        <div>
+                                          <p
+                                            className={`text-sm font-medium text-text-primary ${uiStatus === "processing" ? "text-amber-500 animate-pulse" : "text-text-muted"}`}
+                                          >
+                                            Processing
+                                          </p>
+                                          <p
+                                            className={`text-xs text-amber-600 mt-0.5 font-medium ${uiStatus === "processing" ? "text-amber-500 animate-pulse" : "text-text-muted"}`}
+                                          >
+                                            Preparing items in warehouse
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <div className="relative z-10 flex items-start gap-3">
+                                        <div
+                                          className={`mt-0.5 h-4 w-4 rounded-full border-2 border-surface-elevated shadow-sm ${
+                                            uiStatus === "shipping"
+                                              ? "bg-amber-500 animate-pulse"
+                                              : uiStatus === "shipped" || uiStatus === "delivered"
+                                                ? "bg-blue-500"
+                                                : "bg-border-soft"
+                                          }`}
+                                        />
+                                        <div>
+                                          <p
+                                            className={`text-sm font-medium ${uiStatus === "shipped" || uiStatus === "delivered" ? "text-text-primary" : "text-text-muted"}`}
+                                          >
+                                            Shipping
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <div className="relative z-10 flex items-start gap-3">
+                                        <div
+                                          className={`mt-0.5 h-4 w-4 rounded-full border-2 border-surface-elevated shadow-sm ${
+                                            uiStatus === "delivered" ? "bg-emerald-500" : "bg-border-soft"
+                                          }`}
+                                        />
+                                        <div>
+                                          <p
+                                            className={`text-sm font-medium ${uiStatus === "delivered" ? "text-text-primary" : "text-text-muted"}`}
+                                          >
+                                            Delivered
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="rounded-lg border border-border-soft bg-surface-muted/55 p-4">
+                                    <div className="space-y-2 text-sm">
+                                      <div className="flex justify-between text-text-muted">
+                                        <span>Subtotal</span>
+                                        <span className="text-text-primary">{formatCurrency(itemTotal)}</span>
+                                      </div>
+                                      <div className="flex justify-between text-text-muted">
+                                        <span>Shipping</span>
+                                        <span className="text-text-primary">
+                                          {shippingTotal > 0 ? formatCurrency(shippingTotal) : "FREE"}
+                                        </span>
+                                      </div>
+                                      <div className="mt-2 flex justify-between border-t border-border-soft pt-2 font-semibold">
+                                        <span className="text-text-primary">Total</span>
+                                        <span className="text-text-primary">{formatCurrency(order.totalPrice)}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="rounded-lg border border-border-soft bg-surface-muted/55 p-4">
+                                    <h4 className="mb-3 text-sm font-semibold text-text-primary">Customer Details</h4>
+                                    <div className="space-y-2 text-sm text-text-muted">
+                                      <p className="font-semibold text-text-secondary">
+                                        {order.shipmentAddress?.fullName || customerLabel}
+                                      </p>
+                                      <p>{shippingAddress.line}</p>
+                                      {order.shipmentAddress?.phoneNumber ? (
+                                        <p>{order.shipmentAddress.phoneNumber}</p>
+                                      ) : null}
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </td>
@@ -622,77 +1000,96 @@ export default function BuyerOrdersPage() {
           </table>
         </div>
 
-        {/* Pagination */}
-        <div className="border-t border-border-soft bg-surface-muted/55 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-text-secondary">Show</span>
-              <Select value={String(pageSize)} onValueChange={(value) => handlePageSizeChange(Number(value))}>
-                <SelectTrigger className="h-9 w-20 rounded-lg border-border-soft bg-surface-elevated px-3 py-1 text-sm text-text-primary shadow-none focus-visible:ring-2 focus-visible:ring-ring/50">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectContent>
-              </Select>
-              <span className="text-sm text-text-secondary">per page</span>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Button
-                type="button"
-                variant="unstyled"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 0}
-                className="rounded-lg border border-border-strong px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNumber: number
-                if (totalPages <= 5) {
-                  pageNumber = i
-                } else if (currentPage < 3) {
-                  pageNumber = i
-                } else if (currentPage > totalPages - 3) {
-                  pageNumber = totalPages - 5 + i
-                } else {
-                  pageNumber = currentPage - 2 + i
-                }
-
-                return (
-                  <Button
-                    key={pageNumber}
-                    type="button"
-                    variant="unstyled"
-                    onClick={() => handlePageChange(pageNumber)}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium ${
-                      currentPage === pageNumber
-                        ? "bg-brand text-primary-foreground"
-                        : "border border-border-strong text-text-secondary hover:bg-surface"
-                    }`}
-                  >
-                    {pageNumber + 1}
-                  </Button>
-                )
-              })}
-
-              <Button
-                type="button"
-                variant="unstyled"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages - 1}
-                className="rounded-lg border border-border-strong px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
+        <div className="flex items-center justify-between border-t border-border-soft p-4 text-sm text-text-muted">
+          <div>
+            {totalElements > 0
+              ? `Showing ${currentPage * pageSize + 1} to ${Math.min((currentPage + 1) * pageSize, totalElements)} of ${totalElements.toLocaleString()} results`
+              : "Showing 0 results"}
+          </div>
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              variant="unstyled"
+              onClick={() => handlePageChange(Math.max(0, currentPage - 1))}
+              disabled={currentPage === 0}
+              className="rounded border border-border-soft px-3 py-1 hover:bg-surface-muted/55 disabled:opacity-50"
+            >
+              Prev
+            </Button>
+            {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+              const pageNumber = i
+              return (
+                <Button
+                  key={pageNumber}
+                  type="button"
+                  variant="unstyled"
+                  onClick={() => handlePageChange(pageNumber)}
+                  className={`rounded border px-3 py-1 ${
+                    currentPage === pageNumber
+                      ? "border-emerald-100 bg-emerald-50 font-medium text-emerald-700"
+                      : "border-border-soft hover:bg-surface-muted/55"
+                  }`}
+                >
+                  {pageNumber + 1}
+                </Button>
+              )
+            })}
+            {totalPages > 3 ? <span className="px-2">...</span> : null}
+            <Button
+              type="button"
+              variant="unstyled"
+              onClick={() => handlePageChange(Math.min(totalPages - 1, currentPage + 1))}
+              disabled={currentPage >= totalPages - 1}
+              className="rounded border border-border-soft px-3 py-1 hover:bg-surface-muted/55 disabled:opacity-50"
+            >
+              Next
+            </Button>
           </div>
         </div>
       </section>
+      <Modal
+        isOpen={Boolean(pendingCancelAction)}
+        onClose={() => {
+          if (isConfirmingCancel) return
+          setPendingCancelAction(null)
+        }}
+        title="Confirm cancellation"
+        maxWidthClassName="max-w-lg"
+        closeOnEscape={!isConfirmingCancel}
+        closeOnOverlayClick={!isConfirmingCancel}
+      >
+        <div className="space-y-4 p-6">
+          <h3 className="text-lg font-semibold text-text-primary">Cancel order item(s)?</h3>
+          <p className="text-sm text-text-secondary">
+            This will submit a cancellation request for the selected item(s). Do you want to continue?
+          </p>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setPendingCancelAction(null)}
+              disabled={isConfirmingCancel}
+            >
+              Keep order
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => void confirmPendingCancelAction()}
+              disabled={isConfirmingCancel}
+            >
+              {isConfirmingCancel ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Canceling...
+                </>
+              ) : (
+                "Confirm cancel"
+              )}
+            </Button>
+          </div>
+        </div>
+      </Modal>
       {trackingModalLinks && trackingModalLinks.length > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="mx-4 w-full max-w-2xl rounded-2xl border border-border-soft bg-surface-elevated shadow-panel">
