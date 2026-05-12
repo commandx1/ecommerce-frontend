@@ -220,14 +220,14 @@ function resolveOrderViewStatus(order: BuyerOrder, orderItems: BuyerOrderItem[])
 
 function getOrderStatusBadgeClasses(status: OrderViewStatus): string {
   if (status === "delivered") {
-    return "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+    return "border border-success/40 bg-success/15 text-success"
   }
 
   if (status === "shipped") {
-    return "bg-blue-50 text-blue-700 border border-blue-200/60"
+    return "border border-brand/40 bg-brand/15 text-brand"
   }
 
-  return "bg-amber-50 text-amber-700 border border-amber-200/60"
+  return "border border-warning/40 bg-warning/15 text-warning"
 }
 
 function getOrderStatusLabel(status: OrderViewStatus): string {
@@ -253,19 +253,19 @@ function getOrderItemStatusTagClass(status: string): string {
   const normalizedStatus = status.toUpperCase()
 
   if (normalizedStatus.includes("CANCEL")) {
-    return "border border-red-200 bg-red-50 text-red-700"
+    return "border border-danger/40 bg-danger/15 text-danger"
   }
   if (normalizedStatus.includes("DELIVER")) {
-    return "border border-emerald-200 bg-emerald-50 text-emerald-700"
+    return "border border-success/40 bg-success/15 text-success"
   }
   if (normalizedStatus.includes("SHIP")) {
-    return "border border-blue-200 bg-blue-50 text-blue-700"
+    return "border border-brand/40 bg-brand/15 text-brand"
   }
   if (normalizedStatus.includes("REFUND") || normalizedStatus.includes("RETURN")) {
-    return "border border-violet-200 bg-violet-50 text-violet-700"
+    return "border border-brand/40 bg-brand/15 text-brand"
   }
 
-  return "border border-amber-200 bg-amber-50 text-amber-700"
+  return "border border-warning/40 bg-warning/15 text-warning"
 }
 
 function formatOrderItemStatus(status: string): string {
@@ -280,13 +280,13 @@ function getRefundStatusTagClass(refundStatus: string): string {
   const normalizedStatus = refundStatus.toUpperCase()
 
   if (normalizedStatus === "APPROVED") {
-    return "border border-emerald-200 bg-emerald-50 text-emerald-700"
+    return "border border-success/40 bg-success/15 text-success"
   }
   if (normalizedStatus === "CANCELLED") {
-    return "border border-red-200 bg-red-50 text-red-700"
+    return "border border-danger/40 bg-danger/15 text-danger"
   }
 
-  return "border border-amber-200 bg-amber-50 text-amber-700"
+  return "border border-warning/40 bg-warning/15 text-warning"
 }
 
 function formatRefundStatus(refundStatus: string): string {
@@ -644,10 +644,10 @@ export default function BuyerOrdersPage() {
                             <span
                               className={`h-1.5 w-1.5 rounded-full ${
                                 uiStatus === "delivered"
-                                  ? "bg-emerald-500"
+                                  ? "bg-success"
                                   : uiStatus === "shipped"
-                                    ? "bg-blue-500"
-                                    : "bg-amber-500"
+                                    ? "bg-brand"
+                                    : "bg-warning"
                               }`}
                             />
                             {getOrderStatusLabel(uiStatus)}
@@ -790,14 +790,14 @@ export default function BuyerOrdersPage() {
                                                         {item.cancelledByCustomer ? (
                                                           <>
                                                             <span>•</span>
-                                                            <span className="rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700">
+                                                            <span className="rounded-full border border-danger/40 bg-danger/15 px-2 py-0.5 text-[11px] font-semibold text-danger">
                                                               Cancelled by Customer
                                                             </span>
                                                           </>
                                                         ) : item.cancelledBySeller ? (
                                                           <>
                                                             <span>•</span>
-                                                            <span className="rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[11px] font-semibold text-orange-700">
+                                                            <span className="rounded-full border border-warning/40 bg-warning/15 px-2 py-0.5 text-[11px] font-semibold text-warning">
                                                               Cancelled by Seller
                                                             </span>
                                                           </>
@@ -819,7 +819,7 @@ export default function BuyerOrdersPage() {
                                                         ) : null}
                                                         <span>•</span>
                                                         {item.shipmentFreeBySeller ? (
-                                                          <span className="font-semibold text-emerald-600">
+                                                          <span className="font-semibold text-success">
                                                             Free Shipping
                                                           </span>
                                                         ) : (
@@ -845,7 +845,7 @@ export default function BuyerOrdersPage() {
                                                             cancelingItemId === item.id ||
                                                             isCancelingSellerGroup
                                                           }
-                                                          className="rounded-md bg-emerald-600 px-2.5 py-1 text-[11px] font-semibold text-primary-foreground hover:bg-emerald-700 disabled:opacity-70"
+                                                          className="rounded-md bg-success px-2.5 py-1 text-[11px] font-semibold text-primary-foreground hover:bg-success/80 disabled:opacity-70"
                                                         >
                                                           {reorderingItemId === item.userProductId
                                                             ? "Adding..."
@@ -867,7 +867,7 @@ export default function BuyerOrdersPage() {
                                                               reorderingItemId === item.userProductId ||
                                                               isCancelingSellerGroup
                                                             }
-                                                            className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-100 disabled:opacity-70"
+                                                            className="rounded-md border border-danger/40 bg-danger/15 px-2.5 py-1 text-[11px] font-semibold text-danger hover:bg-danger/25 disabled:opacity-70"
                                                           >
                                                             {cancelingItemId === item.id ? "Canceling..." : "Cancel"}
                                                           </Button>
@@ -877,7 +877,7 @@ export default function BuyerOrdersPage() {
                                                             type="button"
                                                             variant="unstyled"
                                                             onClick={() => setTrackingModalLinks(trackingLinks)}
-                                                            className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100"
+                                                            className="inline-flex items-center gap-1 rounded-md border border-success/40 bg-success/15 px-2.5 py-1 text-[11px] font-semibold text-success hover:bg-success/25"
                                                           >
                                                             Track
                                                             <ExternalLink className="h-3 w-3" />
@@ -917,12 +917,12 @@ export default function BuyerOrdersPage() {
                                                   })
                                                 }
                                                 disabled={isCancelingSellerGroup}
-                                                className="font-semibold text-red-600 hover:text-red-700 disabled:opacity-70"
+                                                className="font-semibold text-danger hover:opacity-80 disabled:opacity-70"
                                               >
                                                 {isCancelingSellerGroup ? "Canceling items..." : "Cancel Seller Items"}
                                               </Button>
                                             ) : (
-                                              <span className="font-semibold text-emerald-600">
+                                              <span className="font-semibold text-success">
                                                 All items already canceled
                                               </span>
                                             )}
@@ -936,14 +936,14 @@ export default function BuyerOrdersPage() {
                                 <div className="flex w-full flex-col gap-6 lg:w-80">
                                   <div>
                                     <div className="flex items-center gap-2 mb-4">
-                                      <LucideTimer className="text-emerald-500" />
+                                      <LucideTimer className="text-success" />
                                       <h4 className="text-sm font-semibold text-text-primary mt-1">
                                         Fulfillment Status
                                       </h4>
                                     </div>
                                     <div className="relative space-y-4 before:absolute before:top-2 before:bottom-2 before:left-[7px] before:w-0.5 before:bg-border-soft before:content-['']">
                                       <div className="relative z-10 flex items-start gap-3">
-                                        <div className="mt-0.5 h-4 w-4 rounded-full border-2 border-surface-elevated bg-emerald-500 shadow-sm" />
+                                        <div className="mt-0.5 h-4 w-4 rounded-full border-2 border-surface-elevated bg-success shadow-sm" />
                                         <div>
                                           <p className="text-sm font-medium text-text-primary">Order Placed</p>
                                           <p className="mt-0.5 text-xs text-text-muted">
@@ -962,17 +962,17 @@ export default function BuyerOrdersPage() {
                                       <div className="relative z-10 flex items-start gap-3">
                                         <div
                                           className={`mt-0.5 h-4 w-4 rounded-full border-2 border-surface-elevated shadow-sm ${
-                                            uiStatus === "processing" ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
+                                            uiStatus === "processing" ? "bg-warning animate-pulse" : "bg-success"
                                           }`}
                                         />
                                         <div>
                                           <p
-                                            className={`text-sm font-medium text-text-primary ${uiStatus === "processing" ? "text-amber-500 animate-pulse" : "text-text-muted"}`}
+                                            className={`text-sm font-medium text-text-primary ${uiStatus === "processing" ? "text-warning animate-pulse" : "text-text-muted"}`}
                                           >
                                             Processing
                                           </p>
                                           <p
-                                            className={`text-xs text-amber-600 mt-0.5 font-medium ${uiStatus === "processing" ? "text-amber-500 animate-pulse" : "text-text-muted"}`}
+                                            className={`mt-0.5 text-xs font-medium ${uiStatus === "processing" ? "text-warning animate-pulse" : "text-text-muted"}`}
                                           >
                                             Preparing items in warehouse
                                           </p>
@@ -982,9 +982,9 @@ export default function BuyerOrdersPage() {
                                         <div
                                           className={`mt-0.5 h-4 w-4 rounded-full border-2 border-surface-elevated shadow-sm ${
                                             uiStatus === "shipping"
-                                              ? "bg-amber-500 animate-pulse"
+                                              ? "bg-warning animate-pulse"
                                               : uiStatus === "shipped" || uiStatus === "delivered"
-                                                ? "bg-blue-500"
+                                                ? "bg-brand"
                                                 : "bg-border-soft"
                                           }`}
                                         />
@@ -999,7 +999,7 @@ export default function BuyerOrdersPage() {
                                       <div className="relative z-10 flex items-start gap-3">
                                         <div
                                           className={`mt-0.5 h-4 w-4 rounded-full border-2 border-surface-elevated shadow-sm ${
-                                            uiStatus === "delivered" ? "bg-emerald-500" : "bg-border-soft"
+                                            uiStatus === "delivered" ? "bg-success" : "bg-border-soft"
                                           }`}
                                         />
                                         <div>
@@ -1085,7 +1085,7 @@ export default function BuyerOrdersPage() {
                   onClick={() => handlePageChange(pageNumber)}
                   className={`rounded border px-3 py-1 ${
                     currentPage === pageNumber
-                      ? "border-emerald-100 bg-emerald-50 font-medium text-emerald-700"
+                      ? "border-brand/35 bg-brand/15 font-medium text-brand"
                       : "border-border-soft hover:bg-surface-muted/55"
                   }`}
                 >
