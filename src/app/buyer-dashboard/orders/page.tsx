@@ -7,6 +7,7 @@ import { Fragment, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import Modal from "@/components/ui/Modal"
 import { showToast } from "@/components/ui/Toast"
+import AddressContactInfo from "@/features/checkout/components/AddressContactInfo"
 import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
 import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
 import {
@@ -232,6 +233,7 @@ function getOrderStatusBadgeClasses(status: OrderViewStatus): string {
 function getOrderStatusLabel(status: OrderViewStatus): string {
   if (status === "delivered") return "Delivered"
   if (status === "shipped") return "Shipped"
+  if (status === "shipping") return "Shipping"
   return "Processing"
 }
 
@@ -272,6 +274,27 @@ function formatOrderItemStatus(status: string): string {
     .split("_")
     .map((part) => (part ? `${part[0].toUpperCase()}${part.slice(1)}` : ""))
     .join(" ")
+}
+
+function getRefundStatusTagClass(refundStatus: string): string {
+  const normalizedStatus = refundStatus.toUpperCase()
+
+  if (normalizedStatus === "APPROVED") {
+    return "border border-emerald-200 bg-emerald-50 text-emerald-700"
+  }
+  if (normalizedStatus === "CANCELLED") {
+    return "border border-red-200 bg-red-50 text-red-700"
+  }
+
+  return "border border-amber-200 bg-amber-50 text-amber-700"
+}
+
+function formatRefundStatus(refundStatus: string): string {
+  const normalizedStatus = refundStatus.toUpperCase()
+  if (normalizedStatus === "APPROVED") return "Refund Approved"
+  if (normalizedStatus === "CANCELLED") return "Refund Cancelled"
+  if (normalizedStatus === "PENDING") return "Refund Pending"
+  return `Refund ${formatOrderItemStatus(refundStatus)}`
 }
 
 function getOrderItemShipmentFee(item: BuyerOrderItem): number {
@@ -598,6 +621,7 @@ export default function BuyerOrdersPage() {
                   const customerLabel = order.shipmentAddress?.fullName || payment.title || "Customer"
                   const isExpanded = expandedOrderId === order.orderId
                   const shippingTotal = orderItems.reduce((sum, item) => sum + getOrderItemShipmentFee(item), 0)
+                  const totalAmountFromItemPrices = orderItems.reduce((sum, item) => sum + item.price, 0)
                   const itemTotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
                   return (
@@ -630,7 +654,7 @@ export default function BuyerOrdersPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right font-medium text-text-primary">
-                          <p className="text-3sm">{formatCurrency(order.totalPrice)}</p>
+                          <p className="text-3sm">{formatCurrency(totalAmountFromItemPrices)}</p>
                           <p className="text-xs text-text-muted">
                             {totalQuantity} item{totalQuantity > 1 ? "s" : ""}
                           </p>
@@ -753,12 +777,46 @@ export default function BuyerOrdersPage() {
                                                         <span className="rounded bg-surface-muted px-2 py-0.5">
                                                           Qty: {item.quantity} unit{item.quantity > 1 ? "s" : ""}
                                                         </span>
-                                                        <span>•</span>
-                                                        <span
-                                                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${getOrderItemStatusTagClass(item.status)}`}
-                                                        >
-                                                          {formatOrderItemStatus(item.status)}
-                                                        </span>
+                                                        {!item.cancelledByCustomer && !item.cancelledBySeller ? (
+                                                          <>
+                                                            <span>•</span>
+                                                            <span
+                                                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${getOrderItemStatusTagClass(item.status)}`}
+                                                            >
+                                                              {formatOrderItemStatus(item.status)}
+                                                            </span>
+                                                          </>
+                                                        ) : null}
+                                                        {item.cancelledByCustomer ? (
+                                                          <>
+                                                            <span>•</span>
+                                                            <span className="rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700">
+                                                              Cancelled by Customer
+                                                            </span>
+                                                          </>
+                                                        ) : item.cancelledBySeller ? (
+                                                          <>
+                                                            <span>•</span>
+                                                            <span className="rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[11px] font-semibold text-orange-700">
+                                                              Cancelled by Seller
+                                                            </span>
+                                                          </>
+                                                        ) : null}
+                                                        {item.refundStatus ? (
+                                                          <>
+                                                            <span>•</span>
+                                                            <span
+                                                              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${getRefundStatusTagClass(item.refundStatus)}`}
+                                                            >
+                                                              {formatRefundStatus(item.refundStatus)}
+                                                            </span>
+                                                            {item.refundStatus.toUpperCase() === "APPROVED" ? (
+                                                              <span className="text-[11px] text-text-muted">
+                                                                Seller approved. Transfer may take a few business days.
+                                                              </span>
+                                                            ) : null}
+                                                          </>
+                                                        ) : null}
                                                         <span>•</span>
                                                         {item.shipmentFreeBySeller ? (
                                                           <span className="font-semibold text-emerald-600">
@@ -771,7 +829,7 @@ export default function BuyerOrdersPage() {
                                                           </span>
                                                         )}
                                                       </div>
-                                                      <div className="mt-3 flex w-fit flex-wrap items-center gap-2 border-t border-border-soft pt-3">
+                                                      <div className="mt-3 flex w-2/3 flex-wrap items-center gap-2 border-t border-border-soft pt-3">
                                                         <Button
                                                           type="button"
                                                           variant="unstyled"
@@ -969,22 +1027,23 @@ export default function BuyerOrdersPage() {
                                       </div>
                                       <div className="mt-2 flex justify-between border-t border-border-soft pt-2 font-semibold">
                                         <span className="text-text-primary">Total</span>
-                                        <span className="text-text-primary">{formatCurrency(order.totalPrice)}</span>
+                                        <span className="text-text-primary">
+                                          {formatCurrency(totalAmountFromItemPrices + shippingTotal)}
+                                        </span>
                                       </div>
                                     </div>
                                   </div>
 
                                   <div className="rounded-lg border border-border-soft bg-surface-muted/55 p-4">
                                     <h4 className="mb-3 text-sm font-semibold text-text-primary">Customer Details</h4>
-                                    <div className="space-y-2 text-sm text-text-muted">
-                                      <p className="font-semibold text-text-secondary">
-                                        {order.shipmentAddress?.fullName || customerLabel}
-                                      </p>
-                                      <p>{shippingAddress.line}</p>
-                                      {order.shipmentAddress?.phoneNumber ? (
-                                        <p>{order.shipmentAddress.phoneNumber}</p>
-                                      ) : null}
-                                    </div>
+                                    <p className="text-sm font-semibold text-text-secondary">
+                                      {order.shipmentAddress?.fullName || customerLabel}
+                                    </p>
+                                    <AddressContactInfo
+                                      className="mt-2"
+                                      address={shippingAddress.line}
+                                      phone={order.shipmentAddress?.phoneNumber}
+                                    />
                                   </div>
                                 </div>
                               </div>
