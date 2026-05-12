@@ -29,12 +29,25 @@ export interface BuyerOrderItem {
   quantity: number
   status: string
   productName: string
-  productCoverPhotoPath: string
+  productCoverPhotoPath: string | null
   sellerName: string
   sellerSurname: string
+  shipmentPrice?: number | null
+  shipmentFreeBySeller?: boolean | null
+  sellerConfirmedReturn?: boolean | null
+  refundStatus?: string | null
   trackingLink?: string[]
   trackingLinks?: BuyerOrderTrackingLink[]
   updatedDate: string
+}
+
+export interface BuyerOrderSellerGroup {
+  sellerId: string
+  sellerName: string
+  sellerSurname: string
+  cancellationShipmentFee?: number | null
+  cancellationShipmentRefundFee?: number | null
+  orderItems: BuyerOrderItem[]
 }
 
 export interface BuyerOrder {
@@ -51,7 +64,8 @@ export interface BuyerOrder {
   cardLast4?: string | null
   cardExpMonth?: number | null
   cardExpYear?: number | null
-  orderItems: BuyerOrderItem[]
+  sellerGroups?: BuyerOrderSellerGroup[]
+  orderItems?: BuyerOrderItem[]
 }
 
 export interface BuyerOrdersResponse {
@@ -63,14 +77,14 @@ export interface BuyerOrdersResponse {
 }
 
 export interface CancelDuringDeliveryByCustomerPayload {
-  trackingUrls: string[]
+  orderItemIds: string[]
 }
 
 export interface CancelDuringDeliveryByCustomerResponse {
   message: string
   successCount: number
   failureCount: number
-  cancelledTrackingUrls: string[]
+  cancelledOrderItemIds: string[]
 }
 
 class BuyerOrdersAPI {
