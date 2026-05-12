@@ -14,15 +14,59 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { Fragment, useEffect, useId, useState } from "react"
+import Modal from "@/components/ui/Modal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
 import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
 import { getFullImageUrl } from "@/lib/api/products"
 import { type ProcessUberDeliveriesResponse, type VendorOrder, vendorOrdersAPI } from "@/lib/api/vendor-orders"
-import { isWarningOrderItemStatus } from "@/lib/constants/order-item-status"
+import {
+  isCancelableOrderItemStatus,
+  isWarningOrderItemStatus,
+  OrderItemStatus,
+} from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { getQzConnectionStatus, printShippingLabel, type QzPrintOptions } from "@/lib/qz/printLabel"
 import { useAuthStore } from "@/stores/authStore"
+
+interface PendingVendorCancelAction {
+  orderItemIds: string[]
+  description: string
+  options?: {
+    cancelingItemId?: string
+    cancelingOrderId?: string
+  }
+}
+
+function extractApiErrorMessage(error: unknown): string | null {
+  if (!error || typeof error !== "object") return null
+
+  const maybeError = error as {
+    message?: unknown
+    response?: { data?: unknown }
+  }
+
+  const data = maybeError.response?.data
+  if (typeof data === "string" && data.trim()) {
+    return data
+  }
+
+  if (data && typeof data === "object") {
+    const payload = data as { message?: unknown; error?: unknown }
+    if (typeof payload.message === "string" && payload.message.trim()) {
+      return payload.message
+    }
+    if (typeof payload.error === "string" && payload.error.trim()) {
+      return payload.error
+    }
+  }
+
+  if (typeof maybeError.message === "string" && maybeError.message.trim()) {
+    return maybeError.message
+  }
+
+  return null
+}
 
 export default function VendorOrdersPage() {
   const id = useId()
@@ -46,6 +90,10 @@ export default function VendorOrdersPage() {
   const [qzError, setQzError] = useState<string | null>(null)
   const [qzInfo, setQzInfo] = useState<string | null>(null)
   const [processingOrderId, setProcessingOrderId] = useState<string | null>(null)
+  const [cancelingItemId, setCancelingItemId] = useState<string | null>(null)
+  const [cancelingOrderId, setCancelingOrderId] = useState<string | null>(null)
+  const [pendingCancelAction, setPendingCancelAction] = useState<PendingVendorCancelAction | null>(null)
+  const [isConfirmingCancel, setIsConfirmingCancel] = useState(false)
   const [uberResult, setUberResult] = useState<ProcessUberDeliveriesResponse | null>(null)
   const [uberProcessedOrderIds, setUberProcessedOrderIds] = useState<string[]>([])
 
@@ -161,6 +209,61 @@ export default function VendorOrdersPage() {
     }
   }
 
+  const handleCancelDuringDelivery = async (
+    orderItemIds: string[],
+    description: string,
+    options?: { cancelingItemId?: string; cancelingOrderId?: string },
+  ) => {
+    if (orderItemIds.length === 0) return
+    if (options?.cancelingItemId) {
+      setCancelingItemId(options.cancelingItemId)
+    }
+    if (options?.cancelingOrderId) {
+      setCancelingOrderId(options.cancelingOrderId)
+    }
+
+    try {
+      const response = await vendorOrdersAPI.cancelDuringDeliveryByCustomer({ orderItemIds })
+      setOrders((prev) =>
+        prev.map((order) => ({
+          ...order,
+          orderItems: order.orderItems.map((orderItem) =>
+            response.cancelledOrderItemIds.includes(orderItem.id)
+              ? { ...orderItem, status: OrderItemStatus.CANCEL_REQUESTED }
+              : orderItem,
+          ),
+        })),
+      )
+      showToast.success("Cancellation sent", response.message || description)
+    } catch (error: unknown) {
+      const apiErrorMessage = extractApiErrorMessage(error)
+      showToast.error("Cancellation failed", apiErrorMessage || "Cancellation request could not be submitted.")
+    } finally {
+      if (options?.cancelingItemId) {
+        setCancelingItemId(null)
+      }
+      if (options?.cancelingOrderId) {
+        setCancelingOrderId(null)
+      }
+    }
+  }
+
+  const confirmPendingCancelAction = async () => {
+    if (!pendingCancelAction) return
+
+    setIsConfirmingCancel(true)
+    try {
+      await handleCancelDuringDelivery(
+        pendingCancelAction.orderItemIds,
+        pendingCancelAction.description,
+        pendingCancelAction.options,
+      )
+    } finally {
+      setIsConfirmingCancel(false)
+      setPendingCancelAction(null)
+    }
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -263,6 +366,10 @@ export default function VendorOrdersPage() {
                   const canCallUber = order.orderItems.some(
                     (item) => item.status === "WAITING_FOR_UBER_DIRECT" || item.status === "UBER_ERROR",
                   )
+                  const cancelableOrderItemIds = order.orderItems
+                    .filter((item) => isCancelableOrderItemStatus(item.status))
+                    .map((item) => item.id)
+                  const hasCancelableOrderItems = cancelableOrderItemIds.length > 0
                   const isUberProcessed = uberProcessedOrderIds.includes(order.orderId)
 
                   return (
@@ -318,21 +425,46 @@ export default function VendorOrdersPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right text-sm">
-                          <button
-                            type="button"
-                            onClick={() => void handleCallUber(order)}
-                            disabled={!canCallUber || isUberProcessed || processingOrderId === order.orderId}
-                            className="rounded-full truncate bg-brand px-4 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
-                          >
-                            {processingOrderId === order.orderId ? (
-                              <span className="inline-flex items-center gap-1">
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                Processing...
-                              </span>
-                            ) : (
-                              "Call Uber"
-                            )}
-                          </button>
+                          <div className="flex justify-end gap-2">
+                            {hasCancelableOrderItems ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setPendingCancelAction({
+                                    orderItemIds: cancelableOrderItemIds,
+                                    description: "Cancellation request for this order's items was submitted.",
+                                    options: { cancelingOrderId: order.orderId },
+                                  })
+                                }
+                                disabled={cancelingOrderId === order.orderId}
+                                className="inline-flex items-center rounded-full border border-danger/25 bg-danger/10 px-4 py-1.5 text-xs font-semibold text-danger transition-colors hover:bg-danger/15 disabled:cursor-not-allowed disabled:opacity-70"
+                              >
+                                {cancelingOrderId === order.orderId ? (
+                                  <span className="inline-flex items-center gap-1">
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    Canceling...
+                                  </span>
+                                ) : (
+                                  "Cancel"
+                                )}
+                              </button>
+                            ) : null}
+                            <button
+                              type="button"
+                              onClick={() => void handleCallUber(order)}
+                              disabled={!canCallUber || isUberProcessed || processingOrderId === order.orderId}
+                              className="rounded-full truncate bg-brand px-4 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
+                            >
+                              {processingOrderId === order.orderId ? (
+                                <span className="inline-flex items-center gap-1">
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  Processing...
+                                </span>
+                              ) : (
+                                "Call Uber"
+                              )}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                       {expandedOrderId === order.orderId && (
@@ -357,7 +489,7 @@ export default function VendorOrdersPage() {
                                         className="h-full w-full object-cover"
                                       />
                                     </div>
-                                    <div className="truncate font-medium text-text-primary">{item.productName}</div>
+                                    <div className="max-w-96 font-medium text-text-primary">{item.productName}</div>
                                   </div>
                                   <div className="flex flex-wrap justify-end items-center gap-4 text-xs text-text-secondary">
                                     <span>
@@ -402,6 +534,29 @@ export default function VendorOrdersPage() {
                                       </button>
                                     ) : (
                                       <span className="text-[11px] text-text-muted">No labels or tracking</span>
+                                    )}
+                                    {isCancelableOrderItemStatus(item.status) && (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setPendingCancelAction({
+                                            orderItemIds: [item.id],
+                                            description: `${item.productName} cancellation request was submitted.`,
+                                            options: { cancelingItemId: item.id },
+                                          })
+                                        }
+                                        disabled={cancelingItemId === item.id || cancelingOrderId === order.orderId}
+                                        className="inline-flex items-center rounded-full border border-danger/25 bg-danger/10 px-3 py-1 text-[11px] font-semibold text-danger transition-colors hover:bg-danger/15 disabled:cursor-not-allowed disabled:opacity-70"
+                                      >
+                                        {cancelingItemId === item.id ? (
+                                          <span className="inline-flex items-center gap-1">
+                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                            Canceling...
+                                          </span>
+                                        ) : (
+                                          "Cancel"
+                                        )}
+                                      </button>
                                     )}
                                   </div>
                                 </div>
@@ -486,6 +641,53 @@ export default function VendorOrdersPage() {
           </div>
         </div>
       </section>
+      <Modal
+        isOpen={Boolean(pendingCancelAction)}
+        onClose={() => {
+          if (isConfirmingCancel) return
+          setPendingCancelAction(null)
+        }}
+        title="Confirm cancellation"
+        maxWidthClassName="max-w-lg"
+        closeOnEscape={!isConfirmingCancel}
+        closeOnOverlayClick={!isConfirmingCancel}
+      >
+        <div className="space-y-4 p-6">
+          <h3 className="text-lg font-semibold text-text-primary">
+            {pendingCancelAction?.orderItemIds.length && pendingCancelAction.orderItemIds.length > 1
+              ? "Cancel all selected order items?"
+              : "Cancel this order item?"}
+          </h3>
+          <p className="text-sm text-text-secondary">
+            This will submit a cancellation request for the selected item(s). Do you want to continue?
+          </p>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setPendingCancelAction(null)}
+              disabled={isConfirmingCancel}
+              className="rounded-lg border border-border-strong px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              Keep order
+            </button>
+            <button
+              type="button"
+              onClick={() => void confirmPendingCancelAction()}
+              disabled={isConfirmingCancel}
+              className="inline-flex items-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-semibold text-white hover:bg-danger/90 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isConfirmingCancel ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Canceling...
+                </>
+              ) : (
+                "Confirm cancel"
+              )}
+            </button>
+          </div>
+        </div>
+      </Modal>
       {labelModalLinks && (labelModalLinks.shipping.length > 0 || labelModalLinks.tracking.length > 0) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="bg-surface-elevated rounded-2xl shadow-xl max-w-4xl w-full mx-4">
