@@ -46,6 +46,17 @@ export interface ProcessUberDeliveriesResponse {
   trackingUrl: string
 }
 
+export interface CancelDuringDeliveryByCustomerPayload {
+  orderItemIds: string[]
+}
+
+export interface CancelDuringDeliveryByCustomerResponse {
+  message: string
+  successCount: number
+  failureCount: number
+  cancelledOrderItemIds: string[]
+}
+
 class VendorOrdersAPI {
   async getVendorOrders(page = 0, size = 10, sortBy?: string, sortDir?: "asc" | "desc"): Promise<VendorOrdersResponse> {
     const response = await apiClient.get<VendorOrdersResponse>("/orders/seller", {
@@ -61,6 +72,16 @@ class VendorOrdersAPI {
 
   async processUberDeliveries(payload: ProcessUberDeliveriesPayload): Promise<ProcessUberDeliveriesResponse> {
     const response = await apiClient.post<ProcessUberDeliveriesResponse>("/orders/uber/process-deliveries", payload)
+    return response.data
+  }
+
+  async cancelDuringDeliveryByCustomer(
+    payload: CancelDuringDeliveryByCustomerPayload,
+  ): Promise<CancelDuringDeliveryByCustomerResponse> {
+    const response = await apiClient.post<CancelDuringDeliveryByCustomerResponse>(
+      "/orders/cancelDuringDeliveryByCustomer",
+      payload,
+    )
     return response.data
   }
 }
