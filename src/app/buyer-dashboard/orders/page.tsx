@@ -731,15 +731,14 @@ export default function BuyerOrdersPage() {
                         <tr>
                           <td colSpan={6} className="border-b border-border-soft p-0">
                             <div className="bg-surface-muted/55 p-6 shadow-inner">
+                              <div className="mb-4 flex items-center gap-2">
+                                <h4 className="text-xl font-semibold text-text-primary">Order Items</h4>
+                                <p className="text-sm font-medium text-text-muted">
+                                  ({totalQuantity} items from {sellerCount} seller{sellerCount > 1 ? "s" : ""})
+                                </p>
+                              </div>
                               <div className="flex gap-8 rounded-xl border border-border-soft bg-surface-elevated p-6 lg:flex-row">
                                 <div className="flex-1">
-                                  <div className="mb-4 flex items-center justify-between">
-                                    <h4 className="text-xl font-semibold text-text-primary">Order Items</h4>
-                                    <p className="text-sm font-medium text-text-muted">
-                                      {totalQuantity} items from {sellerCount} seller{sellerCount > 1 ? "s" : ""}
-                                    </p>
-                                  </div>
-
                                   <div className="space-y-6">
                                     {sellerGroups.map((group) => {
                                       const sellerDisplayName = [group.sellerName, group.sellerSurname]
@@ -842,6 +841,17 @@ export default function BuyerOrdersPage() {
                                                             </>
                                                           ) : null}
                                                           <span>•</span>
+                                                          <span className="font-semibold text-text-primary">
+                                                            {item.price * item.quantity === 0
+                                                              ? "FREE"
+                                                              : formatCurrency(item.price * item.quantity)}
+                                                          </span>
+                                                          {item.quantity > 1 ? (
+                                                            <span className="text-[11px] text-text-muted">
+                                                              ({formatCurrency(item.price)} each)
+                                                            </span>
+                                                          ) : null}
+                                                          <span>•</span>
                                                           {item.shipmentFreeBySeller ? (
                                                             <span className="font-semibold text-success">
                                                               Free Shipping
@@ -893,7 +903,9 @@ export default function BuyerOrdersPage() {
                                                               }
                                                               className="rounded-md border border-danger/40 bg-danger/15 px-2.5 py-1 text-[11px] font-semibold text-danger hover:bg-danger/25 disabled:opacity-70"
                                                             >
-                                                              {cancelingItemId === item.id ? "Canceling..." : "Cancel"}
+                                                              {cancelingItemId === item.id
+                                                                ? "Canceling..."
+                                                                : "Cancel Item"}
                                                             </Button>
                                                           ) : null}
                                                           {trackingLinks.length > 0 ? (
@@ -934,22 +946,10 @@ export default function BuyerOrdersPage() {
                                                           : null
                                                         return (
                                                           <>
-                                                            <div className="mb-2 flex items-start justify-between gap-2">
+                                                            <div className="mb-2 flex items-start gap-2">
                                                               <div className="flex items-center gap-1.5 text-xs font-semibold text-text-secondary">
                                                                 <LucideTimer className="h-3.5 w-3.5 text-success" />
                                                                 Fulfillment
-                                                              </div>
-                                                              <div className="text-right">
-                                                                <p className="text-sm font-semibold text-text-primary">
-                                                                  {item.price * item.quantity === 0
-                                                                    ? "FREE"
-                                                                    : formatCurrency(item.price * item.quantity)}
-                                                                </p>
-                                                                {item.quantity > 1 ? (
-                                                                  <p className="text-[11px] text-text-muted">
-                                                                    {formatCurrency(item.price)} each
-                                                                  </p>
-                                                                ) : null}
                                                               </div>
                                                             </div>
                                                             <div className="relative space-y-2.5 ps-0.5 before:absolute before:top-2 before:bottom-2 before:left-[7px] before:w-0.5 before:bg-border-soft before:content-['']">
@@ -1075,15 +1075,13 @@ export default function BuyerOrdersPage() {
                                                   })
                                                 }
                                                 disabled={isCancelingSellerGroup}
-                                                className="font-semibold text-danger hover:opacity-80 disabled:opacity-70"
+                                                className="rounded-md border border-danger/40 bg-danger/15 px-2.5 py-1 text-[11px] font-semibold text-danger hover:bg-danger/25 disabled:opacity-70"
                                               >
-                                                {isCancelingSellerGroup ? "Canceling items..." : "Cancel Seller Items"}
+                                                {isCancelingSellerGroup
+                                                  ? "Canceling items..."
+                                                  : `Cancel All Items from ${sellerDisplayName}`}
                                               </Button>
-                                            ) : (
-                                              <span className="font-semibold text-success">
-                                                All items already canceled
-                                              </span>
-                                            )}
+                                            ) : null}
                                           </div>
                                         </section>
                                       )
