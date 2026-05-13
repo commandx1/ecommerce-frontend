@@ -731,7 +731,7 @@ export default function BuyerOrdersPage() {
                         <tr>
                           <td colSpan={6} className="border-b border-border-soft p-0">
                             <div className="bg-surface-muted/55 p-6 shadow-inner">
-                              <div className="flex flex-col gap-8 rounded-xl border border-border-soft bg-surface-elevated p-6 lg:flex-row">
+                              <div className="flex gap-8 rounded-xl border border-border-soft bg-surface-elevated p-6 lg:flex-row">
                                 <div className="flex-1">
                                   <div className="mb-4 flex items-center justify-between">
                                     <h4 className="text-xl font-semibold text-text-primary">Order Items</h4>
@@ -800,155 +800,260 @@ export default function BuyerOrdersPage() {
                                                   key={item.id}
                                                   className="rounded-lg border border-border-soft bg-surface-muted/30 p-3 transition-colors hover:border-border-soft"
                                                 >
-                                                  <div className="flex items-center gap-4">
-                                                    <div className="h-12 w-12 overflow-hidden rounded-md bg-surface-elevated shadow-sm">
-                                                      <ProductImageWithFallback
-                                                        src={
-                                                          getFullImageUrl(item.productCoverPhotoPath) ||
-                                                          "/dentypro-product-placeholder.png"
-                                                        }
-                                                        alt={item.productName}
-                                                        width={48}
-                                                        height={48}
-                                                        className="h-full w-full object-cover"
-                                                      />
-                                                    </div>
-                                                    <div className="min-w-0 flex-1">
-                                                      <p className="truncate text-sm font-medium text-text-primary">
-                                                        {productHref ? (
-                                                          <Link
-                                                            href={productHref}
-                                                            className="transition-colors hover:text-emerald-600"
-                                                          >
-                                                            {item.productName}
-                                                          </Link>
-                                                        ) : (
-                                                          item.productName
-                                                        )}
-                                                      </p>
-                                                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-muted">
-                                                        <span className="rounded bg-surface-muted px-2 py-0.5">
-                                                          Qty: {item.quantity} unit{item.quantity > 1 ? "s" : ""}
-                                                        </span>
-                                                        {!item.cancelledByCustomer && !item.cancelledBySeller ? (
-                                                          <>
-                                                            <span>•</span>
-                                                            <span
-                                                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${getOrderItemStatusTagClass(item.status)}`}
-                                                            >
-                                                              {formatOrderItemStatus(item.status)}
-                                                            </span>
-                                                          </>
-                                                        ) : null}
-                                                        {item.cancelledByCustomer ? (
-                                                          <>
-                                                            <span>•</span>
-                                                            <span className="rounded-full border border-danger/40 bg-danger/15 px-2 py-0.5 text-[11px] font-semibold text-danger">
-                                                              Cancelled by Customer
-                                                            </span>
-                                                          </>
-                                                        ) : item.cancelledBySeller ? (
-                                                          <>
-                                                            <span>•</span>
-                                                            <span className="rounded-full border border-warning/40 bg-warning/15 px-2 py-0.5 text-[11px] font-semibold text-warning">
-                                                              Cancelled by Seller
-                                                            </span>
-                                                          </>
-                                                        ) : null}
-                                                        {item.refundStatus ? (
-                                                          <>
-                                                            <span>•</span>
-                                                            <span
-                                                              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${getRefundStatusTagClass(item.refundStatus)}`}
-                                                            >
-                                                              {formatRefundStatus(item.refundStatus)}
-                                                            </span>
-                                                            {item.refundStatus.toUpperCase() === "APPROVED" ? (
-                                                              <span className="text-[11px] text-text-muted">
-                                                                Seller approved. Transfer may take a few business days.
-                                                              </span>
-                                                            ) : null}
-                                                          </>
-                                                        ) : null}
-                                                        <span>•</span>
-                                                        {item.shipmentFreeBySeller ? (
-                                                          <span className="font-semibold text-success">
-                                                            Free Shipping
-                                                          </span>
-                                                        ) : (
-                                                          <span className="font-semibold text-text-secondary">
-                                                            Shipment Fee:{" "}
-                                                            {formatCurrency(getOrderItemShipmentFee(item))}
-                                                          </span>
-                                                        )}
+                                                  <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
+                                                    <div className="flex items-start gap-4">
+                                                      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-surface-elevated shadow-sm">
+                                                        <ProductImageWithFallback
+                                                          src={
+                                                            getFullImageUrl(item.productCoverPhotoPath) ||
+                                                            "/dentypro-product-placeholder.png"
+                                                          }
+                                                          alt={item.productName}
+                                                          width={48}
+                                                          height={48}
+                                                          className="h-full w-full object-cover"
+                                                        />
                                                       </div>
-                                                      <div className="mt-3 flex w-2/3 flex-wrap items-center gap-2 border-t border-border-soft pt-3">
-                                                        <Button
-                                                          type="button"
-                                                          variant="unstyled"
-                                                          onClick={() =>
-                                                            handleReorder(
-                                                              item.userProductId,
-                                                              item.quantity,
-                                                              item.productName,
-                                                            )
-                                                          }
-                                                          disabled={
-                                                            reorderingItemId === item.userProductId ||
-                                                            cancelingItemId === item.id ||
-                                                            isCancelingSellerGroup
-                                                          }
-                                                          className="rounded-md bg-success px-2.5 py-1 text-[11px] font-semibold text-primary-foreground hover:bg-success/80 disabled:opacity-70"
-                                                        >
-                                                          {reorderingItemId === item.userProductId
-                                                            ? "Adding..."
-                                                            : "Reorder"}
-                                                        </Button>
-                                                        {isCancelableOrderItemStatus(item.status) ? (
+                                                      <div className="min-w-0 flex-1 h-full relative">
+                                                        <p className="max-w-96 mb-2 text-sm font-medium text-text-primary">
+                                                          {productHref ? (
+                                                            <Link
+                                                              href={productHref}
+                                                              className="transition-colors hover:text-brand"
+                                                            >
+                                                              {item.productName}
+                                                            </Link>
+                                                          ) : (
+                                                            item.productName
+                                                          )}
+                                                        </p>
+                                                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-muted">
+                                                          <span className="rounded bg-surface-muted px-2 py-0.5">
+                                                            Qty: {item.quantity} unit{item.quantity > 1 ? "s" : ""}
+                                                          </span>
+                                                          {!item.cancelledByCustomer && !item.cancelledBySeller ? (
+                                                            <>
+                                                              <span>•</span>
+                                                              <span
+                                                                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${getOrderItemStatusTagClass(item.status)}`}
+                                                              >
+                                                                {formatOrderItemStatus(item.status)}
+                                                              </span>
+                                                            </>
+                                                          ) : null}
+                                                          <span>•</span>
+                                                          {item.shipmentFreeBySeller ? (
+                                                            <span className="font-semibold text-success">
+                                                              Free Shipping
+                                                            </span>
+                                                          ) : (
+                                                            <span className="font-semibold text-text-secondary">
+                                                              Shipment Fee:{" "}
+                                                              {formatCurrency(getOrderItemShipmentFee(item))}
+                                                            </span>
+                                                          )}
+                                                        </div>
+                                                        <div className="absolute w-full bottom-0 left-0 flex flex-wrap items-center gap-2 border-t border-border-soft pt-3">
                                                           <Button
                                                             type="button"
                                                             variant="unstyled"
                                                             onClick={() =>
-                                                              setPendingCancelAction({
-                                                                orderItemIds: [item.id],
-                                                                description: `${item.productName} cancellation request was submitted.`,
-                                                                options: { cancelingItemId: item.id },
-                                                              })
+                                                              handleReorder(
+                                                                item.userProductId,
+                                                                item.quantity,
+                                                                item.productName,
+                                                              )
                                                             }
                                                             disabled={
-                                                              cancelingItemId === item.id ||
                                                               reorderingItemId === item.userProductId ||
+                                                              cancelingItemId === item.id ||
                                                               isCancelingSellerGroup
                                                             }
-                                                            className="rounded-md border border-danger/40 bg-danger/15 px-2.5 py-1 text-[11px] font-semibold text-danger hover:bg-danger/25 disabled:opacity-70"
+                                                            className="rounded-md bg-success px-2.5 py-1 text-[11px] font-semibold text-primary-foreground hover:bg-success/80 disabled:opacity-70"
                                                           >
-                                                            {cancelingItemId === item.id ? "Canceling..." : "Cancel"}
+                                                            {reorderingItemId === item.userProductId
+                                                              ? "Adding..."
+                                                              : "Reorder"}
                                                           </Button>
-                                                        ) : null}
-                                                        {trackingLinks.length > 0 ? (
-                                                          <Button
-                                                            type="button"
-                                                            variant="unstyled"
-                                                            onClick={() => setTrackingModalLinks(trackingLinks)}
-                                                            className="inline-flex items-center gap-1 rounded-md border border-success/40 bg-success/15 px-2.5 py-1 text-[11px] font-semibold text-success hover:bg-success/25"
-                                                          >
-                                                            Track
-                                                            <ExternalLink className="h-3 w-3" />
-                                                          </Button>
-                                                        ) : null}
+                                                          {isCancelableOrderItemStatus(item.status) ? (
+                                                            <Button
+                                                              type="button"
+                                                              variant="unstyled"
+                                                              onClick={() =>
+                                                                setPendingCancelAction({
+                                                                  orderItemIds: [item.id],
+                                                                  description: `${item.productName} cancellation request was submitted.`,
+                                                                  options: { cancelingItemId: item.id },
+                                                                })
+                                                              }
+                                                              disabled={
+                                                                cancelingItemId === item.id ||
+                                                                reorderingItemId === item.userProductId ||
+                                                                isCancelingSellerGroup
+                                                              }
+                                                              className="rounded-md border border-danger/40 bg-danger/15 px-2.5 py-1 text-[11px] font-semibold text-danger hover:bg-danger/25 disabled:opacity-70"
+                                                            >
+                                                              {cancelingItemId === item.id ? "Canceling..." : "Cancel"}
+                                                            </Button>
+                                                          ) : null}
+                                                          {trackingLinks.length > 0 ? (
+                                                            <Button
+                                                              type="button"
+                                                              variant="unstyled"
+                                                              onClick={() => setTrackingModalLinks(trackingLinks)}
+                                                              className="inline-flex items-center gap-1 rounded-md border border-success/40 bg-success/15 px-2.5 py-1 text-[11px] font-semibold text-success hover:bg-success/25"
+                                                            >
+                                                              Track
+                                                              <ExternalLink className="h-3 w-3" />
+                                                            </Button>
+                                                          ) : null}
+                                                        </div>
                                                       </div>
                                                     </div>
-                                                    <div className="text-right">
-                                                      <p className="text-sm font-semibold text-text-primary">
-                                                        {item.price * item.quantity === 0
-                                                          ? "FREE"
-                                                          : formatCurrency(item.price * item.quantity)}
-                                                      </p>
-                                                      {item.quantity > 1 && (
-                                                        <p className="text-xs text-text-muted">
-                                                          {formatCurrency(item.price)} each
-                                                        </p>
-                                                      )}
+                                                    <div className="rounded-lg border border-border-soft bg-surface-elevated p-3">
+                                                      {(() => {
+                                                        const timelineState = resolveOrderItemFulfillmentState(item)
+                                                        const cancellationLabel = item.cancelledByCustomer
+                                                          ? "Cancelled by Customer"
+                                                          : item.cancelledBySeller
+                                                            ? "Cancelled by Seller"
+                                                            : null
+                                                        const isCancelledDuringShipping =
+                                                          Boolean(cancellationLabel) &&
+                                                          Boolean(item.cancelledWithShippingFee)
+                                                        const shippingDotClass = isCancelledDuringShipping
+                                                          ? "bg-danger"
+                                                          : getTimelineDotClass(timelineState.shipping)
+                                                        const shippingLabelClass = isCancelledDuringShipping
+                                                          ? "text-danger"
+                                                          : getTimelineLabelClass(timelineState.shipping)
+                                                        const cancellationDotClass = "bg-danger"
+                                                        const cancellationLabelClass = "text-danger"
+                                                        const refundTimeline = item.refundStatus
+                                                          ? getRefundTimelineClass(item.refundStatus)
+                                                          : null
+                                                        return (
+                                                          <>
+                                                            <div className="mb-2 flex items-start justify-between gap-2">
+                                                              <div className="flex items-center gap-1.5 text-xs font-semibold text-text-secondary">
+                                                                <LucideTimer className="h-3.5 w-3.5 text-success" />
+                                                                Fulfillment
+                                                              </div>
+                                                              <div className="text-right">
+                                                                <p className="text-sm font-semibold text-text-primary">
+                                                                  {item.price * item.quantity === 0
+                                                                    ? "FREE"
+                                                                    : formatCurrency(item.price * item.quantity)}
+                                                                </p>
+                                                                {item.quantity > 1 ? (
+                                                                  <p className="text-[11px] text-text-muted">
+                                                                    {formatCurrency(item.price)} each
+                                                                  </p>
+                                                                ) : null}
+                                                              </div>
+                                                            </div>
+                                                            <div className="relative space-y-2.5 ps-0.5 before:absolute before:top-2 before:bottom-2 before:left-[7px] before:w-0.5 before:bg-border-soft before:content-['']">
+                                                              <div className="relative z-10 flex items-start gap-2.5">
+                                                                <div className="h-3.5 w-3.5 rounded-full border-2 border-surface-elevated bg-success shadow-sm" />
+                                                                <div>
+                                                                  <p className="text-xs font-semibold text-success">
+                                                                    Order Placed
+                                                                  </p>
+                                                                  <p className="text-[11px] text-text-muted">
+                                                                    {orderDate}, {orderTime}
+                                                                  </p>
+                                                                </div>
+                                                              </div>
+                                                              <div className="relative z-10 flex items-start gap-2.5">
+                                                                <div
+                                                                  className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${getTimelineDotClass(timelineState.processing)}`}
+                                                                />
+                                                                <p
+                                                                  className={`text-xs font-medium ${getTimelineLabelClass(timelineState.processing)}`}
+                                                                >
+                                                                  Processing
+                                                                </p>
+                                                              </div>
+                                                              {cancellationLabel && !isCancelledDuringShipping ? (
+                                                                <div className="relative z-10 flex items-start gap-2.5">
+                                                                  <div
+                                                                    className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${cancellationDotClass}`}
+                                                                  />
+                                                                  <p
+                                                                    className={`text-xs font-medium ${cancellationLabelClass}`}
+                                                                  >
+                                                                    {cancellationLabel}
+                                                                  </p>
+                                                                </div>
+                                                              ) : null}
+                                                              {item.refundStatus &&
+                                                              refundTimeline &&
+                                                              !isCancelledDuringShipping ? (
+                                                                <div className="relative z-10 flex items-start gap-2.5">
+                                                                  <div
+                                                                    className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${refundTimeline.dot}`}
+                                                                  />
+                                                                  <p
+                                                                    className={`text-xs font-medium ${refundTimeline.label}`}
+                                                                  >
+                                                                    {formatRefundStatus(item.refundStatus)}
+                                                                  </p>
+                                                                </div>
+                                                              ) : null}
+                                                              {!cancellationLabel || isCancelledDuringShipping ? (
+                                                                <div className="relative z-10 flex items-start gap-2.5">
+                                                                  <div
+                                                                    className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${shippingDotClass}`}
+                                                                  />
+                                                                  <p
+                                                                    className={`text-xs font-medium ${shippingLabelClass}`}
+                                                                  >
+                                                                    Shipping
+                                                                  </p>
+                                                                </div>
+                                                              ) : null}
+                                                              {cancellationLabel && isCancelledDuringShipping ? (
+                                                                <div className="relative z-10 flex items-start gap-2.5">
+                                                                  <div
+                                                                    className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${cancellationDotClass}`}
+                                                                  />
+                                                                  <p
+                                                                    className={`text-xs font-medium ${cancellationLabelClass}`}
+                                                                  >
+                                                                    {cancellationLabel}
+                                                                  </p>
+                                                                </div>
+                                                              ) : null}
+                                                              {item.refundStatus &&
+                                                              refundTimeline &&
+                                                              isCancelledDuringShipping ? (
+                                                                <div className="relative z-10 flex items-start gap-2.5">
+                                                                  <div
+                                                                    className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${refundTimeline.dot}`}
+                                                                  />
+                                                                  <p
+                                                                    className={`text-xs font-medium ${refundTimeline.label}`}
+                                                                  >
+                                                                    {formatRefundStatus(item.refundStatus)}
+                                                                  </p>
+                                                                </div>
+                                                              ) : null}
+                                                              {!cancellationLabel ? (
+                                                                <div className="relative z-10 flex items-start gap-2.5">
+                                                                  <div
+                                                                    className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${getTimelineDotClass(timelineState.delivered)}`}
+                                                                  />
+                                                                  <p
+                                                                    className={`text-xs font-medium ${getTimelineLabelClass(timelineState.delivered)}`}
+                                                                  >
+                                                                    Delivered
+                                                                  </p>
+                                                                </div>
+                                                              ) : null}
+                                                            </div>
+                                                          </>
+                                                        )
+                                                      })()}
                                                     </div>
                                                   </div>
                                                 </div>
@@ -987,85 +1092,6 @@ export default function BuyerOrdersPage() {
                                 </div>
 
                                 <div className="flex w-full flex-col gap-6 lg:w-80">
-                                  <div>
-                                    <div className="flex items-center gap-2 mb-4">
-                                      <LucideTimer className="text-success" />
-                                      <h4 className="text-sm font-semibold text-text-primary mt-1">
-                                        Fulfillment Status
-                                      </h4>
-                                    </div>
-                                    <div className="relative space-y-4 before:absolute before:top-2 before:bottom-2 before:left-[7px] before:w-0.5 before:bg-border-soft before:content-['']">
-                                      <div className="relative z-10 flex items-start gap-3">
-                                        <div className="mt-0.5 h-4 w-4 rounded-full border-2 border-surface-elevated bg-success shadow-sm" />
-                                        <div>
-                                          <p className="text-sm font-medium text-text-primary">Order Placed</p>
-                                          <p className="mt-0.5 text-xs text-text-muted">
-                                            {orderDate}, {orderTime}
-                                          </p>
-                                          <p className="mt-1 text-xs text-text-muted">
-                                            Payment confirmed via{" "}
-                                            {order.cardBrand && order.cardLast4
-                                              ? `${order.cardBrand.toUpperCase()} ****${order.cardLast4}`
-                                              : payment.title !== "-"
-                                                ? payment.title
-                                                : "saved card"}
-                                          </p>
-                                        </div>
-                                      </div>
-                                      <div className="relative z-10 flex items-start gap-3">
-                                        <div
-                                          className={`mt-0.5 h-4 w-4 rounded-full border-2 border-surface-elevated shadow-sm ${
-                                            uiStatus === "processing" ? "bg-warning animate-pulse" : "bg-success"
-                                          }`}
-                                        />
-                                        <div>
-                                          <p
-                                            className={`text-sm font-medium text-text-primary ${uiStatus === "processing" ? "text-warning animate-pulse" : "text-text-muted"}`}
-                                          >
-                                            Processing
-                                          </p>
-                                          <p
-                                            className={`mt-0.5 text-xs font-medium ${uiStatus === "processing" ? "text-warning animate-pulse" : "text-text-muted"}`}
-                                          >
-                                            Preparing items in warehouse
-                                          </p>
-                                        </div>
-                                      </div>
-                                      <div className="relative z-10 flex items-start gap-3">
-                                        <div
-                                          className={`mt-0.5 h-4 w-4 rounded-full border-2 border-surface-elevated shadow-sm ${
-                                            uiStatus === "shipping"
-                                              ? "bg-warning animate-pulse"
-                                              : uiStatus === "shipped" || uiStatus === "delivered"
-                                                ? "bg-brand"
-                                                : "bg-border-soft"
-                                          }`}
-                                        />
-                                        <div>
-                                          <p
-                                            className={`text-sm font-medium ${uiStatus === "shipped" || uiStatus === "delivered" ? "text-text-primary" : "text-text-muted"}`}
-                                          >
-                                            Shipping
-                                          </p>
-                                        </div>
-                                      </div>
-                                      <div className="relative z-10 flex items-start gap-3">
-                                        <div
-                                          className={`mt-0.5 h-4 w-4 rounded-full border-2 border-surface-elevated shadow-sm ${
-                                            uiStatus === "delivered" ? "bg-success" : "bg-border-soft"
-                                          }`}
-                                        />
-                                        <div>
-                                          <p
-                                            className={`text-sm font-medium ${uiStatus === "delivered" ? "text-text-primary" : "text-text-muted"}`}
-                                          >
-                                            Delivered
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-
                                   <div className="rounded-lg border border-border-soft bg-surface-muted/55 p-4">
                                     <div className="space-y-2 text-sm">
                                       <div className="flex justify-between text-text-muted">
