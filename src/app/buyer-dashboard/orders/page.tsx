@@ -342,19 +342,6 @@ function formatOrderItemStatus(status: string): string {
     .join(" ")
 }
 
-function getRefundStatusTagClass(refundStatus: string): string {
-  const normalizedStatus = refundStatus.toUpperCase()
-
-  if (normalizedStatus === "APPROVED") {
-    return "border border-success/40 bg-success/15 text-success"
-  }
-  if (normalizedStatus === "CANCELLED") {
-    return "border border-danger/40 bg-danger/15 text-danger"
-  }
-
-  return "border border-warning/40 bg-warning/15 text-warning"
-}
-
 function formatRefundStatus(refundStatus: string): string {
   const normalizedStatus = refundStatus.toUpperCase()
   if (normalizedStatus === "APPROVED") return "Refund Approved"
