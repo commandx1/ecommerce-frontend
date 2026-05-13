@@ -237,6 +237,72 @@ function getOrderStatusLabel(status: OrderViewStatus): string {
   return "Processing"
 }
 
+type FulfillmentStepState = "pending" | "active" | "done"
+
+function resolveOrderItemFulfillmentState(item: BuyerOrderItem): {
+  processing: FulfillmentStepState
+  shipping: FulfillmentStepState
+  delivered: FulfillmentStepState
+} {
+  const normalizedStatus = item.status.toUpperCase()
+  const isCancelled =
+    Boolean(item.cancelledByCustomer) || Boolean(item.cancelledBySeller) || normalizedStatus.includes("CANCEL")
+  const isCancelledDuringShipping = isCancelled && Boolean(item.cancelledWithShippingFee)
+
+  if (normalizedStatus.includes("DELIVER")) {
+    return { processing: "done", shipping: "done", delivered: "done" }
+  }
+
+  const isOnWay = normalizedStatus.includes("ON_WAY")
+  const isShipped =
+    isOnWay ||
+    ["SHIPPED", "IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERY"].some((token) => normalizedStatus.includes(token))
+
+  if (isOnWay) {
+    return { processing: "done", shipping: "active", delivered: "pending" }
+  }
+
+  if (isShipped) {
+    return { processing: "done", shipping: "done", delivered: "pending" }
+  }
+
+  if (isCancelledDuringShipping) {
+    return { processing: "done", shipping: "done", delivered: "pending" }
+  }
+
+  if (isCancelled) {
+    return { processing: "done", shipping: "pending", delivered: "pending" }
+  }
+
+  return { processing: "active", shipping: "pending", delivered: "pending" }
+}
+
+function getTimelineDotClass(state: FulfillmentStepState): string {
+  if (state === "done") return "bg-success"
+  if (state === "active") return "bg-warning animate-pulse"
+  return "bg-border-soft"
+}
+
+function getTimelineLabelClass(state: FulfillmentStepState): string {
+  if (state === "done") return "text-success"
+  if (state === "active") return "text-warning"
+  return "text-text-muted"
+}
+
+function getRefundTimelineClass(refundStatus: string): { dot: string; label: string } {
+  const normalizedStatus = refundStatus.toUpperCase()
+
+  if (normalizedStatus === "APPROVED") {
+    return { dot: "bg-success", label: "text-success" }
+  }
+
+  if (normalizedStatus === "CANCELLED") {
+    return { dot: "bg-danger", label: "text-danger" }
+  }
+
+  return { dot: "bg-warning animate-pulse", label: "text-warning" }
+}
+
 function getSellerFirstTwoLetters(value: string): string {
   const words = value
     .split(/\s+/)
