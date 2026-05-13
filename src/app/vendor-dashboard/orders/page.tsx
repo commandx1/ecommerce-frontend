@@ -223,7 +223,7 @@ export default function VendorOrdersPage() {
     }
 
     try {
-      const response = await vendorOrdersAPI.cancelDuringDeliveryByCustomer({ orderItemIds })
+      const response = await vendorOrdersAPI.cancelBySeller({ orderItemIds })
       setOrders((prev) =>
         prev.map((order) => ({
           ...order,
