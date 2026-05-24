@@ -61,6 +61,7 @@ export default function Modal({
             event.preventDefault()
           }
         }}
+        aria-describedby={undefined}
       >
         <DialogTitle className="sr-only">{title}</DialogTitle>
         <div className={cn("w-full", bodyClassName)}>{children}</div>

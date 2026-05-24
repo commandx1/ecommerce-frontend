@@ -31,6 +31,7 @@ export default function TrackingLinksModal({ links, onClose }: TrackingLinksModa
             variant="quiet"
             size="icon-sm"
             onClick={onClose}
+            aria-label="Close tracking modal"
             className="text-text-muted hover:bg-surface-muted hover:text-text-secondary"
           >
             <X className="w-4 h-4" />
