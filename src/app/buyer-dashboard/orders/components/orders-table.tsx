@@ -1,11 +1,12 @@
 "use client"
 
-import type { ColumnDef, ExpandedState, OnChangeFn, Row } from "@tanstack/react-table"
+import type { ColumnDef, Row } from "@tanstack/react-table"
 import { ChevronDown, ChevronUp, Package, Store, Truck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import DataTable from "@/components/ui/data-table"
-import type { BuyerOrder, BuyerOrderTrackingLink } from "@/lib/api/buyer-orders"
+import type { BuyerOrder } from "@/lib/api/buyer-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { useBuyerOrdersTableActions, useBuyerOrdersTableSelector } from "../context/buyer-orders-context"
 import {
   buildBuyerOrderViewModel,
   getOrderStatusBadgeClasses,
@@ -13,40 +14,25 @@ import {
   getPaymentViewStatusClasses,
   getPaymentViewStatusLabel,
 } from "../lib/order-view-utils"
-import type { BuyerOrderViewModel, PendingCancelAction } from "../types"
 import OrderExpandedContent from "./order-expanded-content"
 
-interface OrdersTableProps {
-  cancelingItemId: string | null
-  cancelingSellerKey: string | null
-  dateSortDir: "asc" | "desc"
-  expandedState: ExpandedState
-  isLoading: boolean
-  onDateSortToggle: () => void
-  onExpandedChange: OnChangeFn<ExpandedState>
-  onOpenTrackingLinks: (links: BuyerOrderTrackingLink[]) => void
-  onReorder: (userProductId: string, quantity: number, productName: string) => Promise<void>
-  onRequestCancel: (action: PendingCancelAction) => void
-  orders: BuyerOrder[]
-  reorderingItemId: string | null
-  summariesByOrderId: Map<string, BuyerOrderViewModel>
-}
+export default function OrdersTable() {
+  const {
+    dateSortDir,
+    expandedState,
+    filteredOrders,
+    isLoading,
+    summariesByOrderId,
+  } = useBuyerOrdersTableSelector((state) => ({
+    dateSortDir: state.dateSortDir,
+    expandedState: state.expandedState,
+    filteredOrders: state.filteredOrders,
+    isLoading: state.isLoading,
+    summariesByOrderId: state.summariesByOrderId,
+  }))
 
-export default function OrdersTable({
-  cancelingItemId,
-  cancelingSellerKey,
-  dateSortDir,
-  expandedState,
-  isLoading,
-  onDateSortToggle,
-  onExpandedChange,
-  onOpenTrackingLinks,
-  onReorder,
-  onRequestCancel,
-  orders,
-  reorderingItemId,
-  summariesByOrderId,
-}: OrdersTableProps) {
+  const { handleDateSortToggle, handleExpandedChange } = useBuyerOrdersTableActions()
+
   const getSummary = (order: BuyerOrder) => summariesByOrderId.get(order.orderId) ?? buildBuyerOrderViewModel(order)
 
   const orderColumns: Array<ColumnDef<BuyerOrder, unknown>> = [
@@ -74,7 +60,7 @@ export default function OrdersTable({
         <Button
           type="button"
           variant="unstyled"
-          onClick={onDateSortToggle}
+          onClick={handleDateSortToggle}
           className="inline-flex items-center gap-1 text-xs font-semibold tracking-wider text-text-muted uppercase hover:text-text-secondary"
           aria-label={`Sort by date ${dateSortDir === "desc" ? "ascending" : "descending"}`}
         >
@@ -237,23 +223,14 @@ export default function OrdersTable({
     const summary = getSummary(order)
 
     return (
-      <OrderExpandedContent
-        cancelingItemId={cancelingItemId}
-        cancelingSellerKey={cancelingSellerKey}
-        onOpenTrackingLinks={onOpenTrackingLinks}
-        onReorder={onReorder}
-        onRequestCancel={onRequestCancel}
-        order={order}
-        reorderingItemId={reorderingItemId}
-        summary={summary}
-      />
+      <OrderExpandedContent order={order} summary={summary} />
     )
   }
 
   return (
     <DataTable
       columns={orderColumns}
-      data={orders}
+      data={filteredOrders}
       expanded={expandedState}
       getRowClassName={(row) =>
         `cursor-pointer transition-colors hover:bg-surface-muted/55 ${row.getIsExpanded() ? "bg-surface-muted/40" : ""}`
@@ -261,9 +238,8 @@ export default function OrdersTable({
       getRowId={(order) => order.orderId}
       isLoading={isLoading}
       loadingText="Loading orders..."
-      minTableWidthClassName="min-w-[1380px]"
       noRowsText="No orders found."
-      onExpandedChange={onExpandedChange}
+      onExpandedChange={handleExpandedChange}
       renderExpandedContent={renderExpandedOrderContent}
     />
   )

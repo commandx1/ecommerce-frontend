@@ -1,11 +1,21 @@
 import type { ExpandedState } from "@tanstack/react-table"
 import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { type HTMLAttributes, type ReactNode, useState } from "react"
-import { describe, expect, it, vi } from "vitest"
+import { type HTMLAttributes, type ReactNode, useMemo, useState } from "react"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { BuyerOrder } from "@/lib/api/buyer-orders"
 import { buildBuyerOrderViewModel } from "../lib/order-view-utils"
 import OrdersTable from "./orders-table"
+
+const mockUseBuyerOrdersTableState = vi.fn()
+const mockUseBuyerOrdersTableActions = vi.fn()
+
+vi.mock("../context/buyer-orders-context", () => ({
+  useBuyerOrdersTableSelector: (
+    selector: (state: ReturnType<typeof mockUseBuyerOrdersTableState>) => unknown,
+  ) => selector(mockUseBuyerOrdersTableState()),
+  useBuyerOrdersTableActions: () => mockUseBuyerOrdersTableActions(),
+}))
 
 vi.mock("next/link", () => ({
   default: ({ children, href, ...props }: { children: ReactNode; href: string }) => (
@@ -131,44 +141,57 @@ const secondOrder: BuyerOrder = {
   ],
 }
 
-interface OrdersTableHarnessProps {
-  onOpenTrackingLinks: (links: Array<{ trackingUrl: string; status?: string; updatedDate?: string | null }>) => void
-  onReorder: (userProductId: string, quantity: number, productName: string) => Promise<void>
-  onRequestCancel: (action: {
+type TableState = ReturnType<typeof mockUseBuyerOrdersTableState>
+type TableActions = ReturnType<typeof mockUseBuyerOrdersTableActions>
+
+function createTableState(overrides?: Partial<TableState>) {
+  return {
+    cancelingItemId: null,
+    cancelingSellerKey: null,
+    dateSortDir: "desc" as const,
+    expandedState: {},
+    filteredOrders: [order],
+    isLoading: false,
+    reorderingItemId: null,
+    summariesByOrderId: new Map([[order.orderId, buildBuyerOrderViewModel(order)]]),
+    ...overrides,
+  }
+}
+
+function createTableActions(overrides?: Partial<TableActions>) {
+  return {
+    handleDateSortToggle: vi.fn(),
+    handleExpandedChange: vi.fn(),
+    handleReorder: vi.fn().mockResolvedValue(undefined),
+    requestCancelAction: vi.fn(),
+    setTrackingModalLinks: vi.fn(),
+    ...overrides,
+  }
+}
+
+function configureTableMocks(stateOverrides?: Partial<TableState>, actionOverrides?: Partial<TableActions>) {
+  mockUseBuyerOrdersTableState.mockReturnValue(createTableState(stateOverrides))
+  mockUseBuyerOrdersTableActions.mockReturnValue(createTableActions(actionOverrides))
+}
+
+function StatefulTableHarness({
+  testOrders = [order],
+  onReorder = vi.fn().mockResolvedValue(undefined),
+  onRequestCancel = vi.fn(),
+  onSetTrackingModalLinks = vi.fn(),
+  dateSortDir = "desc" as const,
+}: {
+  dateSortDir?: "asc" | "desc"
+  onReorder?: (userProductId: string, quantity: number, productName: string) => Promise<void>
+  onRequestCancel?: (action: {
     description: string
     orderItemIds: string[]
     options?: { cancelingItemId?: string; cancelingSellerKey?: string }
   }) => void
-}
-
-function OrdersTableHarness({ onOpenTrackingLinks, onReorder, onRequestCancel }: OrdersTableHarnessProps) {
+  onSetTrackingModalLinks?: (links: Array<{ trackingUrl: string; status?: string; updatedDate?: string | null }>) => void
+  testOrders?: BuyerOrder[]
+}) {
   const [expandedState, setExpandedState] = useState<ExpandedState>({})
-  const summary = buildBuyerOrderViewModel(order)
-
-  return (
-    <OrdersTable
-      cancelingItemId={null}
-      cancelingSellerKey={null}
-      dateSortDir="desc"
-      expandedState={expandedState}
-      isLoading={false}
-      onDateSortToggle={vi.fn()}
-      onExpandedChange={setExpandedState}
-      onOpenTrackingLinks={onOpenTrackingLinks}
-      onReorder={onReorder}
-      onRequestCancel={onRequestCancel}
-      orders={[order]}
-      reorderingItemId={null}
-      summariesByOrderId={new Map([[order.orderId, summary]])}
-    />
-  )
-}
-
-function MultiOrderHarness() {
-  const [expandedState, setExpandedState] = useState<ExpandedState>({})
-  const summary1 = buildBuyerOrderViewModel(order)
-  const summary2 = buildBuyerOrderViewModel(secondOrder)
-
   const handleExpandedChange = (nextExpanded: ExpandedState | ((old: ExpandedState) => ExpandedState)) => {
     const resolved = typeof nextExpanded === "function" ? nextExpanded(expandedState) : nextExpanded
     if (resolved === true) {
@@ -181,28 +204,27 @@ function MultiOrderHarness() {
     setExpandedState(singleExpandedRowId ? { [singleExpandedRowId]: true } : {})
   }
 
-  return (
-    <OrdersTable
-      cancelingItemId={null}
-      cancelingSellerKey={null}
-      dateSortDir="desc"
-      expandedState={expandedState}
-      isLoading={false}
-      onDateSortToggle={vi.fn()}
-      onExpandedChange={handleExpandedChange}
-      onOpenTrackingLinks={vi.fn()}
-      onReorder={vi.fn().mockResolvedValue(undefined)}
-      onRequestCancel={vi.fn()}
-      orders={[order, secondOrder]}
-      reorderingItemId={null}
-      summariesByOrderId={
-        new Map([
-          [order.orderId, summary1],
-          [secondOrder.orderId, summary2],
-        ])
-      }
-    />
+  const summariesByOrderId = useMemo(
+    () => new Map(testOrders.map((item) => [item.orderId, buildBuyerOrderViewModel(item)] as const)),
+    [testOrders],
   )
+
+  configureTableMocks(
+    {
+      dateSortDir,
+      expandedState,
+      filteredOrders: testOrders,
+      summariesByOrderId,
+    },
+    {
+      handleExpandedChange,
+      handleReorder: onReorder,
+      requestCancelAction: onRequestCancel,
+      setTrackingModalLinks: onSetTrackingModalLinks,
+    },
+  )
+
+  return <OrdersTable />
 }
 
 function getPrimaryDataRowBySeller(seller: string): HTMLTableRowElement | null {
@@ -215,84 +237,27 @@ function getPrimaryDataRowBySeller(seller: string): HTMLTableRowElement | null {
   return null
 }
 
-function ExpandableSingleOrderHarness({ testOrder }: { testOrder: BuyerOrder }) {
-  const [expandedState, setExpandedState] = useState<ExpandedState>({})
-  const summary = buildBuyerOrderViewModel(testOrder)
-
-  return (
-    <OrdersTable
-      cancelingItemId={null}
-      cancelingSellerKey={null}
-      dateSortDir="desc"
-      expandedState={expandedState}
-      isLoading={false}
-      onDateSortToggle={vi.fn()}
-      onExpandedChange={setExpandedState}
-      onOpenTrackingLinks={vi.fn()}
-      onReorder={vi.fn().mockResolvedValue(undefined)}
-      onRequestCancel={vi.fn()}
-      orders={[testOrder]}
-      reorderingItemId={null}
-      summariesByOrderId={new Map([[testOrder.orderId, summary]])}
-    />
-  )
-}
+beforeEach(() => {
+  mockUseBuyerOrdersTableState.mockReset()
+  mockUseBuyerOrdersTableActions.mockReset()
+})
 
 describe("OrdersTable", () => {
   it("renders loading state and empty state correctly", () => {
-    const summary = buildBuyerOrderViewModel(order)
-
-    const { rerender } = render(
-      <OrdersTable
-        cancelingItemId={null}
-        cancelingSellerKey={null}
-        dateSortDir="desc"
-        expandedState={{}}
-        isLoading
-        onDateSortToggle={vi.fn()}
-        onExpandedChange={vi.fn()}
-        onOpenTrackingLinks={vi.fn()}
-        onReorder={vi.fn().mockResolvedValue(undefined)}
-        onRequestCancel={vi.fn()}
-        orders={[order]}
-        reorderingItemId={null}
-        summariesByOrderId={new Map([[order.orderId, summary]])}
-      />,
-    )
-
+    configureTableMocks({ isLoading: true })
+    const { rerender } = render(<OrdersTable />)
     expect(screen.getByText("Loading orders...")).toBeInTheDocument()
 
-    rerender(
-      <OrdersTable
-        cancelingItemId={null}
-        cancelingSellerKey={null}
-        dateSortDir="desc"
-        expandedState={{}}
-        isLoading={false}
-        onDateSortToggle={vi.fn()}
-        onExpandedChange={vi.fn()}
-        onOpenTrackingLinks={vi.fn()}
-        onReorder={vi.fn().mockResolvedValue(undefined)}
-        onRequestCancel={vi.fn()}
-        orders={[]}
-        reorderingItemId={null}
-        summariesByOrderId={new Map()}
-      />,
-    )
-
+    configureTableMocks({ filteredOrders: [], isLoading: false, summariesByOrderId: new Map() })
+    rerender(<OrdersTable />)
     expect(screen.getByText("No orders found.")).toBeInTheDocument()
   })
 
   it("renders all buyer orders table columns and summary row values", () => {
-    render(
-      <OrdersTableHarness
-        onOpenTrackingLinks={vi.fn()}
-        onReorder={vi.fn().mockResolvedValue(undefined)}
-        onRequestCancel={vi.fn()}
-      />,
-    )
+    configureTableMocks()
+    render(<OrdersTable />)
 
-    const expectedHeaders = [
+    for (const header of [
       "Date",
       "Seller / Store",
       "Items",
@@ -302,9 +267,7 @@ describe("OrdersTable", () => {
       "Tracking",
       "Net Total",
       "Shipment Fee",
-    ]
-
-    for (const header of expectedHeaders) {
+    ]) {
       expect(screen.getByText(header)).toBeInTheDocument()
     }
 
@@ -321,119 +284,50 @@ describe("OrdersTable", () => {
 
   it("triggers date sort toggle when date header is clicked", async () => {
     const user = userEvent.setup()
-    const onDateSortToggle = vi.fn()
-    const summary = buildBuyerOrderViewModel(order)
-
-    render(
-      <OrdersTable
-        cancelingItemId={null}
-        cancelingSellerKey={null}
-        dateSortDir="desc"
-        expandedState={{}}
-        isLoading={false}
-        onDateSortToggle={onDateSortToggle}
-        onExpandedChange={vi.fn()}
-        onOpenTrackingLinks={vi.fn()}
-        onReorder={vi.fn().mockResolvedValue(undefined)}
-        onRequestCancel={vi.fn()}
-        orders={[order]}
-        reorderingItemId={null}
-        summariesByOrderId={new Map([[order.orderId, summary]])}
-      />,
-    )
+    const handleDateSortToggle = vi.fn()
+    configureTableMocks(undefined, { handleDateSortToggle })
+    render(<OrdersTable />)
 
     await user.click(screen.getByRole("button", { name: "Sort by date ascending" }))
-    expect(onDateSortToggle).toHaveBeenCalledTimes(1)
+    expect(handleDateSortToggle).toHaveBeenCalledTimes(1)
   })
 
   it("updates sort button aria-label based on sort direction", () => {
-    const summary = buildBuyerOrderViewModel(order)
-
-    const { rerender } = render(
-      <OrdersTable
-        cancelingItemId={null}
-        cancelingSellerKey={null}
-        dateSortDir="desc"
-        expandedState={{}}
-        isLoading={false}
-        onDateSortToggle={vi.fn()}
-        onExpandedChange={vi.fn()}
-        onOpenTrackingLinks={vi.fn()}
-        onReorder={vi.fn().mockResolvedValue(undefined)}
-        onRequestCancel={vi.fn()}
-        orders={[order]}
-        reorderingItemId={null}
-        summariesByOrderId={new Map([[order.orderId, summary]])}
-      />,
-    )
-
+    configureTableMocks({ dateSortDir: "desc" })
+    const { rerender } = render(<OrdersTable />)
     expect(screen.getByRole("button", { name: "Sort by date ascending" })).toBeInTheDocument()
 
-    rerender(
-      <OrdersTable
-        cancelingItemId={null}
-        cancelingSellerKey={null}
-        dateSortDir="asc"
-        expandedState={{}}
-        isLoading={false}
-        onDateSortToggle={vi.fn()}
-        onExpandedChange={vi.fn()}
-        onOpenTrackingLinks={vi.fn()}
-        onReorder={vi.fn().mockResolvedValue(undefined)}
-        onRequestCancel={vi.fn()}
-        orders={[order]}
-        reorderingItemId={null}
-        summariesByOrderId={new Map([[order.orderId, summary]])}
-      />,
-    )
-
+    configureTableMocks({ dateSortDir: "asc" })
+    rerender(<OrdersTable />)
     expect(screen.getByRole("button", { name: "Sort by date descending" })).toBeInTheDocument()
   })
 
   it("shows tracking fallback when an order has no tracking links", () => {
     const summary = buildBuyerOrderViewModel(secondOrder)
-
-    render(
-      <OrdersTable
-        cancelingItemId={null}
-        cancelingSellerKey={null}
-        dateSortDir="desc"
-        expandedState={{}}
-        isLoading={false}
-        onDateSortToggle={vi.fn()}
-        onExpandedChange={vi.fn()}
-        onOpenTrackingLinks={vi.fn()}
-        onReorder={vi.fn().mockResolvedValue(undefined)}
-        onRequestCancel={vi.fn()}
-        orders={[secondOrder]}
-        reorderingItemId={null}
-        summariesByOrderId={new Map([[secondOrder.orderId, summary]])}
-      />,
-    )
-
+    configureTableMocks({
+      filteredOrders: [secondOrder],
+      summariesByOrderId: new Map([[secondOrder.orderId, summary]]),
+    })
+    render(<OrdersTable />)
     expect(screen.getByText("No tracking yet")).toBeInTheDocument()
   })
 
   it("shows expanded section details and triggers expand-area actions", async () => {
     const user = userEvent.setup()
     const onReorder = vi.fn().mockResolvedValue(undefined)
-    const onOpenTrackingLinks = vi.fn()
+    const onSetTrackingModalLinks = vi.fn()
     const onRequestCancel = vi.fn()
-
     render(
-      <OrdersTableHarness
-        onOpenTrackingLinks={onOpenTrackingLinks}
+      <StatefulTableHarness
         onReorder={onReorder}
         onRequestCancel={onRequestCancel}
+        onSetTrackingModalLinks={onSetTrackingModalLinks}
       />,
     )
 
-    const sellerCell = screen.getByText("Acme Store")
-    const row = sellerCell.closest("tr")
+    const row = screen.getByText("Acme Store").closest("tr")
     expect(row).not.toBeNull()
-
-    const expandButton = within(row as HTMLTableRowElement).getByRole("button")
-    await user.click(expandButton)
+    await user.click(within(row as HTMLTableRowElement).getByRole("button"))
 
     expect(await screen.findByText("Order Items")).toBeInTheDocument()
     expect(screen.getByText("Dental Kit")).toBeInTheDocument()
@@ -445,7 +339,7 @@ describe("OrdersTable", () => {
     expect(onReorder).toHaveBeenCalledWith("up-1", 2, "Dental Kit")
 
     await user.click(screen.getByRole("button", { name: "Track" }))
-    expect(onOpenTrackingLinks).toHaveBeenCalledWith([
+    expect(onSetTrackingModalLinks).toHaveBeenCalledWith([
       {
         trackingUrl: "https://track.example/1",
         status: "IN_TRANSIT",
@@ -470,11 +364,10 @@ describe("OrdersTable", () => {
 
   it("collapses when same row expander is clicked twice", async () => {
     const user = userEvent.setup()
-    render(<MultiOrderHarness />)
+    render(<StatefulTableHarness testOrders={[order, secondOrder]} />)
 
     const firstRow = getPrimaryDataRowBySeller("Acme Store")
     expect(firstRow).not.toBeNull()
-
     await user.click(within(firstRow as HTMLTableRowElement).getByRole("button"))
     expect(await screen.findByText("Order Items")).toBeInTheDocument()
 
@@ -488,7 +381,7 @@ describe("OrdersTable", () => {
 
   it("keeps single-expand behavior when another row is opened", async () => {
     const user = userEvent.setup()
-    render(<MultiOrderHarness />)
+    render(<StatefulTableHarness testOrders={[order, secondOrder]} />)
 
     const firstRow = getPrimaryDataRowBySeller("Acme Store")
     const secondRow = getPrimaryDataRowBySeller("Beta Market")
@@ -507,7 +400,7 @@ describe("OrdersTable", () => {
 
   it("does not show Cancel Item for non-cancelable statuses", async () => {
     const user = userEvent.setup()
-    render(<ExpandableSingleOrderHarness testOrder={secondOrder} />)
+    render(<StatefulTableHarness testOrders={[secondOrder]} />)
 
     const row = screen.getByText("Beta Market").closest("tr")
     expect(row).not.toBeNull()

@@ -238,4 +238,33 @@ describe("useBuyerOrdersPage", () => {
     const updatedOrder = result.current.filteredOrders[0]
     expect(updatedOrder.sellerGroups?.[0]?.orderItems[0]?.status).toBe(OrderItemStatus.CANCEL_REQUESTED)
   })
+
+  it("keeps single-expand behavior by switching to the latest expanded row", async () => {
+    mockGetBuyerOrders.mockResolvedValue({
+      orders: [baseOrder],
+      totalPages: 1,
+      totalElements: 1,
+    })
+
+    const { result } = renderHook(() => useBuyerOrdersPage())
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    act(() => {
+      result.current.handleExpandedChange({ "order-1": true })
+    })
+    expect(result.current.expandedState).toEqual({ "order-1": true })
+
+    act(() => {
+      result.current.handleExpandedChange((old) => ({ ...(old as Record<string, boolean>), "order-2": true }))
+    })
+    expect(result.current.expandedState).toEqual({ "order-2": true })
+
+    act(() => {
+      result.current.handleExpandedChange({})
+    })
+    expect(result.current.expandedState).toEqual({})
+  })
 })

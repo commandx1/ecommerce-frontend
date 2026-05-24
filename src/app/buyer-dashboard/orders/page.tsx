@@ -4,35 +4,10 @@ import CancelConfirmModal from "./components/cancel-confirm-modal"
 import OrdersPagination from "./components/orders-pagination"
 import OrdersTable from "./components/orders-table"
 import TrackingLinksModal from "./components/tracking-links-modal"
-import { useBuyerOrdersPage } from "./hooks/use-buyer-orders-page"
+import { BuyerOrdersProvider, useBuyerOrdersAuthState } from "./context/buyer-orders-context"
 
-export default function BuyerOrdersPage() {
-  const {
-    cancelingItemId,
-    cancelingSellerKey,
-    confirmPendingCancelAction,
-    currentPage,
-    dateSortDir,
-    expandedState,
-    filteredOrders,
-    handleDateSortToggle,
-    handleExpandedChange,
-    handlePageChange,
-    handleReorder,
-    isAuthenticated,
-    isConfirmingCancel,
-    isLoading,
-    pageSize,
-    pendingCancelAction,
-    reorderingItemId,
-    requestCancelAction,
-    setPendingCancelAction,
-    setTrackingModalLinks,
-    summariesByOrderId,
-    totalElements,
-    totalPages,
-    trackingModalLinks,
-  } = useBuyerOrdersPage()
+function BuyerOrdersPageContent() {
+  const { isAuthenticated } = useBuyerOrdersAuthState()
 
   if (!isAuthenticated) {
     return (
@@ -55,40 +30,23 @@ export default function BuyerOrdersPage() {
 
       <section className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
         <div className="overflow-x-auto">
-          <OrdersTable
-            cancelingItemId={cancelingItemId}
-            cancelingSellerKey={cancelingSellerKey}
-            dateSortDir={dateSortDir}
-            expandedState={expandedState}
-            isLoading={isLoading}
-            onDateSortToggle={handleDateSortToggle}
-            onExpandedChange={handleExpandedChange}
-            onOpenTrackingLinks={setTrackingModalLinks}
-            onReorder={handleReorder}
-            onRequestCancel={requestCancelAction}
-            orders={filteredOrders}
-            reorderingItemId={reorderingItemId}
-            summariesByOrderId={summariesByOrderId}
-          />
+          <OrdersTable />
         </div>
 
-        <OrdersPagination
-          currentPage={currentPage}
-          onPageChange={handlePageChange}
-          pageSize={pageSize}
-          totalElements={totalElements}
-          totalPages={totalPages}
-        />
+        <OrdersPagination />
       </section>
 
-      <CancelConfirmModal
-        isConfirmingCancel={isConfirmingCancel}
-        onClose={() => setPendingCancelAction(null)}
-        onConfirm={() => void confirmPendingCancelAction()}
-        pendingCancelAction={pendingCancelAction}
-      />
+      <CancelConfirmModal />
 
-      <TrackingLinksModal links={trackingModalLinks} onClose={() => setTrackingModalLinks(null)} />
+      <TrackingLinksModal />
     </>
+  )
+}
+
+export default function BuyerOrdersPage() {
+  return (
+    <BuyerOrdersProvider>
+      <BuyerOrdersPageContent />
+    </BuyerOrdersProvider>
   )
 }

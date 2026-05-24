@@ -72,7 +72,7 @@ export default function DataTable<TData>({
             {headerGroup.headers.map((header) => {
               const meta = header.column.columnDef.meta as DataTableColumnMeta | undefined
               return (
-                <th key={header.id} colSpan={header.colSpan} className={cn("px-6 py-4", meta?.headerClassName)}>
+                <th key={header.id} colSpan={header.colSpan} className={cn("p-4", meta?.headerClassName)}>
                   {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                 </th>
               )
@@ -82,14 +82,30 @@ export default function DataTable<TData>({
       </thead>
       <tbody className="text-sm text-text-secondary">
         {isLoading ? (
-          <tr>
-            <td colSpan={visibleColumnCount} className="px-6 py-12 text-center text-text-muted">
-              {loadingText}
-            </td>
-          </tr>
+          <>
+            {Array.from({ length: 6 }, (_, rowIndex) => (
+              <tr key={`loading-skeleton-row-${rowIndex}`} className="border-b border-border-soft" aria-hidden="true">
+                {Array.from({ length: visibleColumnCount }, (_, colIndex) => (
+                  <td key={`loading-skeleton-cell-${rowIndex}-${colIndex}`} className="p-4">
+                    <div
+                      className={cn(
+                        "h-4 animate-pulse rounded-md bg-surface-muted",
+                        colIndex === 0 ? "w-14" : colIndex === visibleColumnCount - 1 ? "ms-auto w-20" : "w-full",
+                      )}
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))}
+            <tr>
+              <td colSpan={visibleColumnCount} className="sr-only">
+                {loadingText}
+              </td>
+            </tr>
+          </>
         ) : table.getRowModel().rows.length === 0 ? (
           <tr>
-            <td colSpan={visibleColumnCount} className="px-6 py-12 text-center text-text-muted">
+            <td colSpan={visibleColumnCount} className="p-4 text-center text-text-muted">
               {noRowsText}
             </td>
           </tr>
@@ -101,7 +117,7 @@ export default function DataTable<TData>({
                   {row.getVisibleCells().map((cell) => {
                     const meta = cell.column.columnDef.meta as DataTableColumnMeta | undefined
                     return (
-                      <td key={cell.id} className={cn("px-6 py-4", meta?.cellClassName)}>
+                      <td key={cell.id} className={cn("p-4", meta?.cellClassName)}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     )

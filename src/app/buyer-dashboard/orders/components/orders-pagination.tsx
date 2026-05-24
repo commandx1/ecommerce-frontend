@@ -1,22 +1,17 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { useBuyerOrdersPaginationActions, useBuyerOrdersPaginationSelector } from "../context/buyer-orders-context"
 
-interface OrdersPaginationProps {
-  currentPage: number
-  onPageChange: (page: number) => void
-  pageSize: number
-  totalElements: number
-  totalPages: number
-}
+export default function OrdersPagination() {
+  const { currentPage, pageSize, totalElements, totalPages } = useBuyerOrdersPaginationSelector((state) => ({
+    currentPage: state.currentPage,
+    pageSize: state.pageSize,
+    totalElements: state.totalElements,
+    totalPages: state.totalPages,
+  }))
+  const { handlePageChange } = useBuyerOrdersPaginationActions()
 
-export default function OrdersPagination({
-  currentPage,
-  onPageChange,
-  pageSize,
-  totalElements,
-  totalPages,
-}: OrdersPaginationProps) {
   return (
     <div className="flex items-center justify-between border-t border-border-soft p-4 text-sm text-text-muted">
       <div>
@@ -28,7 +23,7 @@ export default function OrdersPagination({
         <Button
           type="button"
           variant="unstyled"
-          onClick={() => onPageChange(Math.max(0, currentPage - 1))}
+          onClick={() => handlePageChange(Math.max(0, currentPage - 1))}
           disabled={currentPage === 0}
           className="rounded border border-border-soft px-3 py-1 hover:bg-surface-muted/55 disabled:opacity-50"
         >
@@ -41,7 +36,7 @@ export default function OrdersPagination({
               key={pageNumber}
               type="button"
               variant="unstyled"
-              onClick={() => onPageChange(pageNumber)}
+              onClick={() => handlePageChange(pageNumber)}
               className={`rounded border px-3 py-1 ${
                 currentPage === pageNumber
                   ? "border-brand/35 bg-brand/15 font-medium text-brand"
@@ -56,7 +51,7 @@ export default function OrdersPagination({
         <Button
           type="button"
           variant="unstyled"
-          onClick={() => onPageChange(Math.min(totalPages - 1, currentPage + 1))}
+          onClick={() => handlePageChange(Math.min(totalPages - 1, currentPage + 1))}
           disabled={currentPage >= totalPages - 1}
           className="rounded border border-border-soft px-3 py-1 hover:bg-surface-muted/55 disabled:opacity-50"
         >

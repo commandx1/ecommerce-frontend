@@ -1,14 +1,15 @@
 "use client"
 
-import { ExternalLink } from "lucide-react"
+import { ExternalLink, RotateCcw, XCircle } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import AddressContactInfo from "@/features/checkout/components/AddressContactInfo"
 import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
-import type { BuyerOrder, BuyerOrderTrackingLink } from "@/lib/api/buyer-orders"
+import type { BuyerOrder } from "@/lib/api/buyer-orders"
 import { getFullImageUrl } from "@/lib/api/products"
 import { isCancelableOrderItemStatus } from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { useBuyerOrdersTableActions, useBuyerOrdersTableSelector } from "../context/buyer-orders-context"
 import {
   formatDateTime,
   formatOrderItemStatus,
@@ -18,30 +19,22 @@ import {
   resolveOrderItemProductId,
   resolveTrackingLinks,
 } from "../lib/order-view-utils"
-import type { BuyerOrderViewModel, PendingCancelAction } from "../types"
+import type { BuyerOrderViewModel } from "../types"
 import FulfillmentTimeline from "./fulfillment-timeline"
 
 interface OrderExpandedContentProps {
-  cancelingItemId: string | null
-  cancelingSellerKey: string | null
-  onOpenTrackingLinks: (links: BuyerOrderTrackingLink[]) => void
-  onReorder: (userProductId: string, quantity: number, productName: string) => Promise<void>
-  onRequestCancel: (action: PendingCancelAction) => void
   order: BuyerOrder
-  reorderingItemId: string | null
   summary: BuyerOrderViewModel
 }
 
-export default function OrderExpandedContent({
-  cancelingItemId,
-  cancelingSellerKey,
-  onOpenTrackingLinks,
-  onReorder,
-  onRequestCancel,
-  order,
-  reorderingItemId,
-  summary,
-}: OrderExpandedContentProps) {
+export default function OrderExpandedContent({ order, summary }: OrderExpandedContentProps) {
+  const { cancelingItemId, cancelingSellerKey, reorderingItemId } = useBuyerOrdersTableSelector((state) => ({
+    cancelingItemId: state.cancelingItemId,
+    cancelingSellerKey: state.cancelingSellerKey,
+    reorderingItemId: state.reorderingItemId,
+  }))
+  const { handleReorder, requestCancelAction, setTrackingModalLinks } = useBuyerOrdersTableActions()
+
   return (
     <div className="bg-surface-muted/55 p-6 shadow-inner">
       <div className="mb-4 flex items-center gap-2">
@@ -50,7 +43,7 @@ export default function OrderExpandedContent({
           ({summary.totalQuantity} items from {summary.sellerCount} seller{summary.sellerCount > 1 ? "s" : ""})
         </p>
       </div>
-      <div className="flex gap-8 rounded-xl border border-border-soft bg-surface-elevated p-6 lg:flex-row">
+      <div className="flex gap-8 rounded-[8px] border border-border-soft bg-surface-elevated p-6 lg:flex-row">
         <div className="flex-1">
           <div className="space-y-6">
             {summary.sellerGroups.map((group) => {
@@ -65,7 +58,7 @@ export default function OrderExpandedContent({
               const isCancelingSellerGroup = cancelingSellerKey === sellerKey
 
               return (
-                <section key={group.sellerId} className="overflow-hidden rounded-xl border border-border-soft">
+                <section key={group.sellerId} className="overflow-hidden rounded-[8px] border border-border-soft">
                   <div className="flex items-center justify-between border-b border-border-soft bg-linear-to-r from-surface-muted/45 to-surface-muted/75 px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand text-xs font-bold text-primary-foreground shadow-sm">
@@ -94,7 +87,7 @@ export default function OrderExpandedContent({
                       return (
                         <div
                           key={item.id}
-                          className="rounded-lg border border-border-soft bg-surface-muted/30 p-3 transition-colors hover:border-border-soft"
+                          className="rounded-[8px] border border-border-soft bg-surface-muted/30 p-3 transition-colors hover:border-border-soft"
                         >
                           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
                             <div className="flex items-start gap-4">
@@ -149,7 +142,7 @@ export default function OrderExpandedContent({
                                     <span className="font-semibold text-success">Free Shipping</span>
                                   ) : (
                                     <span className="font-semibold text-text-secondary">
-                                      Shipment Fee: {formatCurrency(getOrderItemShipmentFee(item))}
+                                      Shipment: {formatCurrency(getOrderItemShipmentFee(item))}
                                     </span>
                                   )}
                                 </div>
@@ -157,14 +150,17 @@ export default function OrderExpandedContent({
                                   <Button
                                     type="button"
                                     variant="unstyled"
-                                    onClick={() => onReorder(item.userProductId, item.quantity, item.productName)}
+                                    onClick={() =>
+                                      void handleReorder(item.userProductId, item.quantity, item.productName)
+                                    }
                                     disabled={
                                       reorderingItemId === item.userProductId ||
                                       cancelingItemId === item.id ||
                                       isCancelingSellerGroup
                                     }
-                                    className="rounded-md bg-success px-2.5 py-1 text-[11px] font-semibold text-primary-foreground hover:bg-success/80 disabled:opacity-70"
+                                    className="inline-flex items-center gap-1 rounded-[8px] bg-success px-2.5 py-1 text-[11px] font-semibold text-primary-foreground hover:bg-success/80 disabled:opacity-70"
                                   >
+                                    <RotateCcw className="h-3 w-3" />
                                     {reorderingItemId === item.userProductId ? "Adding..." : "Reorder"}
                                   </Button>
                                   {isCancelableOrderItemStatus(item.status) ? (
@@ -172,7 +168,7 @@ export default function OrderExpandedContent({
                                       type="button"
                                       variant="unstyled"
                                       onClick={() =>
-                                        onRequestCancel({
+                                        requestCancelAction({
                                           orderItemIds: [item.id],
                                           description: `${item.productName} cancellation request was submitted.`,
                                           options: { cancelingItemId: item.id },
@@ -183,8 +179,9 @@ export default function OrderExpandedContent({
                                         reorderingItemId === item.userProductId ||
                                         isCancelingSellerGroup
                                       }
-                                      className="rounded-md border border-danger/40 bg-danger/15 px-2.5 py-1 text-[11px] font-semibold text-danger hover:bg-danger/25 disabled:opacity-70"
+                                      className="inline-flex items-center gap-1 rounded-[8px] border border-danger/40 bg-danger/15 px-2.5 py-1 text-[11px] font-semibold text-danger hover:bg-danger/25 disabled:opacity-70"
                                     >
+                                      <XCircle className="h-3 w-3" />
                                       {cancelingItemId === item.id ? "Canceling..." : "Cancel Item"}
                                     </Button>
                                   ) : null}
@@ -192,17 +189,17 @@ export default function OrderExpandedContent({
                                     <Button
                                       type="button"
                                       variant="unstyled"
-                                      onClick={() => onOpenTrackingLinks(trackingLinks)}
-                                      className="inline-flex items-center gap-1 rounded-md border border-success/40 bg-success/15 px-2.5 py-1 text-[11px] font-semibold text-success hover:bg-success/25"
+                                      onClick={() => setTrackingModalLinks(trackingLinks)}
+                                      className="inline-flex items-center gap-1 rounded-[8px] border border-success/40 bg-success/15 px-2.5 py-1 text-[11px] font-semibold text-success hover:bg-success/25"
                                     >
-                                      Track
                                       <ExternalLink className="h-3 w-3" />
+                                      Track
                                     </Button>
                                   ) : null}
                                 </div>
                               </div>
                             </div>
-                            <div className="rounded-lg border border-border-soft bg-surface-elevated p-3">
+                            <div className="rounded-[8px] border border-border-soft bg-surface-elevated p-3">
                               <FulfillmentTimeline
                                 item={item}
                                 orderDate={summary.orderDate}
@@ -222,16 +219,23 @@ export default function OrderExpandedContent({
                         type="button"
                         variant="unstyled"
                         onClick={() =>
-                          onRequestCancel({
+                          requestCancelAction({
                             orderItemIds: cancelableItemIds,
                             description: `${sellerDisplayName} items cancellation request was submitted.`,
                             options: { cancelingSellerKey: sellerKey },
                           })
                         }
                         disabled={isCancelingSellerGroup}
-                        className="rounded-md border border-danger/40 bg-danger/15 px-2.5 py-1 text-[11px] font-semibold text-danger hover:bg-danger/25 disabled:opacity-70"
+                        className="rounded-[8px] border border-danger/40 bg-danger/15 px-2.5 py-1 text-[11px] font-semibold text-danger hover:bg-danger/25 disabled:opacity-70"
                       >
-                        {isCancelingSellerGroup ? "Canceling items..." : `Cancel All Items from ${sellerDisplayName}`}
+                        <XCircle className="h-3 w-3" />
+                        {isCancelingSellerGroup ? (
+                          "Canceling items..."
+                        ) : (
+                          <>
+                            Cancel All Items from <b className='-ml-1'>{sellerDisplayName}</b>
+                          </>
+                        )}
                       </Button>
                     ) : null}
                   </div>
@@ -242,7 +246,7 @@ export default function OrderExpandedContent({
         </div>
 
         <div className="flex w-full flex-col gap-6 lg:w-80">
-          <div className="rounded-lg border border-border-soft bg-surface-muted/55 p-4">
+          <div className="rounded-[8px] border border-border-soft bg-surface-muted/55 p-4">
             <div className="space-y-2 text-sm">
               <div className="flex justify-between text-text-muted">
                 <span>Subtotal</span>
@@ -263,7 +267,7 @@ export default function OrderExpandedContent({
             </div>
           </div>
 
-          <div className="rounded-lg border border-border-soft bg-surface-muted/55 p-4">
+          <div className="rounded-[8px] border border-border-soft bg-surface-muted/55 p-4">
             <h4 className="mb-3 text-sm font-semibold text-text-primary">Customer Details</h4>
             <p className="text-sm font-semibold text-text-secondary">
               {order.shipmentAddress?.fullName || summary.customerLabel}

@@ -254,8 +254,9 @@ export function useBuyerOrdersPage() {
         return
       }
 
-      const firstExpandedRowId = Object.keys(resolvedExpanded).find((rowId) => Boolean(resolvedExpanded[rowId]))
-      setExpandedOrderId(firstExpandedRowId ?? null)
+      const expandedRowIds = Object.keys(resolvedExpanded).filter((rowId) => Boolean(resolvedExpanded[rowId]))
+      const nextExpandedRowId = expandedRowIds[expandedRowIds.length - 1] ?? null
+      setExpandedOrderId(nextExpandedRowId)
     },
     [expandedState],
   )

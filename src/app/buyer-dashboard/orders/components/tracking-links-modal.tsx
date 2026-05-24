@@ -4,21 +4,24 @@ import { ExternalLink, X } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Modal from "@/components/ui/Modal"
-import type { BuyerOrderTrackingLink } from "@/lib/api/buyer-orders"
+import { useBuyerOrdersTrackingModalActions, useBuyerOrdersTrackingModalState } from "../context/buyer-orders-context"
 import { formatDateTime } from "../lib/order-view-utils"
 
-interface TrackingLinksModalProps {
-  links: BuyerOrderTrackingLink[] | null
-  onClose: () => void
-}
+export default function TrackingLinksModal() {
+  const { trackingModalLinks } = useBuyerOrdersTrackingModalState()
+  const { setTrackingModalLinks } = useBuyerOrdersTrackingModalActions()
+  const links = trackingModalLinks
 
-export default function TrackingLinksModal({ links, onClose }: TrackingLinksModalProps) {
   if (!links || links.length === 0) return null
+
+  const handleClose = () => {
+    setTrackingModalLinks(null)
+  }
 
   return (
     <Modal
       isOpen={Boolean(links.length)}
-      onClose={onClose}
+      onClose={handleClose}
       title="Tracking links"
       maxWidthClassName="max-w-2xl"
       contentClassName="rounded-2xl border border-border-soft bg-surface-elevated shadow-panel"
@@ -30,7 +33,7 @@ export default function TrackingLinksModal({ links, onClose }: TrackingLinksModa
             type="button"
             variant="quiet"
             size="icon-sm"
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Close tracking modal"
             className="text-text-muted hover:bg-surface-muted hover:text-text-secondary"
           >
@@ -65,7 +68,7 @@ export default function TrackingLinksModal({ links, onClose }: TrackingLinksModa
           ))}
         </div>
         <div className="flex justify-end border-t border-border-soft px-6 py-3">
-          <Button type="button" variant="outline" onClick={onClose} className="rounded-lg">
+          <Button type="button" variant="outline" onClick={handleClose} className="rounded-lg">
             Close
           </Button>
         </div>
