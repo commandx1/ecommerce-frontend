@@ -1,5 +1,5 @@
 import type { ExpandedState } from "@tanstack/react-table"
-import { render, screen, within } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { type HTMLAttributes, type ReactNode, useState } from "react"
 import { describe, expect, it, vi } from "vitest"
@@ -100,6 +100,37 @@ const order: BuyerOrder = {
   ],
 }
 
+const secondOrder: BuyerOrder = {
+  ...order,
+  orderId: "order-2",
+  createdDate: "2026-05-21T10:30:00Z",
+  totalPrice: 80,
+  sellerGroups: [
+    {
+      sellerId: "seller-2",
+      sellerName: "Beta",
+      sellerSurname: "Market",
+      orderItems: [
+        {
+          id: "item-3",
+          userProductId: "up-3",
+          productId: "product-3",
+          productName: "Mouthwash",
+          price: 80,
+          quantity: 1,
+          status: "DELIVERED",
+          productCoverPhotoPath: "/img-3.jpg",
+          sellerName: "Beta",
+          sellerSurname: "Market",
+          shipmentPrice: 0,
+          shipmentFreeBySeller: true,
+          updatedDate: "2026-05-21T11:00:00Z",
+        },
+      ],
+    },
+  ],
+}
+
 interface OrdersTableHarnessProps {
   onOpenTrackingLinks: (links: Array<{ trackingUrl: string; status?: string; updatedDate?: string | null }>) => void
   onReorder: (userProductId: string, quantity: number, productName: string) => Promise<void>
@@ -129,6 +160,80 @@ function OrdersTableHarness({ onOpenTrackingLinks, onReorder, onRequestCancel }:
       orders={[order]}
       reorderingItemId={null}
       summariesByOrderId={new Map([[order.orderId, summary]])}
+    />
+  )
+}
+
+function MultiOrderHarness() {
+  const [expandedState, setExpandedState] = useState<ExpandedState>({})
+  const summary1 = buildBuyerOrderViewModel(order)
+  const summary2 = buildBuyerOrderViewModel(secondOrder)
+
+  const handleExpandedChange = (nextExpanded: ExpandedState | ((old: ExpandedState) => ExpandedState)) => {
+    const resolved = typeof nextExpanded === "function" ? nextExpanded(expandedState) : nextExpanded
+    if (resolved === true) {
+      setExpandedState({})
+      return
+    }
+    const resolvedMap = resolved as Record<string, boolean>
+    const expandedRowIds = Object.keys(resolvedMap).filter((rowId) => Boolean(resolvedMap[rowId]))
+    const singleExpandedRowId = expandedRowIds[expandedRowIds.length - 1]
+    setExpandedState(singleExpandedRowId ? { [singleExpandedRowId]: true } : {})
+  }
+
+  return (
+    <OrdersTable
+      cancelingItemId={null}
+      cancelingSellerKey={null}
+      dateSortDir="desc"
+      expandedState={expandedState}
+      isLoading={false}
+      onDateSortToggle={vi.fn()}
+      onExpandedChange={handleExpandedChange}
+      onOpenTrackingLinks={vi.fn()}
+      onReorder={vi.fn().mockResolvedValue(undefined)}
+      onRequestCancel={vi.fn()}
+      orders={[order, secondOrder]}
+      reorderingItemId={null}
+      summariesByOrderId={
+        new Map([
+          [order.orderId, summary1],
+          [secondOrder.orderId, summary2],
+        ])
+      }
+    />
+  )
+}
+
+function getPrimaryDataRowBySeller(seller: string): HTMLTableRowElement | null {
+  const rows = screen.getAllByRole("row")
+  for (const row of rows) {
+    if (within(row).queryByText(seller) && row.querySelectorAll("td").length > 1) {
+      return row as HTMLTableRowElement
+    }
+  }
+  return null
+}
+
+function ExpandableSingleOrderHarness({ testOrder }: { testOrder: BuyerOrder }) {
+  const [expandedState, setExpandedState] = useState<ExpandedState>({})
+  const summary = buildBuyerOrderViewModel(testOrder)
+
+  return (
+    <OrdersTable
+      cancelingItemId={null}
+      cancelingSellerKey={null}
+      dateSortDir="desc"
+      expandedState={expandedState}
+      isLoading={false}
+      onDateSortToggle={vi.fn()}
+      onExpandedChange={setExpandedState}
+      onOpenTrackingLinks={vi.fn()}
+      onReorder={vi.fn().mockResolvedValue(undefined)}
+      onRequestCancel={vi.fn()}
+      orders={[testOrder]}
+      reorderingItemId={null}
+      summariesByOrderId={new Map([[testOrder.orderId, summary]])}
     />
   )
 }
@@ -241,6 +346,74 @@ describe("OrdersTable", () => {
     expect(onDateSortToggle).toHaveBeenCalledTimes(1)
   })
 
+  it("updates sort button aria-label based on sort direction", () => {
+    const summary = buildBuyerOrderViewModel(order)
+
+    const { rerender } = render(
+      <OrdersTable
+        cancelingItemId={null}
+        cancelingSellerKey={null}
+        dateSortDir="desc"
+        expandedState={{}}
+        isLoading={false}
+        onDateSortToggle={vi.fn()}
+        onExpandedChange={vi.fn()}
+        onOpenTrackingLinks={vi.fn()}
+        onReorder={vi.fn().mockResolvedValue(undefined)}
+        onRequestCancel={vi.fn()}
+        orders={[order]}
+        reorderingItemId={null}
+        summariesByOrderId={new Map([[order.orderId, summary]])}
+      />,
+    )
+
+    expect(screen.getByRole("button", { name: "Sort by date ascending" })).toBeInTheDocument()
+
+    rerender(
+      <OrdersTable
+        cancelingItemId={null}
+        cancelingSellerKey={null}
+        dateSortDir="asc"
+        expandedState={{}}
+        isLoading={false}
+        onDateSortToggle={vi.fn()}
+        onExpandedChange={vi.fn()}
+        onOpenTrackingLinks={vi.fn()}
+        onReorder={vi.fn().mockResolvedValue(undefined)}
+        onRequestCancel={vi.fn()}
+        orders={[order]}
+        reorderingItemId={null}
+        summariesByOrderId={new Map([[order.orderId, summary]])}
+      />,
+    )
+
+    expect(screen.getByRole("button", { name: "Sort by date descending" })).toBeInTheDocument()
+  })
+
+  it("shows tracking fallback when an order has no tracking links", () => {
+    const summary = buildBuyerOrderViewModel(secondOrder)
+
+    render(
+      <OrdersTable
+        cancelingItemId={null}
+        cancelingSellerKey={null}
+        dateSortDir="desc"
+        expandedState={{}}
+        isLoading={false}
+        onDateSortToggle={vi.fn()}
+        onExpandedChange={vi.fn()}
+        onOpenTrackingLinks={vi.fn()}
+        onReorder={vi.fn().mockResolvedValue(undefined)}
+        onRequestCancel={vi.fn()}
+        orders={[secondOrder]}
+        reorderingItemId={null}
+        summariesByOrderId={new Map([[secondOrder.orderId, summary]])}
+      />,
+    )
+
+    expect(screen.getByText("No tracking yet")).toBeInTheDocument()
+  })
+
   it("shows expanded section details and triggers expand-area actions", async () => {
     const user = userEvent.setup()
     const onReorder = vi.fn().mockResolvedValue(undefined)
@@ -293,5 +466,54 @@ describe("OrdersTable", () => {
       description: "Acme Store items cancellation request was submitted.",
       options: { cancelingSellerKey: "order-1:seller-1" },
     })
+  })
+
+  it("collapses when same row expander is clicked twice", async () => {
+    const user = userEvent.setup()
+    render(<MultiOrderHarness />)
+
+    const firstRow = getPrimaryDataRowBySeller("Acme Store")
+    expect(firstRow).not.toBeNull()
+
+    await user.click(within(firstRow as HTMLTableRowElement).getByRole("button"))
+    expect(await screen.findByText("Order Items")).toBeInTheDocument()
+
+    const firstRowAfterExpand = getPrimaryDataRowBySeller("Acme Store")
+    expect(firstRowAfterExpand).not.toBeNull()
+    await user.click(within(firstRowAfterExpand as HTMLTableRowElement).getByRole("button"))
+    await waitFor(() => {
+      expect(screen.queryByText("Order Items")).not.toBeInTheDocument()
+    })
+  })
+
+  it("keeps single-expand behavior when another row is opened", async () => {
+    const user = userEvent.setup()
+    render(<MultiOrderHarness />)
+
+    const firstRow = getPrimaryDataRowBySeller("Acme Store")
+    const secondRow = getPrimaryDataRowBySeller("Beta Market")
+    expect(firstRow).not.toBeNull()
+    expect(secondRow).not.toBeNull()
+
+    await user.click(within(firstRow as HTMLTableRowElement).getByRole("button"))
+    expect(await screen.findByText("Dental Kit")).toBeInTheDocument()
+
+    const secondRowAfterFirstExpand = getPrimaryDataRowBySeller("Beta Market")
+    expect(secondRowAfterFirstExpand).not.toBeNull()
+    await user.click(within(secondRowAfterFirstExpand as HTMLTableRowElement).getByRole("button"))
+    expect(await screen.findByText("Mouthwash")).toBeInTheDocument()
+    expect(screen.queryByText("Dental Kit")).not.toBeInTheDocument()
+  })
+
+  it("does not show Cancel Item for non-cancelable statuses", async () => {
+    const user = userEvent.setup()
+    render(<ExpandableSingleOrderHarness testOrder={secondOrder} />)
+
+    const row = screen.getByText("Beta Market").closest("tr")
+    expect(row).not.toBeNull()
+    await user.click(within(row as HTMLTableRowElement).getByRole("button"))
+
+    expect(await screen.findByText("Mouthwash")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Cancel Item" })).not.toBeInTheDocument()
   })
 })

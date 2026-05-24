@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
 import { describe, expect, it, vi } from "vitest"
@@ -50,5 +50,121 @@ describe("TrackingLinksModal", () => {
     await user.click(screen.getByRole("button", { name: "Close" }))
     await user.click(screen.getByRole("button", { name: "Close tracking modal" }))
     expect(onClose).toHaveBeenCalledTimes(2)
+  })
+
+  it("calls onClose when overlay is clicked", async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+
+    render(
+      <TrackingLinksModal
+        onClose={onClose}
+        links={[
+          {
+            trackingUrl: "https://carrier.example/track/short",
+          },
+        ]}
+      />,
+    )
+
+    const overlay = document.querySelector('[data-slot="dialog-overlay"]')
+    expect(overlay).not.toBeNull()
+
+    await user.click(overlay as HTMLElement)
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it("calls onClose when Escape is pressed", async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+
+    render(
+      <TrackingLinksModal
+        onClose={onClose}
+        links={[
+          {
+            trackingUrl: "https://carrier.example/track/short",
+          },
+        ]}
+      />,
+    )
+
+    await user.keyboard("{Escape}")
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it("updates rendered content when links prop changes", () => {
+    const onClose = vi.fn()
+    const { rerender } = render(
+      <TrackingLinksModal
+        onClose={onClose}
+        links={[
+          {
+            trackingUrl: "https://carrier.example/track/old",
+            status: "OLD_STATUS",
+          },
+        ]}
+      />,
+    )
+
+    expect(screen.getByText("Tracking links (1)")).toBeInTheDocument()
+    expect(screen.getByText(/OLD_STATUS/)).toBeInTheDocument()
+    expect(screen.getByText("https://carrier.example/track/old")).toBeInTheDocument()
+
+    rerender(
+      <TrackingLinksModal
+        onClose={onClose}
+        links={[
+          {
+            trackingUrl: "https://carrier.example/track/new-1",
+            status: "NEW_STATUS",
+          },
+          {
+            trackingUrl: "https://carrier.example/track/new-2",
+          },
+        ]}
+      />,
+    )
+
+    expect(screen.getByText("Tracking links (2)")).toBeInTheDocument()
+    expect(screen.getByText(/NEW_STATUS/)).toBeInTheDocument()
+    expect(screen.getByText("https://carrier.example/track/new-1")).toBeInTheDocument()
+    expect(screen.queryByText(/OLD_STATUS/)).not.toBeInTheDocument()
+    expect(screen.queryByText("https://carrier.example/track/old")).not.toBeInTheDocument()
+  })
+
+  it("keeps focus inside modal when tabbing and exposes accessible close button", async () => {
+    const user = userEvent.setup()
+
+    render(
+      <TrackingLinksModal
+        onClose={vi.fn()}
+        links={[
+          {
+            trackingUrl: "https://carrier.example/track/a11y-1",
+          },
+          {
+            trackingUrl: "https://carrier.example/track/a11y-2",
+          },
+        ]}
+      />,
+    )
+
+    const dialog = screen.getByRole("dialog")
+    const iconCloseButton = screen.getByRole("button", { name: "Close tracking modal" })
+
+    expect(iconCloseButton).toBeInTheDocument()
+    iconCloseButton.focus()
+    expect(dialog.contains(document.activeElement)).toBe(true)
+
+    await user.tab()
+    expect(dialog.contains(document.activeElement)).toBe(true)
+
+    await user.tab()
+    expect(dialog.contains(document.activeElement)).toBe(true)
   })
 })

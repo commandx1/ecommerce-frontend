@@ -422,7 +422,7 @@ export function buildBuyerOrderViewModel(order: BuyerOrder): BuyerOrderViewModel
   const trackingCount = getTrackingLinkCount(orderItems)
   const customerLabel = order.shipmentAddress?.fullName || payment.title || "Customer"
   const shippingTotal = orderItems.reduce((sum, item) => sum + getOrderItemShipmentFee(item), 0)
-  const totalAmountFromItemPrices = orderItems.reduce((sum, item) => sum + item.price, 0)
+  const totalAmountFromItemPrices = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const itemTotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const money = resolveOrderMoneyBreakdown(itemTotal, shippingTotal, order.totalPrice)
   const lineItemCount = orderItems.length
