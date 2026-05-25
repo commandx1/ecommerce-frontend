@@ -14,10 +14,13 @@ export default function PageSectionContainer({
   children,
 }: PageSectionContainerProps) {
   const Component = as
+  const isHero = className?.includes("hero-cinematic")
 
   return (
     <Component className={className}>
-      <div className={cn("app-container mx-auto px-4 sm:px-6 lg:px-8 xl:px-10", containerClassName)}>{children}</div>
+      <div className={cn("mx-auto px-4 sm:px-6 lg:px-8 xl:px-10", isHero ? "" : "app-container", containerClassName)}>
+        {children}
+      </div>
     </Component>
   )
 }
