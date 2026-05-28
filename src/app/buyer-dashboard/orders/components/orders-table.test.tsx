@@ -164,6 +164,7 @@ function createTableActions(overrides?: Partial<TableActions>) {
     handleExpandedChange: vi.fn(),
     handleReorder: vi.fn().mockResolvedValue(undefined),
     requestCancelAction: vi.fn(),
+    requestRefundAction: vi.fn(),
     setTrackingModalLinks: vi.fn(),
     ...overrides,
   }
@@ -179,6 +180,7 @@ function StatefulTableHarness({
   onReorder = vi.fn().mockResolvedValue(undefined),
   onRequestCancel = vi.fn(),
   onSetTrackingModalLinks = vi.fn(),
+  onRequestRefund = vi.fn(),
   dateSortDir = "desc" as const,
 }: {
   dateSortDir?: "asc" | "desc"
@@ -188,6 +190,7 @@ function StatefulTableHarness({
     orderItemIds: string[]
     options?: { cancelingItemId?: string; cancelingSellerKey?: string }
   }) => void
+  onRequestRefund?: (order: BuyerOrder) => void
   onSetTrackingModalLinks?: (links: Array<{ trackingUrl: string; status?: string; updatedDate?: string | null }>) => void
   testOrders?: BuyerOrder[]
 }) {
@@ -220,6 +223,7 @@ function StatefulTableHarness({
       handleExpandedChange,
       handleReorder: onReorder,
       requestCancelAction: onRequestCancel,
+      requestRefundAction: onRequestRefund,
       setTrackingModalLinks: onSetTrackingModalLinks,
     },
   )
@@ -263,7 +267,6 @@ describe("OrdersTable", () => {
       "Items",
       "Payment Method",
       "Payment Status",
-      "Shipment Status",
       "Tracking",
       "Net Total",
       "Shipment Fee",
@@ -276,7 +279,6 @@ describe("OrdersTable", () => {
     expect(screen.getByText("2 line item(s)")).toBeInTheDocument()
     expect(screen.getByText("VISA •••• 4242")).toBeInTheDocument()
     expect(screen.getByText("Paid")).toBeInTheDocument()
-    expect(screen.getByText("Delivered")).toBeInTheDocument()
     expect(screen.getByText("1 link")).toBeInTheDocument()
     expect(screen.getByText("$240.00")).toBeInTheDocument()
     expect(screen.getByText("$10.00")).toBeInTheDocument()

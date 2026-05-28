@@ -33,15 +33,29 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
     cancelingSellerKey: state.cancelingSellerKey,
     reorderingItemId: state.reorderingItemId,
   }))
-  const { handleReorder, requestCancelAction, setTrackingModalLinks } = useBuyerOrdersTableActions()
+  const { handleReorder, requestCancelAction, requestRefundAction, setTrackingModalLinks } = useBuyerOrdersTableActions()
+  const canRequestRefund = summary.uiStatus === "delivered"
 
   return (
     <div className="bg-surface-muted/55 p-6 shadow-inner">
-      <div className="mb-4 flex items-center gap-2">
-        <h4 className="text-xl font-semibold text-text-primary">Order Items</h4>
-        <p className="text-sm font-medium text-text-muted">
-          ({summary.totalQuantity} items from {summary.sellerCount} seller{summary.sellerCount > 1 ? "s" : ""})
-        </p>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <h4 className="text-xl font-semibold text-text-primary">Order Items</h4>
+          <p className="text-sm font-medium text-text-muted">
+            ({summary.totalQuantity} items from {summary.sellerCount} seller{summary.sellerCount > 1 ? "s" : ""})
+          </p>
+        </div>
+
+        {canRequestRefund ? (
+          <Button
+            type="button"
+            variant="unstyled"
+            onClick={() => requestRefundAction(order)}
+            className="rounded-[8px] border border-brand/40 bg-brand/12 px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand/20"
+          >
+            Request Refund
+          </Button>
+        ) : null}
       </div>
       <div className="flex gap-8 rounded-[8px] border border-border-soft bg-surface-elevated p-6 lg:flex-row">
         <div className="flex-1">

@@ -4,6 +4,7 @@ import CancelConfirmModal from "./components/cancel-confirm-modal"
 import OrdersPagination from "./components/orders-pagination"
 import OrdersStatusTabs from "./components/orders-status-tabs"
 import OrdersTable from "./components/orders-table"
+import RefundOrderModal from "./components/refund-order-modal"
 import TrackingLinksModal from "./components/tracking-links-modal"
 import { BuyerOrdersProvider, useBuyerOrdersAuthState } from "./context/buyer-orders-context"
 
@@ -42,6 +43,8 @@ function BuyerOrdersPageContent() {
       </section>
 
       <CancelConfirmModal />
+
+      <RefundOrderModal />
 
       <TrackingLinksModal />
     </>

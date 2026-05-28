@@ -8,6 +8,7 @@ const mockOrdersTable = vi.fn()
 const mockOrdersPagination = vi.fn()
 const mockOrdersStatusTabs = vi.fn()
 const mockCancelConfirmModal = vi.fn()
+const mockRefundOrderModal = vi.fn()
 const mockTrackingLinksModal = vi.fn()
 
 vi.mock("./context/buyer-orders-context", () => ({
@@ -43,6 +44,13 @@ vi.mock("./components/cancel-confirm-modal", () => ({
   },
 }))
 
+vi.mock("./components/refund-order-modal", () => ({
+  default: () => {
+    mockRefundOrderModal()
+    return <div data-testid="refund-order-modal" />
+  },
+}))
+
 vi.mock("./components/tracking-links-modal", () => ({
   default: () => {
     mockTrackingLinksModal()
@@ -56,6 +64,7 @@ beforeEach(() => {
   mockOrdersPagination.mockReset()
   mockOrdersStatusTabs.mockReset()
   mockCancelConfirmModal.mockReset()
+  mockRefundOrderModal.mockReset()
   mockTrackingLinksModal.mockReset()
 })
 
@@ -79,12 +88,14 @@ describe("BuyerOrdersPage", () => {
     expect(screen.getByTestId("orders-pagination")).toBeInTheDocument()
     expect(screen.getByTestId("orders-status-tabs")).toBeInTheDocument()
     expect(screen.getByTestId("cancel-confirm-modal")).toBeInTheDocument()
+    expect(screen.getByTestId("refund-order-modal")).toBeInTheDocument()
     expect(screen.getByTestId("tracking-links-modal")).toBeInTheDocument()
 
     expect(mockOrdersTable).toHaveBeenCalledTimes(1)
     expect(mockOrdersPagination).toHaveBeenCalledTimes(1)
     expect(mockOrdersStatusTabs).toHaveBeenCalledTimes(1)
     expect(mockCancelConfirmModal).toHaveBeenCalledTimes(1)
+    expect(mockRefundOrderModal).toHaveBeenCalledTimes(1)
     expect(mockTrackingLinksModal).toHaveBeenCalledTimes(1)
   })
 })

@@ -21,7 +21,12 @@ type BuyerOrdersTableState = Pick<
 
 type BuyerOrdersTableActions = Pick<
   UseBuyerOrdersPageResult,
-  "handleDateSortToggle" | "handleExpandedChange" | "handleReorder" | "requestCancelAction" | "setTrackingModalLinks"
+  | "handleDateSortToggle"
+  | "handleExpandedChange"
+  | "handleReorder"
+  | "requestCancelAction"
+  | "requestRefundAction"
+  | "setTrackingModalLinks"
 >
 
 type BuyerOrdersPaginationState = Pick<UseBuyerOrdersPageResult, "currentPage" | "pageSize" | "totalElements" | "totalPages">
@@ -31,6 +36,13 @@ type BuyerOrdersPaginationActions = Pick<UseBuyerOrdersPageResult, "handlePageCh
 type BuyerOrdersCancelModalState = Pick<UseBuyerOrdersPageResult, "isConfirmingCancel" | "pendingCancelAction">
 
 type BuyerOrdersCancelModalActions = Pick<UseBuyerOrdersPageResult, "confirmPendingCancelAction" | "setPendingCancelAction">
+
+type BuyerOrdersRefundModalState = Pick<UseBuyerOrdersPageResult, "isSubmittingRefund" | "pendingRefundOrder">
+
+type BuyerOrdersRefundModalActions = Pick<
+  UseBuyerOrdersPageResult,
+  "requestRefundAction" | "setPendingRefundOrder" | "submitRefundOrder"
+>
 
 type BuyerOrdersTrackingModalState = Pick<UseBuyerOrdersPageResult, "trackingModalLinks">
 
@@ -45,6 +57,8 @@ export const BuyerOrdersPaginationStateContext = createContext<BuyerOrdersPagina
 export const BuyerOrdersPaginationActionsContext = createContext<BuyerOrdersPaginationActions | null>(null)
 export const BuyerOrdersCancelModalStateContext = createContext<BuyerOrdersCancelModalState | null>(null)
 export const BuyerOrdersCancelModalActionsContext = createContext<BuyerOrdersCancelModalActions | null>(null)
+export const BuyerOrdersRefundModalStateContext = createContext<BuyerOrdersRefundModalState | null>(null)
+export const BuyerOrdersRefundModalActionsContext = createContext<BuyerOrdersRefundModalActions | null>(null)
 export const BuyerOrdersTrackingModalStateContext = createContext<BuyerOrdersTrackingModalState | null>(null)
 export const BuyerOrdersTrackingModalActionsContext = createContext<BuyerOrdersTrackingModalActions | null>(null)
 
@@ -121,6 +135,7 @@ export function BuyerOrdersProvider({ children }: BuyerOrdersProviderProps) {
       handleExpandedChange: buyerOrders.handleExpandedChange,
       handleReorder: buyerOrders.handleReorder,
       requestCancelAction: buyerOrders.requestCancelAction,
+      requestRefundAction: buyerOrders.requestRefundAction,
       setTrackingModalLinks: buyerOrders.setTrackingModalLinks,
     }),
     [
@@ -128,6 +143,7 @@ export function BuyerOrdersProvider({ children }: BuyerOrdersProviderProps) {
       buyerOrders.handleExpandedChange,
       buyerOrders.handleReorder,
       buyerOrders.requestCancelAction,
+      buyerOrders.requestRefundAction,
       buyerOrders.setTrackingModalLinks,
     ],
   )
@@ -170,6 +186,23 @@ export function BuyerOrdersProvider({ children }: BuyerOrdersProviderProps) {
       trackingModalLinks: buyerOrders.trackingModalLinks,
     }),
     [buyerOrders.trackingModalLinks],
+  )
+
+  const refundModalState = useMemo<BuyerOrdersRefundModalState>(
+    () => ({
+      isSubmittingRefund: buyerOrders.isSubmittingRefund,
+      pendingRefundOrder: buyerOrders.pendingRefundOrder,
+    }),
+    [buyerOrders.isSubmittingRefund, buyerOrders.pendingRefundOrder],
+  )
+
+  const refundModalActions = useMemo<BuyerOrdersRefundModalActions>(
+    () => ({
+      requestRefundAction: buyerOrders.requestRefundAction,
+      setPendingRefundOrder: buyerOrders.setPendingRefundOrder,
+      submitRefundOrder: buyerOrders.submitRefundOrder,
+    }),
+    [buyerOrders.requestRefundAction, buyerOrders.setPendingRefundOrder, buyerOrders.submitRefundOrder],
   )
 
   const trackingModalActions = useMemo<BuyerOrdersTrackingModalActions>(
@@ -240,6 +273,20 @@ export function BuyerOrdersProvider({ children }: BuyerOrdersProviderProps) {
     },
     {
       render: (providerChildren) => (
+        <BuyerOrdersRefundModalStateContext.Provider value={refundModalState}>
+          {providerChildren}
+        </BuyerOrdersRefundModalStateContext.Provider>
+      ),
+    },
+    {
+      render: (providerChildren) => (
+        <BuyerOrdersRefundModalActionsContext.Provider value={refundModalActions}>
+          {providerChildren}
+        </BuyerOrdersRefundModalActionsContext.Provider>
+      ),
+    },
+    {
+      render: (providerChildren) => (
         <BuyerOrdersTrackingModalStateContext.Provider value={trackingModalState}>
           {providerChildren}
         </BuyerOrdersTrackingModalStateContext.Provider>
@@ -291,6 +338,14 @@ export function useBuyerOrdersCancelModalState(): BuyerOrdersCancelModalState {
 
 export function useBuyerOrdersCancelModalActions(): BuyerOrdersCancelModalActions {
   return useRequiredContext(BuyerOrdersCancelModalActionsContext, "useBuyerOrdersCancelModalActions")
+}
+
+export function useBuyerOrdersRefundModalState(): BuyerOrdersRefundModalState {
+  return useRequiredContext(BuyerOrdersRefundModalStateContext, "useBuyerOrdersRefundModalState")
+}
+
+export function useBuyerOrdersRefundModalActions(): BuyerOrdersRefundModalActions {
+  return useRequiredContext(BuyerOrdersRefundModalActionsContext, "useBuyerOrdersRefundModalActions")
 }
 
 export function useBuyerOrdersTrackingModalState(): BuyerOrdersTrackingModalState {

@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest"
 import { http, HttpResponse } from "msw"
 import { setupServer } from "msw/node"
-import { buyerOrdersAPI, type CancelDuringDeliveryByCustomerPayload } from "./buyer-orders"
+import { buyerOrdersAPI, type CancelDuringDeliveryByCustomerPayload, type RefundOrderPayload } from "./buyer-orders"
 
 const mockOrdersResponse = {
   orders: [
@@ -50,6 +50,7 @@ const mockCancelResponse = {
 
 let capturedQuery: URLSearchParams | null = null
 let capturedCancelPayload: CancelDuringDeliveryByCustomerPayload | null = null
+let capturedRefundPayload: RefundOrderPayload | null = null
 
 const server = setupServer(
   http.get("*/backend-api/orders/buyer", ({ request }) => {
@@ -61,6 +62,10 @@ const server = setupServer(
     capturedCancelPayload = (await request.json()) as CancelDuringDeliveryByCustomerPayload
     return HttpResponse.json(mockCancelResponse)
   }),
+  http.post("*/backend-api/orders/refundOrder", async ({ request }) => {
+    capturedRefundPayload = (await request.json()) as RefundOrderPayload
+    return HttpResponse.json({ message: "Refund created" })
+  }),
 )
 
 beforeAll(() => {
@@ -70,6 +75,7 @@ beforeAll(() => {
 afterEach(() => {
   capturedQuery = null
   capturedCancelPayload = null
+  capturedRefundPayload = null
   server.resetHandlers()
 })
 
@@ -103,6 +109,23 @@ describe("buyerOrdersAPI contract", () => {
     expect(response.cancelledOrderItemIds).toEqual(["item-1"])
     expect(response.successCount).toBe(1)
     expect(response.failureCount).toBe(0)
+  })
+
+  it("sends expected refund payload and returns refund contract response", async () => {
+    const payload: RefundOrderPayload = {
+      items: [
+        {
+          orderItemId: "item-1",
+          quantity: 1,
+          returnReason: "Damaged product",
+        },
+      ],
+    }
+
+    const response = await buyerOrdersAPI.refundOrder(payload)
+
+    expect(capturedRefundPayload).toEqual(payload)
+    expect(response.message).toBe("Refund created")
   })
 
   it("rejects when backend returns an error status", async () => {

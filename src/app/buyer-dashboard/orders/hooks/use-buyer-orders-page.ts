@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
-import { type BuyerOrder, type BuyerOrderTrackingLink, buyerOrdersAPI } from "@/lib/api/buyer-orders"
+import { type BuyerOrder, type BuyerOrderTrackingLink, type RefundOrderPayload, buyerOrdersAPI } from "@/lib/api/buyer-orders"
 import { OrderItemStatus } from "@/lib/constants/order-item-status"
 import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
@@ -59,6 +59,8 @@ export function useBuyerOrdersPage() {
   const [dateSortDir, setDateSortDir] = useState<"asc" | "desc">("desc")
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
   const [trackingModalLinks, setTrackingModalLinks] = useState<BuyerOrderTrackingLink[] | null>(null)
+  const [pendingRefundOrder, setPendingRefundOrder] = useState<BuyerOrder | null>(null)
+  const [isSubmittingRefund, setIsSubmittingRefund] = useState(false)
   const [reorderingItemId, setReorderingItemId] = useState<string | null>(null)
   const [cancelingItemId, setCancelingItemId] = useState<string | null>(null)
   const [cancelingSellerKey, setCancelingSellerKey] = useState<string | null>(null)
@@ -318,6 +320,67 @@ export function useBuyerOrdersPage() {
     setPendingCancelAction(action)
   }, [])
 
+  const requestRefundAction = useCallback((order: BuyerOrder) => {
+    setPendingRefundOrder(order)
+  }, [])
+
+  const submitRefundOrder = useCallback(
+    async (payload: RefundOrderPayload) => {
+      if (!pendingRefundOrder || payload.items.length === 0) return
+
+      setIsSubmittingRefund(true)
+      try {
+        const response = await buyerOrdersAPI.refundOrder(payload)
+        const refundedItemIds = new Set(payload.items.map((item) => item.orderItemId))
+
+        setOrders((prev) =>
+          prev.map((order) => {
+            if (order.orderId !== pendingRefundOrder.orderId) {
+              return order
+            }
+
+            return {
+              ...order,
+              sellerGroups: Array.isArray(order.sellerGroups)
+                ? order.sellerGroups.map((group) => ({
+                    ...group,
+                    orderItems: Array.isArray(group.orderItems)
+                      ? group.orderItems.map((item) =>
+                          refundedItemIds.has(item.id) ? { ...item, refundStatus: "PENDING" } : item,
+                        )
+                      : [],
+                  }))
+                : order.sellerGroups,
+              orderItems: Array.isArray(order.orderItems)
+                ? order.orderItems.map((item) => (refundedItemIds.has(item.id) ? { ...item, refundStatus: "PENDING" } : item))
+                : order.orderItems,
+            }
+          }),
+        )
+
+        showToast.success("Refund request sent", response.message || "Your refund request was submitted successfully.")
+        setPendingRefundOrder(null)
+      } catch (error: unknown) {
+        if (isAuthHandledError(error)) {
+          return
+        }
+
+        const status = extractErrorStatus(error)
+        const apiErrorMessage = extractApiErrorMessage(error)
+        if (isAuthErrorStatus(status)) {
+          showToast.error("Authentication required", apiErrorMessage || "Please sign in to request a refund.")
+          router.push("/login")
+          return
+        }
+
+        showToast.error("Refund request failed", apiErrorMessage || "Your refund request could not be submitted.")
+      } finally {
+        setIsSubmittingRefund(false)
+      }
+    },
+    [pendingRefundOrder, router],
+  )
+
   return {
     cancelingItemId,
     cancelingSellerKey,
@@ -330,15 +393,20 @@ export function useBuyerOrdersPage() {
     handleExpandedChange,
     handlePageChange,
     handleReorder,
+    isSubmittingRefund,
     isAuthenticated,
     isConfirmingCancel,
     isLoading,
     pageSize,
     pendingCancelAction,
+    pendingRefundOrder,
     reorderingItemId,
     requestCancelAction,
+    requestRefundAction,
     selectedTab,
+    submitRefundOrder,
     setPendingCancelAction,
+    setPendingRefundOrder,
     setTrackingModalLinks,
     summariesByOrderId,
     totalElements,

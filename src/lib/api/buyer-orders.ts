@@ -90,6 +90,20 @@ export interface CancelDuringDeliveryByCustomerResponse {
   cancelledOrderItemIds: string[]
 }
 
+export interface RefundOrderItemPayload {
+  orderItemId: string
+  quantity: number
+  returnReason: string
+}
+
+export interface RefundOrderPayload {
+  items: RefundOrderItemPayload[]
+}
+
+export interface RefundOrderResponse {
+  message?: string
+}
+
 class BuyerOrdersAPI {
   async getBuyerOrders(
     page = 0,
@@ -117,6 +131,11 @@ class BuyerOrdersAPI {
       "/orders/cancelDuringDeliveryByCustomer",
       payload,
     )
+    return response.data
+  }
+
+  async refundOrder(payload: RefundOrderPayload): Promise<RefundOrderResponse> {
+    const response = await apiClient.post<RefundOrderResponse>("/orders/refundOrder", payload)
     return response.data
   }
 }
