@@ -3,25 +3,96 @@ import { NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
+const FILTER_FALLBACK_PAGE_SIZE = 1000
+
+function getAuthorizationHeader(request: NextRequest): string | null {
+  const directAuthHeader = request.headers.get("Authorization")
+  if (directAuthHeader) {
+    return directAuthHeader
+  }
+
+  const authCookie = request.cookies.get("auth-storage")
+  if (!authCookie) {
+    return null
+  }
+
+  try {
+    const rawValue = authCookie.value
+    const parsed = JSON.parse(rawValue) as { state?: { accessToken?: string } }
+    const token = parsed?.state?.accessToken
+    return token ? `Bearer ${token}` : null
+  } catch {
+    try {
+      const decoded = decodeURIComponent(authCookie.value)
+      const parsed = JSON.parse(decoded) as { state?: { accessToken?: string } }
+      const token = parsed?.state?.accessToken
+      return token ? `Bearer ${token}` : null
+    } catch {
+      return null
+    }
+  }
+}
+
+function extractUserProductsFromFilterPayload(data: unknown): unknown[] {
+  if (Array.isArray(data)) {
+    return data
+  }
+
+  if (data && typeof data === "object") {
+    const root = data as Record<string, unknown>
+    if (Array.isArray(root.content)) {
+      return root.content
+    }
+
+    if (root.data && typeof root.data === "object") {
+      const nested = root.data as Record<string, unknown>
+      if (Array.isArray(nested.content)) {
+        return nested.content
+      }
+    }
+  }
+
+  return []
+}
 
 // Get All User Products - GET /api/user-products
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("Authorization")
+    const authHeader = getAuthorizationHeader(request)
 
     if (!authHeader) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    const response = await serverRequest(`${BACKEND_URL}/api/user-products`, {
+    const requestHeaders = {
+      "Content-Type": "application/json",
+      "User-Agent": "Mozilla/5.0",
+      Accept: "application/json",
+      Authorization: authHeader,
+    }
+
+    let response = await serverRequest(`${BACKEND_URL}/api/user-products`, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0",
-        Accept: "application/json",
-        Authorization: authHeader,
-      },
+      headers: requestHeaders,
     })
+
+    if (response.status === 403) {
+      const fallbackResponse = await serverRequest(
+        `${BACKEND_URL}/api/user-products/filter?type=TOTAL&page=0&size=${FILTER_FALLBACK_PAGE_SIZE}`,
+        {
+          method: "GET",
+          headers: requestHeaders,
+        },
+      )
+
+      if (fallbackResponse.ok) {
+        const fallbackData = await fallbackResponse.json()
+        const userProducts = extractUserProductsFromFilterPayload(fallbackData)
+        return NextResponse.json(userProducts)
+      }
+
+      response = fallbackResponse
+    }
 
     const contentType = response.headers.get("content-type")
     const hasJson = contentType?.includes("application/json")
