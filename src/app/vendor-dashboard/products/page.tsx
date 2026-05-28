@@ -469,9 +469,6 @@ export default function ProductsPage() {
                   Product
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                  Category
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
                   <button
                     type="button"
                     onClick={() => handleSort("price")}
@@ -527,13 +524,13 @@ export default function ProductsPage() {
             <tbody className="divide-y divide-border-soft">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-text-muted">
+                  <td colSpan={7} className="px-6 py-12 text-center text-text-muted">
                     Loading products...
                   </td>
                 </tr>
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-text-muted">
+                  <td colSpan={7} className="px-6 py-12 text-center text-text-muted">
                     No products found. Create your first product!
                   </td>
                 </tr>
@@ -588,7 +585,6 @@ export default function ProductsPage() {
                         <div className="font-medium text-text-primary">{product.productName}</div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-text-secondary">{product.product?.subCategoriesId || "-"}</td>
                     <td className="px-6 py-4 text-sm font-semibold text-brand">
                       {isEditing ? (
                         <input
