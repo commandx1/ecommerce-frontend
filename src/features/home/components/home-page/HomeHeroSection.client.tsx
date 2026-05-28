@@ -168,12 +168,12 @@ export default function HomeHeroSectionClient() {
           variants={revealVariants}
           className="relative z-20 mx-auto w-full max-w-6xl px-3 sm:px-6"
         >
-          <div className="relative overflow-hidden rounded-[1.6rem] border border-border-soft/75 bg-surface-elevated/92 shadow-panel backdrop-blur-xl sm:rounded-[2rem]">
+          <div className="relative overflow-hidden rounded-[1.6rem] border border-border-soft/75 bg-surface-elevated/92 shadow-panel backdrop-blur-xl sm:rounded-4xl">
             <div ref={emblaRef} className="overflow-hidden">
               <div className="flex">
                 {heroBanners.map((banner) => (
                   <div key={banner.image} className="min-w-0 shrink-0 basis-full">
-                    <article className="relative aspect-[4/1] w-full bg-surface-muted/60">
+                    <article className="relative aspect-4/1 w-full bg-surface-muted/60">
                       <Image
                         src={banner.image}
                         alt={banner.alt}
