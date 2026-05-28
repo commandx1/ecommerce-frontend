@@ -105,7 +105,12 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                               <div className="relative h-full min-w-0 flex-1">
                                 <p className="max-w-96 mb-2 text-sm font-medium text-text-primary">
                                   {productHref ? (
-                                    <Link href={productHref} className="transition-colors hover:text-brand">
+                                    <Link
+                                      href={productHref}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="transition-colors hover:text-brand"
+                                    >
                                       {item.productName}
                                     </Link>
                                   ) : (

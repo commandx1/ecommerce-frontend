@@ -37,7 +37,7 @@ export default function OrderSummaryItems({ items }: OrderSummaryItemsProps) {
               />
             </div>
             <div className="min-w-0 flex-1">
-              <Link href={`/products/${product.id}`}>
+              <Link href={`/products/${product.id}`} target="_blank" rel="noopener noreferrer">
                 <h4 className="truncate text-sm font-medium text-text-primary transition-colors hover:text-brand">
                   {product.name}
                 </h4>

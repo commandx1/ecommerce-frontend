@@ -20,6 +20,8 @@ export default function CartItemCard({ item, onQuantityChange, onRemoveItem }: C
       <div className="flex items-start space-x-4">
         <Link
           href={productDetailHref}
+          target="_blank"
+          rel="noopener noreferrer"
           className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-border-soft bg-surface-elevated"
         >
           <ProductImageWithFallback
@@ -32,7 +34,7 @@ export default function CartItemCard({ item, onQuantityChange, onRemoveItem }: C
         </Link>
 
         <div className="flex-1 min-w-0">
-          <Link href={productDetailHref}>
+          <Link href={productDetailHref} target="_blank" rel="noopener noreferrer">
             <h3 className="truncate text-sm font-medium text-text-primary transition-colors hover:text-brand">
               {product.name}
             </h3>
