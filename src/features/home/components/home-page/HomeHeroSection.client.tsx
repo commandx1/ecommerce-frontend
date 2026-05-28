@@ -1,9 +1,10 @@
 "use client"
 
-import { ArrowRight, Building2, UserRound } from "lucide-react"
+import { Building2, ChevronLeft, ChevronRight, UserRound } from "lucide-react"
+import useEmblaCarousel from "embla-carousel-react"
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react"
 import Image from "next/image"
-import Link from "next/link"
+import { useCallback, useEffect, useState } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
 
 const revealVariants = {
@@ -18,26 +19,45 @@ const revealVariants = {
   },
 }
 
+const heroBanners = [
+  {
+    image: "/banner1.avif",
+    alt: "Essential dental supplies and instruments arranged on a modern clinic workspace",
+  },
+  {
+    image: "/banner2.avif",
+    alt: "Modern dental procurement visual with shipment boxes and logistics flow",
+  },
+] as const
+
 const featureHighlights = [
   {
     title: "Uber Direct",
     detail: "Same-day local delivery",
-    desktopPositionClass: "sm:top-[14%] sm:left-[3%] lg:left-[7%]",
+    desktopPositionClass: "top-[7%] left-[1.5%]",
+    cardClassName: "border-success/40 bg-success/14",
+    titleClassName: "text-success",
   },
   {
     title: "Shippo",
     detail: "Multi-carrier shipping orchestration",
-    desktopPositionClass: "sm:top-[15%] sm:right-[3%] lg:right-[7%]",
+    desktopPositionClass: "top-[7%] right-[1.5%]",
+    cardClassName: "border-brand/40 bg-brand/14",
+    titleClassName: "text-brand",
   },
   {
     title: "Trusted Vendors",
     detail: "Verified supplier reliability",
-    desktopPositionClass: "sm:bottom-[12%] sm:left-[5%] lg:left-[11%]",
+    desktopPositionClass: "bottom-[8%] left-[3%]",
+    cardClassName: "border-accent-strong/50 bg-accent/55",
+    titleClassName: "text-accent-foreground",
   },
   {
     title: "Easy Returns",
     detail: "Frictionless returns flow",
-    desktopPositionClass: "sm:bottom-[11%] sm:right-[4%] lg:right-[10%]",
+    desktopPositionClass: "bottom-[8%] right-[3%]",
+    cardClassName: "border-warning/40 bg-warning/14",
+    titleClassName: "text-warning",
   },
 ] as const
 
@@ -82,6 +102,34 @@ export default function HomeHeroSectionClient() {
   const { scrollYProgress } = useScroll()
   const heroY = useTransform(scrollYProgress, [0, 0.24], [0, -70])
   const heroOpacity = useTransform(scrollYProgress, [0, 0.22], [1, 0.62])
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false, align: "start" })
+  const [selectedBannerIndex, setSelectedBannerIndex] = useState(0)
+  const [canScrollPrev, setCanScrollPrev] = useState(false)
+  const [canScrollNext, setCanScrollNext] = useState(false)
+
+  const updateBannerControls = useCallback(() => {
+    if (!emblaApi) return
+    setSelectedBannerIndex(emblaApi.selectedScrollSnap())
+    setCanScrollPrev(emblaApi.canScrollPrev())
+    setCanScrollNext(emblaApi.canScrollNext())
+  }, [emblaApi])
+
+  useEffect(() => {
+    if (!emblaApi) return
+    updateBannerControls()
+    emblaApi.on("select", updateBannerControls)
+    emblaApi.on("reInit", updateBannerControls)
+
+    return () => {
+      emblaApi.off("select", updateBannerControls)
+      emblaApi.off("reInit", updateBannerControls)
+    }
+  }, [emblaApi, updateBannerControls])
+
+  const scrollPrevBanner = () => emblaApi?.scrollPrev()
+  const scrollNextBanner = () => emblaApi?.scrollNext()
+  const scrollToBanner = (index: number) => emblaApi?.scrollTo(index)
+
   const nodesById = new Map(networkNodes.map((node) => [node.id, node]))
   const networkRoutes = shipmentRoutes
     .map((route) => {
@@ -102,124 +150,135 @@ export default function HomeHeroSectionClient() {
   return (
     <PageSectionContainer
       as="section"
-      className="hero-cinematic relative isolate min-h-screen overflow-hidden p-0"
-      containerClassName="relative z-20"
+      className="hero-cinematic relative isolate h-[calc(100vh-8.75rem)] overflow-hidden p-0"
+      containerClassName="relative z-20 h-full"
     >
       <div aria-hidden className="hero-cinematic-backdrop pointer-events-none absolute inset-0" />
       <div aria-hidden className="hero-cinematic-grid pointer-events-none absolute inset-0" />
       <div aria-hidden className="hero-cinematic-vignette pointer-events-none absolute inset-0" />
-
-      <div aria-hidden className="hero-network-map pointer-events-none absolute inset-0">
-        <svg aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none" className="hero-network-svg">
-          {networkRoutes.map((route) => (
-            <g key={route.id}>
-              <path id={`hero-route-${route.id}`} d={route.path} className="hero-route-path" />
-              <path
-                d={route.path}
-                className="hero-route-glow"
-                style={{ animationDuration: `${route.duration}s`, animationDelay: `${route.delay}s` }}
-              />
-              <circle className="hero-route-packet" r="0.5">
-                <animateMotion
-                  dur={`${route.duration}s`}
-                  begin={`${route.delay}s`}
-                  repeatCount="indefinite"
-                  rotate="auto"
-                >
-                  <mpath href={`#hero-route-${route.id}`} />
-                </animateMotion>
-              </circle>
-            </g>
-          ))}
-        </svg>
-
-        {networkNodes.map((node) => {
-          const Icon = node.kind === "vendor" ? Building2 : UserRound
-
-          return (
-            <div
-              key={node.id}
-              className={`hero-city-node ${node.kind === "vendor" ? "hero-city-node-vendor" : "hero-city-node-dentist"}`}
-              style={{ left: `${node.x}%`, top: `${node.y}%` }}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              <span>{node.city}</span>
-            </div>
-          )
-        })}
-      </div>
 
       <motion.div
         initial="hidden"
         animate="visible"
         variants={{ visible: { transition: { staggerChildren: 0.11 } } }}
         style={prefersReducedMotion ? undefined : { y: heroY, opacity: heroOpacity }}
-        className="relative flex min-h-[calc(100vh-9rem)] flex-col pt-4"
+        className="relative flex h-full flex-col gap-4 py-4 sm:gap-5 sm:py-6"
       >
-        <div className="mx-auto max-w-4xl text-center">
-          <motion.span variants={revealVariants} className="section-kicker">
-            Fulfillment Command Center
-          </motion.span>
-
-          <motion.h1
-            variants={revealVariants}
-            className="mt-6 font-display text-[clamp(2.35rem,6.2vw,5.35rem)] leading-[0.92] text-text-primary"
-          >
-            Same-day delivery, trusted vendors, and easy returns in one modern flow.
-          </motion.h1>
-
-          <motion.p
-            variants={revealVariants}
-            className="mx-auto mt-6 max-w-[62ch] text-base leading-relaxed text-text-secondary md:text-lg"
-          >
-            Uber Direct same-day lanes, Shippo-powered shipment orchestration, verified vendor quality, and return-first
-            support come together in a high-velocity procurement experience.
-          </motion.p>
-
-          <motion.div variants={revealVariants} className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Link
-              href="/products"
-              className="group inline-flex min-h-11 items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-primary-foreground transition-transform duration-300 hover:-translate-y-0.5 hover:bg-brand-strong"
-            >
-              Shop Products
-              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-            </Link>
-            <Link
-              href="/suppliers"
-              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border-strong/70 bg-surface-elevated/88 px-6 py-3 text-sm font-semibold text-text-primary backdrop-blur transition-colors hover:border-brand/45 hover:text-brand"
-            >
-              Browse Suppliers
-            </Link>
-          </motion.div>
-        </div>
-
-        <div className="hero-stage relative z-10 mt-10 min-h-[22rem] flex-1 sm:mt-12 sm:min-h-[30rem] lg:min-h-[34rem]">
-          <div aria-hidden className="hero-stage-halo absolute inset-x-[-12%] top-[14%] h-[66%]" />
-
-          <motion.div
-            variants={revealVariants}
-            className="hero-product-shell absolute top-[54%] left-1/2 z-20 h-[11.5rem] w-[11.5rem] -translate-x-1/2 -translate-y-1/2 sm:h-[18rem] sm:w-[18rem] lg:h-[22rem] lg:w-[22rem]"
-          >
-            <div className="relative h-full w-full">
-              <Image
-                src="/home-hero.png"
-                alt="DentyPro product network showcase"
-                fill
-                priority
-                sizes="(min-width: 1024px) 420px, (min-width: 640px) 340px, 240px"
-                className="hero-product-image object-contain"
-              />
+        <motion.div
+          variants={revealVariants}
+          className="relative z-20 mx-auto w-full max-w-6xl px-3 sm:px-6"
+        >
+          <div className="relative overflow-hidden rounded-[1.6rem] border border-border-soft/75 bg-surface-elevated/92 shadow-panel backdrop-blur-xl sm:rounded-[2rem]">
+            <div ref={emblaRef} className="overflow-hidden">
+              <div className="flex">
+                {heroBanners.map((banner) => (
+                  <div key={banner.image} className="min-w-0 shrink-0 basis-full">
+                    <article className="relative aspect-[4/1] w-full bg-surface-muted/60">
+                      <Image
+                        src={banner.image}
+                        alt={banner.alt}
+                        fill
+                        priority
+                        sizes="(min-width: 1280px) 1152px, (min-width: 640px) calc(100vw - 48px), calc(100vw - 24px)"
+                        className="object-contain"
+                      />
+                    </article>
+                  </div>
+                ))}
+              </div>
             </div>
-          </motion.div>
 
-          <div className="hidden sm:block">
+            <button
+              type="button"
+              onClick={scrollPrevBanner}
+              disabled={!canScrollPrev}
+              aria-label="Previous banner"
+              className="absolute top-1/2 left-3 z-20 -translate-y-1/2 rounded-full border border-border-soft/80 bg-surface-elevated/90 p-2 text-text-primary shadow-soft backdrop-blur transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-45 sm:left-4"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={scrollNextBanner}
+              disabled={!canScrollNext}
+              aria-label="Next banner"
+              className="absolute top-1/2 right-3 z-20 -translate-y-1/2 rounded-full border border-border-soft/80 bg-surface-elevated/90 p-2 text-text-primary shadow-soft backdrop-blur transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-45 sm:right-4"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+
+            <div className="absolute inset-x-0 bottom-3 z-20 flex items-center justify-center gap-2 sm:bottom-4">
+              {heroBanners.map((banner, index) => {
+                const isActive = selectedBannerIndex === index
+
+                return (
+                  <button
+                    key={`${banner.image}-dot`}
+                    type="button"
+                    onClick={() => scrollToBanner(index)}
+                    aria-label={`Go to banner ${index + 1}`}
+                    aria-current={isActive}
+                    className={`h-2.5 rounded-full transition-all ${
+                      isActive ? "w-8 bg-brand" : "w-2.5 bg-border-strong hover:bg-text-muted"
+                    }`}
+                  />
+                )
+              })}
+            </div>
+          </div>
+        </motion.div>
+
+        <div className="app-container hero-stage relative z-10 w-full flex-1 overflow-hidden">
+          <div aria-hidden className="hero-stage-halo absolute inset-x-[-12%] top-[8%] h-[78%]" />
+          <div aria-hidden className="hero-network-map pointer-events-none absolute inset-0">
+            <svg aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none" className="hero-network-svg">
+              {networkRoutes.map((route) => (
+                <g key={route.id}>
+                  <path id={`hero-route-${route.id}`} d={route.path} className="hero-route-path" />
+                  <path
+                    d={route.path}
+                    className="hero-route-glow"
+                    style={{ animationDuration: `${route.duration}s`, animationDelay: `${route.delay}s` }}
+                  />
+                  <circle className="hero-route-packet" r="0.5">
+                    <animateMotion
+                      dur={`${route.duration}s`}
+                      begin={`${route.delay}s`}
+                      repeatCount="indefinite"
+                      rotate="auto"
+                    >
+                      <mpath href={`#hero-route-${route.id}`} />
+                    </animateMotion>
+                  </circle>
+                </g>
+              ))}
+            </svg>
+
+            {networkNodes.map((node) => {
+              const Icon = node.kind === "vendor" ? Building2 : UserRound
+
+              return (
+                <div
+                  key={node.id}
+                  className={`hero-city-node ${node.kind === "vendor" ? "hero-city-node-vendor" : "hero-city-node-dentist"}`}
+                  style={{ left: `${node.x}%`, top: `${node.y}%` }}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  <span>{node.city}</span>
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="pointer-events-none absolute inset-0 z-30 hidden xl:block">
             {featureHighlights.map((feature, index) => (
               <motion.article
                 key={feature.title}
                 variants={revealVariants}
-                className={`hero-signal-node hero-signal-node-float-${(index % 4) + 1} absolute z-30 w-[13.8rem] rounded-2xl border border-border-soft/80 bg-surface-elevated/88 px-4 py-3 shadow-panel backdrop-blur ${feature.desktopPositionClass}`}
+                className={`hero-signal-node hero-signal-node-float-${(index % 4) + 1} absolute w-[13.2rem] rounded-2xl border px-4 py-3 shadow-panel backdrop-blur ${feature.desktopPositionClass} ${feature.cardClassName}`}
               >
-                <p className="text-[0.64rem] font-semibold uppercase tracking-[0.16em] text-text-muted">
+                <p className={`text-[0.64rem] font-semibold uppercase tracking-[0.16em] ${feature.titleClassName}`}>
                   {feature.title}
                 </p>
                 <p className="mt-1 text-sm font-semibold text-text-primary">{feature.detail}</p>
@@ -227,20 +286,6 @@ export default function HomeHeroSectionClient() {
             ))}
           </div>
         </div>
-
-        <motion.div variants={revealVariants} className="mt-6 grid gap-3 sm:hidden">
-          {featureHighlights.map((feature) => (
-            <article
-              key={`mobile-${feature.title}`}
-              className="rounded-2xl border border-border-soft/80 bg-surface-elevated/90 px-4 py-3 shadow-soft"
-            >
-              <p className="text-[0.64rem] font-semibold uppercase tracking-[0.16em] text-text-muted">
-                {feature.title}
-              </p>
-              <p className="mt-1 text-sm font-semibold text-text-primary">{feature.detail}</p>
-            </article>
-          ))}
-        </motion.div>
       </motion.div>
     </PageSectionContainer>
   )
