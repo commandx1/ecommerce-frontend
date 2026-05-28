@@ -4,6 +4,8 @@ import { createContext, useContext, useMemo, type ReactNode } from "react"
 import { useBuyerOrdersPage, type UseBuyerOrdersPageResult } from "../hooks/use-buyer-orders-page"
 
 type BuyerOrdersAuthState = Pick<UseBuyerOrdersPageResult, "isAuthenticated">
+type BuyerOrdersTabsState = Pick<UseBuyerOrdersPageResult, "selectedTab">
+type BuyerOrdersTabsActions = Pick<UseBuyerOrdersPageResult, "handleTabChange">
 
 type BuyerOrdersTableState = Pick<
   UseBuyerOrdersPageResult,
@@ -35,6 +37,8 @@ type BuyerOrdersTrackingModalState = Pick<UseBuyerOrdersPageResult, "trackingMod
 type BuyerOrdersTrackingModalActions = Pick<UseBuyerOrdersPageResult, "setTrackingModalLinks">
 
 export const BuyerOrdersAuthStateContext = createContext<BuyerOrdersAuthState | null>(null)
+export const BuyerOrdersTabsStateContext = createContext<BuyerOrdersTabsState | null>(null)
+export const BuyerOrdersTabsActionsContext = createContext<BuyerOrdersTabsActions | null>(null)
 export const BuyerOrdersTableStateContext = createContext<BuyerOrdersTableState | null>(null)
 export const BuyerOrdersTableActionsContext = createContext<BuyerOrdersTableActions | null>(null)
 export const BuyerOrdersPaginationStateContext = createContext<BuyerOrdersPaginationState | null>(null)
@@ -72,6 +76,20 @@ export function BuyerOrdersProvider({ children }: BuyerOrdersProviderProps) {
       isAuthenticated: buyerOrders.isAuthenticated,
     }),
     [buyerOrders.isAuthenticated],
+  )
+
+  const tabsState = useMemo<BuyerOrdersTabsState>(
+    () => ({
+      selectedTab: buyerOrders.selectedTab,
+    }),
+    [buyerOrders.selectedTab],
+  )
+
+  const tabsActions = useMemo<BuyerOrdersTabsActions>(
+    () => ({
+      handleTabChange: buyerOrders.handleTabChange,
+    }),
+    [buyerOrders.handleTabChange],
   )
 
   const tableState = useMemo<BuyerOrdersTableState>(
@@ -170,6 +188,18 @@ export function BuyerOrdersProvider({ children }: BuyerOrdersProviderProps) {
     },
     {
       render: (providerChildren) => (
+        <BuyerOrdersTabsStateContext.Provider value={tabsState}>{providerChildren}</BuyerOrdersTabsStateContext.Provider>
+      ),
+    },
+    {
+      render: (providerChildren) => (
+        <BuyerOrdersTabsActionsContext.Provider value={tabsActions}>
+          {providerChildren}
+        </BuyerOrdersTabsActionsContext.Provider>
+      ),
+    },
+    {
+      render: (providerChildren) => (
         <BuyerOrdersTableStateContext.Provider value={tableState}>{providerChildren}</BuyerOrdersTableStateContext.Provider>
       ),
     },
@@ -229,6 +259,14 @@ export function BuyerOrdersProvider({ children }: BuyerOrdersProviderProps) {
 
 export function useBuyerOrdersAuthState(): BuyerOrdersAuthState {
   return useRequiredContext(BuyerOrdersAuthStateContext, "useBuyerOrdersAuthState")
+}
+
+export function useBuyerOrdersTabsState(): BuyerOrdersTabsState {
+  return useRequiredContext(BuyerOrdersTabsStateContext, "useBuyerOrdersTabsState")
+}
+
+export function useBuyerOrdersTabsActions(): BuyerOrdersTabsActions {
+  return useRequiredContext(BuyerOrdersTabsActionsContext, "useBuyerOrdersTabsActions")
 }
 
 export function useBuyerOrdersTableState(): BuyerOrdersTableState {

@@ -91,13 +91,20 @@ export interface CancelDuringDeliveryByCustomerResponse {
 }
 
 class BuyerOrdersAPI {
-  async getBuyerOrders(page = 0, size = 10, sortBy?: string, sortDir?: "asc" | "desc"): Promise<BuyerOrdersResponse> {
+  async getBuyerOrders(
+    page = 0,
+    size = 10,
+    sortBy?: string,
+    sortDir?: "asc" | "desc",
+    selectedTab?: string,
+  ): Promise<BuyerOrdersResponse> {
     const response = await apiClient.get<BuyerOrdersResponse>("/orders/buyer", {
       params: {
         page,
         size,
         sortBy,
         sortDir,
+        selectedTab,
       },
     })
     return response.data

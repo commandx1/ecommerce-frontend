@@ -2,6 +2,7 @@
 
 import CancelConfirmModal from "./components/cancel-confirm-modal"
 import OrdersPagination from "./components/orders-pagination"
+import OrdersStatusTabs from "./components/orders-status-tabs"
 import OrdersTable from "./components/orders-table"
 import TrackingLinksModal from "./components/tracking-links-modal"
 import { BuyerOrdersProvider, useBuyerOrdersAuthState } from "./context/buyer-orders-context"
@@ -29,6 +30,10 @@ function BuyerOrdersPageContent() {
       </section>
 
       <section className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
+        <div className="border-b border-border-soft px-4 pt-4 sm:px-6">
+          <OrdersStatusTabs />
+        </div>
+
         <div className="overflow-x-auto">
           <OrdersTable />
         </div>

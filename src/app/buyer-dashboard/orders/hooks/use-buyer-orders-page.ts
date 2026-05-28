@@ -1,7 +1,7 @@
 "use client"
 
 import type { ExpandedState, OnChangeFn } from "@tanstack/react-table"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
@@ -17,12 +17,37 @@ import {
   resolveOrderViewStatus,
   resolvePaymentSummary,
 } from "../lib/order-view-utils"
-import type { OrderViewStatus, PendingCancelAction } from "../types"
+import type { BuyerOrderStatusTab, PendingCancelAction } from "../types"
 
 const DEFAULT_PAGE_SIZE = 10
+const ORDER_STATUS_TABS = ["All", "Pending", "Shipped", "Delivered", "Cancelled"] as const
+
+function isBuyerOrderStatusTab(value: string | null): value is BuyerOrderStatusTab {
+  return Boolean(value && ORDER_STATUS_TABS.includes(value as BuyerOrderStatusTab))
+}
+
+function isCancelledOrder(order: BuyerOrder) {
+  const normalizedOrderStatus = order.orderStatus.toUpperCase()
+  if (normalizedOrderStatus.includes("CANCEL")) {
+    return true
+  }
+
+  const items = getOrderItems(order)
+  return items.some((item) => {
+    const normalizedItemStatus = item.status.toUpperCase()
+    return (
+      normalizedItemStatus.includes("CANCEL") ||
+      Boolean(item.cancelledByCustomer) ||
+      Boolean(item.cancelledBySeller) ||
+      Boolean(item.cancelledWithShippingFee)
+    )
+  })
+}
 
 export function useBuyerOrdersPage() {
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { isAuthenticated } = useAuthStore()
   const addToCart = useCartStore((state) => state.addToCart)
 
@@ -42,14 +67,32 @@ export function useBuyerOrdersPage() {
 
   const pageSize = DEFAULT_PAGE_SIZE
   const searchQuery = ""
-  const statusFilter: "all" | OrderViewStatus = "all"
+
+  const selectedTab = useMemo<BuyerOrderStatusTab>(() => {
+    const queryValue = searchParams.get("selectedTab")
+    if (isBuyerOrderStatusTab(queryValue)) {
+      return queryValue
+    }
+    return "All"
+  }, [searchParams])
+
+  const handleTabChange = useCallback(
+    (tab: BuyerOrderStatusTab) => {
+      const nextParams = new URLSearchParams(searchParams.toString())
+      nextParams.set("selectedTab", tab)
+      router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false })
+      setCurrentPage(0)
+      setExpandedOrderId(null)
+    },
+    [pathname, router, searchParams],
+  )
 
   useEffect(() => {
     const fetchOrders = async () => {
       if (!isAuthenticated) return
       try {
         setIsLoading(true)
-        const response = await buyerOrdersAPI.getBuyerOrders(currentPage, pageSize, "createdDate", dateSortDir)
+        const response = await buyerOrdersAPI.getBuyerOrders(currentPage, pageSize, "createdDate", dateSortDir, selectedTab)
         setOrders(response.orders)
         setTotalPages(response.totalPages)
         setTotalElements(response.totalElements)
@@ -66,7 +109,7 @@ export function useBuyerOrdersPage() {
     }
 
     void fetchOrders()
-  }, [isAuthenticated, currentPage, pageSize, dateSortDir])
+  }, [isAuthenticated, currentPage, pageSize, dateSortDir, selectedTab])
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page)
@@ -194,7 +237,17 @@ export function useBuyerOrdersPage() {
     () =>
       orders.filter((order) => {
         const orderItems = getOrderItems(order)
-        const statusMatches = statusFilter === "all" ? true : resolveOrderViewStatus(order, orderItems) === statusFilter
+        const orderStatus = resolveOrderViewStatus(order, orderItems)
+        const statusMatches =
+          selectedTab === "All"
+            ? true
+            : selectedTab === "Pending"
+              ? orderStatus === "processing"
+              : selectedTab === "Shipped"
+                ? orderStatus === "shipped" || orderStatus === "shipping"
+                : selectedTab === "Delivered"
+                  ? orderStatus === "delivered"
+                  : isCancelledOrder(order)
         if (!statusMatches) return false
 
         if (!searchQuery.trim()) return true
@@ -228,7 +281,7 @@ export function useBuyerOrdersPage() {
           )
         )
       }),
-    [orders],
+    [orders, selectedTab],
   )
 
   const summariesByOrderId = useMemo(
@@ -284,12 +337,14 @@ export function useBuyerOrdersPage() {
     pendingCancelAction,
     reorderingItemId,
     requestCancelAction,
+    selectedTab,
     setPendingCancelAction,
     setTrackingModalLinks,
     summariesByOrderId,
     totalElements,
     totalPages,
     trackingModalLinks,
+    handleTabChange,
   }
 }
 
