@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import {
   CreditCard,
   FileText,
@@ -58,12 +59,40 @@ const BUYER_QUICK_ACTIONS: DashboardSidebarQuickAction[] = [
 ]
 
 const DashboardSidebar = () => {
+  const [isCollapsed, setIsCollapsed] = useState(false)
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem("buyer-dashboard-sidebar-collapsed")
+      if (stored === "true") {
+        setIsCollapsed(true)
+      }
+    } catch {
+      // Ignore localStorage access errors
+    }
+  }, [])
+
+  const toggleCollapse = () => {
+    setIsCollapsed((previous) => {
+      const next = !previous
+      try {
+        window.localStorage.setItem("buyer-dashboard-sidebar-collapsed", String(next))
+      } catch {
+        // Ignore localStorage access errors
+      }
+      return next
+    })
+  }
+
   const navGroups: DashboardSidebarGroup[] = NAV_GROUPS.map((group) =>
     group.title === "Account" ? { ...group, subgroups: [{ title: "Settings", items: SETTINGS_ITEMS }] } : group,
   )
 
   return (
     <CommonDashboardSidebar
+      isCollapsed={isCollapsed}
+      onToggleCollapse={toggleCollapse}
+      collapseButtonLabel={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       quickActions={BUYER_QUICK_ACTIONS}
       quickActionsTrailing={
         <Button type="button" variant="quiet" size="icon-sm" className="text-text-muted hover:text-brand">

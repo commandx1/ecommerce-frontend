@@ -1,6 +1,6 @@
 "use client"
 
-import type { LucideIcon } from "lucide-react"
+import { PanelLeftClose, PanelLeftOpen, type LucideIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { type ReactNode, useId } from "react"
@@ -55,6 +55,9 @@ interface DashboardSidebarProps {
   groups: DashboardSidebarGroup[]
   groupVariant?: SidebarGroupVariant
   defaultItemSize?: SidebarItemSize
+  isCollapsed?: boolean
+  onToggleCollapse?: () => void
+  collapseButtonLabel?: string
 }
 
 const badgeClassMap: Record<SidebarBadgeTone, string> = {
@@ -83,10 +86,12 @@ const SidebarNavItem = ({
   item,
   active,
   defaultItemSize,
+  collapsed,
 }: {
   item: DashboardSidebarNavItem
   active: boolean
   defaultItemSize: SidebarItemSize
+  collapsed: boolean
 }) => {
   const Icon = item.icon
   const itemSize = item.size ?? defaultItemSize
@@ -95,19 +100,26 @@ const SidebarNavItem = ({
   return (
     <Link
       href={item.href}
+      title={collapsed ? item.label : undefined}
       className={cn(
         "flex items-center rounded-lg transition-colors",
-        isCompact ? "px-3 py-2 text-sm" : "px-3 py-2 text-base",
+        collapsed
+          ? isCompact
+            ? "justify-center px-2 py-2 text-sm"
+            : "justify-center px-2 py-2 text-base"
+          : isCompact
+            ? "px-3 py-2 text-sm"
+            : "px-3 py-2 text-base",
         active
           ? "bg-brand/10 font-medium text-brand"
           : "text-text-secondary hover:bg-surface-muted hover:text-text-primary",
         item.disabled ? "pointer-events-none opacity-50" : "",
       )}
     >
-      <Icon className={cn("mr-3", isCompact ? "h-4 w-4" : "h-5 w-5", active ? "text-brand" : "text-text-muted")} />
-      <span>{item.label}</span>
-      {item.trailingText ? <span className="ml-auto text-sm text-text-muted">{item.trailingText}</span> : null}
-      {item.badge ? (
+      <Icon className={cn(collapsed ? "" : "mr-3", isCompact ? "h-4 w-4" : "h-5 w-5", active ? "text-brand" : "text-text-muted")} />
+      {collapsed ? <span className="sr-only">{item.label}</span> : <span>{item.label}</span>}
+      {!collapsed && item.trailingText ? <span className="ml-auto text-sm text-text-muted">{item.trailingText}</span> : null}
+      {!collapsed && item.badge ? (
         <span className={cn("ml-auto rounded-full px-2 py-1 text-xs", badgeClassMap[item.badge.tone])}>
           {item.badge.label}
         </span>
@@ -124,16 +136,18 @@ export default function DashboardSidebar({
   groups,
   groupVariant = "stacked",
   defaultItemSize = "default",
+  isCollapsed = false,
+  onToggleCollapse,
+  collapseButtonLabel = "Toggle sidebar",
 }: DashboardSidebarProps) {
   const sidebarId = useId()
   const pathname = usePathname()
+  const collapsed = Boolean(isCollapsed)
 
   const renderSubgroups = (subgroups: DashboardSidebarNavSubgroup[]) => {
     return subgroups.map((subgroup) => (
       <div key={subgroup.title} className="mt-4">
-        <h5 className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-          {subgroup.title}
-        </h5>
+        {!collapsed ? <h5 className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-text-muted">{subgroup.title}</h5> : null}
         <div className="space-y-1">
           {subgroup.items.map((item) => (
             <SidebarNavItem
@@ -141,6 +155,7 @@ export default function DashboardSidebar({
               item={item}
               active={isItemActive(pathname, item)}
               defaultItemSize={defaultItemSize}
+              collapsed={collapsed}
             />
           ))}
         </div>
@@ -151,39 +166,67 @@ export default function DashboardSidebar({
   return (
     <aside
       id={sidebarId}
-      className="sticky top-16 z-40 h-[calc(100vh-4rem)] w-64 shrink-0 overflow-y-auto border-r border-border-soft bg-surface-elevated shadow-soft"
+      className={cn(
+        "sticky top-16 z-40 h-[calc(100vh-4rem)] shrink-0 overflow-y-auto border-r border-border-soft bg-surface-elevated shadow-soft transition-[width] duration-200",
+        collapsed ? "w-16" : "w-64",
+      )}
     >
-      <div className="p-6">
+      <div className={cn("space-y-6", collapsed ? "p-3" : "p-6")}>
+        {onToggleCollapse ? (
+          <div className={cn("flex", collapsed ? "justify-center" : "justify-end")}>
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              aria-label={collapseButtonLabel}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-muted hover:text-brand"
+            >
+              {collapsed ? <PanelLeftOpen className="h-6 w-6" /> : <PanelLeftClose className="h-6 w-6" />}
+            </button>
+          </div>
+        ) : null}
+
         {quickActions?.length ? (
           <div className="mb-8">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-text-primary">{quickActionsTitle}</h3>
-              {quickActionsTrailing}
-            </div>
+            {!collapsed ? (
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-text-primary">{quickActionsTitle}</h3>
+                {quickActionsTrailing}
+              </div>
+            ) : null}
             <div className={cn(quickActionSize === "compact" ? "space-y-2" : "space-y-3")}>
               {quickActions.map((action) => {
                 const Icon = action.icon
                 const tone = action.tone ?? "brand"
                 const actionClassName = cn(
-                  "flex w-full items-center rounded-lg px-4 font-medium transition-colors",
-                  quickActionSize === "compact" ? "py-2" : "py-3",
+                  "flex w-full items-center rounded-lg font-medium transition-colors",
+                  collapsed
+                    ? "justify-center px-2 py-2"
+                    : quickActionSize === "compact"
+                      ? "px-4 py-2"
+                      : "px-4 py-3",
                   quickActionToneClassMap[tone],
                   action.disabled ? "pointer-events-none opacity-50" : "",
                 )
 
                 if (action.href) {
                   return (
-                    <Link key={action.label} href={action.href} className={actionClassName}>
-                      <Icon className="mr-2 h-4 w-4" />
-                      {action.label}
+                    <Link key={action.label} href={action.href} title={collapsed ? action.label : undefined} className={actionClassName}>
+                      <Icon className={cn("h-4 w-4", collapsed ? "" : "mr-2")} />
+                      {collapsed ? <span className="sr-only">{action.label}</span> : action.label}
                     </Link>
                   )
                 }
 
                 return (
-                  <button key={action.label} type="button" className={actionClassName} disabled={action.disabled}>
-                    <Icon className="mr-2 h-4 w-4" />
-                    {action.label}
+                  <button
+                    key={action.label}
+                    type="button"
+                    title={collapsed ? action.label : undefined}
+                    className={actionClassName}
+                    disabled={action.disabled}
+                  >
+                    <Icon className={cn("h-4 w-4", collapsed ? "" : "mr-2")} />
+                    {collapsed ? <span className="sr-only">{action.label}</span> : action.label}
                   </button>
                 )
               })}
@@ -211,7 +254,7 @@ export default function DashboardSidebar({
                   groupVariant === "divided" ? "text-sm" : "text-xs",
                 )}
               >
-                {group.title}
+                {!collapsed ? group.title : null}
               </h4>
 
               {group.subgroupsFirst && group.subgroups ? renderSubgroups(group.subgroups) : null}
@@ -223,6 +266,7 @@ export default function DashboardSidebar({
                     item={item}
                     active={isItemActive(pathname, item)}
                     defaultItemSize={defaultItemSize}
+                    collapsed={collapsed}
                   />
                 ))}
               </div>
