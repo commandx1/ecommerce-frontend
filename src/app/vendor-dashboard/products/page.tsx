@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Download, Edit, Search, Trash2, Upload } from "lucide-react"
+import { ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, Download, Edit, Search, Trash2, Upload } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -105,6 +105,9 @@ export default function ProductsPage() {
   const [currentPage, setCurrentPage] = useState<number>(0)
   const [totalPages, setTotalPages] = useState<number>(1)
   const [totalElements, setTotalElements] = useState<number>(0)
+  const [editingProductId, setEditingProductId] = useState<string | null>(null)
+  const [editingDraft, setEditingDraft] = useState<{ price: string; stock: string } | null>(null)
+  const [savingProductId, setSavingProductId] = useState<string | null>(null)
   const [imageFallbacks, setImageFallbacks] = useState<Record<string, boolean>>({})
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; productId: string | null; productName: string }>({
     isOpen: false,
@@ -284,8 +287,47 @@ export default function ProductsPage() {
     }
   }
 
-  const handleEdit = (userProductId: string) => {
-    router.push(`/vendor-dashboard/products/create?edit=${userProductId}`)
+  const handleInlineEditStart = (product: ProductWithDetails) => {
+    setEditingProductId(product.id)
+    setEditingDraft({
+      price: String(product.price),
+      stock: String(product.stock),
+    })
+  }
+
+  const handleInlineEditSave = async (product: ProductWithDetails) => {
+    if (!accessToken || !editingDraft) return
+
+    const nextPrice = Number.parseFloat(editingDraft.price)
+    const nextStock = Number.parseInt(editingDraft.stock, 10)
+
+    if (!Number.isFinite(nextPrice) || nextPrice < 0 || !Number.isInteger(nextStock) || nextStock < 0) {
+      return
+    }
+
+    try {
+      setSavingProductId(product.id)
+      const updatedProduct = await productsAPI.updateUserProduct(
+        product.id,
+        {
+          price: nextPrice,
+          stock: nextStock,
+          discount: product.discount,
+          active: product.active,
+        },
+        accessToken,
+      )
+
+      setProducts((prev) =>
+        prev.map((item) => (item.id === product.id ? { ...item, ...updatedProduct, productName: updatedProduct.productName } : item)),
+      )
+      setEditingProductId(null)
+      setEditingDraft(null)
+    } catch (error) {
+      console.error("Error updating product:", error)
+    } finally {
+      setSavingProductId(null)
+    }
   }
 
   const handleDelete = (userProductId: string, productName: string) => {
@@ -496,7 +538,20 @@ export default function ProductsPage() {
                   </td>
                 </tr>
               ) : (
-                products.map((product) => (
+                products.map((product) => {
+                  const isEditing = editingProductId === product.id
+                  const isSaving = savingProductId === product.id
+                  const draftPrice = editingDraft?.price ?? ""
+                  const draftStock = editingDraft?.stock ?? ""
+                  const parsedDraftPrice = Number.parseFloat(draftPrice)
+                  const parsedDraftStock = Number.parseInt(draftStock, 10)
+                  const canSaveDraft =
+                    Number.isFinite(parsedDraftPrice) &&
+                    parsedDraftPrice >= 0 &&
+                    Number.isInteger(parsedDraftStock) &&
+                    parsedDraftStock >= 0
+
+                  return (
                   <tr key={product.id} className="transition-colors hover:bg-surface-muted/80">
                     <td className="px-6 py-4">
                       <input
@@ -534,12 +589,45 @@ export default function ProductsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-text-secondary">{product.product?.subCategoriesId || "-"}</td>
-                    <td className="px-6 py-4 text-sm font-semibold text-brand">${product.price.toFixed(2)}</td>
+                    <td className="px-6 py-4 text-sm font-semibold text-brand">
+                      {isEditing ? (
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={draftPrice}
+                          onChange={(event) =>
+                            setEditingDraft((prev) => (prev ? { ...prev, price: event.target.value } : prev))
+                          }
+                          className="h-9 w-28 rounded-lg border border-border-strong bg-surface px-3 text-sm font-semibold text-brand focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
+                          disabled={isSaving}
+                        />
+                      ) : (
+                        `$${product.price.toFixed(2)}`
+                      )}
+                    </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        <span className={`text-sm font-medium ${getStockColor(product.stock)}`}>{product.stock}</span>
-                        <span className="ml-2 text-xs text-text-muted">units</span>
-                      </div>
+                      {isEditing ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min={0}
+                            step={1}
+                            value={draftStock}
+                            onChange={(event) =>
+                              setEditingDraft((prev) => (prev ? { ...prev, stock: event.target.value } : prev))
+                            }
+                            className="h-9 w-24 rounded-lg border border-border-strong bg-surface px-3 text-sm font-medium text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
+                            disabled={isSaving}
+                          />
+                          <span className="text-xs text-text-muted">units</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center">
+                          <span className={`text-sm font-medium ${getStockColor(product.stock)}`}>{product.stock}</span>
+                          <span className="ml-2 text-xs text-text-muted">units</span>
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <span
@@ -555,15 +643,19 @@ export default function ProductsPage() {
                       <div className="flex items-center space-x-2">
                         <button
                           type="button"
-                          onClick={() => handleEdit(product.id)}
-                          className="rounded-lg p-2 text-brand transition-colors hover:bg-surface-muted"
-                          title="Edit"
+                          onClick={() =>
+                            isEditing ? void handleInlineEditSave(product) : handleInlineEditStart(product)
+                          }
+                          disabled={isSaving || (isEditing && !canSaveDraft)}
+                          className="rounded-lg p-2 text-brand transition-colors hover:bg-surface-muted disabled:opacity-50"
+                          title={isEditing ? "Save" : "Edit"}
                         >
-                          <Edit className="w-4 h-4" />
+                          {isEditing ? <Check className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDelete(product.id, product.productName)}
+                          disabled={isSaving}
                           className="rounded-lg p-2 text-danger transition-colors hover:bg-danger/10"
                           title="Delete"
                         >
@@ -572,7 +664,8 @@ export default function ProductsPage() {
                       </div>
                     </td>
                   </tr>
-                ))
+                  )
+                })
               )}
             </tbody>
           </table>
