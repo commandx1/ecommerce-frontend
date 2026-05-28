@@ -9,8 +9,6 @@ import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useBuyerOrdersTableActions, useBuyerOrdersTableSelector } from "../context/buyer-orders-context"
 import {
   buildBuyerOrderViewModel,
-  getOrderStatusBadgeClasses,
-  getOrderStatusLabel,
   getPaymentViewStatusClasses,
   getPaymentViewStatusLabel,
 } from "../lib/order-view-utils"
@@ -148,33 +146,6 @@ export default function OrdersTable() {
             {getPaymentViewStatusLabel(summary.paymentStatus)}
           </span>
         )
-      },
-    },
-    {
-      id: "shipmentStatus",
-      header: () => "Shipment Status",
-      cell: ({ row }) => {
-        const summary = getSummary(row.original)
-        return (
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getOrderStatusBadgeClasses(summary.uiStatus)}`}
-          >
-            <span
-              className={`h-1.5 w-1.5 rounded-full ${
-                summary.uiStatus === "delivered"
-                  ? "bg-success"
-                  : summary.uiStatus === "shipped"
-                    ? "bg-brand"
-                    : "bg-warning"
-              }`}
-            />
-            {getOrderStatusLabel(summary.uiStatus)}
-          </span>
-        )
-      },
-      meta: {
-        cellClassName: "border-l-2 border-border-soft px-6 py-4",
-        headerClassName: "border-l-2 border-border-soft px-6 py-4",
       },
     },
     {
