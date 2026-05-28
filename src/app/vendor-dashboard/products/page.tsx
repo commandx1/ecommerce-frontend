@@ -5,6 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useId, useState } from "react"
+import AnimatedTabs from "@/components/ui/animated-tabs"
 import { Button } from "@/components/ui/button"
 import Modal from "@/components/ui/Modal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -80,6 +81,14 @@ interface ProductWithDetails extends UserProduct {
   image?: string
 }
 
+type PeriodTab = "3 months" | "6 months" | "12 months"
+
+const PERIOD_TABS: ReadonlyArray<{ label: string; value: PeriodTab }> = [
+  { label: "3 months", value: "3 months" },
+  { label: "6 months", value: "6 months" },
+  { label: "12 months", value: "12 months" },
+]
+
 export default function ProductsPage() {
   const id = useId()
   const router = useRouter()
@@ -91,6 +100,7 @@ export default function ProductsPage() {
   const [sortField, setSortField] = useState<"price" | "stock" | null>(null)
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("TOTAL")
+  const [selectedPeriodTab, setSelectedPeriodTab] = useState<PeriodTab>("3 months")
   const [pageSize, setPageSize] = useState<number>(25)
   const [currentPage, setCurrentPage] = useState<number>(0)
   const [totalPages, setTotalPages] = useState<number>(1)
@@ -355,6 +365,7 @@ export default function ProductsPage() {
 
         {/* Stats Cards */}
         <ProductStatsCards selectedFilter={selectedFilter} onFilterChange={handleFilterChange} />
+
       </section>
 
       {/* Filters and Search */}
@@ -362,17 +373,26 @@ export default function ProductsPage() {
         id={`${id}-filters-section`}
         className="mb-6 rounded-2xl border border-border-soft bg-surface-elevated p-6 shadow-soft"
       >
-        <div className="max-w-lg">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search products by name"
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full rounded-lg border border-border-strong py-2 pl-10 pr-4 text-text-primary placeholder:text-text-muted focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
-            />
-            <Search className="absolute left-3 top-3 text-text-muted w-4 h-4" />
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-lg flex-1">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search products by name"
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="w-full rounded-lg border border-border-strong py-2 pl-10 pr-4 text-text-primary placeholder:text-text-muted focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
+              />
+              <Search className="absolute left-3 top-3 text-text-muted w-4 h-4" />
+            </div>
           </div>
+
+          <AnimatedTabs<PeriodTab>
+            value={selectedPeriodTab}
+            options={PERIOD_TABS}
+            onValueChange={setSelectedPeriodTab}
+            className="self-start lg:self-auto"
+          />
         </div>
 
         <div className="mt-4 pt-4 border-t border-border-soft text-sm text-text-secondary">
