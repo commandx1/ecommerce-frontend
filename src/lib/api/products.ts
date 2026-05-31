@@ -7,9 +7,10 @@ const IMAGE_PROXY_URL = "/api/images" // Proxy path for images
 function normalizeBackendImagePath(path: string): string {
   const cleanPath = path.startsWith("/") ? path : `/${path}`
 
-  // Uploads may arrive as `/uploads/...` from backend DTOs, but backend serves them under `/api/uploads/...`.
-  if (cleanPath.startsWith("/uploads/")) {
-    return `/api${cleanPath}`
+  // Backend static files are served under `/uploads/...`.
+  // Some payloads may still contain `/api/uploads/...`; normalize both to `/uploads/...`.
+  if (cleanPath.startsWith("/api/uploads/")) {
+    return cleanPath.replace(/^\/api/, "")
   }
 
   return cleanPath
