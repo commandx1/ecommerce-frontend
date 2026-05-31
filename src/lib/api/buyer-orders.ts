@@ -40,7 +40,10 @@ export interface BuyerOrderItem {
   sellerConfirmedReturn?: boolean | null
   refundStatus?: string | null
   returnRefundStatus?: string | null
+  returnReason?: string | null
   returnDate?: string | null
+  returnRejectReason?: string | null
+  returnRejectDate?: string | null
   trackingLink?: string[]
   trackingLinks?: BuyerOrderTrackingLink[]
   updatedDate: string
