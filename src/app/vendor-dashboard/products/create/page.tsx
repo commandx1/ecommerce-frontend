@@ -551,16 +551,16 @@ function CreateProductPageContent() {
   if (!isAuthenticated || !user) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center p-8">
-        <div className="bg-white rounded-2xl shadow-lg p-12 text-center max-w-md">
-          <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <AlertCircle className="w-10 h-10 text-yellow-600" />
+        <div className="bg-surface-elevated rounded-2xl shadow-lg p-12 text-center max-w-md">
+          <div className="w-20 h-20 bg-warning/20 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertCircle className="w-10 h-10 text-warning" />
           </div>
-          <h2 className="text-2xl font-bold text-steel-blue mb-4">Authentication Required</h2>
-          <p className="text-gray-600 mb-6">You need to be logged in to create a product.</p>
+          <h2 className="text-2xl font-bold text-brand mb-4">Authentication Required</h2>
+          <p className="text-text-secondary mb-6">You need to be logged in to create a product.</p>
           <button
             type="button"
             onClick={() => router.push("/login")}
-            className="w-full bg-steel-blue text-white py-3 px-6 rounded-lg hover:bg-opacity-90 font-semibold transition-colors"
+            className="w-full bg-brand text-white py-3 px-6 rounded-lg hover:bg-opacity-90 font-semibold transition-colors"
           >
             Go to Login
           </button>
@@ -812,13 +812,13 @@ function CreateProductPageContent() {
         <div className="flex items-center space-x-4">
           <Link
             href="/vendor-dashboard/products"
-            className="w-10 h-10 bg-white rounded-lg shadow flex items-center justify-center hover:bg-gray-50 transition-colors"
+            className="w-10 h-10 bg-surface-elevated rounded-lg shadow flex items-center justify-center hover:bg-surface-muted transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
+            <ArrowLeft className="w-5 h-5 text-text-secondary" />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-steel-blue">{isEditMode ? "Edit Product" : "Create New Product"}</h1>
-            <p className="text-gray-600">
+            <h1 className="text-3xl font-bold text-brand">{isEditMode ? "Edit Product" : "Create New Product"}</h1>
+            <p className="text-text-secondary">
               {isEditMode ? "Update product information" : "Add a new product to your catalog"}
             </p>
           </div>
@@ -828,7 +828,7 @@ function CreateProductPageContent() {
             <button
               type="button"
               onClick={handleClearAll}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium flex items-center"
+              className="px-6 py-2 border border-border-soft rounded-lg text-text-primary hover:bg-surface-muted transition-colors font-medium flex items-center"
             >
               <RotateCcw className="w-4 h-4 mr-2" />
               Clear All
@@ -837,7 +837,7 @@ function CreateProductPageContent() {
           <button
             type="button"
             onClick={() => router.push("/vendor-dashboard/products")}
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+            className="px-6 py-2 border border-border-soft rounded-lg text-text-primary hover:bg-surface-muted transition-colors font-medium"
           >
             Cancel
           </button>
@@ -845,7 +845,7 @@ function CreateProductPageContent() {
             type="submit"
             form="create-product-form"
             disabled={isLoading}
-            className="px-6 py-2 bg-steel-blue text-white rounded-lg hover:bg-opacity-90 transition-colors font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 bg-brand text-white rounded-lg hover:bg-opacity-90 transition-colors font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save className="w-4 h-4 mr-2" />
             {isLoading
@@ -861,14 +861,14 @@ function CreateProductPageContent() {
 
       {/* Product Search Autocomplete */}
       {!isEditMode && (
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+        <div className="bg-surface-elevated rounded-2xl shadow-lg p-6 mb-6">
           <div className="flex items-center space-x-3 mb-4">
-            <div className="w-10 h-10 bg-pale-lime rounded-lg flex items-center justify-center">
-              <Search className="w-5 h-5 text-steel-blue" />
+            <div className="w-10 h-10 bg-accent-strong rounded-lg flex items-center justify-center">
+              <Search className="w-5 h-5 text-muted" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-steel-blue">Search Product</h2>
-              <p className="text-sm text-gray-500">Search existing products by barcode or product name</p>
+              <h2 className="text-lg font-semibold text-brand">Search Product</h2>
+              <p className="text-sm text-text-muted">Search existing products by barcode or product name</p>
             </div>
           </div>
 
@@ -881,13 +881,13 @@ function CreateProductPageContent() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
                 placeholder="Enter barcode number or product name..."
-                className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent"
+                className="w-full px-4 py-3 pl-12 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent"
               />
               <div className="absolute left-4 top-1/2 -translate-y-1/2">
                 {isSearching ? (
-                  <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                  <Loader2 className="w-5 h-5 text-text-muted animate-spin" />
                 ) : (
-                  <Search className="w-5 h-5 text-gray-400" />
+                  <Search className="w-5 h-5 text-text-muted" />
                 )}
               </div>
               {searchQuery && (
@@ -898,7 +898,7 @@ function CreateProductPageContent() {
                     setSearchResults([])
                     setShowDropdown(false)
                   }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -909,10 +909,10 @@ function CreateProductPageContent() {
             {showDropdown && searchResults.length > 0 && (
               <div
                 ref={dropdownRef}
-                className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl max-h-96 overflow-y-auto"
+                className="absolute z-50 w-full mt-2 bg-surface-elevated border border-border-soft rounded-xl shadow-xl max-h-96 overflow-y-auto"
               >
                 <div className="p-2">
-                  <p className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <p className="px-3 py-2 text-xs font-medium text-text-muted uppercase tracking-wide">
                     {searchResults.length} results found
                   </p>
                   {searchResults.map((product) => (
@@ -920,10 +920,10 @@ function CreateProductPageContent() {
                       key={`${product.source}-${product.id}`}
                       type="button"
                       onClick={() => handleProductSelect(product)}
-                      className="w-full flex items-center space-x-4 p-3 hover:bg-gray-50 rounded-lg transition-colors text-left"
+                      className="w-full flex items-center space-x-4 p-3 hover:bg-surface-muted rounded-lg transition-colors text-left"
                     >
                       {/* Product Image */}
-                      <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden shrink-0">
+                      <div className="w-16 h-16 bg-surface rounded-lg overflow-hidden shrink-0">
                         {product.images.length > 0 ? (
                           <Image
                             src={product.images[0]}
@@ -938,31 +938,31 @@ function CreateProductPageContent() {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <ImageIcon className="w-8 h-8 text-gray-300" />
+                            <ImageIcon className="w-8 h-8 text-text-muted/70" />
                           </div>
                         )}
                       </div>
 
                       {/* Product Info */}
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate">{product.title || "Unnamed Product"}</p>
+                        <p className="font-medium text-text-primary truncate">{product.title || "Unnamed Product"}</p>
                         <div className="flex items-center space-x-2 mt-1">
                           {product.barcode && (
-                            <span className="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded font-mono">
+                            <span className="inline-flex items-center px-2 py-0.5 bg-surface text-text-primary text-xs rounded font-mono">
                               <Barcode className="w-3 h-3 mr-1" />
                               {product.barcode}
                             </span>
                           )}
-                          {product.brand && <span className="text-xs text-gray-500 truncate">{product.brand}</span>}
+                          {product.brand && <span className="text-xs text-text-muted truncate">{product.brand}</span>}
                         </div>
-                        {product.category && <p className="text-xs text-gray-400 mt-1 truncate">{product.category}</p>}
+                        {product.category && <p className="text-xs text-text-muted mt-1 truncate">{product.category}</p>}
                       </div>
 
                       {/* Source Badge */}
                       <div className="shrink-0">
                         <span
                           className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            product.source === "local" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
+                            product.source === "local" ? "bg-success/15 text-success" : "bg-brand/15 text-accent-foreground"
                           }`}
                         >
                           {product.source === "local" ? "Local" : "Barcode DB"}
@@ -978,11 +978,11 @@ function CreateProductPageContent() {
             {showDropdown && searchResults.length === 0 && !isSearching && debouncedSearchQuery.trim() && (
               <div
                 ref={dropdownRef}
-                className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl p-6 text-center"
+                className="absolute z-50 w-full mt-2 bg-surface-elevated border border-border-soft rounded-xl shadow-xl p-6 text-center"
               >
-                <Search className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-600 font-medium">No results found</p>
-                <p className="text-gray-400 text-sm mt-1">No matching products for "{debouncedSearchQuery}"</p>
+                <Search className="w-10 h-10 text-text-muted/70 mx-auto mb-3" />
+                <p className="text-text-secondary font-medium">No results found</p>
+                <p className="text-text-muted text-sm mt-1">No matching products for "{debouncedSearchQuery}"</p>
               </div>
             )}
           </div>
@@ -990,15 +990,15 @@ function CreateProductPageContent() {
       )}
 
       {/* Tabs */}
-      <div className="bg-white rounded-t-2xl shadow-sm border-b border-gray-200">
+      <div className="bg-surface-elevated rounded-t-2xl shadow-sm border-b border-border-soft">
         <div className="flex space-x-8 px-8">
           <button
             type="button"
             onClick={() => setActiveTab("basic")}
             className={`py-4 px-2 font-medium border-b-2 transition-colors ${
               activeTab === "basic"
-                ? "text-steel-blue border-steel-blue"
-                : "text-gray-600 border-transparent hover:text-steel-blue"
+                ? "text-brand border-brand"
+                : "text-text-secondary border-transparent hover:text-brand"
             }`}
           >
             <Package className="w-4 h-4 inline mr-2" />
@@ -1009,8 +1009,8 @@ function CreateProductPageContent() {
             onClick={() => setActiveTab("details")}
             className={`py-4 px-2 font-medium border-b-2 transition-colors ${
               activeTab === "details"
-                ? "text-steel-blue border-steel-blue"
-                : "text-gray-600 border-transparent hover:text-steel-blue"
+                ? "text-brand border-brand"
+                : "text-text-secondary border-transparent hover:text-brand"
             }`}
           >
             <FileText className="w-4 h-4 inline mr-2" />
@@ -1021,8 +1021,8 @@ function CreateProductPageContent() {
             onClick={() => setActiveTab("media")}
             className={`py-4 px-2 font-medium border-b-2 transition-colors ${
               activeTab === "media"
-                ? "text-steel-blue border-steel-blue"
-                : "text-gray-600 border-transparent hover:text-steel-blue"
+                ? "text-brand border-brand"
+                : "text-text-secondary border-transparent hover:text-brand"
             }`}
           >
             <ImageIcon className="w-4 h-4 inline mr-2" />
@@ -1033,11 +1033,11 @@ function CreateProductPageContent() {
 
       {/* Form */}
       <form id="create-product-form" onSubmit={handleSubmit}>
-        <div className="bg-white rounded-b-2xl shadow-lg p-8">
+        <div className="bg-surface-elevated rounded-b-2xl shadow-lg p-8">
           {errors.submit && (
-            <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
-              <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-              <p className="text-red-600">{errors.submit}</p>
+            <div className="mb-6 bg-destructive/10 border border-destructive/25 rounded-lg p-4 flex items-start space-x-3">
+              <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+              <p className="text-destructive">{errors.submit}</p>
             </div>
           )}
 
@@ -1046,7 +1046,7 @@ function CreateProductPageContent() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="name" className="block text-sm font-medium text-text-primary mb-2">
                     Product Name *
                   </label>
                   <input
@@ -1056,14 +1056,14 @@ function CreateProductPageContent() {
                     value={formData.name}
                     onChange={handleInputChange}
                     disabled={isProductSelected}
-                    className={`w-full px-4 py-3 border ${errors.name ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60`}
+                    className={`w-full px-4 py-3 border ${errors.name ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
                     placeholder="e.g., Premium Dental Composite Kit"
                   />
-                  {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+                  {errors.name && <p className="text-destructive text-sm mt-1">{errors.name}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="detailedName" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="detailedName" className="block text-sm font-medium text-text-primary mb-2">
                     Detailed Name
                   </label>
                   <input
@@ -1073,14 +1073,14 @@ function CreateProductPageContent() {
                     value={formData.detailedName}
                     onChange={handleInputChange}
                     disabled={isProductSelected}
-                    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60`}
+                    className={`w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
                     placeholder="e.g., Premium Dental Composite Kit - 20 Shades with Applicators"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="aboutProduct" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="aboutProduct" className="block text-sm font-medium text-text-primary mb-2">
                   About Product
                 </label>
                 <textarea
@@ -1090,16 +1090,16 @@ function CreateProductPageContent() {
                   onChange={handleInputChange}
                   disabled={isProductSelected}
                   rows={4}
-                  className={`w-full px-4 py-3 border ${errors.aboutProduct ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent resize-none disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60`}
+                  className={`w-full px-4 py-3 border ${errors.aboutProduct ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent resize-none disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
                   placeholder="Describe your product in detail..."
                 />
-                {errors.aboutProduct && <p className="text-red-500 text-sm mt-1">{errors.aboutProduct}</p>}
+                {errors.aboutProduct && <p className="text-destructive text-sm mt-1">{errors.aboutProduct}</p>}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="subCategoriesId" className="block text-sm font-medium text-gray-700 mb-2">
-                    Category ID <span className="text-gray-400 font-normal">(Optional)</span>
+                  <label htmlFor="subCategoriesId" className="block text-sm font-medium text-text-primary mb-2">
+                    Category ID <span className="text-text-muted font-normal">(Optional)</span>
                   </label>
                   <input
                     id="subCategoriesId"
@@ -1108,14 +1108,14 @@ function CreateProductPageContent() {
                     value={formData.subCategoriesId}
                     onChange={handleInputChange}
                     disabled={isProductSelected}
-                    className={`w-full px-4 py-3 border ${errors.subCategoriesId ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60`}
+                    className={`w-full px-4 py-3 border ${errors.subCategoriesId ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
                     placeholder="Enter category ID"
                   />
-                  {errors.subCategoriesId && <p className="text-red-500 text-sm mt-1">{errors.subCategoriesId}</p>}
+                  {errors.subCategoriesId && <p className="text-destructive text-sm mt-1">{errors.subCategoriesId}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="customerReviews" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="customerReviews" className="block text-sm font-medium text-text-primary mb-2">
                     Customer Reviews (Optional)
                   </label>
                   <input
@@ -1125,7 +1125,7 @@ function CreateProductPageContent() {
                     value={formData.customerReviews}
                     onChange={handleInputChange}
                     disabled={isProductSelected}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
                     placeholder="Initial customer reviews"
                   />
                 </div>
@@ -1133,7 +1133,7 @@ function CreateProductPageContent() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label htmlFor="barcode" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="barcode" className="block text-sm font-medium text-text-primary mb-2">
                     <Barcode className="w-4 h-4 inline mr-1" />
                     Barcode
                   </label>
@@ -1143,14 +1143,14 @@ function CreateProductPageContent() {
                     name="barcode"
                     value={formData.barcode}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 border ${errors.barcode ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60`}
+                    className={`w-full px-4 py-3 border ${errors.barcode ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
                     placeholder="e.g., 8901234567890"
                   />
-                  {errors.barcode && <p className="text-red-500 text-sm mt-1">{errors.barcode}</p>}
+                  {errors.barcode && <p className="text-destructive text-sm mt-1">{errors.barcode}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="barcodeFormats" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="barcodeFormats" className="block text-sm font-medium text-text-primary mb-2">
                     Barcode Format
                   </label>
                   <Select
@@ -1161,7 +1161,7 @@ function CreateProductPageContent() {
                   >
                     <SelectTrigger
                       id="barcodeFormats"
-                      className="w-full rounded-lg border-gray-300 bg-white px-4 py-3 text-gray-700 shadow-none focus-visible:ring-2 focus-visible:ring-steel-blue disabled:bg-gray-100 disabled:opacity-60"
+                      className="w-full rounded-lg border-border-soft bg-surface-elevated px-4 py-3 text-text-primary shadow-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:bg-surface disabled:opacity-60"
                     >
                       <SelectValue />
                     </SelectTrigger>
@@ -1183,20 +1183,20 @@ function CreateProductPageContent() {
                       checked={formData.active}
                       onChange={handleInputChange}
                       disabled={isProductSelected && !isEditMode}
-                      className="w-5 h-5 text-steel-blue border-gray-300 rounded focus:ring-steel-blue disabled:cursor-not-allowed disabled:opacity-60"
+                      className="w-5 h-5 text-brand border-border-soft rounded focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
                     />
-                    <span className="ml-3 text-sm font-medium text-gray-700">Product is Active</span>
+                    <span className="ml-3 text-sm font-medium text-text-primary">Product is Active</span>
                   </label>
                 </div>
               </div>
 
               {/* User Product Fields */}
               {!isEditMode && (
-                <div className="border-t border-gray-200 pt-6 mt-6">
-                  <h3 className="text-lg font-semibold text-steel-blue mb-4">Pricing & Inventory</h3>
+                <div className="border-t border-border-soft pt-6 mt-6">
+                  <h3 className="text-lg font-semibold text-brand mb-4">Pricing & Inventory</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
-                      <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="price" className="block text-sm font-medium text-text-primary mb-2">
                         Price *
                       </label>
                       <input
@@ -1207,15 +1207,15 @@ function CreateProductPageContent() {
                         onChange={handleInputChange}
                         min="0"
                         step="0.01"
-                        className={`w-full px-4 py-3 border ${errors.price ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent`}
+                        className={`w-full px-4 py-3 border ${errors.price ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
                         placeholder="0.00"
                       />
-                      {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
+                      {errors.price && <p className="text-destructive text-sm mt-1">{errors.price}</p>}
                     </div>
 
                     <div>
-                      <label htmlFor="discount" className="block text-sm font-medium text-gray-700 mb-2">
-                        Discount <span className="text-gray-400 font-normal">(Optional)</span>
+                      <label htmlFor="discount" className="block text-sm font-medium text-text-primary mb-2">
+                        Discount <span className="text-text-muted font-normal">(Optional)</span>
                       </label>
                       <input
                         id="discount"
@@ -1225,14 +1225,14 @@ function CreateProductPageContent() {
                         onChange={handleInputChange}
                         min="0"
                         step="0.01"
-                        className={`w-full px-4 py-3 border ${errors.discount ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent`}
+                        className={`w-full px-4 py-3 border ${errors.discount ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
                         placeholder="0.00"
                       />
-                      {errors.discount && <p className="text-red-500 text-sm mt-1">{errors.discount}</p>}
+                      {errors.discount && <p className="text-destructive text-sm mt-1">{errors.discount}</p>}
                     </div>
 
                     <div>
-                      <label htmlFor="stock" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="stock" className="block text-sm font-medium text-text-primary mb-2">
                         Stock *
                       </label>
                       <input
@@ -1243,10 +1243,10 @@ function CreateProductPageContent() {
                         onChange={handleInputChange}
                         min="0"
                         step="1"
-                        className={`w-full px-4 py-3 border ${errors.stock ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent`}
+                        className={`w-full px-4 py-3 border ${errors.stock ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
                         placeholder="0"
                       />
-                      {errors.stock && <p className="text-red-500 text-sm mt-1">{errors.stock}</p>}
+                      {errors.stock && <p className="text-destructive text-sm mt-1">{errors.stock}</p>}
                     </div>
                   </div>
                 </div>
@@ -1254,11 +1254,11 @@ function CreateProductPageContent() {
 
               {/* Edit Mode: Show Pricing & Inventory */}
               {isEditMode && (
-                <div className="border-t border-gray-200 pt-6 mt-6">
-                  <h3 className="text-lg font-semibold text-steel-blue mb-4">Pricing & Inventory</h3>
+                <div className="border-t border-border-soft pt-6 mt-6">
+                  <h3 className="text-lg font-semibold text-brand mb-4">Pricing & Inventory</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
-                      <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="price" className="block text-sm font-medium text-text-primary mb-2">
                         Price *
                       </label>
                       <input
@@ -1269,15 +1269,15 @@ function CreateProductPageContent() {
                         onChange={handleInputChange}
                         min="0"
                         step="0.01"
-                        className={`w-full px-4 py-3 border ${errors.price ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent`}
+                        className={`w-full px-4 py-3 border ${errors.price ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
                         placeholder="0.00"
                       />
-                      {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
+                      {errors.price && <p className="text-destructive text-sm mt-1">{errors.price}</p>}
                     </div>
 
                     <div>
-                      <label htmlFor="discount" className="block text-sm font-medium text-gray-700 mb-2">
-                        Discount <span className="text-gray-400 font-normal">(Optional)</span>
+                      <label htmlFor="discount" className="block text-sm font-medium text-text-primary mb-2">
+                        Discount <span className="text-text-muted font-normal">(Optional)</span>
                       </label>
                       <input
                         id="discount"
@@ -1287,14 +1287,14 @@ function CreateProductPageContent() {
                         onChange={handleInputChange}
                         min="0"
                         step="0.01"
-                        className={`w-full px-4 py-3 border ${errors.discount ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent`}
+                        className={`w-full px-4 py-3 border ${errors.discount ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
                         placeholder="0.00"
                       />
-                      {errors.discount && <p className="text-red-500 text-sm mt-1">{errors.discount}</p>}
+                      {errors.discount && <p className="text-destructive text-sm mt-1">{errors.discount}</p>}
                     </div>
 
                     <div>
-                      <label htmlFor="stock" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="stock" className="block text-sm font-medium text-text-primary mb-2">
                         Stock *
                       </label>
                       <input
@@ -1305,10 +1305,10 @@ function CreateProductPageContent() {
                         onChange={handleInputChange}
                         min="0"
                         step="1"
-                        className={`w-full px-4 py-3 border ${errors.stock ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent`}
+                        className={`w-full px-4 py-3 border ${errors.stock ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
                         placeholder="0"
                       />
-                      {errors.stock && <p className="text-red-500 text-sm mt-1">{errors.stock}</p>}
+                      {errors.stock && <p className="text-destructive text-sm mt-1">{errors.stock}</p>}
                     </div>
                   </div>
                 </div>
@@ -1319,16 +1319,16 @@ function CreateProductPageContent() {
           {/* Product Details Tab */}
           {activeTab === "details" && (
             <div className="space-y-6">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start space-x-3">
-                <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                <p className="text-blue-700 text-sm">
+              <div className="bg-accent/45 border border-brand/25 rounded-lg p-4 flex items-start space-x-3">
+                <Info className="w-5 h-5 text-brand shrink-0 mt-0.5" />
+                <p className="text-accent-foreground text-sm">
                   These details provide additional information about your product and help buyers make informed
                   decisions.
                 </p>
               </div>
 
               <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="description" className="block text-sm font-medium text-text-primary mb-2">
                   Detailed Description
                 </label>
                 <textarea
@@ -1338,14 +1338,14 @@ function CreateProductPageContent() {
                   onChange={handleInputChange}
                   disabled={isProductSelected}
                   rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent resize-none disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent resize-none disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
                   placeholder="Detailed product description..."
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="manufacturerCode" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="manufacturerCode" className="block text-sm font-medium text-text-primary mb-2">
                     Manufacturer Code
                   </label>
                   <input
@@ -1355,13 +1355,13 @@ function CreateProductPageContent() {
                     value={formData.manufacturerCode}
                     onChange={handleInputChange}
                     disabled={isProductSelected}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
                     placeholder="e.g., MNF-4452"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="brand" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="brand" className="block text-sm font-medium text-text-primary mb-2">
                     Brand
                   </label>
                   <input
@@ -1371,7 +1371,7 @@ function CreateProductPageContent() {
                     value={formData.brand}
                     onChange={handleInputChange}
                     disabled={isProductSelected}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
                     placeholder="e.g., DentPro"
                   />
                 </div>
@@ -1379,7 +1379,7 @@ function CreateProductPageContent() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label htmlFor="packaging" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="packaging" className="block text-sm font-medium text-text-primary mb-2">
                     Packaging
                   </label>
                   <input
@@ -1389,13 +1389,13 @@ function CreateProductPageContent() {
                     value={formData.packaging}
                     onChange={handleInputChange}
                     disabled={isProductSelected}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
                     placeholder="e.g., Box of 100"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="primaryMarket" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="primaryMarket" className="block text-sm font-medium text-text-primary mb-2">
                     Primary Market
                   </label>
                   <input
@@ -1405,13 +1405,13 @@ function CreateProductPageContent() {
                     value={formData.primaryMarket}
                     onChange={handleInputChange}
                     disabled={isProductSelected}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
                     placeholder="e.g., Dental"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="type" className="block text-sm font-medium text-text-primary mb-2">
                     Type
                   </label>
                   <input
@@ -1421,7 +1421,7 @@ function CreateProductPageContent() {
                     value={formData.type}
                     onChange={handleInputChange}
                     disabled={isProductSelected}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
                     placeholder="e.g., Disposable"
                   />
                 </div>
@@ -1429,7 +1429,7 @@ function CreateProductPageContent() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label htmlFor="size" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="size" className="block text-sm font-medium text-text-primary mb-2">
                     Size
                   </label>
                   <input
@@ -1439,13 +1439,13 @@ function CreateProductPageContent() {
                     value={formData.size}
                     onChange={handleInputChange}
                     disabled={isProductSelected}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
                     placeholder="e.g., Large"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="scent" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="scent" className="block text-sm font-medium text-text-primary mb-2">
                     Scent
                   </label>
                   <input
@@ -1455,13 +1455,13 @@ function CreateProductPageContent() {
                     value={formData.scent}
                     onChange={handleInputChange}
                     disabled={isProductSelected}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
                     placeholder="e.g., Neutral"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="sds" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="sds" className="block text-sm font-medium text-text-primary mb-2">
                     SDS Document URL
                   </label>
                   <input
@@ -1471,7 +1471,7 @@ function CreateProductPageContent() {
                     value={formData.sds}
                     onChange={handleInputChange}
                     disabled={isProductSelected}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
                     placeholder="https://example.com/sds/product.pdf"
                   />
                 </div>
@@ -1484,11 +1484,11 @@ function CreateProductPageContent() {
             <div className="space-y-8">
               {/* Cover Photo Section */}
               <fieldset>
-                <legend className="block text-sm font-medium text-gray-700 mb-2">
+                <legend className="block text-sm font-medium text-text-primary mb-2">
                   Cover Photo
-                  <span className="text-gray-400 font-normal ml-2">(Main product image)</span>
+                  <span className="text-text-muted font-normal ml-2">(Main product image)</span>
                 </legend>
-                <p className="text-gray-500 text-sm mb-4">
+                <p className="text-text-muted text-sm mb-4">
                   Upload a high-quality cover image for your product. This will be the main image displayed.
                 </p>
 
@@ -1504,7 +1504,7 @@ function CreateProductPageContent() {
 
                 {fileData.coverPhotoPreview || existingImages.coverPhoto ? (
                   <div className="relative inline-block">
-                    <div className="w-48 h-48 bg-gray-100 rounded-lg overflow-hidden border-2 border-steel-blue">
+                    <div className="w-48 h-48 bg-surface rounded-lg overflow-hidden border-2 border-brand">
                       <Image
                         src={fileData.coverPhotoPreview || existingImages.coverPhoto || ""}
                         alt="Cover preview"
@@ -1517,7 +1517,7 @@ function CreateProductPageContent() {
                         }}
                       />
                     </div>
-                    <span className="absolute top-2 left-2 bg-steel-blue text-white text-xs px-2 py-1 rounded">
+                    <span className="absolute top-2 left-2 bg-brand text-white text-xs px-2 py-1 rounded">
                       {fileData.coverPhotoPreview ? "New Cover" : "Existing"}
                     </span>
                     <button
@@ -1530,14 +1530,14 @@ function CreateProductPageContent() {
                         }
                       }}
                       disabled={isProductSelected}
-                      className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-500"
+                      className="absolute top-2 right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center hover:bg-destructive/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-destructive"
                     >
                       <X className="w-4 h-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() => coverPhotoInputRef.current?.click()}
-                      className="absolute bottom-2 right-2 px-3 py-1 bg-white text-gray-700 text-xs rounded shadow hover:bg-gray-50 transition-colors"
+                      className="absolute bottom-2 right-2 px-3 py-1 bg-surface-elevated text-text-primary text-xs rounded shadow hover:bg-surface-muted transition-colors"
                     >
                       Change
                     </button>
@@ -1547,22 +1547,22 @@ function CreateProductPageContent() {
                     type="button"
                     onClick={() => coverPhotoInputRef.current?.click()}
                     disabled={isProductSelected}
-                    className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-steel-blue hover:bg-gray-50 transition-colors cursor-pointer w-full max-w-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="border-2 border-dashed border-border-soft rounded-lg p-8 text-center hover:border-brand hover:bg-surface-muted transition-colors cursor-pointer w-full max-w-md disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600 font-medium">Click to upload cover photo</p>
-                    <p className="text-gray-400 text-sm mt-1">PNG, JPG, GIF up to 10MB</p>
+                    <Upload className="w-10 h-10 text-text-muted mx-auto mb-3" />
+                    <p className="text-text-secondary font-medium">Click to upload cover photo</p>
+                    <p className="text-text-muted text-sm mt-1">PNG, JPG, GIF up to 10MB</p>
                   </button>
                 )}
               </fieldset>
 
               {/* Additional Photos Section */}
               <fieldset>
-                <legend className="block text-sm font-medium text-gray-700 mb-2">
+                <legend className="block text-sm font-medium text-text-primary mb-2">
                   Additional Photos
-                  <span className="text-gray-400 font-normal ml-2">(Optional)</span>
+                  <span className="text-text-muted font-normal ml-2">(Optional)</span>
                 </legend>
-                <p className="text-gray-500 text-sm mb-4">
+                <p className="text-text-muted text-sm mb-4">
                   Upload additional product images to show different angles or details.
                 </p>
 
@@ -1582,7 +1582,7 @@ function CreateProductPageContent() {
                     type="button"
                     onClick={() => photosInputRef.current?.click()}
                     disabled={isProductSelected}
-                    className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center px-4 py-2 bg-surface text-text-primary rounded-lg hover:bg-surface-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Photos
@@ -1593,7 +1593,7 @@ function CreateProductPageContent() {
                       {/* Existing photos from selected product */}
                       {existingImages.photos.map((photo, index) => (
                         <div key={`existing-${photo}`} className="relative group">
-                          <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                          <div className="aspect-square bg-surface rounded-lg overflow-hidden border border-border-soft">
                             <Image
                               src={photo}
                               alt={`Existing ${index + 1}`}
@@ -1615,11 +1615,11 @@ function CreateProductPageContent() {
                               }))
                             }}
                             disabled={isProductSelected}
-                            className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 disabled:opacity-0 disabled:cursor-not-allowed"
+                            className="absolute top-2 right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90 disabled:opacity-0 disabled:cursor-not-allowed"
                           >
                             <X className="w-4 h-4" />
                           </button>
-                          <span className="absolute bottom-2 left-2 bg-blue-500/80 text-white text-xs px-2 py-0.5 rounded">
+                          <span className="absolute bottom-2 left-2 bg-brand/80 text-white text-xs px-2 py-0.5 rounded">
                             Existing
                           </span>
                         </div>
@@ -1627,7 +1627,7 @@ function CreateProductPageContent() {
                       {/* Newly uploaded photos */}
                       {fileData.photosPreviews.map((preview, index) => (
                         <div key={preview} className="relative group">
-                          <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 border-green-400">
+                          <div className="aspect-square bg-surface rounded-lg overflow-hidden border-2 border-success/60">
                             <Image
                               src={preview}
                               alt={`New ${index + 1}`}
@@ -1644,21 +1644,21 @@ function CreateProductPageContent() {
                             type="button"
                             onClick={() => removePhoto(index)}
                             disabled={isProductSelected}
-                            className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 disabled:opacity-0 disabled:cursor-not-allowed"
+                            className="absolute top-2 right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90 disabled:opacity-0 disabled:cursor-not-allowed"
                           >
                             <X className="w-4 h-4" />
                           </button>
-                          <span className="absolute bottom-2 left-2 bg-green-500/80 text-white text-xs px-2 py-0.5 rounded">
+                          <span className="absolute bottom-2 left-2 bg-success/80 text-white text-xs px-2 py-0.5 rounded">
                             New
                           </span>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center">
-                      <ImageIcon className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                      <p className="text-gray-400">No additional photos added</p>
-                      <p className="text-gray-300 text-sm mt-1">Click "Add Photos" to upload more images</p>
+                    <div className="border-2 border-dashed border-border-soft rounded-lg p-8 text-center">
+                      <ImageIcon className="w-10 h-10 text-text-muted/70 mx-auto mb-3" />
+                      <p className="text-text-muted">No additional photos added</p>
+                      <p className="text-text-muted/70 text-sm mt-1">Click "Add Photos" to upload more images</p>
                     </div>
                   )}
                 </div>
@@ -1669,30 +1669,30 @@ function CreateProductPageContent() {
                 fileData.photos.length > 0 ||
                 existingImages.coverPhoto ||
                 existingImages.photos.length > 0) && (
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Images Summary</h4>
-                  <ul className="text-sm text-gray-600 space-y-1">
+                <div className="bg-surface-muted rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-text-primary mb-2">Images Summary</h4>
+                  <ul className="text-sm text-text-secondary space-y-1">
                     {existingImages.coverPhoto && !fileData.coverPhoto && (
                       <li className="flex items-center">
-                        <CheckCircle className="w-4 h-4 text-blue-500 mr-2" />
+                        <CheckCircle className="w-4 h-4 text-brand mr-2" />
                         Cover photo: Existing image
                       </li>
                     )}
                     {fileData.coverPhoto && (
                       <li className="flex items-center">
-                        <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                        <CheckCircle className="w-4 h-4 text-success mr-2" />
                         Cover photo: {fileData.coverPhoto.name} (new)
                       </li>
                     )}
                     {existingImages.photos.length > 0 && (
                       <li className="flex items-center">
-                        <CheckCircle className="w-4 h-4 text-blue-500 mr-2" />
+                        <CheckCircle className="w-4 h-4 text-brand mr-2" />
                         Existing photos: {existingImages.photos.length} image(s)
                       </li>
                     )}
                     {fileData.photos.length > 0 && (
                       <li className="flex items-center">
-                        <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                        <CheckCircle className="w-4 h-4 text-success mr-2" />
                         New photos: {fileData.photos.length} file(s)
                       </li>
                     )}
@@ -1703,14 +1703,14 @@ function CreateProductPageContent() {
           )}
 
           {/* Navigation Buttons */}
-          <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+          <div className="flex justify-between mt-8 pt-6 border-t border-border-soft">
             <button
               type="button"
               onClick={() => {
                 if (activeTab === "details") setActiveTab("basic")
                 else if (activeTab === "media") setActiveTab("details")
               }}
-              className={`px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium ${
+              className={`px-6 py-2 border border-border-soft rounded-lg text-text-primary hover:bg-surface-muted transition-colors font-medium ${
                 activeTab === "basic" ? "invisible" : ""
               }`}
             >
@@ -1722,7 +1722,7 @@ function CreateProductPageContent() {
                 if (activeTab === "basic") setActiveTab("details")
                 else if (activeTab === "details") setActiveTab("media")
               }}
-              className={`px-6 py-2 bg-pale-lime text-steel-blue rounded-lg hover:bg-opacity-90 transition-colors font-medium ${
+              className={`px-6 py-2 bg-accent-strong text-muted rounded-lg hover:bg-opacity-90 transition-colors font-medium ${
                 activeTab === "media" ? "invisible" : ""
               }`}
             >
@@ -1741,8 +1741,8 @@ export default function CreateProductPage() {
       fallback={
         <div className="flex min-h-[40vh] items-center justify-center p-8">
           <div className="text-center">
-            <Loader2 className="w-8 h-8 text-steel-blue animate-spin mx-auto mb-4" />
-            <p className="text-gray-600">Loading...</p>
+            <Loader2 className="w-8 h-8 text-brand animate-spin mx-auto mb-4" />
+            <p className="text-text-secondary">Loading...</p>
           </div>
         </div>
       }
