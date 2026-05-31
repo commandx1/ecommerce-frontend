@@ -332,6 +332,8 @@ export function useBuyerOrdersPage() {
       try {
         const response = await buyerOrdersAPI.refundOrder(payload)
         const refundedItemIds = new Set(payload.items.map((item) => item.orderItemId))
+        const refundReasonByOrderItemId = new Map(payload.items.map((item) => [item.orderItemId, item.returnReason]))
+        const submittedAt = new Date().toISOString()
 
         setOrders((prev) =>
           prev.map((order) => {
@@ -347,7 +349,13 @@ export function useBuyerOrdersPage() {
                     orderItems: Array.isArray(group.orderItems)
                       ? group.orderItems.map((item) =>
                           refundedItemIds.has(item.id)
-                            ? { ...item, refundStatus: "PENDING", returnRefundStatus: "PENDING" }
+                            ? {
+                                ...item,
+                                refundStatus: "PENDING",
+                                returnRefundStatus: "PENDING",
+                                returnReason: refundReasonByOrderItemId.get(item.id) ?? item.returnReason ?? null,
+                                returnDate: submittedAt,
+                              }
                             : item,
                         )
                       : [],
@@ -356,7 +364,13 @@ export function useBuyerOrdersPage() {
               orderItems: Array.isArray(order.orderItems)
                 ? order.orderItems.map((item) =>
                     refundedItemIds.has(item.id)
-                      ? { ...item, refundStatus: "PENDING", returnRefundStatus: "PENDING" }
+                      ? {
+                          ...item,
+                          refundStatus: "PENDING",
+                          returnRefundStatus: "PENDING",
+                          returnReason: refundReasonByOrderItemId.get(item.id) ?? item.returnReason ?? null,
+                          returnDate: submittedAt,
+                        }
                       : item,
                   )
                 : order.orderItems,
