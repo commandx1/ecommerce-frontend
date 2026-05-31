@@ -166,7 +166,7 @@ export default function HomeHeroSectionClient() {
       >
         <motion.div
           variants={revealVariants}
-          className="relative z-20 mx-auto w-full max-w-6xl px-3 sm:px-6"
+          className="relative z-20 app-container"
         >
           <div className="relative overflow-hidden rounded-[1.6rem] border border-border-soft/75 bg-surface-elevated/92 shadow-panel backdrop-blur-xl sm:rounded-4xl">
             <div ref={emblaRef} className="overflow-hidden">

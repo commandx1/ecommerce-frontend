@@ -97,6 +97,11 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                         ? `/products/${encodeURIComponent(productId)}?vendorId=${encodeURIComponent(item.userProductId)}`
                         : null
                       const trackingLinks = resolveTrackingLinks(item)
+                      const hasReturnFlow = Boolean(item.returnRefundStatus)
+                      const metadataStatusValue = hasReturnFlow ? item.returnRefundStatus ?? item.status : item.status
+                      const metadataStatusLabel = hasReturnFlow
+                        ? `Return ${formatOrderItemStatus(metadataStatusValue)}`
+                        : formatOrderItemStatus(metadataStatusValue)
 
                       return (
                         <div
@@ -139,9 +144,9 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                                     <>
                                       <span>•</span>
                                       <span
-                                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${getOrderItemStatusTagClass(item.status)}`}
+                                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${getOrderItemStatusTagClass(metadataStatusValue)}`}
                                       >
-                                        {formatOrderItemStatus(item.status)}
+                                        {metadataStatusLabel}
                                       </span>
                                     </>
                                   ) : null}
@@ -222,7 +227,6 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                               <FulfillmentTimeline
                                 item={item}
                                 orderDate={summary.orderDate}
-                                orderTime={summary.orderTime}
                               />
                             </div>
                           </div>

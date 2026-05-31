@@ -4,6 +4,7 @@ import { LucideTimer } from "lucide-react"
 import { motion, useReducedMotion } from "motion/react"
 import type { BuyerOrderItem } from "@/lib/api/buyer-orders"
 import {
+  formatDateOnly,
   formatRefundStatus,
   getRefundTimelineClass,
   getTimelineDotClass,
@@ -14,12 +15,14 @@ import {
 interface FulfillmentTimelineProps {
   item: BuyerOrderItem
   orderDate: string
-  orderTime: string
 }
 
-export default function FulfillmentTimeline({ item, orderDate, orderTime }: FulfillmentTimelineProps) {
+export default function FulfillmentTimeline({ item, orderDate }: FulfillmentTimelineProps) {
   const prefersReducedMotion = useReducedMotion()
   const timelineState = resolveOrderItemFulfillmentState(item)
+  const deliveredDate = item.deliveredDate ? formatDateOnly(item.deliveredDate) : null
+  const returnRefundStatus = item.returnRefundStatus ?? item.refundStatus ?? null
+  const returnDate = item.returnDate ? formatDateOnly(item.returnDate) : null
   const cancellationLabel = item.cancelledByCustomer
     ? "Cancelled by Customer"
     : item.cancelledBySeller
@@ -30,7 +33,7 @@ export default function FulfillmentTimeline({ item, orderDate, orderTime }: Fulf
   const shippingLabelClass = isCancelledDuringShipping ? "text-danger" : getTimelineLabelClass(timelineState.shipping)
   const cancellationDotClass = "bg-danger"
   const cancellationLabelClass = "text-danger"
-  const refundTimeline = item.refundStatus ? getRefundTimelineClass(item.refundStatus) : null
+  const refundTimeline = returnRefundStatus ? getRefundTimelineClass(returnRefundStatus) : null
   let timelineStepIndex = 0
 
   const getTimelineStepMotionProps = () => {
@@ -65,9 +68,7 @@ export default function FulfillmentTimeline({ item, orderDate, orderTime }: Fulf
           <div className="h-3.5 w-3.5 rounded-full border-2 border-surface-elevated bg-success shadow-sm" />
           <div>
             <p className="text-xs font-semibold text-success">Order Placed</p>
-            <p className="text-[11px] text-text-muted">
-              {orderDate}, {orderTime}
-            </p>
+            <p className="text-[11px] text-text-muted">{orderDate}</p>
           </div>
         </motion.div>
         <motion.div {...getTimelineStepMotionProps()} className="relative z-10 flex items-start gap-2.5">
@@ -82,14 +83,6 @@ export default function FulfillmentTimeline({ item, orderDate, orderTime }: Fulf
               className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${cancellationDotClass}`}
             />
             <p className={`text-xs font-medium ${cancellationLabelClass}`}>{cancellationLabel}</p>
-          </motion.div>
-        ) : null}
-        {item.refundStatus && refundTimeline && !isCancelledDuringShipping ? (
-          <motion.div {...getTimelineStepMotionProps()} className="relative z-10 flex items-start gap-2.5">
-            <div
-              className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${refundTimeline.dot}`}
-            />
-            <p className={`text-xs font-medium ${refundTimeline.label}`}>{formatRefundStatus(item.refundStatus)}</p>
           </motion.div>
         ) : null}
         {!cancellationLabel || isCancelledDuringShipping ? (
@@ -108,21 +101,29 @@ export default function FulfillmentTimeline({ item, orderDate, orderTime }: Fulf
             <p className={`text-xs font-medium ${cancellationLabelClass}`}>{cancellationLabel}</p>
           </motion.div>
         ) : null}
-        {item.refundStatus && refundTimeline && isCancelledDuringShipping ? (
-          <motion.div {...getTimelineStepMotionProps()} className="relative z-10 flex items-start gap-2.5">
-            <div
-              className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${refundTimeline.dot}`}
-            />
-            <p className={`text-xs font-medium ${refundTimeline.label}`}>{formatRefundStatus(item.refundStatus)}</p>
-          </motion.div>
-        ) : null}
         {!cancellationLabel ? (
-          <motion.div {...getTimelineStepMotionProps()} className="relative z-10 flex items-start gap-2.5">
-            <div
-              className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${getTimelineDotClass(timelineState.delivered)}`}
-            />
-            <p className={`text-xs font-medium ${getTimelineLabelClass(timelineState.delivered)}`}>Delivered</p>
-          </motion.div>
+          <>
+            <motion.div {...getTimelineStepMotionProps()} className="relative z-10 flex items-start gap-2.5">
+              <div
+                className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${getTimelineDotClass(timelineState.delivered)}`}
+              />
+              <div>
+                <p className={`text-xs font-medium ${getTimelineLabelClass(timelineState.delivered)}`}>Delivered</p>
+                {deliveredDate && deliveredDate !== "-" ? <p className="text-[11px] text-text-muted">{deliveredDate}</p> : null}
+              </div>
+            </motion.div>
+            {returnRefundStatus && refundTimeline ? (
+              <motion.div {...getTimelineStepMotionProps()} className="relative z-10 flex items-start gap-2.5">
+                <div
+                  className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${refundTimeline.dot}`}
+                />
+                <div>
+                  <p className={`text-xs font-medium ${refundTimeline.label}`}>{formatRefundStatus(returnRefundStatus)}</p>
+                  {returnDate && returnDate !== "-" ? <p className="text-[11px] text-text-muted">{returnDate}</p> : null}
+                </div>
+              </motion.div>
+            ) : null}
+          </>
         ) : null}
       </div>
     </>

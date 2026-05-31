@@ -346,13 +346,19 @@ export function useBuyerOrdersPage() {
                     ...group,
                     orderItems: Array.isArray(group.orderItems)
                       ? group.orderItems.map((item) =>
-                          refundedItemIds.has(item.id) ? { ...item, refundStatus: "PENDING" } : item,
+                          refundedItemIds.has(item.id)
+                            ? { ...item, refundStatus: "PENDING", returnRefundStatus: "PENDING" }
+                            : item,
                         )
                       : [],
                   }))
                 : order.sellerGroups,
               orderItems: Array.isArray(order.orderItems)
-                ? order.orderItems.map((item) => (refundedItemIds.has(item.id) ? { ...item, refundStatus: "PENDING" } : item))
+                ? order.orderItems.map((item) =>
+                    refundedItemIds.has(item.id)
+                      ? { ...item, refundStatus: "PENDING", returnRefundStatus: "PENDING" }
+                      : item,
+                  )
                 : order.orderItems,
             }
           }),
