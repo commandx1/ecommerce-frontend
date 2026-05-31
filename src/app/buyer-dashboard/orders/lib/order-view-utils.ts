@@ -7,6 +7,13 @@ import type {
 } from "@/lib/api/buyer-orders"
 import type { BuyerOrderViewModel, FulfillmentStepState, OrderViewStatus, PaymentViewStatus } from "../types"
 
+interface FulfillmentTimelineStateItem {
+  status: string
+  cancelledByCustomer?: boolean | null
+  cancelledBySeller?: boolean | null
+  cancelledWithShippingFee?: boolean | null
+}
+
 export function resolveOrderItemProductId(item: BuyerOrderItem): string | null {
   const rawItem = item as unknown as Record<string, unknown>
 
@@ -290,7 +297,7 @@ export function resolveOrderMoneyBreakdown(
   return { tax: 0, netTotal }
 }
 
-export function resolveOrderItemFulfillmentState(item: BuyerOrderItem): {
+export function resolveOrderItemFulfillmentState(item: FulfillmentTimelineStateItem): {
   processing: FulfillmentStepState
   shipping: FulfillmentStepState
   delivered: FulfillmentStepState
@@ -405,6 +412,18 @@ export function getOrderItemShipmentFee(item: BuyerOrderItem): number {
   if (item.shipmentFreeBySeller) return 0
   const shipmentUnitPrice = typeof item.shipmentPrice === "number" ? item.shipmentPrice : 0
   return shipmentUnitPrice * item.quantity
+}
+
+export function hasOrderItemReturnFlowStarted(item: BuyerOrderItem): boolean {
+  const hasReturnDate = typeof item.returnDate === "string" && item.returnDate.trim().length > 0
+  const hasReturnStatus = typeof item.returnRefundStatus === "string" && item.returnRefundStatus.trim().length > 0
+  const hasLegacyRefundStatus = typeof item.refundStatus === "string" && item.refundStatus.trim().length > 0
+
+  return hasReturnDate || hasReturnStatus || hasLegacyRefundStatus
+}
+
+export function hasAnyOrderItemReturnFlowStarted(items: BuyerOrderItem[]): boolean {
+  return items.some(hasOrderItemReturnFlowStarted)
 }
 
 export function buildBuyerOrderViewModel(order: BuyerOrder): BuyerOrderViewModel {
