@@ -11,6 +11,7 @@ import { isCancelableOrderItemStatus } from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useBuyerOrdersTableActions, useBuyerOrdersTableSelector } from "../context/buyer-orders-context"
 import {
+  hasAnyOrderItemReturnFlowStarted,
   formatDateTime,
   formatOrderItemStatus,
   getOrderItemShipmentFee,
@@ -34,7 +35,8 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
     reorderingItemId: state.reorderingItemId,
   }))
   const { handleReorder, requestCancelAction, requestRefundAction, setTrackingModalLinks } = useBuyerOrdersTableActions()
-  const canRequestRefund = summary.uiStatus === "delivered"
+  const hasStartedReturnFlow = hasAnyOrderItemReturnFlowStarted(summary.orderItems)
+  const canRequestRefund = summary.uiStatus === "delivered" && !hasStartedReturnFlow
 
   return (
     <div className="bg-surface-muted/55 p-6 shadow-inner">
