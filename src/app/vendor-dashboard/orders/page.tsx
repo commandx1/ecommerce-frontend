@@ -2,32 +2,24 @@
 
 import {
   CheckCircle2,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ChevronsUpDown,
-  ChevronUp,
   ExternalLink,
   Loader2,
   Printer,
   X,
 } from "lucide-react"
 import Link from "next/link"
-import { Fragment, useEffect, useId, useState } from "react"
+import { useEffect, useId, useState } from "react"
 import Modal from "@/components/ui/Modal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
-import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
-import { getFullImageUrl } from "@/lib/api/products"
-import { type ProcessUberDeliveriesResponse, type VendorOrder, vendorOrdersAPI } from "@/lib/api/vendor-orders"
-import {
-  isCancelableOrderItemStatus,
-  isWarningOrderItemStatus,
-  OrderItemStatus,
-} from "@/lib/constants/order-item-status"
-import formatCurrency from "@/lib/helpers/formatCurrency"
+import { extractApiErrorMessage } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
+import { type ProcessUberDeliveriesResponse, type VendorOrder, type VendorOrderItem, vendorOrdersAPI } from "@/lib/api/vendor-orders"
+import { OrderItemStatus } from "@/lib/constants/order-item-status"
 import { getQzConnectionStatus, printShippingLabel, type QzPrintOptions } from "@/lib/qz/printLabel"
 import { useAuthStore } from "@/stores/authStore"
+import OrdersTable from "./components/orders-table"
 
 interface PendingVendorCancelAction {
   orderItemIds: string[]
@@ -38,34 +30,9 @@ interface PendingVendorCancelAction {
   }
 }
 
-function extractApiErrorMessage(error: unknown): string | null {
-  if (!error || typeof error !== "object") return null
-
-  const maybeError = error as {
-    message?: unknown
-    response?: { data?: unknown }
-  }
-
-  const data = maybeError.response?.data
-  if (typeof data === "string" && data.trim()) {
-    return data
-  }
-
-  if (data && typeof data === "object") {
-    const payload = data as { message?: unknown; error?: unknown }
-    if (typeof payload.message === "string" && payload.message.trim()) {
-      return payload.message
-    }
-    if (typeof payload.error === "string" && payload.error.trim()) {
-      return payload.error
-    }
-  }
-
-  if (typeof maybeError.message === "string" && maybeError.message.trim()) {
-    return maybeError.message
-  }
-
-  return null
+interface PendingVendorReturnRejectAction {
+  orderItemId: string
+  productName: string
 }
 
 export default function VendorOrdersPage() {
@@ -94,6 +61,13 @@ export default function VendorOrdersPage() {
   const [cancelingOrderId, setCancelingOrderId] = useState<string | null>(null)
   const [pendingCancelAction, setPendingCancelAction] = useState<PendingVendorCancelAction | null>(null)
   const [isConfirmingCancel, setIsConfirmingCancel] = useState(false)
+  const [pendingRejectReturnAction, setPendingRejectReturnAction] = useState<PendingVendorReturnRejectAction | null>(
+    null,
+  )
+  const [rejectReturnReason, setRejectReturnReason] = useState("")
+  const [rejectReturnError, setRejectReturnError] = useState<string | null>(null)
+  const [returnActionItemId, setReturnActionItemId] = useState<string | null>(null)
+  const [returnActionType, setReturnActionType] = useState<"confirm" | "reject" | null>(null)
   const [uberResult, setUberResult] = useState<ProcessUberDeliveriesResponse | null>(null)
   const [uberProcessedOrderIds, setUberProcessedOrderIds] = useState<string[]>([])
 
@@ -264,6 +238,88 @@ export default function VendorOrdersPage() {
     }
   }
 
+  const handleConfirmReturn = async (item: VendorOrderItem) => {
+    setReturnActionItemId(item.id)
+    setReturnActionType("confirm")
+    try {
+      const response = await vendorOrdersAPI.sellerConfirmReturn({ orderItemIds: [item.id] })
+      setOrders((prev) =>
+        prev.map((order) => ({
+          ...order,
+          orderItems: order.orderItems.map((orderItem) =>
+            response.orderItemIds.includes(orderItem.id)
+              ? {
+                  ...orderItem,
+                  returnRefundStatus: "APPROVED",
+                  sellerConfirmedReturn: true,
+                  returnRejectReason: null,
+                }
+              : orderItem,
+          ),
+        })),
+      )
+      showToast.success("Return approved", response.message || "Return confirmed and refund created.")
+    } catch (error: unknown) {
+      const apiErrorMessage = extractApiErrorMessage(error)
+      showToast.error("Return approval failed", apiErrorMessage || "Return could not be approved.")
+    } finally {
+      setReturnActionItemId(null)
+      setReturnActionType(null)
+    }
+  }
+
+  const openRejectReturnModal = (item: VendorOrderItem) => {
+    setPendingRejectReturnAction({ orderItemId: item.id, productName: item.productName })
+    setRejectReturnReason("")
+    setRejectReturnError(null)
+  }
+
+  const handleRejectReturn = async () => {
+    if (!pendingRejectReturnAction) return
+
+    const reason = rejectReturnReason.trim()
+    if (!reason) {
+      setRejectReturnError("Please enter a rejection reason.")
+      return
+    }
+
+    setReturnActionItemId(pendingRejectReturnAction.orderItemId)
+    setReturnActionType("reject")
+
+    try {
+      const response = await vendorOrdersAPI.sellerRejectReturn({
+        items: [{ orderItemId: pendingRejectReturnAction.orderItemId, returnRejectReason: reason }],
+      })
+
+      setOrders((prev) =>
+        prev.map((order) => ({
+          ...order,
+          orderItems: order.orderItems.map((orderItem) =>
+            response.orderItemIds.includes(orderItem.id)
+              ? {
+                  ...orderItem,
+                  returnRefundStatus: "REJECTED_BY_SELLER",
+                  returnRejectReason: reason,
+                  returnRejectDate: new Date().toISOString(),
+                }
+              : orderItem,
+          ),
+        })),
+      )
+
+      showToast.success("Return rejected", response.message || "Return rejected.")
+      setPendingRejectReturnAction(null)
+      setRejectReturnReason("")
+      setRejectReturnError(null)
+    } catch (error: unknown) {
+      const apiErrorMessage = extractApiErrorMessage(error)
+      showToast.error("Return rejection failed", apiErrorMessage || "Return could not be rejected.")
+    } finally {
+      setReturnActionItemId(null)
+      setReturnActionType(null)
+    }
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -290,287 +346,26 @@ export default function VendorOrdersPage() {
         className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
       >
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b border-border-soft bg-surface-muted/70">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                  Buyer
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                  Created
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                  <button
-                    type="button"
-                    onClick={() => handleSortToggle("quantity")}
-                    className="inline-flex items-center gap-1 hover:text-brand"
-                    aria-label={`Sort by quantity ${sortBy === "quantity" && sortDir === "desc" ? "ascending" : "descending"}`}
-                  >
-                    Quantity
-                    {sortBy === "quantity" ? (
-                      sortDir === "desc" ? (
-                        <ChevronDown className="w-3 h-3" />
-                      ) : (
-                        <ChevronUp className="w-3 h-3" />
-                      )
-                    ) : (
-                      <ChevronsUpDown className="w-3 h-3 opacity-70" />
-                    )}
-                  </button>
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                  Items
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                  <button
-                    type="button"
-                    onClick={() => handleSortToggle("price")}
-                    className="inline-flex items-center gap-1 hover:text-brand"
-                    aria-label={`Sort by price ${sortBy === "price" && sortDir === "desc" ? "ascending" : "descending"}`}
-                  >
-                    Price
-                    {sortBy === "price" ? (
-                      sortDir === "desc" ? (
-                        <ChevronDown className="w-3 h-3" />
-                      ) : (
-                        <ChevronUp className="w-3 h-3" />
-                      )
-                    ) : (
-                      <ChevronsUpDown className="w-3 h-3 opacity-70" />
-                    )}
-                  </button>
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                  Shipping
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border-soft">
-              {!isLoading && orders.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-text-muted">
-                    No orders found.
-                  </td>
-                </tr>
-              ) : (
-                orders.map((order) => {
-                  const total = order.orderItems.reduce((sum, item) => sum + item.totalPrice, 0)
-                  const quantity = order.orderItems.reduce((sum, item) => sum + item.quantity, 0)
-                  const created = new Date(order.orderCreatedDate)
-                  const canCallUber = order.orderItems.some(
-                    (item) => item.status === "WAITING_FOR_UBER_DIRECT" || item.status === "UBER_ERROR",
-                  )
-                  const cancelableOrderItemIds = order.orderItems
-                    .filter((item) => isCancelableOrderItemStatus(item.status))
-                    .map((item) => item.id)
-                  const hasCancelableOrderItems = cancelableOrderItemIds.length > 0
-                  const isUberProcessed = uberProcessedOrderIds.includes(order.orderId)
-
-                  return (
-                    <Fragment key={order.orderId}>
-                      <tr className="hover:bg-surface-muted transition-colors">
-                        <td className="px-6 py-4 text-sm text-text-secondary">
-                          <div className="font-medium">
-                            {order.buyerName} {order.buyerSurname}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-text-secondary">
-                          {created.toLocaleString(undefined, {
-                            year: "numeric",
-                            month: "short",
-                            day: "2-digit",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-text-secondary">
-                          <span className="font-medium">{quantity}</span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-text-secondary">
-                          <button
-                            type="button"
-                            onClick={() => setExpandedOrderId(expandedOrderId === order.orderId ? null : order.orderId)}
-                            className="inline-flex items-center gap-2 text-sm text-brand hover:text-brand-strong"
-                          >
-                            <span className="font-medium">
-                              {order.orderItems.length} item
-                              {order.orderItems.length > 1 ? "s" : ""}
-                            </span>
-                            {expandedOrderId === order.orderId ? (
-                              <ChevronUp className="w-4 h-4" />
-                            ) : (
-                              <ChevronDown className="w-4 h-4" />
-                            )}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4 text-sm font-semibold text-brand">{formatCurrency(total)}</td>
-                        <td className="px-6 py-4 text-sm text-text-secondary">
-                          {formatCurrency(order.totalShippingCost ?? 0)}
-                        </td>
-                        <td className="px-6 py-4 text-sm">
-                          <span
-                            className={`px-3 py-1 text-xs font-medium rounded-full ${
-                              order.orderStatus === "PAYMENT_SUCCESS"
-                                ? "border border-success/20 bg-success/14 text-success"
-                                : "border border-border-soft bg-surface-muted text-text-primary"
-                            }`}
-                          >
-                            {order.orderStatus}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right text-sm">
-                          <div className="flex justify-end gap-2">
-                            {hasCancelableOrderItems ? (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setPendingCancelAction({
-                                    orderItemIds: cancelableOrderItemIds,
-                                    description: "Cancellation request for this order's items was submitted.",
-                                    options: { cancelingOrderId: order.orderId },
-                                  })
-                                }
-                                disabled={cancelingOrderId === order.orderId}
-                                className="inline-flex items-center rounded-full border border-danger/25 bg-danger/10 px-4 py-1.5 text-xs font-semibold text-danger transition-colors hover:bg-danger/15 disabled:cursor-not-allowed disabled:opacity-70"
-                              >
-                                {cancelingOrderId === order.orderId ? (
-                                  <span className="inline-flex items-center gap-1">
-                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                    Canceling...
-                                  </span>
-                                ) : (
-                                  "Cancel"
-                                )}
-                              </button>
-                            ) : null}
-                            <button
-                              type="button"
-                              onClick={() => void handleCallUber(order)}
-                              disabled={!canCallUber || isUberProcessed || processingOrderId === order.orderId}
-                              className="rounded-full truncate bg-brand px-4 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
-                            >
-                              {processingOrderId === order.orderId ? (
-                                <span className="inline-flex items-center gap-1">
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                  Processing...
-                                </span>
-                              ) : (
-                                "Call Uber"
-                              )}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                      {expandedOrderId === order.orderId && (
-                        <tr className="bg-surface-muted/60">
-                          <td colSpan={8} className="p-4">
-                            <div className="border border-border-soft rounded-xl bg-surface-elevated p-4 space-y-3 text-sm">
-                              {order.orderItems.map((item) => (
-                                <div
-                                  key={item.id}
-                                  className="flex flex-col gap-3 border-b border-border-soft pb-3 last:border-b-0 last:pb-0 md:flex-row md:items-center md:justify-between"
-                                >
-                                  <div className="flex items-center gap-3 min-w-0">
-                                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border-soft bg-surface-muted">
-                                      <ProductImageWithFallback
-                                        src={
-                                          getFullImageUrl(item.productCoverPhotoPath) ||
-                                          "/dentypro-product-placeholder.png"
-                                        }
-                                        alt={item.productName}
-                                        width={48}
-                                        height={48}
-                                        className="h-full w-full object-cover"
-                                      />
-                                    </div>
-                                    <div className="max-w-96 font-medium text-text-primary">{item.productName}</div>
-                                  </div>
-                                  <div className="flex flex-wrap justify-end items-center gap-4 text-xs text-text-secondary">
-                                    <span>
-                                      Qty: <span className="font-semibold text-text-primary">{item.quantity}</span>
-                                    </span>
-                                    <span>
-                                      Price:{" "}
-                                      <span className="font-semibold text-text-primary">
-                                        {formatCurrency(item.price)}
-                                      </span>
-                                    </span>
-                                    <span>
-                                      Total:{" "}
-                                      <span className="font-semibold text-text-primary">
-                                        {formatCurrency(item.totalPrice)}
-                                      </span>
-                                    </span>
-                                    <span
-                                      className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
-                                        isWarningOrderItemStatus(item.status)
-                                          ? "border border-warning/20 bg-warning/14 text-warning"
-                                          : "border border-border-soft bg-surface-muted text-text-secondary"
-                                      }`}
-                                    >
-                                      {item.status}
-                                    </span>
-                                    {item.shippingLink?.length || item.trackingLink?.length ? (
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          setLabelModalLinks({
-                                            shipping: item.shippingLink || [],
-                                            tracking: item.trackingLink || [],
-                                          })
-                                        }
-                                        className="inline-flex items-center px-3 py-1 rounded-full bg-brand/10 text-brand text-[11px] font-medium hover:bg-brand/20"
-                                      >
-                                        View {item.shippingLink?.length || 0} label
-                                        {item.shippingLink && item.shippingLink.length !== 1 ? "s" : ""} &amp;{" "}
-                                        {item.trackingLink?.length || 0} tracking
-                                        <ExternalLink className="w-3 h-3 ml-2" />
-                                      </button>
-                                    ) : (
-                                      <span className="text-[11px] text-text-muted">No labels or tracking</span>
-                                    )}
-                                    {isCancelableOrderItemStatus(item.status) && (
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          setPendingCancelAction({
-                                            orderItemIds: [item.id],
-                                            description: `${item.productName} cancellation request was submitted.`,
-                                            options: { cancelingItemId: item.id },
-                                          })
-                                        }
-                                        disabled={cancelingItemId === item.id || cancelingOrderId === order.orderId}
-                                        className="inline-flex items-center rounded-full border border-danger/25 bg-danger/10 px-3 py-1 text-[11px] font-semibold text-danger transition-colors hover:bg-danger/15 disabled:cursor-not-allowed disabled:opacity-70"
-                                      >
-                                        {cancelingItemId === item.id ? (
-                                          <span className="inline-flex items-center gap-1">
-                                            <Loader2 className="h-3 w-3 animate-spin" />
-                                            Canceling...
-                                          </span>
-                                        ) : (
-                                          "Cancel"
-                                        )}
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </Fragment>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
+          <OrdersTable
+            orders={orders}
+            isLoading={isLoading}
+            sortBy={sortBy}
+            sortDir={sortDir}
+            expandedOrderId={expandedOrderId}
+            processingOrderId={processingOrderId}
+            cancelingItemId={cancelingItemId}
+            cancelingOrderId={cancelingOrderId}
+            returnActionItemId={returnActionItemId}
+            returnActionType={returnActionType}
+            uberProcessedOrderIds={uberProcessedOrderIds}
+            onSortToggle={handleSortToggle}
+            onExpandedOrderChange={setExpandedOrderId}
+            onCallUber={(order) => void handleCallUber(order)}
+            onRequestCancel={(action) => setPendingCancelAction(action)}
+            onOpenLabelModal={setLabelModalLinks}
+            onConfirmReturn={(item) => void handleConfirmReturn(item)}
+            onRejectReturn={openRejectReturnModal}
+          />
         </div>
 
         {/* Pagination */}
@@ -683,6 +478,79 @@ export default function VendorOrdersPage() {
                 </>
               ) : (
                 "Confirm cancel"
+              )}
+            </button>
+          </div>
+        </div>
+      </Modal>
+      <Modal
+        isOpen={Boolean(pendingRejectReturnAction)}
+        onClose={() => {
+          if (returnActionType === "reject") return
+          setPendingRejectReturnAction(null)
+          setRejectReturnReason("")
+          setRejectReturnError(null)
+        }}
+        title="Reject return request"
+        maxWidthClassName="max-w-lg"
+        closeOnEscape={returnActionType !== "reject"}
+        closeOnOverlayClick={returnActionType !== "reject"}
+      >
+        <div className="space-y-4 p-6">
+          <div>
+            <h3 className="text-lg font-semibold text-text-primary">Reject return for this item?</h3>
+            {pendingRejectReturnAction ? (
+              <p className="mt-1 text-sm text-text-secondary">{pendingRejectReturnAction.productName}</p>
+            ) : null}
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor={`${id}-return-reject-reason`} className="text-sm font-medium text-text-secondary">
+              Rejection reason
+            </label>
+            <textarea
+              id={`${id}-return-reject-reason`}
+              rows={3}
+              value={rejectReturnReason}
+              onChange={(event) => {
+                setRejectReturnReason(event.target.value)
+                if (rejectReturnError) {
+                  setRejectReturnError(null)
+                }
+              }}
+              disabled={returnActionType === "reject"}
+              placeholder="Explain why the return is rejected"
+              className="w-full rounded-lg border border-border-strong bg-surface-elevated px-3 py-2 text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+            />
+            {rejectReturnError ? <p className="text-xs font-medium text-danger">{rejectReturnError}</p> : null}
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                setPendingRejectReturnAction(null)
+                setRejectReturnReason("")
+                setRejectReturnError(null)
+              }}
+              disabled={returnActionType === "reject"}
+              className="rounded-lg border border-border-strong px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleRejectReturn()}
+              disabled={returnActionType === "reject"}
+              className="inline-flex items-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-semibold text-white hover:bg-danger/90 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {returnActionType === "reject" ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Rejecting...
+                </>
+              ) : (
+                "Confirm reject"
               )}
             </button>
           </div>
