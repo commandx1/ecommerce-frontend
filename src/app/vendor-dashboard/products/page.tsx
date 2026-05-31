@@ -1,5 +1,6 @@
 "use client"
 
+import type { ColumnDef } from "@tanstack/react-table"
 import { ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, Download, Edit, Search, Trash2, Upload } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -7,6 +8,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useId, useState } from "react"
 import AnimatedTabs from "@/components/ui/animated-tabs"
 import { Button } from "@/components/ui/button"
+import DataTable from "@/components/ui/data-table"
 import Modal from "@/components/ui/Modal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getFullImageUrl, type Product, productsAPI, type UserProduct } from "@/lib/api/products"
@@ -369,6 +371,247 @@ export default function ProductsPage() {
     return "text-success"
   }
 
+  const productColumns: Array<ColumnDef<ProductWithDetails, unknown>> = [
+    {
+      id: "select",
+      header: () => (
+        <input
+          type="checkbox"
+          checked={selectedProducts.length === products.length && products.length > 0}
+          onChange={handleSelectAll}
+          className="w-4 h-4 text-brand bg-surface-muted border-border-strong rounded focus:ring-brand/40"
+          aria-label="Select all products"
+        />
+      ),
+      cell: ({ row }) => (
+        <input
+          type="checkbox"
+          checked={selectedProducts.includes(row.original.id)}
+          onChange={() => handleSelectProduct(row.original.id)}
+          className="w-4 h-4 text-brand bg-surface-muted border-border-strong rounded focus:ring-brand/40"
+          aria-label={`Select ${row.original.productName}`}
+        />
+      ),
+      meta: {
+        headerClassName: "w-14 px-6 py-4",
+        cellClassName: "px-6 py-4",
+      },
+    },
+    {
+      id: "product",
+      header: () => "Product",
+      cell: ({ row }) => {
+        const product = row.original
+        return (
+          <div className="flex items-center min-w-72">
+            <div className="w-12 h-12 min-w-12 min-h-12 max-w-12 max-h-12 overflow-hidden bg-surface-elevated rounded-lg border border-border-soft flex items-center justify-center mr-3">
+              <Image
+                src={imageFallbacks[product.id] || !product.image ? "/dentypro-product-placeholder.png" : product.image}
+                alt={product.productName}
+                width={40}
+                height={40}
+                className={cn("w-full h-full object-contain", imageFallbacks[product.id] || !product.image ? "scale-110" : "")}
+                onError={() =>
+                  setImageFallbacks((prev) => ({
+                    ...prev,
+                    [product.id]: true,
+                  }))
+                }
+              />
+            </div>
+            <div className="font-medium text-text-primary">{product.productName}</div>
+          </div>
+        )
+      },
+      meta: {
+        headerClassName: "px-6 py-4",
+        cellClassName: "px-6 py-4",
+      },
+    },
+    {
+      id: "price",
+      header: () => (
+        <button
+          type="button"
+          onClick={() => handleSort("price")}
+          className="flex items-center space-x-1 hover:text-brand transition-colors"
+        >
+          <span>Price</span>
+          {sortField === "price" ? (
+            sortDirection === "asc" ? (
+              <ArrowUp className="w-4 h-4" />
+            ) : (
+              <ArrowDown className="w-4 h-4" />
+            )
+          ) : (
+            <div className="flex flex-col -space-y-1.5 w-4 h-4">
+              <ArrowUp className="w-3 h-3 text-text-muted" />
+              <ArrowDown className="w-3 h-3 text-text-muted" />
+            </div>
+          )}
+        </button>
+      ),
+      cell: ({ row }) => {
+        const product = row.original
+        const isEditing = editingProductId === product.id
+        const isSaving = savingProductId === product.id
+        const draftPrice = editingDraft?.price ?? ""
+
+        return (
+          <div className="text-sm font-semibold text-brand">
+            {isEditing ? (
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                value={draftPrice}
+                onChange={(event) =>
+                  setEditingDraft((prev) => (prev ? { ...prev, price: event.target.value } : prev))
+                }
+                className="h-9 w-28 rounded-lg border border-border-strong bg-surface px-3 text-sm font-semibold text-brand focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
+                disabled={isSaving}
+              />
+            ) : (
+              `$${product.price.toFixed(2)}`
+            )}
+          </div>
+        )
+      },
+      meta: {
+        headerClassName: "border-l-2 border-border-soft px-6 py-4",
+        cellClassName: "border-l-2 border-border-soft px-6 py-4",
+      },
+    },
+    {
+      id: "stock",
+      header: () => (
+        <button
+          type="button"
+          onClick={() => handleSort("stock")}
+          className="flex items-center space-x-1 hover:text-brand transition-colors"
+        >
+          <span>Stock</span>
+          {sortField === "stock" ? (
+            sortDirection === "asc" ? (
+              <ArrowUp className="w-4 h-4" />
+            ) : (
+              <ArrowDown className="w-4 h-4" />
+            )
+          ) : (
+            <div className="flex flex-col -space-y-1.5 w-4 h-4">
+              <ArrowUp className="w-3 h-3 text-text-muted" />
+              <ArrowDown className="w-3 h-3 text-text-muted" />
+            </div>
+          )}
+        </button>
+      ),
+      cell: ({ row }) => {
+        const product = row.original
+        const isEditing = editingProductId === product.id
+        const isSaving = savingProductId === product.id
+        const draftStock = editingDraft?.stock ?? ""
+
+        return isEditing ? (
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min={0}
+              step={1}
+              value={draftStock}
+              onChange={(event) =>
+                setEditingDraft((prev) => (prev ? { ...prev, stock: event.target.value } : prev))
+              }
+              className="h-9 w-24 rounded-lg border border-border-strong bg-surface px-3 text-sm font-medium text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
+              disabled={isSaving}
+            />
+            <span className="text-xs text-text-muted">units</span>
+          </div>
+        ) : (
+          <div className="flex items-center">
+            <span className={`text-sm font-medium ${getStockColor(product.stock)}`}>{product.stock}</span>
+            <span className="ml-2 text-xs text-text-muted">units</span>
+          </div>
+        )
+      },
+      meta: {
+        headerClassName: "px-6 py-4",
+        cellClassName: "px-6 py-4",
+      },
+    },
+    {
+      id: "status",
+      header: () => "Status",
+      cell: ({ row }) => {
+        const product = row.original
+        return (
+          <span
+            className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(product.active ? "Published" : "Inactive")}`}
+          >
+            {product.active ? "Published" : "Inactive"}
+          </span>
+        )
+      },
+      meta: {
+        headerClassName: "px-6 py-4",
+        cellClassName: "px-6 py-4",
+      },
+    },
+    {
+      id: "sales",
+      header: () => "Sales",
+      cell: () => <span className="text-sm text-text-secondary">-</span>,
+      meta: {
+        headerClassName: "px-6 py-4",
+        cellClassName: "px-6 py-4",
+      },
+    },
+    {
+      id: "actions",
+      header: () => "Actions",
+      cell: ({ row }) => {
+        const product = row.original
+        const isEditing = editingProductId === product.id
+        const isSaving = savingProductId === product.id
+        const draftPrice = editingDraft?.price ?? ""
+        const draftStock = editingDraft?.stock ?? ""
+        const parsedDraftPrice = Number.parseFloat(draftPrice)
+        const parsedDraftStock = Number.parseInt(draftStock, 10)
+        const canSaveDraft =
+          Number.isFinite(parsedDraftPrice) &&
+          parsedDraftPrice >= 0 &&
+          Number.isInteger(parsedDraftStock) &&
+          parsedDraftStock >= 0
+
+        return (
+          <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={() => (isEditing ? void handleInlineEditSave(product) : handleInlineEditStart(product))}
+              disabled={isSaving || (isEditing && !canSaveDraft)}
+              className="rounded-lg p-2 text-brand transition-colors hover:bg-surface-muted disabled:opacity-50"
+              title={isEditing ? "Save" : "Edit"}
+            >
+              {isEditing ? <Check className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDelete(product.id, product.productName)}
+              disabled={isSaving}
+              className="rounded-lg p-2 text-danger transition-colors hover:bg-danger/10"
+              title="Delete"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        )
+      },
+      meta: {
+        headerClassName: "border-l-2 border-border-soft px-6 py-4",
+        cellClassName: "border-l-2 border-border-soft px-6 py-4",
+      },
+    },
+  ]
+
   if (!isAuthenticated) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -410,261 +653,56 @@ export default function ProductsPage() {
 
       </section>
 
-      {/* Filters and Search */}
-      <section
-        id={`${id}-filters-section`}
-        className="mb-6 rounded-2xl border border-border-soft bg-surface-elevated p-6 shadow-soft"
-      >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="max-w-lg flex-1">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search products by name"
-                value={searchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="w-full rounded-lg border border-border-strong py-2 pl-10 pr-4 text-text-primary placeholder:text-text-muted focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
-              />
-              <Search className="absolute left-3 top-3 text-text-muted w-4 h-4" />
-            </div>
-          </div>
-
-          <AnimatedTabs<PeriodTab>
-            value={selectedPeriodTab}
-            options={PERIOD_TABS}
-            onValueChange={setSelectedPeriodTab}
-            className="self-start lg:self-auto"
-          />
-        </div>
-
-        <div className="mt-4 pt-4 border-t border-border-soft text-sm text-text-secondary">
-          <div className="text-sm text-text-secondary">
-            Showing{" "}
-            <span className="font-semibold text-brand">
-              {currentPage * pageSize + 1}-{Math.min((currentPage + 1) * pageSize, totalElements)}
-            </span>{" "}
-            of <span className="font-semibold text-brand">{totalElements}</span> products
-          </div>
-        </div>
-      </section>
-
-      {/* Products Table */}
+      {/* Products Table + Filters */}
       <section
         id={`${id}-products-table-section`}
-        className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
+        className="mb-6 overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
       >
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b border-border-soft bg-surface-muted/70">
-              <tr>
-                <th className="px-6 py-4 text-left">
-                  <input
-                    type="checkbox"
-                    checked={selectedProducts.length === products.length && products.length > 0}
-                    onChange={handleSelectAll}
-                    className="w-4 h-4 text-brand bg-surface-muted border-border-strong rounded focus:ring-brand/40"
-                  />
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                  Product
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                  <button
-                    type="button"
-                    onClick={() => handleSort("price")}
-                    className="flex items-center space-x-1 hover:text-brand transition-colors"
-                  >
-                    <span>Price</span>
-                    {sortField === "price" ? (
-                      sortDirection === "asc" ? (
-                        <ArrowUp className="w-4 h-4" />
-                      ) : (
-                        <ArrowDown className="w-4 h-4" />
-                      )
-                    ) : (
-                      <div className="flex flex-col -space-y-1.5 w-4 h-4">
-                        <ArrowUp className="w-3 h-3 text-text-muted" />
-                        <ArrowDown className="w-3 h-3 text-text-muted" />
-                      </div>
-                    )}
-                  </button>
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                  <button
-                    type="button"
-                    onClick={() => handleSort("stock")}
-                    className="flex items-center space-x-1 hover:text-brand transition-colors"
-                  >
-                    <span>Stock</span>
-                    {sortField === "stock" ? (
-                      sortDirection === "asc" ? (
-                        <ArrowUp className="w-4 h-4" />
-                      ) : (
-                        <ArrowDown className="w-4 h-4" />
-                      )
-                    ) : (
-                      <div className="flex flex-col -space-y-1.5 w-4 h-4">
-                        <ArrowUp className="w-3 h-3 text-text-muted" />
-                        <ArrowDown className="w-3 h-3 text-text-muted" />
-                      </div>
-                    )}
-                  </button>
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                  Sales
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border-soft">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-text-muted">
-                    Loading products...
-                  </td>
-                </tr>
-              ) : products.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-text-muted">
-                    No products found. Create your first product!
-                  </td>
-                </tr>
-              ) : (
-                products.map((product) => {
-                  const isEditing = editingProductId === product.id
-                  const isSaving = savingProductId === product.id
-                  const draftPrice = editingDraft?.price ?? ""
-                  const draftStock = editingDraft?.stock ?? ""
-                  const parsedDraftPrice = Number.parseFloat(draftPrice)
-                  const parsedDraftStock = Number.parseInt(draftStock, 10)
-                  const canSaveDraft =
-                    Number.isFinite(parsedDraftPrice) &&
-                    parsedDraftPrice >= 0 &&
-                    Number.isInteger(parsedDraftStock) &&
-                    parsedDraftStock >= 0
+        <div className="border-b border-border-soft p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-lg flex-1">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search products by name"
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="w-full rounded-lg border border-border-strong py-2 pl-10 pr-4 text-text-primary placeholder:text-text-muted focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
+                />
+                <Search className="absolute left-3 top-3 text-text-muted w-4 h-4" />
+              </div>
+            </div>
 
-                  return (
-                  <tr key={product.id} className="transition-colors hover:bg-surface-muted/80">
-                    <td className="px-6 py-4">
-                      <input
-                        type="checkbox"
-                        checked={selectedProducts.includes(product.id)}
-                        onChange={() => handleSelectProduct(product.id)}
-                        className="w-4 h-4 text-brand bg-surface-muted border-border-strong rounded focus:ring-brand/40"
-                      />
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center min-w-72">
-                        <div className="w-12 h-12 min-w-12 min-h-12 max-w-12 max-h-12 overflow-hidden bg-surface-elevated rounded-lg border border-border-soft flex items-center justify-center mr-3">
-                          <Image
-                            src={
-                              imageFallbacks[product.id] || !product.image
-                                ? "/dentypro-product-placeholder.png"
-                                : product.image
-                            }
-                            alt={product.productName}
-                            width={40}
-                            height={40}
-                            className={cn(
-                              "w-full h-full object-contain",
-                              imageFallbacks[product.id] || !product.image ? "scale-110" : "",
-                            )}
-                            onError={() =>
-                              setImageFallbacks((prev) => ({
-                                ...prev,
-                                [product.id]: true,
-                              }))
-                            }
-                          />
-                        </div>
-                        <div className="font-medium text-text-primary">{product.productName}</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm font-semibold text-brand">
-                      {isEditing ? (
-                        <input
-                          type="number"
-                          min={0}
-                          step="0.01"
-                          value={draftPrice}
-                          onChange={(event) =>
-                            setEditingDraft((prev) => (prev ? { ...prev, price: event.target.value } : prev))
-                          }
-                          className="h-9 w-28 rounded-lg border border-border-strong bg-surface px-3 text-sm font-semibold text-brand focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
-                          disabled={isSaving}
-                        />
-                      ) : (
-                        `$${product.price.toFixed(2)}`
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      {isEditing ? (
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            min={0}
-                            step={1}
-                            value={draftStock}
-                            onChange={(event) =>
-                              setEditingDraft((prev) => (prev ? { ...prev, stock: event.target.value } : prev))
-                            }
-                            className="h-9 w-24 rounded-lg border border-border-strong bg-surface px-3 text-sm font-medium text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
-                            disabled={isSaving}
-                          />
-                          <span className="text-xs text-text-muted">units</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center">
-                          <span className={`text-sm font-medium ${getStockColor(product.stock)}`}>{product.stock}</span>
-                          <span className="ml-2 text-xs text-text-muted">units</span>
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(
-                          product.active ? "Published" : "Inactive",
-                        )}`}
-                      >
-                        {product.active ? "Published" : "Inactive"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-text-secondary">-</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            isEditing ? void handleInlineEditSave(product) : handleInlineEditStart(product)
-                          }
-                          disabled={isSaving || (isEditing && !canSaveDraft)}
-                          className="rounded-lg p-2 text-brand transition-colors hover:bg-surface-muted disabled:opacity-50"
-                          title={isEditing ? "Save" : "Edit"}
-                        >
-                          {isEditing ? <Check className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(product.id, product.productName)}
-                          disabled={isSaving}
-                          className="rounded-lg p-2 text-danger transition-colors hover:bg-danger/10"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
+            <AnimatedTabs<PeriodTab>
+              value={selectedPeriodTab}
+              options={PERIOD_TABS}
+              onValueChange={setSelectedPeriodTab}
+              className="self-start lg:self-auto"
+            />
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-border-soft text-sm text-text-secondary">
+            <div className="text-sm text-text-secondary">
+              Showing{" "}
+              <span className="font-semibold text-brand">
+                {currentPage * pageSize + 1}-{Math.min((currentPage + 1) * pageSize, totalElements)}
+              </span>{" "}
+              of <span className="font-semibold text-brand">{totalElements}</span> products
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <DataTable
+            columns={productColumns}
+            data={products}
+            getRowClassName={() => "transition-colors hover:bg-surface-muted/80"}
+            getRowId={(product) => product.id}
+            isLoading={isLoading}
+            loadingText="Loading products..."
+            minTableWidthClassName="min-w-[1100px]"
+            noRowsText="No products found. Create your first product!"
+          />
         </div>
 
         {/* Pagination */}
