@@ -1,12 +1,12 @@
 "use client"
 
 import { ExternalLink, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
 import FulfillmentTimeline from "@/app/buyer-dashboard/orders/components/fulfillment-timeline"
 import { formatOrderItemStatus, getOrderItemStatusTagClass } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
-import { type VendorOrder, type VendorOrderItem } from "@/lib/api/vendor-orders"
+import { Button } from "@/components/ui/button"
+import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
 import { getFullImageUrl } from "@/lib/api/products"
+import type { VendorOrder, VendorOrderItem } from "@/lib/api/vendor-orders"
 import { isCancelableOrderItemStatus } from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 
@@ -23,11 +23,7 @@ interface VendorOrderExpandedContentProps {
   returnActionItemId: string | null
   returnActionType: "confirm" | "reject" | null
   onOpenLabelModal: (links: { shipping: string[]; tracking: string[] }) => void
-  onRequestCancel: (action: {
-    orderItemIds: string[]
-    description: string
-    options?: CancelActionOptions
-  }) => void
+  onRequestCancel: (action: { orderItemIds: string[]; description: string; options?: CancelActionOptions }) => void
   onConfirmReturn: (item: VendorOrderItem) => void
   onRejectReturn: (item: VendorOrderItem) => void
 }
@@ -40,6 +36,15 @@ function resolveVendorTrackingUrls(item: VendorOrderItem): string[] {
   }
   if (Array.isArray(item.trackingLink)) {
     return item.trackingLink.filter((url): url is string => typeof url === "string" && url.length > 0)
+  }
+  return []
+}
+
+function resolveVendorReturnTrackingUrls(item: VendorOrderItem): string[] {
+  if (Array.isArray(item.returnTrackingLinks) && item.returnTrackingLinks.length > 0) {
+    return item.returnTrackingLinks
+      .map((entry) => entry?.trackingUrl)
+      .filter((url): url is string => typeof url === "string" && url.length > 0)
   }
   return []
 }
@@ -65,6 +70,10 @@ function getVendorShipmentFee(item: VendorOrderItem): number {
   return typeof fromShippingLink === "number" ? fromShippingLink : 0
 }
 
+function hasVendorOrderItemReturnFlowStarted(item: VendorOrderItem): boolean {
+  return Boolean(item.returnDate || item.returnRefundStatus)
+}
+
 export default function VendorOrderExpandedContent({
   order,
   orderDate,
@@ -80,8 +89,10 @@ export default function VendorOrderExpandedContent({
     <div className="bg-surface-muted/55 p-6 shadow-inner">
       <div className="space-y-3">
         {order.orderItems.map((item) => {
-          const trackingUrls = resolveVendorTrackingUrls(item)
-          const shippingUrls = resolveVendorShippingUrls(item)
+          const hasReturnFlowStarted = hasVendorOrderItemReturnFlowStarted(item)
+          const returnTrackingUrls = resolveVendorReturnTrackingUrls(item)
+          const trackingUrls = hasReturnFlowStarted ? returnTrackingUrls : resolveVendorTrackingUrls(item)
+          const shippingUrls = hasReturnFlowStarted ? [] : resolveVendorShippingUrls(item)
           const isCancelledByParty = Boolean(item.cancelledByCustomer) || Boolean(item.cancelledBySeller)
           const normalizedReturnStatus = item.returnRefundStatus?.toUpperCase()
           const normalizedItemStatus = item.status.toUpperCase()
@@ -90,7 +101,7 @@ export default function VendorOrderExpandedContent({
           const isConfirmingReturn = returnActionItemId === item.id && returnActionType === "confirm"
           const isReturnActionLoading = isConfirmingReturn
           const hasReturnFlow = Boolean(item.returnRefundStatus)
-          const metadataStatusValue = hasReturnFlow ? item.returnRefundStatus ?? item.status : item.status
+          const metadataStatusValue = hasReturnFlow ? (item.returnRefundStatus ?? item.status) : item.status
           const metadataStatusLabel = hasReturnFlow
             ? `Return ${formatOrderItemStatus(metadataStatusValue)}`
             : formatOrderItemStatus(metadataStatusValue)
