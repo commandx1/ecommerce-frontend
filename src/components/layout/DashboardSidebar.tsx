@@ -3,7 +3,7 @@
 import { PanelLeftClose, PanelLeftOpen, type LucideIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { type ReactNode, useId } from "react"
+import { type ReactNode, useEffect, useId, useState } from "react"
 import { cn } from "@/lib/utils"
 
 type SidebarMatchMode = "exact" | "startsWith"
@@ -48,16 +48,19 @@ export interface DashboardSidebarQuickAction {
 }
 
 interface DashboardSidebarProps {
+  collapseStorageKey?: string
   quickActions?: DashboardSidebarQuickAction[]
   quickActionsTitle?: string
   quickActionsTrailing?: ReactNode
   quickActionSize?: SidebarItemSize
   groups: DashboardSidebarGroup[]
   groupVariant?: SidebarGroupVariant
+  showGroupTitles?: boolean
   defaultItemSize?: SidebarItemSize
   isCollapsed?: boolean
   onToggleCollapse?: () => void
   collapseButtonLabel?: string
+  defaultCollapsed?: boolean
 }
 
 const badgeClassMap: Record<SidebarBadgeTone, string> = {
@@ -129,25 +132,67 @@ const SidebarNavItem = ({
 }
 
 export default function DashboardSidebar({
+  collapseStorageKey,
   quickActions,
   quickActionsTitle = "Quick Actions",
   quickActionsTrailing,
   quickActionSize = "default",
   groups,
   groupVariant = "stacked",
+  showGroupTitles = true,
   defaultItemSize = "default",
-  isCollapsed = false,
+  isCollapsed,
   onToggleCollapse,
-  collapseButtonLabel = "Toggle sidebar",
+  collapseButtonLabel,
+  defaultCollapsed = false,
 }: DashboardSidebarProps) {
   const sidebarId = useId()
   const pathname = usePathname()
-  const collapsed = Boolean(isCollapsed)
+  const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed)
+  const isControlled = typeof isCollapsed === "boolean"
+  const collapsed = isControlled ? isCollapsed : internalCollapsed
+  const canToggleCollapse = Boolean(onToggleCollapse || (!isControlled && collapseStorageKey))
+
+  useEffect(() => {
+    if (isControlled || !collapseStorageKey) return
+
+    try {
+      const stored = window.localStorage.getItem(collapseStorageKey)
+      if (stored !== null) {
+        setInternalCollapsed(stored === "true")
+      }
+    } catch {
+      // Ignore localStorage access errors
+    }
+  }, [collapseStorageKey, isControlled])
+
+  const toggleCollapse = () => {
+    if (onToggleCollapse) {
+      onToggleCollapse()
+      return
+    }
+
+    setInternalCollapsed((previous) => {
+      const next = !previous
+      if (collapseStorageKey) {
+        try {
+          window.localStorage.setItem(collapseStorageKey, String(next))
+        } catch {
+          // Ignore localStorage access errors
+        }
+      }
+      return next
+    })
+  }
+
+  const resolvedCollapseButtonLabel = collapseButtonLabel ?? (collapsed ? "Expand sidebar" : "Collapse sidebar")
 
   const renderSubgroups = (subgroups: DashboardSidebarNavSubgroup[]) => {
     return subgroups.map((subgroup) => (
       <div key={subgroup.title} className="mt-4">
-        {!collapsed ? <h5 className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-text-muted">{subgroup.title}</h5> : null}
+        {!collapsed && showGroupTitles ? (
+          <h5 className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-text-muted">{subgroup.title}</h5>
+        ) : null}
         <div className="space-y-1">
           {subgroup.items.map((item) => (
             <SidebarNavItem
@@ -172,12 +217,12 @@ export default function DashboardSidebar({
       )}
     >
       <div className={cn("space-y-6", collapsed ? "p-3" : "p-6")}>
-        {onToggleCollapse ? (
+        {canToggleCollapse ? (
           <div className={cn("flex", collapsed ? "justify-center" : "justify-end")}>
             <button
               type="button"
-              onClick={onToggleCollapse}
-              aria-label={collapseButtonLabel}
+              onClick={toggleCollapse}
+              aria-label={resolvedCollapseButtonLabel}
               className="inline-flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-muted hover:text-brand"
             >
               {collapsed ? <PanelLeftOpen className="h-6 w-6" /> : <PanelLeftClose className="h-6 w-6" />}
@@ -248,14 +293,16 @@ export default function DashboardSidebar({
                     : "mt-6",
               )}
             >
-              <h4
-                className={cn(
-                  "mb-3 font-semibold uppercase tracking-wider text-text-muted",
-                  groupVariant === "divided" ? "text-sm" : "text-xs",
-                )}
-              >
-                {!collapsed ? group.title : null}
-              </h4>
+              {!collapsed && showGroupTitles ? (
+                <h4
+                  className={cn(
+                    "mb-3 font-semibold uppercase tracking-wider text-text-muted",
+                    groupVariant === "divided" ? "text-sm" : "text-xs",
+                  )}
+                >
+                  {group.title}
+                </h4>
+              ) : null}
 
               {group.subgroupsFirst && group.subgroups ? renderSubgroups(group.subgroups) : null}
 
