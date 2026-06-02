@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { type HTMLAttributes, type ReactNode, useMemo, useState } from "react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import type { BuyerOrder } from "@/lib/api/buyer-orders"
+import type { BuyerOrder, BuyerOrderItem } from "@/lib/api/buyer-orders"
 import { buildBuyerOrderViewModel } from "../lib/order-view-utils"
 import OrdersTable from "./orders-table"
 
@@ -190,8 +190,11 @@ function StatefulTableHarness({
     orderItemIds: string[]
     options?: { cancelingItemId?: string; cancelingSellerKey?: string }
   }) => void
-  onRequestRefund?: (order: BuyerOrder) => void
-  onSetTrackingModalLinks?: (links: Array<{ trackingUrl: string; status?: string; updatedDate?: string | null }>) => void
+  onRequestRefund?: (order: BuyerOrder, orderItem: BuyerOrderItem) => void
+  onSetTrackingModalLinks?: (payload: {
+    links: Array<{ trackingUrl: string; status?: string; updatedDate?: string | null }>
+    title: string
+  }) => void
   testOrders?: BuyerOrder[]
 }) {
   const [expandedState, setExpandedState] = useState<ExpandedState>({})
@@ -265,9 +268,6 @@ describe("OrdersTable", () => {
       "Date",
       "Seller / Store",
       "Items",
-      "Payment Method",
-      "Payment Status",
-      "Tracking",
       "Net Total",
       "Shipment Fee",
     ]) {
@@ -277,9 +277,6 @@ describe("OrdersTable", () => {
     expect(screen.getByText("Acme Store")).toBeInTheDocument()
     expect(screen.getByText("3 items")).toBeInTheDocument()
     expect(screen.getByText("2 line item(s)")).toBeInTheDocument()
-    expect(screen.getByText("VISA •••• 4242")).toBeInTheDocument()
-    expect(screen.getByText("Paid")).toBeInTheDocument()
-    expect(screen.getByText("1 link")).toBeInTheDocument()
     expect(screen.getByText("$240.00")).toBeInTheDocument()
     expect(screen.getByText("$10.00")).toBeInTheDocument()
   })
@@ -311,7 +308,7 @@ describe("OrdersTable", () => {
       summariesByOrderId: new Map([[secondOrder.orderId, summary]]),
     })
     render(<OrdersTable />)
-    expect(screen.getByText("No tracking yet")).toBeInTheDocument()
+    expect(screen.getByText("Beta Market")).toBeInTheDocument()
   })
 
   it("shows expanded section details and triggers expand-area actions", async () => {
@@ -319,10 +316,12 @@ describe("OrdersTable", () => {
     const onReorder = vi.fn().mockResolvedValue(undefined)
     const onSetTrackingModalLinks = vi.fn()
     const onRequestCancel = vi.fn()
+    const onRequestRefund = vi.fn()
     render(
       <StatefulTableHarness
         onReorder={onReorder}
         onRequestCancel={onRequestCancel}
+        onRequestRefund={onRequestRefund}
         onSetTrackingModalLinks={onSetTrackingModalLinks}
       />,
     )
@@ -341,13 +340,16 @@ describe("OrdersTable", () => {
     expect(onReorder).toHaveBeenCalledWith("up-1", 2, "Dental Kit")
 
     await user.click(screen.getByRole("button", { name: "Track" }))
-    expect(onSetTrackingModalLinks).toHaveBeenCalledWith([
-      {
-        trackingUrl: "https://track.example/1",
-        status: "IN_TRANSIT",
-        updatedDate: "2026-05-20T11:00:00Z",
-      },
-    ])
+    expect(onSetTrackingModalLinks).toHaveBeenCalledWith({
+      title: "Tracking links",
+      links: [
+        {
+          trackingUrl: "https://track.example/1",
+          status: "IN_TRANSIT",
+          updatedDate: "2026-05-20T11:00:00Z",
+        },
+      ],
+    })
 
     await user.click(screen.getByRole("button", { name: "Cancel Item" }))
     expect(onRequestCancel).toHaveBeenCalledWith({
@@ -362,6 +364,9 @@ describe("OrdersTable", () => {
       description: "Acme Store items cancellation request was submitted.",
       options: { cancelingSellerKey: "order-1:seller-1" },
     })
+
+    await user.click(screen.getByRole("button", { name: "Request Return" }))
+    expect(onRequestRefund).toHaveBeenCalledWith(order, order.sellerGroups?.[0]?.orderItems[1])
   })
 
   it("collapses when same row expander is clicked twice", async () => {
@@ -410,5 +415,28 @@ describe("OrdersTable", () => {
 
     expect(await screen.findByText("Mouthwash")).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Cancel Item" })).not.toBeInTheDocument()
+  })
+
+  it("does not show Request Return when the item already has a return date", async () => {
+    const user = userEvent.setup()
+    const orderWithReturnedItem: BuyerOrder = {
+      ...secondOrder,
+      sellerGroups: secondOrder.sellerGroups?.map((group) => ({
+        ...group,
+        orderItems: group.orderItems.map((item) => ({
+          ...item,
+          returnDate: "2026-05-22T10:00:00Z",
+        })),
+      })),
+    }
+
+    render(<StatefulTableHarness testOrders={[orderWithReturnedItem]} />)
+
+    const row = screen.getByText("Beta Market").closest("tr")
+    expect(row).not.toBeNull()
+    await user.click(within(row as HTMLTableRowElement).getByRole("button"))
+
+    expect(await screen.findByText("Mouthwash")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Request Return" })).not.toBeInTheDocument()
   })
 })
