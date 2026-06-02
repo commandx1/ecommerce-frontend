@@ -75,7 +75,6 @@ export default function VendorOrderExpandedContent({
   onOpenLabelModal,
   onRequestCancel,
   onConfirmReturn,
-  onRejectReturn,
 }: VendorOrderExpandedContentProps) {
   return (
     <div className="bg-surface-muted/55 p-6 shadow-inner">
@@ -89,8 +88,7 @@ export default function VendorOrderExpandedContent({
           const canManageDeliveredReturn =
             normalizedReturnStatus === "DELIVERED" && normalizedItemStatus === "DELIVERED"
           const isConfirmingReturn = returnActionItemId === item.id && returnActionType === "confirm"
-          const isRejectingReturn = returnActionItemId === item.id && returnActionType === "reject"
-          const isReturnActionLoading = isConfirmingReturn || isRejectingReturn
+          const isReturnActionLoading = isConfirmingReturn
           const hasReturnFlow = Boolean(item.returnRefundStatus)
           const metadataStatusValue = hasReturnFlow ? item.returnRefundStatus ?? item.status : item.status
           const metadataStatusLabel = hasReturnFlow
@@ -204,6 +202,7 @@ export default function VendorOrderExpandedContent({
                               "Approve Return"
                             )}
                           </Button>
+                          {/*
                           <Button
                             type="button"
                             variant="unstyled"
@@ -211,15 +210,9 @@ export default function VendorOrderExpandedContent({
                             disabled={isReturnActionLoading}
                             className="inline-flex items-center gap-1 rounded-[8px] border border-danger/40 bg-danger/15 px-2.5 py-1 text-[11px] font-semibold text-danger hover:bg-danger/25 disabled:opacity-70"
                           >
-                            {isRejectingReturn ? (
-                              <>
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                                Rejecting...
-                              </>
-                            ) : (
-                              "Reject Return"
-                            )}
+                            Reject Return
                           </Button>
+                          */}
                         </>
                       ) : null}
                     </div>
