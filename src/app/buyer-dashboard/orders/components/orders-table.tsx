@@ -11,43 +11,21 @@ import { buildBuyerOrderViewModel } from "../lib/order-view-utils"
 import OrderExpandedContent from "./order-expanded-content"
 
 export default function OrdersTable() {
-  const {
-    dateSortDir,
-    expandedState,
-    filteredOrders,
-    isLoading,
-    summariesByOrderId,
-  } = useBuyerOrdersTableSelector((state) => ({
-    dateSortDir: state.dateSortDir,
-    expandedState: state.expandedState,
-    filteredOrders: state.filteredOrders,
-    isLoading: state.isLoading,
-    summariesByOrderId: state.summariesByOrderId,
-  }))
+  const { dateSortDir, expandedState, filteredOrders, isLoading, summariesByOrderId } = useBuyerOrdersTableSelector(
+    (state) => ({
+      dateSortDir: state.dateSortDir,
+      expandedState: state.expandedState,
+      filteredOrders: state.filteredOrders,
+      isLoading: state.isLoading,
+      summariesByOrderId: state.summariesByOrderId,
+    }),
+  )
 
   const { handleDateSortToggle, handleExpandedChange } = useBuyerOrdersTableActions()
 
   const getSummary = (order: BuyerOrder) => summariesByOrderId.get(order.orderId) ?? buildBuyerOrderViewModel(order)
 
   const orderColumns: Array<ColumnDef<BuyerOrder, unknown>> = [
-    {
-      id: "expander",
-      header: () => null,
-      cell: ({ row }) => (
-        <Button
-          type="button"
-          variant="unstyled"
-          onClick={() => row.toggleExpanded()}
-          className="inline-flex items-center rounded-full border border-border-soft p-1.5! text-text-muted hover:bg-surface-muted hover:text-text-secondary"
-        >
-          {row.getIsExpanded() ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </Button>
-      ),
-      meta: {
-        cellClassName: "px-4 py-4 text-text-muted",
-        headerClassName: "w-12 px-4 py-4",
-      },
-    },
     {
       id: "date",
       header: () => (
@@ -136,15 +114,31 @@ export default function OrdersTable() {
         headerClassName: "px-6 py-4 text-right",
       },
     },
+    {
+      id: "expander",
+      header: () => null,
+      cell: ({ row }) => (
+        <Button
+          type="button"
+          variant="unstyled"
+          onClick={() => row.toggleExpanded()}
+          className="inline-flex items-center rounded-full border border-border-soft p-1.5! text-text-muted hover:bg-surface-muted hover:text-text-secondary"
+        >
+          {row.getIsExpanded() ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </Button>
+      ),
+      meta: {
+        cellClassName: "px-4 py-4 text-right text-text-muted",
+        headerClassName: "w-12 px-4 py-4 text-right",
+      },
+    },
   ]
 
   const renderExpandedOrderContent = (row: Row<BuyerOrder>) => {
     const order = row.original
     const summary = getSummary(order)
 
-    return (
-      <OrderExpandedContent order={order} summary={summary} />
-    )
+    return <OrderExpandedContent order={order} summary={summary} />
   }
 
   return (

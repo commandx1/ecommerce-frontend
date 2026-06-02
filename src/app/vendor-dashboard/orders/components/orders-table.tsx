@@ -1,12 +1,12 @@
 "use client"
 
 import type { ColumnDef, ExpandedState, OnChangeFn, Row } from "@tanstack/react-table"
-import { ChevronDown, ChevronUp, ChevronsUpDown, Loader2 } from "lucide-react"
+import { ChevronDown, ChevronsUpDown, ChevronUp, Loader2 } from "lucide-react"
 import { useMemo } from "react"
-import DataTable from "@/components/ui/data-table"
-import { Button } from "@/components/ui/button"
 import { formatDateOnly, formatTimeOnly } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
-import { type VendorOrder, type VendorOrderItem } from "@/lib/api/vendor-orders"
+import { Button } from "@/components/ui/button"
+import DataTable from "@/components/ui/data-table"
+import type { VendorOrder, VendorOrderItem } from "@/lib/api/vendor-orders"
 import { isCancelableOrderItemStatus } from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import VendorOrderExpandedContent from "./order-expanded-content"
@@ -31,11 +31,7 @@ interface VendorOrdersTableProps {
   onSortToggle: (field: "price" | "quantity") => void
   onExpandedOrderChange: (orderId: string | null) => void
   onCallUber: (order: VendorOrder) => void
-  onRequestCancel: (action: {
-    orderItemIds: string[]
-    description: string
-    options?: CancelActionOptions
-  }) => void
+  onRequestCancel: (action: { orderItemIds: string[]; description: string; options?: CancelActionOptions }) => void
   onOpenLabelModal: (links: { shipping: string[]; tracking: string[] }) => void
   onConfirmReturn: (item: VendorOrderItem) => void
   onRejectReturn: (item: VendorOrderItem) => void
@@ -83,24 +79,6 @@ export default function VendorOrdersTable({
   }
 
   const columns: Array<ColumnDef<VendorOrder, unknown>> = [
-    {
-      id: "expander",
-      header: () => null,
-      cell: ({ row }) => (
-        <Button
-          type="button"
-          variant="unstyled"
-          onClick={() => row.toggleExpanded()}
-          className="inline-flex items-center rounded-full border border-border-soft p-1.5! text-text-muted hover:bg-surface-muted hover:text-text-secondary"
-        >
-          {row.getIsExpanded() ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </Button>
-      ),
-      meta: {
-        cellClassName: "px-4 py-4 text-text-muted",
-        headerClassName: "w-12 px-4 py-4",
-      },
-    },
     {
       id: "buyer",
       header: () => "Buyer",
@@ -216,7 +194,9 @@ export default function VendorOrdersTable({
       id: "status",
       header: () => "Status",
       cell: ({ row }) => (
-        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getOrderStatusClasses(row.original.orderStatus)}`}>
+        <span
+          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getOrderStatusClasses(row.original.orderStatus)}`}
+        >
           {row.original.orderStatus}
         </span>
       ),
@@ -235,8 +215,7 @@ export default function VendorOrdersTable({
         )
         const cancelableOrderItemIds = order.orderItems
           .filter(
-            (item) =>
-              isCancelableOrderItemStatus(item.status) && !item.cancelledByCustomer && !item.cancelledBySeller,
+            (item) => isCancelableOrderItemStatus(item.status) && !item.cancelledByCustomer && !item.cancelledBySeller,
           )
           .map((item) => item.id)
         const hasCancelableOrderItems = cancelableOrderItemIds.length > 0
@@ -290,6 +269,24 @@ export default function VendorOrdersTable({
       meta: {
         cellClassName: "border-l-2 border-border-soft px-6 py-4 text-right",
         headerClassName: "border-l-2 border-border-soft px-6 py-4 text-right",
+      },
+    },
+    {
+      id: "expander",
+      header: () => null,
+      cell: ({ row }) => (
+        <Button
+          type="button"
+          variant="unstyled"
+          onClick={() => row.toggleExpanded()}
+          className="inline-flex items-center rounded-full border border-border-soft p-1.5! text-text-muted hover:bg-surface-muted hover:text-text-secondary"
+        >
+          {row.getIsExpanded() ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </Button>
+      ),
+      meta: {
+        cellClassName: "px-4 py-4 text-right text-text-muted",
+        headerClassName: "w-12 px-4 py-4 text-right",
       },
     },
   ]
