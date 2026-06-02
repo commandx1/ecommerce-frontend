@@ -64,7 +64,7 @@ const server = setupServer(
   }),
   http.post("*/backend-api/orders/refundOrder", async ({ request }) => {
     capturedRefundPayload = (await request.json()) as RefundOrderPayload
-    return HttpResponse.json({ message: "Refund created" })
+    return HttpResponse.json({ message: "Return created" })
   }),
 )
 
@@ -125,7 +125,7 @@ describe("buyerOrdersAPI contract", () => {
     const response = await buyerOrdersAPI.refundOrder(payload)
 
     expect(capturedRefundPayload).toEqual(payload)
-    expect(response.message).toBe("Refund created")
+    expect(response.message).toBe("Return created")
   })
 
   it("rejects when backend returns an error status", async () => {

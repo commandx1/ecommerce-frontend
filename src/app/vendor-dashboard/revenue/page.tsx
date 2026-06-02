@@ -42,7 +42,7 @@ export default function VendorRevenuePage() {
   ] as const
 
   const revenueRisks = [
-    { label: "Refund & Return Loss", value: formatMoney(refundLoss), status: "Moderate" },
+    { label: "Return Loss", value: formatMoney(refundLoss), status: "Moderate" },
     { label: "Discount Cost", value: formatMoney(discountCost), status: "Watch Closely" },
     { label: "Low-Margin SKU Exposure", value: "18% of total revenue", status: "Needs Action" },
   ]
