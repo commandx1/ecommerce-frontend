@@ -13,24 +13,10 @@ const VENDOR_QUICK_ACTIONS: DashboardSidebarQuickAction[] = [
 
 const VENDOR_NAV_GROUPS: DashboardSidebarGroup[] = [
   {
-    title: "Overview",
+    title: "Vendor Navigation",
     items: [
       { href: "/vendor-dashboard", label: "Dashboard", icon: TrendingUp, matchMode: "exact" },
-      //{ href: "/vendor-dashboard/analytics", label: "Analytics", icon: BarChart3, matchMode: "startsWith" },
-      //{ href: "/vendor-dashboard/performance", label: "Performance", icon: PieChart, matchMode: "startsWith" },
-    ],
-  },
-  {
-    title: "Sales",
-    items: [
       { href: "/vendor-dashboard/orders", label: "Orders", icon: ShoppingBag, matchMode: "startsWith" },
-      //{ href: "/vendor-dashboard/revenue", label: "Revenue", icon: DollarSign, matchMode: "startsWith" },
-      //{ href: "/vendor-dashboard/customers", label: "Customers", icon: Users, matchMode: "startsWith" },
-    ],
-  },
-  {
-    title: "Catalog",
-    items: [
       {
         href: "/vendor-dashboard/products",
         label: "Products",
@@ -40,11 +26,6 @@ const VENDOR_NAV_GROUPS: DashboardSidebarGroup[] = [
       },
       { href: "/vendor-dashboard/inventory", label: "Inventory", icon: Warehouse, matchMode: "startsWith" },
       { href: "/vendor-dashboard/categories", label: "Categories", icon: Tags, matchMode: "startsWith" },
-    ],
-  },
-  {
-    title: "Marketing",
-    items: [
       { href: "/vendor-dashboard/promotions", label: "Promotions", icon: Megaphone, matchMode: "startsWith" },
       {
         href: "/vendor-dashboard/reviews",
@@ -53,31 +34,19 @@ const VENDOR_NAV_GROUPS: DashboardSidebarGroup[] = [
         badge: { label: "4.8", tone: "info" },
         matchMode: "startsWith",
       },
-    ],
-  },
-  {
-    title: "Account",
-    items: [],
-    subgroupsFirst: true,
-    subgroups: [
       {
-        title: "Settings",
-        items: [
-          {
-            href: "/vendor-dashboard/settings",
-            label: "Account",
-            icon: User,
-            size: "compact",
-            matchMode: "exact",
-          },
-          {
-            href: "/vendor-dashboard/settings/addresses",
-            label: "Addresses",
-            icon: MapPin,
-            size: "compact",
-            matchMode: "startsWith",
-          },
-        ],
+        href: "/vendor-dashboard/settings",
+        label: "Account",
+        icon: User,
+        size: "compact",
+        matchMode: "exact",
+      },
+      {
+        href: "/vendor-dashboard/settings/addresses",
+        label: "Addresses",
+        icon: MapPin,
+        size: "compact",
+        matchMode: "startsWith",
       },
     ],
   },
