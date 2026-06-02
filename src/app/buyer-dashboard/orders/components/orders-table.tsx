@@ -1,17 +1,13 @@
 "use client"
 
 import type { ColumnDef, Row } from "@tanstack/react-table"
-import { ChevronDown, ChevronUp, Package, Store, Truck } from "lucide-react"
+import { ChevronDown, ChevronUp, Package, Store } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import DataTable from "@/components/ui/data-table"
 import type { BuyerOrder } from "@/lib/api/buyer-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useBuyerOrdersTableActions, useBuyerOrdersTableSelector } from "../context/buyer-orders-context"
-import {
-  buildBuyerOrderViewModel,
-  getPaymentViewStatusClasses,
-  getPaymentViewStatusLabel,
-} from "../lib/order-view-utils"
+import { buildBuyerOrderViewModel } from "../lib/order-view-utils"
 import OrderExpandedContent from "./order-expanded-content"
 
 export default function OrdersTable() {
@@ -117,53 +113,6 @@ export default function OrdersTable() {
       },
     },
     {
-      id: "paymentMethod",
-      header: () => "Payment Method",
-      cell: ({ row }) => {
-        const summary = getSummary(row.original)
-        return (
-          <>
-            <p className="font-medium text-text-primary">{summary.payment.title}</p>
-            {summary.payment.detail ? <p className="text-xs text-text-muted">{summary.payment.detail}</p> : null}
-          </>
-        )
-      },
-      meta: {
-        cellClassName: "border-l-2 border-border-soft px-6 py-4 text-text-secondary",
-        headerClassName: "border-l-2 border-border-soft px-6 py-4",
-      },
-    },
-    {
-      id: "paymentStatus",
-      header: () => "Payment Status",
-      cell: ({ row }) => {
-        const summary = getSummary(row.original)
-        return (
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getPaymentViewStatusClasses(summary.paymentStatus)}`}
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-current" />
-            {getPaymentViewStatusLabel(summary.paymentStatus)}
-          </span>
-        )
-      },
-    },
-    {
-      id: "tracking",
-      header: () => "Tracking",
-      cell: ({ row }) => {
-        const summary = getSummary(row.original)
-        return summary.trackingCount > 0 ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/35 bg-brand/10 px-2.5 py-1 text-xs font-medium text-brand">
-            <Truck className="h-3 w-3" />
-            {summary.trackingCount} link{summary.trackingCount > 1 ? "s" : ""}
-          </span>
-        ) : (
-          <span className="text-xs text-text-muted">No tracking yet</span>
-        )
-      },
-    },
-    {
       id: "netTotal",
       header: () => "Net Total",
       cell: ({ row }) => {
@@ -171,8 +120,8 @@ export default function OrdersTable() {
         return <p>{formatCurrency(summary.money.netTotal)}</p>
       },
       meta: {
-        cellClassName: "border-l-2 border-border-soft px-6 py-4 text-right font-semibold text-text-primary",
-        headerClassName: "border-l-2 border-border-soft px-6 py-4 text-right",
+        cellClassName: "px-6 py-4 text-right font-semibold text-text-primary",
+        headerClassName: "px-6 py-4 text-right",
       },
     },
     {
