@@ -61,7 +61,7 @@ export const KNOWLEDGE_BASE_CATEGORIES: KnowledgeBaseCategory[] = [
       "Return Policy Overview",
       "How to Return Items",
       "Exchange Process",
-      "Refund Timeline",
+      "Return Timeline",
       "Damaged Item Claims",
     ],
     count: 11,
