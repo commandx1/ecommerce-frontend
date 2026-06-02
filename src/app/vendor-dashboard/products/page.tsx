@@ -91,6 +91,12 @@ const PERIOD_TABS: ReadonlyArray<{ label: string; value: PeriodTab }> = [
   { label: "12 months", value: "12 months" },
 ]
 
+const PERIOD_TAB_TO_DAY_COUNT: Record<PeriodTab, number> = {
+  "3 months": 30,
+  "6 months": 60,
+  "12 months": 120,
+}
+
 export default function ProductsPage() {
   const id = useId()
   const router = useRouter()
@@ -142,6 +148,8 @@ export default function ProductsPage() {
       let productsWithDetails: UserProduct[] = []
 
       try {
+        const howManySoldDay = PERIOD_TAB_TO_DAY_COUNT[selectedPeriodTab]
+
         const filterResponse = await productsAPI.filterUserProducts(
           accessToken,
           selectedFilter === "ALL" ? "TOTAL" : selectedFilter,
@@ -150,6 +158,7 @@ export default function ProductsPage() {
           sortParams.price,
           sortParams.stock,
           debouncedSearchQuery,
+          howManySoldDay,
         )
 
         const userProducts = filterResponse.content
@@ -263,6 +272,7 @@ export default function ProductsPage() {
     pageSize,
     currentPage,
     debouncedSearchQuery,
+    selectedPeriodTab,
   ])
 
   const handleSelectProduct = (productId: string) => {
@@ -369,6 +379,15 @@ export default function ProductsPage() {
     if (stock === 0) return "text-danger"
     if (stock < 20) return "text-warning"
     return "text-success"
+  }
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value)
   }
 
   const productColumns: Array<ColumnDef<ProductWithDetails, unknown>> = [
@@ -557,12 +576,26 @@ export default function ProductsPage() {
       },
     },
     {
-      id: "sales",
-      header: () => "Sales",
-      cell: () => <span className="text-sm text-text-secondary">-</span>,
+      id: "periodicSellCount",
+      header: () => "Periodic Sell Count",
+      cell: ({ row }) => (
+        <span className="text-sm text-text-secondary">{row.original.periodicSellCount?.toLocaleString("en-US") ?? 0}</span>
+      ),
       meta: {
-        headerClassName: "px-6 py-4",
-        cellClassName: "px-6 py-4",
+        headerClassName: "border-l-2 border-border-soft px-6 py-4 text-right",
+        cellClassName: "border-l-2 border-border-soft px-6 py-4 text-right",
+      },
+    },
+    {
+      id: "periodicGrossRevenue",
+      header: () => "Periodic Gross Revenue",
+      cell: ({ row }) => {
+        const periodicGrossRevenue = row.original.periodicGrossRevenue ?? 0
+        return <span className="text-sm font-medium text-text-primary">{formatCurrency(periodicGrossRevenue)}</span>
+      },
+      meta: {
+        headerClassName: "px-6 py-4 text-right",
+        cellClassName: "px-6 py-4 text-right",
       },
     },
     {
@@ -700,7 +733,7 @@ export default function ProductsPage() {
             getRowId={(product) => product.id}
             isLoading={isLoading}
             loadingText="Loading products..."
-            minTableWidthClassName="min-w-[1100px]"
+            minTableWidthClassName="min-w-[1320px]"
             noRowsText="No products found. Create your first product!"
           />
         </div>

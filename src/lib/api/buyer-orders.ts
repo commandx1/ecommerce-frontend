@@ -21,6 +21,12 @@ export interface BuyerOrderTrackingLink {
   updatedDate?: string | null
 }
 
+export interface BuyerOrderShippingLink {
+  shippingUrl: string
+  status?: string
+  updatedDate?: string | null
+}
+
 export interface BuyerOrderItem {
   id: string
   productId?: string
@@ -44,8 +50,12 @@ export interface BuyerOrderItem {
   returnDate?: string | null
   returnRejectReason?: string | null
   returnRejectDate?: string | null
+  shippingLink?: string[]
+  shippingLinks?: BuyerOrderShippingLink[]
   trackingLink?: string[]
   trackingLinks?: BuyerOrderTrackingLink[]
+  returnTrackingLinks?: BuyerOrderTrackingLink[]
+  returnShippingLinks?: BuyerOrderShippingLink[]
   updatedDate: string
 }
 

@@ -218,6 +218,8 @@ export interface UserProduct {
   discount: number
   stock: number
   active: boolean
+  periodicSellCount?: number
+  periodicGrossRevenue?: number
 }
 
 export interface UserProductsFilterResponse {
@@ -582,6 +584,7 @@ class ProductsAPI {
     price?: boolean,
     stock?: boolean,
     search?: string,
+    howManySoldDay?: number,
   ): Promise<UserProductsFilterResponse> {
     const response = await apiRequest.requestResponse<unknown>({
       client: "app",
@@ -596,6 +599,7 @@ class ProductsAPI {
         ...(price !== undefined ? { price } : {}),
         ...(stock !== undefined ? { stock } : {}),
         ...(search !== undefined ? { search: search || "" } : {}),
+        ...(howManySoldDay !== undefined ? { howManySoldDay } : {}),
       },
       validateStatus: () => true,
       fallbackMessage: "Failed to filter user products",
