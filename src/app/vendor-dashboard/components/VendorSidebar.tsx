@@ -86,10 +86,12 @@ const VENDOR_NAV_GROUPS: DashboardSidebarGroup[] = [
 const VendorSidebar = () => {
   return (
     <CommonDashboardSidebar
+      collapseStorageKey="vendor-dashboard-sidebar-collapsed"
       quickActions={VENDOR_QUICK_ACTIONS}
       quickActionSize="compact"
       groups={VENDOR_NAV_GROUPS}
       groupVariant="stacked"
+      showGroupTitles={false}
     />
   )
 }
