@@ -5,7 +5,13 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
-import { type BuyerOrder, type BuyerOrderTrackingLink, type RefundOrderPayload, buyerOrdersAPI } from "@/lib/api/buyer-orders"
+import {
+  type BuyerOrder,
+  type BuyerOrderItem,
+  type BuyerOrderTrackingLink,
+  type RefundOrderPayload,
+  buyerOrdersAPI,
+} from "@/lib/api/buyer-orders"
 import { OrderItemStatus } from "@/lib/constants/order-item-status"
 import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
@@ -17,7 +23,7 @@ import {
   resolveOrderViewStatus,
   resolvePaymentSummary,
 } from "../lib/order-view-utils"
-import type { BuyerOrderStatusTab, PendingCancelAction } from "../types"
+import type { BuyerOrderLinksModalPayload, BuyerOrderStatusTab, PendingCancelAction } from "../types"
 
 const DEFAULT_PAGE_SIZE = 10
 const ORDER_STATUS_TABS = ["All", "Pending", "Shipped", "Delivered", "Cancelled"] as const
@@ -58,7 +64,9 @@ export function useBuyerOrdersPage() {
   const [totalElements, setTotalElements] = useState<number>(0)
   const [dateSortDir, setDateSortDir] = useState<"asc" | "desc">("desc")
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
-  const [trackingModalLinks, setTrackingModalLinks] = useState<BuyerOrderTrackingLink[] | null>(null)
+  const [trackingModalLinks, setTrackingModalLinks] = useState<
+    BuyerOrderLinksModalPayload | BuyerOrderTrackingLink[] | null
+  >(null)
   const [pendingRefundOrder, setPendingRefundOrder] = useState<BuyerOrder | null>(null)
   const [isSubmittingRefund, setIsSubmittingRefund] = useState(false)
   const [reorderingItemId, setReorderingItemId] = useState<string | null>(null)
@@ -320,8 +328,23 @@ export function useBuyerOrdersPage() {
     setPendingCancelAction(action)
   }, [])
 
-  const requestRefundAction = useCallback((order: BuyerOrder) => {
-    setPendingRefundOrder(order)
+  const requestRefundAction = useCallback((order: BuyerOrder, orderItem: BuyerOrderItem) => {
+    if (typeof orderItem.returnDate === "string" && orderItem.returnDate.trim().length > 0) {
+      return
+    }
+
+    setPendingRefundOrder({
+      ...order,
+      orderItems: [orderItem],
+      sellerGroups: Array.isArray(order.sellerGroups)
+        ? order.sellerGroups
+            .map((group) => ({
+              ...group,
+              orderItems: group.orderItems.filter((item) => item.id === orderItem.id),
+            }))
+            .filter((group) => group.orderItems.length > 0)
+        : order.sellerGroups,
+    })
   }, [])
 
   const submitRefundOrder = useCallback(
@@ -378,7 +401,7 @@ export function useBuyerOrdersPage() {
           }),
         )
 
-        showToast.success("Refund request sent", response.message || "Your refund request was submitted successfully.")
+        showToast.success("Return request sent", response.message || "Your return request was submitted successfully.")
         setPendingRefundOrder(null)
       } catch (error: unknown) {
         if (isAuthHandledError(error)) {
@@ -393,7 +416,7 @@ export function useBuyerOrdersPage() {
           return
         }
 
-        showToast.error("Refund request failed", apiErrorMessage || "Your refund request could not be submitted.")
+        showToast.error("Return request failed", apiErrorMessage || "Your return request could not be submitted.")
       } finally {
         setIsSubmittingRefund(false)
       }

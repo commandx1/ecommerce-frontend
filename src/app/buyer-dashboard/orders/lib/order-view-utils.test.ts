@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
-import type { BuyerOrder } from "@/lib/api/buyer-orders"
-import { buildBuyerOrderViewModel } from "./order-view-utils"
+import type { BuyerOrder, BuyerOrderItem } from "@/lib/api/buyer-orders"
+import {
+  buildBuyerOrderViewModel,
+  resolveActiveShippingLinks,
+  resolveActiveTrackingLinks,
+} from "./order-view-utils"
 
 const orderFixture: BuyerOrder = {
   orderId: "order-fixture-1",
@@ -135,5 +139,72 @@ describe("buildBuyerOrderViewModel", () => {
 
     const summary = buildBuyerOrderViewModel(noTrackingOrder)
     expect(summary.trackingCount).toBe(0)
+  })
+})
+
+describe("active order item links", () => {
+  const baseItem: BuyerOrderItem = {
+    id: "item-links-1",
+    userProductId: "up-links-1",
+    productId: "product-links-1",
+    productName: "Dental Mirror",
+    price: 12,
+    quantity: 1,
+    status: "DELIVERED",
+    productCoverPhotoPath: null,
+    sellerName: "Acme",
+    sellerSurname: "Store",
+    trackingLinks: [{ trackingUrl: "https://carrier.example/outbound-track" }],
+    shippingLinks: [{ shippingUrl: "https://carrier.example/outbound-label.pdf" }],
+    updatedDate: "2026-05-20T11:00:00Z",
+  }
+
+  it("uses outbound tracking and shipping links before a return starts", () => {
+    expect(resolveActiveTrackingLinks(baseItem)).toEqual([{ trackingUrl: "https://carrier.example/outbound-track" }])
+    expect(resolveActiveShippingLinks(baseItem)).toEqual([
+      {
+        trackingUrl: "https://carrier.example/outbound-label.pdf",
+        status: undefined,
+        updatedDate: undefined,
+      },
+    ])
+  })
+
+  it("uses return tracking and return shipping links after a return starts", () => {
+    const item: BuyerOrderItem = {
+      ...baseItem,
+      returnDate: "2026-05-21T10:00:00Z",
+      returnRefundStatus: "PENDING",
+      returnTrackingLinks: [{ trackingUrl: "https://carrier.example/return-track" }],
+      returnShippingLinks: [{ shippingUrl: "https://carrier.example/return-label.pdf" }],
+    }
+
+    expect(resolveActiveTrackingLinks(item)).toEqual([{ trackingUrl: "https://carrier.example/return-track" }])
+    expect(resolveActiveShippingLinks(item)).toEqual([
+      {
+        trackingUrl: "https://carrier.example/return-label.pdf",
+        status: undefined,
+        updatedDate: undefined,
+      },
+    ])
+  })
+
+  it("does not mix outbound tracking with return shipping links", () => {
+    const item: BuyerOrderItem = {
+      ...baseItem,
+      returnDate: "2026-05-21T10:00:00Z",
+      returnRefundStatus: "PENDING",
+      returnTrackingLinks: [],
+      returnShippingLinks: [{ shippingUrl: "https://carrier.example/return-label.pdf" }],
+    }
+
+    expect(resolveActiveTrackingLinks(item)).toEqual([])
+    expect(resolveActiveShippingLinks(item)).toEqual([
+      {
+        trackingUrl: "https://carrier.example/return-label.pdf",
+        status: undefined,
+        updatedDate: undefined,
+      },
+    ])
   })
 })

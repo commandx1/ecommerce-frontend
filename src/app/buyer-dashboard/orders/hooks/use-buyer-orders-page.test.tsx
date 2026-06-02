@@ -5,6 +5,7 @@ import { OrderItemStatus } from "@/lib/constants/order-item-status"
 import { useBuyerOrdersPage } from "./use-buyer-orders-page"
 
 const mockPush = vi.fn()
+const mockReplace = vi.fn()
 const mockGetBuyerOrders = vi.fn()
 const mockCancelDuringDeliveryByCustomer = vi.fn()
 const mockToastError = vi.fn()
@@ -17,7 +18,12 @@ const mockIsAuthHandledError = vi.fn()
 let mockIsAuthenticated = true
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mockPush }),
+  usePathname: () => "/buyer-dashboard/orders",
+  useRouter: () => ({ push: mockPush, replace: mockReplace }),
+  useSearchParams: () => ({
+    get: () => null,
+    toString: () => "",
+  }),
 }))
 
 vi.mock("@/components/ui/Toast", () => ({
@@ -97,6 +103,7 @@ const baseOrder: BuyerOrder = {
 beforeEach(() => {
   mockIsAuthenticated = true
   mockPush.mockReset()
+  mockReplace.mockReset()
   mockGetBuyerOrders.mockReset()
   mockCancelDuringDeliveryByCustomer.mockReset()
   mockToastError.mockReset()
@@ -125,7 +132,7 @@ describe("useBuyerOrdersPage", () => {
       expect(result.current.isLoading).toBe(false)
     })
 
-    expect(mockGetBuyerOrders).toHaveBeenCalledWith(0, 10, "createdDate", "desc")
+    expect(mockGetBuyerOrders).toHaveBeenCalledWith(0, 10, "createdDate", "desc", "All")
     expect(result.current.filteredOrders).toHaveLength(1)
     expect(result.current.totalPages).toBe(3)
     expect(result.current.totalElements).toBe(25)

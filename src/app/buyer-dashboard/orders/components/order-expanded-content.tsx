@@ -1,6 +1,6 @@
 "use client"
 
-import { ExternalLink, RotateCcw, XCircle } from "lucide-react"
+import { ExternalLink, FileText, RotateCcw, Undo2, XCircle } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import AddressContactInfo from "@/features/checkout/components/AddressContactInfo"
@@ -11,14 +11,14 @@ import { isCancelableOrderItemStatus } from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useBuyerOrdersTableActions, useBuyerOrdersTableSelector } from "../context/buyer-orders-context"
 import {
-  hasAnyOrderItemReturnFlowStarted,
   formatDateTime,
   formatOrderItemStatus,
   getOrderItemShipmentFee,
   getOrderItemStatusTagClass,
   getSellerFirstTwoLetters,
+  resolveActiveShippingLinks,
+  resolveActiveTrackingLinks,
   resolveOrderItemProductId,
-  resolveTrackingLinks,
 } from "../lib/order-view-utils"
 import type { BuyerOrderViewModel } from "../types"
 import FulfillmentTimeline from "./fulfillment-timeline"
@@ -35,8 +35,6 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
     reorderingItemId: state.reorderingItemId,
   }))
   const { handleReorder, requestCancelAction, requestRefundAction, setTrackingModalLinks } = useBuyerOrdersTableActions()
-  const hasStartedReturnFlow = hasAnyOrderItemReturnFlowStarted(summary.orderItems)
-  const canRequestRefund = summary.uiStatus === "delivered" && !hasStartedReturnFlow
 
   return (
     <div className="bg-surface-muted/55 p-6 shadow-inner">
@@ -47,17 +45,6 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
             ({summary.totalQuantity} items from {summary.sellerCount} seller{summary.sellerCount > 1 ? "s" : ""})
           </p>
         </div>
-
-        {canRequestRefund ? (
-          <Button
-            type="button"
-            variant="unstyled"
-            onClick={() => requestRefundAction(order)}
-            className="rounded-[8px] border border-brand/40 bg-brand/12 px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand/20"
-          >
-            Request Refund
-          </Button>
-        ) : null}
       </div>
       <div className="flex gap-8 rounded-[8px] border border-border-soft bg-surface-elevated p-6 lg:flex-row">
         <div className="flex-1">
@@ -98,12 +85,16 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                       const productHref = productId
                         ? `/products/${encodeURIComponent(productId)}?vendorId=${encodeURIComponent(item.userProductId)}`
                         : null
-                      const trackingLinks = resolveTrackingLinks(item)
+                      const trackingLinks = resolveActiveTrackingLinks(item)
+                      const shippingLinks = resolveActiveShippingLinks(item)
                       const hasReturnFlow = Boolean(item.returnRefundStatus)
                       const metadataStatusValue = hasReturnFlow ? item.returnRefundStatus ?? item.status : item.status
                       const metadataStatusLabel = hasReturnFlow
                         ? `Return ${formatOrderItemStatus(metadataStatusValue)}`
                         : formatOrderItemStatus(metadataStatusValue)
+                      const canRequestItemReturn =
+                        item.status.toUpperCase() === "DELIVERED" &&
+                        !(typeof item.returnDate === "string" && item.returnDate.trim().length > 0)
 
                       return (
                         <div
@@ -215,11 +206,42 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                                     <Button
                                       type="button"
                                       variant="unstyled"
-                                      onClick={() => setTrackingModalLinks(trackingLinks)}
+                                      onClick={() =>
+                                        setTrackingModalLinks({ title: "Tracking links", links: trackingLinks })
+                                      }
                                       className="inline-flex items-center gap-1 rounded-[8px] border border-success/40 bg-success/15 px-2.5 py-1 text-[11px] font-semibold text-success hover:bg-success/25"
                                     >
                                       <ExternalLink className="h-3 w-3" />
                                       Track
+                                    </Button>
+                                  ) : null}
+                                  {shippingLinks.length > 0 ? (
+                                    <Button
+                                      type="button"
+                                      variant="unstyled"
+                                      onClick={() =>
+                                        setTrackingModalLinks({ title: "Shipping labels", links: shippingLinks })
+                                      }
+                                      className="inline-flex items-center gap-1 rounded-[8px] border border-brand/40 bg-brand/12 px-2.5 py-1 text-[11px] font-semibold text-brand hover:bg-brand/20"
+                                    >
+                                      <FileText className="h-3 w-3" />
+                                      Shipping Label
+                                    </Button>
+                                  ) : null}
+                                  {canRequestItemReturn ? (
+                                    <Button
+                                      type="button"
+                                      variant="unstyled"
+                                      onClick={() => requestRefundAction(order, item)}
+                                      disabled={
+                                        reorderingItemId === item.userProductId ||
+                                        cancelingItemId === item.id ||
+                                        isCancelingSellerGroup
+                                      }
+                                      className="inline-flex items-center gap-1 rounded-[8px] border border-brand/40 bg-brand/12 px-2.5 py-1 text-[11px] font-semibold text-brand hover:bg-brand/20 disabled:opacity-70"
+                                    >
+                                      <Undo2 className="h-3 w-3" />
+                                      Request Return
                                     </Button>
                                   ) : null}
                                 </div>

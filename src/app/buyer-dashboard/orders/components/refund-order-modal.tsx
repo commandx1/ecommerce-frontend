@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import Modal from "@/components/ui/Modal"
-import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getOrderItems } from "../lib/order-view-utils"
 import { useBuyerOrdersRefundModalActions, useBuyerOrdersRefundModalState } from "../context/buyer-orders-context"
 
@@ -18,10 +18,23 @@ interface RefundFormItemState {
 
 type RefundFormState = Record<string, RefundFormItemState>
 
+const RETURN_REASON_OPTIONS = [
+  "Wrong Item Received",
+  "Product Arrived Damaged",
+  "Defective or Malfunctioning Product",
+  "Missing Parts or Accessories",
+  "Item Does Not Match Description",
+  "Ordered by Mistake",
+  "No Longer Needed",
+  "Other",
+] as const
+
 function createInitialFormState(orderItems: ReturnType<typeof getOrderItems>): RefundFormState {
+  const shouldPreselectOnlyItem = orderItems.length === 1
+
   return orderItems.reduce<RefundFormState>((acc, item) => {
     acc[item.id] = {
-      isSelected: false,
+      isSelected: shouldPreselectOnlyItem,
       quantity: 1,
       returnReason: "",
     }
@@ -35,7 +48,15 @@ export default function RefundOrderModal() {
   const [formState, setFormState] = useState<RefundFormState>({})
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  const orderItems = useMemo(() => (pendingRefundOrder ? getOrderItems(pendingRefundOrder) : []), [pendingRefundOrder])
+  const orderItems = useMemo(
+    () =>
+      pendingRefundOrder
+        ? getOrderItems(pendingRefundOrder).filter(
+            (item) => !(typeof item.returnDate === "string" && item.returnDate.trim().length > 0),
+          )
+        : [],
+    [pendingRefundOrder],
+  )
 
   useEffect(() => {
     if (!pendingRefundOrder) {
@@ -93,7 +114,7 @@ export default function RefundOrderModal() {
     <Modal
       isOpen
       onClose={handleClose}
-      title="Request refund"
+      title="Request return"
       maxWidthClassName="max-w-3xl"
       closeOnEscape={!isSubmittingRefund}
       closeOnOverlayClick={!isSubmittingRefund}
@@ -102,7 +123,7 @@ export default function RefundOrderModal() {
       <div>
         <div className="flex items-center justify-between border-b border-border-soft px-6 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-text-primary">Request Refund</h2>
+            <h2 className="text-lg font-semibold text-text-primary">Request Return</h2>
             <p className="text-xs text-text-muted">Order: {pendingRefundOrder.orderId}</p>
           </div>
           <Button
@@ -177,22 +198,33 @@ export default function RefundOrderModal() {
                       >
                         Return reason
                       </label>
-                      <Textarea
-                        id={`refund-reason-${item.id}`}
-                        rows={3}
-                        placeholder="Explain why you want to return this item"
+                      <Select
                         disabled={!state.isSelected || isSubmittingRefund}
                         value={state.returnReason}
-                        onChange={(event) => {
+                        onValueChange={(returnReason) => {
                           setFormState((prev) => ({
                             ...prev,
                             [item.id]: {
                               ...prev[item.id],
-                              returnReason: event.target.value,
+                              returnReason,
                             },
                           }))
                         }}
-                      />
+                      >
+                        <SelectTrigger
+                          id={`refund-reason-${item.id}`}
+                          className="h-10 w-full rounded-lg border-border-strong bg-surface-elevated px-3 py-2 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                        >
+                          <SelectValue placeholder="Select a return reason" />
+                        </SelectTrigger>
+                        <SelectContent align="start">
+                          {RETURN_REASON_OPTIONS.map((reason) => (
+                            <SelectItem key={reason} value={reason}>
+                              {reason}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                 </div>

@@ -1,4 +1,4 @@
-import type { BuyerOrder, BuyerOrderItem, BuyerOrderSellerGroup } from "@/lib/api/buyer-orders"
+import type { BuyerOrder, BuyerOrderItem, BuyerOrderSellerGroup, BuyerOrderTrackingLink } from "@/lib/api/buyer-orders"
 
 export type OrderViewStatus = "processing" | "shipped" | "delivered" | "shipping"
 export type BuyerOrderStatusTab = "All" | "Pending" | "Shipped" | "Delivered" | "Cancelled"
@@ -49,6 +49,11 @@ export interface PendingCancelAction {
   description: string
   orderItemIds: string[]
   options?: CancelActionOptions
+}
+
+export interface BuyerOrderLinksModalPayload {
+  links: BuyerOrderTrackingLink[]
+  title: string
 }
 
 export interface BuyerOrdersPageState {

@@ -70,6 +70,7 @@ describe("TrackingLinksModal", () => {
     const openButtons = screen.getAllByRole("link", { name: /Open/i })
     expect(openButtons).toHaveLength(2)
     expect(openButtons[0]).toHaveAttribute("href", expect.stringContaining("https://carrier.example/track/"))
+    expect(screen.queryByRole("link", { name: /Download/i })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: "Close" }))
     await user.click(screen.getByRole("button", { name: "Close tracking modal" }))
@@ -148,6 +149,29 @@ describe("TrackingLinksModal", () => {
     expect(screen.getByText("https://carrier.example/track/new-1")).toBeInTheDocument()
     expect(screen.queryByText(/OLD_STATUS/)).not.toBeInTheDocument()
     expect(screen.queryByText("https://carrier.example/track/old")).not.toBeInTheDocument()
+  })
+
+  it("renders a custom title when links are opened as shipping labels", () => {
+    mockUseBuyerOrdersTrackingModalState.mockReturnValue(
+      createStateValue({
+        trackingModalLinks: {
+          title: "Shipping labels",
+          links: [{ trackingUrl: "https://carrier.example/label.pdf" }],
+        },
+      }),
+    )
+    mockUseBuyerOrdersTrackingModalActions.mockReturnValue({ setTrackingModalLinks: vi.fn() })
+
+    render(<TrackingLinksModal />)
+
+    expect(screen.getByText("Shipping labels (1)")).toBeInTheDocument()
+    const downloadLink = screen.getByRole("link", { name: /Download/i })
+    expect(downloadLink).toHaveAttribute("download", "shipping-label-1.pdf")
+    expect(downloadLink).toHaveAttribute(
+      "href",
+      `/api/shipping-label/download?filename=shipping-label-1.pdf&url=${encodeURIComponent("https://carrier.example/label.pdf")}`,
+    )
+    expect(screen.getByRole("link", { name: /Open/i })).toHaveAttribute("href", "https://carrier.example/label.pdf")
   })
 
   it("keeps focus inside modal when tabbing and exposes accessible close button", async () => {

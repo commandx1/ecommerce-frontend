@@ -1,16 +1,30 @@
 "use client"
 
-import { ExternalLink, X } from "lucide-react"
+import { Download, ExternalLink, X } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Modal from "@/components/ui/Modal"
 import { useBuyerOrdersTrackingModalActions, useBuyerOrdersTrackingModalState } from "../context/buyer-orders-context"
 import { formatDateTime } from "../lib/order-view-utils"
 
+function getShippingLabelDownloadHref(labelUrl: string, index: number): string {
+  const params = new URLSearchParams({
+    filename: `shipping-label-${index + 1}.pdf`,
+    url: labelUrl,
+  })
+
+  return `/api/shipping-label/download?${params.toString()}`
+}
+
 export default function TrackingLinksModal() {
   const { trackingModalLinks } = useBuyerOrdersTrackingModalState()
   const { setTrackingModalLinks } = useBuyerOrdersTrackingModalActions()
-  const links = trackingModalLinks
+  const modalPayload = Array.isArray(trackingModalLinks)
+    ? { title: "Tracking links", links: trackingModalLinks }
+    : trackingModalLinks
+  const links = modalPayload?.links ?? []
+  const title = modalPayload?.title ?? "Tracking links"
+  const isShippingLabelsModal = title === "Shipping labels"
 
   if (!links || links.length === 0) return null
 
@@ -22,13 +36,15 @@ export default function TrackingLinksModal() {
     <Modal
       isOpen={Boolean(links.length)}
       onClose={handleClose}
-      title="Tracking links"
+      title={title}
       maxWidthClassName="max-w-2xl"
       contentClassName="rounded-2xl border border-border-soft bg-surface-elevated shadow-panel"
     >
       <div>
         <div className="flex items-center justify-between border-b border-border-soft px-6 py-4">
-          <h2 className="text-lg font-semibold text-text-primary">Tracking links ({links.length})</h2>
+          <h2 className="text-lg font-semibold text-text-primary">
+            {title} ({links.length})
+          </h2>
           <Button
             type="button"
             variant="quiet"
@@ -55,15 +71,28 @@ export default function TrackingLinksModal() {
                   </div>
                 )}
               </div>
-              <Link
-                href={link.trackingUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center whitespace-nowrap rounded-full bg-brand px-2 py-1 text-[11px] font-medium text-primary-foreground transition-colors hover:bg-brand-strong"
-              >
-                Open
-                <ExternalLink className="w-3 h-3 ml-1" />
-              </Link>
+              <div className="flex shrink-0 items-center gap-2">
+                {isShippingLabelsModal ? (
+                  <Link
+                    href={getShippingLabelDownloadHref(link.trackingUrl, index)}
+                    download={`shipping-label-${index + 1}.pdf`}
+                    rel="noreferrer"
+                    className="inline-flex items-center whitespace-nowrap rounded-full bg-success px-2 py-1 text-[11px] font-medium text-primary-foreground transition-colors hover:bg-success/85"
+                  >
+                    Download
+                    <Download className="ml-1 h-3 w-3" />
+                  </Link>
+                ) : null}
+                <Link
+                  href={link.trackingUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center whitespace-nowrap rounded-full bg-brand px-2 py-1 text-[11px] font-medium text-primary-foreground transition-colors hover:bg-brand-strong"
+                >
+                  Open
+                  <ExternalLink className="ml-1 h-3 w-3" />
+                </Link>
+              </div>
             </div>
           ))}
         </div>
