@@ -165,7 +165,7 @@ export default function FulfillmentTimeline({ item, orderDate }: FulfillmentTime
                 />
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <p className={`text-xs font-medium ${returnCreatedLabelClass}`}>Refund Created</p>
+                    <p className={`text-xs font-medium ${returnCreatedLabelClass}`}>Return Created</p>
                     {returnReason ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -178,7 +178,7 @@ export default function FulfillmentTimeline({ item, orderDate }: FulfillmentTime
                           </button>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="border-brand/60 bg-background text-primary-foreground shadow-lg">
-                          <p className="text-[11px] font-semibold text-brand">Refund Reason</p>
+                          <p className="text-[11px] font-semibold text-brand">Return Reason</p>
                           <p className="mt-0.5 text-[11px] text-brand/90">{returnReason}</p>
                         </TooltipContent>
                       </Tooltip>
@@ -205,7 +205,7 @@ export default function FulfillmentTimeline({ item, orderDate }: FulfillmentTime
                 <div>
                   <div className="flex items-center gap-1.5">
                     <p className={`text-xs font-medium ${decisionLabelClass}`}>
-                      {isReturnApproved ? "Refund Approved" : "Refund Rejected"}
+                      {isReturnApproved ? "Return Approved" : "Return Rejected"}
                     </p>
                     {!isReturnApproved && returnRejectReason ? (
                       <Tooltip>
