@@ -364,7 +364,7 @@ export default function ProductsPage() {
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
-      case "Published":
+      case "Active":
         return "border border-success/20 bg-success/14 text-success"
       case "Inactive":
         return "border border-warning/20 bg-warning/14 text-warning"
@@ -564,9 +564,9 @@ export default function ProductsPage() {
         const product = row.original
         return (
           <span
-            className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(product.active ? "Published" : "Inactive")}`}
+            className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(product.active ? "Active" : "Inactive")}`}
           >
-            {product.active ? "Published" : "Inactive"}
+            {product.active ? "Active" : "Inactive"}
           </span>
         )
       },
