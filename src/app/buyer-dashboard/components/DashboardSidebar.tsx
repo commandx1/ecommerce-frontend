@@ -66,11 +66,6 @@ const DashboardSidebar = () => {
     <CommonDashboardSidebar
       collapseStorageKey="buyer-dashboard-sidebar-collapsed"
       quickActions={BUYER_QUICK_ACTIONS}
-      quickActionsTrailing={
-        <Button type="button" variant="quiet" size="icon-sm" className="text-text-muted hover:text-brand">
-          <Plus className="h-4 w-4" />
-        </Button>
-      }
       groups={navGroups}
       groupVariant="divided"
       showGroupTitles={false}
