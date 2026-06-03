@@ -35,6 +35,11 @@
   --shadow-panel: var(--shadow-panel);
   --shadow-floating: var(--shadow-floating);
   --animate-spin-slow: spin 3s linear infinite;
+  --animate-first: moveVertical 30s ease infinite;
+  --animate-second: moveInCircle 20s reverse infinite;
+  --animate-third: moveInCircle 40s linear infinite;
+  --animate-fourth: moveHorizontal 40s ease infinite;
+  --animate-fifth: moveInCircle 20s ease infinite;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -335,28 +340,63 @@ button {
 
 .hero-route-path {
   fill: none;
-  stroke: color-mix(in oklab, var(--border-soft) 58%, transparent);
-  stroke-width: 0.17;
+  stroke: color-mix(in oklab, var(--brand) 22%, var(--border-soft) 78%);
+  stroke-width: 0.19;
   stroke-linecap: round;
   stroke-linejoin: round;
+  opacity: 0.7;
 }
 
 .hero-route-glow {
   fill: none;
-  stroke: color-mix(in oklab, var(--accent-strong) 62%, var(--brand));
-  stroke-width: 0.3;
+  stroke: color-mix(in oklab, var(--brand) 84%, var(--accent-strong));
+  stroke-width: 0.48;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-dasharray: 0.25 2.9;
+  stroke-dasharray: 0.7 4.2;
   stroke-dashoffset: 0;
   opacity: 0;
-  filter: drop-shadow(0 0 2px color-mix(in oklab, var(--brand) 34%, transparent));
+  filter: drop-shadow(0 0 1.2px color-mix(in oklab, var(--brand) 65%, transparent));
   animation: hero-route-scan linear infinite;
 }
 
 .hero-route-packet {
-  fill: color-mix(in oklab, var(--accent-strong) 75%, white);
-  filter: drop-shadow(0 0 5px color-mix(in oklab, var(--brand) 45%, transparent));
+  fill: color-mix(in oklab, var(--accent-strong) 55%, white);
+  filter: drop-shadow(0 0 1.5px white) drop-shadow(0 0 5px color-mix(in oklab, var(--brand) 70%, transparent));
+}
+
+.hero-route-packet-secondary {
+  fill: color-mix(in oklab, var(--brand) 65%, white);
+  filter: drop-shadow(0 0 3px color-mix(in oklab, var(--brand) 55%, transparent));
+  opacity: 0.58;
+}
+
+.hero-route-orb {
+  fill: color-mix(in oklab, var(--brand) 55%, var(--accent-strong));
+  opacity: 0.14;
+  filter: blur(5px);
+}
+
+.hero-vendor-ring {
+  fill: none;
+  stroke: color-mix(in oklab, var(--brand) 78%, transparent);
+  stroke-width: 0.24;
+}
+
+.hero-dentist-ring {
+  fill: none;
+  stroke: color-mix(in oklab, var(--accent-strong) 68%, transparent);
+  stroke-width: 0.17;
+}
+
+.hero-vendor-dot {
+  fill: color-mix(in oklab, var(--brand) 72%, white);
+  filter: drop-shadow(0 0 3px color-mix(in oklab, var(--brand) 60%, transparent));
+}
+
+.hero-dentist-dot {
+  fill: color-mix(in oklab, var(--accent-strong) 68%, white);
+  opacity: 0.85;
 }
 
 .hero-city-node {
@@ -378,10 +418,16 @@ button {
   color: var(--text-secondary);
   box-shadow: var(--shadow-soft);
   backdrop-filter: blur(5px);
+  animation: hero-node-appear 0.5s ease-out both;
 }
 
 .hero-city-node-vendor {
-  color: color-mix(in oklab, var(--brand-strong) 74%, var(--text-primary));
+  color: color-mix(in oklab, var(--brand-strong) 82%, var(--text-primary));
+  padding: 0.38rem 0.8rem;
+  border: 1.5px solid color-mix(in oklab, var(--brand) 48%, transparent);
+  background: color-mix(in oklab, var(--surface-elevated) 90%, var(--brand) 5%);
+  font-size: 0.68rem;
+  box-shadow: var(--shadow-soft), 0 0 14px color-mix(in oklab, var(--brand) 14%, transparent);
 }
 
 .hero-city-node-dentist {
@@ -438,17 +484,37 @@ button {
     opacity: 0;
   }
 
-  18% {
-    opacity: 0.8;
+  8% {
+    opacity: 0;
   }
 
-  84% {
-    opacity: 0.62;
+  16% {
+    opacity: 1;
+  }
+
+  82% {
+    opacity: 0.88;
+  }
+
+  94% {
+    opacity: 0;
   }
 
   100% {
-    stroke-dashoffset: -7.8;
+    stroke-dashoffset: -9.8;
     opacity: 0;
+  }
+}
+
+@keyframes hero-node-appear {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
   }
 }
 
@@ -603,6 +669,48 @@ button {
   box-shadow: var(--shadow-floating);
 }
 
+@keyframes moveHorizontal {
+  0% {
+    transform: translateX(-50%) translateY(-10%);
+  }
+
+  50% {
+    transform: translateX(50%) translateY(10%);
+  }
+
+  100% {
+    transform: translateX(-50%) translateY(-10%);
+  }
+}
+
+@keyframes moveInCircle {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(180deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes moveVertical {
+  0% {
+    transform: translateY(-50%);
+  }
+
+  50% {
+    transform: translateY(50%);
+  }
+
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -625,8 +733,23 @@ button {
   .hero-signal-node-float-1,
   .hero-signal-node-float-2,
   .hero-signal-node-float-3,
-  .hero-signal-node-float-4 {
+  .hero-signal-node-float-4,
+  .hero-city-node {
     animation: none;
+  }
+
+  .animate-first,
+  .animate-second,
+  .animate-third,
+  .animate-fourth,
+  .animate-fifth {
+    animation: none;
+  }
+
+  .hero-route-packet,
+  .hero-route-packet-secondary,
+  .hero-route-orb {
+    display: none;
   }
 
   .hero-route-packet {

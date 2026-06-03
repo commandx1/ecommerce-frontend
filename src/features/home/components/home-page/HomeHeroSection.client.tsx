@@ -5,7 +5,9 @@ import useEmblaCarousel from "embla-carousel-react"
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react"
 import Image from "next/image"
 import { useCallback, useEffect, useState } from "react"
+import { useTheme } from "next-themes"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
+import { BackgroundGradientAnimation } from "@/components/ui/background-gradient-animation"
 
 const revealVariants = {
   hidden: { opacity: 0, y: 30 },
@@ -99,6 +101,8 @@ const getCurvedPath = (from: { x: number; y: number }, to: { x: number; y: numbe
 
 export default function HomeHeroSectionClient() {
   const prefersReducedMotion = useReducedMotion()
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === "dark"
   const { scrollYProgress } = useScroll()
   const heroY = useTransform(scrollYProgress, [0, 0.24], [0, -70])
   const heroOpacity = useTransform(scrollYProgress, [0, 0.22], [1, 0.62])
@@ -153,7 +157,20 @@ export default function HomeHeroSectionClient() {
       className="hero-cinematic relative isolate h-[calc(100vh-8.75rem)] overflow-hidden p-0"
       containerClassName="relative z-20 h-full"
     >
-      <div aria-hidden className="hero-cinematic-backdrop pointer-events-none absolute inset-0" />
+      <BackgroundGradientAnimation
+        gradientBackgroundStart={isDark ? "rgb(14, 21, 38)" : "rgb(237, 244, 253)"}
+        gradientBackgroundEnd={isDark ? "rgb(20, 30, 52)" : "rgb(243, 249, 255)"}
+        firstColor={isDark ? "50, 100, 180" : "100, 155, 210"}
+        secondColor={isDark ? "80, 155, 210" : "140, 190, 225"}
+        thirdColor={isDark ? "95, 195, 225" : "165, 210, 245"}
+        fourthColor={isDark ? "148, 182, 75" : "168, 195, 148"}
+        fifthColor={isDark ? "55, 110, 172" : "142, 172, 205"}
+        pointerColor={isDark ? "75, 135, 200" : "108, 150, 200"}
+        blendingValue={isDark ? "screen" : "soft-light"}
+        size="75%"
+        interactive={false}
+        containerClassName="absolute inset-0 pointer-events-none"
+      />
       <div aria-hidden className="hero-cinematic-grid pointer-events-none absolute inset-0" />
       <div aria-hidden className="hero-cinematic-vignette pointer-events-none absolute inset-0" />
 
@@ -230,9 +247,9 @@ export default function HomeHeroSectionClient() {
         </motion.div>
 
         <div className="app-container hero-stage relative z-10 w-full flex-1 overflow-hidden">
-          <div aria-hidden className="hero-stage-halo absolute inset-x-[-12%] top-[8%] h-[78%]" />
           <div aria-hidden className="hero-network-map pointer-events-none absolute inset-0">
             <svg aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none" className="hero-network-svg">
+              {/* Route paths + traveling packets */}
               {networkRoutes.map((route) => (
                 <g key={route.id}>
                   <path id={`hero-route-${route.id}`} d={route.path} className="hero-route-path" />
@@ -241,10 +258,23 @@ export default function HomeHeroSectionClient() {
                     className="hero-route-glow"
                     style={{ animationDuration: `${route.duration}s`, animationDelay: `${route.delay}s` }}
                   />
-                  <circle className="hero-route-packet" r="0.5">
+                  {/* Bloom orb following main packet */}
+                  <circle r="1.8" className="hero-route-orb">
+                    <animateMotion dur={`${route.duration}s`} begin={`${route.delay}s`} repeatCount="indefinite">
+                      <mpath href={`#hero-route-${route.id}`} />
+                    </animateMotion>
+                  </circle>
+                  {/* Main packet */}
+                  <circle r="0.55" className="hero-route-packet">
+                    <animateMotion dur={`${route.duration}s`} begin={`${route.delay}s`} repeatCount="indefinite" rotate="auto">
+                      <mpath href={`#hero-route-${route.id}`} />
+                    </animateMotion>
+                  </circle>
+                  {/* Secondary staggered packet */}
+                  <circle r="0.38" className="hero-route-packet-secondary">
                     <animateMotion
                       dur={`${route.duration}s`}
-                      begin={`${route.delay}s`}
+                      begin={`${route.delay + route.duration * 0.45}s`}
                       repeatCount="indefinite"
                       rotate="auto"
                     >
@@ -253,16 +283,46 @@ export default function HomeHeroSectionClient() {
                   </circle>
                 </g>
               ))}
+
+              {/* Vendor hub: double pulse ring + center dot */}
+              {networkNodes
+                .filter((n) => n.kind === "vendor")
+                .map((node, i) => (
+                  <g key={`vendor-fx-${node.id}`}>
+                    <circle cx={node.x} cy={node.y} r="0" className="hero-vendor-ring">
+                      <animate attributeName="r" values="0.6;5.5" dur="3s" begin={`${i * 1.6}s`} repeatCount="indefinite" calcMode="spline" keySplines="0.2 0.8 0.4 1" keyTimes="0;1" />
+                      <animate attributeName="opacity" values="0.75;0" dur="3s" begin={`${i * 1.6}s`} repeatCount="indefinite" />
+                    </circle>
+                    <circle cx={node.x} cy={node.y} r="0" className="hero-vendor-ring">
+                      <animate attributeName="r" values="0.6;5.5" dur="3s" begin={`${i * 1.6 + 1.5}s`} repeatCount="indefinite" calcMode="spline" keySplines="0.2 0.8 0.4 1" keyTimes="0;1" />
+                      <animate attributeName="opacity" values="0.5;0" dur="3s" begin={`${i * 1.6 + 1.5}s`} repeatCount="indefinite" />
+                    </circle>
+                    <circle cx={node.x} cy={node.y} r="0.48" className="hero-vendor-dot" />
+                  </g>
+                ))}
+
+              {/* Dentist destination: arrival pulse ring + center dot */}
+              {networkNodes
+                .filter((n) => n.kind === "dentist")
+                .map((node, i) => (
+                  <g key={`dentist-fx-${node.id}`}>
+                    <circle cx={node.x} cy={node.y} r="0" className="hero-dentist-ring">
+                      <animate attributeName="r" values="0.4;3.2" dur="4s" begin={`${i * 0.62}s`} repeatCount="indefinite" calcMode="spline" keySplines="0.2 0.8 0.4 1" keyTimes="0;1" />
+                      <animate attributeName="opacity" values="0.62;0" dur="4s" begin={`${i * 0.62}s`} repeatCount="indefinite" />
+                    </circle>
+                    <circle cx={node.x} cy={node.y} r="0.32" className="hero-dentist-dot" />
+                  </g>
+                ))}
             </svg>
 
-            {networkNodes.map((node) => {
+            {networkNodes.map((node, index) => {
               const Icon = node.kind === "vendor" ? Building2 : UserRound
 
               return (
                 <div
                   key={node.id}
                   className={`hero-city-node ${node.kind === "vendor" ? "hero-city-node-vendor" : "hero-city-node-dentist"}`}
-                  style={{ left: `${node.x}%`, top: `${node.y}%` }}
+                  style={{ left: `${node.x}%`, top: `${node.y}%`, animationDelay: `${index * 0.07}s` }}
                 >
                   <Icon className="h-3.5 w-3.5" />
                   <span>{node.city}</span>
