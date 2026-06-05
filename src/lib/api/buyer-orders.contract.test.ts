@@ -85,12 +85,13 @@ afterAll(() => {
 
 describe("buyerOrdersAPI contract", () => {
   it("sends expected query parameters and returns typed buyer orders response", async () => {
-    const response = await buyerOrdersAPI.getBuyerOrders(1, 10, "createdDate", "asc")
+    const response = await buyerOrdersAPI.getBuyerOrders(1, 10, "createdDate", "asc", "RETURNED")
 
     expect(capturedQuery?.get("page")).toBe("1")
     expect(capturedQuery?.get("size")).toBe("10")
     expect(capturedQuery?.get("sortBy")).toBe("createdDate")
     expect(capturedQuery?.get("sortDir")).toBe("asc")
+    expect(capturedQuery?.get("type")).toBe("RETURNED")
 
     expect(response.currentPage).toBe(1)
     expect(response.totalPages).toBe(5)

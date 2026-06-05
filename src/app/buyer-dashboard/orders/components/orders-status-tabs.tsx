@@ -3,7 +3,7 @@
 import { useBuyerOrdersTabsActions, useBuyerOrdersTabsState } from "../context/buyer-orders-context"
 import type { BuyerOrderStatusTab } from "../types"
 
-const ORDER_STATUS_TABS: BuyerOrderStatusTab[] = ["All", "Pending", "Shipped", "Delivered", "Cancelled"]
+const ORDER_STATUS_TABS: BuyerOrderStatusTab[] = ["All", "Pending", "Shipped", "Delivered", "Cancelled", "Returned"]
 
 export default function OrdersStatusTabs() {
   const { selectedTab } = useBuyerOrdersTabsState()

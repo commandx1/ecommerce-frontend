@@ -94,6 +94,14 @@ export interface BuyerOrdersResponse {
   pageSize: number
 }
 
+export type BuyerOrderFilterType =
+  | "ALL"
+  | "WAITING_FOR_SHIPMENT"
+  | "ON_WAY"
+  | "DELIVERED"
+  | "CANCELLED"
+  | "RETURNED"
+
 export interface CancelDuringDeliveryByCustomerPayload {
   orderItemIds: string[]
 }
@@ -125,7 +133,7 @@ class BuyerOrdersAPI {
     size = 10,
     sortBy?: string,
     sortDir?: "asc" | "desc",
-    selectedTab?: string,
+    type: BuyerOrderFilterType = "ALL",
   ): Promise<BuyerOrdersResponse> {
     const response = await apiClient.get<BuyerOrdersResponse>("/orders/buyer", {
       params: {
@@ -133,7 +141,7 @@ class BuyerOrdersAPI {
         size,
         sortBy,
         sortDir,
-        selectedTab,
+        type,
       },
     })
     return response.data

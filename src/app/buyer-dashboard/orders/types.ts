@@ -1,7 +1,7 @@
 import type { BuyerOrder, BuyerOrderItem, BuyerOrderSellerGroup, BuyerOrderTrackingLink } from "@/lib/api/buyer-orders"
 
 export type OrderViewStatus = "processing" | "shipped" | "delivered" | "shipping"
-export type BuyerOrderStatusTab = "All" | "Pending" | "Shipped" | "Delivered" | "Cancelled"
+export type BuyerOrderStatusTab = "All" | "Pending" | "Shipped" | "Delivered" | "Cancelled" | "Returned"
 
 export type PaymentViewStatus = "paid" | "pending" | "failed" | "refunded" | "unknown"
 

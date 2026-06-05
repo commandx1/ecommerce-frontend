@@ -7,6 +7,7 @@ import { showToast } from "@/components/ui/Toast"
 import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
 import {
   type BuyerOrder,
+  type BuyerOrderFilterType,
   type BuyerOrderItem,
   type BuyerOrderTrackingLink,
   type RefundOrderPayload,
@@ -20,34 +21,23 @@ import {
   extractApiErrorMessage,
   getAddressSummary,
   getOrderItems,
-  resolveOrderViewStatus,
   resolvePaymentSummary,
 } from "../lib/order-view-utils"
 import type { BuyerOrderLinksModalPayload, BuyerOrderStatusTab, PendingCancelAction } from "../types"
 
 const DEFAULT_PAGE_SIZE = 10
-const ORDER_STATUS_TABS = ["All", "Pending", "Shipped", "Delivered", "Cancelled"] as const
+const ORDER_STATUS_TABS = ["All", "Pending", "Shipped", "Delivered", "Cancelled", "Returned"] as const
+const ORDER_STATUS_TAB_TO_FILTER_TYPE: Record<BuyerOrderStatusTab, BuyerOrderFilterType> = {
+  All: "ALL",
+  Pending: "WAITING_FOR_SHIPMENT",
+  Shipped: "ON_WAY",
+  Delivered: "DELIVERED",
+  Cancelled: "CANCELLED",
+  Returned: "RETURNED",
+}
 
 function isBuyerOrderStatusTab(value: string | null): value is BuyerOrderStatusTab {
   return Boolean(value && ORDER_STATUS_TABS.includes(value as BuyerOrderStatusTab))
-}
-
-function isCancelledOrder(order: BuyerOrder) {
-  const normalizedOrderStatus = order.orderStatus.toUpperCase()
-  if (normalizedOrderStatus.includes("CANCEL")) {
-    return true
-  }
-
-  const items = getOrderItems(order)
-  return items.some((item) => {
-    const normalizedItemStatus = item.status.toUpperCase()
-    return (
-      normalizedItemStatus.includes("CANCEL") ||
-      Boolean(item.cancelledByCustomer) ||
-      Boolean(item.cancelledBySeller) ||
-      Boolean(item.cancelledWithShippingFee)
-    )
-  })
 }
 
 export function useBuyerOrdersPage() {
@@ -102,7 +92,13 @@ export function useBuyerOrdersPage() {
       if (!isAuthenticated) return
       try {
         setIsLoading(true)
-        const response = await buyerOrdersAPI.getBuyerOrders(currentPage, pageSize, "createdDate", dateSortDir, selectedTab)
+        const response = await buyerOrdersAPI.getBuyerOrders(
+          currentPage,
+          pageSize,
+          "createdDate",
+          dateSortDir,
+          ORDER_STATUS_TAB_TO_FILTER_TYPE[selectedTab],
+        )
         setOrders(response.orders)
         setTotalPages(response.totalPages)
         setTotalElements(response.totalElements)
@@ -247,19 +243,6 @@ export function useBuyerOrdersPage() {
     () =>
       orders.filter((order) => {
         const orderItems = getOrderItems(order)
-        const orderStatus = resolveOrderViewStatus(order, orderItems)
-        const statusMatches =
-          selectedTab === "All"
-            ? true
-            : selectedTab === "Pending"
-              ? orderStatus === "processing"
-              : selectedTab === "Shipped"
-                ? orderStatus === "shipped" || orderStatus === "shipping"
-                : selectedTab === "Delivered"
-                  ? orderStatus === "delivered"
-                  : isCancelledOrder(order)
-        if (!statusMatches) return false
-
         if (!searchQuery.trim()) return true
         const query = searchQuery.toLowerCase()
         const shipmentAddress = getAddressSummary(
@@ -291,7 +274,7 @@ export function useBuyerOrdersPage() {
           )
         )
       }),
-    [orders, selectedTab],
+    [orders],
   )
 
   const summariesByOrderId = useMemo(
