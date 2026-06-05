@@ -25,7 +25,7 @@ export default function AnimatedTabs<T extends string>({
   return (
     <Tabs value={value} onValueChange={onValueChange} className={className}>
       <TabsList
-        className={cn("h-auto rounded-xl border border-border-soft bg-surface p-1", listClassName)}
+        className={cn("h-auto rounded-[.87rem] border border-border-soft bg-surface p-0.5", listClassName)}
         activeClassName={cn("bg-brand shadow-soft", activeIndicatorClassName)}
       >
         {options.map((option) => (
@@ -33,7 +33,7 @@ export default function AnimatedTabs<T extends string>({
             key={option.value}
             value={option.value}
             className={cn(
-              "h-8 rounded-lg px-3 text-xs font-semibold delay-100 transition-colors duration-300 ease-out",
+              "h-8 px-3 text-xs font-semibold delay-100 transition-colors duration-300 ease-out",
               "data-[state=active]:text-primary-foreground",
               "text-text-secondary hover:text-text-primary",
               triggerClassName,
