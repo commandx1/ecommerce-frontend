@@ -347,34 +347,8 @@ button {
   opacity: 0.7;
 }
 
-.hero-route-glow {
-  fill: none;
-  stroke: color-mix(in oklab, var(--brand) 84%, var(--accent-strong));
-  stroke-width: 0.48;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 0.7 4.2;
-  stroke-dashoffset: 0;
-  opacity: 0;
-  filter: drop-shadow(0 0 1.2px color-mix(in oklab, var(--brand) 65%, transparent));
-  animation: hero-route-scan linear infinite;
-}
-
 .hero-route-packet {
   fill: color-mix(in oklab, var(--accent-strong) 55%, white);
-  filter: drop-shadow(0 0 1.5px white) drop-shadow(0 0 5px color-mix(in oklab, var(--brand) 70%, transparent));
-}
-
-.hero-route-packet-secondary {
-  fill: color-mix(in oklab, var(--brand) 65%, white);
-  filter: drop-shadow(0 0 3px color-mix(in oklab, var(--brand) 55%, transparent));
-  opacity: 0.58;
-}
-
-.hero-route-orb {
-  fill: color-mix(in oklab, var(--brand) 55%, var(--accent-strong));
-  opacity: 0.14;
-  filter: blur(5px);
 }
 
 .hero-vendor-ring {
@@ -383,15 +357,8 @@ button {
   stroke-width: 0.24;
 }
 
-.hero-dentist-ring {
-  fill: none;
-  stroke: color-mix(in oklab, var(--accent-strong) 68%, transparent);
-  stroke-width: 0.17;
-}
-
 .hero-vendor-dot {
   fill: color-mix(in oklab, var(--brand) 72%, white);
-  filter: drop-shadow(0 0 3px color-mix(in oklab, var(--brand) 60%, transparent));
 }
 
 .hero-dentist-dot {
@@ -476,34 +443,6 @@ button {
 
 .hero-signal-node-float-4 {
   animation: hero-node-float-d 4.6s ease-in-out infinite;
-}
-
-@keyframes hero-route-scan {
-  0% {
-    stroke-dashoffset: 0;
-    opacity: 0;
-  }
-
-  8% {
-    opacity: 0;
-  }
-
-  16% {
-    opacity: 1;
-  }
-
-  82% {
-    opacity: 0.88;
-  }
-
-  94% {
-    opacity: 0;
-  }
-
-  100% {
-    stroke-dashoffset: -9.8;
-    opacity: 0;
-  }
 }
 
 @keyframes hero-node-appear {
@@ -728,7 +667,6 @@ button {
     animation: none;
   }
 
-  .hero-route-glow,
   .hero-product-shell,
   .hero-signal-node-float-1,
   .hero-signal-node-float-2,
@@ -744,12 +682,6 @@ button {
   .animate-fourth,
   .animate-fifth {
     animation: none;
-  }
-
-  .hero-route-packet,
-  .hero-route-packet-secondary,
-  .hero-route-orb {
-    display: none;
   }
 
   .hero-route-packet {

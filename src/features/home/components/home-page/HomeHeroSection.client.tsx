@@ -169,7 +169,7 @@ export default function HomeHeroSectionClient() {
         blendingValue={isDark ? "screen" : "soft-light"}
         size="75%"
         interactive={false}
-        containerClassName="absolute inset-0 pointer-events-none"
+        containerClassName="absolute inset-0 pointer-events-none will-change-transform"
       />
       <div aria-hidden className="hero-cinematic-grid pointer-events-none absolute inset-0" />
       <div aria-hidden className="hero-cinematic-vignette pointer-events-none absolute inset-0" />
@@ -179,7 +179,7 @@ export default function HomeHeroSectionClient() {
         animate="visible"
         variants={{ visible: { transition: { staggerChildren: 0.11 } } }}
         style={prefersReducedMotion ? undefined : { y: heroY, opacity: heroOpacity }}
-        className="relative flex h-full flex-col gap-4 py-4 sm:gap-5 sm:py-6"
+        className="relative flex h-full flex-col gap-4 py-4 sm:gap-5 sm:py-6 will-change-transform"
       >
         <motion.div
           variants={revealVariants}
@@ -247,37 +247,15 @@ export default function HomeHeroSectionClient() {
         </motion.div>
 
         <div className="app-container hero-stage relative z-10 w-full flex-1 overflow-hidden">
-          <div aria-hidden className="hero-network-map pointer-events-none absolute inset-0">
-            <svg aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none" className="hero-network-svg">
+          <div aria-hidden className="hero-network-map pointer-events-none absolute inset-0 [contain:layout_style_paint]">
+            <svg aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none" className="hero-network-svg" style={{ willChange: 'transform' }}>
               {/* Route paths + traveling packets */}
               {networkRoutes.map((route) => (
                 <g key={route.id}>
                   <path id={`hero-route-${route.id}`} d={route.path} className="hero-route-path" />
-                  <path
-                    d={route.path}
-                    className="hero-route-glow"
-                    style={{ animationDuration: `${route.duration}s`, animationDelay: `${route.delay}s` }}
-                  />
-                  {/* Bloom orb following main packet */}
-                  <circle r="1.8" className="hero-route-orb">
-                    <animateMotion dur={`${route.duration}s`} begin={`${route.delay}s`} repeatCount="indefinite">
-                      <mpath href={`#hero-route-${route.id}`} />
-                    </animateMotion>
-                  </circle>
-                  {/* Main packet */}
+                  {/* Single traveling packet per route */}
                   <circle r="0.55" className="hero-route-packet">
                     <animateMotion dur={`${route.duration}s`} begin={`${route.delay}s`} repeatCount="indefinite" rotate="auto">
-                      <mpath href={`#hero-route-${route.id}`} />
-                    </animateMotion>
-                  </circle>
-                  {/* Secondary staggered packet */}
-                  <circle r="0.38" className="hero-route-packet-secondary">
-                    <animateMotion
-                      dur={`${route.duration}s`}
-                      begin={`${route.delay + route.duration * 0.45}s`}
-                      repeatCount="indefinite"
-                      rotate="auto"
-                    >
                       <mpath href={`#hero-route-${route.id}`} />
                     </animateMotion>
                   </circle>
@@ -290,12 +268,8 @@ export default function HomeHeroSectionClient() {
                 .map((node, i) => (
                   <g key={`vendor-fx-${node.id}`}>
                     <circle cx={node.x} cy={node.y} r="0" className="hero-vendor-ring">
-                      <animate attributeName="r" values="0.6;5.5" dur="3s" begin={`${i * 1.6}s`} repeatCount="indefinite" calcMode="spline" keySplines="0.2 0.8 0.4 1" keyTimes="0;1" />
-                      <animate attributeName="opacity" values="0.75;0" dur="3s" begin={`${i * 1.6}s`} repeatCount="indefinite" />
-                    </circle>
-                    <circle cx={node.x} cy={node.y} r="0" className="hero-vendor-ring">
-                      <animate attributeName="r" values="0.6;5.5" dur="3s" begin={`${i * 1.6 + 1.5}s`} repeatCount="indefinite" calcMode="spline" keySplines="0.2 0.8 0.4 1" keyTimes="0;1" />
-                      <animate attributeName="opacity" values="0.5;0" dur="3s" begin={`${i * 1.6 + 1.5}s`} repeatCount="indefinite" />
+                      <animate attributeName="r" values="0.6;5.5" dur="3.5s" begin={`${i * 2}s`} repeatCount="indefinite" calcMode="spline" keySplines="0.2 0.8 0.4 1" keyTimes="0;1" />
+                      <animate attributeName="opacity" values="0.6;0" dur="3.5s" begin={`${i * 2}s`} repeatCount="indefinite" />
                     </circle>
                     <circle cx={node.x} cy={node.y} r="0.48" className="hero-vendor-dot" />
                   </g>
@@ -304,12 +278,8 @@ export default function HomeHeroSectionClient() {
               {/* Dentist destination: arrival pulse ring + center dot */}
               {networkNodes
                 .filter((n) => n.kind === "dentist")
-                .map((node, i) => (
+                .map((node) => (
                   <g key={`dentist-fx-${node.id}`}>
-                    <circle cx={node.x} cy={node.y} r="0" className="hero-dentist-ring">
-                      <animate attributeName="r" values="0.4;3.2" dur="4s" begin={`${i * 0.62}s`} repeatCount="indefinite" calcMode="spline" keySplines="0.2 0.8 0.4 1" keyTimes="0;1" />
-                      <animate attributeName="opacity" values="0.62;0" dur="4s" begin={`${i * 0.62}s`} repeatCount="indefinite" />
-                    </circle>
                     <circle cx={node.x} cy={node.y} r="0.32" className="hero-dentist-dot" />
                   </g>
                 ))}
