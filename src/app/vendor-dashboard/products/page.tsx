@@ -83,6 +83,7 @@ interface ProductWithDetails extends UserProduct {
   image?: string
 }
 
+type ProductStatusDraft = "active" | "inactive"
 type PeriodTab = "3 months" | "6 months" | "12 months"
 
 const PERIOD_TABS: ReadonlyArray<{ label: string; value: PeriodTab }> = [
@@ -114,7 +115,7 @@ export default function ProductsPage() {
   const [totalPages, setTotalPages] = useState<number>(1)
   const [totalElements, setTotalElements] = useState<number>(0)
   const [editingProductId, setEditingProductId] = useState<string | null>(null)
-  const [editingDraft, setEditingDraft] = useState<{ price: string; stock: string } | null>(null)
+  const [editingDraft, setEditingDraft] = useState<{ price: string; stock: string; active: ProductStatusDraft } | null>(null)
   const [savingProductId, setSavingProductId] = useState<string | null>(null)
   const [imageFallbacks, setImageFallbacks] = useState<Record<string, boolean>>({})
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; productId: string | null; productName: string }>({
@@ -304,6 +305,7 @@ export default function ProductsPage() {
     setEditingDraft({
       price: String(product.price),
       stock: String(product.stock),
+      active: product.active ? "active" : "inactive",
     })
   }
 
@@ -312,6 +314,7 @@ export default function ProductsPage() {
 
     const nextPrice = Number.parseFloat(editingDraft.price)
     const nextStock = Number.parseInt(editingDraft.stock, 10)
+    const nextActive = editingDraft.active === "active"
 
     if (!Number.isFinite(nextPrice) || nextPrice < 0 || !Number.isInteger(nextStock) || nextStock < 0) {
       return
@@ -325,13 +328,17 @@ export default function ProductsPage() {
           price: nextPrice,
           stock: nextStock,
           discount: product.discount,
-          active: product.active,
+          active: nextActive,
         },
         accessToken,
       )
 
       setProducts((prev) =>
-        prev.map((item) => (item.id === product.id ? { ...item, ...updatedProduct, productName: updatedProduct.productName } : item)),
+        prev.map((item) =>
+          item.id === product.id
+            ? { ...item, ...updatedProduct, active: nextActive, productName: updatedProduct.productName }
+            : item,
+        ),
       )
       setEditingProductId(null)
       setEditingDraft(null)
@@ -558,11 +565,56 @@ export default function ProductsPage() {
       },
     },
     {
+      id: "periodicSellCount",
+      header: () => "Qty Sold",
+      cell: ({ row }) => (
+        <span className="text-sm text-text-secondary">{row.original.periodicSellCount?.toLocaleString("en-US") ?? 0}</span>
+      ),
+      meta: {
+        headerClassName: "px-6 py-4 text-right",
+        cellClassName: "px-6 py-4 text-right",
+      },
+    },
+    {
+      id: "periodicGrossRevenue",
+      header: () => "Sales",
+      cell: ({ row }) => {
+        const periodicGrossRevenue = row.original.periodicGrossRevenue ?? 0
+        return <span className="text-sm font-medium text-text-primary">{formatCurrency(periodicGrossRevenue)}</span>
+      },
+      meta: {
+        headerClassName: "px-6 py-4 text-right",
+        cellClassName: "px-6 py-4 text-right",
+      },
+    },
+    {
       id: "status",
       header: () => "Status",
       cell: ({ row }) => {
         const product = row.original
-        return (
+        const isEditing = editingProductId === product.id
+        const isSaving = savingProductId === product.id
+        const draftActive = editingDraft?.active ?? (product.active ? "active" : "inactive")
+
+        return isEditing ? (
+          <Select
+            value={draftActive}
+            onValueChange={(value) =>
+              setEditingDraft((prev) =>
+                prev ? { ...prev, active: value === "active" ? "active" : "inactive" } : prev,
+              )
+            }
+            disabled={isSaving}
+          >
+            <SelectTrigger className="h-9 w-32 rounded-lg border-border-strong bg-surface-elevated px-3 text-sm shadow-none focus:ring-2 focus:ring-brand/40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+        ) : (
           <span
             className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(product.active ? "Active" : "Inactive")}`}
           >
@@ -573,29 +625,6 @@ export default function ProductsPage() {
       meta: {
         headerClassName: "px-6 py-4",
         cellClassName: "px-6 py-4",
-      },
-    },
-    {
-      id: "periodicSellCount",
-      header: () => "Periodic Sell Count",
-      cell: ({ row }) => (
-        <span className="text-sm text-text-secondary">{row.original.periodicSellCount?.toLocaleString("en-US") ?? 0}</span>
-      ),
-      meta: {
-        headerClassName: "border-l-2 border-border-soft px-6 py-4 text-right",
-        cellClassName: "border-l-2 border-border-soft px-6 py-4 text-right",
-      },
-    },
-    {
-      id: "periodicGrossRevenue",
-      header: () => "Periodic Gross Revenue",
-      cell: ({ row }) => {
-        const periodicGrossRevenue = row.original.periodicGrossRevenue ?? 0
-        return <span className="text-sm font-medium text-text-primary">{formatCurrency(periodicGrossRevenue)}</span>
-      },
-      meta: {
-        headerClassName: "px-6 py-4 text-right",
-        cellClassName: "px-6 py-4 text-right",
       },
     },
     {
@@ -639,8 +668,8 @@ export default function ProductsPage() {
         )
       },
       meta: {
-        headerClassName: "border-l-2 border-border-soft px-6 py-4",
-        cellClassName: "border-l-2 border-border-soft px-6 py-4",
+        headerClassName: "px-6 py-4",
+        cellClassName: "px-6 py-4",
       },
     },
   ]
