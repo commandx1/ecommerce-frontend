@@ -1,6 +1,7 @@
 import { Award, CheckCircle, GraduationCap, Phone, ShieldCheck, Truck, Wrench } from "lucide-react"
 import Image from "next/image"
 import type { ComponentType } from "react"
+import { SpotlightCard } from "@/components/ui/spotlight-card"
 import StarRating from "@/features/home/components/StarRating"
 
 interface Feature {
@@ -36,7 +37,8 @@ const colorMap: Record<string, string> = {
 
 export default function SupplierCard({ name, logo, alt, rating, starCount, reviewCount, features }: SupplierCardProps) {
   return (
-    <div className="spotlight-border rounded-[1.75rem] border border-border-soft bg-surface-elevated p-8 shadow-soft transition-all hover:-translate-y-1 hover:shadow-panel">
+    <SpotlightCard className="rounded-[1.75rem] shadow-soft transition-all hover:-translate-y-1 hover:shadow-panel">
+    <div className="overflow-hidden rounded-[1.75rem] bg-surface-elevated p-8">
       <div className="mb-4 flex items-center justify-between">
         <span className="rounded-full bg-[color:color-mix(in_oklab,var(--success)_14%,var(--surface))] px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-success">
           Verified partner
@@ -95,5 +97,6 @@ export default function SupplierCard({ name, logo, alt, rating, starCount, revie
         </button>
       </div>
     </div>
+    </SpotlightCard>
   )
 }

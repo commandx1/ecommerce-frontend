@@ -1,5 +1,6 @@
 import { Heart, Mail, Star } from "lucide-react"
 import Link from "next/link"
+import { SpotlightCard } from "@/components/ui/spotlight-card"
 import type { SupplierDirectoryItem } from "@/features/suppliers/suppliersPageData"
 import { cn } from "@/lib/utils"
 
@@ -7,7 +8,8 @@ const numericFormatter = new Intl.NumberFormat("en-US")
 
 export default function SupplierDirectoryCard({ supplier }: { supplier: SupplierDirectoryItem }) {
   return (
-    <article className="spotlight-border rounded-[1.25rem] border border-border-soft bg-surface-elevated p-6 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-panel">
+    <SpotlightCard className="rounded-[1.25rem] shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-panel">
+    <article className="overflow-hidden rounded-[1.25rem] bg-surface-elevated p-6">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h3 className="text-xl font-semibold text-text-primary">{supplier.name}</h3>
@@ -70,5 +72,6 @@ export default function SupplierDirectoryCard({ supplier }: { supplier: Supplier
         </button>
       </div>
     </article>
+    </SpotlightCard>
   )
 }
