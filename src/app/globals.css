@@ -34,6 +34,7 @@
   --shadow-soft: var(--shadow-soft);
   --shadow-panel: var(--shadow-panel);
   --shadow-floating: var(--shadow-floating);
+  --animate-shine: shine var(--duration, 14s) infinite linear;
   --animate-spin-slow: spin 3s linear infinite;
   --animate-first: moveVertical 30s ease infinite;
   --animate-second: moveInCircle 20s reverse infinite;
@@ -606,6 +607,33 @@ button {
 
 .shadow-floating {
   box-shadow: var(--shadow-floating);
+}
+
+@keyframes shine {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
+}
+
+.shine-border {
+  border-radius: var(--shine-radius, 8px);
+}
+
+.shine-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--shine-radius, 8px);
+  padding: var(--shine-width, 1px);
+  background-image: var(--shine-gradient);
+  background-size: 300% 300%;
+  will-change: background-position;
+  pointer-events: none;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  animation: shine var(--shine-duration, 14s) infinite linear;
 }
 
 @keyframes moveHorizontal {
