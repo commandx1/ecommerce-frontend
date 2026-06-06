@@ -1,12 +1,25 @@
 import { ArrowRight } from "lucide-react"
 import Link from "next/link"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
-import ProductCard from "@/features/home/components/ProductCard"
+import ProductCard, { type ProductCardData } from "@/features/products/listing/components/listing/ProductCard"
 import type { HomeProductItem } from "@/features/home/types"
 
 interface HomeTrendingProductsSectionProps {
   products: ReadonlyArray<HomeProductItem>
 }
+
+const parsePrice = (s: string) => parseFloat(s.replace(/[$,]/g, "")) || 0
+
+const adaptHomeProduct = (p: HomeProductItem): ProductCardData => ({
+  id: p.id,
+  name: p.title,
+  brand: p.category,
+  imageSrc: p.image,
+  price: parsePrice(p.price),
+  oldPrice: p.originalPrice ? parsePrice(p.originalPrice) : undefined,
+  stock: 1,
+  href: `/products/${p.id}`,
+})
 
 export default function HomeTrendingProductsSection({ products }: HomeTrendingProductsSectionProps) {
   return (
@@ -33,7 +46,7 @@ export default function HomeTrendingProductsSection({ products }: HomeTrendingPr
 
         <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
           {products.map((product) => (
-            <ProductCard key={product.id} {...product} href={`/products/${product.id}`} />
+            <ProductCard key={product.id} data={adaptHomeProduct(product)} />
           ))}
         </div>
       </div>
