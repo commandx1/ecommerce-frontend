@@ -93,9 +93,9 @@ const PERIOD_TABS: ReadonlyArray<{ label: string; value: PeriodTab }> = [
 ]
 
 const PERIOD_TAB_TO_DAY_COUNT: Record<PeriodTab, number> = {
-  "3 months": 30,
-  "6 months": 60,
-  "12 months": 120,
+  "3 months": 90,
+  "6 months": 180,
+  "12 months": 365,
 }
 
 export default function ProductsPage() {
