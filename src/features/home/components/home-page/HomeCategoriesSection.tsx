@@ -9,10 +9,10 @@ interface HomeCategoriesSectionProps {
 export default function HomeCategoriesSection({ categories }: HomeCategoriesSectionProps) {
   return (
     <PageSectionContainer as="section" className="relative py-14 lg:py-18">
-      <h2 className="max-w-[20ch] font-display text-4xl leading-[1.03] text-text-primary md:text-5xl">
+      <h2 className="max-w-[20ch] m-auto text-center font-display text-4xl leading-[1.03] text-text-primary md:text-5xl">
         Shop by category, not by confusion.
       </h2>
-      <p className="mt-4 max-w-[60ch] text-base leading-relaxed text-text-secondary">
+      <p className="mt-4 max-w-[60ch] m-auto text-center text-base leading-relaxed text-text-secondary">
         We bring high-intent categories to the front so clinics can go from discovery to order faster.
       </p>
 

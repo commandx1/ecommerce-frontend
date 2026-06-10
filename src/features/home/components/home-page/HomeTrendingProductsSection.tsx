@@ -24,7 +24,7 @@ const adaptHomeProduct = (p: HomeProductItem): ProductCardData => ({
 export default function HomeTrendingProductsSection({ products }: HomeTrendingProductsSectionProps) {
   return (
     <PageSectionContainer as="section" className="relative py-14 lg:py-18">
-      <div className="rounded-[2rem] border border-border-soft/80 bg-surface-elevated/75 p-6 shadow-panel backdrop-blur-xl sm:p-8">
+      <div className="rounded-4xl border border-border-soft/80 bg-surface-elevated/75 p-6 shadow-panel backdrop-blur-xl sm:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="font-display text-3xl leading-tight text-text-primary sm:text-4xl">

@@ -5,7 +5,6 @@ import HomeBuyLaneSection from "@/features/home/components/home-page/HomeBuyLane
 import HomeCategoriesSection from "@/features/home/components/home-page/HomeCategoriesSection"
 import HomeFinalCtaSection from "@/features/home/components/home-page/HomeFinalCtaSection"
 import HomeHeroSectionClient from "@/features/home/components/home-page/HomeHeroSection.client"
-import HomeSignalStackSection from "@/features/home/components/home-page/HomeSignalStackSection"
 import HomeSuppliersSection from "@/features/home/components/home-page/HomeSuppliersSection"
 import HomeTrendingProductsSection from "@/features/home/components/home-page/HomeTrendingProductsSection"
 import { homeBuyLaneItems } from "@/features/home/homePageData"
@@ -25,7 +24,6 @@ export default function HomePage() {
         <HomeHeroSectionClient />
       </div>
 
-      <HomeSignalStackSection />
       <HomeCategoriesSection categories={featuredCategories} />
       <HomeTrendingProductsSection products={featuredProducts} />
       <HomeSuppliersSection suppliers={featuredSuppliers} />

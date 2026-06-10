@@ -1,15 +1,5 @@
-import { CreditCard, PackageSearch, ShieldCheck, ShoppingCart, Sparkles, Store, Truck, Waypoints } from "lucide-react"
-import type { HomeBuyLaneItem, HomeSignalItem } from "@/features/home/types"
-
-export const homeSignalItems: HomeSignalItem[] = [
-  { id: "deal", label: "Deal Spike", detail: "Composite kits now 18% off", icon: Sparkles },
-  { id: "dispatch", label: "Fast Dispatch", detail: "312 orders shipping today", icon: Truck },
-  { id: "trust", label: "Supplier Trust", detail: "0 unresolved critical flags", icon: ShieldCheck },
-  { id: "demand", label: "Demand Radar", detail: "Imaging devices trending +24%", icon: Waypoints },
-  { id: "uber-direct", label: "Uber Direct", detail: "Same-day local delivery lanes active", icon: Truck },
-  { id: "shippo", label: "Shippo", detail: "Multi-carrier labels synced in realtime", icon: PackageSearch },
-  { id: "stripe", label: "Stripe", detail: "Secure checkout events processing live", icon: CreditCard },
-]
+import { PackageSearch, ShoppingCart, Store } from "lucide-react"
+import type { HomeBuyLaneItem } from "@/features/home/types"
 
 export const homeBuyLaneItems: HomeBuyLaneItem[] = [
   {

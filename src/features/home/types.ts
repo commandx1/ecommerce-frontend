@@ -37,13 +37,6 @@ export interface HomeSupplierItem {
   features: HomeSupplierFeature[]
 }
 
-export interface HomeSignalItem {
-  id: string
-  label: string
-  detail: string
-  icon: LucideIcon
-}
-
 export interface HomeBuyLaneItem {
   title: string
   description: string
