@@ -65,7 +65,7 @@ export default function Modal({
       >
         <DialogTitle className="sr-only">{title}</DialogTitle>
         <div className={cn("w-full", bodyClassName)}>{children}</div>
-        {footer ? <div className={cn("border-t border-gray-200 p-4 sm:p-6", footerClassName)}>{footer}</div> : null}
+        {footer ? <div className={cn("border-t border-border-soft p-4 sm:p-6", footerClassName)}>{footer}</div> : null}
       </DialogContent>
     </Dialog>
   )

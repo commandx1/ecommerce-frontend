@@ -26,6 +26,7 @@ interface DataTableProps<TData> {
   getRowClassName?: (row: Row<TData>) => string
   getRowId?: (originalRow: TData, index: number) => string
   isLoading?: boolean
+  lastColumnSkeletonCircle?: boolean
   loadingText?: string
   minTableWidthClassName?: string
   noRowsText?: string
@@ -41,6 +42,7 @@ export default function DataTable<TData>({
   getRowClassName,
   getRowId,
   isLoading = false,
+  lastColumnSkeletonCircle = false,
   loadingText = "Loading...",
   minTableWidthClassName = "",
   noRowsText = "No rows found.",
@@ -87,12 +89,16 @@ export default function DataTable<TData>({
               <tr key={`loading-skeleton-row-${rowIndex}`} className="border-b border-border-soft" aria-hidden="true">
                 {Array.from({ length: visibleColumnCount }, (_, colIndex) => (
                   <td key={`loading-skeleton-cell-${rowIndex}-${colIndex}`} className="p-4">
-                    <div
-                      className={cn(
-                        "h-4 animate-pulse rounded-md bg-surface-muted",
-                        colIndex === 0 ? "w-14" : colIndex === visibleColumnCount - 1 ? "ms-auto w-20" : "w-full",
-                      )}
-                    />
+                    {lastColumnSkeletonCircle && colIndex === visibleColumnCount - 1 ? (
+                      <div className="ms-auto h-7 w-7 animate-pulse rounded-full bg-surface-muted" />
+                    ) : (
+                      <div
+                        className={cn(
+                          "h-4 animate-pulse rounded-md bg-surface-muted",
+                          colIndex === 0 ? "w-14" : colIndex === visibleColumnCount - 1 ? "ms-auto w-20" : "w-full",
+                        )}
+                      />
+                    )}
                   </td>
                 ))}
               </tr>
