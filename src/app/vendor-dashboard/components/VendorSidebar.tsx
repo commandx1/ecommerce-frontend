@@ -1,6 +1,6 @@
 "use client"
 
-import { Box, MapPin, Megaphone, Plus, ShoppingBag, Star, Tag, TrendingUp, User, Warehouse } from "lucide-react"
+import { Box, MapPin, Megaphone, MessageSquare, Plus, ShoppingBag, Star, Tag, TrendingUp, User, Warehouse } from "lucide-react"
 import CommonDashboardSidebar, {
   type DashboardSidebarGroup,
   type DashboardSidebarQuickAction,
@@ -31,6 +31,12 @@ const VENDOR_NAV_GROUPS: DashboardSidebarGroup[] = [
         label: "Reviews",
         icon: Star,
         badge: { label: "4.8", tone: "info" },
+        matchMode: "startsWith",
+      },
+      {
+        href: "/vendor-dashboard/questions",
+        label: "Questions",
+        icon: MessageSquare,
         matchMode: "startsWith",
       },
       {
