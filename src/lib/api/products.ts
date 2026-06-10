@@ -222,6 +222,15 @@ export interface UserProduct {
   periodicGrossRevenue?: number
 }
 
+export type UserProductSortBy =
+  | "PRICE"
+  | "STOCK"
+  | "OLD_PRICE"
+  | "DISCOUNT"
+  | "SELL_COUNT"
+  | "PERIODIC_SELL_COUNT"
+  | "PERIODIC_GROSS_REVENUE"
+
 export interface UserProductsFilterResponse {
   content: UserProduct[]
   totalElements: number
@@ -581,8 +590,8 @@ class ProductsAPI {
     type: "ACTIVE" | "INACTIVE" | "OUT_OF_STOCK" | "LOW_STOCK" | "TOTAL",
     page: number = 0,
     size: number = 10,
-    price?: boolean,
-    stock?: boolean,
+    sortBy?: UserProductSortBy,
+    sortDir?: "asc" | "desc",
     search?: string,
     howManySoldDay?: number,
   ): Promise<UserProductsFilterResponse> {
@@ -596,8 +605,8 @@ class ProductsAPI {
         type,
         page,
         size,
-        ...(price !== undefined ? { price } : {}),
-        ...(stock !== undefined ? { stock } : {}),
+        ...(sortBy !== undefined ? { sortBy } : {}),
+        ...(sortDir !== undefined ? { sortDir } : {}),
         ...(search !== undefined ? { search: search || "" } : {}),
         ...(howManySoldDay !== undefined ? { howManySoldDay } : {}),
       },

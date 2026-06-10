@@ -30,6 +30,14 @@ export interface SellerQuestionsPage {
   size: number
 }
 
+export interface SellerQuestionCounts {
+  total: number
+  answered: number
+  unanswered: number
+}
+
+export type QuestionFilter = "all" | "answered" | "unanswered"
+
 export interface CreateAnswerPayload {
   productQuestionId: string
   answer: string
@@ -40,10 +48,16 @@ export interface UpdateAnswerPayload {
 }
 
 class VendorQuestionsAPI {
-  async getSellerQuestions(page = 0, size = 10): Promise<SellerQuestionsPage> {
+  async getSellerQuestions(page = 0, size = 10, filter: QuestionFilter = "all"): Promise<SellerQuestionsPage> {
+    const answered = filter === "answered" ? true : filter === "unanswered" ? false : undefined
     const response = await apiClient.get<SellerQuestionsPage>("/product-questions/seller", {
-      params: { page, size },
+      params: { page, size, ...(answered !== undefined && { answered }) },
     })
+    return response.data
+  }
+
+  async getSellerCounts(): Promise<SellerQuestionCounts> {
+    const response = await apiClient.get<SellerQuestionCounts>("/product-questions/seller/counts")
     return response.data
   }
 

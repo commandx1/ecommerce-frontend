@@ -18,13 +18,31 @@ export interface BuyerOrderAddress {
 export interface BuyerOrderTrackingLink {
   trackingUrl: string
   status?: string
+  createdDate?: string | null
   updatedDate?: string | null
+  shipmentPrice?: number | null
+  takedShipmentPrice?: number | null
+  boxSize?: string | null
+  height?: number | null
+  width?: number | null
+  length?: number | null
+  weight?: number | null
+  allItemsInThisShipment?: boolean | null
+  howManyItemsContainedInThisShipment?: number | null
 }
 
 export interface BuyerOrderShippingLink {
   shippingUrl: string
   status?: string
+  createdDate?: string | null
   updatedDate?: string | null
+  shipmentPrice?: number | null
+  takedShipmentPrice?: number | null
+  boxSize?: string | null
+  height?: number | null
+  width?: number | null
+  length?: number | null
+  weight?: number | null
 }
 
 export interface BuyerOrderItem {
@@ -56,6 +74,7 @@ export interface BuyerOrderItem {
   trackingLinks?: BuyerOrderTrackingLink[]
   returnTrackingLinks?: BuyerOrderTrackingLink[]
   returnShippingLinks?: BuyerOrderShippingLink[]
+  returnenable?: boolean | null
   updatedDate: string
 }
 
@@ -123,8 +142,15 @@ export interface RefundOrderPayload {
   items: RefundOrderItemPayload[]
 }
 
+export interface RefundOrderItemLinks {
+  orderItemId: string
+  returnTrackingLinks: BuyerOrderTrackingLink[]
+  returnShippingLinks: BuyerOrderShippingLink[]
+}
+
 export interface RefundOrderResponse {
   message?: string
+  itemLinks?: RefundOrderItemLinks[]
 }
 
 class BuyerOrdersAPI {
@@ -134,6 +160,7 @@ class BuyerOrdersAPI {
     sortBy?: string,
     sortDir?: "asc" | "desc",
     type: BuyerOrderFilterType = "ALL",
+    signal?: AbortSignal,
   ): Promise<BuyerOrdersResponse> {
     const response = await apiClient.get<BuyerOrdersResponse>("/orders/buyer", {
       params: {
@@ -143,6 +170,7 @@ class BuyerOrdersAPI {
         sortDir,
         type,
       },
+      signal,
     })
     return response.data
   }

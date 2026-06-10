@@ -1,5 +1,13 @@
 import apiClient from "./client"
 
+export type VendorOrderFilterType =
+  | "ALL"
+  | "WAITING_FOR_SHIPMENT"
+  | "ON_WAY"
+  | "DELIVERED"
+  | "CANCELLED"
+  | "RETURNED"
+
 export interface VendorTrackingLink {
   trackingUrl: string
   status?: string
@@ -148,14 +156,23 @@ export interface SellerRejectReturnResponse {
 }
 
 class VendorOrdersAPI {
-  async getVendorOrders(page = 0, size = 10, sortBy?: string, sortDir?: "asc" | "desc"): Promise<VendorOrdersResponse> {
+  async getVendorOrders(
+    page = 0,
+    size = 10,
+    sortBy?: string,
+    sortDir?: "asc" | "desc",
+    type: VendorOrderFilterType = "ALL",
+    signal?: AbortSignal,
+  ): Promise<VendorOrdersResponse> {
     const response = await apiClient.get<VendorOrdersResponse>("/orders/seller", {
       params: {
         page,
         size,
         sortBy,
         sortDir,
+        type,
       },
+      signal,
     })
     return response.data
   }
