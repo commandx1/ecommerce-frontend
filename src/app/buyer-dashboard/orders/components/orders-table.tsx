@@ -1,7 +1,7 @@
 "use client"
 
 import type { ColumnDef, Row } from "@tanstack/react-table"
-import { ChevronDown, ChevronUp, Package, Store } from "lucide-react"
+import { ChevronDown, ChevronUp, ChevronsUpDown, Package, Store } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import DataTable from "@/components/ui/data-table"
 import type { BuyerOrder } from "@/lib/api/buyer-orders"
@@ -11,9 +11,10 @@ import { buildBuyerOrderViewModel } from "../lib/order-view-utils"
 import OrderExpandedContent from "./order-expanded-content"
 
 export default function OrdersTable() {
-  const { dateSortDir, expandedState, filteredOrders, isLoading, summariesByOrderId } = useBuyerOrdersTableSelector(
+  const { sortField, sortDir, expandedState, filteredOrders, isLoading, summariesByOrderId } = useBuyerOrdersTableSelector(
     (state) => ({
-      dateSortDir: state.dateSortDir,
+      sortField: state.sortField,
+      sortDir: state.sortDir,
       expandedState: state.expandedState,
       filteredOrders: state.filteredOrders,
       isLoading: state.isLoading,
@@ -21,7 +22,7 @@ export default function OrdersTable() {
     }),
   )
 
-  const { handleDateSortToggle, handleExpandedChange } = useBuyerOrdersTableActions()
+  const { handleSort, handleExpandedChange } = useBuyerOrdersTableActions()
 
   const getSummary = (order: BuyerOrder) => summariesByOrderId.get(order.orderId) ?? buildBuyerOrderViewModel(order)
 
@@ -32,12 +33,15 @@ export default function OrdersTable() {
         <Button
           type="button"
           variant="unstyled"
-          onClick={handleDateSortToggle}
+          onClick={() => handleSort("createdDate")}
           className="inline-flex items-center gap-1 text-xs font-semibold tracking-wider text-text-muted uppercase hover:text-text-secondary"
-          aria-label={`Sort by date ${dateSortDir === "desc" ? "ascending" : "descending"}`}
         >
           Date
-          {dateSortDir === "desc" ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
+          {sortField === "createdDate" ? (
+            sortDir === "desc" ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />
+          ) : (
+            <ChevronsUpDown className="h-2.5 w-2.5 text-text-muted/50" />
+          )}
         </Button>
       ),
       cell: ({ row }) => {
@@ -92,7 +96,21 @@ export default function OrdersTable() {
     },
     {
       id: "netTotal",
-      header: () => "Net Total",
+      header: () => (
+        <Button
+          type="button"
+          variant="unstyled"
+          onClick={() => handleSort("totalPrice")}
+          className="inline-flex items-center gap-1 text-xs font-semibold tracking-wider text-text-muted uppercase hover:text-text-secondary"
+        >
+          Net Total
+          {sortField === "totalPrice" ? (
+            sortDir === "desc" ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />
+          ) : (
+            <ChevronsUpDown className="h-2.5 w-2.5 text-text-muted/50" />
+          )}
+        </Button>
+      ),
       cell: ({ row }) => {
         const summary = getSummary(row.original)
         return <p>{formatCurrency(summary.money.netTotal)}</p>
@@ -146,6 +164,7 @@ export default function OrdersTable() {
       columns={orderColumns}
       data={filteredOrders}
       expanded={expandedState}
+      lastColumnSkeletonCircle
       getRowClassName={(row) =>
         `cursor-pointer transition-colors hover:bg-surface-muted/55 ${row.getIsExpanded() ? "bg-surface-muted/40" : ""}`
       }

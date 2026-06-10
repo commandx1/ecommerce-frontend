@@ -2,7 +2,7 @@
 
 import type { ExpandedState, OnChangeFn } from "@tanstack/react-table"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
 import {
@@ -52,7 +52,10 @@ export function useBuyerOrdersPage() {
   const [currentPage, setCurrentPage] = useState<number>(0)
   const [totalPages, setTotalPages] = useState<number>(1)
   const [totalElements, setTotalElements] = useState<number>(0)
-  const [dateSortDir, setDateSortDir] = useState<"asc" | "desc">("desc")
+  const [sort, setSort] = useState<{ field: "createdDate" | "totalPrice"; dir: "asc" | "desc" }>({
+    field: "createdDate",
+    dir: "desc",
+  })
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
   const [trackingModalLinks, setTrackingModalLinks] = useState<
     BuyerOrderLinksModalPayload | BuyerOrderTrackingLink[] | null
@@ -67,6 +70,7 @@ export function useBuyerOrdersPage() {
 
   const pageSize = DEFAULT_PAGE_SIZE
   const searchQuery = ""
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   const selectedTab = useMemo<BuyerOrderStatusTab>(() => {
     const queryValue = searchParams.get("selectedTab")
@@ -90,19 +94,26 @@ export function useBuyerOrdersPage() {
   useEffect(() => {
     const fetchOrders = async () => {
       if (!isAuthenticated) return
+
+      abortControllerRef.current?.abort()
+      const controller = new AbortController()
+      abortControllerRef.current = controller
+
       try {
         setIsLoading(true)
         const response = await buyerOrdersAPI.getBuyerOrders(
           currentPage,
           pageSize,
-          "createdDate",
-          dateSortDir,
+          sort.field,
+          sort.dir,
           ORDER_STATUS_TAB_TO_FILTER_TYPE[selectedTab],
+          controller.signal,
         )
         setOrders(response.orders)
         setTotalPages(response.totalPages)
         setTotalElements(response.totalElements)
       } catch (error: unknown) {
+        if (controller.signal.aborted) return
         if (!isAuthHandledError(error)) {
           showToast.error("Orders unavailable", "Your orders could not be loaded right now. Please try again.")
         }
@@ -110,19 +121,28 @@ export function useBuyerOrdersPage() {
         setTotalPages(0)
         setTotalElements(0)
       } finally {
-        setIsLoading(false)
+        if (!controller.signal.aborted) {
+          setIsLoading(false)
+        }
       }
     }
 
     void fetchOrders()
-  }, [isAuthenticated, currentPage, pageSize, dateSortDir, selectedTab])
+
+    return () => {
+      abortControllerRef.current?.abort()
+    }
+  }, [isAuthenticated, currentPage, pageSize, sort, selectedTab])
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page)
   }, [])
 
-  const handleDateSortToggle = useCallback(() => {
-    setDateSortDir((prev) => (prev === "desc" ? "asc" : "desc"))
+  const handleSort = useCallback((field: "createdDate" | "totalPrice") => {
+    setSort((prev) => ({
+      field,
+      dir: prev.field === field ? (prev.dir === "desc" ? "asc" : "desc") : "desc",
+    }))
     setCurrentPage(0)
   }, [])
 
@@ -340,6 +360,9 @@ export function useBuyerOrdersPage() {
         const refundedItemIds = new Set(payload.items.map((item) => item.orderItemId))
         const refundReasonByOrderItemId = new Map(payload.items.map((item) => [item.orderItemId, item.returnReason]))
         const submittedAt = new Date().toISOString()
+        const linksByItemId = new Map(
+          (response.itemLinks ?? []).map((link) => [link.orderItemId, link]),
+        )
 
         setOrders((prev) =>
           prev.map((order) => {
@@ -347,39 +370,29 @@ export function useBuyerOrdersPage() {
               return order
             }
 
+            const applyUpdate = (item: BuyerOrderItem) => {
+              if (!refundedItemIds.has(item.id)) return item
+              const links = linksByItemId.get(item.id)
+              return {
+                ...item,
+                refundStatus: "PENDING",
+                returnRefundStatus: "PENDING",
+                returnReason: refundReasonByOrderItemId.get(item.id) ?? item.returnReason ?? null,
+                returnDate: submittedAt,
+                ...(links?.returnTrackingLinks && { returnTrackingLinks: links.returnTrackingLinks }),
+                ...(links?.returnShippingLinks && { returnShippingLinks: links.returnShippingLinks }),
+              }
+            }
+
             return {
               ...order,
               sellerGroups: Array.isArray(order.sellerGroups)
                 ? order.sellerGroups.map((group) => ({
                     ...group,
-                    orderItems: Array.isArray(group.orderItems)
-                      ? group.orderItems.map((item) =>
-                          refundedItemIds.has(item.id)
-                            ? {
-                                ...item,
-                                refundStatus: "PENDING",
-                                returnRefundStatus: "PENDING",
-                                returnReason: refundReasonByOrderItemId.get(item.id) ?? item.returnReason ?? null,
-                                returnDate: submittedAt,
-                              }
-                            : item,
-                        )
-                      : [],
+                    orderItems: Array.isArray(group.orderItems) ? group.orderItems.map(applyUpdate) : [],
                   }))
                 : order.sellerGroups,
-              orderItems: Array.isArray(order.orderItems)
-                ? order.orderItems.map((item) =>
-                    refundedItemIds.has(item.id)
-                      ? {
-                          ...item,
-                          refundStatus: "PENDING",
-                          returnRefundStatus: "PENDING",
-                          returnReason: refundReasonByOrderItemId.get(item.id) ?? item.returnReason ?? null,
-                          returnDate: submittedAt,
-                        }
-                      : item,
-                  )
-                : order.orderItems,
+              orderItems: Array.isArray(order.orderItems) ? order.orderItems.map(applyUpdate) : order.orderItems,
             }
           }),
         )
@@ -412,10 +425,11 @@ export function useBuyerOrdersPage() {
     cancelingSellerKey,
     confirmPendingCancelAction,
     currentPage,
-    dateSortDir,
+    sortField: sort.field,
+    sortDir: sort.dir,
     expandedState,
     filteredOrders,
-    handleDateSortToggle,
+    handleSort,
     handleExpandedChange,
     handlePageChange,
     handleReorder,

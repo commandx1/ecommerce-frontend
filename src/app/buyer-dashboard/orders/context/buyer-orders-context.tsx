@@ -11,7 +11,8 @@ type BuyerOrdersTableState = Pick<
   UseBuyerOrdersPageResult,
   | "cancelingItemId"
   | "cancelingSellerKey"
-  | "dateSortDir"
+  | "sortField"
+  | "sortDir"
   | "expandedState"
   | "filteredOrders"
   | "isLoading"
@@ -21,7 +22,7 @@ type BuyerOrdersTableState = Pick<
 
 type BuyerOrdersTableActions = Pick<
   UseBuyerOrdersPageResult,
-  | "handleDateSortToggle"
+  | "handleSort"
   | "handleExpandedChange"
   | "handleReorder"
   | "requestCancelAction"
@@ -110,7 +111,8 @@ export function BuyerOrdersProvider({ children }: BuyerOrdersProviderProps) {
     () => ({
       cancelingItemId: buyerOrders.cancelingItemId,
       cancelingSellerKey: buyerOrders.cancelingSellerKey,
-      dateSortDir: buyerOrders.dateSortDir,
+      sortField: buyerOrders.sortField,
+      sortDir: buyerOrders.sortDir,
       expandedState: buyerOrders.expandedState,
       filteredOrders: buyerOrders.filteredOrders,
       isLoading: buyerOrders.isLoading,
@@ -120,7 +122,8 @@ export function BuyerOrdersProvider({ children }: BuyerOrdersProviderProps) {
     [
       buyerOrders.cancelingItemId,
       buyerOrders.cancelingSellerKey,
-      buyerOrders.dateSortDir,
+      buyerOrders.sortField,
+      buyerOrders.sortDir,
       buyerOrders.expandedState,
       buyerOrders.filteredOrders,
       buyerOrders.isLoading,
@@ -131,7 +134,7 @@ export function BuyerOrdersProvider({ children }: BuyerOrdersProviderProps) {
 
   const tableActions = useMemo<BuyerOrdersTableActions>(
     () => ({
-      handleDateSortToggle: buyerOrders.handleDateSortToggle,
+      handleSort: buyerOrders.handleSort,
       handleExpandedChange: buyerOrders.handleExpandedChange,
       handleReorder: buyerOrders.handleReorder,
       requestCancelAction: buyerOrders.requestCancelAction,
@@ -139,7 +142,7 @@ export function BuyerOrdersProvider({ children }: BuyerOrdersProviderProps) {
       setTrackingModalLinks: buyerOrders.setTrackingModalLinks,
     }),
     [
-      buyerOrders.handleDateSortToggle,
+      buyerOrders.handleSort,
       buyerOrders.handleExpandedChange,
       buyerOrders.handleReorder,
       buyerOrders.requestCancelAction,

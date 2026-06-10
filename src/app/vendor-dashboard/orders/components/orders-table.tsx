@@ -19,7 +19,7 @@ interface CancelActionOptions {
 interface VendorOrdersTableProps {
   orders: VendorOrder[]
   isLoading: boolean
-  sortBy: "price" | "quantity"
+  sortBy: "price" | "quantity" | "createdDate"
   sortDir: "asc" | "desc"
   expandedOrderId: string | null
   processingOrderId: string | null
@@ -28,7 +28,7 @@ interface VendorOrdersTableProps {
   returnActionItemId: string | null
   returnActionType: "confirm" | "reject" | null
   uberProcessedOrderIds: string[]
-  onSortToggle: (field: "price" | "quantity") => void
+  onSortToggle: (field: "price" | "quantity" | "createdDate") => void
   onExpandedOrderChange: (orderId: string | null) => void
   onCallUber: (order: VendorOrder) => void
   onRequestCancel: (action: { orderItemIds: string[]; description: string; options?: CancelActionOptions }) => void
@@ -94,7 +94,21 @@ export default function VendorOrdersTable({
     },
     {
       id: "created",
-      header: () => "Created",
+      header: () => (
+        <Button
+          type="button"
+          variant="unstyled"
+          onClick={() => onSortToggle("createdDate")}
+          className="inline-flex items-center gap-1 text-xs font-semibold tracking-wider text-text-muted uppercase hover:text-text-secondary"
+        >
+          Created
+          {sortBy === "createdDate" ? (
+            sortDir === "desc" ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />
+          ) : (
+            <ChevronsUpDown className="h-3 w-3 opacity-70" />
+          )}
+        </Button>
+      ),
       cell: ({ row }) => (
         <>
           <p>{formatDateOnly(row.original.orderCreatedDate)}</p>
