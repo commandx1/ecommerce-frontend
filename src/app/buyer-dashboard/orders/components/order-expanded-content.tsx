@@ -93,7 +93,7 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                         ? `Return ${formatOrderItemStatus(metadataStatusValue)}`
                         : formatOrderItemStatus(metadataStatusValue)
                       const canRequestItemReturn =
-                        item.status.toUpperCase() === "DELIVERED" &&
+                        item.returnenable === true &&
                         !(typeof item.returnDate === "string" && item.returnDate.trim().length > 0)
 
                       return (
