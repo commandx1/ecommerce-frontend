@@ -1,6 +1,7 @@
 "use client"
 
-import { ExternalLink, FileText, RotateCcw, Undo2, XCircle } from "lucide-react"
+import { ChevronDown, ExternalLink, FileText, RotateCcw, Undo2, XCircle } from "lucide-react"
+import { Collapse, CollapseContent, CollapseTrigger } from "@/components/ui/collapse"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import AddressContactInfo from "@/features/checkout/components/AddressContactInfo"
@@ -61,8 +62,9 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
               const isCancelingSellerGroup = cancelingSellerKey === sellerKey
 
               return (
-                <section key={group.sellerId} className="overflow-hidden rounded-[8px] border border-border-soft">
-                  <div className="flex items-center justify-between border-b border-border-soft bg-linear-to-r from-surface-muted/45 to-surface-muted/75 px-4 py-3">
+                <Collapse key={group.sellerId}>
+                <section className="overflow-hidden rounded-[8px] border border-border-soft">
+                  <CollapseTrigger className="group flex w-full items-center justify-between bg-linear-to-r from-surface-muted/45 to-surface-muted/75 px-4 py-3 transition-colors hover:from-surface-muted/60 hover:to-surface-muted/90 data-[state=open]:border-b data-[state=open]:border-border-soft">
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand text-xs font-bold text-primary-foreground shadow-sm">
                         {getSellerFirstTwoLetters(sellerDisplayName)}
@@ -71,14 +73,18 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                         <p className="text-sm font-semibold text-text-primary">{sellerDisplayName || "Seller"}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-text-primary">{formatCurrency(sellerTotal)}</p>
-                      <p className="text-xs text-text-muted">
-                        {sellerItemCount} item{sellerItemCount > 1 ? "s" : ""}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-text-primary">{formatCurrency(sellerTotal)}</p>
+                        <p className="text-xs text-text-muted">
+                          {sellerItemCount} item{sellerItemCount > 1 ? "s" : ""}
+                        </p>
+                      </div>
+                      <ChevronDown className="h-4 w-4 shrink-0 text-text-muted transition-transform duration-200 group-data-[state=open]:rotate-180" />
                     </div>
-                  </div>
+                  </CollapseTrigger>
 
+                  <CollapseContent>
                   <div className="space-y-3 bg-surface-elevated p-3">
                     {group.orderItems.map((item) => {
                       const productId = resolveOrderItemProductId(item)
@@ -280,13 +286,15 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                           "Canceling items..."
                         ) : (
                           <>
-                            Cancel All Items from <b className='-ml-1'>{sellerDisplayName}</b>
+                            Cancel All Items from <b className="-ml-1">{sellerDisplayName}</b>
                           </>
                         )}
                       </Button>
                     ) : null}
                   </div>
+                  </CollapseContent>
                 </section>
+                </Collapse>
               )
             })}
           </div>
