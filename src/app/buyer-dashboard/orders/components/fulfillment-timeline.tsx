@@ -22,6 +22,7 @@ interface FulfillmentTimelineItem {
   cancelledByCustomer?: boolean | null
   cancelledBySeller?: boolean | null
   cancelledWithShippingFee?: boolean | null
+  updatedDate?: string | null
 }
 
 interface FulfillmentTimelineProps {
@@ -44,6 +45,7 @@ export default function FulfillmentTimeline({ item, orderDate }: FulfillmentTime
     : item.cancelledBySeller
       ? "Cancelled by Seller"
       : null
+  const cancellationDate = cancellationLabel && item.updatedDate ? formatDateOnly(item.updatedDate) : null
   const isCancelledDuringShipping = Boolean(cancellationLabel) && Boolean(item.cancelledWithShippingFee)
   const hasReturnFlow = Boolean(returnRefundStatus || (returnDate && returnDate !== "-"))
   const effectiveTimelineState: typeof timelineState =
@@ -128,7 +130,12 @@ export default function FulfillmentTimeline({ item, orderDate }: FulfillmentTime
             <div
               className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${cancellationDotClass}`}
             />
-            <p className={`text-xs font-medium ${cancellationLabelClass}`}>{cancellationLabel}</p>
+            <div>
+              <p className={`text-xs font-medium ${cancellationLabelClass}`}>{cancellationLabel}</p>
+              {cancellationDate && cancellationDate !== "-" ? (
+                <p className="text-[11px] text-text-muted">{cancellationDate}</p>
+              ) : null}
+            </div>
           </motion.div>
         ) : null}
         {!cancellationLabel || isCancelledDuringShipping ? (
@@ -144,7 +151,12 @@ export default function FulfillmentTimeline({ item, orderDate }: FulfillmentTime
             <div
               className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${cancellationDotClass}`}
             />
-            <p className={`text-xs font-medium ${cancellationLabelClass}`}>{cancellationLabel}</p>
+            <div>
+              <p className={`text-xs font-medium ${cancellationLabelClass}`}>{cancellationLabel}</p>
+              {cancellationDate && cancellationDate !== "-" ? (
+                <p className="text-[11px] text-text-muted">{cancellationDate}</p>
+              ) : null}
+            </div>
           </motion.div>
         ) : null}
         {!cancellationLabel ? (
