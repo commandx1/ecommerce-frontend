@@ -2,24 +2,36 @@
 
 import {
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   ExternalLink,
   Loader2,
   Printer,
   X,
 } from "lucide-react"
 import Link from "next/link"
-import { useEffect, useId, useState } from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
+import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
 import Modal from "@/components/ui/Modal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
 import { extractApiErrorMessage } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
-import { type ProcessUberDeliveriesResponse, type VendorOrder, type VendorOrderItem, vendorOrdersAPI } from "@/lib/api/vendor-orders"
+import { type ProcessUberDeliveriesResponse, type VendorOrder, type VendorOrderFilterType, type VendorOrderItem, vendorOrdersAPI } from "@/lib/api/vendor-orders"
 import { OrderItemStatus } from "@/lib/constants/order-item-status"
 import { getQzConnectionStatus, printShippingLabel, type QzPrintOptions } from "@/lib/qz/printLabel"
 import { useAuthStore } from "@/stores/authStore"
 import OrdersTable from "./components/orders-table"
+
+const VENDOR_ORDER_TABS = ["All", "Pending", "Shipped", "Delivered", "Cancelled", "Returned"] as const
+type VendorOrderStatusTab = (typeof VENDOR_ORDER_TABS)[number]
+
+const TAB_TO_FILTER: Record<VendorOrderStatusTab, VendorOrderFilterType> = {
+  All: "ALL",
+  Pending: "WAITING_FOR_SHIPMENT",
+  Shipped: "ON_WAY",
+  Delivered: "DELIVERED",
+  Cancelled: "CANCELLED",
+  Returned: "RETURNED",
+}
 
 interface PendingVendorCancelAction {
   orderItemIds: string[]
@@ -37,13 +49,22 @@ interface PendingVendorReturnRejectAction {
 
 export default function VendorOrdersPage() {
   const id = useId()
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { isAuthenticated } = useAuthStore()
+
+  const selectedTab = useMemo<VendorOrderStatusTab>(() => {
+    const value = searchParams.get("selectedTab")
+    return VENDOR_ORDER_TABS.includes(value as VendorOrderStatusTab) ? (value as VendorOrderStatusTab) : "All"
+  }, [searchParams])
   const [orders, setOrders] = useState<VendorOrder[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [pageSize, setPageSize] = useState<number>(10)
   const [currentPage, setCurrentPage] = useState<number>(0)
   const [totalPages, setTotalPages] = useState<number>(1)
-  const [sortBy, setSortBy] = useState<"price" | "quantity">("price")
+  const [totalElements, setTotalElements] = useState<number>(0)
+  const [sortBy, setSortBy] = useState<"price" | "quantity" | "createdDate">("createdDate")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
   const [labelModalLinks, setLabelModalLinks] = useState<{ shipping: string[]; tracking: string[] } | null>(null)
@@ -70,25 +91,40 @@ export default function VendorOrdersPage() {
   const [returnActionType, setReturnActionType] = useState<"confirm" | "reject" | null>(null)
   const [uberResult, setUberResult] = useState<ProcessUberDeliveriesResponse | null>(null)
   const [uberProcessedOrderIds, setUberProcessedOrderIds] = useState<string[]>([])
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
     const fetchOrders = async () => {
       if (!isAuthenticated) return
+
+      abortControllerRef.current?.abort()
+      const controller = new AbortController()
+      abortControllerRef.current = controller
+
       try {
         setIsLoading(true)
-        const response = await vendorOrdersAPI.getVendorOrders(currentPage, pageSize, sortBy, sortDir)
+        const response = await vendorOrdersAPI.getVendorOrders(currentPage, pageSize, sortBy, sortDir, TAB_TO_FILTER[selectedTab], controller.signal)
         setOrders(response.orders)
         setTotalPages(response.totalPages)
+        setTotalElements(response.totalElements)
       } catch {
+        if (controller.signal.aborted) return
         setOrders([])
         setTotalPages(0)
+        setTotalElements(0)
       } finally {
-        setIsLoading(false)
+        if (!controller.signal.aborted) {
+          setIsLoading(false)
+        }
       }
     }
 
     void fetchOrders()
-  }, [isAuthenticated, currentPage, pageSize, sortBy, sortDir])
+
+    return () => {
+      abortControllerRef.current?.abort()
+    }
+  }, [isAuthenticated, currentPage, pageSize, sortBy, sortDir, selectedTab])
 
   useEffect(() => {
     if (!labelModalLinks) return
@@ -127,6 +163,17 @@ export default function VendorOrdersPage() {
     void initQz()
   }, [labelModalLinks])
 
+  const handleTabChange = useCallback(
+    (tab: VendorOrderStatusTab) => {
+      const nextParams = new URLSearchParams(searchParams.toString())
+      nextParams.set("selectedTab", tab)
+      router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false })
+      setCurrentPage(0)
+      setExpandedOrderId(null)
+    },
+    [pathname, router, searchParams],
+  )
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
   }
@@ -136,7 +183,7 @@ export default function VendorOrdersPage() {
     setCurrentPage(0)
   }
 
-  const handleSortToggle = (field: "price" | "quantity") => {
+  const handleSortToggle = (field: "price" | "quantity" | "createdDate") => {
     if (sortBy === field) {
       setSortDir((prev) => (prev === "desc" ? "asc" : "desc"))
     } else {
@@ -345,6 +392,28 @@ export default function VendorOrdersPage() {
         id={`${id}-orders-table-section`}
         className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
       >
+        <div className="border-b border-border-soft px-4 pt-4 sm:px-6">
+          <div className="mb-4">
+            <div className="inline-flex flex-wrap items-center gap-2 rounded-sm border border-border-soft bg-surface p-1.5 shadow-soft">
+              {VENDOR_ORDER_TABS.map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => handleTabChange(tab)}
+                  className={`rounded-sm px-4 py-2 text-sm font-medium transition-colors ${
+                    selectedTab === tab
+                      ? "bg-brand text-muted shadow-soft"
+                      : "text-text-secondary hover:bg-surface-muted hover:text-text-primary"
+                  }`}
+                  aria-pressed={selectedTab === tab}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         <div className="overflow-x-auto">
           <OrdersTable
             orders={orders}
@@ -368,73 +437,27 @@ export default function VendorOrdersPage() {
           />
         </div>
 
-        {/* Pagination */}
-        <div className="px-6 py-4 border-t border-border-soft bg-surface-muted">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-text-secondary">Show</span>
-              <Select value={String(pageSize)} onValueChange={(value) => handlePageSizeChange(Number(value))}>
-                <SelectTrigger className="h-9 w-20 rounded-lg border-border-strong bg-surface-elevated px-3 py-1 text-sm text-text-secondary shadow-none focus-visible:ring-2 focus-visible:ring-brand/50">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectContent>
-              </Select>
-              <span className="text-sm text-text-secondary">per page</span>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <button
-                type="button"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 0}
-                className="px-3 py-2 border border-border-strong rounded-lg hover:bg-surface-elevated text-sm font-medium text-text-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNumber: number
-                if (totalPages <= 5) {
-                  pageNumber = i
-                } else if (currentPage < 3) {
-                  pageNumber = i
-                } else if (currentPage > totalPages - 3) {
-                  pageNumber = totalPages - 5 + i
-                } else {
-                  pageNumber = currentPage - 2 + i
-                }
-
-                return (
-                  <button
-                    key={pageNumber}
-                    type="button"
-                    onClick={() => handlePageChange(pageNumber)}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium ${
-                      currentPage === pageNumber
-                        ? "bg-brand text-white"
-                        : "border border-border-strong hover:bg-surface-elevated text-text-secondary"
-                    }`}
-                  >
-                    {pageNumber + 1}
-                  </button>
-                )
-              })}
-
-              <button
-                type="button"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages - 1}
-                className="px-3 py-2 border border-border-strong rounded-lg hover:bg-surface-elevated text-sm font-medium text-text-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+        <div className="flex items-center gap-2 border-t border-border-soft bg-surface-muted px-6 py-3">
+          <span className="text-sm text-text-secondary">Show</span>
+          <Select value={String(pageSize)} onValueChange={(value) => handlePageSizeChange(Number(value))}>
+            <SelectTrigger className="h-9 w-20 rounded-lg border-border-strong bg-surface-elevated px-3 py-1 text-sm text-text-secondary shadow-none focus-visible:ring-2 focus-visible:ring-brand/50">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="25">25</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+            </SelectContent>
+          </Select>
+          <span className="text-sm text-text-secondary">per page</span>
         </div>
+        <DashboardPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalElements={totalElements}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
+        />
       </section>
       <Modal
         isOpen={Boolean(pendingCancelAction)}

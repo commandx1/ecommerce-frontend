@@ -1,31 +1,37 @@
 "use client"
 
-import { ChevronLeft, ChevronRight, Loader2, MessageSquare, Pencil, Send, Trash2, X } from "lucide-react"
+import { Loader2, MessageSquare, Pencil, Send, Trash2, X } from "lucide-react"
 import { useCallback, useEffect, useId, useState } from "react"
+import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
+import ConfirmationModal from "@/components/feedback/ConfirmationModal"
 import { showToast } from "@/components/ui/Toast"
 import { cn } from "@/lib/utils"
 import {
   type ProductAnswerResponse,
   type ProductQuestionResponse,
+  type QuestionFilter,
+  type SellerQuestionCounts,
   vendorQuestionsAPI,
 } from "@/lib/api/vendor-questions"
 import { useAuthStore } from "@/stores/authStore"
 
-const FILTER_TABS = ["All", "Unanswered", "Answered"] as const
-type FilterTab = (typeof FILTER_TABS)[number]
-
 const PAGE_SIZE = 10
+
+const FILTER_TABS: { key: QuestionFilter; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "unanswered", label: "Unanswered" },
+  { key: "answered", label: "Answered" },
+]
 
 function formatRelativeDate(dateStr: string | null): string {
   if (!dateStr) return ""
   const date = new Date(dateStr)
   const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
   if (diffDays === 0) return "Today"
   if (diffDays === 1) return "Yesterday"
   if (diffDays < 7) return `${diffDays} days ago`
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? "s" : ""} ago`
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
 }
 
@@ -46,33 +52,19 @@ function QuestionCard({ question, currentUserId, onAnswerCreated, onAnswerUpdate
   const [draftText, setDraftText] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
-  const startCompose = () => {
-    setDraftText("")
-    setMode("composing")
-  }
-
-  const startEdit = () => {
-    setDraftText(existingAnswer?.answer ?? "")
-    setMode("editing")
-  }
-
-  const cancelEdit = () => {
-    setDraftText("")
-    setMode("view")
-  }
+  const startCompose = () => { setDraftText(""); setMode("composing") }
+  const startEdit = () => { setDraftText(existingAnswer?.answer ?? ""); setMode("editing") }
+  const cancelEdit = () => { setDraftText(""); setMode("view") }
 
   const handleSubmit = async () => {
     const trimmed = draftText.trim()
     if (!trimmed) return
-
     setIsSubmitting(true)
     try {
       if (mode === "composing") {
-        const created = await vendorQuestionsAPI.createAnswer({
-          productQuestionId: question.id,
-          answer: trimmed,
-        })
+        const created = await vendorQuestionsAPI.createAnswer({ productQuestionId: question.id, answer: trimmed })
         onAnswerCreated(question.id, created)
       } else {
         if (!existingAnswer) return
@@ -88,12 +80,13 @@ function QuestionCard({ question, currentUserId, onAnswerCreated, onAnswerUpdate
     }
   }
 
-  const handleDelete = async () => {
+  const handleDeleteConfirmed = async () => {
     if (!existingAnswer) return
     setIsDeleting(true)
     try {
       await vendorQuestionsAPI.deleteAnswer(existingAnswer.id)
       onAnswerDeleted(question.id, existingAnswer.id)
+      setShowDeleteConfirm(false)
       setMode("view")
     } catch {
       showToast.error("Failed to delete answer", "Please try again.")
@@ -104,28 +97,23 @@ function QuestionCard({ question, currentUserId, onAnswerCreated, onAnswerUpdate
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft transition-shadow hover:shadow-md">
-      {/* Product label */}
       <div className="flex items-center gap-2 border-b border-border-soft bg-surface px-5 py-3">
         <div className="flex h-6 w-6 items-center justify-center rounded-md bg-brand/10">
           <MessageSquare className="h-3.5 w-3.5 text-brand" />
         </div>
-        <span className="text-xs font-semibold text-brand">
-          {question.productName ?? "Product"}
-        </span>
+        <span className="text-xs font-semibold text-brand">{question.productName ?? "Product"}</span>
         <span className="ml-auto text-xs text-text-muted">{formatRelativeDate(question.createdDate)}</span>
       </div>
 
-      <div className="px-5 py-4 space-y-4">
-        {/* Question */}
+      <div className="space-y-4 px-5 py-4">
         <div className="space-y-1.5">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Question</p>
-          <p className="text-sm text-text-primary leading-relaxed">{question.question}</p>
+          <p className="text-sm leading-relaxed text-text-primary">{question.question}</p>
           <p className="text-xs text-text-muted">
             Asked by <span className="font-medium text-text-secondary">{question.questionerName}</span>
           </p>
         </div>
 
-        {/* Answer section */}
         <div className="border-t border-border-soft pt-4">
           {mode === "view" && existingAnswer ? (
             <div className="space-y-2">
@@ -137,31 +125,26 @@ function QuestionCard({ question, currentUserId, onAnswerCreated, onAnswerUpdate
                       type="button"
                       onClick={startEdit}
                       className="rounded-lg p-1.5 text-text-muted transition-colors hover:bg-surface-muted hover:text-text-secondary"
-                      title="Edit answer"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
                       type="button"
-                      onClick={() => void handleDelete()}
-                      disabled={isDeleting}
-                      className="rounded-lg p-1.5 text-text-muted transition-colors hover:bg-danger/10 hover:text-danger disabled:opacity-50"
-                      title="Delete answer"
+                      onClick={() => setShowDeleteConfirm(true)}
+                      className="rounded-lg p-1.5 text-text-muted transition-colors hover:bg-danger/10 hover:text-danger"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 )}
               </div>
-              <p className="text-sm text-text-primary leading-relaxed">{existingAnswer.answer}</p>
+              <p className="text-sm leading-relaxed text-text-primary">{existingAnswer.answer}</p>
               <p className="text-xs text-text-muted">
                 By <span className="font-medium text-text-secondary">{existingAnswer.answererName}</span>
-                {existingAnswer.createdDate && (
-                  <> · {formatRelativeDate(existingAnswer.createdDate)}</>
-                )}
+                {existingAnswer.createdDate && <> · {formatRelativeDate(existingAnswer.createdDate)}</>}
               </p>
             </div>
-          ) : mode === "view" && !existingAnswer ? (
+          ) : mode === "view" ? (
             <button
               id={`${cardId}-answer-btn`}
               type="button"
@@ -199,11 +182,7 @@ function QuestionCard({ question, currentUserId, onAnswerCreated, onAnswerUpdate
                   disabled={isSubmitting || !draftText.trim()}
                   className="flex items-center gap-1.5 rounded-xl bg-brand px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {isSubmitting ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Send className="h-3.5 w-3.5" />
-                  )}
+                  {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                   {isSubmitting ? "Saving…" : mode === "editing" ? "Save changes" : "Submit answer"}
                 </button>
               </div>
@@ -211,6 +190,17 @@ function QuestionCard({ question, currentUserId, onAnswerCreated, onAnswerUpdate
           )}
         </div>
       </div>
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={() => void handleDeleteConfirmed()}
+        title="Delete answer"
+        description="Are you sure you want to delete this answer? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Keep it"
+        isDanger
+        isLoading={isDeleting}
+      />
     </div>
   )
 }
@@ -218,44 +208,65 @@ function QuestionCard({ question, currentUserId, onAnswerCreated, onAnswerUpdate
 export default function VendorQuestionsPage() {
   const { isAuthenticated, user } = useAuthStore()
   const [questions, setQuestions] = useState<ProductQuestionResponse[]>([])
+  const [counts, setCounts] = useState<SellerQuestionCounts | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
   const [totalElements, setTotalElements] = useState(0)
-  const [activeTab, setActiveTab] = useState<FilterTab>("All")
+  const [activeFilter, setActiveFilter] = useState<QuestionFilter>("all")
 
-  const fetchQuestions = useCallback(async (page: number) => {
+  const fetchCounts = useCallback(async () => {
+    if (!isAuthenticated) return
+    try {
+      const data = await vendorQuestionsAPI.getSellerCounts()
+      setCounts(data)
+    } catch {
+      // non-critical, silently ignore
+    }
+  }, [isAuthenticated])
+
+  const fetchQuestions = useCallback(async (page: number, filter: QuestionFilter) => {
     if (!isAuthenticated) return
     setIsLoading(true)
     try {
-      const response = await vendorQuestionsAPI.getSellerQuestions(page, PAGE_SIZE)
+      const response = await vendorQuestionsAPI.getSellerQuestions(page, PAGE_SIZE, filter)
       setQuestions(response.content)
       setTotalPages(response.totalPages)
       setTotalElements(response.totalElements)
     } catch {
       showToast.error("Failed to load questions", "Please refresh the page.")
       setQuestions([])
+      setTotalPages(0)
+      setTotalElements(0)
     } finally {
       setIsLoading(false)
     }
   }, [isAuthenticated])
 
   useEffect(() => {
-    void fetchQuestions(currentPage)
-  }, [fetchQuestions, currentPage])
+    void fetchQuestions(currentPage, activeFilter)
+  }, [fetchQuestions, currentPage, activeFilter])
+
+  useEffect(() => {
+    void fetchCounts()
+  }, [fetchCounts])
+
+  const handleFilterChange = (filter: QuestionFilter) => {
+    setActiveFilter(filter)
+    setCurrentPage(0)
+  }
 
   const handleAnswerCreated = useCallback((questionId: string, answer: ProductAnswerResponse) => {
     setQuestions((prev) =>
       prev.map((q) => (q.id === questionId ? { ...q, answers: [answer, ...q.answers] } : q)),
     )
-  }, [])
+    void fetchCounts()
+  }, [fetchCounts])
 
   const handleAnswerUpdated = useCallback((questionId: string, answer: ProductAnswerResponse) => {
     setQuestions((prev) =>
       prev.map((q) =>
-        q.id === questionId
-          ? { ...q, answers: q.answers.map((a) => (a.id === answer.id ? answer : a)) }
-          : q,
+        q.id === questionId ? { ...q, answers: q.answers.map((a) => (a.id === answer.id ? answer : a)) } : q,
       ),
     )
   }, [])
@@ -266,15 +277,8 @@ export default function VendorQuestionsPage() {
         q.id === questionId ? { ...q, answers: q.answers.filter((a) => a.id !== answerId) } : q,
       ),
     )
-  }, [])
-
-  const filteredQuestions = questions.filter((q) => {
-    if (activeTab === "Answered") return q.answers.length > 0
-    if (activeTab === "Unanswered") return q.answers.length === 0
-    return true
-  })
-
-  const unansweredCount = questions.filter((q) => q.answers.length === 0).length
+    void fetchCounts()
+  }, [fetchCounts])
 
   if (!isAuthenticated) {
     return (
@@ -286,64 +290,66 @@ export default function VendorQuestionsPage() {
 
   return (
     <>
-      {/* Header */}
       <section className="mb-8">
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-3xl font-bold text-text-primary">Product Questions</h1>
-            <p className="mt-1 text-text-secondary">
-              Answer customer questions about your products
-            </p>
+            <p className="mt-1 text-text-secondary">Answer customer questions about your products</p>
           </div>
-          {unansweredCount > 0 && !isLoading && (
+          {counts && counts.unanswered > 0 && (
             <div className="flex items-center gap-2 rounded-2xl border border-warning/30 bg-warning/10 px-4 py-2.5">
               <MessageSquare className="h-4 w-4 text-warning" />
-              <span className="text-sm font-semibold text-warning">
-                {unansweredCount} unanswered
-              </span>
+              <span className="text-sm font-semibold text-warning">{counts.unanswered} unanswered</span>
             </div>
           )}
         </div>
       </section>
 
       <section className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
-        {/* Tabs + stats */}
         <div className="flex flex-col gap-3 border-b border-border-soft px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="inline-flex items-center gap-1.5 rounded-sm border border-border-soft bg-surface p-1.5 shadow-soft">
-            {FILTER_TABS.map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={cn(
-                  "rounded-sm px-4 py-2 text-sm font-medium transition-colors",
-                  activeTab === tab
-                    ? "bg-brand text-muted shadow-soft"
-                    : "text-text-secondary hover:bg-surface-muted hover:text-text-primary",
-                )}
-                aria-pressed={activeTab === tab}
-              >
-                {tab}
-                {tab === "Unanswered" && unansweredCount > 0 && !isLoading && (
-                  <span className="ml-2 rounded-full bg-warning/20 px-1.5 py-0.5 text-[11px] font-bold text-warning">
-                    {unansweredCount}
-                  </span>
-                )}
-              </button>
-            ))}
+            {FILTER_TABS.map(({ key, label }) => {
+              const count = counts
+                ? key === "all" ? counts.total : key === "answered" ? counts.answered : counts.unanswered
+                : null
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => handleFilterChange(key)}
+                  className={cn(
+                    "flex items-center gap-2 rounded-sm px-4 py-2 text-sm font-medium transition-colors",
+                    activeFilter === key
+                      ? "bg-brand text-muted shadow-soft"
+                      : "text-text-secondary hover:bg-surface-muted hover:text-text-primary",
+                  )}
+                  aria-pressed={activeFilter === key}
+                >
+                  {label}
+                  {count !== null && (
+                    <span
+                      className={cn(
+                        "rounded-full px-1.5 py-0.5 text-[11px] font-bold",
+                        activeFilter === key
+                          ? "bg-white/20 text-white"
+                          : key === "unanswered" && count > 0
+                            ? "bg-warning/20 text-warning"
+                            : "bg-surface-muted text-text-muted",
+                      )}
+                    >
+                      {count}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
           </div>
-          {!isLoading && (
-            <p className="text-sm text-text-muted">
-              {totalElements} total question{totalElements !== 1 ? "s" : ""}
-            </p>
-          )}
         </div>
 
-        {/* Content */}
         <div className="p-6">
           {isLoading ? (
-            <div className="space-y-4">
-              {Array.from({ length: 3 }, (_, i) => (
+            <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
+              {Array.from({ length: 4 }, (_, i) => (
                 <div key={i} className="animate-pulse overflow-hidden rounded-2xl border border-border-soft">
                   <div className="h-11 bg-surface" />
                   <div className="space-y-3 p-5">
@@ -356,21 +362,27 @@ export default function VendorQuestionsPage() {
                 </div>
               ))}
             </div>
-          ) : filteredQuestions.length === 0 ? (
+          ) : questions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-muted">
                 <MessageSquare className="h-8 w-8 text-text-muted" />
               </div>
               <p className="text-base font-semibold text-text-primary">
-                {activeTab === "Unanswered" ? "No unanswered questions" : activeTab === "Answered" ? "No answered questions yet" : "No questions yet"}
+                {activeFilter === "unanswered"
+                  ? "No unanswered questions"
+                  : activeFilter === "answered"
+                    ? "No answered questions yet"
+                    : "No questions yet"}
               </p>
               <p className="mt-1 text-sm text-text-muted">
-                {activeTab === "All" ? "Customer questions about your products will appear here." : "Switch to a different filter to see other questions."}
+                {activeFilter === "all"
+                  ? "Customer questions about your products will appear here."
+                  : "Switch to a different filter to see other questions."}
               </p>
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
-              {filteredQuestions.map((question) => (
+              {questions.map((question) => (
                 <QuestionCard
                   key={question.id}
                   question={question}
@@ -384,49 +396,14 @@ export default function VendorQuestionsPage() {
           )}
         </div>
 
-        {/* Pagination */}
-        {!isLoading && totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-border-soft px-6 py-4">
-            <p className="text-sm text-text-muted">
-              Page {currentPage + 1} of {totalPages}
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
-                disabled={currentPage === 0}
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-border-strong text-text-secondary transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                const page = totalPages <= 5 ? i : Math.max(0, Math.min(currentPage - 2, totalPages - 5)) + i
-                return (
-                  <button
-                    key={page}
-                    type="button"
-                    onClick={() => setCurrentPage(page)}
-                    className={cn(
-                      "flex h-9 w-9 items-center justify-center rounded-xl text-sm font-medium transition-colors",
-                      page === currentPage
-                        ? "bg-brand text-white shadow-soft"
-                        : "border border-border-strong text-text-secondary hover:bg-surface-muted",
-                    )}
-                  >
-                    {page + 1}
-                  </button>
-                )
-              })}
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
-                disabled={currentPage >= totalPages - 1}
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-border-strong text-text-secondary transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
+        {!isLoading && totalPages > 0 && (
+          <DashboardPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            pageSize={PAGE_SIZE}
+            onPageChange={setCurrentPage}
+          />
         )}
       </section>
     </>

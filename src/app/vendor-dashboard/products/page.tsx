@@ -1,7 +1,7 @@
 "use client"
 
 import type { ColumnDef } from "@tanstack/react-table"
-import { ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, Download, Edit, Search, Trash2, Upload } from "lucide-react"
+import { ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, Download, Edit, Loader2, Search, Trash2, Upload } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import DataTable from "@/components/ui/data-table"
 import Modal from "@/components/ui/Modal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { getFullImageUrl, type Product, productsAPI, type UserProduct } from "@/lib/api/products"
+import { getFullImageUrl, type Product, productsAPI, type UserProduct, type UserProductSortBy } from "@/lib/api/products"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
 import ProductStatsCards, { type FilterType } from "./components/ProductStatsCards"
@@ -106,7 +106,7 @@ export default function ProductsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
-  const [sortField, setSortField] = useState<"price" | "stock" | null>(null)
+  const [sortField, setSortField] = useState<UserProductSortBy | null>(null)
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("TOTAL")
   const [selectedPeriodTab, setSelectedPeriodTab] = useState<PeriodTab>("3 months")
@@ -133,31 +133,21 @@ export default function ProductsPage() {
 
     try {
       setIsLoading(true)
-      // Prepare sort parameters
-      const sortParams: { price?: boolean; stock?: boolean } = {}
-      if (sortField === "price") {
-        sortParams.price = sortDirection === "desc" // Reverse logic
-      } else if (sortField === "stock") {
-        sortParams.stock = sortDirection === "desc" // Reverse logic
-      }
-
-      // Default sort by stock asc if no sort is selected
-      if (!sortField) {
-        sortParams.stock = true
-      }
 
       let productsWithDetails: UserProduct[] = []
 
       try {
         const howManySoldDay = PERIOD_TAB_TO_DAY_COUNT[selectedPeriodTab]
+        const activeSortBy: UserProductSortBy = sortField ?? "STOCK"
+        const activeSortDir = sortField ? sortDirection : "asc"
 
         const filterResponse = await productsAPI.filterUserProducts(
           accessToken,
           selectedFilter === "ALL" ? "TOTAL" : selectedFilter,
           currentPage,
           pageSize,
-          sortParams.price,
-          sortParams.stock,
+          activeSortBy,
+          activeSortDir,
           debouncedSearchQuery,
           howManySoldDay,
         )
@@ -290,8 +280,7 @@ export default function ProductsPage() {
     }
   }
 
-  // Handle sort
-  const handleSort = (field: "price" | "stock") => {
+  const handleSort = (field: UserProductSortBy) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc")
     } else {
@@ -450,7 +439,7 @@ export default function ProductsPage() {
         )
       },
       meta: {
-        headerClassName: "px-6 py-4",
+        headerClassName: "w-80 px-6 py-4",
         cellClassName: "px-6 py-4",
       },
     },
@@ -459,16 +448,12 @@ export default function ProductsPage() {
       header: () => (
         <button
           type="button"
-          onClick={() => handleSort("price")}
+          onClick={() => handleSort("PRICE")}
           className="flex items-center space-x-1 hover:text-brand transition-colors"
         >
           <span>Price</span>
-          {sortField === "price" ? (
-            sortDirection === "asc" ? (
-              <ArrowUp className="w-4 h-4" />
-            ) : (
-              <ArrowDown className="w-4 h-4" />
-            )
+          {sortField === "PRICE" ? (
+            sortDirection === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
           ) : (
             <div className="flex flex-col -space-y-1.5 w-4 h-4">
               <ArrowUp className="w-3 h-3 text-text-muted" />
@@ -513,16 +498,12 @@ export default function ProductsPage() {
       header: () => (
         <button
           type="button"
-          onClick={() => handleSort("stock")}
+          onClick={() => handleSort("STOCK")}
           className="flex items-center space-x-1 hover:text-brand transition-colors"
         >
           <span>Stock</span>
-          {sortField === "stock" ? (
-            sortDirection === "asc" ? (
-              <ArrowUp className="w-4 h-4" />
-            ) : (
-              <ArrowDown className="w-4 h-4" />
-            )
+          {sortField === "STOCK" ? (
+            sortDirection === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
           ) : (
             <div className="flex flex-col -space-y-1.5 w-4 h-4">
               <ArrowUp className="w-3 h-3 text-text-muted" />
@@ -566,7 +547,25 @@ export default function ProductsPage() {
     },
     {
       id: "periodicSellCount",
-      header: () => "Qty Sold",
+      header: () => (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => handleSort("PERIODIC_SELL_COUNT")}
+            className="flex items-center space-x-1 hover:text-brand transition-colors"
+          >
+            <span>Qty Sold</span>
+            {sortField === "PERIODIC_SELL_COUNT" ? (
+              sortDirection === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
+            ) : (
+              <div className="flex flex-col -space-y-1.5 w-4 h-4">
+                <ArrowUp className="w-3 h-3 text-text-muted" />
+                <ArrowDown className="w-3 h-3 text-text-muted" />
+              </div>
+            )}
+          </button>
+        </div>
+      ),
       cell: ({ row }) => (
         <span className="text-sm text-text-secondary">{row.original.periodicSellCount?.toLocaleString("en-US") ?? 0}</span>
       ),
@@ -577,7 +576,25 @@ export default function ProductsPage() {
     },
     {
       id: "periodicGrossRevenue",
-      header: () => "Sales",
+      header: () => (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => handleSort("PERIODIC_GROSS_REVENUE")}
+            className="flex items-center space-x-1 hover:text-brand transition-colors"
+          >
+            <span>Sales</span>
+            {sortField === "PERIODIC_GROSS_REVENUE" ? (
+              sortDirection === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
+            ) : (
+              <div className="flex flex-col -space-y-1.5 w-4 h-4">
+                <ArrowUp className="w-3 h-3 text-text-muted" />
+                <ArrowDown className="w-3 h-3 text-text-muted" />
+              </div>
+            )}
+          </button>
+        </div>
+      ),
       cell: ({ row }) => {
         const periodicGrossRevenue = row.original.periodicGrossRevenue ?? 0
         return <span className="text-sm font-medium text-text-primary">{formatCurrency(periodicGrossRevenue)}</span>
@@ -653,7 +670,7 @@ export default function ProductsPage() {
               className="rounded-lg p-2 text-brand transition-colors hover:bg-surface-muted disabled:opacity-50"
               title={isEditing ? "Save" : "Edit"}
             >
-              {isEditing ? <Check className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : isEditing ? <Check className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
             </button>
             <button
               type="button"

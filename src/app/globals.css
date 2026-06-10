@@ -78,13 +78,6 @@
 
 :root {
   --button-ripple-color: oklch(0.145 0 0 / 0.3);
-  --signal-card-1: oklch(93% 0.025 240);
-  --signal-card-2: oklch(92% 0.02 250);
-  --signal-card-3: oklch(91% 0.03 275);
-  --signal-card-4: oklch(92% 0.025 160);
-  --signal-card-5: oklch(93% 0.02 80);
-  --signal-card-6: oklch(91% 0.03 350);
-  --signal-card-7: oklch(92% 0.022 220);
   --radius: 1.25rem;
   --canvas: oklch(98.4% 0.005 84);
   --surface: oklch(99.5% 0.004 84);
@@ -142,13 +135,6 @@
 
 .dark {
   --button-ripple-color: oklch(0.985 0 0 / 0.5);
-  --signal-card-1: oklch(20% 0.04 240);
-  --signal-card-2: oklch(18% 0.04 250);
-  --signal-card-3: oklch(17% 0.05 275);
-  --signal-card-4: oklch(18% 0.05 160);
-  --signal-card-5: oklch(20% 0.04 80);
-  --signal-card-6: oklch(17% 0.05 350);
-  --signal-card-7: oklch(19% 0.04 220);
   --canvas: oklch(18% 0.017 250);
   --surface: oklch(23% 0.019 250);
   --surface-elevated: oklch(27% 0.02 250);
@@ -553,28 +539,6 @@ button {
   padding: 1px;
 }
 
-.home-signal-mask {
-  mask-image: linear-gradient(to right, transparent 0, black 6%, black 94%, transparent 100%);
-}
-
-.home-signal-track {
-  width: max-content;
-  --signal-card-width: 19rem;
-  --signal-gap: 0.5rem;
-  --signal-item-count: 4;
-  animation: signal-rail 24s linear infinite;
-}
-
-@keyframes signal-rail {
-  0% {
-    transform: translateX(0);
-  }
-
-  100% {
-    transform: translateX(calc((var(--signal-card-width) + var(--signal-gap)) * var(--signal-item-count) * -1));
-  }
-}
-
 .ambient-orb {
   animation: ambient-drift 16s ease-in-out infinite;
 }
@@ -774,10 +738,6 @@ button {
     animation-duration: 0.01ms;
     animation-iteration-count: 1;
     transition-duration: 0.01ms;
-  }
-
-  .home-signal-track {
-    animation: none;
   }
 
   .hero-product-shell,
