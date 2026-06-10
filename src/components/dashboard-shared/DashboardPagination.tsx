@@ -85,7 +85,10 @@ export default function DashboardPagination({
                     size="icon"
                     variant={currentPage === page ? "outline" : "ghost"}
                     onClick={() => onPageChange(page)}
-                    className="size-9 rounded-md text-sm"
+                    className={cn(
+                      "size-9 rounded-md text-sm",
+                      currentPage === page && "border-border-strong bg-surface-muted font-semibold text-text-primary",
+                    )}
                   >
                     {page + 1}
                   </Button>
