@@ -28,7 +28,7 @@ interface CollapseProps {
   open?: boolean
 }
 
-export function Collapse({ children, className, defaultOpen = false, onOpenChange, open }: CollapseProps) {
+export function Collapse({ children, className, defaultOpen = true, onOpenChange, open }: CollapseProps) {
   const [internalOpen, setInternalOpen] = useState(defaultOpen)
   const contentId = useId()
   const isControlled = typeof open === "boolean"
