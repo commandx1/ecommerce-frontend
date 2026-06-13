@@ -29,7 +29,7 @@ const ProductCard = ({ data, viewType = "grid" }: ProductCardProps) => {
     : null
 
   return (
-    <SpotlightCard className={`group rounded-[1.75rem] shadow-soft transition-all hover:-translate-y-1 hover:shadow-panel ${viewType === "list" ? "flex shrink-0" : ""}`}>
+    <SpotlightCard radius={28} className={`group rounded-[1.75rem] shadow-soft transition-all hover:-translate-y-1 hover:shadow-panel ${viewType === "list" ? "flex shrink-0" : ""}`}>
       {/* overflow-hidden on inner div so glow pseudo-elements aren't clipped */}
       <div className={`flex overflow-hidden rounded-[1.75rem] bg-surface-elevated ${viewType === "list" ? "flex-row w-full" : "flex-col"}`}>
         <div className={`relative bg-surface-muted ${viewType === "list" ? "w-64 shrink-0" : "h-64"}`}>

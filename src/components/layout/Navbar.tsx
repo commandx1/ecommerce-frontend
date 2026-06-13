@@ -26,7 +26,7 @@ interface NavbarProps {
 
 const NAV_LINKS = [
   { href: "/top-deals", label: "Top Deals" },
-  { href: "/suppliers", label: "Suppliers" },
+  { href: "/vendors", label: "Vendors" },
   { href: "/equipment", label: "Equipment" },
   { href: "/lab-services", label: "Lab Services" },
   { href: "/resources", label: "Resources" },
@@ -157,7 +157,7 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
 
           <div className="flex items-center gap-3">
             <span className="hidden rounded-full border border-border-soft bg-surface-elevated px-3 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.24em] text-text-muted md:inline-flex">
-              Verified suppliers nationwide
+              Verified vendors nationwide
             </span>
             {!isAuthenticated ? (
               <button

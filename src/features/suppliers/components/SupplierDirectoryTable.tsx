@@ -7,9 +7,10 @@ const numericFormatter = new Intl.NumberFormat("en-US")
 
 interface SupplierDirectoryTableProps {
   suppliers: ReadonlyArray<SupplierDirectoryItem>
+  onToggleFavorite?: (id: string) => void
 }
 
-export default function SupplierDirectoryTable({ suppliers }: SupplierDirectoryTableProps) {
+export default function SupplierDirectoryTable({ suppliers, onToggleFavorite }: SupplierDirectoryTableProps) {
   if (suppliers.length === 0) {
     return (
       <div className="rounded-[1.25rem] border border-border-soft bg-surface-elevated p-6 text-sm text-text-secondary">
@@ -49,15 +50,22 @@ export default function SupplierDirectoryTable({ suppliers }: SupplierDirectoryT
               <tr key={supplier.id} className="border-b border-border-soft/70 last:border-b-0">
                 <td className="px-5 py-4">
                   <div className="flex items-start gap-3">
-                    <span
-                      className={cn("mt-0.5 text-rose-500", supplier.isFavorite ? "opacity-100" : "opacity-30")}
-                      aria-hidden
+                    <button
+                      type="button"
+                      onClick={() => onToggleFavorite?.(String(supplier.id))}
+                      className={cn(
+                        "mt-0.5 transition-colors",
+                        supplier.isFavorite ? "text-rose-500 hover:text-rose-600" : "text-text-muted hover:text-rose-500",
+                      )}
+                      aria-label={supplier.isFavorite ? "Remove from favorites" : "Save to favorites"}
                     >
                       <Heart className={cn("h-4 w-4", supplier.isFavorite ? "fill-current" : "")} />
-                    </span>
+                    </button>
                     <div>
                       <p className="font-semibold text-text-primary">{supplier.name}</p>
-                      <p className="mt-1 line-clamp-2 text-xs leading-5 text-text-secondary">{supplier.about}</p>
+                      {supplier.about ? (
+                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-text-secondary">{supplier.about}</p>
+                      ) : null}
                     </div>
                   </div>
                 </td>
@@ -84,7 +92,7 @@ export default function SupplierDirectoryTable({ suppliers }: SupplierDirectoryT
                 </td>
                 <td className="px-5 py-4">
                   <div className="flex flex-wrap gap-1.5">
-                    {supplier.deliveryMethods.slice(0, 2).map((deliveryMethod) => (
+                    {(supplier.deliveryMethods ?? []).slice(0, 2).map((deliveryMethod) => (
                       <span
                         key={`${supplier.id}-${deliveryMethod}`}
                         className="rounded-full bg-accent px-2.5 py-1 text-[11px] font-semibold text-brand-strong"
@@ -97,7 +105,7 @@ export default function SupplierDirectoryTable({ suppliers }: SupplierDirectoryT
                 <td className="px-5 py-4">
                   <div className="flex justify-end gap-2">
                     <Link
-                      href={`/products?supplier=${supplier.slug}`}
+                      href={`/products?vendor=${supplier.slug}`}
                       className="rounded-full bg-brand px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand-strong"
                     >
                       View Products

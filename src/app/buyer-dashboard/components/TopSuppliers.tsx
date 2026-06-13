@@ -30,8 +30,8 @@ const TopSuppliers = () => {
   return (
     <div className="rounded-xl border border-border-soft bg-surface-elevated shadow-soft">
       <div className="border-b border-border-soft p-6">
-        <h2 className="text-xl font-semibold text-text-primary">Top Suppliers</h2>
-        <p className="mt-1 text-sm text-text-secondary">Your most frequently used suppliers</p>
+        <h2 className="text-xl font-semibold text-text-primary">Top Vendors</h2>
+        <p className="mt-1 text-sm text-text-secondary">Your most frequently used vendors</p>
       </div>
       <div className="p-6">
         <div className="space-y-4">
@@ -62,8 +62,8 @@ const TopSuppliers = () => {
           })}
 
           <div className="border-t border-border-soft pt-4">
-            <Link href="/suppliers" className="block w-full text-center font-medium text-brand hover:underline">
-              View All Suppliers
+            <Link href="/vendors" className="block w-full text-center font-medium text-brand hover:underline">
+              View All Vendors
             </Link>
           </div>
         </div>

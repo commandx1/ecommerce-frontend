@@ -13,6 +13,7 @@ export interface SavedPaymentMethod {
   expiryYear: string
   billingAddress: string
   status: PaymentMethodStatus
+  stripePaymentMethodId?: string
 }
 
 export interface BankMethod {

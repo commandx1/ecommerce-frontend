@@ -37,7 +37,7 @@ const colorMap: Record<string, string> = {
 
 export default function SupplierCard({ name, logo, alt, rating, starCount, reviewCount, features }: SupplierCardProps) {
   return (
-    <SpotlightCard className="rounded-[1.75rem] shadow-soft transition-all hover:-translate-y-1 hover:shadow-panel">
+    <SpotlightCard radius={28} className="rounded-[1.75rem] shadow-soft transition-all hover:-translate-y-1 hover:shadow-panel">
     <div className="overflow-hidden rounded-[1.75rem] bg-surface-elevated p-8">
       <div className="mb-4 flex items-center justify-between">
         <span className="rounded-full bg-[color:color-mix(in_oklab,var(--success)_14%,var(--surface))] px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-success">

@@ -1,26 +1,58 @@
 "use client"
 
-import { LayoutGrid, Rows3 } from "lucide-react"
-import { useMemo, useState } from "react"
+import { LayoutGrid, Loader2, Rows3 } from "lucide-react"
+import { useEffect, useState } from "react"
 import SupplierDirectoryCard from "@/features/suppliers/components/SupplierDirectoryCard"
 import SupplierDirectoryTable from "@/features/suppliers/components/SupplierDirectoryTable"
-import { suppliersDirectoryData } from "@/features/suppliers/suppliersPageData"
+import { type VendorListItem, addVendorFavorite, getMyFavoriteVendors, removeVendorFavorite } from "@/lib/api/vendors"
+import { showToast } from "@/components/ui/Toast"
 import { cn } from "@/lib/utils"
 
 type ViewMode = "grid" | "table"
 
 export default function FavoriteSuppliersPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("grid")
+  const [vendors, setVendors] = useState<VendorListItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [hasError, setHasError] = useState(false)
 
-  const favoriteSuppliers = useMemo(() => suppliersDirectoryData.filter((supplier) => Boolean(supplier.isFavorite)), [])
+  useEffect(() => {
+    getMyFavoriteVendors()
+      .then(setVendors)
+      .catch(() => setHasError(true))
+      .finally(() => setIsLoading(false))
+  }, [])
+
+  const handleToggleFavorite = async (vendorId: string) => {
+    const isFav = vendors.some((v) => v.id === vendorId)
+    setVendors((prev) => prev.filter((v) => v.id !== vendorId))
+    try {
+      if (isFav) await removeVendorFavorite(vendorId)
+      else await addVendorFavorite(vendorId)
+    } catch {
+      showToast.error("Action failed", "Could not update favorites. Please try again.")
+      const restored = await getMyFavoriteVendors().catch(() => null)
+      if (restored) setVendors(restored)
+    }
+  }
+
+  const supplierItems = vendors.map((v) => ({
+    id: v.id,
+    name: v.name,
+    slug: v.slug,
+    about: "",
+    rating: v.averageRating,
+    reviewCount: v.reviewCount,
+    isFavorite: true,
+  }))
 
   return (
     <section>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary">Favorite Suppliers</h1>
+          <h1 className="text-3xl font-bold text-text-primary">Favorite Vendors</h1>
           <p className="mt-1 text-text-secondary">
-            Quick access to your starred suppliers. Switch between grid and table views.
+            Quick access to your starred vendors. Switch between grid and table views.
           </p>
         </div>
 
@@ -52,23 +84,34 @@ export default function FavoriteSuppliersPage() {
         </div>
       </div>
 
-      {favoriteSuppliers.length === 0 ? (
-        <div className="rounded-[1.25rem] border border-border-soft bg-surface-elevated p-6 text-sm text-text-secondary">
-          No favorite suppliers yet.
+      {isLoading ? (
+        <div className="flex items-center justify-center py-24 text-text-muted">
+          <Loader2 className="h-8 w-8 animate-spin" />
         </div>
-      ) : null}
-
-      {favoriteSuppliers.length > 0 && viewMode === "grid" ? (
+      ) : hasError ? (
+        <div className="rounded-[1.25rem] border border-border-soft bg-surface-elevated p-6 text-sm text-text-secondary">
+          Unable to load favorite vendors. Please try again later.
+        </div>
+      ) : supplierItems.length === 0 ? (
+        <div className="rounded-[1.25rem] border border-border-soft bg-surface-elevated p-6 text-sm text-text-secondary">
+          No favorite vendors yet.
+        </div>
+      ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {favoriteSuppliers.map((supplier) => (
-            <SupplierDirectoryCard key={supplier.id} supplier={supplier} />
+          {supplierItems.map((supplier) => (
+            <SupplierDirectoryCard
+              key={supplier.id}
+              supplier={supplier}
+              onToggleFavorite={() => handleToggleFavorite(supplier.id as string)}
+            />
           ))}
         </div>
-      ) : null}
-
-      {favoriteSuppliers.length > 0 && viewMode === "table" ? (
-        <SupplierDirectoryTable suppliers={favoriteSuppliers} />
-      ) : null}
+      ) : (
+        <SupplierDirectoryTable
+          suppliers={supplierItems}
+          onToggleFavorite={handleToggleFavorite}
+        />
+      )}
     </section>
   )
 }

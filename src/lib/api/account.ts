@@ -1,5 +1,3 @@
-"use client"
-
 import { apiRequest } from "@/lib/api/request"
 
 export type AccountUser = {

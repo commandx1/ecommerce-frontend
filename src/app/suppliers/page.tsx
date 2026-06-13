@@ -1,11 +1,5 @@
-import type { Metadata } from "next"
-import SuppliersPage from "@/features/suppliers/SuppliersPage"
+import { redirect } from "next/navigation"
 
-export const metadata: Metadata = {
-  title: "Suppliers",
-  description: "Browse trusted and verified dental suppliers across categories.",
-}
-
-export default function SuppliersRoutePage() {
-  return <SuppliersPage />
+export default function SuppliersLegacyRoute() {
+  redirect("/vendors")
 }

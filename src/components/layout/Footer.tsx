@@ -13,7 +13,7 @@ const PRODUCT_LINKS = [
 ] as const
 
 const SERVICE_LINKS = [
-  ["Supplier Network", "/supplier-network"],
+  ["Vendor Network", "/vendor-network"],
   ["Lab Services", "/lab-services"],
   ["Equipment Installation", "/equipment-installation"],
   ["Training Programs", "/training-programs"],
@@ -85,7 +85,7 @@ const Footer = () => {
 
             <p className="mb-6 max-w-xl leading-relaxed text-text-secondary dark:text-inverse-muted">
               The leading B2B marketplace for dental professionals in the United States. Connect with verified
-              suppliers, access competitive pricing, and streamline your practice procurement.
+              vendors, access competitive pricing, and streamline your practice procurement.
             </p>
 
             <div className="mb-8 flex flex-wrap gap-3">

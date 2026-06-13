@@ -1,34 +1,34 @@
 "use client"
 
-import { Banknote, CheckCircle2, CreditCard, Edit3, Plus, Trash2 } from "lucide-react"
-import { useState } from "react"
+import { CardCvcElement, CardExpiryElement, CardNumberElement, Elements, useElements, useStripe } from "@stripe/react-stripe-js"
+import { loadStripe } from "@stripe/stripe-js"
+import { CheckCircle2, CreditCard, Edit3, Loader2, LoaderCircle, Plus, Trash2 } from "lucide-react"
+import { useTheme } from "next-themes"
+import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import Modal from "@/components/ui/Modal"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { showToast } from "@/components/ui/Toast"
 import { cn } from "@/lib/utils"
-import { initialSavedPaymentMethods, type SavedPaymentMethod } from "./paymentMethodsData"
+import { paymentMethodsAPI } from "@/lib/api/payment-methods"
+import { type SavedPaymentMethod } from "./paymentMethodsData"
 
-interface PaymentMethodFormState {
-  nickname: string
-  cardholder: string
-  last4: string
-  expiryMonth: string
-  expiryYear: string
-  billingAddress: string
-  makeDefault: boolean
+const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? ""
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null
+
+// ── Modal state types ────────────────────────────────────────────────────────
+
+type ModalMode = "add" | "rename" | null
+
+interface RenameState {
+  cardId: string
+  currentNickname: string
+  newNickname: string
 }
 
-const initialFormState: PaymentMethodFormState = {
-  nickname: "",
-  cardholder: "",
-  last4: "",
-  expiryMonth: "",
-  expiryYear: "",
-  billingAddress: "",
-  makeDefault: true,
-}
+// ── Brand → CSS tone map ─────────────────────────────────────────────────────
 
 const methodToneMap: Record<SavedPaymentMethod["type"], string> = {
   visa: "bg-brand/15 text-brand",
@@ -37,153 +37,237 @@ const methodToneMap: Record<SavedPaymentMethod["type"], string> = {
   bank: "bg-surface-muted text-text-secondary",
 }
 
-export default function BuyerPaymentMethodsPage() {
-  const [methods, setMethods] = useState<SavedPaymentMethod[]>([...initialSavedPaymentMethods])
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingMethodId, setEditingMethodId] = useState<string | null>(null)
-  const [formState, setFormState] = useState<PaymentMethodFormState>(initialFormState)
+// ── Inner page (must be inside <Elements>) ───────────────────────────────────
 
-  const defaultMethod = methods.find((method) => method.status === "default") ?? null
+function PaymentMethodsContent() {
+  const stripe = useStripe()
+  const elements = useElements()
+  const { resolvedTheme } = useTheme()
+
+  const [methods, setMethods] = useState<SavedPaymentMethod[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [modalMode, setModalMode] = useState<ModalMode>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null)
+  const [defaultPopoverOpenId, setDefaultPopoverOpenId] = useState<string | null>(null)
+  const [deletePopoverOpenId, setDeletePopoverOpenId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  // Add-card form
+  const [nickname, setNickname] = useState("")
+  const [makeDefault, setMakeDefault] = useState(false)
+
+  // Rename form
+  const [renameState, setRenameState] = useState<RenameState | null>(null)
+
+  // Stripe Elements appearance (mirrors checkout styling)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+  const isDark = mounted && resolvedTheme === "dark"
+
+  const cardElementOptions = useMemo(() => ({
+    disableLink: true,
+    style: {
+      base: {
+        fontFamily: "Manrope, ui-sans-serif, system-ui, sans-serif",
+        fontSize: "16px",
+        color: isDark ? "#F4F1EA" : "#1F2937",
+        iconColor: isDark ? "#F4F1EA" : "#475569",
+        "::placeholder": { color: isDark ? "#A8B0BD" : "#94A3B8" },
+      },
+      invalid: { color: "#DC2626", iconColor: "#DC2626" },
+    },
+  }), [isDark])
+
+  // ── Data fetching ──────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    paymentMethodsAPI
+      .getSavedCards()
+      .then(setMethods)
+      .catch(() => showToast.error("Failed to load", "Could not fetch payment methods."))
+      .finally(() => setIsLoading(false))
+  }, [])
+
+  const defaultMethod = methods.find((m) => m.status === "default") ?? null
+
+  // ── Add card (SetupIntent flow) ────────────────────────────────────────────
 
   const openAddModal = () => {
-    setEditingMethodId(null)
-    setFormState(initialFormState)
-    setIsModalOpen(true)
+    setNickname("")
+    setMakeDefault(methods.length === 0)
+    setModalMode("add")
   }
 
-  const openEditModal = (method: SavedPaymentMethod) => {
-    setEditingMethodId(method.id)
-    setFormState({
-      nickname: method.nickname,
-      cardholder: method.cardholder,
-      last4: method.last4,
-      expiryMonth: method.expiryMonth,
-      expiryYear: method.expiryYear,
-      billingAddress: method.billingAddress,
-      makeDefault: method.status === "default",
-    })
-    setIsModalOpen(true)
-  }
-
-  const resetModal = () => {
-    setIsModalOpen(false)
-    setEditingMethodId(null)
-    setFormState(initialFormState)
-  }
-
-  const handleSaveMethod = () => {
-    if (!formState.nickname.trim() || !formState.cardholder.trim()) {
-      showToast.error("Missing fields", "Nickname and cardholder are required.")
+  const handleAddCard = useCallback(async () => {
+    if (!stripe || !elements) {
+      showToast.error("Stripe not ready", "Please refresh and try again.")
       return
     }
-    if (!/^\d{4}$/.test(formState.last4)) {
-      showToast.error("Invalid card", "Last 4 must be exactly 4 digits.")
-      return
-    }
-    if (!/^\d{2}$/.test(formState.expiryMonth) || !/^\d{4}$/.test(formState.expiryYear)) {
-      showToast.error("Invalid expiry", "Use MM and YYYY format for expiry.")
+    if (!nickname.trim()) {
+      showToast.error("Nickname required", "Please give this card a name.")
       return
     }
 
-    setMethods((currentMethods) => {
-      const baseStatus: SavedPaymentMethod["status"] = formState.makeDefault ? "default" : "active"
+    setIsSaving(true)
+    try {
+      // 1. Backend creates a SetupIntent — card data never touches our server
+      const { clientSecret } = await paymentMethodsAPI.createSetupIntent()
 
-      if (editingMethodId) {
-        return currentMethods.map<SavedPaymentMethod>((method) => {
-          if (method.id === editingMethodId) {
-            return {
-              ...method,
-              nickname: formState.nickname.trim(),
-              cardholder: formState.cardholder.trim(),
-              last4: formState.last4,
-              expiryMonth: formState.expiryMonth,
-              expiryYear: formState.expiryYear,
-              billingAddress: formState.billingAddress.trim(),
-              status: baseStatus,
-            }
-          }
-
-          if (formState.makeDefault && method.status === "default") return { ...method, status: "active" }
-          return method
-        })
+      // 2. Stripe confirms the setup using the card details entered in CardNumberElement
+      const cardElement = elements.getElement(CardNumberElement)
+      if (!cardElement) {
+        showToast.error("Card details missing", "Please enter your card details.")
+        return
       }
 
-      const newMethod: SavedPaymentMethod = {
-        id: `pm-${Date.now()}`,
-        type: "visa",
-        brandLabel: "Visa",
-        nickname: formState.nickname.trim(),
-        cardholder: formState.cardholder.trim(),
-        last4: formState.last4,
-        expiryMonth: formState.expiryMonth,
-        expiryYear: formState.expiryYear,
-        billingAddress: formState.billingAddress.trim(),
-        status: baseStatus,
+      const { setupIntent, error } = await stripe.confirmCardSetup(clientSecret, {
+        payment_method: { card: cardElement },
+      })
+
+      if (error || !setupIntent?.payment_method) {
+        showToast.error("Card declined", error?.message ?? "Could not verify the card.")
+        return
       }
 
-      const normalizedMethods = formState.makeDefault
-        ? currentMethods.map<SavedPaymentMethod>((method) =>
-            method.status === "default" ? { ...method, status: "active" } : method,
-          )
-        : currentMethods
+      // 3. Tell our backend to retrieve & persist the PaymentMethod
+      const saved = await paymentMethodsAPI.saveCard({
+        paymentMethodId: setupIntent.payment_method as string,
+        nickname: nickname.trim(),
+        makeDefault,
+      })
 
-      return [newMethod, ...normalizedMethods]
-    })
+      setMethods((current) => {
+        const normalised = makeDefault
+          ? current.map((m) => (m.status === "default" ? { ...m, status: "active" as const } : m))
+          : current
+        return [saved, ...normalised]
+      })
 
-    showToast.success(editingMethodId ? "Method updated" : "Method added")
-    resetModal()
+      showToast.success("Card added", `${saved.brandLabel} •••• ${saved.last4} saved.`)
+      setModalMode(null)
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status
+      if (status === 409) {
+        showToast.error("Card already saved", "This card is already linked to your account.")
+      } else {
+        showToast.error("Failed to add card", "Please try again.")
+      }
+    } finally {
+      setIsSaving(false)
+    }
+  }, [stripe, elements, nickname, makeDefault])
+
+  // ── Rename ─────────────────────────────────────────────────────────────────
+
+  const openRenameModal = (method: SavedPaymentMethod) => {
+    setRenameState({ cardId: method.id, currentNickname: method.nickname, newNickname: method.nickname })
+    setModalMode("rename")
   }
 
-  const setAsDefault = (methodId: string) => {
-    setMethods((currentMethods) =>
-      currentMethods.map((method) => {
-        if (method.id === methodId) return { ...method, status: "default" }
-        if (method.status === "default") return { ...method, status: "active" }
-        return method
-      }),
+  const handleRename = async () => {
+    if (!renameState) return
+    if (!renameState.newNickname.trim()) {
+      showToast.error("Nickname required", "Please enter a name for the card.")
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      const updated = await paymentMethodsAPI.updateNickname(renameState.cardId, {
+        nickname: renameState.newNickname.trim(),
+      })
+      setMethods((current) => current.map((m) => (m.id === updated.id ? updated : m)))
+      showToast.success("Card renamed")
+      setModalMode(null)
+    } catch {
+      showToast.error("Failed to rename card")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  // ── Delete ─────────────────────────────────────────────────────────────────
+
+  const removeMethod = async (method: SavedPaymentMethod) => {
+    if (methods.length === 1) {
+      showToast.warning("Cannot remove", "At least one payment method must remain.")
+      setDeletePopoverOpenId(null)
+      return
+    }
+
+    setDeletingId(method.id)
+    try {
+      await paymentMethodsAPI.deleteCard(method.id)
+      setMethods((current) => {
+        const remaining = current.filter((m) => m.id !== method.id)
+        if (method.status === "default" && remaining.length > 0) {
+          return [{ ...remaining[0], status: "default" }, ...remaining.slice(1)]
+        }
+        return remaining
+      })
+      showToast.success("Card removed")
+    } catch {
+      showToast.error("Failed to remove card")
+    } finally {
+      setDeletingId(null)
+      setDeletePopoverOpenId(null)
+    }
+  }
+
+  // ── Set default ────────────────────────────────────────────────────────────
+
+  const setAsDefault = async (method: SavedPaymentMethod) => {
+    setSettingDefaultId(method.id)
+    try {
+      const updated = await paymentMethodsAPI.setDefault(method.id)
+      setMethods((current) =>
+        current.map((m) => {
+          if (m.id === updated.id) return updated
+          if (m.status === "default") return { ...m, status: "active" }
+          return m
+        }),
+      )
+      showToast.success("Default updated", "Primary payment method changed.")
+    } catch {
+      showToast.error("Failed to update default")
+    } finally {
+      setSettingDefaultId(null)
+      setDefaultPopoverOpenId(null)
+    }
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-8 w-8 animate-spin text-brand" />
+      </div>
     )
-    showToast.success("Default updated", "Primary payment method changed.")
-  }
-
-  const removeMethod = (methodId: string) => {
-    setMethods((currentMethods) => {
-      if (currentMethods.length === 1) {
-        showToast.warning("Cannot remove", "At least one payment method must remain.")
-        return currentMethods
-      }
-
-      const removedMethod = currentMethods.find((method) => method.id === methodId)
-      const remaining = currentMethods.filter((method) => method.id !== methodId)
-
-      if (removedMethod?.status === "default") {
-        const [nextDefault, ...rest] = remaining
-        return [{ ...nextDefault, status: "default" }, ...rest]
-      }
-
-      return remaining
-    })
   }
 
   return (
     <div className="space-y-6">
+      {/* Header + KPIs */}
       <section className="rounded-[1.25rem] border border-border-soft bg-surface-elevated p-6 shadow-soft">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-text-primary">Payment Methods</h1>
             <p className="mt-2 max-w-3xl text-text-secondary">
-              Manage cards and bank methods used for invoice settlement. Configure auto-pay behavior and fallback rules.
+              Manage cards used for invoice settlement. Cards are stored securely by Stripe — we only hold the last 4 digits and expiry.
             </p>
           </div>
-          <Button type="button" onClick={openAddModal}>
+          <Button type="button" onClick={openAddModal} disabled={!stripePromise}>
             <Plus className="h-4 w-4" />
-            Add New Method
+            Add New Card
           </Button>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
           <KpiCard
             icon={<CreditCard className="h-5 w-5 text-brand" />}
-            label="Active Cards"
+            label="Saved Cards"
             value={String(methods.length)}
             hint="Ready for payments"
           />
@@ -191,170 +275,296 @@ export default function BuyerPaymentMethodsPage() {
             icon={<CheckCircle2 className="h-5 w-5 text-success" />}
             label="Default Method"
             value={defaultMethod ? `${defaultMethod.brandLabel} •••• ${defaultMethod.last4}` : "N/A"}
-            hint={defaultMethod?.nickname || "Not set"}
-          />
-          <KpiCard
-            icon={<Banknote className="h-5 w-5 text-warning" />}
-            label="Upcoming Payments"
-            value="$0.00"
-            hint="Scheduled activity hidden"
+            hint={defaultMethod?.nickname ?? "Not set"}
           />
         </div>
       </section>
 
+      {/* Card list */}
       <section className="rounded-[1.25rem] border border-border-soft bg-surface p-6 shadow-soft">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-text-primary">Saved Methods</h2>
-          <span className="text-sm text-text-muted">{methods.length} methods</span>
+          <h2 className="text-xl font-semibold text-text-primary">Saved Cards</h2>
+          <span className="text-sm text-text-muted">{methods.length} cards</span>
         </div>
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          {methods.map((method) => (
-            <article key={method.id} className="rounded-xl border border-border-soft bg-surface-elevated p-5">
-              <div className="mb-4 flex items-start justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", methodToneMap[method.type])}>
-                      {method.brandLabel}
-                    </span>
-                    <StatusTag status={method.status} />
+
+        {methods.length === 0 ? (
+          <p className="py-8 text-center text-sm text-text-muted">
+            No saved cards yet. Add a card to get started.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            {[...methods]
+              .sort((a, b) => {
+                if (a.status === "default") return -1
+                if (b.status === "default") return 1
+                return a.nickname.localeCompare(b.nickname)
+              })
+              .map((method) => (
+              <article key={method.id} className={cn("rounded-xl border bg-surface-elevated p-5", method.status === "default" ? "border-success" : "border-border-soft")}>
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", methodToneMap[method.type])}>
+                        {method.brandLabel}
+                      </span>
+                      <StatusTag status={method.status} />
+                    </div>
+                    <h3 className="mt-2 text-lg font-semibold text-text-primary">{method.nickname}</h3>
                   </div>
-                  <h3 className="mt-2 text-lg font-semibold text-text-primary">{method.nickname}</h3>
+                  <div className="flex items-center gap-2">
+                    <IconButton label="Rename" onClick={() => openRenameModal(method)} icon={<Edit3 className="h-4 w-4" />} />
+                    <Popover
+                      open={deletePopoverOpenId === method.id}
+                      onOpenChange={(open) => setDeletePopoverOpenId(open ? method.id : null)}
+                    >
+                      <PopoverTrigger asChild>
+                        <IconButton label="Remove" onClick={() => {}} icon={<Trash2 className="h-4 w-4" />} />
+                      </PopoverTrigger>
+                      <PopoverContent side="top" className="w-60 p-4">
+                        <p className="text-sm font-semibold text-text-primary">Remove card?</p>
+                        <p className="mt-1 text-xs text-text-secondary">
+                          {method.brandLabel} •••• {method.last4} will be permanently deleted.
+                        </p>
+                        <div className="mt-3 flex justify-end gap-2">
+                          <Button
+                            type="button"
+                            variant="quiet"
+                            size="sm"
+                            disabled={deletingId === method.id}
+                            onClick={() => setDeletePopoverOpenId(null)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            disabled={deletingId === method.id}
+                            onClick={() => { void removeMethod(method) }}
+                            className={cn(
+                              "relative transition-[padding] duration-200",
+                              deletingId === method.id && "pl-7",
+                            )}
+                          >
+                            <div
+                              className={cn(
+                                "absolute left-2.5 transition-all duration-200 ease-in-out opacity-0 -translate-x-2",
+                                deletingId === method.id && "opacity-100 translate-x-0",
+                              )}
+                            >
+                              <LoaderCircle className="animate-spin" size={12} strokeWidth={2} aria-hidden="true" />
+                            </div>
+                            Remove
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <IconButton label="Edit" onClick={() => openEditModal(method)} icon={<Edit3 className="h-4 w-4" />} />
-                  <IconButton
-                    label="Remove"
-                    onClick={() => removeMethod(method.id)}
-                    icon={<Trash2 className="h-4 w-4" />}
-                  />
+
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <Meta label="Card" value={`•••• ${method.last4}`} />
+                  <Meta label="Expiry" value={`${method.expiryMonth}/${method.expiryYear}`} />
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <Meta label="Card" value={`•••• ${method.last4}`} />
-                <Meta label="Expiry" value={`${method.expiryMonth}/${method.expiryYear}`} />
-                <Meta label="Cardholder" value={method.cardholder} />
-                <Meta label="Billing" value={method.billingAddress} />
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                {method.status !== "default" ? (
-                  <Button type="button" variant="outline" size="sm" onClick={() => setAsDefault(method.id)}>
-                    Set as Default
-                  </Button>
-                ) : (
-                  <Button type="button" variant="outline" size="sm" disabled>
-                    Default Method
-                  </Button>
-                )}
-                <Button type="button" variant="quiet" size="sm" onClick={() => openEditModal(method)}>
-                  Edit Details
-                </Button>
-              </div>
-            </article>
-          ))}
-        </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {method.status !== "default" ? (
+                    <Popover
+                      open={defaultPopoverOpenId === method.id}
+                      onOpenChange={(open) => setDefaultPopoverOpenId(open ? method.id : null)}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button type="button" variant="outline" size="sm">
+                          Set as Default
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent side="top" className="w-64 p-4">
+                        <p className="text-sm font-semibold text-text-primary">Set as default?</p>
+                        <p className="mt-1 text-xs text-text-secondary">
+                          {method.brandLabel} •••• {method.last4} will be used for all future invoices.
+                        </p>
+                        <div className="mt-3 flex justify-end gap-2">
+                          <Button
+                            type="button"
+                            variant="quiet"
+                            size="sm"
+                            disabled={settingDefaultId === method.id}
+                            onClick={() => setDefaultPopoverOpenId(null)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={settingDefaultId === method.id}
+                            onClick={() => { void setAsDefault(method) }}
+                            className={cn(
+                              "relative transition-[padding] duration-200",
+                              settingDefaultId === method.id && "pl-7",
+                            )}
+                          >
+                            <div
+                              className={cn(
+                                "absolute left-2.5 transition-all duration-200 ease-in-out opacity-0 -translate-x-2",
+                                settingDefaultId === method.id && "opacity-100 translate-x-0",
+                              )}
+                            >
+                              <LoaderCircle className="animate-spin" size={12} strokeWidth={2} aria-hidden="true" />
+                            </div>
+                            OK
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  ) : (
+                    <Button type="button" variant="outline" size="sm" disabled>
+                      Default Card
+                    </Button>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
 
+      {/* Add card modal */}
       <Modal
-        isOpen={isModalOpen}
-        onClose={resetModal}
-        title={editingMethodId ? "Edit Payment Method" : "Add Payment Method"}
+        isOpen={modalMode === "add"}
+        onClose={() => setModalMode(null)}
+        title="Add Payment Card"
         maxWidthClassName="max-w-xl"
       >
         <div className="p-6">
-          <h3 className="text-xl font-semibold text-text-primary">
-            {editingMethodId ? "Edit payment method" : "Add new payment method"}
-          </h3>
+          <h3 className="text-xl font-semibold text-text-primary">Add new card</h3>
           <p className="mt-1 text-sm text-text-secondary">
-            {editingMethodId
-              ? "Update method details and optional default status."
-              : "Enter card details to add a new payment method."}
+            Card details are collected securely by Stripe and never stored on our servers.
           </p>
 
-          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField label="Nickname">
+          <div className="mt-5 space-y-4">
+            <FormField label="Card nickname">
               <Input
-                value={formState.nickname}
-                onChange={(event) => setFormState((current) => ({ ...current, nickname: event.target.value }))}
-                placeholder="Main Clinic Card"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                placeholder="e.g. Main Clinic Card"
+                disabled={isSaving}
               />
             </FormField>
-            <FormField label="Cardholder">
-              <Input
-                value={formState.cardholder}
-                onChange={(event) => setFormState((current) => ({ ...current, cardholder: event.target.value }))}
-                placeholder="Cardholder name"
-              />
+
+            <FormField label="Card number">
+              <div className="rounded-md border border-border-soft bg-surface px-3 py-3">
+                <CardNumberElement options={cardElementOptions} />
+              </div>
             </FormField>
-            <FormField label="Last 4 digits">
-              <Input
-                value={formState.last4}
-                onChange={(event) =>
-                  setFormState((current) => ({
-                    ...current,
-                    last4: event.target.value.replace(/[^\d]/g, "").slice(0, 4),
-                  }))
-                }
-                placeholder="1234"
-              />
-            </FormField>
-            <div className="grid grid-cols-2 gap-3">
-              <FormField label="Exp. Month">
-                <Input
-                  value={formState.expiryMonth}
-                  onChange={(event) =>
-                    setFormState((current) => ({
-                      ...current,
-                      expiryMonth: event.target.value.replace(/[^\d]/g, "").slice(0, 2),
-                    }))
-                  }
-                  placeholder="09"
-                />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField label="Expiry date">
+                <div className="rounded-md border border-border-soft bg-surface px-3 py-3">
+                  <CardExpiryElement options={cardElementOptions} />
+                </div>
               </FormField>
-              <FormField label="Exp. Year">
-                <Input
-                  value={formState.expiryYear}
-                  onChange={(event) =>
-                    setFormState((current) => ({
-                      ...current,
-                      expiryYear: event.target.value.replace(/[^\d]/g, "").slice(0, 4),
-                    }))
-                  }
-                  placeholder="2028"
-                />
+              <FormField label="CVC">
+                <div className="rounded-md border border-border-soft bg-surface px-3 py-3">
+                  <CardCvcElement options={cardElementOptions} />
+                </div>
               </FormField>
             </div>
-            <FormField label="Billing Address" className="sm:col-span-2">
-              <Input
-                value={formState.billingAddress}
-                onChange={(event) => setFormState((current) => ({ ...current, billingAddress: event.target.value }))}
-                placeholder="Street, city, state"
-              />
-            </FormField>
           </div>
 
           <div className="mt-4 inline-flex items-center gap-2 text-sm text-text-secondary">
             <Checkbox
-              checked={formState.makeDefault}
-              onChange={(event) => setFormState((current) => ({ ...current, makeDefault: event.target.checked }))}
+              checked={makeDefault}
+              onChange={(e) => setMakeDefault(e.target.checked)}
+              disabled={isSaving}
             />
-            Make this my default payment method
+            Set as my default payment card
           </div>
 
           <div className="mt-6 flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={resetModal}>
+            <Button type="button" variant="outline" onClick={() => setModalMode(null)} disabled={isSaving}>
               Cancel
             </Button>
-            <Button type="button" onClick={handleSaveMethod}>
-              {editingMethodId ? "Save Changes" : "Add Method"}
+            <Button
+              type="button"
+              disabled={isSaving}
+              onClick={() => { void handleAddCard() }}
+              className={cn(
+                "relative transition-[padding] duration-200",
+                isSaving && "pl-7",
+              )}
+            >
+              <div
+                className={cn(
+                  "absolute left-2.5 transition-all duration-200 ease-in-out opacity-0 -translate-x-2",
+                  isSaving && "opacity-100 translate-x-0",
+                )}
+              >
+                <LoaderCircle className="animate-spin" size={12} strokeWidth={2} aria-hidden="true" />
+              </div>
+              Save Card
             </Button>
           </div>
         </div>
       </Modal>
+
+      {/* Rename modal */}
+      <Modal
+        isOpen={modalMode === "rename"}
+        onClose={() => setModalMode(null)}
+        title="Rename Card"
+        maxWidthClassName="max-w-sm"
+      >
+        <div className="p-6">
+          <h3 className="text-xl font-semibold text-text-primary">Rename card</h3>
+          <p className="mt-1 text-sm text-text-secondary">Update the display name for this card.</p>
+
+          <div className="mt-5">
+            <FormField label="New nickname">
+              <Input
+                value={renameState?.newNickname ?? ""}
+                onChange={(e) =>
+                  setRenameState((s) => (s ? { ...s, newNickname: e.target.value } : s))
+                }
+                placeholder="e.g. Backup Card"
+                disabled={isSaving}
+              />
+            </FormField>
+          </div>
+
+          <div className="mt-6 flex justify-end gap-3">
+            <Button type="button" variant="outline" onClick={() => setModalMode(null)} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={() => { void handleRename() }} disabled={isSaving}>
+              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
     </div>
   )
 }
+
+// ── Outer wrapper — provides Stripe context ───────────────────────────────────
+
+export default function BuyerPaymentMethodsPage() {
+  if (!stripePromise) {
+    return (
+      <div className="rounded-[1.25rem] border border-border-soft bg-surface-elevated p-8 text-center text-sm text-text-secondary shadow-soft">
+        Stripe publishable key is missing. Set <code>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code>.
+      </div>
+    )
+  }
+
+  return (
+    <Elements stripe={stripePromise}>
+      <PaymentMethodsContent />
+    </Elements>
+  )
+}
+
+// ── Small presentational components ─────────────────────────────────────────
 
 function KpiCard({ icon, label, value, hint }: { icon: React.ReactNode; label: string; value: string; hint: string }) {
   return (
@@ -391,22 +601,24 @@ function Meta({ label, value }: { label: string; value: string }) {
   )
 }
 
-function IconButton({ icon, onClick, label }: { icon: React.ReactNode; onClick: () => void; label: string }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border-soft text-text-muted transition-colors hover:text-brand"
-    >
-      {icon}
-    </button>
-  )
-}
+const IconButton = React.forwardRef<
+  HTMLButtonElement,
+  { icon: React.ReactNode; onClick: () => void; label: string }
+>(({ icon, onClick, label }, ref) => (
+  <button
+    ref={ref}
+    type="button"
+    onClick={onClick}
+    aria-label={label}
+    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border-soft text-text-muted transition-colors hover:text-brand"
+  >
+    {icon}
+  </button>
+))
 
-function FormField({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
+function FormField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className={className}>
+    <div>
       <p className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">{label}</p>
       {children}
     </div>

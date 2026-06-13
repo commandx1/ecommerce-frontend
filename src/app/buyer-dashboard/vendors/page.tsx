@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
 
-export default function BuyerDashboardSuppliersLegacyRoute() {
+export default function BuyerDashboardVendorsRoute() {
   redirect("/buyer-dashboard/vendors/favorites")
 }

@@ -1,5 +1,3 @@
-"use client"
-
 export type ApiErrorShape = { message?: string; error?: string }
 
 export async function readApiErrorMessage(response: Response, fallback: string): Promise<string> {

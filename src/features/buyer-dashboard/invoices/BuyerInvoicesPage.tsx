@@ -69,7 +69,7 @@ function formatDate(value: string): string {
 
 function getSupplierOptions(invoices: ReadonlyArray<BuyerInvoice>): string[] {
   return [
-    "All Suppliers",
+    "All Vendors",
     ...Array.from(new Set(invoices.map((invoice) => invoice.supplier))).sort((a, b) => a.localeCompare(b)),
   ]
 }
@@ -77,7 +77,7 @@ function getSupplierOptions(invoices: ReadonlyArray<BuyerInvoice>): string[] {
 export default function BuyerInvoicesPage() {
   const [dateRange, setDateRange] = useState<DateRangeOption>("Last 30 days")
   const [status, setStatus] = useState<StatusOption>("All Statuses")
-  const [supplier, setSupplier] = useState("All Suppliers")
+  const [supplier, setSupplier] = useState("All Vendors")
   const [searchText, setSearchText] = useState("")
   const [sortBy, setSortBy] = useState<SortOption>("Date (Newest)")
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<Set<string>>(new Set())
@@ -95,7 +95,7 @@ export default function BuyerInvoicesPage() {
       const ageInDays = Math.floor((today.getTime() - issueDate.getTime()) / (1000 * 60 * 60 * 24))
       const dateMatch = ageInDays <= dayLimit
       const statusMatch = status === "All Statuses" || invoice.status === status
-      const supplierMatch = supplier === "All Suppliers" || invoice.supplier === supplier
+      const supplierMatch = supplier === "All Vendors" || invoice.supplier === supplier
       const searchMatch =
         normalizedSearch.length === 0 ||
         invoice.id.toLowerCase().includes(normalizedSearch) ||
@@ -152,8 +152,8 @@ export default function BuyerInvoicesPage() {
     status !== "All Statuses"
       ? { key: "status", label: `Status: ${status}`, onClear: () => setStatus("All Statuses") }
       : null,
-    supplier !== "All Suppliers"
-      ? { key: "supplier", label: `Supplier: ${supplier}`, onClear: () => setSupplier("All Suppliers") }
+    supplier !== "All Vendors"
+      ? { key: "supplier", label: `Vendor: ${supplier}`, onClear: () => setSupplier("All Vendors") }
       : null,
     searchText.trim().length > 0
       ? { key: "search", label: `Search: ${searchText}`, onClear: () => setSearchText("") }
@@ -183,7 +183,7 @@ export default function BuyerInvoicesPage() {
   const clearAllFilters = () => {
     setDateRange("Last 30 days")
     setStatus("All Statuses")
-    setSupplier("All Suppliers")
+    setSupplier("All Vendors")
     setSearchText("")
     setSortBy("Date (Newest)")
   }
@@ -242,7 +242,7 @@ export default function BuyerInvoicesPage() {
             />
           </div>
           <div className="lg:col-span-2">
-            <Label>Supplier</Label>
+            <Label>Vendor</Label>
             <SelectField value={supplier} onChange={setSupplier} options={supplierOptions} />
           </div>
           <div className="lg:col-span-3">

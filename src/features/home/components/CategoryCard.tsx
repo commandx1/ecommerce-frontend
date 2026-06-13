@@ -28,7 +28,7 @@ export default function CategoryCard({
   className,
 }: CategoryCardProps) {
   return (
-    <SpotlightCard className={cn("group h-full rounded-[1.75rem] shadow-soft transition-all hover:-translate-y-1 hover:shadow-panel",className)}>
+    <SpotlightCard radius={28} className={cn("group h-full rounded-[1.75rem] shadow-soft transition-all hover:-translate-y-1 hover:shadow-panel",className)}>
       <Link
         href={href}
         className={cn(

@@ -1,5 +1,3 @@
-"use client"
-
 import { type ImpersonationRefreshResponse, refreshTokenForImpersonation } from "./impersonation"
 
 export async function refreshTokenForVendorSetup(refreshToken: string): Promise<ImpersonationRefreshResponse> {

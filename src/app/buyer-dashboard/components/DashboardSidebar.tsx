@@ -24,7 +24,7 @@ const NAV_GROUPS: DashboardSidebarGroup[] = [
     items: [
       { href: "/buyer-dashboard", label: "Overview", icon: Home },
       { href: "/buyer-dashboard/orders", label: "All Orders", icon: ShoppingBag },
-      { href: "/buyer-dashboard/suppliers/favorites", label: "Favorites", icon: Heart },
+      { href: "/buyer-dashboard/vendors/favorites", label: "Favorites", icon: Heart },
       { href: "/buyer-dashboard/invoices", label: "Invoices", icon: FileText },
       { href: "/buyer-dashboard/payment-methods", label: "Payment Methods", icon: CreditCard },
       { href: "/buyer-dashboard/settings", label: "Account", icon: User },
@@ -37,7 +37,7 @@ const NAV_GROUPS: DashboardSidebarGroup[] = [
 const BUYER_QUICK_ACTIONS: DashboardSidebarQuickAction[] = [
   { label: "New Order", icon: Plus, tone: "brand", href: "/products" },
   { label: "Reorder Items", icon: RotateCcw, tone: "accent", href: "/buyer-dashboard/orders" },
-  { label: "Find Suppliers", icon: Search, tone: "surface", href: "/suppliers" },
+  { label: "Find Vendors", icon: Search, tone: "surface", href: "/vendors" },
 ]
 
 const DashboardSidebar = () => {

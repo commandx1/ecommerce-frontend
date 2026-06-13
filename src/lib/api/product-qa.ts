@@ -1,5 +1,3 @@
-"use client"
-
 import { apiRequest } from "./request"
 
 export async function submitProductQuestion(params: {

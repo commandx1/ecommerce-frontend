@@ -1,82 +1,139 @@
 "use client"
 
-import { ChevronDown, ChevronLeft, ChevronRight, SlidersHorizontal, Star } from "lucide-react"
+import { ChevronDown, ChevronLeft, ChevronRight, Loader2, Star } from "lucide-react"
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import SupplierDirectoryCard from "@/features/suppliers/components/SupplierDirectoryCard"
 import {
-  type SupplierDirectoryItem,
   supplierCategories,
-  suppliersDirectoryData,
   supplierTestimonials,
   supplierTrustItems,
 } from "@/features/suppliers/suppliersPageData"
+import { type VendorListParams, addVendorFavorite, getMyFavoriteVendorIds, getVendors, removeVendorFavorite } from "@/lib/api/vendors"
+import { showToast } from "@/components/ui/Toast"
+import type { VendorListItem } from "@/lib/api/vendors"
+import { useAuthStore } from "@/stores/authStore"
 import { cn } from "@/lib/utils"
 
 const ITEMS_PER_PAGE = 6
 
-const categoryOptions = ["All Categories", ...supplierCategories.map((category) => category.label)] as const
-const locationOptions = ["All Locations", "California", "Texas", "New York", "Florida"] as const
-const ratingOptions = ["Rating: All", "5 Stars", "4+ Stars", "3+ Stars"] as const
+const ratingOptions = ["Rating: All", "4+ Stars", "3+ Stars"] as const
 const sortOptions = ["Highest Rated", "Most Reviews", "A-Z"] as const
 
+type RatingOption = (typeof ratingOptions)[number]
 type SortOption = (typeof sortOptions)[number]
 
 const numericFormatter = new Intl.NumberFormat("en-US")
 
-const getSortValue = (supplier: SupplierDirectoryItem, sortBy: SortOption) => {
-  if (sortBy === "Most Reviews") return supplier.reviewCount
-  if (sortBy === "A-Z") return supplier.name
-  return supplier.rating
+function toApiSort(sort: SortOption): VendorListParams["sort"] {
+  if (sort === "Most Reviews") return "reviewCount"
+  if (sort === "A-Z") return "name"
+  return "rating"
+}
+
+function toApiMinRating(rating: RatingOption): number | undefined {
+  if (rating === "4+ Stars") return 4
+  if (rating === "3+ Stars") return 3
+  return undefined
+}
+
+function vendorToSupplierItem(vendor: VendorListItem) {
+  return {
+    id: vendor.id,
+    name: vendor.name,
+    slug: vendor.slug,
+    about: "",
+    rating: vendor.averageRating,
+    reviewCount: vendor.reviewCount,
+  }
 }
 
 export default function SuppliersDirectorySection() {
-  const [selectedCategory, setSelectedCategory] = useState<(typeof categoryOptions)[number]>("All Categories")
-  const [selectedLocation, setSelectedLocation] = useState<(typeof locationOptions)[number]>("All Locations")
-  const [selectedRating, setSelectedRating] = useState<(typeof ratingOptions)[number]>("Rating: All")
+  const { isAuthenticated } = useAuthStore()
+
+  const [selectedRating, setSelectedRating] = useState<RatingOption>("Rating: All")
   const [selectedSort, setSelectedSort] = useState<SortOption>("Highest Rated")
   const [currentPage, setCurrentPage] = useState(1)
 
-  const filteredSuppliers = useMemo(() => {
-    const suppliers = suppliersDirectoryData.filter((supplier) => {
-      const categoryMatch = selectedCategory === "All Categories" || supplier.category === selectedCategory
-      const locationMatch = selectedLocation === "All Locations" || supplier.location === selectedLocation
-      const ratingMatch =
-        selectedRating === "Rating: All" ||
-        (selectedRating === "5 Stars" && supplier.rating >= 5) ||
-        (selectedRating === "4+ Stars" && supplier.rating >= 4) ||
-        (selectedRating === "3+ Stars" && supplier.rating >= 3)
+  const [vendors, setVendors] = useState<VendorListItem[]>([])
+  const [totalCount, setTotalCount] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [isLoading, setIsLoading] = useState(true)
+  const [hasError, setHasError] = useState(false)
 
-      return categoryMatch && locationMatch && ratingMatch
-    })
-
-    return [...suppliers].sort((left, right) => {
-      if (selectedSort === "A-Z") {
-        const leftValue = getSortValue(left, selectedSort) as string
-        const rightValue = getSortValue(right, selectedSort) as string
-        return leftValue.localeCompare(rightValue)
-      }
-
-      const leftValue = getSortValue(left, selectedSort) as number
-      const rightValue = getSortValue(right, selectedSort) as number
-      return rightValue - leftValue
-    })
-  }, [selectedCategory, selectedLocation, selectedRating, selectedSort])
-
-  const pageCount = Math.max(1, Math.ceil(filteredSuppliers.length / ITEMS_PER_PAGE))
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
+  const favoriteIdsRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
-    setCurrentPage(1)
-  }, [selectedCategory, selectedLocation, selectedRating, selectedSort])
+    favoriteIdsRef.current = favoriteIds
+  }, [favoriteIds])
 
-  const visibleSuppliers = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE
-    return filteredSuppliers.slice(start, start + ITEMS_PER_PAGE)
-  }, [currentPage, filteredSuppliers])
+  useEffect(() => {
+    if (!isAuthenticated) return
+    getMyFavoriteVendorIds()
+      .then((ids) => setFavoriteIds(new Set(ids)))
+      .catch(() => {})
+  }, [isAuthenticated])
 
-  const currentStart = filteredSuppliers.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1
-  const currentEnd = Math.min(currentPage * ITEMS_PER_PAGE, filteredSuppliers.length)
+  const handleToggleFavorite = useCallback(
+    async (vendorId: string) => {
+      if (!isAuthenticated) {
+        showToast.warning("Login required", "Please sign in to save vendors to your favorites.")
+        return
+      }
+      const isFav = favoriteIdsRef.current.has(vendorId)
+      setFavoriteIds((prev) => {
+        const next = new Set(prev)
+        if (isFav) next.delete(vendorId)
+        else next.add(vendorId)
+        return next
+      })
+      try {
+        if (isFav) await removeVendorFavorite(vendorId)
+        else await addVendorFavorite(vendorId)
+      } catch {
+        setFavoriteIds((prev) => {
+          const next = new Set(prev)
+          if (isFav) next.add(vendorId)
+          else next.delete(vendorId)
+          return next
+        })
+      }
+    },
+    [isAuthenticated],
+  )
+
+  useEffect(() => {
+    const controller = new AbortController()
+    setIsLoading(true)
+    setHasError(false)
+    getVendors({
+      page: currentPage - 1,
+      size: ITEMS_PER_PAGE,
+      sort: toApiSort(selectedSort),
+      minRating: toApiMinRating(selectedRating),
+      signal: controller.signal,
+    })
+      .then((result) => {
+        setVendors(result.vendors)
+        setTotalCount(result.totalCount)
+        setTotalPages(result.totalPages)
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setHasError(true)
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoading(false)
+      })
+    return () => controller.abort()
+  }, [currentPage, selectedSort, selectedRating])
+
+
+  const supplierItems = useMemo(() => vendors.map(vendorToSupplierItem), [vendors])
+
+  const currentStart = totalCount === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1
+  const currentEnd = Math.min(currentPage * ITEMS_PER_PAGE, totalCount)
 
   return (
     <>
@@ -85,13 +142,13 @@ export default function SuppliersDirectorySection() {
         <PageSectionContainer>
           <div className="relative max-w-4xl">
             <h1 className="text-4xl font-semibold leading-[1.02] text-inverse-foreground md:text-6xl">
-              Trusted Dental Suppliers
+              Trusted Dental Vendors
             </h1>
             <p className="mt-5 max-w-3xl text-lg leading-relaxed text-inverse-muted md:text-xl">
-              Connect with verified suppliers offering quality dental products and equipment across the United States.
+              Connect with verified vendors offering quality dental products and equipment across the United States.
             </p>
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <HeroMetric value="450+" label="Verified Suppliers" />
+              <HeroMetric value="450+" label="Verified Vendors" />
               <HeroMetric value="98%" label="Satisfaction Rate" />
               <HeroMetric value="24/7" label="Support Available" />
             </div>
@@ -104,36 +161,23 @@ export default function SuppliersDirectorySection() {
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex flex-wrap items-center gap-3">
               <FilterSelect
-                value={selectedCategory}
-                onChange={(event) => setSelectedCategory(event.target.value as (typeof categoryOptions)[number])}
-                options={categoryOptions}
-                ariaLabel="Filter by category"
-              />
-              <FilterSelect
-                value={selectedLocation}
-                onChange={(event) => setSelectedLocation(event.target.value as (typeof locationOptions)[number])}
-                options={locationOptions}
-                ariaLabel="Filter by location"
-              />
-              <FilterSelect
                 value={selectedRating}
-                onChange={(event) => setSelectedRating(event.target.value as (typeof ratingOptions)[number])}
+                onChange={(event) => {
+                  setSelectedRating(event.target.value as RatingOption)
+                  setCurrentPage(1)
+                }}
                 options={ratingOptions}
                 ariaLabel="Filter by rating"
               />
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-full border border-border-soft bg-surface-elevated px-4 py-2.5 text-sm font-semibold text-text-secondary transition-colors hover:text-brand"
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-                More Filters
-              </button>
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm text-text-muted">Sort by:</span>
               <FilterSelect
                 value={selectedSort}
-                onChange={(event) => setSelectedSort(event.target.value as SortOption)}
+                onChange={(event) => {
+                  setSelectedSort(event.target.value as SortOption)
+                  setCurrentPage(1)
+                }}
                 options={sortOptions}
                 ariaLabel="Sort suppliers"
               />
@@ -144,97 +188,107 @@ export default function SuppliersDirectorySection() {
 
       <PageSectionContainer className="py-12 lg:py-14">
         <div className="mb-8">
-          <h2 className="text-3xl font-semibold text-text-primary md:text-4xl">Browse Suppliers</h2>
+          <h2 className="text-3xl font-semibold text-text-primary md:text-4xl">Browse Vendors</h2>
           <p className="mt-3 text-base text-text-secondary">
-            Showing {numericFormatter.format(filteredSuppliers.length)} verified suppliers from a curated network.
+            {isLoading
+              ? "Loading vendors…"
+              : `Showing ${numericFormatter.format(totalCount)} verified vendors from a curated network.`}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {visibleSuppliers.map((supplier) => (
-            <SupplierDirectoryCard key={supplier.id} supplier={supplier} />
-          ))}
-        </div>
-
-        {visibleSuppliers.length === 0 ? (
-          <div className="mt-8 rounded-[1.25rem] border border-border-soft bg-surface-elevated p-6 text-sm text-text-secondary">
-            No supplier matches these filters. Clear one or more filters to see available suppliers.
+        {isLoading ? (
+          <div className="flex items-center justify-center py-24 text-text-muted">
+            <Loader2 className="h-8 w-8 animate-spin" />
           </div>
-        ) : null}
-      </PageSectionContainer>
-
-      <PageSectionContainer className="pb-14">
-        <div className="flex flex-col gap-4 rounded-[1.25rem] border border-border-soft bg-surface-elevated px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-text-secondary">
-            Showing <span className="font-semibold text-text-primary">{currentStart}</span>-
-            <span className="font-semibold text-text-primary">{currentEnd}</span> of{" "}
-            <span className="font-semibold text-text-primary">{filteredSuppliers.length}</span> suppliers
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-              disabled={currentPage === 1}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border-soft text-text-secondary transition-colors hover:text-brand disabled:cursor-not-allowed disabled:opacity-45"
-              aria-label="Previous page"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            {Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => (
-              <button
-                key={page}
-                type="button"
-                onClick={() => setCurrentPage(page)}
-                className={cn(
-                  "h-10 min-w-10 rounded-full border px-3 text-sm font-semibold transition-colors",
-                  page === currentPage
-                    ? "border-brand bg-brand text-white"
-                    : "border-border-soft bg-surface text-text-secondary hover:text-brand",
-                )}
-              >
-                {page}
-              </button>
+        ) : hasError ? (
+          <div className="rounded-[1.25rem] border border-border-soft bg-surface-elevated p-6 text-sm text-text-secondary">
+            Unable to load vendors. Please try again later.
+          </div>
+        ) : supplierItems.length === 0 ? (
+          <div className="rounded-[1.25rem] border border-border-soft bg-surface-elevated p-6 text-sm text-text-secondary">
+            No vendors match these filters. Clear one or more filters to see available vendors.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {supplierItems.map((supplier) => (
+              <SupplierDirectoryCard
+                key={supplier.id}
+                supplier={{ ...supplier, isFavorite: favoriteIds.has(supplier.id as string) }}
+                onToggleFavorite={() => handleToggleFavorite(supplier.id as string)}
+              />
             ))}
-            <button
-              type="button"
-              onClick={() => setCurrentPage((page) => Math.min(pageCount, page + 1))}
-              disabled={currentPage === pageCount}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border-soft text-text-secondary transition-colors hover:text-brand disabled:cursor-not-allowed disabled:opacity-45"
-              aria-label="Next page"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
           </div>
-        </div>
+        )}
       </PageSectionContainer>
+
+      {!isLoading && !hasError && totalPages > 1 && (
+        <PageSectionContainer className="pb-14">
+          <div className="flex flex-col gap-4 rounded-[1.25rem] border border-border-soft bg-surface-elevated px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-text-secondary">
+              Showing <span className="font-semibold text-text-primary">{currentStart}</span>–
+              <span className="font-semibold text-text-primary">{currentEnd}</span> of{" "}
+              <span className="font-semibold text-text-primary">{totalCount}</span> suppliers
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border-soft text-text-secondary transition-colors hover:text-brand disabled:cursor-not-allowed disabled:opacity-45"
+                aria-label="Previous page"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() => setCurrentPage(page)}
+                  className={cn(
+                    "h-10 min-w-10 rounded-full border px-3 text-sm font-semibold transition-colors",
+                    page === currentPage
+                      ? "border-brand bg-brand text-white"
+                      : "border-border-soft bg-surface text-text-secondary hover:text-brand",
+                  )}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border-soft text-text-secondary transition-colors hover:text-brand disabled:cursor-not-allowed disabled:opacity-45"
+                aria-label="Next page"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </PageSectionContainer>
+      )}
 
       <PageSectionContainer className="pb-16">
         <div className="mb-10 text-center">
           <h2 className="text-3xl font-semibold text-text-primary md:text-4xl">Browse by Category</h2>
           <p className="mt-3 text-text-secondary">
-            Find suppliers specializing in specific dental products and services.
+            Find vendors specializing in specific dental products and services.
           </p>
         </div>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
           {supplierCategories.map((category) => {
             const Icon = category.icon
-            const isSelected = selectedCategory === category.label
             return (
-              <button
-                type="button"
+              <div
                 key={category.id}
-                onClick={() => setSelectedCategory(category.label)}
-                className={cn(
-                  "spotlight-border rounded-[1.25rem] border bg-surface-elevated p-5 text-center transition-all hover:-translate-y-0.5",
-                  isSelected ? "border-brand shadow-panel" : "border-border-soft shadow-soft",
-                )}
+                className="spotlight-border rounded-[1.25rem] border border-border-soft bg-surface-elevated p-5 text-center shadow-soft"
               >
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-border-soft bg-surface">
                   <Icon className="h-6 w-6 text-brand" />
                 </div>
                 <h3 className="text-sm font-semibold text-text-primary">{category.label}</h3>
                 <p className="mt-1 text-xs text-text-secondary">{category.supplierCount} suppliers</p>
-              </button>
+              </div>
             )
           })}
         </div>
@@ -243,9 +297,9 @@ export default function SuppliersDirectorySection() {
       <section className="bg-surface py-16">
         <PageSectionContainer>
           <div className="mb-10 text-center">
-            <h2 className="text-3xl font-semibold text-text-primary md:text-4xl">Why Choose Our Suppliers</h2>
+            <h2 className="text-3xl font-semibold text-text-primary md:text-4xl">Why Choose Our Vendors</h2>
             <p className="mt-3 text-text-secondary">
-              Every supplier is vetted for quality, reliability, and procurement performance.
+              Every vendor is vetted for quality, reliability, and procurement performance.
             </p>
           </div>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
@@ -277,8 +331,8 @@ export default function SuppliersDirectorySection() {
           {supplierTestimonials.map((testimonial) => (
             <article key={testimonial.id} className="rounded-4xl border border-border-soft bg-surface p-7 shadow-soft">
               <div className="mb-4 flex items-center gap-1 text-amber-400">
-                {Array.from({ length: 5 }, (_, index) => (
-                  <Star key={`${testimonial.id}-star-${index + 1}`} className="h-4 w-4 fill-current" />
+                {Array.from({ length: 5 }, (_, i) => (
+                  <Star key={`${testimonial.id}-star-${i + 1}`} className="h-4 w-4 fill-current" />
                 ))}
               </div>
               <p className="text-sm leading-7 text-text-secondary">"{testimonial.quote}"</p>
@@ -311,10 +365,10 @@ export default function SuppliersDirectorySection() {
         <PageSectionContainer>
           <div className="rounded-4xl bg-brand-surface px-6 py-14 text-center text-inverse-foreground shadow-panel sm:px-12">
             <h2 className="text-3xl font-semibold md:text-5xl text-inverse-foreground">
-              Ready to Find Your Perfect Supplier?
+              Ready to Find Your Perfect Vendor?
             </h2>
             <p className="mx-auto mt-4 max-w-3xl text-lg text-inverse-muted">
-              Join thousands of dental professionals who rely on a verified supplier network to keep operations
+              Join thousands of dental professionals who rely on a verified vendor network to keep operations
               consistent.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">

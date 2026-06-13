@@ -1,5 +1,3 @@
-"use client"
-
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime"
 import { apiRequest } from "@/lib/api/request"
 

@@ -2,15 +2,15 @@ import { Beaker, Headset, MonitorCog, ShieldCheck, Syringe, Truck, Wrench } from
 import type { ComponentType } from "react"
 
 export interface SupplierDirectoryItem {
-  id: number
+  id: string | number
   name: string
   slug: string
-  category: "Supplies" | "Equipment" | "Instruments" | "Materials" | "Technology" | "Infection Control"
-  location: "California" | "Texas" | "New York" | "Florida"
+  category?: "Supplies" | "Equipment" | "Instruments" | "Materials" | "Technology" | "Infection Control"
+  location?: string
   rating: number
   reviewCount: number
   about: string
-  deliveryMethods: string[]
+  deliveryMethods?: string[]
   isFavorite?: boolean
 }
 
@@ -37,6 +37,8 @@ export interface SupplierTestimonialItem {
   avatarGradient: string
 }
 
+// Vendor data is now fetched from the API via GET /api/vendors
+// This static array is kept empty; favorites page will be migrated separately
 export const suppliersDirectoryData: ReadonlyArray<SupplierDirectoryItem> = [
   {
     id: 1,

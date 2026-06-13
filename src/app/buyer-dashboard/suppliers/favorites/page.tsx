@@ -1,5 +1,5 @@
-import FavoriteSuppliersPage from "@/features/suppliers/FavoriteSuppliersPage"
+import { redirect } from "next/navigation"
 
-export default function BuyerDashboardFavoriteSuppliersRoute() {
-  return <FavoriteSuppliersPage />
+export default function BuyerDashboardFavoriteSuppliersLegacyRoute() {
+  redirect("/buyer-dashboard/vendors/favorites")
 }

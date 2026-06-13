@@ -9,6 +9,7 @@ interface SpotlightCardProps {
   children: ReactNode
   className?: string
   glowColor?: GlowColor
+  radius?: number
 }
 
 const glowColorMap: Record<GlowColor, { base: number; spread: number }> = {
@@ -19,7 +20,7 @@ const glowColorMap: Record<GlowColor, { base: number; spread: number }> = {
   orange: { base: 30,  spread: 80 },
 }
 
-export function SpotlightCard({ children, className, glowColor = "blue" }: SpotlightCardProps) {
+export function SpotlightCard({ children, className, glowColor = "blue", radius = 20 }: SpotlightCardProps) {
   const cardRef = useRef<HTMLDivElement>(null)
   const { base, spread } = glowColorMap[glowColor]
 
@@ -50,7 +51,7 @@ export function SpotlightCard({ children, className, glowColor = "blue" }: Spotl
         {
           "--base": base,
           "--spread": spread,
-          "--radius": "28",
+          "--radius": String(radius),
           "--border": "1.5",
           "--size": "280",
           "--outer": "1",

@@ -52,7 +52,7 @@ const featureHighlights = [
   },
   {
     title: "Trusted Vendors",
-    detail: "Verified supplier reliability",
+    detail: "Verified vendor reliability",
     desktopPositionClass: "bottom-[8%] left-[3%]",
     bgClassName: "bg-accent/55",
     titleClassName: "text-accent-foreground",

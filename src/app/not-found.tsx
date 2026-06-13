@@ -103,10 +103,10 @@ export default function NotFound() {
               },
               {
                 icon: Store,
-                title: "Suppliers",
-                desc: "Find verified dental suppliers",
-                link: "/suppliers",
-                btnText: "Browse Suppliers",
+                title: "Vendors",
+                desc: "Find verified dental vendors",
+                link: "/vendors",
+                btnText: "Browse Vendors",
               },
               {
                 icon: Tag,
@@ -246,8 +246,8 @@ export default function NotFound() {
                 a: "We accept all major credit cards, wire transfers, and offer net payment terms for verified practices.",
               },
               {
-                q: "How do I become a verified supplier?",
-                a: "Visit our Supplier Registration page and complete the verification process with required licenses and certifications.",
+                q: "How do I become a verified vendor?",
+                a: "Visit our Vendor Registration page and complete the verification process with required licenses and certifications.",
               },
               {
                 q: "What is your return policy?",

@@ -10,11 +10,11 @@ export const homeBuyLaneItems: HomeBuyLaneItem[] = [
     href: "/products",
   },
   {
-    title: "Compare supplier offers",
+    title: "Compare vendor offers",
     description: "Check rating, lead time, and support guarantees before committing to large-volume orders.",
     icon: Store,
-    cta: "View suppliers",
-    href: "/suppliers",
+    cta: "View vendors",
+    href: "/vendors",
   },
   {
     title: "Build basket and checkout",
