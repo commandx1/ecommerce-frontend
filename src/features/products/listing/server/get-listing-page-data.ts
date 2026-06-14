@@ -10,9 +10,27 @@ export interface ListingPageData {
   manufacturers: string[]
 }
 
-export async function getListingPageData({ apiPage, pageSize }: ParsedListingSearchParams): Promise<ListingPageData> {
+export async function getListingPageData({
+  apiPage,
+  pageSize,
+  sort,
+  brands: selectedBrands,
+  manufacturers: selectedManufacturers,
+  minPrice,
+  maxPrice,
+  minRating,
+  inStock,
+}: ParsedListingSearchParams): Promise<ListingPageData> {
   const [productsResponse, brands, manufacturers] = await Promise.all([
-    getPublicProducts<APIProduct>(apiPage, pageSize),
+    getPublicProducts<APIProduct>(apiPage, pageSize, {
+      brands: selectedBrands,
+      manufacturers: selectedManufacturers,
+      minPrice,
+      maxPrice,
+      minRating,
+      inStock,
+      sort,
+    }),
     getProductBrands(),
     getProductManufacturers(),
   ])

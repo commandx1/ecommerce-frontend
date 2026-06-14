@@ -18,6 +18,13 @@ export default function ProductListingPageView({ data, params }: ProductListingP
       pageSize={params.pageSize}
       totalPages={data.totalPages}
       viewType={params.viewType}
+      sort={params.sort}
+      selectedBrands={params.brands}
+      selectedManufacturers={params.manufacturers}
+      minPrice={params.minPrice}
+      maxPrice={params.maxPrice}
+      minRating={params.minRating}
+      inStock={params.inStock}
     />
   )
 }

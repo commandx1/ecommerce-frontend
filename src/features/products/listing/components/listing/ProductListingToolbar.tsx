@@ -1,7 +1,8 @@
-import { LayoutGrid, List, RotateCcw } from "lucide-react"
+import { Suspense } from "react"
+import { LayoutGrid, List } from "lucide-react"
 import Link from "next/link"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import SortSelect from "./SortSelect"
 
 interface ProductListingToolbarProps {
   buildUrl: (overrides: { page?: number; size?: number; view?: "grid" | "list" }) => string
@@ -51,31 +52,11 @@ const ProductListingToolbar = ({ buildUrl, viewType, pageSize }: ProductListingT
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 text-sm text-text-secondary">
-              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-text-muted">Sort by</span>
-              <Select defaultValue="best-match">
-                <SelectTrigger className="h-9 rounded-full border-border-soft bg-surface px-4 py-2 shadow-soft">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="best-match">Best Match</SelectItem>
-                  <SelectItem value="price-low-high">Price: Low to High</SelectItem>
-                  <SelectItem value="price-high-low">Price: High to Low</SelectItem>
-                  <SelectItem value="newest">Newest First</SelectItem>
-                  <SelectItem value="popular">Most Popular</SelectItem>
-                  <SelectItem value="rating">Best Rating</SelectItem>
-                  <SelectItem value="brand">Brand A-Z</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <button
-              type="button"
-              className="flex items-center text-sm font-medium text-brand transition-colors hover:text-brand-strong"
-            >
-              <RotateCcw className="mr-2 h-4 w-4" />
-              Reset Filters
-            </button>
+          <div className="flex items-center gap-2 text-sm text-text-secondary">
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-text-muted">Sort by</span>
+            <Suspense>
+              <SortSelect />
+            </Suspense>
           </div>
         </div>
       </PageSectionContainer>

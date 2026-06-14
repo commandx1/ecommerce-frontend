@@ -1,4 +1,6 @@
+import { Suspense } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
+import type { SortValue } from "../server/parse-listing-search-params"
 import { createProductsUrlBuilder } from "./listing/buildProductsUrl"
 import MobileFilters from "./listing/MobileFilters"
 import PaginationBar from "./listing/PaginationBar"
@@ -37,6 +39,13 @@ interface ProductListingClientProps {
   pageSize: number
   totalPages: number
   viewType: "grid" | "list"
+  sort: SortValue
+  selectedBrands: string[]
+  selectedManufacturers: string[]
+  minPrice: number | null
+  maxPrice: number | null
+  minRating: number | null
+  inStock: boolean
 }
 
 const ProductListingClient = ({
@@ -48,12 +57,32 @@ const ProductListingClient = ({
   pageSize,
   totalPages,
   viewType,
+  sort,
+  selectedBrands,
+  selectedManufacturers,
+  minPrice,
+  maxPrice,
+  minRating,
+  inStock,
 }: ProductListingClientProps) => {
-  const buildUrl = createProductsUrlBuilder({ currentPage, pageSize, viewType })
+  const buildUrl = createProductsUrlBuilder({
+    currentPage,
+    pageSize,
+    viewType,
+    sort,
+    brands: selectedBrands,
+    manufacturers: selectedManufacturers,
+    minPrice,
+    maxPrice,
+    minRating,
+    inStock,
+  })
 
   return (
     <div className="min-h-screen bg-canvas font-sans">
-      <MobileFilters brands={brands} manufacturers={manufacturers} />
+      <Suspense>
+        <MobileFilters brands={brands} manufacturers={manufacturers} />
+      </Suspense>
       <ProductListingBreadcrumb />
       <ProductListingHeader totalElements={totalElements} />
       <ProductListingToolbar buildUrl={buildUrl} viewType={viewType} pageSize={pageSize} />
@@ -65,7 +94,9 @@ const ProductListingClient = ({
               style={{ maxHeight: "calc(100vh - 8rem)" }}
               className="sticky top-28 overflow-y-auto rounded-[1.75rem] border border-border-soft bg-surface-elevated shadow-soft"
             >
-              <ProductFiltersPanel brands={brands} manufacturers={manufacturers} />
+              <Suspense>
+                <ProductFiltersPanel brands={brands} manufacturers={manufacturers} />
+              </Suspense>
             </div>
           </aside>
 

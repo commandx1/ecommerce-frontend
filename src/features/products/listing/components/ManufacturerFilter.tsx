@@ -1,33 +1,71 @@
 "use client"
 
 import { Search } from "lucide-react"
+import { useId, useState } from "react"
 import { CheckboxField } from "@/components/form/CheckboxField"
 import { Input } from "@/components/ui/input"
 import { useExpandableList } from "../hooks/useExpandableList"
+import { useProductFiltersNavigation } from "../hooks/useProductFiltersNavigation"
 
 interface ManufacturerFilterProps {
   manufacturers: string[]
 }
 
 const ManufacturerFilter = ({ manufacturers }: ManufacturerFilterProps) => {
-  const { showAll, visibleItems, toggleShowAll } = useExpandableList(manufacturers)
+  const uid = useId()
+  const [search, setSearch] = useState("")
+  const { navigate, currentManufacturers } = useProductFiltersNavigation()
+  const filtered = search
+    ? manufacturers.filter((m) => m.toLowerCase().includes(search.toLowerCase()))
+    : manufacturers
+  const { showAll, visibleItems, toggleShowAll } = useExpandableList(filtered)
+
+  const toggle = (manufacturer: string) => {
+    const next = currentManufacturers.includes(manufacturer)
+      ? currentManufacturers.filter((m) => m !== manufacturer)
+      : [...currentManufacturers, manufacturer]
+    navigate({ manufacturers: next })
+  }
 
   return (
     <div className="border-b border-border-soft p-6">
-      <h3 className="mb-4 text-lg font-semibold text-text-primary">Manufacturer</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-text-primary">Manufacturer</h3>
+        {currentManufacturers.length > 0 && (
+          <button
+            type="button"
+            onClick={() => navigate({ manufacturers: [] })}
+            className="text-xs font-medium text-text-muted hover:text-brand transition-colors"
+          >
+            Clear
+          </button>
+        )}
+      </div>
       <div className="relative mb-4">
         <Search className="absolute left-3 top-3 h-4 w-4 text-text-muted" />
-        <Input type="text" placeholder="Search manufacturers..." className="w-full py-2 pr-4 pl-10 text-sm" />
+        <Input
+          type="text"
+          placeholder="Search manufacturers..."
+          className="w-full py-2 pr-4 pl-10 text-sm"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </div>
       <div className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
         {visibleItems.map((manufacturer) => (
-          <CheckboxField key={manufacturer} id={`manufacturer-${manufacturer}`} label={manufacturer} />
+          <CheckboxField
+            key={manufacturer}
+            id={`${uid}-manufacturer-${manufacturer}`}
+            label={manufacturer}
+            checked={currentManufacturers.includes(manufacturer)}
+            onChange={() => toggle(manufacturer)}
+          />
         ))}
-        {manufacturers.length === 0 && <p className="text-sm italic text-text-muted">No manufacturers found</p>}
+        {filtered.length === 0 && <p className="text-sm italic text-text-muted">No manufacturers found</p>}
       </div>
-      {manufacturers.length > 8 && (
+      {filtered.length > 8 && (
         <button type="button" onClick={toggleShowAll} className="mt-4 text-sm font-medium text-brand hover:underline">
-          {showAll ? "Show less" : `Show ${manufacturers.length - 8} more manufacturers`}
+          {showAll ? "Show less" : `Show ${filtered.length - 8} more manufacturers`}
         </button>
       )}
     </div>

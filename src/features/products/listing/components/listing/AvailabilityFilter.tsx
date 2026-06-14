@@ -1,15 +1,33 @@
-import { useId } from "react"
+"use client"
+
 import { CheckboxField } from "@/components/form/CheckboxField"
+import { useProductFiltersNavigation } from "../../hooks/useProductFiltersNavigation"
 
 const AvailabilityFilter = () => {
-  const id = useId()
+  const { navigate, currentInStock } = useProductFiltersNavigation()
+  const isFiltered = !currentInStock
 
   return (
     <div className="border-b border-border-soft p-6">
-      <h3 className="mb-4 text-lg font-semibold text-text-primary">Availability</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-text-primary">Availability</h3>
+        {isFiltered && (
+          <button
+            type="button"
+            onClick={() => navigate({ inStock: true })}
+            className="text-xs font-medium text-text-muted hover:text-brand transition-colors"
+          >
+            Clear
+          </button>
+        )}
+      </div>
       <div className="space-y-3">
-        <CheckboxField id={`${id}-availability-in-stock`} label="In Stock" defaultChecked />
-        <CheckboxField id={`${id}-availability-ship-today`} label="Ships Today" />
+        <CheckboxField
+          id="availability-in-stock"
+          label="In Stock"
+          checked={currentInStock}
+          onChange={() => navigate({ inStock: !currentInStock })}
+        />
       </div>
     </div>
   )

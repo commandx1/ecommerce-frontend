@@ -1,7 +1,17 @@
+export const VALID_SORT_VALUES = ["price-asc", "price-desc", "rating", "newest", "name-asc"] as const
+export type SortValue = (typeof VALID_SORT_VALUES)[number] | "best-match"
+
 export interface ListingSearchParams {
   page?: string
   size?: string
   view?: string
+  sort?: string
+  brands?: string | string[]
+  manufacturers?: string | string[]
+  minPrice?: string
+  maxPrice?: string
+  minRating?: string
+  inStock?: string
 }
 
 export interface ParsedListingSearchParams {
@@ -9,6 +19,13 @@ export interface ParsedListingSearchParams {
   pageSize: number
   apiPage: number
   viewType: "grid" | "list"
+  sort: SortValue
+  brands: string[]
+  manufacturers: string[]
+  minPrice: number | null
+  maxPrice: number | null
+  minRating: number | null
+  inStock: boolean
 }
 
 const DEFAULT_PAGE = 1
@@ -20,8 +37,18 @@ function parsePositiveInt(value: string | undefined, fallback: number) {
   if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
     return fallback
   }
-
   return parsedValue
+}
+
+function parsePositiveFloat(value: string | undefined): number | null {
+  if (!value) return null
+  const parsed = Number.parseFloat(value)
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null
+}
+
+function parseStringArray(value: string | string[] | undefined): string[] {
+  if (!value) return []
+  return Array.isArray(value) ? value.filter(Boolean) : [value].filter(Boolean)
 }
 
 export function parseListingSearchParams(params: ListingSearchParams): ParsedListingSearchParams {
@@ -29,11 +56,22 @@ export function parseListingSearchParams(params: ListingSearchParams): ParsedLis
   const requestedPageSize = parsePositiveInt(params.size, DEFAULT_PAGE_SIZE)
   const pageSize = Math.min(requestedPageSize, MAX_PAGE_SIZE)
   const viewType = params.view === "list" ? "list" : "grid"
+  const sort: SortValue = VALID_SORT_VALUES.includes(params.sort as (typeof VALID_SORT_VALUES)[number])
+    ? (params.sort as SortValue)
+    : "best-match"
+  const inStock = params.inStock !== "false"
 
   return {
     displayPage,
     pageSize,
     apiPage: Math.max(0, displayPage - 1),
     viewType,
+    sort,
+    brands: parseStringArray(params.brands),
+    manufacturers: parseStringArray(params.manufacturers),
+    minPrice: parsePositiveFloat(params.minPrice),
+    maxPrice: parsePositiveFloat(params.maxPrice),
+    minRating: parsePositiveFloat(params.minRating),
+    inStock,
   }
 }
