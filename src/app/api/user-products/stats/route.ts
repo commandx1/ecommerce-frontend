@@ -2,36 +2,10 @@ import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import type { UserProduct } from "@/lib/api/products"
 import { serverRequest } from "@/lib/api/server-request"
+import { getAuthorizationHeader } from "@/lib/api/server-auth"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 const FILTER_FALLBACK_PAGE_SIZE = 1000
-
-function getAuthorizationHeader(request: NextRequest): string | null {
-  const directAuthHeader = request.headers.get("Authorization")
-  if (directAuthHeader) {
-    return directAuthHeader
-  }
-
-  const authCookie = request.cookies.get("auth-storage")
-  if (!authCookie) {
-    return null
-  }
-
-  try {
-    const parsed = JSON.parse(authCookie.value) as { state?: { accessToken?: string } }
-    const token = parsed?.state?.accessToken
-    return token ? `Bearer ${token}` : null
-  } catch {
-    try {
-      const decoded = decodeURIComponent(authCookie.value)
-      const parsed = JSON.parse(decoded) as { state?: { accessToken?: string } }
-      const token = parsed?.state?.accessToken
-      return token ? `Bearer ${token}` : null
-    } catch {
-      return null
-    }
-  }
-}
 
 function computeStats(userProducts: UserProduct[]) {
   return {

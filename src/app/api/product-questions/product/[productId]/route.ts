@@ -3,27 +3,7 @@ import { serverRequest } from "@/lib/api/server-request"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
-// Helper function to parse auth cookie and get access token
-function getAccessTokenFromCookie(request: NextRequest): string | null {
-  const authCookie = request.cookies.get("auth-storage")
-  if (!authCookie) {
-    return null
-  }
-
-  try {
-    let authData: { state?: { accessToken?: string } }
-    try {
-      authData = JSON.parse(authCookie.value)
-    } catch {
-      const decodedValue = decodeURIComponent(authCookie.value)
-      authData = JSON.parse(decodedValue)
-    }
-
-    return authData?.state?.accessToken || null
-  } catch {
-    return null
-  }
-}
+import { getAuthorizationHeader } from "@/lib/api/server-auth"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ productId: string }> }) {
   try {
@@ -32,8 +12,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const page = searchParams.get("page") || "0"
     const size = searchParams.get("size") || "10"
 
-    // Get access token from cookie
-    const accessToken = getAccessTokenFromCookie(request)
+    const accessToken = getAuthorizationHeader(request)?.replace("Bearer ", "") ?? null
 
     // Build headers
     const headers: HeadersInit = {

@@ -21,7 +21,6 @@ const VENDOR_NAV_GROUPS: DashboardSidebarGroup[] = [
         href: "/vendor-dashboard/products",
         label: "Products",
         icon: Box,
-        trailingText: "1,247",
         matchMode: "startsWith",
       },
       { href: "/vendor-dashboard/inventory", label: "Inventory", icon: Warehouse, matchMode: "startsWith" },
@@ -30,7 +29,6 @@ const VENDOR_NAV_GROUPS: DashboardSidebarGroup[] = [
         href: "/vendor-dashboard/reviews",
         label: "Reviews",
         icon: Star,
-        badge: { label: "4.8", tone: "info" },
         matchMode: "startsWith",
       },
       {

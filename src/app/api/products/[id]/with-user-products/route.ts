@@ -3,47 +3,22 @@ import { serverRequest } from "@/lib/api/server-request"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
-// Helper function to parse auth cookie and get access token
-function getAccessTokenFromCookie(request: NextRequest): string | null {
-  const authCookie = request.cookies.get("auth-storage")
-  if (!authCookie) {
-    return null
-  }
-
-  try {
-    let authData: { state?: { accessToken?: string } }
-    try {
-      // Try parsing directly (might be already decoded)
-      authData = JSON.parse(authCookie.value)
-    } catch {
-      // If that fails, try URL decoding first
-      const decodedValue = decodeURIComponent(authCookie.value)
-      authData = JSON.parse(decodedValue)
-    }
-
-    return authData?.state?.accessToken || null
-  } catch {
-    return null
-  }
-}
+import { getAuthorizationHeader } from "@/lib/api/server-auth"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
 
-    // Get access token from cookie
-    const accessToken = getAccessTokenFromCookie(request)
+    const authHeader = getAuthorizationHeader(request)
 
-    // Build headers
     const headers: HeadersInit = {
       "Content-Type": "application/json",
       "User-Agent": "Mozilla/5.0",
       Accept: "application/json",
     }
 
-    // Add authorization header if token exists
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
+    if (authHeader) {
+      headers.Authorization = authHeader
     }
 
     const response = await serverRequest(`${BACKEND_URL}/api/products/${id}/with-user-products`, {
