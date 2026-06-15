@@ -8,6 +8,11 @@ export type PublicProductsResponse<TProduct = unknown> = {
   totalPages?: number
 }
 
+export type FilterOption = { name: string; count: number }
+export type VendorOption = { id: string; name: string; count: number }
+export type AttributeValueOption = { value: string; count: number }
+export type AttributeGroup = { attributeName: string; values: AttributeValueOption[] }
+
 function requireBackendUrl() {
   if (!BACKEND_URL) {
     throw new Error("NEXT_PUBLIC_BACKEND_URL is not set")
@@ -18,11 +23,14 @@ function requireBackendUrl() {
 export interface PublicProductsFilterParams {
   brands?: string[]
   manufacturers?: string[]
+  categories?: string[]
+  vendorIds?: string[]
   minPrice?: number | null
   maxPrice?: number | null
   minRating?: number | null
   inStock?: boolean
   sort?: string
+  attributes?: string[]
 }
 
 export async function getPublicProducts<TProduct = unknown>(
@@ -32,19 +40,20 @@ export async function getPublicProducts<TProduct = unknown>(
 ): Promise<PublicProductsResponse<TProduct>> {
   const baseUrl = requireBackendUrl()
 
-  // Build query string manually to ensure arrays serialize as repeated keys
-  // (e.g. brands=3M&brands=Dentsply) which Spring Boot @RequestParam List<String> expects
   const qs = new URLSearchParams()
   qs.set("page", String(page))
   qs.set("size", String(size))
 
   for (const brand of filters.brands ?? []) qs.append("brands", brand)
   for (const mfr of filters.manufacturers ?? []) qs.append("manufacturers", mfr)
+  for (const cat of filters.categories ?? []) qs.append("categories", cat)
+  for (const v of filters.vendorIds ?? []) qs.append("vendorIds", v)
   if (filters.minPrice != null) qs.set("minPrice", String(filters.minPrice))
   if (filters.maxPrice != null) qs.set("maxPrice", String(filters.maxPrice))
   if (filters.minRating != null) qs.set("minRating", String(filters.minRating))
   if (filters.inStock === false) qs.set("inStock", "false")
   if (filters.sort && filters.sort !== "best-match") qs.set("sort", filters.sort)
+  for (const attr of filters.attributes ?? []) qs.append("attributes", attr)
 
   return apiRequest.requestJson<PublicProductsResponse<TProduct>>({
     client: "app",
@@ -54,10 +63,10 @@ export async function getPublicProducts<TProduct = unknown>(
   })
 }
 
-export async function getProductBrands(): Promise<string[]> {
+export async function getProductBrandOptions(): Promise<FilterOption[]> {
   const baseUrl = requireBackendUrl()
   try {
-    return await apiRequest.requestJson<string[]>({
+    return await apiRequest.requestJson<FilterOption[]>({
       client: "app",
       method: "GET",
       url: `${baseUrl}/api/products/brands`,
@@ -68,14 +77,56 @@ export async function getProductBrands(): Promise<string[]> {
   }
 }
 
-export async function getProductManufacturers(): Promise<string[]> {
+export async function getProductManufacturerOptions(): Promise<FilterOption[]> {
   const baseUrl = requireBackendUrl()
   try {
-    return await apiRequest.requestJson<string[]>({
+    return await apiRequest.requestJson<FilterOption[]>({
       client: "app",
       method: "GET",
       url: `${baseUrl}/api/products/manufacturers`,
       fallbackMessage: "Failed to fetch product manufacturers",
+    })
+  } catch {
+    return []
+  }
+}
+
+export async function getProductVendorOptions(): Promise<VendorOption[]> {
+  const baseUrl = requireBackendUrl()
+  try {
+    return await apiRequest.requestJson<VendorOption[]>({
+      client: "app",
+      method: "GET",
+      url: `${baseUrl}/api/products/vendors`,
+      fallbackMessage: "Failed to fetch product vendors",
+    })
+  } catch {
+    return []
+  }
+}
+
+export async function getProductCategoryOptions(): Promise<FilterOption[]> {
+  const baseUrl = requireBackendUrl()
+  try {
+    return await apiRequest.requestJson<FilterOption[]>({
+      client: "app",
+      method: "GET",
+      url: `${baseUrl}/api/products/categories`,
+      fallbackMessage: "Failed to fetch product categories",
+    })
+  } catch {
+    return []
+  }
+}
+
+export async function getProductAttributeOptions(): Promise<AttributeGroup[]> {
+  const baseUrl = requireBackendUrl()
+  try {
+    return await apiRequest.requestJson<AttributeGroup[]>({
+      client: "app",
+      method: "GET",
+      url: `${baseUrl}/api/products/attributes`,
+      fallbackMessage: "Failed to fetch product attributes",
     })
   } catch {
     return []

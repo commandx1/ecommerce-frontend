@@ -1,18 +1,56 @@
 "use client"
 
 import { X } from "lucide-react"
+import type { VendorOption } from "@/lib/api/public-products"
 import { useProductFiltersNavigation } from "../../hooks/useProductFiltersNavigation"
 
-const ActiveFilters = () => {
-  const { navigate, currentBrands, currentManufacturers, currentMinPrice, currentMaxPrice, currentMinRating, currentInStock } =
-    useProductFiltersNavigation()
+interface ActiveFiltersProps {
+  vendors: VendorOption[]
+}
+
+const ActiveFilters = ({ vendors }: ActiveFiltersProps) => {
+  const {
+    navigate,
+    currentBrands,
+    currentManufacturers,
+    currentCategories,
+    currentVendors,
+    currentMinPrice,
+    currentMaxPrice,
+    currentMinRating,
+    currentInStock,
+    currentAttributes,
+  } = useProductFiltersNavigation()
 
   const priceLabel =
     currentMinPrice != null || currentMaxPrice != null
       ? `$${currentMinPrice ?? 0} – ${currentMaxPrice != null ? `$${currentMaxPrice}` : "Any"}`
       : null
 
+  const attributeGroups = currentAttributes.reduce<Record<string, string[]>>((acc, attr) => {
+    const [name, value] = attr.split(":", 2)
+    if (!acc[name]) acc[name] = []
+    acc[name].push(value)
+    return acc
+  }, {})
+
   const groups = [
+    {
+      label: "Vendor",
+      chips: currentVendors.map((id) => ({
+        key: `vendor-${id}`,
+        text: vendors.find((v) => v.id === id)?.name ?? id,
+        onRemove: () => navigate({ vendors: currentVendors.filter((v) => v !== id) }),
+      })),
+    },
+    {
+      label: "Category",
+      chips: currentCategories.map((cat) => ({
+        key: `cat-${cat}`,
+        text: cat,
+        onRemove: () => navigate({ categories: currentCategories.filter((c) => c !== cat) }),
+      })),
+    },
     {
       label: "Brand",
       chips: currentBrands.map((brand) => ({
@@ -37,9 +75,10 @@ const ActiveFilters = () => {
     },
     {
       label: "Customer Rating",
-      chips: currentMinRating != null
-        ? [{ key: "rating", text: `${currentMinRating}+ Stars`, onRemove: () => navigate({ minRating: null }) }]
-        : [],
+      chips:
+        currentMinRating != null
+          ? [{ key: "rating", text: `${currentMinRating}+ Stars`, onRemove: () => navigate({ minRating: null }) }]
+          : [],
     },
     {
       label: "Availability",
@@ -47,12 +86,31 @@ const ActiveFilters = () => {
         ? [{ key: "stock", text: "Out of stock included", onRemove: () => navigate({ inStock: true }) }]
         : [],
     },
+    ...Object.entries(attributeGroups).map(([attrName, values]) => ({
+      label: attrName.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+      chips: values.map((v) => ({
+        key: `attr-${attrName}-${v}`,
+        text: v,
+        onRemove: () =>
+          navigate({ attributes: currentAttributes.filter((a) => a !== `${attrName}:${v}`) }),
+      })),
+    })),
   ].filter((g) => g.chips.length > 0)
 
   if (groups.length === 0) return null
 
   const clearAll = () =>
-    navigate({ brands: [], manufacturers: [], minPrice: null, maxPrice: null, minRating: null, inStock: true })
+    navigate({
+      brands: [],
+      manufacturers: [],
+      categories: [],
+      vendors: [],
+      minPrice: null,
+      maxPrice: null,
+      minRating: null,
+      inStock: true,
+      attributes: [],
+    })
 
   return (
     <div className="p-6 border-b border-border-soft">

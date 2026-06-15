@@ -1,8 +1,12 @@
 "use client"
 
+import type { AttributeGroup, FilterOption, VendorOption } from "@/lib/api/public-products"
+import AttributeFilter from "../AttributeFilter"
 import BrandFilter from "../BrandFilter"
+import CategoryFilter from "../CategoryFilter"
 import ManufacturerFilter from "../ManufacturerFilter"
 import RatingFilter from "../RatingFilter"
+import VendorFilter from "../VendorFilter"
 import {
   FilterNavigationContext,
   useFilterNavigationProvider,
@@ -13,21 +17,24 @@ import AvailabilityFilter from "./AvailabilityFilter"
 import PriceRangeFilter from "./PriceRangeFilter"
 
 interface ProductFiltersPanelProps {
-  brands: string[]
-  manufacturers: string[]
+  brands: FilterOption[]
+  manufacturers: FilterOption[]
+  categories: FilterOption[]
+  vendors: VendorOption[]
+  attributeGroups: AttributeGroup[]
 }
 
-const ProductFiltersPanel = ({ brands, manufacturers }: ProductFiltersPanelProps) => {
+const ProductFiltersPanel = ({ brands, manufacturers, categories, vendors, attributeGroups }: ProductFiltersPanelProps) => {
   const value = useFilterNavigationProvider()
 
   return (
     <FilterNavigationContext.Provider value={value}>
-      <FiltersPanelContent brands={brands} manufacturers={manufacturers} />
+      <FiltersPanelContent brands={brands} manufacturers={manufacturers} categories={categories} vendors={vendors} attributeGroups={attributeGroups} />
     </FilterNavigationContext.Provider>
   )
 }
 
-function FiltersPanelContent({ brands, manufacturers }: ProductFiltersPanelProps) {
+function FiltersPanelContent({ brands, manufacturers, categories, vendors, attributeGroups }: ProductFiltersPanelProps) {
   const { isPending } = useProductFiltersNavigation()
 
   return (
@@ -35,12 +42,17 @@ function FiltersPanelContent({ brands, manufacturers }: ProductFiltersPanelProps
       className="transition-opacity duration-200"
       style={{ opacity: isPending ? 0.5 : 1, pointerEvents: isPending ? "none" : undefined }}
     >
-      <ActiveFilters />
+      <ActiveFilters vendors={vendors} />
+      <CategoryFilter categories={categories} />
       <BrandFilter brands={brands} />
       <ManufacturerFilter manufacturers={manufacturers} />
+      <VendorFilter vendors={vendors} />
       <PriceRangeFilter />
       <AvailabilityFilter />
       <RatingFilter />
+      {attributeGroups.map((group) => (
+        <AttributeFilter key={group.attributeName} group={group} />
+      ))}
     </div>
   )
 }

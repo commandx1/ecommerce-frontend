@@ -14,6 +14,9 @@ export default function ProductListingPageView({ data, params }: ProductListingP
       totalElements={data.totalElements}
       brands={data.brands}
       manufacturers={data.manufacturers}
+      categories={data.categories}
+      vendors={data.vendors}
+      attributeGroups={data.attributeGroups}
       currentPage={params.displayPage}
       pageSize={params.pageSize}
       totalPages={data.totalPages}
@@ -21,10 +24,13 @@ export default function ProductListingPageView({ data, params }: ProductListingP
       sort={params.sort}
       selectedBrands={params.brands}
       selectedManufacturers={params.manufacturers}
+      selectedCategories={params.categories}
+      selectedVendors={params.vendors}
       minPrice={params.minPrice}
       maxPrice={params.maxPrice}
       minRating={params.minRating}
       inStock={params.inStock}
+      selectedAttributes={params.attributes}
     />
   )
 }

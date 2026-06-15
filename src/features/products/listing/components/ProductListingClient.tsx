@@ -1,5 +1,6 @@
 import { Suspense } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
+import type { AttributeGroup, FilterOption, VendorOption } from "@/lib/api/public-products"
 import type { SortValue } from "../server/parse-listing-search-params"
 import { createProductsUrlBuilder } from "./listing/buildProductsUrl"
 import MobileFilters from "./listing/MobileFilters"
@@ -33,8 +34,11 @@ export interface APIProduct {
 interface ProductListingClientProps {
   initialProducts: APIProduct[]
   totalElements: number
-  brands: string[]
-  manufacturers: string[]
+  brands: FilterOption[]
+  manufacturers: FilterOption[]
+  categories: FilterOption[]
+  vendors: VendorOption[]
+  attributeGroups: AttributeGroup[]
   currentPage: number
   pageSize: number
   totalPages: number
@@ -42,10 +46,13 @@ interface ProductListingClientProps {
   sort: SortValue
   selectedBrands: string[]
   selectedManufacturers: string[]
+  selectedCategories: string[]
+  selectedVendors: string[]
   minPrice: number | null
   maxPrice: number | null
   minRating: number | null
   inStock: boolean
+  selectedAttributes: string[]
 }
 
 const ProductListingClient = ({
@@ -53,6 +60,9 @@ const ProductListingClient = ({
   totalElements,
   brands,
   manufacturers,
+  categories,
+  vendors,
+  attributeGroups,
   currentPage,
   pageSize,
   totalPages,
@@ -60,10 +70,13 @@ const ProductListingClient = ({
   sort,
   selectedBrands,
   selectedManufacturers,
+  selectedCategories,
+  selectedVendors,
   minPrice,
   maxPrice,
   minRating,
   inStock,
+  selectedAttributes,
 }: ProductListingClientProps) => {
   const buildUrl = createProductsUrlBuilder({
     currentPage,
@@ -72,16 +85,19 @@ const ProductListingClient = ({
     sort,
     brands: selectedBrands,
     manufacturers: selectedManufacturers,
+    categories: selectedCategories,
+    vendors: selectedVendors,
     minPrice,
     maxPrice,
     minRating,
     inStock,
+    attributes: selectedAttributes,
   })
 
   return (
     <div className="min-h-screen bg-canvas font-sans">
       <Suspense>
-        <MobileFilters brands={brands} manufacturers={manufacturers} />
+        <MobileFilters brands={brands} manufacturers={manufacturers} categories={categories} vendors={vendors} attributeGroups={attributeGroups} />
       </Suspense>
       <ProductListingBreadcrumb />
       <ProductListingHeader totalElements={totalElements} />
@@ -91,11 +107,11 @@ const ProductListingClient = ({
         <div className="flex flex-col gap-8 lg:flex-row">
           <aside className="hidden w-72 shrink-0 lg:block">
             <div
-              style={{ maxHeight: "calc(100vh - 8rem)" }}
-              className="sticky top-28 overflow-y-auto rounded-[1.75rem] border border-border-soft bg-surface-elevated shadow-soft"
+              style={{ maxHeight: "calc(100vh - 11.5rem)" }}
+              className="sticky top-42 overflow-y-auto rounded-[1.75rem] border border-border-soft bg-surface-elevated shadow-soft"
             >
               <Suspense>
-                <ProductFiltersPanel brands={brands} manufacturers={manufacturers} />
+                <ProductFiltersPanel brands={brands} manufacturers={manufacturers} categories={categories} vendors={vendors} attributeGroups={attributeGroups} />
               </Suspense>
             </div>
           </aside>

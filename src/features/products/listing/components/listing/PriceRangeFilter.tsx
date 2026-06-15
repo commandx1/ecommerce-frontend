@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useId, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Radio } from "@/components/ui/radio"
@@ -19,6 +19,7 @@ function matchPreset(min: number | null, max: number | null) {
 }
 
 const PriceRangeFilter = () => {
+  const uid = useId()
   const { navigate, currentMinPrice, currentMaxPrice } = useProductFiltersNavigation()
   const [minInput, setMinInput] = useState(currentMinPrice != null ? String(currentMinPrice) : "")
   const [maxInput, setMaxInput] = useState(currentMaxPrice != null ? String(currentMaxPrice) : "")
@@ -106,12 +107,12 @@ const PriceRangeFilter = () => {
           {PRICE_PRESETS.map((preset, idx) => (
             <div key={preset.label} className="flex items-center gap-3">
               <Radio
-                id={`price-preset-${idx}`}
-                name="priceRange"
+                id={`${uid}-price-preset-${idx}`}
+                name={`${uid}-priceRange`}
                 checked={activePreset === idx}
                 onChange={() => selectPreset(preset)}
               />
-              <Label htmlFor={`price-preset-${idx}`} className="text-sm text-text-secondary cursor-pointer">
+              <Label htmlFor={`${uid}-price-preset-${idx}`} className="text-sm text-text-secondary cursor-pointer">
                 {preset.label}
               </Label>
             </div>

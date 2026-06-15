@@ -159,15 +159,6 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
             <span className="hidden rounded-full border border-border-soft bg-surface-elevated px-3 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.24em] text-text-muted md:inline-flex">
               Verified vendors nationwide
             </span>
-            {!isAuthenticated ? (
-              <button
-                type="button"
-                onClick={() => router.push("/register")}
-                className="rounded-full bg-accent-strong px-5 py-2.5 text-sm font-semibold text-accent-foreground shadow-soft transition-all hover:-translate-y-0.5"
-              >
-                Register Your Clinic
-              </button>
-            ) : null}
           </div>
         </div>
       </div>

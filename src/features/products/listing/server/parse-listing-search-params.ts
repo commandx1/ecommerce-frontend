@@ -8,10 +8,13 @@ export interface ListingSearchParams {
   sort?: string
   brands?: string | string[]
   manufacturers?: string | string[]
+  categories?: string | string[]
+  vendors?: string | string[]
   minPrice?: string
   maxPrice?: string
   minRating?: string
   inStock?: string
+  attributes?: string | string[]
 }
 
 export interface ParsedListingSearchParams {
@@ -22,10 +25,13 @@ export interface ParsedListingSearchParams {
   sort: SortValue
   brands: string[]
   manufacturers: string[]
+  categories: string[]
+  vendors: string[]
   minPrice: number | null
   maxPrice: number | null
   minRating: number | null
   inStock: boolean
+  attributes: string[]
 }
 
 const DEFAULT_PAGE = 1
@@ -69,9 +75,12 @@ export function parseListingSearchParams(params: ListingSearchParams): ParsedLis
     sort,
     brands: parseStringArray(params.brands),
     manufacturers: parseStringArray(params.manufacturers),
+    categories: parseStringArray(params.categories),
+    vendors: parseStringArray(params.vendors),
     minPrice: parsePositiveFloat(params.minPrice),
     maxPrice: parsePositiveFloat(params.maxPrice),
     minRating: parsePositiveFloat(params.minRating),
     inStock,
+    attributes: parseStringArray(params.attributes),
   }
 }

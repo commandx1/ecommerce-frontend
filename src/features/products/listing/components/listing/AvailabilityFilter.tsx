@@ -1,9 +1,11 @@
 "use client"
 
+import { useId } from "react"
 import { CheckboxField } from "@/components/form/CheckboxField"
 import { useProductFiltersNavigation } from "../../hooks/useProductFiltersNavigation"
 
 const AvailabilityFilter = () => {
+  const uid = useId()
   const { navigate, currentInStock } = useProductFiltersNavigation()
   const isFiltered = !currentInStock
 
@@ -23,7 +25,7 @@ const AvailabilityFilter = () => {
       </div>
       <div className="space-y-3">
         <CheckboxField
-          id="availability-in-stock"
+          id={`${uid}-availability-in-stock`}
           label="In Stock"
           checked={currentInStock}
           onChange={() => navigate({ inStock: !currentInStock })}

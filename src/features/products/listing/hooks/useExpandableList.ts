@@ -6,7 +6,7 @@ interface UseExpandableListOptions {
 
 const DEFAULT_VISIBLE = 8
 
-export const useExpandableList = (items: string[], options: UseExpandableListOptions = {}) => {
+export const useExpandableList = <T>(items: T[], options: UseExpandableListOptions = {}) => {
   const { initialVisible = DEFAULT_VISIBLE } = options
   const [showAll, setShowAll] = useState(false)
 
