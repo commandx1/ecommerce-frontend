@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter, useSearchParams } from "next/navigation"
-import { createContext, useCallback, useContext, useTransition } from "react"
+import { createContext, useCallback, useContext, useEffect, useTransition } from "react"
 
 export interface FilterUpdates {
   brands?: string[]
@@ -18,6 +18,7 @@ export interface FilterUpdates {
 export interface FilterNavigationState {
   isPending: boolean
   navigate: (updates: FilterUpdates) => void
+  startNavigation: (fn: () => void) => void
   currentBrands: string[]
   currentManufacturers: string[]
   currentCategories: string[]
@@ -33,6 +34,11 @@ export const FilterNavigationContext = createContext<FilterNavigationState | nul
 
 export function useFilterNavigationProvider(): FilterNavigationState {
   const [isPending, startTransition] = useTransition()
+
+  useEffect(() => {
+    document.body.style.cursor = isPending ? "wait" : ""
+    return () => { document.body.style.cursor = "" }
+  }, [isPending])
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -86,6 +92,7 @@ export function useFilterNavigationProvider(): FilterNavigationState {
   return {
     isPending,
     navigate,
+    startNavigation: startTransition,
     currentBrands: searchParams.getAll("brands"),
     currentManufacturers: searchParams.getAll("manufacturers"),
     currentCategories: searchParams.getAll("categories"),

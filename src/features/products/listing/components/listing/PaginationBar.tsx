@@ -6,7 +6,7 @@ interface PaginationBarProps {
   pageSize: number
   totalElements: number
   totalPages: number
-  buildUrl: (overrides: { page?: number; size?: number; view?: "grid" | "list" }) => string
+  buildUrl: (overrides: { page?: number; size?: number }) => string
 }
 
 const PaginationBar = ({ currentPage, pageSize, totalElements, totalPages, buildUrl }: PaginationBarProps) => {

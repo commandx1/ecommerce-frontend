@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { VALID_SORT_VALUES, type SortValue } from "../../server/parse-listing-search-params"
+import { useProductFiltersNavigation } from "../../hooks/useProductFiltersNavigation"
 
 const SORT_LABELS: Record<SortValue, string> = {
   "best-match": "Best Match",
@@ -16,6 +17,7 @@ const SORT_LABELS: Record<SortValue, string> = {
 const ALL_SORT_VALUES: SortValue[] = ["best-match", ...VALID_SORT_VALUES]
 
 const SortSelect = () => {
+  const { isPending, startNavigation } = useProductFiltersNavigation()
   const router = useRouter()
   const searchParams = useSearchParams()
   const currentSort = (searchParams.get("sort") ?? "best-match") as SortValue
@@ -28,11 +30,11 @@ const SortSelect = () => {
     } else {
       params.set("sort", value)
     }
-    router.push(`/products?${params.toString()}`)
+    startNavigation(() => router.push(`/products?${params.toString()}`, { scroll: false }))
   }
 
   return (
-    <Select value={currentSort} onValueChange={handleChange}>
+    <Select value={currentSort} onValueChange={handleChange} disabled={isPending}>
       <SelectTrigger className="h-9 rounded-full border-border-soft bg-surface px-4 py-2 shadow-soft">
         <SelectValue />
       </SelectTrigger>

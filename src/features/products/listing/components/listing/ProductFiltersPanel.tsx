@@ -1,6 +1,5 @@
 "use client"
 
-import { useEffect } from "react"
 import type { AttributeGroup, FilterOption, VendorOption } from "@/lib/api/public-products"
 import AttributeFilter from "../AttributeFilter"
 import BrandFilter from "../BrandFilter"
@@ -8,11 +7,7 @@ import CategoryFilter from "../CategoryFilter"
 import ManufacturerFilter from "../ManufacturerFilter"
 import RatingFilter from "../RatingFilter"
 import VendorFilter from "../VendorFilter"
-import {
-  FilterNavigationContext,
-  useFilterNavigationProvider,
-  useProductFiltersNavigation,
-} from "../../hooks/useProductFiltersNavigation"
+import { useProductFiltersNavigation } from "../../hooks/useProductFiltersNavigation"
 import ActiveFilters from "./ActiveFilters"
 import AvailabilityFilter from "./AvailabilityFilter"
 import PriceRangeFilter from "./PriceRangeFilter"
@@ -26,22 +21,13 @@ interface ProductFiltersPanelProps {
 }
 
 const ProductFiltersPanel = ({ brands, manufacturers, categories, vendors, attributeGroups }: ProductFiltersPanelProps) => {
-  const value = useFilterNavigationProvider()
-
   return (
-    <FilterNavigationContext.Provider value={value}>
-      <FiltersPanelContent brands={brands} manufacturers={manufacturers} categories={categories} vendors={vendors} attributeGroups={attributeGroups} />
-    </FilterNavigationContext.Provider>
+    <FiltersPanelContent brands={brands} manufacturers={manufacturers} categories={categories} vendors={vendors} attributeGroups={attributeGroups} />
   )
 }
 
 function FiltersPanelContent({ brands, manufacturers, categories, vendors, attributeGroups }: ProductFiltersPanelProps) {
   const { isPending } = useProductFiltersNavigation()
-
-  useEffect(() => {
-    document.body.style.cursor = isPending ? "wait" : ""
-    return () => { document.body.style.cursor = "" }
-  }, [isPending])
 
   return (
     <div

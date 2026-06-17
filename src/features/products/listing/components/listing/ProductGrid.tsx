@@ -4,7 +4,6 @@ import ProductCard, { type ProductCardData } from "./ProductCard"
 
 interface ProductGridProps {
   products: APIProduct[]
-  viewType: "grid" | "list"
 }
 
 const adaptAPIProduct = (p: APIProduct): ProductCardData => ({
@@ -20,13 +19,11 @@ const adaptAPIProduct = (p: APIProduct): ProductCardData => ({
   href: `/products/${p.productId}`,
 })
 
-const ProductGrid = ({ products, viewType }: ProductGridProps) => {
+const ProductGrid = ({ products }: ProductGridProps) => {
   return (
-    <div
-      className={viewType === "grid" ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8" : "space-y-6 mb-8"}
-    >
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
       {products.map((product) => (
-        <ProductCard key={product.productId} data={adaptAPIProduct(product)} viewType={viewType} />
+        <ProductCard key={product.productId} data={adaptAPIProduct(product)} />
       ))}
     </div>
   )

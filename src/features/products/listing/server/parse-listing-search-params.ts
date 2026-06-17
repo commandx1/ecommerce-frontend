@@ -4,7 +4,6 @@ export type SortValue = (typeof VALID_SORT_VALUES)[number] | "best-match"
 export interface ListingSearchParams {
   page?: string
   size?: string
-  view?: string
   sort?: string
   brands?: string | string[]
   manufacturers?: string | string[]
@@ -21,7 +20,6 @@ export interface ParsedListingSearchParams {
   displayPage: number
   pageSize: number
   apiPage: number
-  viewType: "grid" | "list"
   sort: SortValue
   brands: string[]
   manufacturers: string[]
@@ -61,7 +59,6 @@ export function parseListingSearchParams(params: ListingSearchParams): ParsedLis
   const displayPage = parsePositiveInt(params.page, DEFAULT_PAGE)
   const requestedPageSize = parsePositiveInt(params.size, DEFAULT_PAGE_SIZE)
   const pageSize = Math.min(requestedPageSize, MAX_PAGE_SIZE)
-  const viewType = params.view === "list" ? "list" : "grid"
   const sort: SortValue = VALID_SORT_VALUES.includes(params.sort as (typeof VALID_SORT_VALUES)[number])
     ? (params.sort as SortValue)
     : "best-match"
@@ -71,7 +68,6 @@ export function parseListingSearchParams(params: ListingSearchParams): ParsedLis
     displayPage,
     pageSize,
     apiPage: Math.max(0, displayPage - 1),
-    viewType,
     sort,
     brands: parseStringArray(params.brands),
     manufacturers: parseStringArray(params.manufacturers),

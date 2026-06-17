@@ -11,6 +11,7 @@ import ProductListingBreadcrumb from "./listing/ProductListingBreadcrumb"
 import ProductListingHeader from "./listing/ProductListingHeader"
 import ProductListingToolbar from "./listing/ProductListingToolbar"
 import ResultsSummary from "./listing/ResultsSummary"
+import FilterNavigationProvider from "./listing/FilterNavigationProvider"
 
 export interface APIProduct {
   productId: string
@@ -42,7 +43,6 @@ interface ProductListingClientProps {
   currentPage: number
   pageSize: number
   totalPages: number
-  viewType: "grid" | "list"
   sort: SortValue
   selectedBrands: string[]
   selectedManufacturers: string[]
@@ -66,7 +66,6 @@ const ProductListingClient = ({
   currentPage,
   pageSize,
   totalPages,
-  viewType,
   sort,
   selectedBrands,
   selectedManufacturers,
@@ -81,7 +80,6 @@ const ProductListingClient = ({
   const buildUrl = createProductsUrlBuilder({
     currentPage,
     pageSize,
-    viewType,
     sort,
     brands: selectedBrands,
     manufacturers: selectedManufacturers,
@@ -95,13 +93,14 @@ const ProductListingClient = ({
   })
 
   return (
+    <FilterNavigationProvider>
     <div className="min-h-screen bg-canvas font-sans">
       <Suspense>
         <MobileFilters brands={brands} manufacturers={manufacturers} categories={categories} vendors={vendors} attributeGroups={attributeGroups} />
       </Suspense>
       <ProductListingBreadcrumb />
       <ProductListingHeader totalElements={totalElements} />
-      <ProductListingToolbar buildUrl={buildUrl} viewType={viewType} pageSize={pageSize} />
+      <ProductListingToolbar pageSize={pageSize} />
 
       <PageSectionContainer as="div" containerClassName="py-8 md:py-10">
         <div className="flex flex-col gap-8 lg:flex-row">
@@ -119,7 +118,7 @@ const ProductListingClient = ({
           <main className="flex-1">
             <div className="rounded-4xl border border-border-soft/80 bg-surface-elevated p-4 shadow-soft md:p-6">
               <ResultsSummary totalElements={totalElements} />
-              <ProductGrid products={initialProducts} viewType={viewType} />
+              <ProductGrid products={initialProducts} />
             </div>
             <PaginationBar
               currentPage={currentPage}
@@ -132,6 +131,7 @@ const ProductListingClient = ({
         </div>
       </PageSectionContainer>
     </div>
+    </FilterNavigationProvider>
   )
 }
 

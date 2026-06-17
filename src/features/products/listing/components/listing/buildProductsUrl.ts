@@ -1,7 +1,6 @@
 interface BuildUrlBase {
   currentPage: number
   pageSize: number
-  viewType: "grid" | "list"
   sort: string
   brands: string[]
   manufacturers: string[]
@@ -17,15 +16,13 @@ interface BuildUrlBase {
 interface BuildUrlOverrides {
   page?: number
   size?: number
-  view?: "grid" | "list"
 }
 
 export const createProductsUrlBuilder = (base: BuildUrlBase) => {
-  return ({ page, size, view }: BuildUrlOverrides = {}) => {
+  return ({ page, size }: BuildUrlOverrides = {}) => {
     const params = new URLSearchParams()
     params.set("page", String(page ?? base.currentPage))
     params.set("size", String(size ?? base.pageSize))
-    params.set("view", view ?? base.viewType)
     if (base.sort && base.sort !== "best-match") params.set("sort", base.sort)
 
     for (const brand of base.brands) params.append("brands", brand)

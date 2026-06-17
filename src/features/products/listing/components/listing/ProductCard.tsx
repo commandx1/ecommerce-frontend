@@ -20,19 +20,18 @@ export interface ProductCardData {
 
 interface ProductCardProps {
   data: ProductCardData
-  viewType?: "grid" | "list"
 }
 
-const ProductCard = ({ data, viewType = "grid" }: ProductCardProps) => {
+const ProductCard = ({ data }: ProductCardProps) => {
   const discount = data.oldPrice && data.oldPrice > data.price
     ? Math.round((1 - data.price / data.oldPrice) * 100)
     : null
 
   return (
-    <SpotlightCard radius={28} className={`group rounded-[1.75rem] shadow-soft transition-all hover:-translate-y-1 hover:shadow-panel ${viewType === "list" ? "flex shrink-0" : ""}`}>
+    <SpotlightCard radius={28} className="group rounded-[1.75rem] shadow-soft transition-all hover:-translate-y-1 hover:shadow-panel">
       {/* overflow-hidden on inner div so glow pseudo-elements aren't clipped */}
-      <div className={`flex overflow-hidden rounded-[1.75rem] bg-surface-elevated ${viewType === "list" ? "flex-row w-full" : "flex-col"}`}>
-        <div className={`relative bg-surface-muted ${viewType === "list" ? "w-64 shrink-0" : "h-64"}`}>
+      <div className="flex flex-col overflow-hidden rounded-[1.75rem] bg-surface-elevated">
+        <div className="relative h-64 bg-surface-muted">
           <ProductImageWithFallback
             src={data.imageSrc}
             alt={data.name}
