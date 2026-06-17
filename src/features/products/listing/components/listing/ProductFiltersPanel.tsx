@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import type { AttributeGroup, FilterOption, VendorOption } from "@/lib/api/public-products"
 import AttributeFilter from "../AttributeFilter"
 import BrandFilter from "../BrandFilter"
@@ -36,6 +37,11 @@ const ProductFiltersPanel = ({ brands, manufacturers, categories, vendors, attri
 
 function FiltersPanelContent({ brands, manufacturers, categories, vendors, attributeGroups }: ProductFiltersPanelProps) {
   const { isPending } = useProductFiltersNavigation()
+
+  useEffect(() => {
+    document.body.style.cursor = isPending ? "wait" : ""
+    return () => { document.body.style.cursor = "" }
+  }, [isPending])
 
   return (
     <div
