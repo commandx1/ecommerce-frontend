@@ -761,3 +761,48 @@ button {
     display: none;
   }
 }
+
+/* ── Product detail loading skeleton ── */
+
+@keyframes shimmer-sweep {
+  0%   { background-position: -1000px 0; }
+  100% { background-position:  1000px 0; }
+}
+
+@keyframes loading-progress {
+  0%   { width: 0%; }
+  60%  { width: 75%; }
+  100% { width: 92%; }
+}
+
+@keyframes dot-bounce {
+  0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+  40%           { transform: scale(1.2); opacity: 1; }
+}
+
+.skeleton-mint {
+  background: linear-gradient(90deg, var(--surface-muted) 25%, var(--surface) 50%, var(--surface-muted) 75%);
+  background-size: 1000px 100%;
+  animation: shimmer-sweep 2s infinite linear;
+}
+
+.skeleton-white {
+  background: linear-gradient(90deg, var(--surface-muted) 25%, var(--surface-elevated) 50%, var(--surface-muted) 75%);
+  background-size: 1000px 100%;
+  animation: shimmer-sweep 2s infinite linear;
+}
+
+.loading-progress-bar {
+  animation: loading-progress 3s ease-in-out forwards;
+}
+
+.dot-bounce-1 { animation: dot-bounce 1.4s ease-in-out infinite; animation-delay: 0s; }
+.dot-bounce-2 { animation: dot-bounce 1.4s ease-in-out infinite; animation-delay: 0.2s; }
+.dot-bounce-3 { animation: dot-bounce 1.4s ease-in-out infinite; animation-delay: 0.4s; }
+
+@keyframes icon-float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+
+.icon-float { animation: icon-float 3s ease-in-out infinite; }

@@ -1,6 +1,6 @@
 import { apiRequest } from "./request"
 
-const BACKEND_URL = process.env.BACKEND_URL
+const BACKEND_URL = process.env.BACKEND_URL ?? 'localhost:8080'
 
 export type PublicProductsResponse<TProduct = unknown> = {
   content?: TProduct[]

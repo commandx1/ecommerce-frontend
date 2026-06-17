@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 import { apiRequest } from "@/lib/api/request"
 import type { ProductRequestMethod } from "./types"
 
-const BACKEND_URL = process.env.BACKEND_URL
+const BACKEND_URL = process.env.BACKEND_URL ?? 'localhost:8080'
 const DEFAULT_HEADERS = {
   "User-Agent": "Mozilla/5.0",
   Accept: "application/json",

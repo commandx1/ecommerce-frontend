@@ -8,7 +8,7 @@ import type {
 } from "@/features/products/product-detail/types"
 import { apiRequest } from "./request"
 
-const BACKEND_URL = process.env.BACKEND_URL
+const BACKEND_URL = process.env.BACKEND_URL ?? 'localhost:8080'
 
 function requireBackendUrl() {
   if (!BACKEND_URL) throw new Error("BACKEND_URL is not set")
