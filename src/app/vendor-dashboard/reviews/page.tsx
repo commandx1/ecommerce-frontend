@@ -33,7 +33,10 @@ export default function VendorReviewsPage() {
       .finally(() => setLoading(false))
   }, [accessToken])
 
-  const reviews = data?.reviews ?? []
+  const [selectedStars, setSelectedStars] = useState<number | null>(null)
+
+  const allReviews = data?.reviews ?? []
+  const reviews = selectedStars === null ? allReviews : allReviews.filter((r) => r.star === selectedStars)
   const totalReviews = data?.totalReviews ?? 0
   const averageRating = data?.averageRating ?? 0
   const positiveReviews = data?.positiveReviews ?? 0
@@ -93,15 +96,35 @@ export default function VendorReviewsPage() {
                     <div className="h-4 w-6 animate-pulse rounded bg-surface-muted" />
                   </div>
                 ))
-              : ratingBreakdown.map((item) => (
-                  <div key={`rating-${item.stars}`} className="flex items-center gap-3">
-                    <div className="w-10 text-sm font-medium text-text-primary">{item.stars}★</div>
-                    <div className="h-2 flex-1 rounded-full bg-surface-muted">
-                      <div className="h-2 rounded-full bg-brand" style={{ width: `${item.percentage}%` }} />
-                    </div>
-                    <div className="w-12 text-right text-sm text-text-secondary">{item.count}</div>
-                  </div>
-                ))}
+              : ratingBreakdown.map((item) => {
+                  const isActive = selectedStars === item.stars
+                  return (
+                    <button
+                      key={`rating-${item.stars}`}
+                      type="button"
+                      onClick={() => setSelectedStars(isActive ? null : item.stars)}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-lg px-2 py-1.5 transition-colors",
+                        isActive
+                          ? "bg-brand/10 ring-1 ring-brand/30"
+                          : "hover:bg-surface-muted/60",
+                      )}
+                    >
+                      <div className={cn("w-10 text-sm font-medium", isActive ? "text-brand" : "text-text-primary")}>
+                        {item.stars}★
+                      </div>
+                      <div className="h-2 flex-1 rounded-full bg-surface-muted">
+                        <div
+                          className={cn("h-2 rounded-full transition-colors", isActive ? "bg-brand" : "bg-brand/50")}
+                          style={{ width: `${item.percentage}%` }}
+                        />
+                      </div>
+                      <div className={cn("w-12 text-right text-sm", isActive ? "font-semibold text-brand" : "text-text-secondary")}>
+                        {item.count}
+                      </div>
+                    </button>
+                  )
+                })}
           </div>
         </DashboardPanel>
 
@@ -143,13 +166,23 @@ export default function VendorReviewsPage() {
       </div>
 
       <DashboardPanel
-        title="Latest Product Reviews"
-        description="Feedback feed from customers who purchased your products"
+        title={selectedStars !== null ? `${selectedStars}-Star Reviews` : "Latest Product Reviews"}
+        description={selectedStars !== null ? `Showing ${reviews.length} review${reviews.length !== 1 ? "s" : ""} with ${selectedStars} star${selectedStars !== 1 ? "s" : ""}` : "Feedback feed from customers who purchased your products"}
         action={
-          <span className="inline-flex items-center gap-1 text-sm text-text-secondary">
-            <MessageSquare className="h-4 w-4" />
-            {totalReviews} reviews
-          </span>
+          selectedStars !== null ? (
+            <button
+              type="button"
+              onClick={() => setSelectedStars(null)}
+              className="text-sm text-brand hover:underline"
+            >
+              Show all
+            </button>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-sm text-text-secondary">
+              <MessageSquare className="h-4 w-4" />
+              {totalReviews} reviews
+            </span>
+          )
         }
       >
         {loading ? (
@@ -159,7 +192,9 @@ export default function VendorReviewsPage() {
             ))}
           </div>
         ) : reviews.length === 0 ? (
-          <p className="py-8 text-center text-sm text-text-muted">No reviews yet for your products.</p>
+          <p className="py-8 text-center text-sm text-text-muted">
+            {selectedStars !== null ? `No ${selectedStars}-star reviews yet.` : "No reviews yet for your products."}
+          </p>
         ) : (
           <div className="space-y-4">
             {reviews.map((review) => (
