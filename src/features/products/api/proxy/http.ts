@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 import { apiRequest } from "@/lib/api/request"
 import type { ProductRequestMethod } from "./types"
 
-const BACKEND_URL = process.env.BACKEND_URL ?? 'localhost:8080'
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8080"
 const DEFAULT_HEADERS = {
   "User-Agent": "Mozilla/5.0",
   Accept: "application/json",
@@ -11,7 +11,7 @@ const DEFAULT_HEADERS = {
 
 function requireBackendUrl() {
   if (!BACKEND_URL) {
-    throw new Error("BACKEND_URL or BACKEND_URL is not set")
+    throw new Error("BACKEND_URL is not set")
   }
 
   return BACKEND_URL

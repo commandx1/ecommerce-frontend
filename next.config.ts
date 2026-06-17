@@ -1,6 +1,7 @@
 import type { NextConfig } from "next"
 
-const backendBaseUrl = process.env.BACKEND_URL ?? 'localhost:8080'
+const backendBaseUrl = process.env.BACKEND_URL ?? "http://localhost:8080"
+const backendHostname = new URL(backendBaseUrl).hostname
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
@@ -14,7 +15,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "http",
-        hostname: "51.20.96.242",
+        hostname: backendHostname,
         port: "8080",
         pathname: "/**",
       },
