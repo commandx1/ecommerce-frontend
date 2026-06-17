@@ -122,7 +122,7 @@ function MotionHighlight<T extends string>({ ref, ...props }: MotionHighlightPro
 
   const localRef = React.useRef<HTMLDivElement>(null)
 
-  React.useImperativeHandle(ref, () => localRef.current as HTMLDivElement)
+  React.useImperativeHandle(ref as React.Ref<HTMLDivElement>, () => localRef.current as HTMLDivElement)
 
   const [activeValue, setActiveValue] = React.useState<T | null>(value ?? defaultValue ?? null)
   const [boundsState, setBoundsState] = React.useState<Bounds | null>(null)
@@ -363,7 +363,7 @@ function MotionHighlightItem({
 
   const localRef = React.useRef<HTMLDivElement>(null)
 
-  React.useImperativeHandle(ref, () => localRef.current as HTMLDivElement)
+  React.useImperativeHandle(ref as React.Ref<HTMLDivElement>, () => localRef.current as HTMLDivElement)
 
   React.useEffect(() => {
     if (mode !== 'parent') return

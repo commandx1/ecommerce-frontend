@@ -3,7 +3,6 @@ import { NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 import { getAuthorizationHeader } from "@/lib/api/server-auth"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,7 +11,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    const response = await serverRequest(`${BACKEND_URL}/api/reviews/vendor`, {
+    const response = await serverRequest(`/api/reviews/vendor`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

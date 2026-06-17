@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 // Public Search Products - GET /api/products/public-search?Search=...&page=0&size=20
 export async function GET(request: NextRequest) {
@@ -17,7 +16,7 @@ export async function GET(request: NextRequest) {
       size,
     })
 
-    const response = await serverRequest(`${BACKEND_URL}/api/products/public-search?${queryParams.toString()}`, {
+    const response = await serverRequest(`/api/products/public-search?${queryParams.toString()}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

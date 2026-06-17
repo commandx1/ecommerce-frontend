@@ -2,7 +2,6 @@ import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 // Get Product by Barcode - GET /api/barcode/products/bybarcode/:barcode
 export async function GET(request: NextRequest, { params }: { params: Promise<{ barcode: string }> }) {
@@ -18,7 +17,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ message: "Barcode parameter is required" }, { status: 400 })
     }
 
-    const backendUrl = `${BACKEND_URL}/api/barcode/products/ByBarcode/${encodeURIComponent(barcode.trim())}`
+    const backendUrl = `/api/barcode/products/ByBarcode/${encodeURIComponent(barcode.trim())}`
 
     const response = await serverRequest(backendUrl, {
       method: "GET",

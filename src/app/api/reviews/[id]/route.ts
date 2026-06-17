@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -17,7 +16,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       headers.Authorization = authHeader
     }
 
-    const response = await serverRequest(`${BACKEND_URL}/api/reviews/${id}`, {
+    const response = await serverRequest(`/api/reviews/${id}`, {
       method: "PUT",
       headers,
       body: JSON.stringify(body),

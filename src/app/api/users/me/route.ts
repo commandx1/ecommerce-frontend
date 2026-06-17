@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 export async function PUT(request: NextRequest) {
   try {
@@ -12,7 +11,7 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json()
 
-    const response = await serverRequest(`${BACKEND_URL}/api/users/me`, {
+    const response = await serverRequest(`/api/users/me`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -40,7 +39,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const response = await serverRequest(`${BACKEND_URL}/api/users/me`, {
+    const response = await serverRequest(`/api/users/me`, {
       method: "DELETE",
       headers: {
         Authorization: authHeader,

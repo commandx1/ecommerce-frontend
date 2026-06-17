@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 import { getAuthorizationHeader } from "@/lib/api/server-auth"
 
@@ -21,7 +20,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       headers.Authorization = authHeader
     }
 
-    const response = await serverRequest(`${BACKEND_URL}/api/products/${id}/with-user-products`, {
+    const response = await serverRequest(`/api/products/${id}/with-user-products`, {
       method: "GET",
       headers,
       cache: "no-store", // Always fetch fresh data for SSR

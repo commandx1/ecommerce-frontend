@@ -10,6 +10,7 @@ import {
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
+import formatCurrency from "@/lib/helpers/formatCurrency"
 import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
 import Modal from "@/components/ui/Modal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"

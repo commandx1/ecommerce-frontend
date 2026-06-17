@@ -1,6 +1,6 @@
 import type { NextConfig } from "next"
 
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"
+const backendBaseUrl = process.env.BACKEND_URL
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
@@ -14,17 +14,10 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "http",
-        hostname: "localhost",
+        hostname: "51.20.96.242",
         port: "8080",
         pathname: "/**",
       },
-      // Old backend host:
-      // {
-      //   protocol: "http",
-      //   hostname: "51.20.96.242",
-      //   port: "8080",
-      //   pathname: "/**",
-      // },
       {
         protocol: "https",
         hostname: "images.barcodelookup.com",
@@ -48,14 +41,12 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/backend-api/:path*",
-        destination: `${backendUrl}/api/:path*`,
-        // Old destination: "http://51.20.96.242:8080/api/:path*",
+        destination: `${backendBaseUrl}/api/:path*`,
       },
       // Proxy images
       {
         source: "/api/images/:path*",
-        destination: `${backendUrl}/:path*`,
-        // Old destination: "http://51.20.96.242:8080/:path*",
+        destination: `${backendBaseUrl}/:path*`,
       },
     ]
   },

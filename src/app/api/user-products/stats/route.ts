@@ -4,7 +4,6 @@ import type { UserProduct } from "@/lib/api/products"
 import { serverRequest } from "@/lib/api/server-request"
 import { getAuthorizationHeader } from "@/lib/api/server-auth"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 const FILTER_FALLBACK_PAGE_SIZE = 1000
 
 function computeStats(userProducts: UserProduct[]) {
@@ -55,14 +54,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Prefer backend stats endpoint for better compatibility.
-    let response = await serverRequest(`${BACKEND_URL}/api/user-products/stats`, {
+    let response = await serverRequest(`/api/user-products/stats`, {
       method: "GET",
       headers: requestHeaders,
     })
 
     if (response.status === 403) {
       const fallbackResponse = await serverRequest(
-        `${BACKEND_URL}/api/user-products/filter?type=TOTAL&page=0&size=${FILTER_FALLBACK_PAGE_SIZE}`,
+        `/api/user-products/filter?type=TOTAL&page=0&size=${FILTER_FALLBACK_PAGE_SIZE}`,
         {
           method: "GET",
           headers: requestHeaders,

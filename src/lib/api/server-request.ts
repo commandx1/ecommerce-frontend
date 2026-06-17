@@ -1,3 +1,5 @@
-export async function serverRequest(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-  return fetch(input, init)
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8080"
+
+export async function serverRequest(path: string, init?: RequestInit): Promise<Response> {
+  return fetch(`${BACKEND_URL}${path}`, init)
 }

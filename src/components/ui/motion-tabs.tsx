@@ -150,7 +150,7 @@ function TabsTrigger({ ref, value, children, className, ...props }: TabsTriggerP
 
   const localRef = React.useRef<HTMLButtonElement | null>(null)
 
-  React.useImperativeHandle(ref, () => localRef.current as HTMLButtonElement)
+  React.useImperativeHandle(ref as React.Ref<HTMLButtonElement>, () => localRef.current as HTMLButtonElement)
 
   React.useEffect(() => {
     registerTrigger(value, localRef.current)
