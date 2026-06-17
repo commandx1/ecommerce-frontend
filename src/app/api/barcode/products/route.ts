@@ -2,7 +2,6 @@ import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 // Get All Barcode Products - GET /api/barcode/products
 export async function GET(request: NextRequest) {
@@ -13,7 +12,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    const response = await serverRequest(`${BACKEND_URL}/api/barcode/products`, {
+    const response = await serverRequest(`/api/barcode/products`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

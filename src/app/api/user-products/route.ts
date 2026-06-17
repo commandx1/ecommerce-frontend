@@ -2,7 +2,6 @@ import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 const FILTER_FALLBACK_PAGE_SIZE = 1000
 
 import { getAuthorizationHeader } from "@/lib/api/server-auth"
@@ -45,14 +44,14 @@ export async function GET(request: NextRequest) {
       Authorization: authHeader,
     }
 
-    let response = await serverRequest(`${BACKEND_URL}/api/user-products`, {
+    let response = await serverRequest(`/api/user-products`, {
       method: "GET",
       headers: requestHeaders,
     })
 
     if (response.status === 403) {
       const fallbackResponse = await serverRequest(
-        `${BACKEND_URL}/api/user-products/filter?type=TOTAL&page=0&size=${FILTER_FALLBACK_PAGE_SIZE}`,
+        `/api/user-products/filter?type=TOTAL&page=0&size=${FILTER_FALLBACK_PAGE_SIZE}`,
         {
           method: "GET",
           headers: requestHeaders,
@@ -104,7 +103,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    const response = await serverRequest(`${BACKEND_URL}/api/user-products`, {
+    const response = await serverRequest(`/api/user-products`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

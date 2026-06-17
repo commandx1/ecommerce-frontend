@@ -1,17 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    if (!BACKEND_URL) {
-      return NextResponse.json({ error: "Backend URL is not configured" }, { status: 500 })
-    }
 
-    const response = await serverRequest(`${BACKEND_URL}/api/mail/forgot-password`, {
+    const response = await serverRequest(`/api/mail/forgot-password`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

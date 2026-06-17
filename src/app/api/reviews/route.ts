@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +15,7 @@ export async function POST(request: NextRequest) {
       headers.Authorization = authHeader
     }
 
-    const response = await serverRequest(`${BACKEND_URL}/api/reviews`, {
+    const response = await serverRequest(`/api/reviews`, {
       method: "POST",
       headers,
       body: JSON.stringify(body),

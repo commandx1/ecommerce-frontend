@@ -2,7 +2,6 @@ import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 import { getAuthorizationHeader } from "@/lib/api/server-auth"
 
@@ -54,7 +53,7 @@ export async function GET(request: NextRequest) {
       queryParams.append("sortDir", sortDir)
     }
 
-    const response = await serverRequest(`${BACKEND_URL}/api/user-products/filter?${queryParams.toString()}`, {
+    const response = await serverRequest(`/api/user-products/filter?${queryParams.toString()}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

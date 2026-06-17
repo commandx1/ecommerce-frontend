@@ -1,6 +1,6 @@
 import { apiRequest } from "./request"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
+const BACKEND_URL = process.env.BACKEND_URL
 
 export type PublicProductsResponse<TProduct = unknown> = {
   content?: TProduct[]
@@ -15,7 +15,7 @@ export type AttributeGroup = { attributeName: string; values: AttributeValueOpti
 
 function requireBackendUrl() {
   if (!BACKEND_URL) {
-    throw new Error("NEXT_PUBLIC_BACKEND_URL is not set")
+    throw new Error("BACKEND_URL is not set")
   }
   return BACKEND_URL
 }

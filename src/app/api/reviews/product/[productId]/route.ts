@@ -2,7 +2,6 @@ import { type NextRequest, NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 import { getAuthorizationHeader } from "@/lib/api/server-auth"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ productId: string }> }) {
   try {
@@ -23,7 +22,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       headers.Authorization = authHeader
     }
 
-    const response = await serverRequest(`${BACKEND_URL}/api/reviews/product/${productId}?page=${page}&size=${size}`, {
+    const response = await serverRequest(`/api/reviews/product/${productId}?page=${page}&size=${size}`, {
       method: "GET",
       headers,
       cache: "no-store", // Always fetch fresh data for SSR

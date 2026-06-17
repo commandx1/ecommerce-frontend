@@ -2,7 +2,6 @@ import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 // Create Product - POST /api/products
 // Content-Type: multipart/form-data
@@ -19,7 +18,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
 
     // Forward the form data to the backend
-    const response = await serverRequest(`${BACKEND_URL}/api/products`, {
+    const response = await serverRequest(`/api/products`, {
       method: "POST",
       headers: {
         "User-Agent": "Mozilla/5.0",

@@ -2,7 +2,6 @@ import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 // Search Products by Title - GET /api/barcode/products/search?title=...
 export async function GET(request: NextRequest) {
@@ -20,7 +19,7 @@ export async function GET(request: NextRequest) {
     }
 
     const response = await serverRequest(
-      `${BACKEND_URL}/api/barcode/products/search?title=${encodeURIComponent(title)}`,
+      `/api/barcode/products/search?title=${encodeURIComponent(title)}`,
       {
         method: "GET",
         headers: {

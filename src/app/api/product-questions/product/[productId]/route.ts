@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 import { getAuthorizationHeader } from "@/lib/api/server-auth"
 
@@ -27,7 +26,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const response = await serverRequest(
-      `${BACKEND_URL}/api/product-questions/product/${productId}?page=${page}&size=${size}`,
+      `/api/product-questions/product/${productId}?page=${page}&size=${size}`,
       {
         method: "GET",
         headers,

@@ -2,13 +2,12 @@ import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    const response = await serverRequest(`${BACKEND_URL}/api/auth/login`, {
+    const response = await serverRequest(`/api/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

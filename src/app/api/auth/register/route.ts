@@ -2,13 +2,12 @@ import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    const response = await serverRequest(`${BACKEND_URL}/api/users/register`, {
+    const response = await serverRequest(`/api/users/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
