@@ -115,7 +115,7 @@ export default function VendorReviewsPage() {
                       </div>
                       <div className="h-2 flex-1 rounded-full bg-surface-muted">
                         <div
-                          className={cn("h-2 rounded-full transition-colors", isActive ? "bg-brand" : "bg-brand/50")}
+                          className="h-2 rounded-full transition-colors bg-brand"
                           style={{ width: `${item.percentage}%` }}
                         />
                       </div>
