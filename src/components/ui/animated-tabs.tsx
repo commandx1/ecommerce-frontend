@@ -8,6 +8,7 @@ interface AnimatedTabsProps<T extends string> {
   options: ReadonlyArray<{ label: string; value: T }>
   onValueChange: (value: T) => void
   className?: string
+  disabled?: boolean
   listClassName?: string
   activeIndicatorClassName?: string
   triggerClassName?: string
@@ -18,12 +19,14 @@ export default function AnimatedTabs<T extends string>({
   options,
   onValueChange,
   className,
+  disabled = false,
   listClassName,
   activeIndicatorClassName,
   triggerClassName,
 }: AnimatedTabsProps<T>) {
   return (
-    <Tabs value={value} onValueChange={onValueChange} className={className}>
+    <div className={cn(disabled && "pointer-events-none select-none")}>
+    <Tabs value={value} onValueChange={disabled ? undefined : onValueChange} className={className}>
       <TabsList
         className={cn("h-auto rounded-[.87rem] border border-border-soft bg-surface p-0.5", listClassName)}
         activeClassName={cn("bg-brand shadow-soft", activeIndicatorClassName)}
@@ -32,6 +35,7 @@ export default function AnimatedTabs<T extends string>({
           <TabsTrigger
             key={option.value}
             value={option.value}
+            disabled={disabled}
             className={cn(
               "h-8 px-3 text-xs font-semibold delay-100 transition-colors duration-300 ease-out",
               "data-[state=active]:text-primary-foreground",
@@ -44,5 +48,6 @@ export default function AnimatedTabs<T extends string>({
         ))}
       </TabsList>
     </Tabs>
+    </div>
   )
 }

@@ -87,20 +87,23 @@ export default function DataTable<TData>({
           <>
             {Array.from({ length: 6 }, (_, rowIndex) => (
               <tr key={`loading-skeleton-row-${rowIndex}`} className="border-b border-border-soft" aria-hidden="true">
-                {Array.from({ length: visibleColumnCount }, (_, colIndex) => (
-                  <td key={`loading-skeleton-cell-${rowIndex}-${colIndex}`} className="p-4">
-                    {lastColumnSkeletonCircle && colIndex === visibleColumnCount - 1 ? (
-                      <div className="ms-auto h-7 w-7 animate-pulse rounded-full bg-surface-muted" />
-                    ) : (
-                      <div
-                        className={cn(
-                          "h-4 animate-pulse rounded-md bg-surface-muted",
-                          colIndex === 0 ? "w-14" : colIndex === visibleColumnCount - 1 ? "ms-auto w-20" : "w-full",
-                        )}
-                      />
-                    )}
-                  </td>
-                ))}
+                {table.getVisibleLeafColumns().map((column, colIndex) => {
+                  const meta = column.columnDef.meta as DataTableColumnMeta | undefined
+                  return (
+                    <td key={`loading-skeleton-cell-${rowIndex}-${column.id}`} className={cn("p-4", meta?.cellClassName)}>
+                      {lastColumnSkeletonCircle && colIndex === visibleColumnCount - 1 ? (
+                        <div className="mx-auto h-7 w-7 animate-pulse rounded-full bg-surface-muted" />
+                      ) : (
+                        <div
+                          className={cn(
+                            "h-4 animate-pulse rounded-md bg-surface-muted",
+                            colIndex === 0 ? "w-14" : colIndex === visibleColumnCount - 1 ? "ml-auto w-20" : "w-full",
+                          )}
+                        />
+                      )}
+                    </td>
+                  )
+                })}
               </tr>
             ))}
             <tr>

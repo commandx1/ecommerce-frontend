@@ -5,7 +5,7 @@ import { ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, Download, Edit, L
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useId, useState } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 import AnimatedTabs from "@/components/ui/animated-tabs"
 import { Button } from "@/components/ui/button"
 import DataTable from "@/components/ui/data-table"
@@ -104,6 +104,8 @@ export default function ProductsPage() {
   const { accessToken, isAuthenticated } = useAuthStore()
   const [products, setProducts] = useState<ProductWithDetails[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isFetching, setIsFetching] = useState(false)
+  const hasLoadedOnce = useRef(false)
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [sortField, setSortField] = useState<UserProductSortBy | null>(null)
@@ -129,10 +131,18 @@ export default function ProductsPage() {
 
   // Fetch products
   const fetchProducts = async () => {
-    if (!accessToken || !isAuthenticated) return
+    if (!accessToken || !isAuthenticated) {
+      setIsLoading(false)
+      setIsFetching(false)
+      return
+    }
 
     try {
-      setIsLoading(true)
+      if (!hasLoadedOnce.current) {
+        setIsLoading(true)
+      } else {
+        setIsFetching(true)
+      }
 
       let productsWithDetails: UserProduct[] = []
 
@@ -219,10 +229,12 @@ export default function ProductsPage() {
       }
 
       setProducts(productsWithDetails)
+      hasLoadedOnce.current = true
     } catch (error) {
       console.error("Error fetching products:", error)
     } finally {
       setIsLoading(false)
+      setIsFetching(false)
     }
   }
 
@@ -446,21 +458,23 @@ export default function ProductsPage() {
     {
       id: "price",
       header: () => (
-        <button
-          type="button"
-          onClick={() => handleSort("PRICE")}
-          className="flex items-center space-x-1 hover:text-brand transition-colors"
-        >
-          <span>Price</span>
-          {sortField === "PRICE" ? (
-            sortDirection === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
-          ) : (
-            <div className="flex flex-col -space-y-1.5 w-4 h-4">
-              <ArrowUp className="w-3 h-3 text-text-muted" />
-              <ArrowDown className="w-3 h-3 text-text-muted" />
-            </div>
-          )}
-        </button>
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={() => handleSort("PRICE")}
+            className="flex items-center space-x-1 hover:text-brand transition-colors"
+          >
+            <span>Price</span>
+            {sortField === "PRICE" ? (
+              sortDirection === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
+            ) : (
+              <div className="flex flex-col -space-y-1.5 w-4 h-4">
+                <ArrowUp className="w-3 h-3 text-text-muted" />
+                <ArrowDown className="w-3 h-3 text-text-muted" />
+              </div>
+            )}
+          </button>
+        </div>
       ),
       cell: ({ row }) => {
         const product = row.original
@@ -489,28 +503,30 @@ export default function ProductsPage() {
         )
       },
       meta: {
-        headerClassName: "border-l-2 border-border-soft px-6 py-4",
-        cellClassName: "border-l-2 border-border-soft px-6 py-4",
+        headerClassName: "border-l-2 border-border-soft px-6 py-4 text-center",
+        cellClassName: "border-l-2 border-border-soft px-6 py-4 text-center",
       },
     },
     {
       id: "stock",
       header: () => (
-        <button
-          type="button"
-          onClick={() => handleSort("STOCK")}
-          className="flex items-center space-x-1 hover:text-brand transition-colors"
-        >
-          <span>Stock</span>
-          {sortField === "STOCK" ? (
-            sortDirection === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
-          ) : (
-            <div className="flex flex-col -space-y-1.5 w-4 h-4">
-              <ArrowUp className="w-3 h-3 text-text-muted" />
-              <ArrowDown className="w-3 h-3 text-text-muted" />
-            </div>
-          )}
-        </button>
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={() => handleSort("STOCK")}
+            className="flex items-center space-x-1 hover:text-brand transition-colors"
+          >
+            <span>Stock</span>
+            {sortField === "STOCK" ? (
+              sortDirection === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
+            ) : (
+              <div className="flex flex-col -space-y-1.5 w-4 h-4">
+                <ArrowUp className="w-3 h-3 text-text-muted" />
+                <ArrowDown className="w-3 h-3 text-text-muted" />
+              </div>
+            )}
+          </button>
+        </div>
       ),
       cell: ({ row }) => {
         const product = row.original
@@ -519,7 +535,7 @@ export default function ProductsPage() {
         const draftStock = editingDraft?.stock ?? ""
 
         return isEditing ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <input
               type="number"
               min={0}
@@ -534,21 +550,21 @@ export default function ProductsPage() {
             <span className="text-xs text-text-muted">units</span>
           </div>
         ) : (
-          <div className="flex items-center">
+          <div className="flex items-center justify-center">
             <span className={`text-sm font-medium ${getStockColor(product.stock)}`}>{product.stock}</span>
             <span className="ml-2 text-xs text-text-muted">units</span>
           </div>
         )
       },
       meta: {
-        headerClassName: "px-6 py-4",
-        cellClassName: "px-6 py-4",
+        headerClassName: "px-6 py-4 text-center",
+        cellClassName: "px-6 py-4 text-center",
       },
     },
     {
       id: "periodicSellCount",
       header: () => (
-        <div className="flex justify-end">
+        <div className="flex justify-center">
           <button
             type="button"
             onClick={() => handleSort("PERIODIC_SELL_COUNT")}
@@ -570,14 +586,14 @@ export default function ProductsPage() {
         <span className="text-sm text-text-secondary">{row.original.periodicSellCount?.toLocaleString("en-US") ?? 0}</span>
       ),
       meta: {
-        headerClassName: "px-6 py-4 text-right",
-        cellClassName: "px-6 py-4 text-right",
+        headerClassName: "px-6 py-4 text-center",
+        cellClassName: "px-6 py-4 text-center",
       },
     },
     {
       id: "periodicGrossRevenue",
       header: () => (
-        <div className="flex justify-end">
+        <div className="flex justify-center">
           <button
             type="button"
             onClick={() => handleSort("PERIODIC_GROSS_REVENUE")}
@@ -600,13 +616,13 @@ export default function ProductsPage() {
         return <span className="text-sm font-medium text-text-primary">{formatCurrency(periodicGrossRevenue)}</span>
       },
       meta: {
-        headerClassName: "px-6 py-4 text-right",
-        cellClassName: "px-6 py-4 text-right",
+        headerClassName: "px-6 py-4 text-center",
+        cellClassName: "px-6 py-4 text-center",
       },
     },
     {
       id: "status",
-      header: () => "Status",
+      header: () => <div className="text-center">Status</div>,
       cell: ({ row }) => {
         const product = row.original
         const isEditing = editingProductId === product.id
@@ -640,13 +656,13 @@ export default function ProductsPage() {
         )
       },
       meta: {
-        headerClassName: "px-6 py-4",
-        cellClassName: "px-6 py-4",
+        headerClassName: "px-6 py-4 text-center",
+        cellClassName: "px-6 py-4 text-center",
       },
     },
     {
       id: "actions",
-      header: () => "Actions",
+      header: () => <div className="text-center">Actions</div>,
       cell: ({ row }) => {
         const product = row.original
         const isEditing = editingProductId === product.id
@@ -662,7 +678,7 @@ export default function ProductsPage() {
           parsedDraftStock >= 0
 
         return (
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center justify-center space-x-2">
             <button
               type="button"
               onClick={() => (isEditing ? void handleInlineEditSave(product) : handleInlineEditStart(product))}
@@ -685,8 +701,8 @@ export default function ProductsPage() {
         )
       },
       meta: {
-        headerClassName: "px-6 py-4",
-        cellClassName: "px-6 py-4",
+        headerClassName: "px-6 py-4 text-center",
+        cellClassName: "px-6 py-4 text-center",
       },
     },
   ]
@@ -756,6 +772,7 @@ export default function ProductsPage() {
               value={selectedPeriodTab}
               options={PERIOD_TABS}
               onValueChange={setSelectedPeriodTab}
+              disabled={isLoading || isFetching}
               className="self-start lg:self-auto"
             />
           </div>
@@ -771,7 +788,7 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className={cn("overflow-x-auto transition-opacity duration-150", isFetching && "opacity-50", isFetching && !editingProductId && "pointer-events-none")}>
           <DataTable
             columns={productColumns}
             data={products}
