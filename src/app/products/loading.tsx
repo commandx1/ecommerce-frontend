@@ -58,7 +58,7 @@ export default function ProductListingLoading() {
           <div className="flex gap-8">
 
             {/* Sidebar skeleton */}
-            <aside className="hidden w-80 flex-shrink-0 lg:block">
+            <aside className="hidden w-80 shrink-0 lg:block">
               <div className="rounded-2xl border border-border-soft bg-surface p-6">
 
                 {/* Active filters */}
@@ -184,7 +184,7 @@ export default function ProductListingLoading() {
                       <span className="font-semibold text-steel-blue">92%</span>
                     </div>
                     <div className="h-2.5 w-full overflow-hidden rounded-full bg-surface-muted">
-                      <div className="loading-progress-bar h-2.5 rounded-full bg-gradient-to-r from-steel-blue to-pale-lime" />
+                      <div className="loading-progress-bar h-2.5 rounded-full bg-linear-to-r from-steel-blue to-pale-lime" />
                     </div>
                   </div>
 

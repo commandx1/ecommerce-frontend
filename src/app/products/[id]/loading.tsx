@@ -110,7 +110,7 @@ export default function ProductDetailLoading() {
               {[1, 2, 3].map((row) => (
                 <div key={row} className="grid grid-cols-7 items-center gap-4 px-6 py-5">
                   <div className="flex items-center gap-3">
-                    <div className="skeleton-mint h-12 w-12 flex-shrink-0 rounded-lg" />
+                    <div className="skeleton-mint h-12 w-12 shrink-0 rounded-lg" />
                     <div className="space-y-1.5">
                       <div className="skeleton-white h-4 w-24 rounded-full" />
                       <div className="skeleton-white h-3 w-16 rounded-full" />
@@ -168,7 +168,7 @@ export default function ProductDetailLoading() {
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="rounded-2xl bg-surface p-6">
                     <div className="flex items-start gap-4">
-                      <div className="skeleton-white h-16 w-16 flex-shrink-0 rounded-xl" />
+                      <div className="skeleton-white h-16 w-16 shrink-0 rounded-xl" />
                       <div className="flex-1 space-y-2">
                         <div className="skeleton-white h-6 w-36 rounded-lg" />
                         <div className="skeleton-white h-4 w-full rounded-full" />
@@ -253,7 +253,7 @@ export default function ProductDetailLoading() {
             {[1, 2].map((i) => (
               <div key={i} className="rounded-2xl bg-surface p-8">
                 <div className="flex items-start gap-4">
-                  <div className="skeleton-white h-12 w-12 flex-shrink-0 rounded-full" />
+                  <div className="skeleton-white h-12 w-12 shrink-0 rounded-full" />
                   <div className="flex-1 space-y-3">
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
