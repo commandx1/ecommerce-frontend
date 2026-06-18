@@ -24,17 +24,15 @@ export async function proxy(request: NextRequest) {
   let isAuthenticated = false
 
   if (authCookie) {
-    try {
-      const authData = parseAuthCookie(authCookie)
-      user = authData?.state?.user ?? null
-      isAuthenticated = Boolean(authData?.state?.isAuthenticated)
-    } catch (error) {
-      console.error("[Middleware] Failed to parse auth cookie:", error)
-    }
+    const authData = parseAuthCookie(authCookie)
+    user = authData?.state?.user ?? null
+    isAuthenticated = Boolean(authData?.state?.isAuthenticated)
   }
 
   // Vendor users can only access vendor dashboard routes
-  if (user?.roleName === "Vendor" && !pathname.startsWith("/vendor-dashboard")) {
+  // Exception: /register?token=... is the admin-invited signup flow — let it through
+  const isSignupLinkFlow = pathname === "/register" && url.searchParams.has("token")
+  if (user?.roleName === "Vendor" && !pathname.startsWith("/vendor-dashboard") && !isSignupLinkFlow) {
     return NextResponse.redirect(new URL("/vendor-dashboard", request.url))
   }
 
