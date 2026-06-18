@@ -1,6 +1,5 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
-import { serverRequest } from "@/lib/api/server-request"
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,8 +15,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: "Google Maps API key is not configured" }, { status: 500 })
     }
 
-    const response = await serverRequest(
-      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&key=${apiKey}&fields=place_id,formatted_address,geometry,address_components`,
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&key=${apiKey}&fields=place_id,formatted_address,geometry,address_components`,
       {
         headers: {
           "Content-Type": "application/json",
