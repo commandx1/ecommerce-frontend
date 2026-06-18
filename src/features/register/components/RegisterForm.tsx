@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import { useSearchParams } from "next/navigation"
 import { showToast } from "@/components/ui/Toast"
 import AddressSection from "@/features/register/components/AddressSection"
 import BusinessTypeField from "@/features/register/components/BusinessTypeField"
@@ -9,8 +10,13 @@ import PersonalInfoFields from "@/features/register/components/PersonalInfoField
 import RegisterFormActions from "@/features/register/components/RegisterFormActions"
 import RegisterFormIntro from "@/features/register/components/RegisterFormIntro"
 import { useRegisterForm } from "@/hooks/useRegisterForm"
+import { useAuthStore } from "@/stores/authStore"
 
 export default function RegisterForm() {
+  const searchParams = useSearchParams()
+  const initialEmail = searchParams.get("email") ?? undefined
+  const initialToken = searchParams.get("token") ?? undefined
+  const { logout, isAuthenticated } = useAuthStore()
   const {
     confirmPassword,
     errors,
@@ -23,9 +29,15 @@ export default function RegisterForm() {
     handlePostalCodeChange,
     handleSubmit,
     isLoading,
-  } = useRegisterForm()
+  } = useRegisterForm({ initialEmail, initialToken })
 
   const lastSubmitErrorRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (initialToken && isAuthenticated) {
+      logout()
+    }
+  }, [initialToken, isAuthenticated, logout])
 
   useEffect(() => {
     if (errors.submit && errors.submit !== lastSubmitErrorRef.current) {
@@ -45,21 +57,26 @@ export default function RegisterForm() {
             errors={errors}
             onChange={handleChange}
             onPhoneNumberChange={handlePhoneNumberChange}
+            emailReadOnly={!!initialToken}
           />
 
-          <BusinessTypeField
-            value={formData.businessDescribe}
-            onChange={handleChange}
-            error={errors.businessDescribe}
-          />
+          {!initialToken && (
+            <BusinessTypeField
+              value={formData.businessDescribe}
+              onChange={handleChange}
+              error={errors.businessDescribe}
+            />
+          )}
 
-          <AddressSection
-            address={formData.address}
-            errors={errors}
-            onAddressSelect={handleAddressSelect}
-            onAddressFieldChange={handleAddressFieldChange}
-            onPostalCodeChange={handlePostalCodeChange}
-          />
+          {!initialToken && (
+            <AddressSection
+              address={formData.address}
+              errors={errors}
+              onAddressSelect={handleAddressSelect}
+              onAddressFieldChange={handleAddressFieldChange}
+              onPostalCodeChange={handlePostalCodeChange}
+            />
+          )}
 
           <PasswordSection
             password={formData.password}

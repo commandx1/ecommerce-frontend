@@ -112,6 +112,22 @@ class AuthAPIDirect {
     })
   }
 
+  async completeVendorSignup(payload: {
+    token: string
+    name: string
+    surname: string
+    phoneNumber: string
+    password: string
+  }) {
+    return apiRequest.requestJson({
+      client: "backend",
+      method: "POST",
+      url: "/users/vendor-manager-add",
+      data: payload,
+      fallbackMessage: "Failed to complete signup",
+    })
+  }
+
   async login(payload: LoginPayload) {
     const response = await apiRequest.requestResponse<Record<string, unknown>, LoginPayload>({
       client: "backend",

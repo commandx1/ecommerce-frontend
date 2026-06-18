@@ -100,11 +100,32 @@ const mapZodErrors = (errors: z.ZodIssue[]) => {
   return fieldErrors
 }
 
-export const useRegisterForm = () => {
+const tokenSignupSchema = z
+  .object({
+    name: z.string().trim().min(1, "First name is required"),
+    surname: z.string().trim().min(1, "Last name is required"),
+    phoneNumber: z
+      .string()
+      .trim()
+      .min(1, "Phone number is required")
+      .refine((value) => /^\d{10}$/.test(value.replace(/\s/g, "")), "Please enter a valid 10-digit phone number"),
+    password: z.string().min(1, "Password is required").min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string().min(1, "Confirm password is required"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  })
+
+export const useRegisterForm = (options?: { initialEmail?: string; initialToken?: string }) => {
   const router = useRouter()
   const { setError } = useAuthStore()
+  const isTokenFlow = !!options?.initialToken
 
-  const [formData, setFormData] = useState<RegisterPayload>(initialFormData)
+  const [formData, setFormData] = useState<RegisterPayload>(() => ({
+    ...initialFormData,
+    email: options?.initialEmail ?? "",
+  }))
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<ErrorMap>({})
@@ -119,7 +140,8 @@ export const useRegisterForm = () => {
   }
 
   const validateForm = () => {
-    const result = registerSchema.safeParse({ ...formData, confirmPassword })
+    const schema = isTokenFlow ? tokenSignupSchema : registerSchema
+    const result = schema.safeParse({ ...formData, confirmPassword })
 
     if (result.success) {
       setErrors({})
@@ -141,6 +163,18 @@ export const useRegisterForm = () => {
     setError(null)
 
     try {
+      if (isTokenFlow) {
+        await authAPI.completeVendorSignup({
+          token: options!.initialToken!,
+          name: formData.name,
+          surname: formData.surname,
+          phoneNumber: normalizePhoneNumber(formData.phoneNumber),
+          password: formData.password,
+        })
+        router.push(`/login?email=${encodeURIComponent(formData.email)}`)
+        return
+      }
+
       const fullName = `${formData.name} ${formData.surname}`.trim()
 
       await authAPI.register({
