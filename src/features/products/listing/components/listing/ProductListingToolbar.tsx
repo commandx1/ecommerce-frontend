@@ -43,7 +43,7 @@ const ProductListingToolbar = ({ pageSize }: { pageSize: number }) => {
   return (
     <section className="border-b border-border-soft bg-canvas py-4">
       <PageSectionContainer as="div">
-        <div className="flex flex-col gap-4 rounded-[1.5rem] border border-border-soft bg-surface-elevated px-4 py-4 shadow-soft lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-4 rounded-3xl border border-border-soft bg-surface-elevated px-4 py-4 shadow-soft lg:flex-row lg:items-center lg:justify-between">
           <Suspense>
             <PageSizeButtons pageSize={pageSize} />
           </Suspense>

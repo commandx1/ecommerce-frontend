@@ -8,6 +8,7 @@ interface PersonalInfoFieldsProps {
   errors: RegisterFormErrors
   onChange: (event: ChangeEvent<HTMLInputElement>) => void
   onPhoneNumberChange: (value: string) => void
+  emailReadOnly?: boolean
 }
 
 export default function PersonalInfoFields({
@@ -15,6 +16,7 @@ export default function PersonalInfoFields({
   errors,
   onChange,
   onPhoneNumberChange,
+  emailReadOnly,
 }: PersonalInfoFieldsProps) {
   return (
     <div className="space-y-6">
@@ -51,6 +53,7 @@ export default function PersonalInfoFields({
         onChange={onChange}
         placeholder="professional@example.com"
         error={errors.email}
+        readOnly={emailReadOnly}
       />
 
       <TextField
