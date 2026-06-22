@@ -43,6 +43,7 @@ export default function FavoriteSuppliersPage() {
     about: "",
     rating: v.averageRating,
     reviewCount: v.reviewCount,
+    productCount: v.productCount,
     isFavorite: true,
   }))
 

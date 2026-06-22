@@ -34,6 +34,7 @@ export async function getListingPageData({
   minRating,
   inStock,
   attributes,
+  companyId,
 }: ParsedListingSearchParams): Promise<ListingPageData> {
   const [productsResponse, brands, manufacturers, categories, vendors, attributeGroups] = await Promise.all([
     getPublicProducts<APIProduct>(apiPage, pageSize, {
@@ -41,6 +42,7 @@ export async function getListingPageData({
       manufacturers: selectedManufacturers,
       categories: selectedCategories,
       vendorIds: selectedVendors,
+      companyId,
       minPrice,
       maxPrice,
       minRating,

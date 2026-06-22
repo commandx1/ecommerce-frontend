@@ -53,10 +53,10 @@ export default function SupplierDirectoryCard({
 
       <div className="flex items-center gap-3">
         <Link
-          href={`/products?vendor=${supplier.slug}`}
+          href={`/products?companyId=${supplier.id}`}
           className="flex-1 rounded-full bg-brand px-4 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-brand-strong"
         >
-          View Products
+          View {supplier.productCount > 0 ? `${numericFormatter.format(supplier.productCount)} ` : ""}Products
         </Link>
         <button
           type="button"

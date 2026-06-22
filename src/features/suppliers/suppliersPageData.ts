@@ -5,10 +5,12 @@ export interface SupplierDirectoryItem {
   id: string | number
   name: string
   slug: string
+  companyPhoto?: string | null
   category?: "Supplies" | "Equipment" | "Instruments" | "Materials" | "Technology" | "Infection Control"
   location?: string
   rating: number
   reviewCount: number
+  productCount: number
   about: string
   deliveryMethods?: string[]
   isFavorite?: boolean
@@ -48,6 +50,7 @@ export const suppliersDirectoryData: ReadonlyArray<SupplierDirectoryItem> = [
     location: "California",
     rating: 4.4,
     reviewCount: 1076,
+    productCount: 0,
     about:
       "In our continuous efforts to represent the best in dental supplies, River Dental Supplies offers excellent service and quality products at affordable pricing.",
     deliveryMethods: ["UPS", "USPS", "FedEx", "Local Delivery"],
@@ -60,6 +63,7 @@ export const suppliersDirectoryData: ReadonlyArray<SupplierDirectoryItem> = [
     location: "Texas",
     rating: 4.8,
     reviewCount: 2341,
+    productCount: 0,
     about:
       "Leading provider of premium dental equipment and technology solutions, with focus on imaging systems, chairs, and diagnostic tools.",
     deliveryMethods: ["FedEx", "White Glove", "Installation Service"],
@@ -72,6 +76,7 @@ export const suppliersDirectoryData: ReadonlyArray<SupplierDirectoryItem> = [
     location: "Florida",
     rating: 4.6,
     reviewCount: 892,
+    productCount: 0,
     about:
       "Trusted partner for bulk dental supplies and consumables with competitive wholesale pricing and fast replenishment workflows.",
     deliveryMethods: ["UPS", "FedEx", "Next Day"],
@@ -85,6 +90,7 @@ export const suppliersDirectoryData: ReadonlyArray<SupplierDirectoryItem> = [
     location: "New York",
     rating: 4.9,
     reviewCount: 1543,
+    productCount: 0,
     about:
       "Specialized in high-quality surgical and diagnostic instruments, backed by strong warranties for daily clinical use.",
     deliveryMethods: ["USPS", "FedEx", "Express"],
@@ -97,6 +103,7 @@ export const suppliersDirectoryData: ReadonlyArray<SupplierDirectoryItem> = [
     location: "California",
     rating: 4.2,
     reviewCount: 634,
+    productCount: 0,
     about:
       "Innovative dental technology and digital solutions provider covering CAD/CAM systems, 3D printing, and modern software stacks.",
     deliveryMethods: ["FedEx", "Installation", "Training Included"],
@@ -109,6 +116,7 @@ export const suppliersDirectoryData: ReadonlyArray<SupplierDirectoryItem> = [
     location: "Texas",
     rating: 4.7,
     reviewCount: 1823,
+    productCount: 0,
     about:
       "Comprehensive dental supply network delivering from routine consumables to advanced equipment with reliable support.",
     deliveryMethods: ["UPS", "USPS", "FedEx", "Same Day"],
@@ -122,6 +130,7 @@ export const suppliersDirectoryData: ReadonlyArray<SupplierDirectoryItem> = [
     location: "Florida",
     rating: 4.5,
     reviewCount: 967,
+    productCount: 0,
     about:
       "Premium dental materials specialist for composites, cements, impression materials, and restorative product lines.",
     deliveryMethods: ["FedEx", "Temperature Controlled", "Express"],
@@ -134,6 +143,7 @@ export const suppliersDirectoryData: ReadonlyArray<SupplierDirectoryItem> = [
     location: "California",
     rating: 4.3,
     reviewCount: 745,
+    productCount: 0,
     about:
       "Full-service equipment provider for operatory setup, sterilization systems, and practice infrastructure from planning to install.",
     deliveryMethods: ["Freight", "White Glove", "Full Installation"],
@@ -146,6 +156,7 @@ export const suppliersDirectoryData: ReadonlyArray<SupplierDirectoryItem> = [
     location: "New York",
     rating: 4.6,
     reviewCount: 1456,
+    productCount: 0,
     about:
       "Nationwide distributor with broad inventory, strong account management, and proven fulfillment operations for growing clinics.",
     deliveryMethods: ["UPS", "FedEx", "Local Delivery", "Next Day"],
@@ -158,6 +169,7 @@ export const suppliersDirectoryData: ReadonlyArray<SupplierDirectoryItem> = [
     location: "Texas",
     rating: 4.5,
     reviewCount: 1189,
+    productCount: 0,
     about:
       "Supply chain platform for clinics and DSOs with scheduled fulfillment, inventory visibility, and predictable turnaround.",
     deliveryMethods: ["USPS", "UPS", "Scheduled Delivery"],
@@ -171,6 +183,7 @@ export const suppliersDirectoryData: ReadonlyArray<SupplierDirectoryItem> = [
     location: "Florida",
     rating: 4.1,
     reviewCount: 523,
+    productCount: 0,
     about:
       "International network providing innovative and hard-to-source specialty products with managed global logistics.",
     deliveryMethods: ["FedEx", "International", "Customs Cleared"],
@@ -183,6 +196,7 @@ export const suppliersDirectoryData: ReadonlyArray<SupplierDirectoryItem> = [
     location: "New York",
     rating: 4.7,
     reviewCount: 2076,
+    productCount: 0,
     about:
       "Cutting-edge dental technology supplier focused on digital workflows, AI diagnostics, and cloud-connected practice operations.",
     deliveryMethods: ["FedEx Priority", "Setup & Training", "Cloud Delivery"],

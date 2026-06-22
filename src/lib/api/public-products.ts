@@ -25,6 +25,7 @@ export interface PublicProductsFilterParams {
   manufacturers?: string[]
   categories?: string[]
   vendorIds?: string[]
+  companyId?: string | null
   minPrice?: number | null
   maxPrice?: number | null
   minRating?: number | null
@@ -48,6 +49,7 @@ export async function getPublicProducts<TProduct = unknown>(
   for (const mfr of filters.manufacturers ?? []) qs.append("manufacturers", mfr)
   for (const cat of filters.categories ?? []) qs.append("categories", cat)
   for (const v of filters.vendorIds ?? []) qs.append("vendorIds", v)
+  if (filters.companyId) qs.set("companyId", filters.companyId)
   if (filters.minPrice != null) qs.set("minPrice", String(filters.minPrice))
   if (filters.maxPrice != null) qs.set("maxPrice", String(filters.maxPrice))
   if (filters.minRating != null) qs.set("minRating", String(filters.minRating))

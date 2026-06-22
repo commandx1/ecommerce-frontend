@@ -17,6 +17,7 @@
     "check": "biome check --write . && prettier --check '**/*.{ts,tsx,js,jsx}'"
   },
   "dependencies": {
+    "@ark-ui/react": "^5.37.2",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-avatar": "^1.1.11",

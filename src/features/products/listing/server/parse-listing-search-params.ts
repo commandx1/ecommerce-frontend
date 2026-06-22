@@ -14,6 +14,7 @@ export interface ListingSearchParams {
   minRating?: string
   inStock?: string
   attributes?: string | string[]
+  companyId?: string
 }
 
 export interface ParsedListingSearchParams {
@@ -30,6 +31,7 @@ export interface ParsedListingSearchParams {
   minRating: number | null
   inStock: boolean
   attributes: string[]
+  companyId: string | null
 }
 
 const DEFAULT_PAGE = 1
@@ -78,5 +80,6 @@ export function parseListingSearchParams(params: ListingSearchParams): ParsedLis
     minRating: parsePositiveFloat(params.minRating),
     inStock,
     attributes: parseStringArray(params.attributes),
+    companyId: params.companyId ?? null,
   }
 }
