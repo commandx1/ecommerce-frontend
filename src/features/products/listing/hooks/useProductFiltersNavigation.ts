@@ -8,6 +8,7 @@ export interface FilterUpdates {
   manufacturers?: string[]
   categories?: string[]
   vendors?: string[]
+  companyId?: string | null
   minPrice?: number | null
   maxPrice?: number | null
   minRating?: number | null
@@ -23,6 +24,7 @@ export interface FilterNavigationState {
   currentManufacturers: string[]
   currentCategories: string[]
   currentVendors: string[]
+  currentCompanyId: string | null
   currentMinPrice: number | null
   currentMaxPrice: number | null
   currentMinRating: number | null
@@ -59,6 +61,7 @@ export function useFilterNavigationProvider(): FilterNavigationState {
         "manufacturers" in updates ? updates.manufacturers : searchParams.getAll("manufacturers")
       const categories = "categories" in updates ? updates.categories : searchParams.getAll("categories")
       const vendors = "vendors" in updates ? updates.vendors : searchParams.getAll("vendors")
+      const companyId = "companyId" in updates ? updates.companyId : searchParams.get("companyId")
       const attributes = "attributes" in updates ? updates.attributes : searchParams.getAll("attributes")
       const rawMin = searchParams.get("minPrice")
       const rawMax = searchParams.get("maxPrice")
@@ -72,6 +75,7 @@ export function useFilterNavigationProvider(): FilterNavigationState {
       for (const m of manufacturers ?? []) params.append("manufacturers", m)
       for (const c of categories ?? []) params.append("categories", c)
       for (const v of vendors ?? []) params.append("vendors", v)
+      if (companyId) params.set("companyId", companyId)
       for (const a of attributes ?? []) params.append("attributes", a)
       if (minPrice != null && !Number.isNaN(minPrice)) params.set("minPrice", String(minPrice))
       if (maxPrice != null && !Number.isNaN(maxPrice)) params.set("maxPrice", String(maxPrice))
@@ -97,6 +101,7 @@ export function useFilterNavigationProvider(): FilterNavigationState {
     currentManufacturers: searchParams.getAll("manufacturers"),
     currentCategories: searchParams.getAll("categories"),
     currentVendors: searchParams.getAll("vendors"),
+    currentCompanyId: searchParams.get("companyId"),
     currentMinPrice: rawMinPrice ? Number(rawMinPrice) : null,
     currentMaxPrice: rawMaxPrice ? Number(rawMaxPrice) : null,
     currentMinRating: rawMinRating ? Number(rawMinRating) : null,

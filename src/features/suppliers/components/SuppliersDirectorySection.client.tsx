@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronDown, ChevronLeft, ChevronRight, Loader2, Star } from "lucide-react"
+import { ChevronLeft, ChevronRight, Loader2, Star } from "lucide-react"
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
@@ -13,6 +13,7 @@ import {
 import { type VendorListParams, addVendorFavorite, getCompanies, getMyFavoriteVendorIds, removeVendorFavorite } from "@/lib/api/vendors"
 import { showToast } from "@/components/ui/Toast"
 import type { CompanyListItem } from "@/lib/api/vendors"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuthStore } from "@/stores/authStore"
 import { cn } from "@/lib/utils"
 
@@ -162,27 +163,41 @@ export default function SuppliersDirectorySection() {
         <PageSectionContainer>
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex flex-wrap items-center gap-3">
-              <FilterSelect
+              <Select
                 value={selectedRating}
-                onChange={(event) => {
-                  setSelectedRating(event.target.value as RatingOption)
+                onValueChange={(v) => {
+                  setSelectedRating(v as RatingOption)
                   setCurrentPage(1)
                 }}
-                options={ratingOptions}
-                ariaLabel="Filter by rating"
-              />
+              >
+                <SelectTrigger aria-label="Filter by rating" className="rounded-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ratingOptions.map((option) => (
+                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm text-text-muted">Sort by:</span>
-              <FilterSelect
+              <Select
                 value={selectedSort}
-                onChange={(event) => {
-                  setSelectedSort(event.target.value as SortOption)
+                onValueChange={(v) => {
+                  setSelectedSort(v as SortOption)
                   setCurrentPage(1)
                 }}
-                options={sortOptions}
-                ariaLabel="Sort suppliers"
-              />
+              >
+                <SelectTrigger aria-label="Sort suppliers" className="rounded-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {sortOptions.map((option) => (
+                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </PageSectionContainer>
@@ -404,32 +419,3 @@ function HeroMetric({ value, label }: { value: string; label: string }) {
   )
 }
 
-function FilterSelect({
-  value,
-  onChange,
-  options,
-  ariaLabel,
-}: {
-  value: string
-  onChange: React.ChangeEventHandler<HTMLSelectElement>
-  options: ReadonlyArray<string>
-  ariaLabel: string
-}) {
-  return (
-    <div className="relative">
-      <select
-        aria-label={ariaLabel}
-        value={value}
-        onChange={onChange}
-        className="appearance-none rounded-full border border-border-soft bg-surface-elevated py-2.5 pr-10 pl-4 text-sm font-medium text-text-secondary outline-none transition-colors focus:border-brand focus:text-text-primary"
-      >
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-      <ChevronDown className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-text-muted" />
-    </div>
-  )
-}

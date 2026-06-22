@@ -1,11 +1,11 @@
 import type { APIProduct } from "@/features/products/listing/components/ProductListingClient"
-import type { AttributeGroup, FilterOption, VendorOption } from "@/lib/api/public-products"
+import type { AttributeGroup, CompanyOption, FilterOption } from "@/lib/api/public-products"
 import {
   getProductAttributeOptions,
   getProductBrandOptions,
   getProductCategoryOptions,
+  getProductCompanyOptions,
   getProductManufacturerOptions,
-  getProductVendorOptions,
   getPublicProducts,
 } from "@/lib/api/public-products"
 import type { ParsedListingSearchParams } from "./parse-listing-search-params"
@@ -17,7 +17,7 @@ export interface ListingPageData {
   brands: FilterOption[]
   manufacturers: FilterOption[]
   categories: FilterOption[]
-  vendors: VendorOption[]
+  companies: CompanyOption[]
   attributeGroups: AttributeGroup[]
 }
 
@@ -36,7 +36,7 @@ export async function getListingPageData({
   attributes,
   companyId,
 }: ParsedListingSearchParams): Promise<ListingPageData> {
-  const [productsResponse, brands, manufacturers, categories, vendors, attributeGroups] = await Promise.all([
+  const [productsResponse, brands, manufacturers, categories, companies, attributeGroups] = await Promise.all([
     getPublicProducts<APIProduct>(apiPage, pageSize, {
       brands: selectedBrands,
       manufacturers: selectedManufacturers,
@@ -53,7 +53,7 @@ export async function getListingPageData({
     getProductBrandOptions(),
     getProductManufacturerOptions(),
     getProductCategoryOptions(),
-    getProductVendorOptions(),
+    getProductCompanyOptions(),
     getProductAttributeOptions(),
   ])
 
@@ -64,7 +64,7 @@ export async function getListingPageData({
     brands,
     manufacturers,
     categories,
-    vendors,
+    companies,
     attributeGroups,
   }
 }

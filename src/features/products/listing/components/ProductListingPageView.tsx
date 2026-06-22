@@ -15,7 +15,7 @@ export default function ProductListingPageView({ data, params }: ProductListingP
       brands={data.brands}
       manufacturers={data.manufacturers}
       categories={data.categories}
-      vendors={data.vendors}
+      companies={data.companies}
       attributeGroups={data.attributeGroups}
       currentPage={params.displayPage}
       pageSize={params.pageSize}

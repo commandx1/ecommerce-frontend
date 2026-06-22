@@ -10,6 +10,7 @@ export type PublicProductsResponse<TProduct = unknown> = {
 
 export type FilterOption = { name: string; count: number }
 export type VendorOption = { id: string; name: string; count: number }
+export type CompanyOption = { id: string; name: string; count: number }
 export type AttributeValueOption = { value: string; count: number }
 export type AttributeGroup = { attributeName: string; values: AttributeValueOption[] }
 
@@ -101,6 +102,20 @@ export async function getProductVendorOptions(): Promise<VendorOption[]> {
       method: "GET",
       url: `${baseUrl}/api/products/vendors`,
       fallbackMessage: "Failed to fetch product vendors",
+    })
+  } catch {
+    return []
+  }
+}
+
+export async function getProductCompanyOptions(): Promise<CompanyOption[]> {
+  const baseUrl = requireBackendUrl()
+  try {
+    return await apiRequest.requestJson<CompanyOption[]>({
+      client: "app",
+      method: "GET",
+      url: `${baseUrl}/api/products/companies`,
+      fallbackMessage: "Failed to fetch product companies",
     })
   } catch {
     return []
