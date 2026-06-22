@@ -1,4 +1,4 @@
-import { Check, Circle } from "lucide-react"
+import { Circle } from "lucide-react"
 import type { ChangeEvent } from "react"
 import zxcvbn from "zxcvbn"
 import { PasswordField } from "@/components/form/PasswordField"
@@ -65,18 +65,19 @@ export default function PasswordSection({
           </div>
         </div>
 
-        <p className="mb-3 text-sm font-medium text-text-primary">Password rules</p>
-        <ul className="space-y-2">
-          {passwordRules.map((rule) => (
-            <li
-              key={rule.label}
-              className={`flex items-center gap-2 text-sm ${rule.isValid ? "text-success" : "text-text-muted"}`}
-            >
-              {rule.isValid ? <Check className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
-              <span>{rule.label}</span>
-            </li>
-          ))}
-        </ul>
+        {passwordRules.some((rule) => !rule.isValid) && (
+          <>
+            <p className="mb-3 text-sm font-medium text-text-primary">Password rules</p>
+            <ul className="space-y-2">
+              {passwordRules.filter((rule) => !rule.isValid).map((rule) => (
+                <li key={rule.label} className="flex items-center gap-2 text-sm text-text-muted">
+                  <Circle className="h-4 w-4" />
+                  <span>{rule.label}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </div>
 
       <PasswordField

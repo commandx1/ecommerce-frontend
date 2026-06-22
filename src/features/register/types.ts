@@ -6,12 +6,15 @@ export interface RegisterFormErrors {
   surname?: string
   email?: string
   phoneNumber?: string
-  businessDescribe?: string
   address?: string
   addressPostalCode?: string
   password?: string
   confirmPassword?: string
   submit?: string
+  companyName?: string
+  companyEmail?: string
+  companyPhoneNumber?: string
+  taxNumber?: string
 }
 
 export type RegisterFormData = RegisterPayload

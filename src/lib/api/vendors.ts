@@ -17,6 +17,24 @@ export interface VendorPageResponse {
   totalPages: number
 }
 
+export interface CompanyListItem {
+  id: string
+  name: string
+  companyPhoto: string | null
+  slug: string
+  averageRating: number
+  reviewCount: number
+  productCount: number
+}
+
+export interface CompanyPageResponse {
+  companies: CompanyListItem[]
+  totalCount: number
+  page: number
+  size: number
+  totalPages: number
+}
+
 export interface VendorListParams {
   page?: number
   size?: number
@@ -76,5 +94,22 @@ export async function getVendors(params: VendorListParams = {}): Promise<VendorP
     url: `/vendors?${query.toString()}`,
     signal: params.signal,
     fallbackMessage: "Failed to fetch vendors",
+  })
+}
+
+export async function getCompanies(params: VendorListParams = {}): Promise<CompanyPageResponse> {
+  const query = new URLSearchParams()
+  if (params.page !== undefined) query.set("page", String(params.page))
+  if (params.size !== undefined) query.set("size", String(params.size))
+  if (params.sort) query.set("sort", params.sort)
+  if (params.minRating !== undefined) query.set("minRating", String(params.minRating))
+  if (params.search) query.set("search", params.search)
+
+  return apiRequest.requestJson<CompanyPageResponse>({
+    client: "backend",
+    method: "GET",
+    url: `/vendors/companies?${query.toString()}`,
+    signal: params.signal,
+    fallbackMessage: "Failed to fetch companies",
   })
 }

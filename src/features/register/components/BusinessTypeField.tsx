@@ -5,7 +5,7 @@ import { BUSINESS_TYPE_OPTIONS } from "@/lib/constants/business-types"
 
 interface BusinessTypeFieldProps {
   value: string
-  error?: RegisterFormErrors["businessDescribe"]
+  error?: string
   onChange: (event: ChangeEvent<HTMLSelectElement>) => void
 }
 

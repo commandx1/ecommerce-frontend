@@ -1,7 +1,7 @@
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { z } from "zod"
-import { authAPIDirect as authAPI, type RegisterPayload } from "@/lib/api/auth-direct"
+import { authAPIDirect as authAPI, type CompanyPayload, type RegisterPayload } from "@/lib/api/auth-direct"
 import type { ParsedAddress } from "@/lib/utils/google-maps"
 import { normalizePhoneNumber } from "@/lib/utils/phone-number"
 import { useAuthStore } from "@/stores/authStore"
@@ -20,7 +20,6 @@ const registerSchema = z
       .refine((value) => /^\d{10}$/.test(value.replace(/\s/g, "")), "Please enter a valid 10-digit phone number"),
     password: z.string().min(1, "Password is required").min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string().min(1, "Confirm password is required"),
-    businessDescribe: z.string().min(1, "Business type is required"),
     address: z.object({
       title: z.string().optional(),
       fullName: z.string().optional(),
@@ -37,6 +36,16 @@ const registerSchema = z
       placeId: z.string().min(1, "Address is required"),
       formattedAddress: z.string().optional(),
     }),
+    company: z.object({
+      name: z.string().trim().min(1, "Company name is required"),
+      taxNumber: z.string().trim().min(1, "Tax number is required"),
+      email: z.string().trim().min(1, "Company email is required").email("Please enter a valid email address"),
+      phoneNumber: z.string().trim().min(1, "Company phone is required"),
+      website: z.string().optional(),
+      description: z.string().optional(),
+      companyPhoto: z.string().optional(),
+      active: z.boolean().optional(),
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -49,7 +58,6 @@ const initialFormData: RegisterPayload = {
   email: "",
   password: "",
   phoneNumber: "",
-  businessDescribe: "",
   address: {
     title: "Home",
     fullName: "",
@@ -65,6 +73,16 @@ const initialFormData: RegisterPayload = {
     longitude: 0,
     placeId: "",
     formattedAddress: "",
+  },
+  company: {
+    name: "",
+    companyPhoto: "",
+    taxNumber: "",
+    email: "",
+    phoneNumber: "",
+    website: "",
+    description: "",
+    active: true,
   },
 }
 
@@ -90,6 +108,22 @@ const mapZodErrors = (errors: z.ZodIssue[]) => {
       fieldErrors.addressPostalCode = issue.message
       continue
     }
+    if (path === "company.name") {
+      fieldErrors.companyName = issue.message
+      continue
+    }
+    if (path === "company.email") {
+      fieldErrors.companyEmail = issue.message
+      continue
+    }
+    if (path === "company.phoneNumber") {
+      fieldErrors.companyPhoneNumber = issue.message
+      continue
+    }
+    if (path === "company.taxNumber") {
+      fieldErrors.taxNumber = issue.message
+      continue
+    }
 
     const fieldKey = issue.path[0]
     if (fieldKey) {
@@ -111,6 +145,16 @@ const tokenSignupSchema = z
       .refine((value) => /^\d{10}$/.test(value.replace(/\s/g, "")), "Please enter a valid 10-digit phone number"),
     password: z.string().min(1, "Password is required").min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string().min(1, "Confirm password is required"),
+    address: z.object({
+      postalCode: z.string().min(1, "Zip code is required"),
+      placeId: z.string().min(1, "Address is required"),
+    }),
+    company: z.object({
+      name: z.string().trim().min(1, "Company name is required"),
+      taxNumber: z.string().trim().min(1, "Tax number is required"),
+      email: z.string().trim().min(1, "Company email is required").email("Please enter a valid email address"),
+      phoneNumber: z.string().trim().min(1, "Company phone is required"),
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -164,12 +208,19 @@ export const useRegisterForm = (options?: { initialEmail?: string; initialToken?
 
     try {
       if (isTokenFlow) {
+        const fullName = `${formData.name} ${formData.surname}`.trim()
         await authAPI.completeVendorSignup({
           token: options!.initialToken!,
           name: formData.name,
           surname: formData.surname,
           phoneNumber: normalizePhoneNumber(formData.phoneNumber),
           password: formData.password,
+          address: {
+            ...formData.address,
+            fullName: fullName || formData.address.fullName,
+            phoneNumber: normalizePhoneNumber(formData.phoneNumber),
+          },
+          company: formData.company,
         })
         router.push(`/login?email=${encodeURIComponent(formData.email)}`)
         return
@@ -270,6 +321,18 @@ export const useRegisterForm = (options?: { initialEmail?: string; initialToken?
     }))
   }
 
+  const handleCompanyFieldChange = (field: keyof CompanyPayload, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      company: {
+        ...prev.company,
+        [field]: value,
+      },
+    }))
+    clearError(field === "name" ? "companyName" : field === "email" ? "companyEmail" : field === "phoneNumber" ? "companyPhoneNumber" : field)
+    clearError("submit")
+  }
+
   const handleConfirmPasswordChange = (value: string) => {
     setConfirmPassword(value)
     clearError("confirmPassword")
@@ -318,6 +381,7 @@ export const useRegisterForm = (options?: { initialEmail?: string; initialToken?
     handleAddressFieldChange,
     handleAddressSelect,
     handleChange,
+    handleCompanyFieldChange,
     handleConfirmPasswordChange,
     handlePhoneNumberChange,
     handlePostalCodeChange,

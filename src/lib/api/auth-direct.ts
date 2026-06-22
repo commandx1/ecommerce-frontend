@@ -22,14 +22,25 @@ export interface AddressPayload {
   formattedAddress: string
 }
 
+export interface CompanyPayload {
+  name: string
+  companyPhoto: string
+  taxNumber: string
+  email: string
+  phoneNumber: string
+  website: string
+  description: string
+  active: boolean
+}
+
 export interface RegisterPayload {
   name: string
   surname: string
   email: string
   password: string
   phoneNumber: string
-  businessDescribe: string
   address: AddressPayload
+  company: CompanyPayload
 }
 
 export interface LoginPayload {
@@ -118,6 +129,8 @@ class AuthAPIDirect {
     surname: string
     phoneNumber: string
     password: string
+    address: AddressPayload
+    company: CompanyPayload
   }) {
     return apiRequest.requestJson({
       client: "backend",

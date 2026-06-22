@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { showToast } from "@/components/ui/Toast"
 import AddressSection from "@/features/register/components/AddressSection"
-import BusinessTypeField from "@/features/register/components/BusinessTypeField"
+import CompanyInfoSection from "@/features/register/components/CompanyInfoSection"
 import PasswordSection from "@/features/register/components/PasswordSection"
 import PersonalInfoFields from "@/features/register/components/PersonalInfoFields"
 import RegisterFormActions from "@/features/register/components/RegisterFormActions"
@@ -24,6 +24,7 @@ export default function RegisterForm() {
     handleAddressFieldChange,
     handleAddressSelect,
     handleChange,
+    handleCompanyFieldChange,
     handleConfirmPasswordChange,
     handlePhoneNumberChange,
     handlePostalCodeChange,
@@ -60,30 +61,22 @@ export default function RegisterForm() {
             emailReadOnly={!!initialToken}
           />
 
-          {!initialToken && (
-            <BusinessTypeField
-              value={formData.businessDescribe}
-              onChange={handleChange}
-              error={errors.businessDescribe}
-            />
-          )}
-
-          {!initialToken && (
-            <AddressSection
-              address={formData.address}
-              errors={errors}
-              onAddressSelect={handleAddressSelect}
-              onAddressFieldChange={handleAddressFieldChange}
-              onPostalCodeChange={handlePostalCodeChange}
-            />
-          )}
-
           <PasswordSection
             password={formData.password}
             confirmPassword={confirmPassword}
             errors={errors}
             onPasswordChange={handleChange}
             onConfirmPasswordChange={handleConfirmPasswordChange}
+          />
+
+          <CompanyInfoSection company={formData.company} errors={errors} onFieldChange={handleCompanyFieldChange} />
+
+          <AddressSection
+            address={formData.address}
+            errors={errors}
+            onAddressSelect={handleAddressSelect}
+            onAddressFieldChange={handleAddressFieldChange}
+            onPostalCodeChange={handlePostalCodeChange}
           />
 
           <RegisterFormActions isLoading={isLoading} />
