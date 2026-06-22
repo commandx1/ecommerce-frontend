@@ -55,7 +55,7 @@ export async function searchPublicProducts(query: string, page = 0, size = 20): 
       method: "GET",
       url: "/api/products/public-search",
       params: {
-        Search: q,
+        search: q,
         page,
         size,
       },
