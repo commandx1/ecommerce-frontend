@@ -29,6 +29,16 @@ interface OrderExpandedContentProps {
   summary: BuyerOrderViewModel
 }
 
+function getItemAccentClasses(statusValue: string | undefined, cancelledByCustomer: boolean, cancelledBySeller: boolean): string {
+  if (cancelledByCustomer || cancelledBySeller) return 'border-l-danger bg-danger/[0.03]'
+  const s = (statusValue ?? '').toUpperCase()
+  if (s.includes('REJECT')) return 'border-l-danger bg-danger/[0.03]'
+  if (s === 'DELIVERED') return 'border-l-success bg-success/[0.03]'
+  if (s.includes('RETURN')) return 'border-l-brand bg-brand/[0.03]'
+  if (s.includes('SHIP') || s.includes('TRANSIT')) return 'border-l-brand bg-brand/[0.03]'
+  return 'border-l-border-strong/50'
+}
+
 export default function OrderExpandedContent({ order, summary }: OrderExpandedContentProps) {
   const { cancelingItemId, cancelingSellerKey, reorderingItemId } = useBuyerOrdersTableSelector((state) => ({
     cancelingItemId: state.cancelingItemId,
@@ -105,23 +115,24 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                       return (
                         <div
                           key={item.id}
-                          className="rounded-[8px] border border-border-soft bg-surface-muted/30 p-3 transition-colors hover:border-border-soft"
+                          className={`rounded-[8px] border border-border-soft border-l-4 ${getItemAccentClasses(metadataStatusValue, Boolean(item.cancelledByCustomer), Boolean(item.cancelledBySeller))} p-4 transition-all hover:shadow-sm`}
                         >
-                          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
-                            <div className="flex items-start gap-4">
-                              <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-surface-elevated shadow-sm">
-                                <ProductImageWithFallback
-                                  src={
-                                    getFullImageUrl(item.productCoverPhotoPath) || "/dentypro-product-placeholder.png"
-                                  }
-                                  alt={item.productName}
-                                  width={48}
-                                  height={48}
-                                  className="h-full w-full object-cover"
-                                />
-                              </div>
-                              <div className="relative h-full min-w-0 flex-1">
-                                <p className="max-w-96 mb-2 text-sm font-medium text-text-primary">
+                          {/* Product header: image + name + status */}
+                          <div className="flex items-start gap-3">
+                            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md bg-surface-elevated shadow-sm ring-1 ring-border-soft/50">
+                              <ProductImageWithFallback
+                                src={
+                                  getFullImageUrl(item.productCoverPhotoPath) || "/dentypro-product-placeholder.png"
+                                }
+                                alt={item.productName}
+                                width={56}
+                                height={56}
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start justify-between gap-3">
+                                <p className="text-sm font-semibold leading-snug text-text-primary">
                                   {productHref ? (
                                     <Link
                                       href={productHref}
@@ -135,41 +146,39 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                                     item.productName
                                   )}
                                 </p>
-                                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-muted">
-                                  <span className="rounded bg-surface-muted px-2 py-0.5">
-                                    Qty: {item.quantity} unit{item.quantity > 1 ? "s" : ""}
+                                {!item.cancelledByCustomer && !item.cancelledBySeller ? (
+                                  <span
+                                    className={`mt-0.5 shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${getOrderItemStatusTagClass(metadataStatusValue)}`}
+                                  >
+                                    {metadataStatusLabel}
                                   </span>
-                                  {!item.cancelledByCustomer && !item.cancelledBySeller ? (
-                                    <>
-                                      <span>•</span>
-                                      <span
-                                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${getOrderItemStatusTagClass(metadataStatusValue)}`}
-                                      >
-                                        {metadataStatusLabel}
-                                      </span>
-                                    </>
-                                  ) : null}
-                                  <span>•</span>
-                                  <span className="font-semibold text-text-primary">
-                                    {item.price * item.quantity === 0
-                                      ? "FREE"
-                                      : formatCurrency(item.price * item.quantity)}
-                                  </span>
-                                  {item.quantity > 1 ? (
-                                    <span className="text-[11px] text-text-muted">
-                                      ({formatCurrency(item.price)} each)
-                                    </span>
-                                  ) : null}
-                                  <span>•</span>
-                                  {item.shipmentFreeBySeller ? (
-                                    <span className="font-semibold text-success">Free Shipping</span>
-                                  ) : (
-                                    <span className="font-semibold text-text-secondary">
-                                      Shipment: {formatCurrency(getOrderItemShipmentFee(item))}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="absolute bottom-0 left-0 flex w-full flex-wrap items-center gap-2 border-t border-border-soft pt-3">
+                                ) : null}
+                              </div>
+                              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-muted">
+                                <span className="rounded bg-surface-muted px-1.5 py-0.5 font-medium">
+                                  {item.quantity} unit{item.quantity > 1 ? "s" : ""}
+                                </span>
+                                <span className="text-border-strong">·</span>
+                                <span className="font-semibold text-text-primary">
+                                  {item.price * item.quantity === 0
+                                    ? "FREE"
+                                    : formatCurrency(item.price * item.quantity)}
+                                </span>
+                                {item.quantity > 1 ? (
+                                  <span className="text-[11px]">({formatCurrency(item.price)} each)</span>
+                                ) : null}
+                                <span className="text-border-strong">·</span>
+                                {item.shipmentFreeBySeller ? (
+                                  <span className="font-medium text-success">Free Shipping</span>
+                                ) : (
+                                  <span>Shipment: {formatCurrency(getOrderItemShipmentFee(item))}</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="mt-3 flex w-full flex-wrap items-center gap-2 border-t border-border-soft pt-3">
                                   <Button
                                     type="button"
                                     variant="unstyled"
@@ -250,15 +259,11 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                                       Request Return
                                     </Button>
                                   ) : null}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="rounded-[8px] border border-border-soft bg-surface-elevated p-3">
-                              <FulfillmentTimeline
-                                item={item}
-                                orderDate={summary.orderDate}
-                              />
-                            </div>
+                          </div>
+
+                          {/* Timeline — no extra card border, just a separator */}
+                          <div className="mt-3 border-t border-border-soft pt-3">
+                            <FulfillmentTimeline item={item} orderDate={summary.orderDate} />
                           </div>
                         </div>
                       )

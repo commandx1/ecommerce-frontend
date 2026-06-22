@@ -1,12 +1,11 @@
 "use client"
 
 import { CircleHelp, LucideTimer } from "lucide-react"
-import { motion, useReducedMotion } from "motion/react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { HorizontalTimeline } from "@/components/ui/horizontal-timeline"
+import type { HorizontalTimelineStep } from "@/components/ui/horizontal-timeline"
 import {
   formatDateOnly,
-  getTimelineDotClass,
-  getTimelineLabelClass,
   resolveOrderItemFulfillmentState,
 } from "../lib/order-view-utils"
 
@@ -30,8 +29,33 @@ interface FulfillmentTimelineProps {
   orderDate: string
 }
 
+function ReturnReasonTooltip({ reason, variant }: { reason: string; variant: "return" | "reject" }) {
+  const isReturn = variant === "return"
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          className={`inline-flex h-4 w-4 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 ${isReturn ? "text-brand/85 hover:text-brand focus-visible:ring-brand/35" : "text-danger/90 hover:text-danger focus-visible:ring-danger/35"}`}
+          aria-label={isReturn ? "Show return reason" : "Show reject reason"}
+        >
+          <CircleHelp className="h-3.5 w-3.5" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        className={isReturn ? "border-brand/60 bg-background shadow-lg" : "border-danger/60 bg-background shadow-lg"}
+      >
+        <p className={`text-[11px] font-semibold ${isReturn ? "text-brand" : "text-danger"}`}>
+          {isReturn ? "Return Reason" : "Reject Reason"}
+        </p>
+        <p className={`mt-0.5 text-[11px] ${isReturn ? "text-brand/90" : "text-danger/90"}`}>{reason}</p>
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
 export default function FulfillmentTimeline({ item, orderDate }: FulfillmentTimelineProps) {
-  const prefersReducedMotion = useReducedMotion()
   const timelineState = resolveOrderItemFulfillmentState(item)
   const normalizedItemStatus = item.status.toUpperCase()
   const deliveredDate = item.deliveredDate ? formatDateOnly(item.deliveredDate) : null
@@ -52,10 +76,6 @@ export default function FulfillmentTimeline({ item, orderDate }: FulfillmentTime
     hasReturnFlow && !cancellationLabel
       ? { processing: "done", shipping: "done", delivered: "done" }
       : timelineState
-  const shippingDotClass = isCancelledDuringShipping ? "bg-danger" : getTimelineDotClass(effectiveTimelineState.shipping)
-  const shippingLabelClass = isCancelledDuringShipping ? "text-danger" : getTimelineLabelClass(effectiveTimelineState.shipping)
-  const cancellationDotClass = "bg-danger"
-  const cancellationLabelClass = "text-danger"
   const isReturnRejected =
     returnRefundStatus === "REJECTED_BY_SELLER" ||
     returnRefundStatus === "REJECTED_BY_STRIPE" ||
@@ -63,195 +83,129 @@ export default function FulfillmentTimeline({ item, orderDate }: FulfillmentTime
   const isReturnApproved = returnRefundStatus === "APPROVED" || normalizedItemStatus === "RETURNED"
   const isReturned = normalizedItemStatus === "RETURNED"
   const isReturnDelivered = returnRefundStatus === "DELIVERED" || isReturnApproved
-  const returnCreatedDotClass = "bg-brand"
-  const returnCreatedLabelClass = "text-brand"
-  const returnShipmentDotClass = isReturnRejected
-    ? "bg-danger"
-    : isReturnDelivered
-      ? "bg-success"
-      : "bg-border-soft"
-  const returnShipmentLabelClass = isReturnRejected
-    ? "text-danger"
-    : isReturnDelivered
-      ? "text-success"
-      : "text-text-muted"
-  const returnShipmentStatusLabel = "DELIVERED"
-  const showReturnShipmentStep = isReturnDelivered
-  const decisionDotClass = isReturnApproved ? "bg-success" : "bg-danger"
-  const decisionLabelClass = isReturnApproved ? "text-success" : "text-danger"
   const showDecisionStep = isReturnApproved || isReturnRejected
-  const returnedDotClass = "bg-success"
-  const returnedLabelClass = "text-success"
-  let timelineStepIndex = 0
 
-  const getTimelineStepMotionProps = () => {
-    if (prefersReducedMotion) return {}
+  const steps: HorizontalTimelineStep[] = []
 
-    const expandPanelDuration = 0.32
-    const expandPanelBuffer = 0.03
-    const delay = expandPanelDuration + expandPanelBuffer + timelineStepIndex * 0.07
-    timelineStepIndex += 1
+  // Step 1: Order Placed
+  steps.push({
+    label: "Placed",
+    date: orderDate,
+    state: "done",
+  })
 
-    return {
-      initial: { opacity: 0, y: -10 },
-      animate: { opacity: 1, y: 0 },
-      transition: {
-        duration: 0.24,
-        delay,
-        ease: [0.22, 1, 0.36, 1] as const,
-      },
+  // Step 2: Processing
+  steps.push({
+    label: "Processing",
+    state:
+      effectiveTimelineState.processing === "done"
+        ? "done"
+        : effectiveTimelineState.processing === "active"
+          ? "active"
+          : "pending",
+  })
+
+  // Cancellation before shipping
+  if (cancellationLabel && !isCancelledDuringShipping) {
+    steps.push({
+      label: cancellationLabel,
+      date: cancellationDate ?? undefined,
+      state: "error",
+    })
+    return (
+      <div>
+        <div className="mb-2.5 flex items-center gap-1.5 text-xs font-semibold text-text-secondary">
+          <LucideTimer className="h-3.5 w-3.5 text-success" />
+          Fulfillment
+        </div>
+        <HorizontalTimeline steps={steps} />
+      </div>
+    )
+  }
+
+  // Step 3: Shipping
+  steps.push({
+    label: "Shipping",
+    state: isCancelledDuringShipping
+      ? "done"
+      : effectiveTimelineState.shipping === "done"
+        ? "done"
+        : effectiveTimelineState.shipping === "active"
+          ? "active"
+          : "pending",
+  })
+
+  // Cancellation during shipping
+  if (cancellationLabel && isCancelledDuringShipping) {
+    steps.push({
+      label: cancellationLabel,
+      date: cancellationDate ?? undefined,
+      state: "error",
+    })
+    return (
+      <div>
+        <div className="mb-2.5 flex items-center gap-1.5 text-xs font-semibold text-text-secondary">
+          <LucideTimer className="h-3.5 w-3.5 text-success" />
+          Fulfillment
+        </div>
+        <HorizontalTimeline steps={steps} />
+      </div>
+    )
+  }
+
+  // Step 4: Delivered
+  steps.push({
+    label: "Delivered",
+    date: deliveredDate ?? undefined,
+    state:
+      effectiveTimelineState.delivered === "done"
+        ? "done"
+        : effectiveTimelineState.delivered === "active"
+          ? "active"
+          : "pending",
+  })
+
+  // Return flow steps
+  if (hasReturnFlow) {
+    steps.push({
+      label: "Return",
+      date: returnDate ?? undefined,
+      state: "done",
+      extra: returnReason ? <ReturnReasonTooltip reason={returnReason} variant="return" /> : null,
+    })
+
+    if (isReturnDelivered) {
+      steps.push({
+        label: "Return Ship.",
+        sublabel: "Delivered",
+        state: isReturnRejected ? "error" : "done",
+      })
+    }
+
+    if (showDecisionStep) {
+      steps.push({
+        label: isReturnApproved ? "Approved" : "Rejected",
+        date: !isReturnApproved && returnRejectDate ? returnRejectDate : undefined,
+        state: isReturnApproved ? "done" : "error",
+        extra:
+          !isReturnApproved && returnRejectReason ? (
+            <ReturnReasonTooltip reason={returnRejectReason} variant="reject" />
+          ) : null,
+      })
+    }
+
+    if (isReturned) {
+      steps.push({ label: "Returned", state: "done" })
     }
   }
 
   return (
-    <>
-      <div className="mb-2 flex items-start gap-2">
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-text-secondary">
-          <LucideTimer className="h-3.5 w-3.5 text-success" />
-          Fulfillment
-        </div>
+    <div>
+      <div className="mb-2.5 flex items-center gap-1.5 text-xs font-semibold text-text-secondary">
+        <LucideTimer className="h-3.5 w-3.5 text-success" />
+        Fulfillment
       </div>
-      <div className="relative space-y-2.5 ps-0.5 before:absolute before:top-2 before:bottom-2 before:left-[7px] before:w-0.5 before:bg-border-soft before:content-['']">
-        <motion.div {...getTimelineStepMotionProps()} className="relative z-10 flex items-start gap-2.5">
-          <div className="h-3.5 w-3.5 rounded-full border-2 border-surface-elevated bg-success shadow-sm" />
-          <div>
-            <p className="text-xs font-semibold text-success">Order Placed</p>
-            <p className="text-[11px] text-text-muted">{orderDate}</p>
-          </div>
-        </motion.div>
-        <motion.div {...getTimelineStepMotionProps()} className="relative z-10 flex items-start gap-2.5">
-          <div
-            className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${getTimelineDotClass(effectiveTimelineState.processing)}`}
-          />
-          <p className={`text-xs font-medium ${getTimelineLabelClass(effectiveTimelineState.processing)}`}>Processing</p>
-        </motion.div>
-        {cancellationLabel && !isCancelledDuringShipping ? (
-          <motion.div {...getTimelineStepMotionProps()} className="relative z-10 flex items-start gap-2.5">
-            <div
-              className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${cancellationDotClass}`}
-            />
-            <div>
-              <p className={`text-xs font-medium ${cancellationLabelClass}`}>{cancellationLabel}</p>
-              {cancellationDate && cancellationDate !== "-" ? (
-                <p className="text-[11px] text-text-muted">{cancellationDate}</p>
-              ) : null}
-            </div>
-          </motion.div>
-        ) : null}
-        {!cancellationLabel || isCancelledDuringShipping ? (
-          <motion.div {...getTimelineStepMotionProps()} className="relative z-10 flex items-start gap-2.5">
-            <div
-              className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${shippingDotClass}`}
-            />
-            <p className={`text-xs font-medium ${shippingLabelClass}`}>Shipping</p>
-          </motion.div>
-        ) : null}
-        {cancellationLabel && isCancelledDuringShipping ? (
-          <motion.div {...getTimelineStepMotionProps()} className="relative z-10 flex items-start gap-2.5">
-            <div
-              className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${cancellationDotClass}`}
-            />
-            <div>
-              <p className={`text-xs font-medium ${cancellationLabelClass}`}>{cancellationLabel}</p>
-              {cancellationDate && cancellationDate !== "-" ? (
-                <p className="text-[11px] text-text-muted">{cancellationDate}</p>
-              ) : null}
-            </div>
-          </motion.div>
-        ) : null}
-        {!cancellationLabel ? (
-          <>
-            <motion.div {...getTimelineStepMotionProps()} className="relative z-10 flex items-start gap-2.5">
-              <div
-                className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${getTimelineDotClass(effectiveTimelineState.delivered)}`}
-              />
-              <div>
-                <p className={`text-xs font-medium ${getTimelineLabelClass(effectiveTimelineState.delivered)}`}>Delivered</p>
-                {deliveredDate && deliveredDate !== "-" ? <p className="text-[11px] text-text-muted">{deliveredDate}</p> : null}
-              </div>
-            </motion.div>
-            {hasReturnFlow ? (
-              <motion.div {...getTimelineStepMotionProps()} className="relative z-10 flex items-start gap-2.5">
-                <div
-                  className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${returnCreatedDotClass}`}
-                />
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <p className={`text-xs font-medium ${returnCreatedLabelClass}`}>Return Created</p>
-                    {returnReason ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            className="inline-flex h-4 w-4 items-center justify-center rounded-full text-brand/85 hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35"
-                            aria-label="Show return reason"
-                          >
-                            <CircleHelp className="h-3.5 w-3.5" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="border-brand/60 bg-background text-primary-foreground shadow-lg">
-                          <p className="text-[11px] font-semibold text-brand">Return Reason</p>
-                          <p className="mt-0.5 text-[11px] text-brand/90">{returnReason}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    ) : null}
-                  </div>
-                  {returnDate && returnDate !== "-" ? <p className="text-[11px] text-text-muted">{returnDate}</p> : null}
-                </div>
-              </motion.div>
-            ) : null}
-            {showReturnShipmentStep ? (
-              <motion.div {...getTimelineStepMotionProps()} className="relative z-10 flex items-start gap-2.5">
-                <div
-                  className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${returnShipmentDotClass}`}
-                />
-                <div>
-                  <p className={`text-xs font-medium ${returnShipmentLabelClass}`}>Return Shipment</p>
-                  <p className={`text-[11px] font-medium ${returnShipmentLabelClass}`}>{returnShipmentStatusLabel}</p>
-                </div>
-              </motion.div>
-            ) : null}
-            {showDecisionStep ? (
-              <motion.div {...getTimelineStepMotionProps()} className="relative z-10 flex items-start gap-2.5">
-                <div className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${decisionDotClass}`} />
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <p className={`text-xs font-medium ${decisionLabelClass}`}>
-                      {isReturnApproved ? "Return Approved" : "Return Rejected"}
-                    </p>
-                    {!isReturnApproved && returnRejectReason ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            className="inline-flex h-4 w-4 items-center justify-center rounded-full text-danger/90 hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/35"
-                            aria-label="Show reject reason"
-                          >
-                            <CircleHelp className="h-3.5 w-3.5" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="border-danger/60 bg-background text-danger shadow-lg">
-                          <p className="text-[11px] font-semibold text-danger">Reject Reason</p>
-                          <p className="mt-0.5 text-[11px] text-danger/90">{returnRejectReason}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    ) : null}
-                  </div>
-                  {!isReturnApproved && returnRejectDate && returnRejectDate !== "-" ? (
-                    <p className="text-[11px] text-text-muted">{returnRejectDate}</p>
-                  ) : null}
-                </div>
-              </motion.div>
-            ) : null}
-            {isReturned ? (
-              <motion.div {...getTimelineStepMotionProps()} className="relative z-10 flex items-start gap-2.5">
-                <div className={`h-3.5 w-3.5 rounded-full border-2 border-surface-elevated shadow-sm ${returnedDotClass}`} />
-                <p className={`text-xs font-medium ${returnedLabelClass}`}>Returned</p>
-              </motion.div>
-            ) : null}
-          </>
-        ) : null}
-      </div>
-    </>
+      <HorizontalTimeline steps={steps} />
+    </div>
   )
 }
