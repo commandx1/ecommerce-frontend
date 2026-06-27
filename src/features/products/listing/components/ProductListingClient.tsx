@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
-import type { AttributeGroup, CompanyOption, FilterOption } from "@/lib/api/public-products"
+import type { AttributeGroup, FilterOption, VendorOption } from "@/lib/api/public-products"
 import type { SortValue } from "../server/parse-listing-search-params"
 import { createProductsUrlBuilder } from "./listing/buildProductsUrl"
 import MobileFilters from "./listing/MobileFilters"
@@ -38,7 +38,7 @@ interface ProductListingClientProps {
   brands: FilterOption[]
   manufacturers: FilterOption[]
   categories: FilterOption[]
-  companies: CompanyOption[]
+  vendors: VendorOption[]
   attributeGroups: AttributeGroup[]
   currentPage: number
   pageSize: number
@@ -61,7 +61,7 @@ const ProductListingClient = ({
   brands,
   manufacturers,
   categories,
-  companies,
+  vendors,
   attributeGroups,
   currentPage,
   pageSize,
@@ -96,7 +96,7 @@ const ProductListingClient = ({
     <FilterNavigationProvider>
     <div className="min-h-screen bg-canvas font-sans">
       <Suspense>
-        <MobileFilters brands={brands} manufacturers={manufacturers} categories={categories} companies={companies} attributeGroups={attributeGroups} />
+        <MobileFilters brands={brands} manufacturers={manufacturers} categories={categories} vendors={vendors} attributeGroups={attributeGroups} />
       </Suspense>
       <ProductListingBreadcrumb />
       <ProductListingHeader totalElements={totalElements} />
@@ -110,7 +110,7 @@ const ProductListingClient = ({
               className="sticky top-42 overflow-y-auto rounded-[1.75rem] border border-border-soft bg-surface-elevated shadow-soft"
             >
               <Suspense>
-                <ProductFiltersPanel brands={brands} manufacturers={manufacturers} categories={categories} companies={companies} attributeGroups={attributeGroups} />
+                <ProductFiltersPanel brands={brands} manufacturers={manufacturers} categories={categories} vendors={vendors} attributeGroups={attributeGroups} />
               </Suspense>
             </div>
           </aside>

@@ -1,10 +1,10 @@
 "use client"
 
-import type { AttributeGroup, CompanyOption, FilterOption } from "@/lib/api/public-products"
+import type { AttributeGroup, FilterOption, VendorOption } from "@/lib/api/public-products"
 import AttributeFilter from "../AttributeFilter"
 import BrandFilter from "../BrandFilter"
 import CategoryFilter from "../CategoryFilter"
-import CompanyFilter from "../CompanyFilter"
+import VendorFilter from "../VendorFilter"
 import ManufacturerFilter from "../ManufacturerFilter"
 import RatingFilter from "../RatingFilter"
 import { useProductFiltersNavigation } from "../../hooks/useProductFiltersNavigation"
@@ -16,17 +16,17 @@ interface ProductFiltersPanelProps {
   brands: FilterOption[]
   manufacturers: FilterOption[]
   categories: FilterOption[]
-  companies: CompanyOption[]
+  vendors: VendorOption[]
   attributeGroups: AttributeGroup[]
 }
 
-const ProductFiltersPanel = ({ brands, manufacturers, categories, companies, attributeGroups }: ProductFiltersPanelProps) => {
+const ProductFiltersPanel = ({ brands, manufacturers, categories, vendors, attributeGroups }: ProductFiltersPanelProps) => {
   return (
-    <FiltersPanelContent brands={brands} manufacturers={manufacturers} categories={categories} companies={companies} attributeGroups={attributeGroups} />
+    <FiltersPanelContent brands={brands} manufacturers={manufacturers} categories={categories} vendors={vendors} attributeGroups={attributeGroups} />
   )
 }
 
-function FiltersPanelContent({ brands, manufacturers, categories, companies, attributeGroups }: ProductFiltersPanelProps) {
+function FiltersPanelContent({ brands, manufacturers, categories, vendors, attributeGroups }: ProductFiltersPanelProps) {
   const { isPending } = useProductFiltersNavigation()
 
   return (
@@ -34,11 +34,11 @@ function FiltersPanelContent({ brands, manufacturers, categories, companies, att
       className="transition-opacity duration-200"
       style={{ opacity: isPending ? 0.5 : 1, pointerEvents: isPending ? "none" : undefined }}
     >
-      <ActiveFilters companies={companies} />
+      <ActiveFilters vendors={vendors} />
       <CategoryFilter categories={categories} />
       <BrandFilter brands={brands} />
       <ManufacturerFilter manufacturers={manufacturers} />
-      <CompanyFilter companies={companies} />
+      <VendorFilter vendors={vendors} />
       <PriceRangeFilter />
       <AvailabilityFilter />
       <RatingFilter />

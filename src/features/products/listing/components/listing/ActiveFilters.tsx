@@ -1,20 +1,20 @@
 "use client"
 
 import { X } from "lucide-react"
-import type { CompanyOption } from "@/lib/api/public-products"
+import type { VendorOption } from "@/lib/api/public-products"
 import { useProductFiltersNavigation } from "../../hooks/useProductFiltersNavigation"
 
 interface ActiveFiltersProps {
-  companies: CompanyOption[]
+  vendors: VendorOption[]
 }
 
-const ActiveFilters = ({ companies }: ActiveFiltersProps) => {
+const ActiveFilters = ({ vendors }: ActiveFiltersProps) => {
   const {
     navigate,
     currentBrands,
     currentManufacturers,
     currentCategories,
-    currentCompanyId,
+    currentVendors,
     currentMinPrice,
     currentMaxPrice,
     currentMinRating,
@@ -37,15 +37,11 @@ const ActiveFilters = ({ companies }: ActiveFiltersProps) => {
   const groups = [
     {
       label: "Vendor",
-      chips: currentCompanyId
-        ? [
-            {
-              key: `company-${currentCompanyId}`,
-              text: companies.find((c) => c.id === currentCompanyId)?.name ?? currentCompanyId,
-              onRemove: () => navigate({ companyId: null }),
-            },
-          ]
-        : [],
+      chips: currentVendors.map((vendorId) => ({
+        key: `vendor-${vendorId}`,
+        text: vendors.find((v) => v.id === vendorId)?.name ?? vendorId,
+        onRemove: () => navigate({ vendors: currentVendors.filter((v) => v !== vendorId) }),
+      })),
     },
     {
       label: "Category",
