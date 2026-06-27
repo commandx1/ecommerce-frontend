@@ -53,18 +53,20 @@ export default function SupplierDirectoryCard({
 
       <div className="flex items-center gap-3">
         <Link
-          href={`/products?companyId=${supplier.id}`}
+          href={`/products?vendors=${supplier.id}`}
           className="flex-1 rounded-full bg-brand px-4 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-brand-strong"
         >
           View {supplier.productCount > 0 ? `${numericFormatter.format(supplier.productCount)} ` : ""}Products
         </Link>
-        <button
-          type="button"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border-soft text-text-secondary transition-colors hover:text-brand"
-          aria-label="Contact supplier"
-        >
-          <Mail className="h-4 w-4" />
-        </button>
+        {supplier.email && (
+          <a
+            href={`mailto:${supplier.email}`}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border-soft text-text-secondary transition-colors hover:text-brand"
+            aria-label="Contact supplier"
+          >
+            <Mail className="h-4 w-4" />
+          </a>
+        )}
       </div>
     </article>
     </SpotlightCard>

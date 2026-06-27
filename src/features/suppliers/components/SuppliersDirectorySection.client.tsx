@@ -10,9 +10,9 @@ import {
   supplierTestimonials,
   supplierTrustItems,
 } from "@/features/suppliers/suppliersPageData"
-import { type VendorListParams, addVendorFavorite, getCompanies, getMyFavoriteVendorIds, removeVendorFavorite } from "@/lib/api/vendors"
+import { type VendorListParams, addVendorFavorite, getVendors, getMyFavoriteVendorIds, removeVendorFavorite } from "@/lib/api/vendors"
 import { showToast } from "@/components/ui/Toast"
-import type { CompanyListItem } from "@/lib/api/vendors"
+import type { VendorListItem } from "@/lib/api/vendors"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuthStore } from "@/stores/authStore"
 import { cn } from "@/lib/utils"
@@ -39,16 +39,17 @@ function toApiMinRating(rating: RatingOption): number | undefined {
   return undefined
 }
 
-function companyToSupplierItem(company: CompanyListItem) {
+function vendorToSupplierItem(vendor: VendorListItem) {
   return {
-    id: company.id,
-    name: company.name,
-    slug: company.slug,
-    companyPhoto: company.companyPhoto,
-    about: "",
-    rating: company.averageRating,
-    reviewCount: company.reviewCount,
-    productCount: company.productCount,
+    id: vendor.id,
+    name: vendor.companyName ?? vendor.name,
+    slug: vendor.slug,
+    companyPhoto: vendor.companyPhoto,
+    about: vendor.description ?? "",
+    email: vendor.email,
+    rating: vendor.averageRating,
+    reviewCount: vendor.reviewCount,
+    productCount: vendor.productCount,
   }
 }
 
@@ -59,7 +60,7 @@ export default function SuppliersDirectorySection() {
   const [selectedSort, setSelectedSort] = useState<SortOption>("Highest Rated")
   const [currentPage, setCurrentPage] = useState(1)
 
-  const [vendors, setVendors] = useState<CompanyListItem[]>([])
+  const [vendors, setVendors] = useState<VendorListItem[]>([])
   const [totalCount, setTotalCount] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
@@ -111,7 +112,7 @@ export default function SuppliersDirectorySection() {
     const controller = new AbortController()
     setIsLoading(true)
     setHasError(false)
-    getCompanies({
+    getVendors({
       page: currentPage - 1,
       size: ITEMS_PER_PAGE,
       sort: toApiSort(selectedSort),
@@ -119,9 +120,9 @@ export default function SuppliersDirectorySection() {
       signal: controller.signal,
     })
       .then((result) => {
-        setVendors(result.companies)
-        setTotalCount(result.totalCount)
-        setTotalPages(result.totalPages)
+        setVendors(result.vendors ?? [])
+        setTotalCount(result.totalCount ?? 0)
+        setTotalPages(result.totalPages ?? 1)
       })
       .catch(() => {
         if (!controller.signal.aborted) setHasError(true)
@@ -133,7 +134,7 @@ export default function SuppliersDirectorySection() {
   }, [currentPage, selectedSort, selectedRating])
 
 
-  const supplierItems = useMemo(() => vendors.map(companyToSupplierItem), [vendors])
+  const supplierItems = useMemo(() => vendors.map(vendorToSupplierItem), [vendors])
 
   const currentStart = totalCount === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1
   const currentEnd = Math.min(currentPage * ITEMS_PER_PAGE, totalCount)
