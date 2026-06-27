@@ -22,8 +22,19 @@ const CANCELABLE_ORDER_ITEM_STATUS_SET = new Set<string>([
   ...Object.values(ShippoCancelableStatus),
 ])
 
+const PRE_SHIPPING_CANCELABLE_STATUS_SET = new Set<string>([
+  UberCancelableStatus.PENDING,
+  UberCancelableStatus.WAITING_FOR_UBER_DIRECT,
+  ShippoCancelableStatus.UNKNOWN,
+  ShippoCancelableStatus.WAITING_FOR_SHIPMENT,
+])
+
 export function isCancelableOrderItemStatus(status: string): boolean {
   return CANCELABLE_ORDER_ITEM_STATUS_SET.has(status)
+}
+
+export function isPreShippingCancelableStatus(status: string): boolean {
+  return PRE_SHIPPING_CANCELABLE_STATUS_SET.has(status)
 }
 
 export function isWarningOrderItemStatus(status: string): boolean {

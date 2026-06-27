@@ -12,6 +12,7 @@ export interface SupplierDirectoryItem {
   reviewCount: number
   productCount: number
   about: string
+  email?: string | null
   deliveryMethods?: string[]
   isFavorite?: boolean
 }

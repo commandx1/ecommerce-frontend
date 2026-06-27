@@ -7,6 +7,10 @@ export interface VendorListItem {
   averageRating: number
   reviewCount: number
   productCount: number
+  companyName: string | null
+  description: string | null
+  companyPhoto: string | null
+  email: string | null
 }
 
 export interface VendorPageResponse {
