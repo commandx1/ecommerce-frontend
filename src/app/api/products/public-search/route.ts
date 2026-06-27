@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const size = searchParams.get("size") || "20"
 
     const queryParams = new URLSearchParams({
-      search,
+      Search: search,
       page,
       size,
     })
