@@ -61,14 +61,6 @@ export default function RegisterForm() {
             emailReadOnly={!!initialToken}
           />
 
-          <PasswordSection
-            password={formData.password}
-            confirmPassword={confirmPassword}
-            errors={errors}
-            onPasswordChange={handleChange}
-            onConfirmPasswordChange={handleConfirmPasswordChange}
-          />
-
           <CompanyInfoSection company={formData.company} errors={errors} onFieldChange={handleCompanyFieldChange} />
 
           <AddressSection
@@ -77,6 +69,14 @@ export default function RegisterForm() {
             onAddressSelect={handleAddressSelect}
             onAddressFieldChange={handleAddressFieldChange}
             onPostalCodeChange={handlePostalCodeChange}
+          />
+
+          <PasswordSection
+            password={formData.password}
+            confirmPassword={confirmPassword}
+            errors={errors}
+            onPasswordChange={handleChange}
+            onConfirmPasswordChange={handleConfirmPasswordChange}
           />
 
           <RegisterFormActions isLoading={isLoading} />
