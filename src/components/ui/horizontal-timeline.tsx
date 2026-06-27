@@ -24,7 +24,7 @@ function StepIndicator({ state }: { state: HorizontalTimelineStepState }) {
 
   if (state === "done") {
     return (
-      <div className={cn(base, "border-success bg-success text-white")}>
+      <div className={cn(base, "border-brand bg-brand text-white")}>
         <Check className="h-3.5 w-3.5" />
       </div>
     )
@@ -40,8 +40,8 @@ function StepIndicator({ state }: { state: HorizontalTimelineStepState }) {
 
   if (state === "active") {
     return (
-      <div className={cn(base, "border-brand bg-brand text-white")}>
-        <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
+      <div className={cn(base, "border-brand bg-brand/15 text-brand")}>
+        <span className="h-2 w-2 animate-pulse rounded-full bg-brand" />
       </div>
     )
   }
@@ -50,14 +50,14 @@ function StepIndicator({ state }: { state: HorizontalTimelineStepState }) {
 }
 
 function stepLabelClass(state: HorizontalTimelineStepState): string {
-  if (state === "done") return "text-success"
+  if (state === "done") return "text-brand"
   if (state === "error") return "text-danger"
   if (state === "active") return "text-brand"
   return "text-text-muted"
 }
 
 function separatorClass(state: HorizontalTimelineStepState): string {
-  if (state === "done") return "bg-success"
+  if (state === "done") return "bg-brand"
   if (state === "error") return "bg-danger"
   return "bg-border-soft"
 }
