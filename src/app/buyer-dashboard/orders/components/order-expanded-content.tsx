@@ -8,7 +8,7 @@ import AddressContactInfo from "@/features/checkout/components/AddressContactInf
 import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
 import type { BuyerOrder } from "@/lib/api/buyer-orders"
 import { getFullImageUrl } from "@/lib/api/products"
-import { isCancelableOrderItemStatus } from "@/lib/constants/order-item-status"
+import { isPreShippingCancelableStatus } from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useBuyerOrdersTableActions, useBuyerOrdersTableSelector } from "../context/buyer-orders-context"
 import {
@@ -30,13 +30,13 @@ interface OrderExpandedContentProps {
 }
 
 function getItemAccentClasses(statusValue: string | undefined, cancelledByCustomer: boolean, cancelledBySeller: boolean): string {
-  if (cancelledByCustomer || cancelledBySeller) return 'border-l-danger bg-danger/[0.03]'
+  if (cancelledByCustomer || cancelledBySeller) return 'border-l-danger bg-background'
   const s = (statusValue ?? '').toUpperCase()
-  if (s.includes('REJECT')) return 'border-l-danger bg-danger/[0.03]'
-  if (s === 'DELIVERED') return 'border-l-success bg-success/[0.03]'
-  if (s.includes('RETURN')) return 'border-l-brand bg-brand/[0.03]'
-  if (s.includes('SHIP') || s.includes('TRANSIT')) return 'border-l-brand bg-brand/[0.03]'
-  return 'border-l-border-strong/50'
+  if (s.includes('REJECT')) return 'border-l-danger bg-background'
+  if (s === 'DELIVERED') return 'border-l-success bg-background'
+  if (s.includes('RETURN')) return 'border-l-brand bg-background'
+  if (s.includes('SHIP') || s.includes('TRANSIT')) return 'border-l-brand bg-background'
+  return 'border-l-border-strong/50 bg-background'
 }
 
 export default function OrderExpandedContent({ order, summary }: OrderExpandedContentProps) {
@@ -65,7 +65,7 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
               const sellerTotal = group.orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
               const sellerItemCount = group.orderItems.reduce((sum, item) => sum + item.quantity, 0)
               const cancelableItemIds = group.orderItems
-                .filter((item) => isCancelableOrderItemStatus(item.status))
+                .filter((item) => isPreShippingCancelableStatus(item.status))
                 .map((item) => item.id)
               const hasCancelableItems = cancelableItemIds.length > 0
               const sellerKey = `${order.orderId}:${group.sellerId}`
@@ -190,12 +190,12 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                                       cancelingItemId === item.id ||
                                       isCancelingSellerGroup
                                     }
-                                    className="inline-flex items-center gap-1 rounded-[8px] bg-success px-2.5 py-1 text-[11px] font-semibold text-primary-foreground hover:bg-success/80 disabled:opacity-70"
+                                    className="inline-flex items-center gap-1 rounded-[8px] bg-accent-strong px-2.5 py-1 text-[11px] font-semibold text-neutral-800 hover:brightness-95 disabled:opacity-70"
                                   >
                                     <RotateCcw className="h-3 w-3" />
                                     {reorderingItemId === item.userProductId ? "Adding..." : "Reorder"}
                                   </Button>
-                                  {isCancelableOrderItemStatus(item.status) ? (
+                                  {isPreShippingCancelableStatus(item.status) ? (
                                     <Button
                                       type="button"
                                       variant="unstyled"
@@ -224,7 +224,7 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                                       onClick={() =>
                                         setTrackingModalLinks({ title: "Tracking links", links: trackingLinks })
                                       }
-                                      className="inline-flex items-center gap-1 rounded-[8px] border border-success/40 bg-success/15 px-2.5 py-1 text-[11px] font-semibold text-success hover:bg-success/25"
+                                      className="inline-flex items-center gap-1 rounded-[8px] border border-border-strong/70 bg-transparent px-2.5 py-1 text-[11px] font-semibold text-text-secondary hover:bg-surface-muted hover:text-text-primary"
                                     >
                                       <ExternalLink className="h-3 w-3" />
                                       Track
@@ -237,7 +237,7 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                                       onClick={() =>
                                         setTrackingModalLinks({ title: "Shipping labels", links: shippingLinks })
                                       }
-                                      className="inline-flex items-center gap-1 rounded-[8px] border border-brand/40 bg-brand/12 px-2.5 py-1 text-[11px] font-semibold text-brand hover:bg-brand/20"
+                                      className="inline-flex items-center gap-1 rounded-[8px] border border-border-strong/70 bg-transparent px-2.5 py-1 text-[11px] font-semibold text-text-secondary hover:bg-surface-muted hover:text-text-primary"
                                     >
                                       <FileText className="h-3 w-3" />
                                       Shipping Label
