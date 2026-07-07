@@ -4,7 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, Download, Edit, Loader2, Search, Trash2, Upload } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useId, useRef, useState } from "react"
 import AnimatedTabs from "@/components/ui/animated-tabs"
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getFullImageUrl, type Product, productsAPI, type UserProduct, type UserProductSortBy } from "@/lib/api/products"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
+import ImportDocumentsModal from "./components/ImportDocumentsModal"
 import ProductStatsCards, { type FilterType } from "./components/ProductStatsCards"
 
 // Debounce hook
@@ -98,9 +99,12 @@ const PERIOD_TAB_TO_DAY_COUNT: Record<PeriodTab, number> = {
   "12 months": 365,
 }
 
+const VALID_FILTER_TYPES: FilterType[] = ["ALL", "TOTAL", "ACTIVE", "INACTIVE", "OUT_OF_STOCK", "LOW_STOCK"]
+
 export default function ProductsPage() {
   const id = useId()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { accessToken, isAuthenticated } = useAuthStore()
   const [products, setProducts] = useState<ProductWithDetails[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -110,7 +114,11 @@ export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [sortField, setSortField] = useState<UserProductSortBy | null>(null)
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
-  const [selectedFilter, setSelectedFilter] = useState<FilterType>("TOTAL")
+  const [selectedFilter, setSelectedFilter] = useState<FilterType>(() => {
+    const filterParam = searchParams.get("filter")
+    return VALID_FILTER_TYPES.includes(filterParam as FilterType) ? (filterParam as FilterType) : "TOTAL"
+  })
+  const [selectedUserProductId] = useState<string | null>(() => searchParams.get("userProductId"))
   const [selectedPeriodTab, setSelectedPeriodTab] = useState<PeriodTab>("3 months")
   const [pageSize, setPageSize] = useState<number>(25)
   const [currentPage, setCurrentPage] = useState<number>(0)
@@ -120,6 +128,7 @@ export default function ProductsPage() {
   const [editingDraft, setEditingDraft] = useState<{ price: string; stock: string; active: ProductStatusDraft } | null>(null)
   const [savingProductId, setSavingProductId] = useState<string | null>(null)
   const [imageFallbacks, setImageFallbacks] = useState<Record<string, boolean>>({})
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; productId: string | null; productName: string }>({
     isOpen: false,
     productId: null,
@@ -160,6 +169,7 @@ export default function ProductsPage() {
           activeSortDir,
           debouncedSearchQuery,
           howManySoldDay,
+          selectedUserProductId ?? undefined,
         )
 
         const userProducts = filterResponse.content
@@ -270,6 +280,7 @@ export default function ProductsPage() {
     isAuthenticated,
     accessToken,
     selectedFilter,
+    selectedUserProductId,
     sortField,
     sortDirection,
     pageSize,
@@ -729,9 +740,14 @@ export default function ProductsPage() {
               <Download className="mr-2 w-4 h-4" />
               Export
             </Button>
-            <Button type="button" variant="secondary" className="rounded-lg px-4 font-medium dark:text-neutral-800">
+            <Button
+              type="button"
+              variant="secondary"
+              className="rounded-lg px-4 font-medium dark:text-neutral-800"
+              onClick={() => setIsImportModalOpen(true)}
+            >
               <Upload className="mr-2 w-4 h-4" />
-              Import CSV
+              Import Products
             </Button>
             <Link
               href="/vendor-dashboard/products/create"
@@ -884,6 +900,8 @@ export default function ProductsPage() {
           </div>
         </div>
       </section>
+
+      <ImportDocumentsModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
 
       <ConfirmationModal
         isOpen={deleteModal.isOpen}

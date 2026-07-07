@@ -594,6 +594,7 @@ class ProductsAPI {
     sortDir?: "asc" | "desc",
     search?: string,
     howManySoldDay?: number,
+    userProductId?: string,
   ): Promise<UserProductsFilterResponse> {
     const response = await apiRequest.requestResponse<unknown>({
       client: "app",
@@ -609,6 +610,7 @@ class ProductsAPI {
         ...(sortDir !== undefined ? { sortDir } : {}),
         ...(search !== undefined ? { search: search || "" } : {}),
         ...(howManySoldDay !== undefined ? { howManySoldDay } : {}),
+        ...(userProductId !== undefined ? { userProductId } : {}),
       },
       validateStatus: () => true,
       fallbackMessage: "Failed to filter user products",
