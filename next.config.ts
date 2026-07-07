@@ -1,3 +1,4 @@
+import path from "node:path"
 import type { NextConfig } from "next"
 
 const backendBaseUrl = process.env.BACKEND_URL ?? "http://localhost:8080"
@@ -5,12 +6,20 @@ const backendHostname = new URL(backendBaseUrl).hostname
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  turbopack: {
+    root: path.join(__dirname),
+  },
   images: {
     unoptimized: false,
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "storage.googleapis.com",
+        hostname: "**",
+        pathname: "/**",
+      },
+      {
+        protocol: "http",
+        hostname: "**",
         pathname: "/**",
       },
       {
