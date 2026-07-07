@@ -1,6 +1,7 @@
 "use client"
 
 import DashboardHeader, { type DashboardHeaderNavItem } from "@/components/layout/DashboardHeader"
+import VendorNotificationBell from "./VendorNotificationBell"
 
 const VENDOR_NAV_ITEMS: DashboardHeaderNavItem[] = [
   { href: "/vendor-dashboard", label: "Dashboard", matchMode: "exact" },
@@ -12,6 +13,11 @@ const VENDOR_NAV_ITEMS: DashboardHeaderNavItem[] = [
 
 export default function VendorHeader() {
   return (
-    <DashboardHeader navItems={VENDOR_NAV_ITEMS} accountFallbackName="Vendor" accountMenuClassName="hidden sm:flex" />
+    <DashboardHeader
+      navItems={VENDOR_NAV_ITEMS}
+      accountFallbackName="Vendor"
+      accountMenuClassName="hidden sm:flex"
+      notificationBell={<VendorNotificationBell />}
+    />
   )
 }
