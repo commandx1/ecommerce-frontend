@@ -307,7 +307,7 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
                 type="button"
                 onClick={handleUpload}
                 disabled={!selectedFile || isUploading}
-                className="flex flex-[2] items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex flex-2 items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                 {isUploading ? "Uploading..." : "Upload Document"}
