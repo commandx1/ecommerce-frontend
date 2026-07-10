@@ -8,7 +8,7 @@ type ErrorWithStatus = {
   authHandled?: boolean
 }
 
-export type AuthErrorStatus = 401 | 403
+export type AuthErrorStatus = 401
 export type AuthHandledAxiosError = AxiosError & { authHandled?: boolean }
 
 export function extractErrorStatus(error: unknown): number | undefined {
@@ -20,8 +20,11 @@ export function extractErrorStatus(error: unknown): number | undefined {
   return maybeError.response?.status ?? maybeError.status
 }
 
+// 403 is a business-rule/authorization rejection (e.g. missing role, unapproved
+// account) on an otherwise-authenticated session, not an expired-session signal —
+// it should be shown to the user inline, not treated as a reason to log them out.
 export function isAuthErrorStatus(status: number | undefined): status is AuthErrorStatus {
-  return status === 401 || status === 403
+  return status === 401
 }
 
 export function isAuthHandledError(error: unknown): boolean {
