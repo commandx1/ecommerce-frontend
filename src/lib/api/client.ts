@@ -1,6 +1,6 @@
 import axios, { type InternalAxiosRequestConfig } from "axios"
 import { useAuthStore } from "@/stores/authStore"
-import { type AuthErrorStatus, type AuthHandledAxiosError, isAuthErrorStatus } from "./auth-error"
+import { type AuthHandledAxiosError, isAuthErrorStatus } from "./auth-error"
 
 const apiClient = axios.create({
   baseURL: "/backend-api",
@@ -12,7 +12,7 @@ export const appApiClient = axios.create()
 
 let authFailurePromise: Promise<void> | null = null
 
-const buildLoginUrl = (status: AuthErrorStatus): string => {
+const buildLoginUrl = (): string => {
   if (typeof window === "undefined") {
     return "/login"
   }
@@ -24,11 +24,11 @@ const buildLoginUrl = (status: AuthErrorStatus): string => {
     loginUrl.searchParams.set("redirect", currentPath)
   }
 
-  loginUrl.searchParams.set("reason", status === 401 ? "session-expired" : "access-denied")
+  loginUrl.searchParams.set("reason", "session-expired")
   return loginUrl.toString()
 }
 
-const handleAuthFailure = async (status: AuthErrorStatus): Promise<void> => {
+const handleAuthFailure = async (): Promise<void> => {
   if (typeof window === "undefined") {
     return
   }
@@ -38,7 +38,7 @@ const handleAuthFailure = async (status: AuthErrorStatus): Promise<void> => {
       const { logout } = useAuthStore.getState()
       await logout()
 
-      const target = buildLoginUrl(status)
+      const target = buildLoginUrl()
       if (window.location.href !== target) {
         window.location.assign(target)
       }
@@ -99,7 +99,7 @@ const attachAuthInterceptors = (client: typeof apiClient): void => {
 
       if (isAuthErrorStatus(status)) {
         error.authHandled = true
-        await handleAuthFailure(status)
+        await handleAuthFailure()
       }
 
       return Promise.reject(error)
