@@ -118,7 +118,7 @@ export default function ProductsPage() {
     const filterParam = searchParams.get("filter")
     return VALID_FILTER_TYPES.includes(filterParam as FilterType) ? (filterParam as FilterType) : "TOTAL"
   })
-  const [selectedUserProductId] = useState<string | null>(() => searchParams.get("userProductId"))
+  const selectedUserProductId = searchParams.get("userProductId")
   const [selectedPeriodTab, setSelectedPeriodTab] = useState<PeriodTab>("3 months")
   const [pageSize, setPageSize] = useState<number>(25)
   const [currentPage, setCurrentPage] = useState<number>(0)
@@ -749,13 +749,12 @@ export default function ProductsPage() {
               <Upload className="mr-2 w-4 h-4" />
               Import Products
             </Button>
-            <Link
-              href="/vendor-dashboard/products/create"
-              className="flex items-center rounded-lg bg-brand px-4 py-2 font-medium text-primary-foreground transition-colors hover:bg-brand-strong"
-            >
-              <span className="mr-2">+</span>
-              Add New Product
-            </Link>
+            <Button asChild className="rounded-lg px-4 font-medium">
+              <Link href="/vendor-dashboard/products/create">
+                <span className="mr-2">+</span>
+                Add New Product
+              </Link>
+            </Button>
           </div>
         </div>
 

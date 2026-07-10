@@ -4,7 +4,6 @@ import { Download, FileUp, Loader2, RefreshCw, Trash2, Upload, X } from "lucide-
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import Modal from "@/components/ui/Modal"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { showToast } from "@/components/ui/Toast"
 import { extractFileName, type VendorDocument, vendorDocumentsAPI } from "@/lib/api/vendor-documents"
 import { cn } from "@/lib/utils"
@@ -262,7 +261,7 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
             <label
               htmlFor="vendor-doc-upload"
               className={cn(
-                "flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-10 transition-colors",
+                "mx-auto flex w-1/2 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 transition-colors",
                 selectedFile
                   ? "border-success/50 bg-success/5"
                   : "border-border-strong hover:border-brand/50 hover:bg-surface-muted",
@@ -437,47 +436,45 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
 
                       {/* Delete (only pending) */}
                       {!doc.approved && !doc.deleted && (
-                        <Popover
-                          open={confirmDeleteId === doc.id}
-                          onOpenChange={(open) => setConfirmDeleteId(open ? doc.id : null)}
-                        >
-                          <PopoverTrigger asChild>
-                            <button
-                              type="button"
-                              className="flex items-center gap-1.5 rounded-lg border border-danger/30 px-3 py-1.5 text-xs font-medium text-danger transition-colors hover:bg-danger/10"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                              Delete
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent side="top" className="w-60 p-4">
-                            <p className="text-sm font-semibold text-text-primary">Delete document?</p>
-                            <p className="mt-1 text-xs text-text-secondary">
-                              {extractFileName(doc.filePath)} will be permanently deleted.
-                            </p>
-                            <div className="mt-3 flex justify-end gap-2">
-                              <Button
-                                type="button"
-                                variant="quiet"
-                                size="sm"
-                                disabled={deletingId === doc.id}
-                                onClick={() => setConfirmDeleteId(null)}
-                              >
-                                Cancel
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="sm"
-                                disabled={deletingId === doc.id}
-                                onClick={() => { void handleDelete(doc.id) }}
-                              >
-                                {deletingId === doc.id && <Loader2 className="h-3 w-3 animate-spin" />}
-                                Delete
-                              </Button>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteId(confirmDeleteId === doc.id ? null : doc.id)}
+                            className="flex items-center gap-1.5 rounded-lg border border-danger/30 px-3 py-1.5 text-xs font-medium text-danger transition-colors hover:bg-danger/10"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Delete
+                          </button>
+                          {confirmDeleteId === doc.id && (
+                            <div className="absolute bottom-full left-0 z-10 mb-2 w-60 rounded-xl border border-border-soft bg-surface-elevated p-4 shadow-panel">
+                              <p className="text-sm font-semibold text-text-primary">Delete document?</p>
+                              <p className="mt-1 text-xs text-text-secondary wrap-break-word">
+                                <span className="break-all">{extractFileName(doc.filePath)}</span> will be permanently deleted.
+                              </p>
+                              <div className="mt-3 flex justify-end gap-2">
+                                <Button
+                                  type="button"
+                                  variant="quiet"
+                                  size="sm"
+                                  disabled={deletingId === doc.id}
+                                  onClick={() => setConfirmDeleteId(null)}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="sm"
+                                  disabled={deletingId === doc.id}
+                                  onClick={() => { void handleDelete(doc.id) }}
+                                >
+                                  {deletingId === doc.id && <Loader2 className="h-3 w-3 animate-spin" />}
+                                  Delete
+                                </Button>
+                              </div>
                             </div>
-                          </PopoverContent>
-                        </Popover>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
