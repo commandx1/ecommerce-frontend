@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
     const howManySoldDay = searchParams.get("howManySoldDay") || "0"
     const sortBy = searchParams.get("sortBy")
     const sortDir = searchParams.get("sortDir")
+    const userProductId = searchParams.get("userProductId")
 
     if (!type) {
       return NextResponse.json({ message: "Type parameter is required" }, { status: 400 })
@@ -51,6 +52,9 @@ export async function GET(request: NextRequest) {
     }
     if (sortDir !== null && sortDir !== "") {
       queryParams.append("sortDir", sortDir)
+    }
+    if (userProductId !== null && userProductId !== "") {
+      queryParams.append("userProductId", userProductId)
     }
 
     const response = await serverRequest(`/api/user-products/filter?${queryParams.toString()}`, {
