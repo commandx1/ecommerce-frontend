@@ -69,7 +69,7 @@ jobs:
       - name: Build, tag, and push docker image
         env:
           REGISTRY: public.ecr.aws/u3n2f4w8
-          REPOSITORY: dentlab/dt-ecommerce-frontend
+          REPOSITORY: dentlab/ecommerce-frontend
           IMAGE_TAG: ${{ env.timestamp }}-${{ env.sha }}
         run: |
           docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
@@ -84,7 +84,7 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           REGISTRY: public.ecr.aws/u3n2f4w8
-          REPOSITORY: dentlab/dt-ecommerce-frontend
+          REPOSITORY: dentlab/ecommerce-frontend
           IMAGE_TAG: ${{ env.timestamp }}-${{ env.sha }}
         run: |
           IMAGE_URL="$REGISTRY/$REPOSITORY:$IMAGE_TAG"
