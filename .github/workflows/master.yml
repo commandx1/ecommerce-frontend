@@ -1,0 +1,103 @@
+name: dt-ecommerce-frontend
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Metadata
+      - name: Set outputs
+        run: |
+          echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "timestamp=$(date -u +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+
+      - name: Check outputs
+        run: |
+          echo SHA: ${{ env.sha }}
+          echo Timestamp: ${{ env.timestamp }}
+
+      # SSH (private repos)
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DENTLAB_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Configure Git to use SSH for GitHub
+        run: git config --global url."ssh://git@github.com/".insteadOf "https://github.com/"
+
+      # Node / Next
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Install deps
+      - name: Install dependencies
+        run: npm ci
+
+      # Build React / Next
+      - name: Build frontend
+        run: npm run build
+
+      # AWS Auth
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # ECR Public Login
+      - name: Login to Amazon ECR Public
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
+
+      # Docker Build + Push
+      - name: Build, tag, and push docker image
+        env:
+          REGISTRY: public.ecr.aws/u3n2f4w8
+          REPOSITORY: dentlab/ecommerce-frontend
+          IMAGE_TAG: ${{ env.timestamp }}-${{ env.sha }}
+        run: |
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker tag $REGISTRY/$REPOSITORY:$IMAGE_TAG $REGISTRY/$REPOSITORY:latest
+
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+          docker push $REGISTRY/$REPOSITORY:latest
+
+      # Slack Success
+      - name: Notify Slack on Success
+        if: success()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          REGISTRY: public.ecr.aws/u3n2f4w8
+          REPOSITORY: dentlab/ecommerce-frontend
+          IMAGE_TAG: ${{ env.timestamp }}-${{ env.sha }}
+        run: |
+          IMAGE_URL="$REGISTRY/$REPOSITORY:$IMAGE_TAG"
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"✅ *Frontend build succeeded* for \`${{ github.repository }}\`\n📦 Image: \`${IMAGE_URL}\`\n🔗 <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
+            $SLACK_WEBHOOK_URL
+
+      # Slack Failure
+      - name: Notify Slack on Failure
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"❌ *Frontend build failed* for \`${{ github.repository }}\`\n👤 Triggered by: \`${{ github.actor }}\`\n🔗 <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
+            $SLACK_WEBHOOK_URL
