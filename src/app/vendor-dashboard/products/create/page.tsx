@@ -8,10 +8,10 @@ import {
   FileText,
   Image as ImageIcon,
   Info,
+  Link2,
   Loader2,
   Package,
   Plus,
-  RotateCcw,
   Save,
   Search,
   Upload,
@@ -21,63 +21,68 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useCallback, useEffect, useRef, useState } from "react"
+import BrandFilterDropdown from "@/app/vendor-dashboard/products/create/components/BrandFilterDropdown"
+import ProductDetailsModal from "@/app/vendor-dashboard/products/create/components/ProductDetailsModal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
-import { downloadImageAsFileViaProxy } from "@/lib/api/image-proxy"
+import { useDebounce } from "@/lib/hooks/useDebounce"
 import {
-  type BarcodeLookupProduct,
-  type BarcodeProduct,
-  type CreateProductData,
   type CreateUserProductPayload,
   getFullImageUrl,
   type NormalizedSearchProduct,
   type Product,
+  type ProductAttribute,
+  type ProductVendorRequestData,
   productsAPI,
 } from "@/lib/api/products"
 import { useAuthStore } from "@/stores/authStore"
 
-// Debounce hook
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+const SEARCH_PAGE_SIZE = 10
+const SEARCH_SCROLL_THRESHOLD_PX = 48
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value)
-    }, delay)
-
-    return () => {
-      clearTimeout(handler)
-    }
-  }, [value, delay])
-
-  return debouncedValue
+function isValidImageUrl(value: string): boolean {
+  try {
+    const url = new URL(value.trim())
+    return url.protocol === "http:" || url.protocol === "https:"
+  } catch {
+    return false
+  }
 }
 
 interface FormData {
   // Product fields
   name: string
   detailedName: string
-  aboutProduct: string
-  subCategoriesId: string
-  customerReviews: string
   barcode: string
   barcodeFormats: string
   active: boolean
-  secureCode: string
   // Product Details fields
   description: string
   manufacturerCode: string
+  manufacturer: string
   brand: string
-  packaging: string
-  primaryMarket: string
-  scent: string
-  size: string
-  type: string
-  sds: string
+  exampleVariationsProductId: string
+  categoryLevel1: string
+  categoryLevel2: string
+  categoryLevel3: string
+  categoryLevel4: string
+  categoryLevel5: string
+  manufacturerSiteProductPage: string
+  dentalLicenseRequired: string
+  reorderId: string
+  referanceNumber: string
+  height: string
+  length: string
+  width: string
+  weight: string
   // User Product fields
+  skuCode: string
   price: string
-  discount: string
   stock: string
+  shipmentFee: string
+  heavyShippingSurcharge: string
+  exportPackaging: boolean
+  fulfillmentPolicy: string
 }
 
 // For file uploads
@@ -91,25 +96,34 @@ interface FileData {
 const initialFormData: FormData = {
   name: "",
   detailedName: "",
-  aboutProduct: "",
-  subCategoriesId: "",
-  customerReviews: "",
   barcode: "",
   barcodeFormats: "EAN_13",
   active: true,
-  secureCode: "",
   description: "",
   manufacturerCode: "",
+  manufacturer: "",
   brand: "",
-  packaging: "",
-  primaryMarket: "",
-  scent: "",
-  size: "",
-  type: "",
-  sds: "",
+  exampleVariationsProductId: "",
+  categoryLevel1: "",
+  categoryLevel2: "",
+  categoryLevel3: "",
+  categoryLevel4: "",
+  categoryLevel5: "",
+  manufacturerSiteProductPage: "",
+  dentalLicenseRequired: "",
+  reorderId: "",
+  referanceNumber: "",
+  height: "",
+  length: "",
+  width: "",
+  weight: "",
+  skuCode: "",
   price: "",
-  discount: "",
   stock: "",
+  shipmentFee: "",
+  heavyShippingSurcharge: "",
+  exportPackaging: false,
+  fulfillmentPolicy: "",
 }
 
 const initialFileData: FileData = {
@@ -125,6 +139,17 @@ interface ExistingImages {
   photos: string[]
 }
 
+// For manually entered image links (URLs, not files)
+interface LinkedImages {
+  coverPhoto: string | null
+  photos: string[]
+}
+
+const initialLinkedImages: LinkedImages = {
+  coverPhoto: null,
+  photos: [],
+}
+
 const barcodeFormatOptions = [
   { value: "EAN_13", label: "EAN-13" },
   { value: "EAN_8", label: "EAN-8" },
@@ -135,9 +160,6 @@ const barcodeFormatOptions = [
   { value: "QR_CODE", label: "QR Code" },
 ]
 
-const DEFAULT_DISTANCE_UNIT = "in"
-const DEFAULT_MASS_UNIT = "lb"
-
 function CreateProductPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -147,14 +169,36 @@ function CreateProductPageContent() {
   const [isEditMode] = useState(!!editUserProductId)
   const [userProductId] = useState<string | null>(editUserProductId)
 
+  // Edit a rejected product and resubmit it for review (distinct from isEditMode, which only
+  // updates price/stock on an already-approved UserProduct)
+  const reviewEditProductId = searchParams.get("reviewEditId")
+  const reviewEditUserProductId = searchParams.get("reviewUserProductId")
+  const [isReviewEditMode] = useState(!!reviewEditProductId)
+  const [reviewProductId] = useState<string | null>(reviewEditProductId)
+  const [reviewUserProductId] = useState<string | null>(reviewEditUserProductId)
+
   const [formData, setFormData] = useState<FormData>(initialFormData)
+  const [attributes, setAttributes] = useState<ProductAttribute[]>([])
+  // Discount is only used by the edit flow (updateUserProduct); it is not part of the review DTO
+  const [editDiscount, setEditDiscount] = useState("")
   const [fileData, setFileData] = useState<FileData>(initialFileData)
   const [existingImages, setExistingImages] = useState<ExistingImages>({ coverPhoto: null, photos: [] })
+  const [linkedImages, setLinkedImages] = useState<LinkedImages>(initialLinkedImages)
+  const [coverPhotoMode, setCoverPhotoMode] = useState<"upload" | "link">("upload")
+  const [photosMode, setPhotosMode] = useState<"upload" | "link">("upload")
+  const [coverPhotoUrlInput, setCoverPhotoUrlInput] = useState("")
+  const [photoUrlInput, setPhotoUrlInput] = useState("")
+  const [coverPhotoUrlError, setCoverPhotoUrlError] = useState("")
+  const [photoUrlError, setPhotoUrlError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [activeTab, setActiveTab] = useState<"basic" | "details" | "media">("basic")
   const [isProductSelected, setIsProductSelected] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<NormalizedSearchProduct | null>(null)
+
+  // Search-first UX: start on the search view unless we're editing/resubmitting an existing product
+  const [view, setView] = useState<"search" | "form">(editUserProductId || reviewEditProductId ? "form" : "search")
+  const [modalProduct, setModalProduct] = useState<NormalizedSearchProduct | null>(null)
 
   // File input refs
   const coverPhotoInputRef = useRef<HTMLInputElement>(null)
@@ -162,11 +206,19 @@ function CreateProductPageContent() {
 
   // Autocomplete search states
   const [searchQuery, setSearchQuery] = useState("")
+  const [selectedBrand, setSelectedBrand] = useState<string | null>(null)
   const [searchResults, setSearchResults] = useState<NormalizedSearchProduct[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [isLoadingMoreResults, setIsLoadingMoreResults] = useState(false)
+  const [searchResultsPage, setSearchResultsPage] = useState(0)
+  const [hasMoreResults, setHasMoreResults] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [brokenImageIds, setBrokenImageIds] = useState<Set<string>>(new Set())
+  const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const searchResultsListRef = useRef<HTMLDivElement>(null)
+  const searchAbortControllerRef = useRef<AbortController | null>(null)
 
   // Debounced search query
   const debouncedSearchQuery = useDebounce(searchQuery, 500)
@@ -188,35 +240,42 @@ function CreateProductPageContent() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // Search function
+  // Search function (GET /api/products/active?search=...&brand=...&page=...&size=...)
   const performSearch = useCallback(
-    async (query: string) => {
+    async (query: string, brand: string | null, page: number, options: { append?: boolean } = {}) => {
       if (!query.trim() || !accessToken) {
+        searchAbortControllerRef.current?.abort()
         setSearchResults([])
         setShowDropdown(false)
+        setHasMoreResults(false)
         return
       }
 
-      setIsSearching(true)
+      searchAbortControllerRef.current?.abort()
+      const controller = new AbortController()
+      searchAbortControllerRef.current = controller
+
+      if (options.append) {
+        setIsLoadingMoreResults(true)
+      } else {
+        setIsSearching(true)
+      }
 
       try {
-        // Check if query looks like a barcode (only numbers)
-        const isBarcode = /^\d+$/.test(query.trim())
+        const response = await productsAPI.searchActiveProducts(
+          { search: query.trim(), brand, page, size: SEARCH_PAGE_SIZE },
+          accessToken,
+          controller.signal,
+        )
+        const normalized = response.content.map((item) => productsAPI.normalizeActiveProductSearchItem(item))
 
-        if (isBarcode) {
-          // Search by barcode
-          const result = await productsAPI.getProductByBarcode(query.trim(), accessToken)
-          const normalized = productsAPI.normalizeBarcodeResult(result)
-          setSearchResults([normalized])
-        } else {
-          // Search by title
-          const response = await productsAPI.searchProductsByTitle(query.trim(), accessToken)
-          const normalized = productsAPI.normalizeSearchResults(response)
-          setSearchResults(normalized)
-        }
-
+        setSearchResults((prev) => (options.append ? [...prev, ...normalized] : normalized))
+        setSearchResultsPage(response.number)
+        setHasMoreResults(!response.last)
         setShowDropdown(true)
       } catch (error) {
+        if (controller.signal.aborted) return
+
         const errorMessage =
           error && typeof error === "object" && "message" in error
             ? (error.message as string)
@@ -224,18 +283,55 @@ function CreateProductPageContent() {
               ? error.message
               : "An error occurred during search"
         showToast.error(`Search error: ${errorMessage}`)
-        setSearchResults([])
+        if (!options.append) setSearchResults([])
+        setHasMoreResults(false)
       } finally {
-        setIsSearching(false)
+        if (controller.signal.aborted) return
+        if (options.append) setIsLoadingMoreResults(false)
+        else setIsSearching(false)
       }
     },
     [accessToken],
   )
 
-  // Trigger search when debounced query changes
+  // Trigger a fresh (page 0) search whenever the debounced query or the brand filter changes
   useEffect(() => {
-    performSearch(debouncedSearchQuery)
-  }, [debouncedSearchQuery, performSearch])
+    performSearch(debouncedSearchQuery, selectedBrand, 0)
+  }, [debouncedSearchQuery, selectedBrand, performSearch])
+
+  // Abort any in-flight search on unmount
+  useEffect(() => {
+    return () => {
+      searchAbortControllerRef.current?.abort()
+    }
+  }, [])
+
+  const handleSearchResultsScroll = () => {
+    const el = searchResultsListRef.current
+    if (!el || isSearching || isLoadingMoreResults || !hasMoreResults) return
+
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+    if (distanceFromBottom <= SEARCH_SCROLL_THRESHOLD_PX) {
+      performSearch(debouncedSearchQuery, selectedBrand, searchResultsPage + 1, { append: true })
+    }
+  }
+
+  // A search result row was clicked: fetch full product details before opening the modal,
+  // since /api/products/active only returns a partial projection (id, name, brand, ...)
+  const handleSelectSearchResult = async (item: NormalizedSearchProduct) => {
+    if (!accessToken || loadingDetailId) return
+
+    setLoadingDetailId(item.id)
+    try {
+      const fullProduct = await productsAPI.getProductById(item.id, accessToken)
+      setModalProduct(productsAPI.normalizeBarcodeResult(fullProduct))
+    } catch (error) {
+      const errorMessage = (error as { message?: string })?.message || "Failed to load product details"
+      showToast.error(errorMessage)
+    } finally {
+      setLoadingDetailId(null)
+    }
+  }
 
   // Load product data in edit mode
   // biome-ignore lint/correctness/useExhaustiveDependencies: <no need to re-run this effect>
@@ -244,6 +340,67 @@ function CreateProductPageContent() {
       loadProductForEdit()
     }
   }, [isEditMode, userProductId, accessToken])
+
+  // Load full product data for a rejected product that's being edited and resubmitted for review
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <no need to re-run this effect>
+  useEffect(() => {
+    if (isReviewEditMode && reviewProductId && reviewUserProductId && accessToken) {
+      loadProductForReviewEdit()
+    }
+  }, [isReviewEditMode, reviewProductId, reviewUserProductId, accessToken])
+
+  const loadProductForReviewEdit = async () => {
+    if (!reviewProductId || !reviewUserProductId || !accessToken) return
+
+    try {
+      setIsLoading(true)
+
+      const [product, userProduct] = await Promise.all([
+        productsAPI.getProductByIdForAdmin(reviewProductId, accessToken),
+        productsAPI.getUserProductById(reviewUserProductId, accessToken),
+      ])
+
+      setFormData({
+        ...initialFormData,
+        name: product.name || "",
+        detailedName: product.detailedName || "",
+        barcode: product.barcode ? String(product.barcode) : "",
+        barcodeFormats: product.barcodeFormats || "EAN_13",
+        active: userProduct.active,
+        description: product.description || "",
+        manufacturerCode: product.manufacturerCode || "",
+        manufacturer: product.manufacturer || "",
+        brand: product.brand || "",
+        exampleVariationsProductId: product.exampleVariationsProductId || "",
+        categoryLevel1: product.categoryLevel1 || "",
+        categoryLevel2: product.categoryLevel2 || "",
+        categoryLevel3: product.categoryLevel3 || "",
+        categoryLevel4: product.categoryLevel4 || "",
+        categoryLevel5: product.categoryLevel5 || "",
+        manufacturerSiteProductPage: product.manufacturerSiteProductPage || "",
+        dentalLicenseRequired: product.dentalLicenseRequired || "",
+        reorderId: product.reorderId || "",
+        referanceNumber: product.referanceNumber || "",
+        height: product.height != null ? String(product.height) : "",
+        length: product.length != null ? String(product.length) : "",
+        width: product.width != null ? String(product.width) : "",
+        weight: product.weight != null ? String(product.weight) : "",
+        skuCode: userProduct.skuCode || "",
+        price: String(userProduct.price),
+        stock: String(userProduct.stock),
+        shipmentFee: userProduct.shipmentFee != null ? String(userProduct.shipmentFee) : "",
+      })
+
+      const coverPhoto = product.coverPhotoPath ? getFullImageUrl(product.coverPhotoPath) : null
+      const photos = product.photoPhats ? product.photoPhats.map(getFullImageUrl) : []
+      setExistingImages({ coverPhoto, photos })
+    } catch (error) {
+      showToast.error((error as { message?: string })?.message || "Failed to load product data")
+      router.push("/vendor-dashboard/products")
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const loadProductForEdit = async () => {
     if (!userProductId || !accessToken) return
@@ -265,28 +422,19 @@ function CreateProductPageContent() {
 
       // Populate form data
       setFormData({
+        ...initialFormData,
         name: product.name || "",
         detailedName: product.detailedName || "",
-        aboutProduct: product.aboutProduct || "",
-        subCategoriesId: product.subCategoriesId || "",
-        customerReviews: product.customerReviews || "",
         barcode: String(product.barcode),
         barcodeFormats: product.barcodeFormats || "EAN_13",
         active: userProduct.active,
-        secureCode: "",
         description: product.description || "",
         manufacturerCode: product.manufacturerCode || "",
         brand: product.brand || "",
-        packaging: product.packaging || "",
-        primaryMarket: product.primaryMarket || "",
-        scent: product.scent || "",
-        size: product.size || "",
-        type: product.type || "",
-        sds: product.sds || "",
         price: String(userProduct.price),
-        discount: String(userProduct.discount),
         stock: String(userProduct.stock),
       })
+      setEditDiscount(String(userProduct.discount))
 
       // Load existing images
       const coverPhoto = product.coverPhotoPath ? getFullImageUrl(product.coverPhotoPath) : null
@@ -307,180 +455,12 @@ function CreateProductPageContent() {
     }
   }
 
-  // Download image from URL and convert to File (using proxy to bypass CORS)
-  const downloadImageAsFile = async (url: string, filename: string): Promise<File> => {
-    try {
-      return await downloadImageAsFileViaProxy(url, filename)
-    } catch (error) {
-      showToast.error((error as { message?: string })?.message || "Error downloading image")
-      throw error
-    }
-  }
-
-  // Download images from URLs and set them as files
-  const downloadAndSetImages = async (imageUrls: string[]) => {
-    if (imageUrls.length === 0) {
-      setFileData(initialFileData)
-      setExistingImages({ coverPhoto: null, photos: [] })
-      return
-    }
-
-    try {
-      // Download cover photo (first image)
-      const coverPhotoUrl = imageUrls[0]
-      const coverPhotoFile = await downloadImageAsFile(coverPhotoUrl, `cover-${Date.now()}.jpg`)
-      const coverPhotoPreview = URL.createObjectURL(coverPhotoFile)
-
-      // Download additional photos
-      const additionalPhotos: File[] = []
-      const additionalPreviews: string[] = []
-
-      for (let i = 1; i < imageUrls.length; i++) {
-        const photoUrl = imageUrls[i]
-        const photoFile = await downloadImageAsFile(photoUrl, `photo-${Date.now()}-${i}.jpg`)
-        additionalPhotos.push(photoFile)
-        additionalPreviews.push(URL.createObjectURL(photoFile))
-      }
-
-      setFileData({
-        coverPhoto: coverPhotoFile,
-        coverPhotoPreview,
-        photos: additionalPhotos,
-        photosPreviews: additionalPreviews,
-      })
-
-      // Clear existing images since we're using downloaded files
-      setExistingImages({ coverPhoto: null, photos: [] })
-    } catch (error) {
-      showToast.error((error as { message?: string })?.message || "Error downloading images")
-      // On error, fallback to showing URLs as existing images
-      setFileData(initialFileData)
-      setExistingImages({
-        coverPhoto: imageUrls[0] || null,
-        photos: imageUrls.slice(1),
-      })
-    }
-  }
-
-  // Fill form with selected product data
-  const handleProductSelect = async (product: NormalizedSearchProduct) => {
-    const { originalData, source, images } = product
-
-    // Mark that a product was selected (disable form inputs)
-    setIsProductSelected(true)
-    setSelectedProduct(product)
-
-    // For barcode lookup products, download images and convert to files
-    if (source === "barcode_lookup" && images.length > 0) {
-      await downloadAndSetImages(images)
-    } else {
-      // For local products, use existing images as URLs
-      if (images.length > 0) {
-        setExistingImages({
-          coverPhoto: images[0],
-          photos: images.slice(1),
-        })
-      } else {
-        setExistingImages({ coverPhoto: null, photos: [] })
-      }
-      // Clear any uploaded files since we're using existing images
-      setFileData(initialFileData)
-    }
-
-    if (source === "barcode_lookup") {
-      // Handle BarcodeLookupProduct or BarcodeProduct
-      if ("barcode_number" in originalData) {
-        const barcodeProduct = originalData as BarcodeLookupProduct
-        setFormData({
-          name: barcodeProduct.title || "",
-          detailedName: barcodeProduct.title || "",
-          aboutProduct: barcodeProduct.features?.join(". ") || "",
-          subCategoriesId: barcodeProduct.category || "",
-          customerReviews: "",
-          barcode: barcodeProduct.barcode_number,
-          barcodeFormats: barcodeProduct.barcode_formats || "EAN_13",
-          active: true,
-          secureCode: "",
-          description: barcodeProduct.features?.join(". ") || "",
-          manufacturerCode: barcodeProduct.mpn || "",
-          brand: barcodeProduct.brand || "",
-          packaging: "",
-          primaryMarket: barcodeProduct.category || "",
-          scent: "",
-          size: "",
-          type: "",
-          sds: "",
-          price: "",
-          discount: "",
-          stock: "",
-        })
-      } else if ("barcodeNumber" in originalData) {
-        const barcodeProduct = originalData as BarcodeProduct
-        setFormData({
-          name: barcodeProduct.title || "",
-          detailedName: barcodeProduct.title || "",
-          aboutProduct: "",
-          subCategoriesId: barcodeProduct.category || "",
-          customerReviews: "",
-          barcode: barcodeProduct.barcodeNumber,
-          barcodeFormats: barcodeProduct.barcodeFormats || "EAN_13",
-          active: true,
-          secureCode: "",
-          description: "",
-          manufacturerCode: barcodeProduct.mpn || "",
-          brand: barcodeProduct.brand || "",
-          packaging: "",
-          primaryMarket: barcodeProduct.category || "",
-          scent: "",
-          size: "",
-          type: "",
-          sds: "",
-          price: "",
-          discount: "",
-          stock: "",
-        })
-      }
-    } else {
-      // Handle local Product
-      const localProduct = originalData as Product
-      setFormData({
-        name: localProduct.name || "",
-        detailedName: localProduct.detailedName || "",
-        aboutProduct: localProduct.aboutProduct || "",
-        subCategoriesId: localProduct.subCategoriesId || "",
-        customerReviews: localProduct.customerReviews || "",
-        barcode: String(localProduct.barcode),
-        barcodeFormats: localProduct.barcodeFormats || "EAN_13",
-        active: localProduct.active,
-        secureCode: "",
-        description: localProduct.description || "",
-        manufacturerCode: localProduct.manufacturerCode || "",
-        brand: localProduct.brand || "",
-        packaging: localProduct.packaging || "",
-        primaryMarket: localProduct.primaryMarket || "",
-        scent: localProduct.scent || "",
-        size: localProduct.size || "",
-        type: localProduct.type || "",
-        sds: localProduct.sds || "",
-        price: "",
-        discount: "",
-        stock: "",
-      })
-    }
-
-    // Clear search
-    setSearchQuery("")
-    setShowDropdown(false)
-    setSearchResults([])
-
-    // Clear all errors since form is now filled with valid data
-    setErrors({})
-  }
-
   // Clear all form data and images
   const handleClearAll = () => {
     // Reset form data
     setFormData(initialFormData)
+    setAttributes([])
+    setEditDiscount("")
 
     // Clear file data and revoke URLs
     if (fileData.coverPhotoPreview) {
@@ -494,6 +474,15 @@ function CreateProductPageContent() {
     // Clear existing images
     setExistingImages({ coverPhoto: null, photos: [] })
 
+    // Clear linked images
+    setLinkedImages(initialLinkedImages)
+    setCoverPhotoMode("upload")
+    setPhotosMode("upload")
+    setCoverPhotoUrlInput("")
+    setPhotoUrlInput("")
+    setCoverPhotoUrlError("")
+    setPhotoUrlError("")
+
     // Reset product selected state
     setIsProductSelected(false)
     setSelectedProduct(null)
@@ -502,8 +491,12 @@ function CreateProductPageContent() {
     setErrors({})
 
     // Clear search
+    searchAbortControllerRef.current?.abort()
     setSearchQuery("")
+    setSelectedBrand(null)
     setSearchResults([])
+    setSearchResultsPage(0)
+    setHasMoreResults(false)
     setShowDropdown(false)
 
     // Reset file inputs
@@ -520,26 +513,37 @@ function CreateProductPageContent() {
     const basicFields = [
       "name",
       "detailedName",
-      "aboutProduct",
-      "subCategoriesId",
-      "customerReviews",
       "barcode",
       "barcodeFormats",
       "active",
+      "skuCode",
       "price",
       "discount",
       "stock",
+      "shipmentFee",
+      "heavyShippingSurcharge",
+      "exportPackaging",
+      "fulfillmentPolicy",
     ]
     const detailsFields = [
       "description",
       "manufacturerCode",
+      "manufacturer",
       "brand",
-      "packaging",
-      "primaryMarket",
-      "scent",
-      "size",
-      "type",
-      "sds",
+      "exampleVariationsProductId",
+      "categoryLevel1",
+      "categoryLevel2",
+      "categoryLevel3",
+      "categoryLevel4",
+      "categoryLevel5",
+      "manufacturerSiteProductPage",
+      "dentalLicenseRequired",
+      "reorderId",
+      "referanceNumber",
+      "height",
+      "length",
+      "width",
+      "weight",
     ]
 
     if (basicFields.includes(fieldName)) return "basic"
@@ -642,6 +646,42 @@ function CreateProductPageContent() {
     }))
   }
 
+  // Add cover photo by URL
+  const handleAddCoverPhotoLink = () => {
+    if (!isValidImageUrl(coverPhotoUrlInput)) {
+      setCoverPhotoUrlError("Please enter a valid image URL (starting with http:// or https://)")
+      return
+    }
+    setLinkedImages((prev) => ({ ...prev, coverPhoto: coverPhotoUrlInput.trim() }))
+    setCoverPhotoUrlInput("")
+    setCoverPhotoUrlError("")
+  }
+
+  // Remove linked cover photo
+  const removeLinkedCoverPhoto = () => {
+    setLinkedImages((prev) => ({ ...prev, coverPhoto: null }))
+  }
+
+  // Add an additional photo by URL
+  const handleAddPhotoLink = () => {
+    if (!isValidImageUrl(photoUrlInput)) {
+      setPhotoUrlError("Please enter a valid image URL (starting with http:// or https://)")
+      return
+    }
+    const url = photoUrlInput.trim()
+    setLinkedImages((prev) => (prev.photos.includes(url) ? prev : { ...prev, photos: [...prev.photos, url] }))
+    setPhotoUrlInput("")
+    setPhotoUrlError("")
+  }
+
+  // Remove a linked photo by index
+  const removeLinkedPhoto = (index: number) => {
+    setLinkedImages((prev) => ({
+      ...prev,
+      photos: prev.photos.filter((_, i) => i !== index),
+    }))
+  }
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
 
@@ -653,25 +693,39 @@ function CreateProductPageContent() {
       newErrors.barcode = "Barcode must be a number"
     }
 
-    // Category ID is optional - no validation needed
+    // Validate user product fields
+    if (!formData.price.trim()) {
+      newErrors.price = "Price is required"
+    } else if (Number.isNaN(Number(formData.price)) || Number(formData.price) <= 0) {
+      newErrors.price = "Price must be a positive number"
+    }
 
-    // Validate user product fields (only for create mode, not edit mode)
-    if (!isEditMode) {
-      if (!formData.price.trim()) {
-        newErrors.price = "Price is required"
-      } else if (Number.isNaN(Number(formData.price)) || Number(formData.price) <= 0) {
-        newErrors.price = "Price must be a positive number"
-      }
+    if (!formData.stock.trim()) {
+      newErrors.stock = "Stock is required"
+    } else if (Number.isNaN(Number(formData.stock)) || Number(formData.stock) < 0) {
+      newErrors.stock = "Stock must be a non-negative number"
+    }
 
+    if (isEditMode && !isReviewEditMode) {
       // Discount is optional, but if provided, must be a valid non-negative number
-      if (formData.discount.trim() && (Number.isNaN(Number(formData.discount)) || Number(formData.discount) < 0)) {
+      if (editDiscount.trim() && (Number.isNaN(Number(editDiscount)) || Number(editDiscount) < 0)) {
         newErrors.discount = "Discount must be a non-negative number"
       }
-
-      if (!formData.stock.trim()) {
-        newErrors.stock = "Stock is required"
-      } else if (Number.isNaN(Number(formData.stock)) || Number(formData.stock) < 0) {
-        newErrors.stock = "Stock must be a non-negative number"
+    } else {
+      // Optional numeric fields must be valid numbers when provided
+      const optionalNumericFields: Array<[keyof FormData, string]> = [
+        ["height", "Height"],
+        ["length", "Length"],
+        ["width", "Width"],
+        ["weight", "Weight"],
+        ["shipmentFee", "Shipment fee"],
+        ["heavyShippingSurcharge", "Heavy shipping surcharge"],
+      ]
+      for (const [field, label] of optionalNumericFields) {
+        const value = formData[field] as string
+        if (value.trim() && (Number.isNaN(Number(value)) || Number(value) < 0)) {
+          newErrors[field] = `${label} must be a non-negative number`
+        }
       }
     }
 
@@ -709,7 +763,7 @@ function CreateProductPageContent() {
           userProductId,
           {
             price: Number(formData.price),
-            discount: formData.discount.trim() ? Number(formData.discount) : 0,
+            discount: editDiscount.trim() ? Number(editDiscount) : 0,
             stock: Number(formData.stock),
             active: formData.active,
           },
@@ -724,80 +778,95 @@ function CreateProductPageContent() {
       }
 
       // Create mode: Continue with existing logic
-      let productId: string
 
       // Case 1: Local product selected - only create user-product
-      if (selectedProduct && selectedProduct.source === "local") {
+      if (!isReviewEditMode && selectedProduct && selectedProduct.source === "local") {
         const localProduct = selectedProduct.originalData as Product
-        productId = localProduct.id
 
         // Create user product
         const userProductPayload: CreateUserProductPayload = {
-          productId,
+          productId: localProduct.id,
           price: Number(formData.price),
-          discount: formData.discount.trim() ? Number(formData.discount) : 0,
+          discount: 0,
           stock: Number(formData.stock),
           active: formData.active,
         }
 
         await productsAPI.createUserProduct(userProductPayload, accessToken || "")
-      } else {
-        // Case 2: Barcode product selected or manual creation - create product first, then user-product
-        // Prepare the data payload (JSON) - active is not included in product data
-        const productData: CreateProductData = {
-          name: formData.name,
-          detailedName: formData.detailedName,
-          aboutProduct: formData.aboutProduct,
-          subCategoriesId: formData.subCategoriesId,
-          customerReviews: formData.customerReviews || undefined,
-          barcode: Number(formData.barcode),
-          barcodeFormats: formData.barcodeFormats,
-          active: true, // Product is always active, user-product has its own active field
-          secureCode: formData.secureCode || undefined,
-          description: formData.description,
-          manufacturerCode: formData.manufacturerCode,
-          brand: formData.brand,
-          packaging: formData.packaging,
-          primaryMarket: formData.primaryMarket,
-          distanceUnit: DEFAULT_DISTANCE_UNIT,
-          massUnit: DEFAULT_MASS_UNIT,
-          scent: formData.scent,
-          size: formData.size,
-          type: formData.type,
-          sds: formData.sds,
-        }
 
-        // Create the product with multipart/form-data
-        const createdProduct = await productsAPI.createProduct(
-          {
-            data: productData,
-            coverPhoto: fileData.coverPhoto || undefined,
-            photos: fileData.photos.length > 0 ? fileData.photos : undefined,
-          },
-          accessToken || "",
-        )
-
-        productId = createdProduct.id
-
-        // Create user product
-        const userProductPayload: CreateUserProductPayload = {
-          productId,
-          price: Number(formData.price),
-          discount: formData.discount.trim() ? Number(formData.discount) : 0,
-          stock: Number(formData.stock),
-          active: formData.active,
-        }
-
-        await productsAPI.createUserProduct(userProductPayload, accessToken || "")
+        showToast.success("Product created successfully!")
+        router.push("/vendor-dashboard/products")
+        return
       }
 
-      showToast.success("Product created successfully!")
+      // Case 2: Barcode product selected, manual creation, or resubmitting a rejected product -
+      // Product + UserProduct info goes in a single ProductVendorRequestDto payload
+      const toOptionalNumber = (value: string): number | undefined => (value.trim() ? Number(value) : undefined)
+      const toOptionalString = (value: string): string | undefined => value.trim() || undefined
+
+      const filledAttributes = attributes.filter((attr) => attr.attributeName.trim() && attr.attributeValue.trim())
+
+      const productData: ProductVendorRequestData = {
+        name: formData.name,
+        detailedName: toOptionalString(formData.detailedName),
+        // Fallback image paths (used by backend when no files are uploaded)
+        coverPhotoPath: existingImages.coverPhoto || linkedImages.coverPhoto || undefined,
+        photoPhats:
+          [...existingImages.photos, ...linkedImages.photos].length > 0
+            ? [...existingImages.photos, ...linkedImages.photos]
+            : undefined,
+        barcode: toOptionalNumber(formData.barcode),
+        barcodeFormats: formData.barcodeFormats,
+        description: toOptionalString(formData.description),
+        manufacturerCode: toOptionalString(formData.manufacturerCode),
+        manufacturer: toOptionalString(formData.manufacturer),
+        brand: toOptionalString(formData.brand),
+        exampleVariationsProductId: toOptionalString(formData.exampleVariationsProductId),
+        categoryLevel1: toOptionalString(formData.categoryLevel1),
+        categoryLevel2: toOptionalString(formData.categoryLevel2),
+        categoryLevel3: toOptionalString(formData.categoryLevel3),
+        categoryLevel4: toOptionalString(formData.categoryLevel4),
+        categoryLevel5: toOptionalString(formData.categoryLevel5),
+        manufacturerSiteProductPage: toOptionalString(formData.manufacturerSiteProductPage),
+        dentalLicenseRequired: toOptionalString(formData.dentalLicenseRequired),
+        reorderId: toOptionalString(formData.reorderId),
+        referanceNumber: toOptionalString(formData.referanceNumber),
+        height: toOptionalNumber(formData.height),
+        length: toOptionalNumber(formData.length),
+        width: toOptionalNumber(formData.width),
+        weight: toOptionalNumber(formData.weight),
+        attributes: filledAttributes.length > 0 ? filledAttributes : undefined,
+        // UserProduct (vendor listing) fields
+        skuCode: toOptionalString(formData.skuCode),
+        price: Number(formData.price),
+        stock: Number(formData.stock),
+        active: formData.active,
+        shipmentFee: toOptionalNumber(formData.shipmentFee),
+        heavyShippingSurcharge: toOptionalNumber(formData.heavyShippingSurcharge),
+        exportPackaging: formData.exportPackaging,
+        fulfillmentPolicy: toOptionalString(formData.fulfillmentPolicy),
+      }
+
+      const reviewPayload = {
+        data: productData,
+        coverPhoto: fileData.coverPhoto || undefined,
+        photos: fileData.photos.length > 0 ? fileData.photos : undefined,
+      }
+
+      if (isReviewEditMode && reviewProductId) {
+        await productsAPI.updateProductForReview(reviewProductId, reviewPayload, accessToken || "")
+        showToast.success("Product updated and resubmitted for review!")
+      } else {
+        await productsAPI.createProductForReview(reviewPayload, accessToken || "")
+        showToast.success("Product submitted for review!")
+      }
 
       // Redirect immediately
       router.push("/vendor-dashboard/products")
     } catch (error: unknown) {
       const err = error as { message?: string }
-      const errorMessage = err.message || `Failed to ${isEditMode ? "update" : "create"} product. Please try again.`
+      const errorMessage =
+        err.message || `Failed to ${isEditMode || isReviewEditMode ? "update" : "create"} product. Please try again.`
       setErrors({ submit: errorMessage })
       showToast.error(errorMessage)
     } finally {
@@ -817,21 +886,30 @@ function CreateProductPageContent() {
             <ArrowLeft className="w-5 h-5 text-text-secondary" />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-brand">{isEditMode ? "Edit Product" : "Create New Product"}</h1>
+            <h1 className="text-3xl font-bold text-brand">
+              {isReviewEditMode ? "Edit Rejected Product" : isEditMode ? "Edit Product" : "Create New Product"}
+            </h1>
             <p className="text-text-secondary">
-              {isEditMode ? "Update product information" : "Add a new product to your catalog"}
+              {isReviewEditMode
+                ? "Update your product and resubmit it for review"
+                : isEditMode
+                  ? "Update product information"
+                  : "Add a new product to your catalog"}
             </p>
           </div>
         </div>
         <div className="flex space-x-3">
-          {!isEditMode && (
+          {view === "form" && !isEditMode && !isReviewEditMode && (
             <button
               type="button"
-              onClick={handleClearAll}
+              onClick={() => {
+                handleClearAll()
+                setView("search")
+              }}
               className="px-6 py-2 border border-border-soft rounded-lg text-text-primary hover:bg-surface-muted transition-colors font-medium flex items-center"
             >
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Clear All
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Search
             </button>
           )}
           <button
@@ -841,896 +919,1291 @@ function CreateProductPageContent() {
           >
             Cancel
           </button>
-          <button
-            type="submit"
-            form="create-product-form"
-            disabled={isLoading}
-            className="px-6 py-2 bg-brand text-white rounded-lg hover:bg-opacity-90 transition-colors font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Save className="w-4 h-4 mr-2" />
-            {isLoading
-              ? isEditMode
-                ? "Updating..."
-                : "Creating..."
-              : isEditMode
-                ? "Update Product"
-                : "Create Product"}
-          </button>
+          {view === "form" && (
+            <button
+              type="submit"
+              form="create-product-form"
+              disabled={isLoading}
+              className="px-6 py-2 bg-brand text-white rounded-lg hover:bg-opacity-90 transition-colors font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {isLoading
+                ? isReviewEditMode
+                  ? "Resubmitting..."
+                  : isEditMode
+                    ? "Updating..."
+                    : "Creating..."
+                : isReviewEditMode
+                  ? "Resubmit for Review"
+                  : isEditMode
+                    ? "Update Product"
+                    : "Create Product"}
+            </button>
+          )}
         </div>
       </div>
 
       {/* Product Search Autocomplete */}
-      {!isEditMode && (
-        <div className="bg-surface-elevated rounded-2xl shadow-lg p-6 mb-6">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-10 h-10 bg-accent-strong rounded-lg flex items-center justify-center">
-              <Search className="w-5 h-5 text-muted" />
+      {view === "search" && (
+        <div className="flex items-center justify-center min-h-[calc(100vh-320px)]">
+          <div className="w-full max-w-4xl bg-surface-elevated rounded-2xl shadow-lg p-6">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-10 h-10 bg-accent-strong rounded-lg flex items-center justify-center">
+                <Search className="w-5 h-5 text-muted" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-brand">Search Product</h2>
+                <p className="text-sm text-text-muted">Search existing products by barcode or product name</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-lg font-semibold text-brand">Search Product</h2>
-              <p className="text-sm text-text-muted">Search existing products by barcode or product name</p>
+
+            <div className="relative">
+              <div className="flex items-stretch gap-2">
+                <BrandFilterDropdown value={selectedBrand} onChange={setSelectedBrand} accessToken={accessToken} />
+
+                <div className="relative flex-1">
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
+                    placeholder="Search by barcode, name, detailed name, or manufacturer code..."
+                    className="w-full px-4 py-3 pl-12 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent"
+                  />
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                    {isSearching ? (
+                      <Loader2 className="w-5 h-5 text-text-muted animate-spin" />
+                    ) : (
+                      <Search className="w-5 h-5 text-text-muted" />
+                    )}
+                  </div>
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchQuery("")
+                        setSearchResults([])
+                        setShowDropdown(false)
+                        setHasMoreResults(false)
+                      }}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Search Results Panel */}
+              {showDropdown && searchResults.length > 0 && (
+                <div
+                  ref={dropdownRef}
+                  className="relative z-10 w-full mt-2 bg-surface-elevated border border-border-soft rounded-xl shadow-xl"
+                >
+                  <div
+                    ref={searchResultsListRef}
+                    onScroll={handleSearchResultsScroll}
+                    className="p-2 max-h-96 overflow-y-auto"
+                  >
+                    <p className="px-3 py-2 text-xs font-medium text-text-muted uppercase tracking-wide">
+                      {searchResults.length} results found
+                    </p>
+                    {searchResults.map((product) => (
+                      <button
+                        key={`${product.source}-${product.id}`}
+                        type="button"
+                        disabled={loadingDetailId === product.id}
+                        onClick={() => handleSelectSearchResult(product)}
+                        className="w-full flex items-center space-x-4 p-3 hover:bg-surface-muted rounded-lg transition-colors text-left disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {/* Product Image */}
+                        <div className="w-16 h-16 bg-surface rounded-lg overflow-hidden shrink-0">
+                          {product.images.length > 0 && !brokenImageIds.has(`${product.source}-${product.id}`) ? (
+                            <Image
+                              src={product.images[0]}
+                              alt={product.title}
+                              width={64}
+                              height={64}
+                              className="w-full h-full object-cover"
+                              onError={() => {
+                                setBrokenImageIds((prev) => new Set(prev).add(`${product.source}-${product.id}`))
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <ImageIcon className="w-8 h-8 text-text-muted/70" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Product Info */}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-text-primary truncate">{product.title || "Unnamed Product"}</p>
+                          <div className="flex items-center space-x-2 mt-1">
+                            {product.barcode && (
+                              <span className="inline-flex items-center px-2 py-0.5 bg-surface text-text-primary text-xs rounded font-mono">
+                                <Barcode className="w-3 h-3 mr-1" />
+                                {product.barcode}
+                              </span>
+                            )}
+                            {product.brand && <span className="text-xs text-text-muted truncate">{product.brand}</span>}
+                          </div>
+                          {product.category && (
+                            <p className="text-xs text-text-muted mt-1 truncate">{product.category}</p>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                    {isLoadingMoreResults && (
+                      <div className="flex items-center justify-center py-3">
+                        <Loader2 className="w-4 h-4 text-text-muted animate-spin" />
+                      </div>
+                    )}
+                    {!isLoadingMoreResults && !hasMoreResults && searchResults.length > 0 && (
+                      <p className="text-center text-xs text-text-muted py-2">No more results</p>
+                    )}
+                  </div>
+                  <div className="border-t border-border-soft p-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleClearAll()
+                        setView("form")
+                      }}
+                      className="w-full text-center text-sm font-medium text-brand hover:underline"
+                    >
+                      Can't find your product? Create new
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* No Results */}
+              {showDropdown && searchResults.length === 0 && !isSearching && debouncedSearchQuery.trim() && (
+                <div
+                  ref={dropdownRef}
+                  className="relative z-10 w-full mt-2 bg-surface-elevated border border-border-soft rounded-xl shadow-xl p-6 text-center"
+                >
+                  <Search className="w-10 h-10 text-text-muted/70 mx-auto mb-3" />
+                  <p className="text-text-secondary font-medium">No results found</p>
+                  <p className="text-text-muted text-sm mt-1">No matching products for "{debouncedSearchQuery}"</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleClearAll()
+                      setView("form")
+                    }}
+                    className="mt-4 inline-flex items-center px-4 py-2 bg-brand text-white rounded-lg hover:bg-opacity-90 transition-colors font-medium"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create New Product
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {view === "form" && (
+        <>
+          {/* Tabs */}
+          <div className="bg-surface-elevated rounded-t-2xl shadow-sm border-b border-border-soft">
+            <div className="flex space-x-8 px-8">
+              <button
+                type="button"
+                onClick={() => setActiveTab("basic")}
+                className={`py-4 px-2 font-medium border-b-2 transition-colors ${
+                  activeTab === "basic"
+                    ? "text-brand border-brand"
+                    : "text-text-secondary border-transparent hover:text-brand"
+                }`}
+              >
+                <Package className="w-4 h-4 inline mr-2" />
+                Basic Information
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("details")}
+                className={`py-4 px-2 font-medium border-b-2 transition-colors ${
+                  activeTab === "details"
+                    ? "text-brand border-brand"
+                    : "text-text-secondary border-transparent hover:text-brand"
+                }`}
+              >
+                <FileText className="w-4 h-4 inline mr-2" />
+                Product Details
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("media")}
+                className={`py-4 px-2 font-medium border-b-2 transition-colors ${
+                  activeTab === "media"
+                    ? "text-brand border-brand"
+                    : "text-text-secondary border-transparent hover:text-brand"
+                }`}
+              >
+                <ImageIcon className="w-4 h-4 inline mr-2" />
+                Media
+              </button>
             </div>
           </div>
 
-          <div className="relative">
-            <div className="relative">
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
-                placeholder="Enter barcode number or product name..."
-                className="w-full px-4 py-3 pl-12 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent"
-              />
-              <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                {isSearching ? (
-                  <Loader2 className="w-5 h-5 text-text-muted animate-spin" />
-                ) : (
-                  <Search className="w-5 h-5 text-text-muted" />
-                )}
-              </div>
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchQuery("")
-                    setSearchResults([])
-                    setShowDropdown(false)
-                  }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+          {/* Form */}
+          <form id="create-product-form" onSubmit={handleSubmit}>
+            <div className="bg-surface-elevated rounded-b-2xl shadow-lg p-8">
+              {errors.submit && (
+                <div className="mb-6 bg-destructive/10 border border-destructive/25 rounded-lg p-4 flex items-start space-x-3">
+                  <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                  <p className="text-destructive">{errors.submit}</p>
+                </div>
               )}
-            </div>
 
-            {/* Search Results Dropdown */}
-            {showDropdown && searchResults.length > 0 && (
-              <div
-                ref={dropdownRef}
-                className="absolute z-50 w-full mt-2 bg-surface-elevated border border-border-soft rounded-xl shadow-xl max-h-96 overflow-y-auto"
-              >
-                <div className="p-2">
-                  <p className="px-3 py-2 text-xs font-medium text-text-muted uppercase tracking-wide">
-                    {searchResults.length} results found
-                  </p>
-                  {searchResults.map((product) => (
-                    <button
-                      key={`${product.source}-${product.id}`}
-                      type="button"
-                      onClick={() => handleProductSelect(product)}
-                      className="w-full flex items-center space-x-4 p-3 hover:bg-surface-muted rounded-lg transition-colors text-left"
-                    >
-                      {/* Product Image */}
-                      <div className="w-16 h-16 bg-surface rounded-lg overflow-hidden shrink-0">
-                        {product.images.length > 0 ? (
+              {/* Basic Information Tab */}
+              {activeTab === "basic" && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label htmlFor="name" className="block text-sm font-medium text-text-primary mb-2">
+                        Product Name *
+                      </label>
+                      <input
+                        id="name"
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        disabled={isProductSelected}
+                        className={`w-full px-4 py-3 border ${errors.name ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
+                        placeholder="e.g., Premium Dental Composite Kit"
+                      />
+                      {errors.name && <p className="text-destructive text-sm mt-1">{errors.name}</p>}
+                    </div>
+
+                    <div>
+                      <label htmlFor="detailedName" className="block text-sm font-medium text-text-primary mb-2">
+                        Detailed Name
+                      </label>
+                      <input
+                        id="detailedName"
+                        type="text"
+                        name="detailedName"
+                        value={formData.detailedName}
+                        onChange={handleInputChange}
+                        disabled={isProductSelected}
+                        className={`w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
+                        placeholder="e.g., Premium Dental Composite Kit - 20 Shades with Applicators"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                      <label htmlFor="barcode" className="block text-sm font-medium text-text-primary mb-2">
+                        <Barcode className="w-4 h-4 inline mr-1" />
+                        Barcode
+                      </label>
+                      <input
+                        id="barcode"
+                        type="text"
+                        name="barcode"
+                        value={formData.barcode}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-3 border ${errors.barcode ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
+                        placeholder="e.g., 8901234567890"
+                      />
+                      {errors.barcode && <p className="text-destructive text-sm mt-1">{errors.barcode}</p>}
+                    </div>
+
+                    <div>
+                      <label htmlFor="barcodeFormats" className="block text-sm font-medium text-text-primary mb-2">
+                        Barcode Format
+                      </label>
+                      <Select
+                        name="barcodeFormats"
+                        value={formData.barcodeFormats}
+                        disabled={isProductSelected}
+                        onValueChange={(value) => setFormData((prev) => ({ ...prev, barcodeFormats: value }))}
+                      >
+                        <SelectTrigger
+                          id="barcodeFormats"
+                          className="w-full rounded-lg border-border-soft bg-surface-elevated px-4 py-3 text-text-primary shadow-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:bg-surface disabled:opacity-60"
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {barcodeFormatOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex items-center">
+                      <label className="flex items-center cursor-pointer mt-6">
+                        <input
+                          type="checkbox"
+                          name="active"
+                          checked={formData.active}
+                          onChange={handleInputChange}
+                          disabled={isProductSelected && !isEditMode}
+                          className="w-5 h-5 text-brand border-border-soft rounded focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
+                        />
+                        <span className="ml-3 text-sm font-medium text-text-primary">Product is Active</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* User Product Fields */}
+                  {(!isEditMode || isReviewEditMode) && (
+                    <div className="border-t border-border-soft pt-6 mt-6">
+                      <h3 className="text-lg font-semibold text-brand mb-4">Pricing & Inventory</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                          <label htmlFor="skuCode" className="block text-sm font-medium text-text-primary mb-2">
+                            SKU Code *
+                          </label>
+                          <input
+                            id="skuCode"
+                            type="text"
+                            name="skuCode"
+                            value={formData.skuCode}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent"
+                            placeholder="e.g., SKU-12345"
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="price" className="block text-sm font-medium text-text-primary mb-2">
+                            Price *
+                          </label>
+                          <input
+                            id="price"
+                            type="number"
+                            name="price"
+                            value={formData.price}
+                            onChange={handleInputChange}
+                            min="0"
+                            step="0.01"
+                            className={`w-full px-4 py-3 border ${errors.price ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
+                            placeholder="0.00"
+                          />
+                          {errors.price && <p className="text-destructive text-sm mt-1">{errors.price}</p>}
+                        </div>
+
+                        <div>
+                          <label htmlFor="stock" className="block text-sm font-medium text-text-primary mb-2">
+                            Stock *
+                          </label>
+                          <input
+                            id="stock"
+                            type="number"
+                            name="stock"
+                            value={formData.stock}
+                            onChange={handleInputChange}
+                            min="0"
+                            step="1"
+                            className={`w-full px-4 py-3 border ${errors.stock ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
+                            placeholder="0"
+                          />
+                          {errors.stock && <p className="text-destructive text-sm mt-1">{errors.stock}</p>}
+                        </div>
+
+                        <div>
+                          <label htmlFor="shipmentFee" className="block text-sm font-medium text-text-primary mb-2">
+                            Shipment Fee *
+                          </label>
+                          <input
+                            id="shipmentFee"
+                            type="number"
+                            name="shipmentFee"
+                            value={formData.shipmentFee}
+                            onChange={handleInputChange}
+                            min="0"
+                            step="0.01"
+                            className={`w-full px-4 py-3 border ${errors.shipmentFee ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
+                            placeholder="0.00"
+                          />
+                          {errors.shipmentFee && <p className="text-destructive text-sm mt-1">{errors.shipmentFee}</p>}
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="heavyShippingSurcharge"
+                            className="block text-sm font-medium text-text-primary mb-2"
+                          >
+                            Heavy Shipping Surcharge *
+                          </label>
+                          <input
+                            id="heavyShippingSurcharge"
+                            type="number"
+                            name="heavyShippingSurcharge"
+                            value={formData.heavyShippingSurcharge}
+                            onChange={handleInputChange}
+                            min="0"
+                            step="0.01"
+                            className={`w-full px-4 py-3 border ${errors.heavyShippingSurcharge ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
+                            placeholder="0.00"
+                          />
+                          {errors.heavyShippingSurcharge && (
+                            <p className="text-destructive text-sm mt-1">{errors.heavyShippingSurcharge}</p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="fulfillmentPolicy"
+                            className="block text-sm font-medium text-text-primary mb-2"
+                          >
+                            Fulfillment Policy *
+                          </label>
+                          <input
+                            id="fulfillmentPolicy"
+                            type="text"
+                            name="fulfillmentPolicy"
+                            value={formData.fulfillmentPolicy}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent"
+                            placeholder="e.g., Ships within 2 business days"
+                          />
+                        </div>
+
+                        <div className="flex items-center">
+                          <label className="flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              name="exportPackaging"
+                              checked={formData.exportPackaging}
+                              onChange={handleInputChange}
+                              className="w-5 h-5 text-brand border-border-soft rounded focus:ring-ring/50"
+                            />
+                            <span className="ml-3 text-sm font-medium text-text-primary">Export Packaging</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Edit Mode: Show Pricing & Inventory */}
+                  {isEditMode && !isReviewEditMode && (
+                    <div className="border-t border-border-soft pt-6 mt-6">
+                      <h3 className="text-lg font-semibold text-brand mb-4">Pricing & Inventory</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                          <label htmlFor="price" className="block text-sm font-medium text-text-primary mb-2">
+                            Price *
+                          </label>
+                          <input
+                            id="price"
+                            type="number"
+                            name="price"
+                            value={formData.price}
+                            onChange={handleInputChange}
+                            min="0"
+                            step="0.01"
+                            className={`w-full px-4 py-3 border ${errors.price ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
+                            placeholder="0.00"
+                          />
+                          {errors.price && <p className="text-destructive text-sm mt-1">{errors.price}</p>}
+                        </div>
+
+                        <div>
+                          <label htmlFor="discount" className="block text-sm font-medium text-text-primary mb-2">
+                            Discount <span className="text-text-muted font-normal">(Optional)</span>
+                          </label>
+                          <input
+                            id="discount"
+                            type="number"
+                            name="discount"
+                            value={editDiscount}
+                            onChange={(e) => {
+                              setEditDiscount(e.target.value)
+                              if (errors.discount) {
+                                setErrors((prev) => {
+                                  const newErrors = { ...prev }
+                                  delete newErrors.discount
+                                  return newErrors
+                                })
+                              }
+                            }}
+                            min="0"
+                            step="0.01"
+                            className={`w-full px-4 py-3 border ${errors.discount ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
+                            placeholder="0.00"
+                          />
+                          {errors.discount && <p className="text-destructive text-sm mt-1">{errors.discount}</p>}
+                        </div>
+
+                        <div>
+                          <label htmlFor="stock" className="block text-sm font-medium text-text-primary mb-2">
+                            Stock *
+                          </label>
+                          <input
+                            id="stock"
+                            type="number"
+                            name="stock"
+                            value={formData.stock}
+                            onChange={handleInputChange}
+                            min="0"
+                            step="1"
+                            className={`w-full px-4 py-3 border ${errors.stock ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
+                            placeholder="0"
+                          />
+                          {errors.stock && <p className="text-destructive text-sm mt-1">{errors.stock}</p>}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Product Details Tab */}
+              {activeTab === "details" && (
+                <div className="space-y-6">
+                  <div className="bg-accent/45 border border-brand/25 rounded-lg p-4 flex items-start space-x-3">
+                    <Info className="w-5 h-5 text-brand shrink-0 mt-0.5" />
+                    <p className="text-accent-foreground text-sm">
+                      These details provide additional information about your product and help buyers make informed
+                      decisions.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label htmlFor="description" className="block text-sm font-medium text-text-primary mb-2">
+                      Detailed Description *
+                    </label>
+                    <textarea
+                      id="description"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      disabled={isProductSelected}
+                      rows={4}
+                      className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent resize-none disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+                      placeholder="Detailed product description..."
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                      <label htmlFor="manufacturerCode" className="block text-sm font-medium text-text-primary mb-2">
+                        Manufacturer Code *
+                      </label>
+                      <input
+                        id="manufacturerCode"
+                        type="text"
+                        name="manufacturerCode"
+                        value={formData.manufacturerCode}
+                        onChange={handleInputChange}
+                        disabled={isProductSelected}
+                        className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+                        placeholder="e.g., MNF-4452"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="manufacturer" className="block text-sm font-medium text-text-primary mb-2">
+                        Manufacturer *
+                      </label>
+                      <input
+                        id="manufacturer"
+                        type="text"
+                        name="manufacturer"
+                        value={formData.manufacturer}
+                        onChange={handleInputChange}
+                        disabled={isProductSelected}
+                        className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+                        placeholder="e.g., DentPro Inc."
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="brand" className="block text-sm font-medium text-text-primary mb-2">
+                        Brand *
+                      </label>
+                      <input
+                        id="brand"
+                        type="text"
+                        name="brand"
+                        value={formData.brand}
+                        onChange={handleInputChange}
+                        disabled={isProductSelected}
+                        className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+                        placeholder="e.g., DentPro"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Categories */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-text-primary mb-3">Categories</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                      {(
+                        [
+                          "categoryLevel1",
+                          "categoryLevel2",
+                          "categoryLevel3",
+                          "categoryLevel4",
+                          "categoryLevel5",
+                        ] as const
+                      ).map((field, index) => (
+                        <div key={field}>
+                          <label htmlFor={field} className="block text-sm font-medium text-text-primary mb-2">
+                            Level {index + 1}
+                          </label>
+                          <input
+                            id={field}
+                            type="text"
+                            name={field}
+                            value={formData[field]}
+                            onChange={handleInputChange}
+                            disabled={isProductSelected}
+                            className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+                            placeholder={`Category level ${index + 1}`}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label
+                        htmlFor="manufacturerSiteProductPage"
+                        className="block text-sm font-medium text-text-primary mb-2"
+                      >
+                        Manufacturer Site Product Page *
+                      </label>
+                      <input
+                        id="manufacturerSiteProductPage"
+                        type="url"
+                        name="manufacturerSiteProductPage"
+                        value={formData.manufacturerSiteProductPage}
+                        onChange={handleInputChange}
+                        disabled={isProductSelected}
+                        className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+                        placeholder="https://example.com/products/item"
+                      />
+                    </div>
+
+                    <div>
+                      <span className="block text-sm font-medium text-text-primary mb-2">
+                        Dental License Required *
+                      </span>
+                      <label className="flex items-center gap-3 cursor-pointer mt-1">
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={formData.dentalLicenseRequired === "Yes"}
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              dentalLicenseRequired: prev.dentalLicenseRequired === "Yes" ? "No" : "Yes",
+                            }))
+                          }
+                          disabled={isProductSelected}
+                          className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60 ${
+                            formData.dentalLicenseRequired === "Yes"
+                              ? "bg-brand"
+                              : "bg-surface-muted border border-border-soft"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                              formData.dentalLicenseRequired === "Yes" ? "translate-x-6" : "translate-x-1"
+                            }`}
+                          />
+                        </button>
+                        <span className="text-sm font-medium text-text-primary">
+                          {formData.dentalLicenseRequired === "Yes" ? "Yes" : "No"}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                      <label htmlFor="reorderId" className="block text-sm font-medium text-text-primary mb-2">
+                        Reorder ID *
+                      </label>
+                      <input
+                        id="reorderId"
+                        type="text"
+                        name="reorderId"
+                        value={formData.reorderId}
+                        onChange={handleInputChange}
+                        disabled={isProductSelected}
+                        className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+                        placeholder="e.g., RO-1001"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="referanceNumber" className="block text-sm font-medium text-text-primary mb-2">
+                        Reference Number *
+                      </label>
+                      <input
+                        id="referanceNumber"
+                        type="text"
+                        name="referanceNumber"
+                        value={formData.referanceNumber}
+                        onChange={handleInputChange}
+                        disabled={isProductSelected}
+                        className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+                        placeholder="e.g., REF-2024-01"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="exampleVariationsProductId"
+                        className="block text-sm font-medium text-text-primary mb-2"
+                      >
+                        Example Variations Product ID
+                      </label>
+                      <input
+                        id="exampleVariationsProductId"
+                        type="text"
+                        name="exampleVariationsProductId"
+                        value={formData.exampleVariationsProductId}
+                        onChange={handleInputChange}
+                        disabled={isProductSelected}
+                        className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+                        placeholder="Related product ID"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Dimensions & Weight */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-text-primary mb-3">Dimensions & Weight</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      {(
+                        [
+                          ["height", "Height"],
+                          ["length", "Length"],
+                          ["width", "Width"],
+                          ["weight", "Weight"],
+                        ] as const
+                      ).map(([field, label]) => (
+                        <div key={field}>
+                          <label htmlFor={field} className="block text-sm font-medium text-text-primary mb-2">
+                            {field === "weight" ? `${label} *` : label}
+                          </label>
+                          <input
+                            id={field}
+                            type="number"
+                            name={field}
+                            value={formData[field]}
+                            onChange={handleInputChange}
+                            min="0"
+                            step="0.01"
+                            disabled={isProductSelected}
+                            className={`w-full px-4 py-3 border ${errors[field] ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
+                            placeholder="0.00"
+                          />
+                          {errors[field] && <p className="text-destructive text-sm mt-1">{errors[field]}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Attributes */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-semibold text-text-primary">Attributes</h4>
+                      <button
+                        type="button"
+                        onClick={() => setAttributes((prev) => [...prev, { attributeName: "", attributeValue: "" }])}
+                        disabled={isProductSelected}
+                        className="inline-flex items-center px-3 py-1.5 bg-surface text-text-primary text-sm rounded-lg hover:bg-surface-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Add Attribute
+                      </button>
+                    </div>
+
+                    {attributes.length === 0 ? (
+                      <p className="text-text-muted text-sm">
+                        No attributes added. Use "Add Attribute" to define name/value pairs (e.g., Color / Blue).
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {attributes.map((attribute, index) => (
+                          // biome-ignore lint/suspicious/noArrayIndexKey: rows are editable and have no stable id
+                          <div key={index} className="flex items-center gap-4">
+                            <input
+                              type="text"
+                              value={attribute.attributeName}
+                              onChange={(e) =>
+                                setAttributes((prev) =>
+                                  prev.map((attr, i) =>
+                                    i === index ? { ...attr, attributeName: e.target.value } : attr,
+                                  ),
+                                )
+                              }
+                              disabled={isProductSelected}
+                              className="flex-1 px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+                              placeholder="Attribute name (e.g., Color)"
+                            />
+                            <input
+                              type="text"
+                              value={attribute.attributeValue}
+                              onChange={(e) =>
+                                setAttributes((prev) =>
+                                  prev.map((attr, i) =>
+                                    i === index ? { ...attr, attributeValue: e.target.value } : attr,
+                                  ),
+                                )
+                              }
+                              disabled={isProductSelected}
+                              className="flex-1 px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+                              placeholder="Attribute value (e.g., Blue)"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setAttributes((prev) => prev.filter((_, i) => i !== index))}
+                              disabled={isProductSelected}
+                              className="w-8 h-8 shrink-0 bg-destructive/10 text-destructive rounded-full flex items-center justify-center hover:bg-destructive/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Media Tab */}
+              {activeTab === "media" && (
+                <div className="space-y-8">
+                  {/* Cover Photo Section */}
+                  <fieldset>
+                    <legend className="block text-sm font-medium text-text-primary mb-2">
+                      Cover Photo *<span className="text-text-muted font-normal ml-2">(Main product image)</span>
+                    </legend>
+                    <p className="text-text-muted text-sm mb-4">
+                      Upload a high-quality cover image for your product, or add it via a link. This will be the
+                      main image displayed.
+                    </p>
+
+                    <div className="flex items-center gap-2 mb-4">
+                      <button
+                        type="button"
+                        onClick={() => setCoverPhotoMode("upload")}
+                        disabled={isProductSelected}
+                        className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                          coverPhotoMode === "upload"
+                            ? "bg-brand text-white"
+                            : "bg-surface text-text-secondary hover:bg-surface-muted"
+                        }`}
+                      >
+                        <Upload className="w-4 h-4 mr-1.5" />
+                        Upload
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCoverPhotoMode("link")}
+                        disabled={isProductSelected}
+                        className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                          coverPhotoMode === "link"
+                            ? "bg-brand text-white"
+                            : "bg-surface text-text-secondary hover:bg-surface-muted"
+                        }`}
+                      >
+                        <Link2 className="w-4 h-4 mr-1.5" />
+                        Add via Link
+                      </button>
+                    </div>
+
+                    <input
+                      ref={coverPhotoInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCoverPhotoChange}
+                      disabled={isProductSelected}
+                      className="hidden"
+                      id="coverPhotoInput"
+                    />
+
+                    {fileData.coverPhotoPreview || existingImages.coverPhoto || linkedImages.coverPhoto ? (
+                      <div className="relative inline-block">
+                        <div className="w-48 h-48 bg-surface rounded-lg overflow-hidden border-2 border-brand">
                           <Image
-                            src={product.images[0]}
-                            alt={product.title}
-                            width={64}
-                            height={64}
+                            src={fileData.coverPhotoPreview || existingImages.coverPhoto || linkedImages.coverPhoto || ""}
+                            alt="Cover preview"
                             className="w-full h-full object-cover"
+                            width={192}
+                            height={192}
                             onError={(e) => {
                               ;(e.target as HTMLImageElement).src =
                                 "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'/%3E%3C/svg%3E"
                             }}
                           />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <ImageIcon className="w-8 h-8 text-text-muted/70" />
-                          </div>
+                        </div>
+                        <span className="absolute top-2 left-2 bg-brand text-white text-xs px-2 py-1 rounded">
+                          {fileData.coverPhotoPreview ? "New Cover" : existingImages.coverPhoto ? "Existing" : "Link"}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (fileData.coverPhotoPreview) {
+                              removeCoverPhoto()
+                            } else if (existingImages.coverPhoto) {
+                              setExistingImages((prev) => ({ ...prev, coverPhoto: null }))
+                            } else {
+                              removeLinkedCoverPhoto()
+                            }
+                          }}
+                          disabled={isProductSelected}
+                          className="absolute top-2 right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center hover:bg-destructive/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-destructive"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                        {coverPhotoMode === "upload" && fileData.coverPhotoPreview && (
+                          <button
+                            type="button"
+                            onClick={() => coverPhotoInputRef.current?.click()}
+                            className="absolute bottom-2 right-2 px-3 py-1 bg-surface-elevated text-text-primary text-xs rounded shadow hover:bg-surface-muted transition-colors"
+                          >
+                            Change
+                          </button>
                         )}
                       </div>
-
-                      {/* Product Info */}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-text-primary truncate">{product.title || "Unnamed Product"}</p>
-                        <div className="flex items-center space-x-2 mt-1">
-                          {product.barcode && (
-                            <span className="inline-flex items-center px-2 py-0.5 bg-surface text-text-primary text-xs rounded font-mono">
-                              <Barcode className="w-3 h-3 mr-1" />
-                              {product.barcode}
-                            </span>
-                          )}
-                          {product.brand && <span className="text-xs text-text-muted truncate">{product.brand}</span>}
-                        </div>
-                        {product.category && <p className="text-xs text-text-muted mt-1 truncate">{product.category}</p>}
-                      </div>
-
-                      {/* Source Badge */}
-                      <div className="shrink-0">
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            product.source === "local" ? "bg-success/15 text-success" : "bg-brand/15 text-accent-foreground"
-                          }`}
-                        >
-                          {product.source === "local" ? "Local" : "Barcode DB"}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* No Results */}
-            {showDropdown && searchResults.length === 0 && !isSearching && debouncedSearchQuery.trim() && (
-              <div
-                ref={dropdownRef}
-                className="absolute z-50 w-full mt-2 bg-surface-elevated border border-border-soft rounded-xl shadow-xl p-6 text-center"
-              >
-                <Search className="w-10 h-10 text-text-muted/70 mx-auto mb-3" />
-                <p className="text-text-secondary font-medium">No results found</p>
-                <p className="text-text-muted text-sm mt-1">No matching products for "{debouncedSearchQuery}"</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Tabs */}
-      <div className="bg-surface-elevated rounded-t-2xl shadow-sm border-b border-border-soft">
-        <div className="flex space-x-8 px-8">
-          <button
-            type="button"
-            onClick={() => setActiveTab("basic")}
-            className={`py-4 px-2 font-medium border-b-2 transition-colors ${
-              activeTab === "basic"
-                ? "text-brand border-brand"
-                : "text-text-secondary border-transparent hover:text-brand"
-            }`}
-          >
-            <Package className="w-4 h-4 inline mr-2" />
-            Basic Information
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("details")}
-            className={`py-4 px-2 font-medium border-b-2 transition-colors ${
-              activeTab === "details"
-                ? "text-brand border-brand"
-                : "text-text-secondary border-transparent hover:text-brand"
-            }`}
-          >
-            <FileText className="w-4 h-4 inline mr-2" />
-            Product Details
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("media")}
-            className={`py-4 px-2 font-medium border-b-2 transition-colors ${
-              activeTab === "media"
-                ? "text-brand border-brand"
-                : "text-text-secondary border-transparent hover:text-brand"
-            }`}
-          >
-            <ImageIcon className="w-4 h-4 inline mr-2" />
-            Media
-          </button>
-        </div>
-      </div>
-
-      {/* Form */}
-      <form id="create-product-form" onSubmit={handleSubmit}>
-        <div className="bg-surface-elevated rounded-b-2xl shadow-lg p-8">
-          {errors.submit && (
-            <div className="mb-6 bg-destructive/10 border border-destructive/25 rounded-lg p-4 flex items-start space-x-3">
-              <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
-              <p className="text-destructive">{errors.submit}</p>
-            </div>
-          )}
-
-          {/* Basic Information Tab */}
-          {activeTab === "basic" && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-text-primary mb-2">
-                    Product Name *
-                  </label>
-                  <input
-                    id="name"
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    disabled={isProductSelected}
-                    className={`w-full px-4 py-3 border ${errors.name ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
-                    placeholder="e.g., Premium Dental Composite Kit"
-                  />
-                  {errors.name && <p className="text-destructive text-sm mt-1">{errors.name}</p>}
-                </div>
-
-                <div>
-                  <label htmlFor="detailedName" className="block text-sm font-medium text-text-primary mb-2">
-                    Detailed Name
-                  </label>
-                  <input
-                    id="detailedName"
-                    type="text"
-                    name="detailedName"
-                    value={formData.detailedName}
-                    onChange={handleInputChange}
-                    disabled={isProductSelected}
-                    className={`w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
-                    placeholder="e.g., Premium Dental Composite Kit - 20 Shades with Applicators"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="aboutProduct" className="block text-sm font-medium text-text-primary mb-2">
-                  About Product
-                </label>
-                <textarea
-                  id="aboutProduct"
-                  name="aboutProduct"
-                  value={formData.aboutProduct}
-                  onChange={handleInputChange}
-                  disabled={isProductSelected}
-                  rows={4}
-                  className={`w-full px-4 py-3 border ${errors.aboutProduct ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent resize-none disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
-                  placeholder="Describe your product in detail..."
-                />
-                {errors.aboutProduct && <p className="text-destructive text-sm mt-1">{errors.aboutProduct}</p>}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="subCategoriesId" className="block text-sm font-medium text-text-primary mb-2">
-                    Category ID <span className="text-text-muted font-normal">(Optional)</span>
-                  </label>
-                  <input
-                    id="subCategoriesId"
-                    type="text"
-                    name="subCategoriesId"
-                    value={formData.subCategoriesId}
-                    onChange={handleInputChange}
-                    disabled={isProductSelected}
-                    className={`w-full px-4 py-3 border ${errors.subCategoriesId ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
-                    placeholder="Enter category ID"
-                  />
-                  {errors.subCategoriesId && <p className="text-destructive text-sm mt-1">{errors.subCategoriesId}</p>}
-                </div>
-
-                <div>
-                  <label htmlFor="customerReviews" className="block text-sm font-medium text-text-primary mb-2">
-                    Customer Reviews (Optional)
-                  </label>
-                  <input
-                    id="customerReviews"
-                    type="text"
-                    name="customerReviews"
-                    value={formData.customerReviews}
-                    onChange={handleInputChange}
-                    disabled={isProductSelected}
-                    className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
-                    placeholder="Initial customer reviews"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label htmlFor="barcode" className="block text-sm font-medium text-text-primary mb-2">
-                    <Barcode className="w-4 h-4 inline mr-1" />
-                    Barcode
-                  </label>
-                  <input
-                    id="barcode"
-                    type="text"
-                    name="barcode"
-                    value={formData.barcode}
-                    onChange={handleInputChange}
-                    className={`w-full px-4 py-3 border ${errors.barcode ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
-                    placeholder="e.g., 8901234567890"
-                  />
-                  {errors.barcode && <p className="text-destructive text-sm mt-1">{errors.barcode}</p>}
-                </div>
-
-                <div>
-                  <label htmlFor="barcodeFormats" className="block text-sm font-medium text-text-primary mb-2">
-                    Barcode Format
-                  </label>
-                  <Select
-                    name="barcodeFormats"
-                    value={formData.barcodeFormats}
-                    disabled={isProductSelected}
-                    onValueChange={(value) => setFormData((prev) => ({ ...prev, barcodeFormats: value }))}
-                  >
-                    <SelectTrigger
-                      id="barcodeFormats"
-                      className="w-full rounded-lg border-border-soft bg-surface-elevated px-4 py-3 text-text-primary shadow-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:bg-surface disabled:opacity-60"
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {barcodeFormatOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-center">
-                  <label className="flex items-center cursor-pointer mt-6">
-                    <input
-                      type="checkbox"
-                      name="active"
-                      checked={formData.active}
-                      onChange={handleInputChange}
-                      disabled={isProductSelected && !isEditMode}
-                      className="w-5 h-5 text-brand border-border-soft rounded focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
-                    />
-                    <span className="ml-3 text-sm font-medium text-text-primary">Product is Active</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* User Product Fields */}
-              {!isEditMode && (
-                <div className="border-t border-border-soft pt-6 mt-6">
-                  <h3 className="text-lg font-semibold text-brand mb-4">Pricing & Inventory</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                      <label htmlFor="price" className="block text-sm font-medium text-text-primary mb-2">
-                        Price *
-                      </label>
-                      <input
-                        id="price"
-                        type="number"
-                        name="price"
-                        value={formData.price}
-                        onChange={handleInputChange}
-                        min="0"
-                        step="0.01"
-                        className={`w-full px-4 py-3 border ${errors.price ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
-                        placeholder="0.00"
-                      />
-                      {errors.price && <p className="text-destructive text-sm mt-1">{errors.price}</p>}
-                    </div>
-
-                    <div>
-                      <label htmlFor="discount" className="block text-sm font-medium text-text-primary mb-2">
-                        Discount <span className="text-text-muted font-normal">(Optional)</span>
-                      </label>
-                      <input
-                        id="discount"
-                        type="number"
-                        name="discount"
-                        value={formData.discount}
-                        onChange={handleInputChange}
-                        min="0"
-                        step="0.01"
-                        className={`w-full px-4 py-3 border ${errors.discount ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
-                        placeholder="0.00"
-                      />
-                      {errors.discount && <p className="text-destructive text-sm mt-1">{errors.discount}</p>}
-                    </div>
-
-                    <div>
-                      <label htmlFor="stock" className="block text-sm font-medium text-text-primary mb-2">
-                        Stock *
-                      </label>
-                      <input
-                        id="stock"
-                        type="number"
-                        name="stock"
-                        value={formData.stock}
-                        onChange={handleInputChange}
-                        min="0"
-                        step="1"
-                        className={`w-full px-4 py-3 border ${errors.stock ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
-                        placeholder="0"
-                      />
-                      {errors.stock && <p className="text-destructive text-sm mt-1">{errors.stock}</p>}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Edit Mode: Show Pricing & Inventory */}
-              {isEditMode && (
-                <div className="border-t border-border-soft pt-6 mt-6">
-                  <h3 className="text-lg font-semibold text-brand mb-4">Pricing & Inventory</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                      <label htmlFor="price" className="block text-sm font-medium text-text-primary mb-2">
-                        Price *
-                      </label>
-                      <input
-                        id="price"
-                        type="number"
-                        name="price"
-                        value={formData.price}
-                        onChange={handleInputChange}
-                        min="0"
-                        step="0.01"
-                        className={`w-full px-4 py-3 border ${errors.price ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
-                        placeholder="0.00"
-                      />
-                      {errors.price && <p className="text-destructive text-sm mt-1">{errors.price}</p>}
-                    </div>
-
-                    <div>
-                      <label htmlFor="discount" className="block text-sm font-medium text-text-primary mb-2">
-                        Discount <span className="text-text-muted font-normal">(Optional)</span>
-                      </label>
-                      <input
-                        id="discount"
-                        type="number"
-                        name="discount"
-                        value={formData.discount}
-                        onChange={handleInputChange}
-                        min="0"
-                        step="0.01"
-                        className={`w-full px-4 py-3 border ${errors.discount ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
-                        placeholder="0.00"
-                      />
-                      {errors.discount && <p className="text-destructive text-sm mt-1">{errors.discount}</p>}
-                    </div>
-
-                    <div>
-                      <label htmlFor="stock" className="block text-sm font-medium text-text-primary mb-2">
-                        Stock *
-                      </label>
-                      <input
-                        id="stock"
-                        type="number"
-                        name="stock"
-                        value={formData.stock}
-                        onChange={handleInputChange}
-                        min="0"
-                        step="1"
-                        className={`w-full px-4 py-3 border ${errors.stock ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
-                        placeholder="0"
-                      />
-                      {errors.stock && <p className="text-destructive text-sm mt-1">{errors.stock}</p>}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Product Details Tab */}
-          {activeTab === "details" && (
-            <div className="space-y-6">
-              <div className="bg-accent/45 border border-brand/25 rounded-lg p-4 flex items-start space-x-3">
-                <Info className="w-5 h-5 text-brand shrink-0 mt-0.5" />
-                <p className="text-accent-foreground text-sm">
-                  These details provide additional information about your product and help buyers make informed
-                  decisions.
-                </p>
-              </div>
-
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-text-primary mb-2">
-                  Detailed Description
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  disabled={isProductSelected}
-                  rows={4}
-                  className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent resize-none disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
-                  placeholder="Detailed product description..."
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="manufacturerCode" className="block text-sm font-medium text-text-primary mb-2">
-                    Manufacturer Code
-                  </label>
-                  <input
-                    id="manufacturerCode"
-                    type="text"
-                    name="manufacturerCode"
-                    value={formData.manufacturerCode}
-                    onChange={handleInputChange}
-                    disabled={isProductSelected}
-                    className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
-                    placeholder="e.g., MNF-4452"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="brand" className="block text-sm font-medium text-text-primary mb-2">
-                    Brand
-                  </label>
-                  <input
-                    id="brand"
-                    type="text"
-                    name="brand"
-                    value={formData.brand}
-                    onChange={handleInputChange}
-                    disabled={isProductSelected}
-                    className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
-                    placeholder="e.g., DentPro"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label htmlFor="packaging" className="block text-sm font-medium text-text-primary mb-2">
-                    Packaging
-                  </label>
-                  <input
-                    id="packaging"
-                    type="text"
-                    name="packaging"
-                    value={formData.packaging}
-                    onChange={handleInputChange}
-                    disabled={isProductSelected}
-                    className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
-                    placeholder="e.g., Box of 100"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="primaryMarket" className="block text-sm font-medium text-text-primary mb-2">
-                    Primary Market
-                  </label>
-                  <input
-                    id="primaryMarket"
-                    type="text"
-                    name="primaryMarket"
-                    value={formData.primaryMarket}
-                    onChange={handleInputChange}
-                    disabled={isProductSelected}
-                    className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
-                    placeholder="e.g., Dental"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="type" className="block text-sm font-medium text-text-primary mb-2">
-                    Type
-                  </label>
-                  <input
-                    id="type"
-                    type="text"
-                    name="type"
-                    value={formData.type}
-                    onChange={handleInputChange}
-                    disabled={isProductSelected}
-                    className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
-                    placeholder="e.g., Disposable"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label htmlFor="size" className="block text-sm font-medium text-text-primary mb-2">
-                    Size
-                  </label>
-                  <input
-                    id="size"
-                    type="text"
-                    name="size"
-                    value={formData.size}
-                    onChange={handleInputChange}
-                    disabled={isProductSelected}
-                    className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
-                    placeholder="e.g., Large"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="scent" className="block text-sm font-medium text-text-primary mb-2">
-                    Scent
-                  </label>
-                  <input
-                    id="scent"
-                    type="text"
-                    name="scent"
-                    value={formData.scent}
-                    onChange={handleInputChange}
-                    disabled={isProductSelected}
-                    className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
-                    placeholder="e.g., Neutral"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="sds" className="block text-sm font-medium text-text-primary mb-2">
-                    SDS Document URL
-                  </label>
-                  <input
-                    id="sds"
-                    type="url"
-                    name="sds"
-                    value={formData.sds}
-                    onChange={handleInputChange}
-                    disabled={isProductSelected}
-                    className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
-                    placeholder="https://example.com/sds/product.pdf"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Media Tab */}
-          {activeTab === "media" && (
-            <div className="space-y-8">
-              {/* Cover Photo Section */}
-              <fieldset>
-                <legend className="block text-sm font-medium text-text-primary mb-2">
-                  Cover Photo
-                  <span className="text-text-muted font-normal ml-2">(Main product image)</span>
-                </legend>
-                <p className="text-text-muted text-sm mb-4">
-                  Upload a high-quality cover image for your product. This will be the main image displayed.
-                </p>
-
-                <input
-                  ref={coverPhotoInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleCoverPhotoChange}
-                  disabled={isProductSelected}
-                  className="hidden"
-                  id="coverPhotoInput"
-                />
-
-                {fileData.coverPhotoPreview || existingImages.coverPhoto ? (
-                  <div className="relative inline-block">
-                    <div className="w-48 h-48 bg-surface rounded-lg overflow-hidden border-2 border-brand">
-                      <Image
-                        src={fileData.coverPhotoPreview || existingImages.coverPhoto || ""}
-                        alt="Cover preview"
-                        className="w-full h-full object-cover"
-                        width={192}
-                        height={192}
-                        onError={(e) => {
-                          ;(e.target as HTMLImageElement).src =
-                            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'/%3E%3C/svg%3E"
-                        }}
-                      />
-                    </div>
-                    <span className="absolute top-2 left-2 bg-brand text-white text-xs px-2 py-1 rounded">
-                      {fileData.coverPhotoPreview ? "New Cover" : "Existing"}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (fileData.coverPhotoPreview) {
-                          removeCoverPhoto()
-                        } else {
-                          setExistingImages((prev) => ({ ...prev, coverPhoto: null }))
-                        }
-                      }}
-                      disabled={isProductSelected}
-                      className="absolute top-2 right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center hover:bg-destructive/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-destructive"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => coverPhotoInputRef.current?.click()}
-                      className="absolute bottom-2 right-2 px-3 py-1 bg-surface-elevated text-text-primary text-xs rounded shadow hover:bg-surface-muted transition-colors"
-                    >
-                      Change
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => coverPhotoInputRef.current?.click()}
-                    disabled={isProductSelected}
-                    className="border-2 border-dashed border-border-soft rounded-lg p-8 text-center hover:border-brand hover:bg-surface-muted transition-colors cursor-pointer w-full max-w-md disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Upload className="w-10 h-10 text-text-muted mx-auto mb-3" />
-                    <p className="text-text-secondary font-medium">Click to upload cover photo</p>
-                    <p className="text-text-muted text-sm mt-1">PNG, JPG, GIF up to 10MB</p>
-                  </button>
-                )}
-              </fieldset>
-
-              {/* Additional Photos Section */}
-              <fieldset>
-                <legend className="block text-sm font-medium text-text-primary mb-2">
-                  Additional Photos
-                  <span className="text-text-muted font-normal ml-2">(Optional)</span>
-                </legend>
-                <p className="text-text-muted text-sm mb-4">
-                  Upload additional product images to show different angles or details.
-                </p>
-
-                <input
-                  ref={photosInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handlePhotosChange}
-                  disabled={isProductSelected}
-                  className="hidden"
-                  id="photosInput"
-                />
-
-                <div className="space-y-4">
-                  <button
-                    type="button"
-                    onClick={() => photosInputRef.current?.click()}
-                    disabled={isProductSelected}
-                    className="inline-flex items-center px-4 py-2 bg-surface text-text-primary rounded-lg hover:bg-surface-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Photos
-                  </button>
-
-                  {fileData.photosPreviews.length > 0 || existingImages.photos.length > 0 ? (
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                      {/* Existing photos from selected product */}
-                      {existingImages.photos.map((photo, index) => (
-                        <div key={`existing-${photo}`} className="relative group">
-                          <div className="aspect-square bg-surface rounded-lg overflow-hidden border border-border-soft">
-                            <Image
-                              src={photo}
-                              alt={`Existing ${index + 1}`}
-                              className="w-full h-full object-cover"
-                              width={192}
-                              height={192}
-                              onError={(e) => {
-                                ;(e.target as HTMLImageElement).src =
-                                  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'/%3E%3C/svg%3E"
-                              }}
-                            />
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setExistingImages((prev) => ({
-                                ...prev,
-                                photos: prev.photos.filter((_, i) => i !== index),
-                              }))
+                    ) : coverPhotoMode === "upload" ? (
+                      <button
+                        type="button"
+                        onClick={() => coverPhotoInputRef.current?.click()}
+                        disabled={isProductSelected}
+                        className="border-2 border-dashed border-border-soft rounded-lg p-8 text-center hover:border-brand hover:bg-surface-muted transition-colors cursor-pointer w-full max-w-md disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Upload className="w-10 h-10 text-text-muted mx-auto mb-3" />
+                        <p className="text-text-secondary font-medium">Click to upload cover photo</p>
+                        <p className="text-text-muted text-sm mt-1">PNG, JPG, GIF up to 10MB</p>
+                      </button>
+                    ) : (
+                      <div className="border-2 border-dashed border-border-soft rounded-lg p-6 w-full max-w-md">
+                        <div className="flex gap-2">
+                          <input
+                            type="url"
+                            value={coverPhotoUrlInput}
+                            onChange={(e) => {
+                              setCoverPhotoUrlInput(e.target.value)
+                              if (coverPhotoUrlError) setCoverPhotoUrlError("")
                             }}
                             disabled={isProductSelected}
-                            className="absolute top-2 right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90 disabled:opacity-0 disabled:cursor-not-allowed"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                          <span className="absolute bottom-2 left-2 bg-brand/80 text-white text-xs px-2 py-0.5 rounded">
-                            Existing
-                          </span>
-                        </div>
-                      ))}
-                      {/* Newly uploaded photos */}
-                      {fileData.photosPreviews.map((preview, index) => (
-                        <div key={preview} className="relative group">
-                          <div className="aspect-square bg-surface rounded-lg overflow-hidden border-2 border-success/60">
-                            <Image
-                              src={preview}
-                              alt={`New ${index + 1}`}
-                              className="w-full h-full object-cover"
-                              width={192}
-                              height={192}
-                              onError={(e) => {
-                                ;(e.target as HTMLImageElement).src =
-                                  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'/%3E%3C/svg%3E"
-                              }}
-                            />
-                          </div>
+                            placeholder="https://example.com/image.jpg"
+                            className="flex-1 px-3 py-2 border border-border-soft rounded-lg text-sm bg-surface-elevated text-text-primary focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-50 disabled:cursor-not-allowed"
+                          />
                           <button
                             type="button"
-                            onClick={() => removePhoto(index)}
+                            onClick={handleAddCoverPhotoLink}
                             disabled={isProductSelected}
-                            className="absolute top-2 right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90 disabled:opacity-0 disabled:cursor-not-allowed"
+                            className="px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium hover:bg-brand/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            <X className="w-4 h-4" />
+                            Add
                           </button>
-                          <span className="absolute bottom-2 left-2 bg-success/80 text-white text-xs px-2 py-0.5 rounded">
-                            New
-                          </span>
                         </div>
-                      ))}
+                        {coverPhotoUrlError && <p className="text-destructive text-sm mt-2">{coverPhotoUrlError}</p>}
+                      </div>
+                    )}
+                  </fieldset>
+
+                  {/* Additional Photos Section */}
+                  <fieldset>
+                    <legend className="block text-sm font-medium text-text-primary mb-2">
+                      Additional Photos
+                      <span className="text-text-muted font-normal ml-2">(Optional)</span>
+                    </legend>
+                    <p className="text-text-muted text-sm mb-4">
+                      Upload additional product images to show different angles or details, or add them via a link.
+                    </p>
+
+                    <div className="flex items-center gap-2 mb-4">
+                      <button
+                        type="button"
+                        onClick={() => setPhotosMode("upload")}
+                        disabled={isProductSelected}
+                        className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                          photosMode === "upload"
+                            ? "bg-brand text-white"
+                            : "bg-surface text-text-secondary hover:bg-surface-muted"
+                        }`}
+                      >
+                        <Upload className="w-4 h-4 mr-1.5" />
+                        Upload
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPhotosMode("link")}
+                        disabled={isProductSelected}
+                        className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                          photosMode === "link"
+                            ? "bg-brand text-white"
+                            : "bg-surface text-text-secondary hover:bg-surface-muted"
+                        }`}
+                      >
+                        <Link2 className="w-4 h-4 mr-1.5" />
+                        Add via Link
+                      </button>
                     </div>
-                  ) : (
-                    <div className="border-2 border-dashed border-border-soft rounded-lg p-8 text-center">
-                      <ImageIcon className="w-10 h-10 text-text-muted/70 mx-auto mb-3" />
-                      <p className="text-text-muted">No additional photos added</p>
-                      <p className="text-text-muted/70 text-sm mt-1">Click "Add Photos" to upload more images</p>
+
+                    <input
+                      ref={photosInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handlePhotosChange}
+                      disabled={isProductSelected}
+                      className="hidden"
+                      id="photosInput"
+                    />
+
+                    <div className="space-y-4">
+                      {photosMode === "upload" ? (
+                        <button
+                          type="button"
+                          onClick={() => photosInputRef.current?.click()}
+                          disabled={isProductSelected}
+                          className="inline-flex items-center px-4 py-2 bg-surface text-text-primary rounded-lg hover:bg-surface-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Photos
+                        </button>
+                      ) : (
+                        <div className="border-2 border-dashed border-border-soft rounded-lg p-4 max-w-md">
+                          <div className="flex gap-2">
+                            <input
+                              type="url"
+                              value={photoUrlInput}
+                              onChange={(e) => {
+                                setPhotoUrlInput(e.target.value)
+                                if (photoUrlError) setPhotoUrlError("")
+                              }}
+                              disabled={isProductSelected}
+                              placeholder="https://example.com/image.jpg"
+                              className="flex-1 px-3 py-2 border border-border-soft rounded-lg text-sm bg-surface-elevated text-text-primary focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-50 disabled:cursor-not-allowed"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleAddPhotoLink}
+                              disabled={isProductSelected}
+                              className="px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium hover:bg-brand/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Add
+                            </button>
+                          </div>
+                          {photoUrlError && <p className="text-destructive text-sm mt-2">{photoUrlError}</p>}
+                        </div>
+                      )}
+
+                      {fileData.photosPreviews.length > 0 ||
+                      existingImages.photos.length > 0 ||
+                      linkedImages.photos.length > 0 ? (
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                          {/* Existing photos from selected product */}
+                          {existingImages.photos.map((photo, index) => (
+                            <div key={`existing-${photo}`} className="relative group">
+                              <div className="aspect-square bg-surface rounded-lg overflow-hidden border border-border-soft">
+                                <Image
+                                  src={photo}
+                                  alt={`Existing ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                  width={192}
+                                  height={192}
+                                  onError={(e) => {
+                                    ;(e.target as HTMLImageElement).src =
+                                      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'/%3E%3C/svg%3E"
+                                  }}
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setExistingImages((prev) => ({
+                                    ...prev,
+                                    photos: prev.photos.filter((_, i) => i !== index),
+                                  }))
+                                }}
+                                disabled={isProductSelected}
+                                className="absolute top-2 right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90 disabled:opacity-0 disabled:cursor-not-allowed"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                              <span className="absolute bottom-2 left-2 bg-brand/80 text-white text-xs px-2 py-0.5 rounded">
+                                Existing
+                              </span>
+                            </div>
+                          ))}
+                          {/* Newly uploaded photos */}
+                          {fileData.photosPreviews.map((preview, index) => (
+                            <div key={preview} className="relative group">
+                              <div className="aspect-square bg-surface rounded-lg overflow-hidden border-2 border-success/60">
+                                <Image
+                                  src={preview}
+                                  alt={`New ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                  width={192}
+                                  height={192}
+                                  onError={(e) => {
+                                    ;(e.target as HTMLImageElement).src =
+                                      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'/%3E%3C/svg%3E"
+                                  }}
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removePhoto(index)}
+                                disabled={isProductSelected}
+                                className="absolute top-2 right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90 disabled:opacity-0 disabled:cursor-not-allowed"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                              <span className="absolute bottom-2 left-2 bg-success/80 text-white text-xs px-2 py-0.5 rounded">
+                                New
+                              </span>
+                            </div>
+                          ))}
+                          {/* Linked photos */}
+                          {linkedImages.photos.map((photo, index) => (
+                            <div key={`link-${photo}`} className="relative group">
+                              <div className="aspect-square bg-surface rounded-lg overflow-hidden border-2 border-brand/60">
+                                <Image
+                                  src={photo}
+                                  alt={`Linked ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                  width={192}
+                                  height={192}
+                                  onError={(e) => {
+                                    ;(e.target as HTMLImageElement).src =
+                                      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'/%3E%3C/svg%3E"
+                                  }}
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removeLinkedPhoto(index)}
+                                disabled={isProductSelected}
+                                className="absolute top-2 right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90 disabled:opacity-0 disabled:cursor-not-allowed"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                              <span className="absolute bottom-2 left-2 bg-brand/80 text-white text-xs px-2 py-0.5 rounded">
+                                Link
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="border-2 border-dashed border-border-soft rounded-lg p-8 text-center">
+                          <ImageIcon className="w-10 h-10 text-text-muted/70 mx-auto mb-3" />
+                          <p className="text-text-muted">No additional photos added</p>
+                          <p className="text-text-muted/70 text-sm mt-1">
+                            Click "Add Photos" or add an image link to add more images
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </fieldset>
+
+                  {/* Upload Summary */}
+                  {(fileData.coverPhoto ||
+                    fileData.photos.length > 0 ||
+                    existingImages.coverPhoto ||
+                    existingImages.photos.length > 0 ||
+                    linkedImages.coverPhoto ||
+                    linkedImages.photos.length > 0) && (
+                    <div className="bg-surface-muted rounded-lg p-4">
+                      <h4 className="text-sm font-medium text-text-primary mb-2">Images Summary</h4>
+                      <ul className="text-sm text-text-secondary space-y-1">
+                        {existingImages.coverPhoto && !fileData.coverPhoto && (
+                          <li className="flex items-center">
+                            <CheckCircle className="w-4 h-4 text-brand mr-2" />
+                            Cover photo: Existing image
+                          </li>
+                        )}
+                        {fileData.coverPhoto && (
+                          <li className="flex items-center">
+                            <CheckCircle className="w-4 h-4 text-success mr-2" />
+                            Cover photo: {fileData.coverPhoto.name} (new)
+                          </li>
+                        )}
+                        {linkedImages.coverPhoto && !fileData.coverPhoto && (
+                          <li className="flex items-center">
+                            <CheckCircle className="w-4 h-4 text-brand mr-2" />
+                            Cover photo: link
+                          </li>
+                        )}
+                        {existingImages.photos.length > 0 && (
+                          <li className="flex items-center">
+                            <CheckCircle className="w-4 h-4 text-brand mr-2" />
+                            Existing photos: {existingImages.photos.length} image(s)
+                          </li>
+                        )}
+                        {fileData.photos.length > 0 && (
+                          <li className="flex items-center">
+                            <CheckCircle className="w-4 h-4 text-success mr-2" />
+                            New photos: {fileData.photos.length} file(s)
+                          </li>
+                        )}
+                        {linkedImages.photos.length > 0 && (
+                          <li className="flex items-center">
+                            <CheckCircle className="w-4 h-4 text-brand mr-2" />
+                            Linked photos: {linkedImages.photos.length} image(s)
+                          </li>
+                        )}
+                      </ul>
                     </div>
                   )}
                 </div>
-              </fieldset>
-
-              {/* Upload Summary */}
-              {(fileData.coverPhoto ||
-                fileData.photos.length > 0 ||
-                existingImages.coverPhoto ||
-                existingImages.photos.length > 0) && (
-                <div className="bg-surface-muted rounded-lg p-4">
-                  <h4 className="text-sm font-medium text-text-primary mb-2">Images Summary</h4>
-                  <ul className="text-sm text-text-secondary space-y-1">
-                    {existingImages.coverPhoto && !fileData.coverPhoto && (
-                      <li className="flex items-center">
-                        <CheckCircle className="w-4 h-4 text-brand mr-2" />
-                        Cover photo: Existing image
-                      </li>
-                    )}
-                    {fileData.coverPhoto && (
-                      <li className="flex items-center">
-                        <CheckCircle className="w-4 h-4 text-success mr-2" />
-                        Cover photo: {fileData.coverPhoto.name} (new)
-                      </li>
-                    )}
-                    {existingImages.photos.length > 0 && (
-                      <li className="flex items-center">
-                        <CheckCircle className="w-4 h-4 text-brand mr-2" />
-                        Existing photos: {existingImages.photos.length} image(s)
-                      </li>
-                    )}
-                    {fileData.photos.length > 0 && (
-                      <li className="flex items-center">
-                        <CheckCircle className="w-4 h-4 text-success mr-2" />
-                        New photos: {fileData.photos.length} file(s)
-                      </li>
-                    )}
-                  </ul>
-                </div>
               )}
-            </div>
-          )}
 
-          {/* Navigation Buttons */}
-          <div className="flex justify-between mt-8 pt-6 border-t border-border-soft">
-            <button
-              type="button"
-              onClick={() => {
-                if (activeTab === "details") setActiveTab("basic")
-                else if (activeTab === "media") setActiveTab("details")
-              }}
-              className={`px-6 py-2 border border-border-soft rounded-lg text-text-primary hover:bg-surface-muted transition-colors font-medium ${
-                activeTab === "basic" ? "invisible" : ""
-              }`}
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (activeTab === "basic") setActiveTab("details")
-                else if (activeTab === "details") setActiveTab("media")
-              }}
-              className={`px-6 py-2 bg-accent-strong text-muted rounded-lg hover:bg-opacity-90 transition-colors font-medium ${
-                activeTab === "media" ? "invisible" : ""
-              }`}
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      </form>
+              {/* Navigation Buttons */}
+              <div className="flex justify-between mt-8 pt-6 border-t border-border-soft">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (activeTab === "details") setActiveTab("basic")
+                    else if (activeTab === "media") setActiveTab("details")
+                  }}
+                  className={`px-6 py-2 border border-border-soft rounded-lg text-text-primary hover:bg-surface-muted transition-colors font-medium ${
+                    activeTab === "basic" ? "invisible" : ""
+                  }`}
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (activeTab === "basic") setActiveTab("details")
+                    else if (activeTab === "details") setActiveTab("media")
+                  }}
+                  className={`px-6 py-2 bg-accent-strong text-muted rounded-lg hover:bg-opacity-90 transition-colors font-medium ${
+                    activeTab === "media" ? "invisible" : ""
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </form>
+        </>
+      )}
+
+      {modalProduct && (
+        <ProductDetailsModal
+          product={modalProduct}
+          isOpen={!!modalProduct}
+          onClose={() => setModalProduct(null)}
+          onSuccess={() => setModalProduct(null)}
+        />
+      )}
     </div>
   )
 }

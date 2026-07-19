@@ -23,7 +23,6 @@ interface DashboardHeaderProps {
   accountFallbackName?: string
   accountMenuClassName?: string
   showCart?: boolean
-  notificationBell?: React.ReactNode
 }
 
 export default function DashboardHeader({
@@ -31,7 +30,6 @@ export default function DashboardHeader({
   accountFallbackName = "Account",
   accountMenuClassName,
   showCart = false,
-  notificationBell,
 }: DashboardHeaderProps) {
   const headerId = useId()
   const pathname = usePathname()
@@ -106,7 +104,6 @@ export default function DashboardHeader({
               </Link>
             ) : null}
             <ThemeToggle />
-            {notificationBell ?? null}
             <AccountMenu
               className={accountMenuClassName}
               displayName={displayName}

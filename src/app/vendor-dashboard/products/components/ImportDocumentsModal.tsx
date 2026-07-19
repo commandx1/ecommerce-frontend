@@ -17,6 +17,13 @@ interface ImportDocumentsModalProps {
 }
 
 function statusBadge(doc: VendorDocument) {
+  if (doc.systemRejected) {
+    return (
+      <span className="inline-flex items-center rounded-full bg-danger/10 px-2.5 py-0.5 text-xs font-semibold text-danger">
+        System Rejected
+      </span>
+    )
+  }
   if (doc.approved) {
     return (
       <span className="inline-flex items-center rounded-full bg-success/12 px-2.5 py-0.5 text-xs font-semibold text-success">
@@ -52,6 +59,28 @@ function statusBadge(doc: VendorDocument) {
   )
 }
 
+const EXPANDABLE_TEXT_LIMIT = 180
+
+function ExpandableText({ text, className }: { text: string; className?: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const isTruncatable = text.length > EXPANDABLE_TEXT_LIMIT
+
+  return (
+    <p className={cn("whitespace-pre-line", className)}>
+      {expanded || !isTruncatable ? text : `${text.slice(0, EXPANDABLE_TEXT_LIMIT).trimEnd()}...`}
+      {isTruncatable && (
+        <button
+          type="button"
+          onClick={() => setExpanded((prev) => !prev)}
+          className="ml-1.5 font-semibold underline underline-offset-2"
+        >
+          {expanded ? "Show less" : "Show more"}
+        </button>
+      )}
+    </p>
+  )
+}
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {
     year: "numeric",
@@ -75,9 +104,8 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
   const [isLoadingDocs, setIsLoadingDocs] = useState(false)
   const [currentPage, setCurrentPage] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
-  const [revisionCount, setRevisionCount] = useState(0)
   const [revisingId, setRevisingId] = useState<string | null>(null)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deletingIds, setDeletingIds] = useState<Map<string, boolean>>(new Map())
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
 
@@ -90,11 +118,6 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
         setDocuments(res.content)
         setTotalPages(res.totalPages)
         setCurrentPage(page)
-        if (page === 0) {
-          setRevisionCount(
-            res.content.filter((d) => d.revisionRequested && !d.approved && !d.deleted && d.revisedFilePath === null).length,
-          )
-        }
       } catch {
         showToast.error("Failed to load upload history")
       } finally {
@@ -160,7 +183,7 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
     }
   }
 
-  const handleDownload = async (doc: VendorDocument, fileType: "original" | "revised") => {
+  const handleDownload = async (doc: VendorDocument, fileType: "original" | "revised" | "invalid") => {
     if (!accessToken) return
     setDownloadingId(`${doc.id}-${fileType}`)
     try {
@@ -168,11 +191,18 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
-      a.download = extractFileName(fileType === "revised" && doc.revisedFilePath ? doc.revisedFilePath : doc.filePath)
+      const sourcePath =
+        fileType === "revised" && doc.revisedFilePath
+          ? doc.revisedFilePath
+          : fileType === "invalid" && doc.invalidRecordsFilePath
+            ? doc.invalidRecordsFilePath
+            : doc.filePath
+      a.download = extractFileName(sourcePath)
       a.click()
       URL.revokeObjectURL(url)
-    } catch {
-      showToast.error("Failed to download file")
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to download file"
+      showToast.error(msg)
     } finally {
       setDownloadingId(null)
     }
@@ -180,17 +210,21 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
 
   const handleDelete = async (docId: string) => {
     if (!accessToken) return
-    setDeletingId(docId)
+    setDeletingIds((prev) => new Map(prev).set(docId, true))
     try {
       await vendorDocumentsAPI.deleteDocument(docId, accessToken)
       showToast.success("Document deleted")
       setConfirmDeleteId(null)
-      void fetchDocuments(currentPage)
+      setDocuments((prev) => prev.filter((d) => d.id !== docId))
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to delete document"
       showToast.error(msg)
     } finally {
-      setDeletingId(null)
+      setDeletingIds((prev) => {
+        const next = new Map(prev)
+        next.delete(docId)
+        return next
+      })
     }
   }
 
@@ -205,7 +239,7 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
       isOpen={isOpen}
       onClose={handleClose}
       title="Import Products"
-      maxWidthClassName="min-w-4xl"
+      maxWidthClassName="w-5xl"
       overlayClassName="bg-brand-strong/40 backdrop-blur-[2px]"
       contentClassName="rounded-2xl border border-border-soft bg-surface-elevated p-0"
     >
@@ -240,16 +274,11 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
           type="button"
           onClick={() => setActiveTab("history")}
           className={cn(
-            "relative flex flex-1 items-center justify-center gap-2 px-6 py-3 text-sm font-medium transition-colors",
+            "flex-1 px-6 py-3 text-sm font-medium transition-colors",
             activeTab === "history" ? "border-b-2 border-brand text-brand" : "text-text-muted hover:text-text-primary",
           )}
         >
           My Uploads
-          {revisionCount > 0 && (
-            <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-warning px-1 text-[10px] font-bold text-white">
-              {revisionCount}
-            </span>
-          )}
         </button>
       </div>
 
@@ -352,15 +381,15 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
                                 <span className="font-semibold">Revision submitted</span> — awaiting admin review
                               </p>
                             ) : doc.revisionApproved === false && doc.requestedEdits ? (
-                              <p className="mt-2 whitespace-pre-line rounded-lg bg-danger/8 px-3 py-2 text-xs text-danger">
+                              <div className="mt-2 rounded-lg bg-danger/8 px-3 py-2 text-xs text-danger">
                                 <span className="font-semibold">Fix required: </span>
-                                {doc.requestedEdits}
-                              </p>
+                                <ExpandableText text={doc.requestedEdits} />
+                              </div>
                             ) : !doc.revisedFilePath && doc.requestedEdits ? (
-                              <p className="mt-2 whitespace-pre-line rounded-lg bg-warning/10 px-3 py-2 text-xs text-warning">
+                              <div className="mt-2 rounded-lg bg-warning/10 px-3 py-2 text-xs text-warning">
                                 <span className="font-semibold">Revision note: </span>
-                                {doc.requestedEdits}
-                              </p>
+                                <ExpandableText text={doc.requestedEdits} />
+                              </div>
                             ) : null}
                           </>
                         )}
@@ -398,6 +427,23 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
                             <Download className="h-3.5 w-3.5" />
                           )}
                           Revised
+                        </button>
+                      )}
+
+                      {/* Download invalid records */}
+                      {doc.invalidRecordsFilePath && (
+                        <button
+                          type="button"
+                          disabled={downloadingId === `${doc.id}-invalid`}
+                          onClick={() => handleDownload(doc, "invalid")}
+                          className="flex items-center gap-1.5 rounded-lg border border-danger/30 bg-danger/8 px-3 py-1.5 text-xs font-medium text-danger transition-colors hover:bg-danger/15 disabled:opacity-50"
+                        >
+                          {downloadingId === `${doc.id}-invalid` ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Download className="h-3.5 w-3.5" />
+                          )}
+                          Invalid Records
                         </button>
                       )}
 
@@ -456,7 +502,7 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
                                   type="button"
                                   variant="quiet"
                                   size="sm"
-                                  disabled={deletingId === doc.id}
+                                  disabled={deletingIds.has(doc.id)}
                                   onClick={() => setConfirmDeleteId(null)}
                                 >
                                   Cancel
@@ -465,10 +511,10 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
                                   type="button"
                                   variant="destructive"
                                   size="sm"
-                                  disabled={deletingId === doc.id}
+                                  disabled={deletingIds.has(doc.id)}
                                   onClick={() => { void handleDelete(doc.id) }}
                                 >
-                                  {deletingId === doc.id && <Loader2 className="h-3 w-3 animate-spin" />}
+                                  {deletingIds.has(doc.id) && <Loader2 className="h-3 w-3 animate-spin" />}
                                   Delete
                                 </Button>
                               </div>

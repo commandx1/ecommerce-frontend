@@ -4,13 +4,19 @@ import { buildErrorResponse, parseJsonOrText, proxyRequest } from "@/features/pr
 import type { ProductRouteContext } from "@/features/products/api/proxy/types"
 
 // Get Product by ID - GET /api/products/:id
-export async function GET(_request: NextRequest, { params }: ProductRouteContext) {
+export async function GET(request: NextRequest, { params }: ProductRouteContext) {
   try {
     const { id } = await params
+    const authHeader = request.headers.get("Authorization")
+
+    if (!authHeader) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    }
 
     const response = await proxyRequest({
       id,
       method: "GET",
+      authHeader,
     })
 
     if (response.status < 200 || response.status >= 300) {

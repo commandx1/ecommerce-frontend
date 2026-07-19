@@ -9,9 +9,11 @@ export interface VendorDocument {
   revisionApproved: boolean | null
   requestedEdits: string | null
   revisedFilePath: string | null
+  invalidRecordsFilePath: string | null
   createdDate: string
   updatedDate: string
   deleted: boolean
+  systemRejected: boolean
 }
 
 export interface VendorDocumentsResponse {
@@ -87,7 +89,7 @@ class VendorDocumentsAPI {
     })
   }
 
-  async downloadDocument(id: string, fileType: "original" | "revised", token: string): Promise<Blob> {
+  async downloadDocument(id: string, fileType: "original" | "revised" | "invalid", token: string): Promise<Blob> {
     const response = await apiRequest.requestResponse<Blob>({
       client: "backend",
       method: "GET",

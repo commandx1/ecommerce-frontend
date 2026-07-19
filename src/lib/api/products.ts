@@ -65,6 +65,24 @@ export interface Product {
   photoPaths?: string
   productDetailsId?: string | null
   customerReviews?: string
+  // Vendor review flow fields (also present on ProductResponseDto)
+  manufacturer?: string
+  exampleVariationsProductId?: string
+  categoryLevel1?: string
+  categoryLevel2?: string
+  categoryLevel3?: string
+  categoryLevel4?: string
+  categoryLevel5?: string
+  manufacturerSiteProductPage?: string
+  dentalLicenseRequired?: string
+  reorderId?: string
+  referanceNumber?: string
+  height?: number
+  length?: number
+  width?: number
+  distanceUnit?: string
+  weight?: number
+  massUnit?: string
 }
 
 // Data payload for multipart/form-data (JSON string in 'data' field)
@@ -93,6 +111,57 @@ export interface CreateProductData {
 
 export interface CreateProductPayload {
   data: CreateProductData
+  coverPhoto?: File
+  photos?: File[]
+}
+
+// Attribute pair for the vendor review flow (ProductAttributeDto)
+export interface ProductAttribute {
+  attributeName: string
+  attributeValue: string
+}
+
+// Data payload for POST /api/products/review (JSON string in 'data' field)
+// Mirrors backend ProductVendorRequestDto
+export interface ProductVendorRequestData {
+  name?: string
+  detailedName?: string
+  coverPhotoPath?: string
+  photoPhats?: string[]
+  barcode?: number
+  barcodeFormats?: string
+  description?: string
+  manufacturerCode?: string
+  manufacturer?: string
+  brand?: string
+  exampleVariationsProductId?: string
+  categoryLevel1?: string
+  categoryLevel2?: string
+  categoryLevel3?: string
+  categoryLevel4?: string
+  categoryLevel5?: string
+  manufacturerSiteProductPage?: string
+  dentalLicenseRequired?: string
+  reorderId?: string
+  referanceNumber?: string
+  height?: number
+  length?: number
+  width?: number
+  weight?: number
+  attributes?: ProductAttribute[]
+  // UserProduct (vendor listing) fields
+  skuCode?: string
+  price?: number
+  stock?: number
+  active?: boolean
+  shipmentFee?: number
+  heavyShippingSurcharge?: number
+  exportPackaging?: boolean
+  fulfillmentPolicy?: string
+}
+
+export interface CreateProductForReviewPayload {
+  data: ProductVendorRequestData
   coverPhoto?: File
   photos?: File[]
 }
@@ -156,10 +225,30 @@ export interface BarcodeLookupProduct {
   barcode_number: string
   barcode_formats?: string
   mpn?: string
+  model?: string
+  asin?: string
   title?: string
   category?: string
   manufacturer?: string
   brand?: string
+  contributors?: string[]
+  age_group?: string
+  ingredients?: string
+  nutrition_facts?: string
+  energy_efficiency_class?: string
+  color?: string
+  gender?: string
+  material?: string
+  pattern?: string
+  format?: string
+  multipack?: string
+  size?: string
+  length?: string
+  width?: string
+  height?: string
+  weight?: string
+  release_date?: string
+  description?: string
   features?: string[]
   images?: string[]
   last_update?: string
@@ -183,6 +272,29 @@ export interface BarcodeProduct {
 export interface ProductSearchResponse {
   products: Product[]
   barcodeProducts: BarcodeLookupProduct[]
+}
+
+// Generic Spring Page<T> wrapper
+export interface PageResponse<T> {
+  content: T[]
+  totalElements: number
+  totalPages: number
+  number: number
+  size: number
+  numberOfElements: number
+  first: boolean
+  last: boolean
+  empty: boolean
+}
+
+// Item shape returned by GET /api/products/active (search autocomplete row, not full product details)
+export interface ActiveProductSearchItem {
+  id: string
+  name: string
+  coverPhotoPath: string | null
+  brand: string | null
+  manufacturer: string | null
+  manufacturerCode: string | null
 }
 
 // Normalized product for autocomplete
@@ -220,6 +332,56 @@ export interface UserProduct {
   active: boolean
   periodicSellCount?: number
   periodicGrossRevenue?: number
+  // Populated client-side by merging in GET /api/products/my-products (not part of the filter response)
+  reviewStatus?: ProductReviewStatus
+}
+
+// Mirrors backend UserProductResponse (GET /api/user-products/:id)
+export interface UserProductDetailResponse {
+  id: string
+  userId: string
+  productId: string
+  productName: string
+  price: number
+  oldPrice: number
+  discount: number
+  stock: number
+  active: boolean
+  coverPhotoPath: string
+  skuCode: string
+  sellCount: number
+  periodicSellCount?: number
+  periodicGrossRevenue?: number
+  height: number
+  length: number
+  width: number
+  distanceUnit: string
+  weight: number
+  massUnit: string
+  shipmentFee: number
+}
+
+// Mirrors backend ProductReviewStatusDto
+// approved === null means the product is still pending review
+export interface ProductReviewStatus {
+  id: string
+  approved: boolean | null
+  rejectedReason?: string | null
+  lastReviewedByAdminId?: string | null
+  updatedDate: string
+}
+
+// Mirrors backend VendorProductReviewResponseDto (GET /api/products/my-products)
+export interface VendorProductReviewItem {
+  product: Product
+  reviewStatus?: ProductReviewStatus
+  userProduct?: UserProductDetailResponse
+}
+
+export interface MyProductsPageResponse {
+  content: VendorProductReviewItem[]
+  totalElements: number
+  totalPages: number
 }
 
 export type UserProductSortBy =
@@ -288,6 +450,109 @@ class ProductsAPI {
   }
 
   /**
+   * Create a new product and submit it for review (vendor flow)
+   * POST /api/products/review
+   * Content-Type: multipart/form-data
+   * Fields: data (JSON string of ProductVendorRequestData), coverPhoto (file), photos (file[])
+   */
+  async createProductForReview(payload: CreateProductForReviewPayload, token: string): Promise<Product> {
+    const formData = new FormData()
+
+    // Add JSON data as string
+    formData.append("data", JSON.stringify(payload.data))
+
+    // Add cover photo if provided
+    if (payload.coverPhoto) {
+      formData.append("coverPhoto", payload.coverPhoto)
+    }
+
+    // Add additional photos if provided
+    if (payload.photos && payload.photos.length > 0) {
+      for (const photo of payload.photos) {
+        formData.append("photos", photo)
+      }
+    }
+
+    return apiRequest.requestJson<Product>({
+      client: "app",
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      url: `${BASE_URL}/api/products/review`,
+      withCredentials: true,
+      data: formData,
+      fallbackMessage: "Failed to submit product for review",
+    })
+  }
+
+  /**
+   * Update a rejected product and resubmit it for review (vendor flow)
+   * PUT /api/products/review/:id
+   * Content-Type: multipart/form-data
+   * Fields: data (JSON string of ProductVendorRequestData), coverPhoto (file), photos (file[])
+   * Backend only allows this when the product's review status is REJECTED.
+   */
+  async updateProductForReview(id: string, payload: CreateProductForReviewPayload, token: string): Promise<Product> {
+    const formData = new FormData()
+
+    formData.append("data", JSON.stringify(payload.data))
+
+    if (payload.coverPhoto) {
+      formData.append("coverPhoto", payload.coverPhoto)
+    }
+
+    if (payload.photos && payload.photos.length > 0) {
+      for (const photo of payload.photos) {
+        formData.append("photos", photo)
+      }
+    }
+
+    return apiRequest.requestJson<Product>({
+      client: "app",
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      url: `${BASE_URL}/api/products/review/${id}`,
+      withCredentials: true,
+      data: formData,
+      fallbackMessage: "Failed to update product for review",
+    })
+  }
+
+  /**
+   * Get the vendor's own products together with their review status
+   * GET /api/products/my-products
+   */
+  async getMyProducts(
+    token: string,
+    params: {
+      approved?: "TRUE" | "FALSE" | "NULL" | "ALL"
+      sortBy?: "createdDate" | "updatedDate"
+      sortDir?: "asc" | "desc"
+      page?: number
+      size?: number
+    } = {},
+  ): Promise<MyProductsPageResponse> {
+    return apiRequest.requestJson<MyProductsPageResponse>({
+      client: "app",
+      method: "GET",
+      url: `${BASE_URL}/api/products/my-products`,
+      headers: this.getAuthHeaders(token),
+      withCredentials: true,
+      params: {
+        approved: params.approved ?? "ALL",
+        sortBy: params.sortBy ?? "createdDate",
+        sortDir: params.sortDir ?? "desc",
+        page: params.page ?? 0,
+        size: params.size ?? 1000,
+      },
+      fallbackMessage: "Failed to fetch review status for products",
+    })
+  }
+
+  /**
    * Get product by ID
    * GET /api/products/:id
    */
@@ -296,6 +561,22 @@ class ProductsAPI {
       client: "app",
       method: "GET",
       url: `${BASE_URL}/api/products/${id}`,
+      headers: this.getAuthHeaders(token),
+      withCredentials: true,
+      fallbackMessage: "Failed to fetch product",
+    })
+  }
+
+  /**
+   * Get product by ID regardless of active status (owner/admin only).
+   * Needed for rejected/pending products, which are not active yet.
+   * GET /api/products/:id/admin
+   */
+  async getProductByIdForAdmin(id: string, token?: string): Promise<Product> {
+    return apiRequest.requestJson<Product>({
+      client: "app",
+      method: "GET",
+      url: `${BASE_URL}/api/products/${id}/admin`,
       headers: this.getAuthHeaders(token),
       withCredentials: true,
       fallbackMessage: "Failed to fetch product",
@@ -439,6 +720,83 @@ class ProductsAPI {
     })
   }
 
+  // ==================== Product Search (active products + brand filter) ====================
+
+  /**
+   * Search brand names for the brand filter dropdown (paginated, typeahead)
+   * GET /api/products/brands/search?search=...&page=...&size=...
+   */
+  async searchBrands(
+    params: { search: string; page?: number; size?: number },
+    token: string,
+    signal?: AbortSignal,
+  ): Promise<PageResponse<string>> {
+    return apiRequest.requestJson<PageResponse<string>>({
+      client: "app",
+      method: "GET",
+      headers: this.getAuthHeaders(token),
+      url: `${BASE_URL}/api/products/brands/search`,
+      params: {
+        search: params.search,
+        page: params.page ?? 0,
+        size: params.size ?? 20,
+      },
+      signal,
+      fallbackMessage: "Failed to search brands",
+    })
+  }
+
+  /**
+   * Search active products by free-text (barcode, name, detailedName, manufacturerCode)
+   * and optional brand filter. Paginated for infinite scroll.
+   * GET /api/products/active?search=...&brand=...&page=...&size=...
+   */
+  async searchActiveProducts(
+    params: { search: string; brand?: string | null; page?: number; size?: number },
+    token: string,
+    signal?: AbortSignal,
+  ): Promise<PageResponse<ActiveProductSearchItem>> {
+    return apiRequest.requestJson<PageResponse<ActiveProductSearchItem>>({
+      client: "app",
+      method: "GET",
+      headers: this.getAuthHeaders(token),
+      url: `${BASE_URL}/api/products/active`,
+      params: {
+        search: params.search,
+        page: params.page ?? 0,
+        size: params.size ?? 10,
+        ...(params.brand ? { brand: params.brand } : {}),
+      },
+      signal,
+      fallbackMessage: "Failed to search products",
+    })
+  }
+
+  /**
+   * Normalize a GET /api/products/active row for the search dropdown.
+   * Note: this row is a partial projection (no barcode/detailedName) -
+   * fetch the full product via getProductById once a row is selected.
+   */
+  normalizeActiveProductSearchItem(item: ActiveProductSearchItem): NormalizedSearchProduct {
+    return {
+      id: item.id,
+      barcode: "",
+      title: item.name || "",
+      brand: item.brand || undefined,
+      category: undefined,
+      images: item.coverPhotoPath ? [getFullImageUrl(item.coverPhotoPath)] : [],
+      source: "local",
+      originalData: {
+        id: item.id,
+        name: item.name,
+        coverPhotoPath: item.coverPhotoPath ?? undefined,
+        brand: item.brand ?? undefined,
+        manufacturer: item.manufacturer ?? undefined,
+        manufacturerCode: item.manufacturerCode ?? undefined,
+      } as Product,
+    }
+  }
+
   // ==================== Barcode Lookup ====================
 
   /**
@@ -578,6 +936,21 @@ class ProductsAPI {
       headers: this.getAuthHeaders(token),
       withCredentials: true,
       fallbackMessage: "Failed to fetch user products",
+    })
+  }
+
+  /**
+   * Get user product by ID
+   * GET /api/user-products/:id
+   */
+  async getUserProductById(id: string, token: string): Promise<UserProductDetailResponse> {
+    return apiRequest.requestJson<UserProductDetailResponse>({
+      client: "app",
+      method: "GET",
+      url: `${BASE_URL}/api/user-products/${id}`,
+      headers: this.getAuthHeaders(token),
+      withCredentials: true,
+      fallbackMessage: "Failed to fetch user product",
     })
   }
 

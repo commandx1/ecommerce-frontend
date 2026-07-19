@@ -51,10 +51,22 @@ function extractErrorMessage(data: unknown, fallbackMessage: string): string {
   return fallbackMessage
 }
 
-function toApiRequestError(error: unknown, fallbackMessage: string): ApiRequestError {
+async function parseBlobErrorData(data: Blob): Promise<unknown> {
+  try {
+    const text = await data.text()
+    return text ? JSON.parse(text) : data
+  } catch {
+    return data
+  }
+}
+
+async function toApiRequestError(error: unknown, fallbackMessage: string): Promise<ApiRequestError> {
   if (axios.isAxiosError(error)) {
     const status = error.response?.status
-    const data = error.response?.data
+    let data = error.response?.data
+    if (data instanceof Blob) {
+      data = await parseBlobErrorData(data)
+    }
     const message = extractErrorMessage(data, fallbackMessage)
 
     return new ApiRequestError(message, {
@@ -80,7 +92,7 @@ async function requestResponse<TResponse = unknown, TBody = unknown>(
   try {
     return await resolvedClient.request<TResponse, AxiosResponse<TResponse, TBody>, TBody>(axiosConfig)
   } catch (error: unknown) {
-    throw toApiRequestError(error, fallbackMessage)
+    throw await toApiRequestError(error, fallbackMessage)
   }
 }
 

@@ -1,17 +1,40 @@
 "use client"
 
-import type { ColumnDef } from "@tanstack/react-table"
-import { ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, Download, Edit, Loader2, Search, Trash2, Upload } from "lucide-react"
+import type { CellContext, ColumnDef } from "@tanstack/react-table"
+import {
+  ArrowDown,
+  ArrowUp,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Edit,
+  FileEdit,
+  Loader2,
+  Search,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useId, useRef, useState } from "react"
+import { useCallback, useEffect, useId, useRef, useState } from "react"
 import AnimatedTabs from "@/components/ui/animated-tabs"
 import { Button } from "@/components/ui/button"
 import DataTable from "@/components/ui/data-table"
 import Modal from "@/components/ui/Modal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { getFullImageUrl, type Product, productsAPI, type UserProduct, type UserProductSortBy } from "@/lib/api/products"
+import { showToast } from "@/components/ui/Toast"
+import {
+  getFullImageUrl,
+  type Product,
+  type ProductReviewStatus,
+  productsAPI,
+  type UserProduct,
+  type UserProductSortBy,
+  type VendorProductReviewItem,
+} from "@/lib/api/products"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
 import ImportDocumentsModal from "./components/ImportDocumentsModal"
@@ -86,6 +109,8 @@ interface ProductWithDetails extends UserProduct {
 
 type ProductStatusDraft = "active" | "inactive"
 type PeriodTab = "3 months" | "6 months" | "12 months"
+type ViewMode = "products" | "review"
+type ReviewApprovedFilter = "NULL" | "FALSE" | "ALL"
 
 const PERIOD_TABS: ReadonlyArray<{ label: string; value: PeriodTab }> = [
   { label: "3 months", value: "3 months" },
@@ -98,6 +123,17 @@ const PERIOD_TAB_TO_DAY_COUNT: Record<PeriodTab, number> = {
   "6 months": 180,
   "12 months": 365,
 }
+
+const VIEW_MODE_TABS: ReadonlyArray<{ label: string; value: ViewMode }> = [
+  { label: "All Products", value: "products" },
+  { label: "Review Queue", value: "review" },
+]
+
+const REVIEW_APPROVED_FILTER_OPTIONS: ReadonlyArray<{ label: string; value: ReviewApprovedFilter }> = [
+  { label: "Pending Review", value: "NULL" },
+  { label: "Rejected", value: "FALSE" },
+  { label: "All", value: "ALL" },
+]
 
 const VALID_FILTER_TYPES: FilterType[] = ["ALL", "TOTAL", "ACTIVE", "INACTIVE", "OUT_OF_STOCK", "LOW_STOCK"]
 
@@ -120,12 +156,19 @@ export default function ProductsPage() {
   })
   const selectedUserProductId = searchParams.get("userProductId")
   const [selectedPeriodTab, setSelectedPeriodTab] = useState<PeriodTab>("3 months")
+  const [viewMode, setViewMode] = useState<ViewMode>("products")
+  const [reviewApprovedFilter, setReviewApprovedFilter] = useState<ReviewApprovedFilter>("NULL")
   const [pageSize, setPageSize] = useState<number>(25)
   const [currentPage, setCurrentPage] = useState<number>(0)
   const [totalPages, setTotalPages] = useState<number>(1)
   const [totalElements, setTotalElements] = useState<number>(0)
   const [editingProductId, setEditingProductId] = useState<string | null>(null)
-  const [editingDraft, setEditingDraft] = useState<{ price: string; stock: string; active: ProductStatusDraft } | null>(null)
+  const [editingDraft, setEditingDraft] = useState<{
+    price: string
+    discount: string
+    stock: string
+    active: ProductStatusDraft
+  } | null>(null)
   const [savingProductId, setSavingProductId] = useState<string | null>(null)
   const [imageFallbacks, setImageFallbacks] = useState<Record<string, boolean>>({})
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
@@ -156,60 +199,101 @@ export default function ProductsPage() {
       let productsWithDetails: UserProduct[] = []
 
       try {
-        const howManySoldDay = PERIOD_TAB_TO_DAY_COUNT[selectedPeriodTab]
-        const activeSortBy: UserProductSortBy = sortField ?? "STOCK"
-        const activeSortDir = sortField ? sortDirection : "asc"
+        if (viewMode === "review") {
+          const myProductsResponse = await productsAPI.getMyProducts(accessToken, {
+            approved: reviewApprovedFilter,
+            page: currentPage,
+            size: pageSize,
+          })
 
-        const filterResponse = await productsAPI.filterUserProducts(
-          accessToken,
-          selectedFilter === "ALL" ? "TOTAL" : selectedFilter,
-          currentPage,
-          pageSize,
-          activeSortBy,
-          activeSortDir,
-          debouncedSearchQuery,
-          howManySoldDay,
-          selectedUserProductId ?? undefined,
-        )
+          setTotalPages(myProductsResponse.totalPages)
+          setTotalElements(myProductsResponse.totalElements)
 
-        const userProducts = filterResponse.content
-        setTotalPages(filterResponse.totalPages)
-        setTotalElements(filterResponse.totalElements)
+          productsWithDetails = myProductsResponse.content
+            .filter(
+              (
+                item,
+              ): item is VendorProductReviewItem & {
+                userProduct: NonNullable<VendorProductReviewItem["userProduct"]>
+              } => Boolean(item.userProduct),
+            )
+            .map((item) => {
+              const up = item.userProduct
+              return {
+                id: up.id,
+                userId: up.userId,
+                productId: up.productId,
+                coverPhotoPath: up.coverPhotoPath,
+                photoPhats: item.product.photoPhats ?? [],
+                subCategoriesId: item.product.subCategoriesId,
+                productName: up.productName,
+                price: up.price,
+                discount: up.discount,
+                stock: up.stock,
+                active: up.active,
+                periodicSellCount: up.periodicSellCount,
+                periodicGrossRevenue: up.periodicGrossRevenue,
+                reviewStatus: item.reviewStatus,
+                product: item.product,
+                image: up.coverPhotoPath ? getFullImageUrl(up.coverPhotoPath) : undefined,
+              }
+            })
+        } else {
+          const howManySoldDay = PERIOD_TAB_TO_DAY_COUNT[selectedPeriodTab]
+          const activeSortBy: UserProductSortBy = sortField ?? "STOCK"
+          const activeSortDir = sortField ? sortDirection : "asc"
 
-        // Filter API already includes product details, no need for additional API calls
-        productsWithDetails = userProducts.map((userProduct) => ({
-          ...userProduct,
-          product: {
-            id: userProduct.productId,
-            name: userProduct.productName || "",
-            detailedName: userProduct.productName || "",
-            barcode: "", // Not available in filter response
-            barcodeFormats: "",
-            active: userProduct.active,
-            subCategoriesId: userProduct.subCategoriesId || "",
-            coverPhotoPath: userProduct.coverPhotoPath,
-            // Add other required Product fields with defaults
-            aboutProduct: "",
-            customerReviews: "",
-            description: "",
-            manufacturerCode: "",
-            brand: "",
-            packaging: "",
-            primaryMarket: "",
-            scent: "",
-            size: "",
-            type: "",
-            sds: "",
-            photoPaths: userProduct.coverPhotoPath,
-            photoPhats: userProduct.coverPhotoPath ? [userProduct.coverPhotoPath] : [],
-            createdDate: "",
-            userId: userProduct.userId,
-            reviewCount: 0,
-            vendorsCount: 0,
-            overallStar: 0,
-          },
-          image: userProduct.coverPhotoPath ? getFullImageUrl(userProduct.coverPhotoPath) : undefined,
-        }))
+          const filterResponse = await productsAPI.filterUserProducts(
+            accessToken,
+            selectedFilter === "ALL" ? "TOTAL" : selectedFilter,
+            currentPage,
+            pageSize,
+            activeSortBy,
+            activeSortDir,
+            debouncedSearchQuery,
+            howManySoldDay,
+            selectedUserProductId ?? undefined,
+          )
+
+          const userProducts = filterResponse.content
+          setTotalPages(filterResponse.totalPages)
+          setTotalElements(filterResponse.totalElements)
+
+          // Filter API already includes product details, no need for additional API calls
+          productsWithDetails = userProducts.map((userProduct) => ({
+            ...userProduct,
+            product: {
+              id: userProduct.productId,
+              name: userProduct.productName || "",
+              detailedName: userProduct.productName || "",
+              barcode: "", // Not available in filter response
+              barcodeFormats: "",
+              active: userProduct.active,
+              subCategoriesId: userProduct.subCategoriesId || "",
+              coverPhotoPath: userProduct.coverPhotoPath,
+              // Add other required Product fields with defaults
+              aboutProduct: "",
+              customerReviews: "",
+              description: "",
+              manufacturerCode: "",
+              brand: "",
+              packaging: "",
+              primaryMarket: "",
+              scent: "",
+              size: "",
+              type: "",
+              sds: "",
+              photoPaths: userProduct.coverPhotoPath,
+              photoPhats: userProduct.coverPhotoPath ? [userProduct.coverPhotoPath] : [],
+              createdDate: "",
+              userId: userProduct.userId,
+              reviewCount: 0,
+              vendorsCount: 0,
+              overallStar: 0,
+            },
+            image: userProduct.coverPhotoPath ? getFullImageUrl(userProduct.coverPhotoPath) : undefined,
+          }))
+        }
       } catch (apiError: unknown) {
         // 403 veya 401 hatası kontrolü
         if (apiError && typeof apiError === "object" && "status" in apiError) {
@@ -271,6 +355,18 @@ export default function ProductsPage() {
     setCurrentPage(0) // Reset to first page when search changes
   }
 
+  // Handle view mode change (All Products / Review Queue)
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode)
+    setCurrentPage(0) // Reset to first page when switching views
+  }
+
+  // Handle review approved filter change
+  const handleReviewApprovedFilterChange = (filter: ReviewApprovedFilter) => {
+    setReviewApprovedFilter(filter)
+    setCurrentPage(0) // Reset to first page when filter changes
+  }
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: <no need to re-run this effect>
   useEffect(() => {
     if (isAuthenticated && accessToken) {
@@ -287,6 +383,8 @@ export default function ProductsPage() {
     currentPage,
     debouncedSearchQuery,
     selectedPeriodTab,
+    viewMode,
+    reviewApprovedFilter,
   ])
 
   const handleSelectProduct = (productId: string) => {
@@ -312,10 +410,96 @@ export default function ProductsPage() {
     }
   }
 
+  // Keeps the latest editing state readable from stable cell renderers below without
+  // forcing those renderers to be recreated (and their <input> remounted) on every keystroke.
+  const editingStateRef = useRef({ editingProductId, editingDraft, savingProductId })
+  editingStateRef.current = { editingProductId, editingDraft, savingProductId }
+
+  const renderPriceCell = useCallback((info: CellContext<ProductWithDetails, unknown>) => {
+    const product = info.row.original
+    const { editingProductId, editingDraft, savingProductId } = editingStateRef.current
+    const isEditing = editingProductId === product.id
+    const isSaving = savingProductId === product.id
+    const draftPrice = editingDraft?.price ?? ""
+
+    return (
+      <div className="text-sm font-semibold text-brand">
+        {isEditing ? (
+          <input
+            type="number"
+            min={0}
+            step="0.01"
+            value={draftPrice}
+            onChange={(event) => setEditingDraft((prev) => (prev ? { ...prev, price: event.target.value } : prev))}
+            className="h-9 w-28 rounded-lg border border-border-strong bg-surface px-3 text-sm font-semibold text-brand focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
+            disabled={isSaving}
+          />
+        ) : (
+          `$${product.price.toFixed(2)}`
+        )}
+      </div>
+    )
+  }, [])
+
+  const renderDiscountCell = useCallback((info: CellContext<ProductWithDetails, unknown>) => {
+    const product = info.row.original
+    const { editingProductId, editingDraft, savingProductId } = editingStateRef.current
+    const isEditing = editingProductId === product.id
+    const isSaving = savingProductId === product.id
+    const draftDiscount = editingDraft?.discount ?? ""
+
+    return (
+      <div className="text-sm font-medium text-text-primary">
+        {isEditing ? (
+          <input
+            type="number"
+            min={0}
+            step="0.01"
+            value={draftDiscount}
+            onChange={(event) => setEditingDraft((prev) => (prev ? { ...prev, discount: event.target.value } : prev))}
+            className="h-9 w-24 rounded-lg border border-border-strong bg-surface px-3 text-sm font-medium text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
+            disabled={isSaving}
+          />
+        ) : (
+          `$${(product.discount ?? 0).toFixed(2)}`
+        )}
+      </div>
+    )
+  }, [])
+
+  const renderStockCell = useCallback((info: CellContext<ProductWithDetails, unknown>) => {
+    const product = info.row.original
+    const { editingProductId, editingDraft, savingProductId } = editingStateRef.current
+    const isEditing = editingProductId === product.id
+    const isSaving = savingProductId === product.id
+    const draftStock = editingDraft?.stock ?? ""
+
+    return isEditing ? (
+      <div className="flex items-center justify-center gap-2">
+        <input
+          type="number"
+          min={0}
+          step={1}
+          value={draftStock}
+          onChange={(event) => setEditingDraft((prev) => (prev ? { ...prev, stock: event.target.value } : prev))}
+          className="h-9 w-24 rounded-lg border border-border-strong bg-surface px-3 text-sm font-medium text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
+          disabled={isSaving}
+        />
+        <span className="text-xs text-text-muted">units</span>
+      </div>
+    ) : (
+      <div className="flex items-center justify-center">
+        <span className={`text-sm font-medium ${getStockColor(product.stock)}`}>{product.stock}</span>
+        <span className="ml-2 text-xs text-text-muted">units</span>
+      </div>
+    )
+  }, [])
+
   const handleInlineEditStart = (product: ProductWithDetails) => {
     setEditingProductId(product.id)
     setEditingDraft({
       price: String(product.price),
+      discount: String(product.discount ?? 0),
       stock: String(product.stock),
       active: product.active ? "active" : "inactive",
     })
@@ -325,10 +509,18 @@ export default function ProductsPage() {
     if (!accessToken || !editingDraft) return
 
     const nextPrice = Number.parseFloat(editingDraft.price)
+    const nextDiscount = Number.parseFloat(editingDraft.discount)
     const nextStock = Number.parseInt(editingDraft.stock, 10)
     const nextActive = editingDraft.active === "active"
 
-    if (!Number.isFinite(nextPrice) || nextPrice < 0 || !Number.isInteger(nextStock) || nextStock < 0) {
+    if (
+      !Number.isFinite(nextPrice) ||
+      nextPrice < 0 ||
+      !Number.isFinite(nextDiscount) ||
+      nextDiscount < 0 ||
+      !Number.isInteger(nextStock) ||
+      nextStock < 0
+    ) {
       return
     }
 
@@ -339,7 +531,7 @@ export default function ProductsPage() {
         {
           price: nextPrice,
           stock: nextStock,
-          discount: product.discount,
+          discount: nextDiscount,
           active: nextActive,
         },
         accessToken,
@@ -356,9 +548,15 @@ export default function ProductsPage() {
       setEditingDraft(null)
     } catch (error) {
       console.error("Error updating product:", error)
+      showToast.error("Update failed", error instanceof Error ? error.message : "Failed to update product")
     } finally {
       setSavingProductId(null)
     }
+  }
+
+  const handleInlineEditCancel = () => {
+    setEditingProductId(null)
+    setEditingDraft(null)
   }
 
   const handleDelete = (userProductId: string, productName: string) => {
@@ -378,6 +576,7 @@ export default function ProductsPage() {
       await fetchProducts() // Refresh the list
     } catch (error) {
       console.error("Error deleting product:", error)
+      showToast.error("Delete failed", error instanceof Error ? error.message : "Failed to delete product")
     }
   }
 
@@ -392,6 +591,27 @@ export default function ProductsPage() {
       default:
         return "border border-border-soft bg-surface-muted text-text-primary"
     }
+  }
+
+  const getReviewBadge = (reviewStatus?: ProductReviewStatus) => {
+    if (!reviewStatus || reviewStatus.approved === true) return null
+
+    if (reviewStatus.approved === false) {
+      return (
+        <span
+          className="px-3 py-1 text-xs font-medium rounded-full border border-danger/20 bg-danger/14 text-danger"
+          title={reviewStatus.rejectedReason ?? undefined}
+        >
+          Rejected
+        </span>
+      )
+    }
+
+    return (
+      <span className="px-3 py-1 text-xs font-medium rounded-full border border-warning/20 bg-warning/14 text-warning">
+        Pending Review
+      </span>
+    )
   }
 
   const getStockColor = (stock: number) => {
@@ -448,7 +668,10 @@ export default function ProductsPage() {
                 alt={product.productName}
                 width={40}
                 height={40}
-                className={cn("w-full h-full object-contain", imageFallbacks[product.id] || !product.image ? "scale-110" : "")}
+                className={cn(
+                  "w-full h-full object-contain",
+                  imageFallbacks[product.id] || !product.image ? "scale-110" : "",
+                )}
                 onError={() =>
                   setImageFallbacks((prev) => ({
                     ...prev,
@@ -473,11 +696,16 @@ export default function ProductsPage() {
           <button
             type="button"
             onClick={() => handleSort("PRICE")}
-            className="flex items-center space-x-1 hover:text-brand transition-colors"
+            disabled={viewMode === "review"}
+            className="flex items-center space-x-1 hover:text-brand transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             <span>Price</span>
             {sortField === "PRICE" ? (
-              sortDirection === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
+              sortDirection === "asc" ? (
+                <ArrowUp className="w-4 h-4" />
+              ) : (
+                <ArrowDown className="w-4 h-4" />
+              )
             ) : (
               <div className="flex flex-col -space-y-1.5 w-4 h-4">
                 <ArrowUp className="w-3 h-3 text-text-muted" />
@@ -487,32 +715,16 @@ export default function ProductsPage() {
           </button>
         </div>
       ),
-      cell: ({ row }) => {
-        const product = row.original
-        const isEditing = editingProductId === product.id
-        const isSaving = savingProductId === product.id
-        const draftPrice = editingDraft?.price ?? ""
-
-        return (
-          <div className="text-sm font-semibold text-brand">
-            {isEditing ? (
-              <input
-                type="number"
-                min={0}
-                step="0.01"
-                value={draftPrice}
-                onChange={(event) =>
-                  setEditingDraft((prev) => (prev ? { ...prev, price: event.target.value } : prev))
-                }
-                className="h-9 w-28 rounded-lg border border-border-strong bg-surface px-3 text-sm font-semibold text-brand focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
-                disabled={isSaving}
-              />
-            ) : (
-              `$${product.price.toFixed(2)}`
-            )}
-          </div>
-        )
+      cell: renderPriceCell,
+      meta: {
+        headerClassName: "border-l-2 border-border-soft px-6 py-4 text-center",
+        cellClassName: "border-l-2 border-border-soft px-6 py-4 text-center",
       },
+    },
+    {
+      id: "discount",
+      header: () => <div className="flex justify-center">Discount</div>,
+      cell: renderDiscountCell,
       meta: {
         headerClassName: "border-l-2 border-border-soft px-6 py-4 text-center",
         cellClassName: "border-l-2 border-border-soft px-6 py-4 text-center",
@@ -525,11 +737,16 @@ export default function ProductsPage() {
           <button
             type="button"
             onClick={() => handleSort("STOCK")}
-            className="flex items-center space-x-1 hover:text-brand transition-colors"
+            disabled={viewMode === "review"}
+            className="flex items-center space-x-1 hover:text-brand transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             <span>Stock</span>
             {sortField === "STOCK" ? (
-              sortDirection === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
+              sortDirection === "asc" ? (
+                <ArrowUp className="w-4 h-4" />
+              ) : (
+                <ArrowDown className="w-4 h-4" />
+              )
             ) : (
               <div className="flex flex-col -space-y-1.5 w-4 h-4">
                 <ArrowUp className="w-3 h-3 text-text-muted" />
@@ -539,34 +756,7 @@ export default function ProductsPage() {
           </button>
         </div>
       ),
-      cell: ({ row }) => {
-        const product = row.original
-        const isEditing = editingProductId === product.id
-        const isSaving = savingProductId === product.id
-        const draftStock = editingDraft?.stock ?? ""
-
-        return isEditing ? (
-          <div className="flex items-center justify-center gap-2">
-            <input
-              type="number"
-              min={0}
-              step={1}
-              value={draftStock}
-              onChange={(event) =>
-                setEditingDraft((prev) => (prev ? { ...prev, stock: event.target.value } : prev))
-              }
-              className="h-9 w-24 rounded-lg border border-border-strong bg-surface px-3 text-sm font-medium text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
-              disabled={isSaving}
-            />
-            <span className="text-xs text-text-muted">units</span>
-          </div>
-        ) : (
-          <div className="flex items-center justify-center">
-            <span className={`text-sm font-medium ${getStockColor(product.stock)}`}>{product.stock}</span>
-            <span className="ml-2 text-xs text-text-muted">units</span>
-          </div>
-        )
-      },
+      cell: renderStockCell,
       meta: {
         headerClassName: "px-6 py-4 text-center",
         cellClassName: "px-6 py-4 text-center",
@@ -579,11 +769,16 @@ export default function ProductsPage() {
           <button
             type="button"
             onClick={() => handleSort("PERIODIC_SELL_COUNT")}
-            className="flex items-center space-x-1 hover:text-brand transition-colors"
+            disabled={viewMode === "review"}
+            className="flex items-center space-x-1 hover:text-brand transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             <span>Qty Sold</span>
             {sortField === "PERIODIC_SELL_COUNT" ? (
-              sortDirection === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
+              sortDirection === "asc" ? (
+                <ArrowUp className="w-4 h-4" />
+              ) : (
+                <ArrowDown className="w-4 h-4" />
+              )
             ) : (
               <div className="flex flex-col -space-y-1.5 w-4 h-4">
                 <ArrowUp className="w-3 h-3 text-text-muted" />
@@ -594,7 +789,9 @@ export default function ProductsPage() {
         </div>
       ),
       cell: ({ row }) => (
-        <span className="text-sm text-text-secondary">{row.original.periodicSellCount?.toLocaleString("en-US") ?? 0}</span>
+        <span className="text-sm text-text-secondary">
+          {row.original.periodicSellCount?.toLocaleString("en-US") ?? 0}
+        </span>
       ),
       meta: {
         headerClassName: "px-6 py-4 text-center",
@@ -608,11 +805,16 @@ export default function ProductsPage() {
           <button
             type="button"
             onClick={() => handleSort("PERIODIC_GROSS_REVENUE")}
-            className="flex items-center space-x-1 hover:text-brand transition-colors"
+            disabled={viewMode === "review"}
+            className="flex items-center space-x-1 hover:text-brand transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             <span>Sales</span>
             {sortField === "PERIODIC_GROSS_REVENUE" ? (
-              sortDirection === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
+              sortDirection === "asc" ? (
+                <ArrowUp className="w-4 h-4" />
+              ) : (
+                <ArrowDown className="w-4 h-4" />
+              )
             ) : (
               <div className="flex flex-col -space-y-1.5 w-4 h-4">
                 <ArrowUp className="w-3 h-3 text-text-muted" />
@@ -644,9 +846,7 @@ export default function ProductsPage() {
           <Select
             value={draftActive}
             onValueChange={(value) =>
-              setEditingDraft((prev) =>
-                prev ? { ...prev, active: value === "active" ? "active" : "inactive" } : prev,
-              )
+              setEditingDraft((prev) => (prev ? { ...prev, active: value === "active" ? "active" : "inactive" } : prev))
             }
             disabled={isSaving}
           >
@@ -658,12 +858,16 @@ export default function ProductsPage() {
               <SelectItem value="inactive">Inactive</SelectItem>
             </SelectContent>
           </Select>
+        ) : product.reviewStatus && product.reviewStatus.approved !== true ? (
+          <div className="flex flex-col items-center gap-1">{getReviewBadge(product.reviewStatus)}</div>
         ) : (
-          <span
-            className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(product.active ? "Active" : "Inactive")}`}
-          >
-            {product.active ? "Active" : "Inactive"}
-          </span>
+          <div className="flex flex-col items-center gap-1">
+            <span
+              className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(product.active ? "Active" : "Inactive")}`}
+            >
+              {product.active ? "Active" : "Inactive"}
+            </span>
+          </div>
         )
       },
       meta: {
@@ -679,14 +883,23 @@ export default function ProductsPage() {
         const isEditing = editingProductId === product.id
         const isSaving = savingProductId === product.id
         const draftPrice = editingDraft?.price ?? ""
+        const draftDiscount = editingDraft?.discount ?? ""
         const draftStock = editingDraft?.stock ?? ""
         const parsedDraftPrice = Number.parseFloat(draftPrice)
+        const parsedDraftDiscount = Number.parseFloat(draftDiscount)
         const parsedDraftStock = Number.parseInt(draftStock, 10)
         const canSaveDraft =
           Number.isFinite(parsedDraftPrice) &&
           parsedDraftPrice >= 0 &&
+          Number.isFinite(parsedDraftDiscount) &&
+          parsedDraftDiscount >= 0 &&
           Number.isInteger(parsedDraftStock) &&
           parsedDraftStock >= 0
+
+        const reviewApproved = product.reviewStatus?.approved
+        const isRejected = reviewApproved === false
+        const isPending = product.reviewStatus != null && reviewApproved === null
+        const showReviewEdit = isRejected || isPending
 
         return (
           <div className="flex items-center justify-center space-x-2">
@@ -697,8 +910,44 @@ export default function ProductsPage() {
               className="rounded-lg p-2 text-brand transition-colors hover:bg-surface-muted disabled:opacity-50"
               title={isEditing ? "Save" : "Edit"}
             >
-              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : isEditing ? <Check className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : isEditing ? (
+                <Check className="w-4 h-4" />
+              ) : (
+                <Edit className="w-4 h-4" />
+              )}
             </button>
+            {isEditing && (
+              <button
+                type="button"
+                onClick={handleInlineEditCancel}
+                disabled={isSaving}
+                className="rounded-lg p-2 text-red-600 transition-colors hover:bg-surface-muted disabled:opacity-50"
+                title="Cancel"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+            {showReviewEdit && (
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    `/vendor-dashboard/products/create?reviewEditId=${product.productId}&reviewUserProductId=${product.id}`,
+                  )
+                }
+                disabled={isPending}
+                className="rounded-lg p-2 text-brand transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-40"
+                title={
+                  isPending
+                    ? "Product is pending review and cannot be edited yet"
+                    : "Edit rejected product and resubmit for review"
+                }
+              >
+                <FileEdit className="w-4 h-4" />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => handleDelete(product.id, product.productName)}
@@ -758,9 +1007,21 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <ProductStatsCards selectedFilter={selectedFilter} onFilterChange={handleFilterChange} />
+        {/* View Mode Tabs */}
+        <div className="mb-6">
+          <AnimatedTabs<ViewMode>
+            value={viewMode}
+            options={VIEW_MODE_TABS}
+            onValueChange={handleViewModeChange}
+            disabled={isLoading || isFetching}
+            className="self-start"
+          />
+        </div>
 
+        {/* Stats Cards */}
+        {viewMode === "products" && (
+          <ProductStatsCards selectedFilter={selectedFilter} onFilterChange={handleFilterChange} />
+        )}
       </section>
 
       {/* Products Table + Filters */}
@@ -770,26 +1031,48 @@ export default function ProductsPage() {
       >
         <div className="border-b border-border-soft p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-lg flex-1">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search products by name"
-                  value={searchQuery}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  className="w-full rounded-lg border border-border-strong py-2 pl-10 pr-4 text-text-primary placeholder:text-text-muted focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
-                />
-                <Search className="absolute left-3 top-3 text-text-muted w-4 h-4" />
+            {viewMode === "products" ? (
+              <div className="max-w-lg flex-1">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search products by name"
+                    value={searchQuery}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    className="w-full rounded-lg border border-border-strong py-2 pl-10 pr-4 text-text-primary placeholder:text-text-muted focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
+                  />
+                  <Search className="absolute left-3 top-3 text-text-muted w-4 h-4" />
+                </div>
               </div>
-            </div>
+            ) : (
+              <div />
+            )}
 
-            <AnimatedTabs<PeriodTab>
-              value={selectedPeriodTab}
-              options={PERIOD_TABS}
-              onValueChange={setSelectedPeriodTab}
-              disabled={isLoading || isFetching}
-              className="self-start lg:self-auto"
-            />
+            {viewMode === "products" ? (
+              <AnimatedTabs<PeriodTab>
+                value={selectedPeriodTab}
+                options={PERIOD_TABS}
+                onValueChange={setSelectedPeriodTab}
+                disabled={isLoading || isFetching}
+                className="self-start lg:self-auto"
+              />
+            ) : (
+              <Select
+                value={reviewApprovedFilter}
+                onValueChange={(value) => handleReviewApprovedFilterChange(value as ReviewApprovedFilter)}
+              >
+                <SelectTrigger className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft lg:w-48">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {REVIEW_APPROVED_FILTER_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <div className="mt-4 pt-4 border-t border-border-soft text-sm text-text-secondary">
@@ -803,7 +1086,13 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        <div className={cn("overflow-x-auto transition-opacity duration-150", isFetching && "opacity-50", isFetching && !editingProductId && "pointer-events-none")}>
+        <div
+          className={cn(
+            "overflow-x-auto transition-opacity duration-150",
+            isFetching && "opacity-50",
+            isFetching && !editingProductId && "pointer-events-none",
+          )}
+        >
           <DataTable
             columns={productColumns}
             data={products}
@@ -811,7 +1100,7 @@ export default function ProductsPage() {
             getRowId={(product) => product.id}
             isLoading={isLoading}
             loadingText="Loading products..."
-            minTableWidthClassName="min-w-[1320px]"
+            minTableWidthClassName="min-w-[1480px]"
             noRowsText="No products found. Create your first product!"
           />
         </div>
