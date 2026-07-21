@@ -146,6 +146,7 @@ export default function ProductsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isFetching, setIsFetching] = useState(false)
   const hasLoadedOnce = useRef(false)
+  const fetchProductsAbortRef = useRef<AbortController | null>(null)
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [sortField, setSortField] = useState<UserProductSortBy | null>(null)
@@ -189,6 +190,13 @@ export default function ProductsPage() {
       return
     }
 
+    // Abort any in-flight request before starting a new one so stale
+    // responses can never overwrite fresher state.
+    fetchProductsAbortRef.current?.abort()
+    const controller = new AbortController()
+    fetchProductsAbortRef.current = controller
+    const isStale = () => controller.signal.aborted
+
     try {
       if (!hasLoadedOnce.current) {
         setIsLoading(true)
@@ -200,11 +208,15 @@ export default function ProductsPage() {
 
       try {
         if (viewMode === "review") {
-          const myProductsResponse = await productsAPI.getMyProducts(accessToken, {
-            approved: reviewApprovedFilter,
-            page: currentPage,
-            size: pageSize,
-          })
+          const myProductsResponse = await productsAPI.getMyProducts(
+            accessToken,
+            {
+              approved: reviewApprovedFilter,
+              page: currentPage,
+              size: pageSize,
+            },
+            controller.signal,
+          )
 
           setTotalPages(myProductsResponse.totalPages)
           setTotalElements(myProductsResponse.totalElements)
@@ -253,6 +265,7 @@ export default function ProductsPage() {
             debouncedSearchQuery,
             howManySoldDay,
             selectedUserProductId ?? undefined,
+            controller.signal,
           )
 
           const userProducts = filterResponse.content
@@ -295,6 +308,12 @@ export default function ProductsPage() {
           }))
         }
       } catch (apiError: unknown) {
+        // Ignore aborted requests entirely: no state updates, no logging,
+        // no toast. A newer fetch is already in flight.
+        if (isStale()) {
+          return
+        }
+
         // 403 veya 401 hatası kontrolü
         if (apiError && typeof apiError === "object" && "status" in apiError) {
           const errorStatus = (apiError as { status: number }).status
@@ -322,13 +341,21 @@ export default function ProductsPage() {
         productsWithDetails = []
       }
 
+      if (isStale()) {
+        return
+      }
       setProducts(productsWithDetails)
       hasLoadedOnce.current = true
     } catch (error) {
+      if (isStale()) {
+        return
+      }
       console.error("Error fetching products:", error)
     } finally {
-      setIsLoading(false)
-      setIsFetching(false)
+      if (!isStale()) {
+        setIsLoading(false)
+        setIsFetching(false)
+      }
     }
   }
 

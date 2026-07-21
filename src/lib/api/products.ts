@@ -534,6 +534,7 @@ class ProductsAPI {
       page?: number
       size?: number
     } = {},
+    signal?: AbortSignal,
   ): Promise<MyProductsPageResponse> {
     return apiRequest.requestJson<MyProductsPageResponse>({
       client: "app",
@@ -548,6 +549,7 @@ class ProductsAPI {
         page: params.page ?? 0,
         size: params.size ?? 1000,
       },
+      signal,
       fallbackMessage: "Failed to fetch review status for products",
     })
   }
@@ -968,6 +970,7 @@ class ProductsAPI {
     search?: string,
     howManySoldDay?: number,
     userProductId?: string,
+    signal?: AbortSignal,
   ): Promise<UserProductsFilterResponse> {
     const response = await apiRequest.requestResponse<unknown>({
       client: "app",
@@ -985,6 +988,7 @@ class ProductsAPI {
         ...(howManySoldDay !== undefined ? { howManySoldDay } : {}),
         ...(userProductId !== undefined ? { userProductId } : {}),
       },
+      signal,
       validateStatus: () => true,
       fallbackMessage: "Failed to filter user products",
     })

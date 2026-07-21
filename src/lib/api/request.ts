@@ -13,13 +13,15 @@ export class ApiRequestError extends Error {
   status?: number
   data?: unknown
   authHandled?: boolean
+  code?: string
 
-  constructor(message: string, options?: { status?: number; data?: unknown; authHandled?: boolean }) {
+  constructor(message: string, options?: { status?: number; data?: unknown; authHandled?: boolean; code?: string }) {
     super(message)
     this.name = "ApiRequestError"
     this.status = options?.status
     this.data = options?.data
     this.authHandled = options?.authHandled
+    this.code = options?.code
   }
 }
 
@@ -61,6 +63,17 @@ async function parseBlobErrorData(data: Blob): Promise<unknown> {
 }
 
 async function toApiRequestError(error: unknown, fallbackMessage: string): Promise<ApiRequestError> {
+  // Preserve cancellation identity: axios wraps AbortController aborts as an
+  // AxiosError with code "ERR_CANCELED" (axios.isCancel(error) === true).
+  // Without carrying `code`/`name` through, callers can't distinguish an
+  // aborted (stale, expected) request from a genuine network/API failure.
+  if (axios.isCancel(error)) {
+    const canceledMessage = error instanceof Error ? error.message || fallbackMessage : fallbackMessage
+    const apiError = new ApiRequestError(canceledMessage, { code: "ERR_CANCELED" })
+    apiError.name = "CanceledError"
+    return apiError
+  }
+
   if (axios.isAxiosError(error)) {
     const status = error.response?.status
     let data = error.response?.data
@@ -73,6 +86,7 @@ async function toApiRequestError(error: unknown, fallbackMessage: string): Promi
       status,
       data,
       authHandled: Boolean((error as { authHandled?: boolean }).authHandled),
+      code: error.code,
     })
   }
 
