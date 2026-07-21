@@ -1336,7 +1336,7 @@ function CreateProductPageContent() {
                             htmlFor="heavyShippingSurcharge"
                             className="block text-sm font-medium text-text-primary mb-2"
                           >
-                            Heavy Shipping Surcharge *
+                            Heavy Shipping Fee *
                           </label>
                           <input
                             id="heavyShippingSurcharge"
@@ -1525,15 +1525,14 @@ function CreateProductPageContent() {
                       <label htmlFor="brand" className="block text-sm font-medium text-text-primary mb-2">
                         Brand *
                       </label>
-                      <input
+                      <BrandFilterDropdown
                         id="brand"
-                        type="text"
-                        name="brand"
-                        value={formData.brand}
-                        onChange={handleInputChange}
+                        value={formData.brand || null}
+                        onChange={(brand) => setFormData((prev) => ({ ...prev, brand: brand ?? "" }))}
+                        accessToken={accessToken}
                         disabled={isProductSelected}
-                        className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
-                        placeholder="e.g., DentPro"
+                        hideAllOption
+                        triggerClassName="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
                       />
                     </div>
                   </div>

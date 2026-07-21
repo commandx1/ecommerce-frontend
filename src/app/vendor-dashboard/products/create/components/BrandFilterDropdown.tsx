@@ -13,9 +13,20 @@ interface BrandFilterDropdownProps {
   onChange: (brand: string | null) => void
   accessToken: string | null
   disabled?: boolean
+  hideAllOption?: boolean
+  triggerClassName?: string
+  id?: string
 }
 
-export default function BrandFilterDropdown({ value, onChange, accessToken, disabled }: BrandFilterDropdownProps) {
+export default function BrandFilterDropdown({
+  value,
+  onChange,
+  accessToken,
+  disabled,
+  hideAllOption,
+  triggerClassName,
+  id,
+}: BrandFilterDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [query, setQuery] = useState("")
   const [brands, setBrands] = useState<string[]>([])
@@ -107,16 +118,20 @@ export default function BrandFilterDropdown({ value, onChange, accessToken, disa
   return (
     <div ref={containerRef} className="relative shrink-0">
       <button
+        id={id}
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex h-full min-w-[10rem] items-center gap-2 rounded-lg border border-border-soft px-4 py-3 text-left focus:outline-none focus:ring-2 focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+        className={`flex items-center gap-2 text-left ${
+          triggerClassName ??
+          "h-full min-w-40 rounded-lg border border-border-soft px-4 py-3 focus:outline-none focus:ring-2 focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+        }`}
       >
         <Tag className="w-4 h-4 text-text-muted shrink-0" />
         <span className={`flex-1 truncate text-sm ${value ? "text-text-primary" : "text-text-muted"}`}>
-          {value || "All Brands"}
+          {value || (hideAllOption ? "Select brand" : "All Brands")}
         </span>
-        {value && (
+        {!hideAllOption && value && (
           <span
             role="button"
             tabIndex={0}
@@ -155,14 +170,16 @@ export default function BrandFilterDropdown({ value, onChange, accessToken, disa
           </div>
 
           <div ref={listRef} onScroll={handleListScroll} className="max-h-64 overflow-y-auto p-1">
-            <button
-              type="button"
-              onClick={() => handleSelect(null)}
-              className="flex w-full items-center justify-between px-3 py-2 rounded-lg text-sm text-left hover:bg-surface-muted"
-            >
-              <span className={!value ? "font-medium text-text-primary" : "text-text-secondary"}>All Brands</span>
-              {!value && <Check className="w-4 h-4 text-brand" />}
-            </button>
+            {!hideAllOption && (
+              <button
+                type="button"
+                onClick={() => handleSelect(null)}
+                className="flex w-full items-center justify-between px-3 py-2 rounded-lg text-sm text-left hover:bg-surface-muted"
+              >
+                <span className={!value ? "font-medium text-text-primary" : "text-text-secondary"}>All Brands</span>
+                {!value && <Check className="w-4 h-4 text-brand" />}
+              </button>
+            )}
 
             {isLoading ? (
               <div className="flex items-center justify-center py-6">
