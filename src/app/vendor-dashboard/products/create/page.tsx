@@ -945,7 +945,7 @@ function CreateProductPageContent() {
 
       {/* Product Search Autocomplete */}
       {view === "search" && (
-        <div className="flex items-center justify-center min-h-[calc(100vh-320px)]">
+        <>
           <div className="w-full max-w-4xl bg-surface-elevated rounded-2xl shadow-lg p-6">
             <div className="flex items-center space-x-3 mb-4">
               <div className="w-10 h-10 bg-accent-strong rounded-lg flex items-center justify-center">
@@ -1103,7 +1103,7 @@ function CreateProductPageContent() {
               )}
             </div>
           </div>
-        </div>
+        </>
       )}
 
       {view === "form" && (
