@@ -14,7 +14,7 @@ const ProductHero = ({ product, selectedSupplier }: ProductHeroProps) => {
   return (
     <section className="bg-canvas py-8 md:py-10">
       <PageSectionContainer as="div">
-        <div className="grid gap-12 lg:grid-cols-[0.95fr_1.05fr]">
+        <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12">
           <ProductHeroGallery
             title={product.title}
             sku={product.sku}

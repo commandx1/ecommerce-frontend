@@ -7,9 +7,9 @@ import ProductImageWithFallback from "@/features/products/listing/components/Pro
 
 const RecentlyViewed = () => {
   return (
-    <section className="bg-canvas py-12">
+    <section className="bg-canvas py-10 sm:py-12">
       <PageSectionContainer as="div">
-        <h2 className="mb-8 text-3xl font-semibold text-text-primary">Recently Viewed</h2>
+        <h2 className="mb-6 text-2xl font-semibold text-text-primary sm:mb-8 sm:text-3xl">Recently Viewed</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           {recentlyViewedData.map((product) => (
             <Link

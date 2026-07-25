@@ -42,12 +42,12 @@ const badgeColorMap: Record<string, string> = {
 
 const TechnicalSpecs = ({ technicalSpecs, certifications }: TechnicalSpecsProps) => {
   return (
-    <section className="bg-surface-muted/45 py-12">
+    <section className="bg-surface-muted/45 py-10 sm:py-12">
       <PageSectionContainer as="div">
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
           <div>
-            <h2 className="mb-6 text-3xl font-semibold text-text-primary">Technical Specifications</h2>
-            <SurfaceCard className="p-8">
+            <h2 className="mb-6 text-2xl font-semibold text-text-primary sm:text-3xl">Technical Specifications</h2>
+            <SurfaceCard className="p-5 sm:p-8">
               <div className="grid grid-cols-1 gap-6">
                 {technicalSpecs.map((spec) => (
                   <div
@@ -63,7 +63,7 @@ const TechnicalSpecs = ({ technicalSpecs, certifications }: TechnicalSpecsProps)
           </div>
 
           <div>
-            <h2 className="mb-6 text-3xl font-semibold text-text-primary">Certifications & Compliance</h2>
+            <h2 className="mb-6 text-2xl font-semibold text-text-primary sm:text-3xl">Certifications & Compliance</h2>
             <div className="space-y-6">
               {certifications.map((cert) => {
                 const IconComponent = iconMap[cert.icon]
@@ -71,10 +71,10 @@ const TechnicalSpecs = ({ technicalSpecs, certifications }: TechnicalSpecsProps)
                 const badgeColorClass = badgeColorMap[cert.badgeColor] || "bg-surface-muted text-text-secondary"
 
                 return (
-                  <SurfaceCard key={cert.id} className="p-6">
+                  <SurfaceCard key={cert.id} className="p-4 sm:p-6">
                     <div className="flex items-start space-x-4">
                       <div
-                        className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl ${iconColorClass}`}
+                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl sm:h-16 sm:w-16 ${iconColorClass}`}
                       >
                         {IconComponent && <IconComponent className="text-2xl w-8 h-8" />}
                       </div>

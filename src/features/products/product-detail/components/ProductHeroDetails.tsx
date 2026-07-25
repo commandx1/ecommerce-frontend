@@ -18,7 +18,7 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
   const formattedDiscount = Number.isInteger(discountPercent) ? `${discountPercent}` : discountPercent.toFixed(1)
 
   return (
-    <div className="space-y-6 rounded-4xl border border-border-soft bg-surface-elevated p-7 shadow-soft md:p-8">
+    <div className="space-y-6 rounded-4xl border border-border-soft bg-surface-elevated p-5 shadow-soft sm:p-7 md:p-8">
       <div>
         <div className="mb-3 flex flex-wrap items-center gap-3">
           <span className="rounded-full border border-border-soft bg-surface px-3 py-1 text-sm font-medium text-brand">
@@ -26,8 +26,8 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
           </span>
           <span className="rounded-full bg-warning/20 px-3 py-1 text-sm font-medium text-warning">Best Seller</span>
         </div>
-        <h1 className="mb-4 text-4xl font-semibold text-text-primary md:text-5xl">{product.title}</h1>
-        <p className="text-lg leading-8 text-text-secondary">{product.description}</p>
+        <h1 className="mb-4 text-3xl font-semibold text-text-primary sm:text-4xl md:text-5xl">{product.title}</h1>
+        <p className="text-base leading-7 text-text-secondary sm:text-lg sm:leading-8">{product.description}</p>
       </div>
 
       <div className="flex flex-wrap items-center gap-4">
@@ -47,7 +47,7 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
         <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <div className="text-3xl font-semibold text-brand">{selectedPriceLabel}</div>
+              <div className="text-2xl font-semibold text-brand sm:text-3xl">{selectedPriceLabel}</div>
               {hasDiscount ? (
                 <>
                   <span className="text-base font-medium text-text-muted line-through">{selectedOldPriceLabel}</span>

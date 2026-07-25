@@ -59,7 +59,7 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
             return (
               <div
                 key={qa.id}
-                className="rounded-[1.75rem] border border-border-soft bg-surface-elevated p-8 shadow-soft"
+                className="rounded-[1.75rem] border border-border-soft bg-surface-elevated p-5 shadow-soft sm:p-8"
               >
                 <div className="mb-4">
                   <div className="flex items-start justify-between">
@@ -100,7 +100,7 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
           })}
         </div>
       ) : (
-        <div className="rounded-[1.75rem] border border-border-soft bg-surface-elevated p-8 text-center shadow-soft">
+        <div className="rounded-[1.75rem] border border-border-soft bg-surface-elevated p-5 text-center shadow-soft sm:p-8">
           <p className="text-text-secondary">
             {selectedSupplierUserProductId
               ? "No questions have been asked to this vendor yet."

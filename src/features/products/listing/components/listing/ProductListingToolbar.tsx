@@ -19,7 +19,7 @@ const PageSizeButtons = ({ pageSize }: { pageSize: number }) => {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center justify-center gap-2 lg:justify-start">
       <span className="text-xs font-semibold uppercase tracking-[0.14em] text-text-muted">Items per page</span>
       {[10, 20, 50, 100].map((size) => (
         <button
@@ -43,7 +43,7 @@ const ProductListingToolbar = ({ pageSize }: { pageSize: number }) => {
   return (
     <section className="border-b border-border-soft bg-canvas py-4">
       <PageSectionContainer as="div">
-        <div className="flex flex-col gap-4 rounded-3xl border border-border-soft bg-surface-elevated px-4 py-4 shadow-soft lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col items-center gap-4 rounded-3xl border border-border-soft bg-surface-elevated px-4 py-4 shadow-soft lg:flex-row lg:items-center lg:justify-between">
           <Suspense>
             <PageSizeButtons pageSize={pageSize} />
           </Suspense>

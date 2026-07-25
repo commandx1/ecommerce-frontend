@@ -135,13 +135,13 @@ const PurchaseOptions = ({
   }
 
   return (
-    <section className="border-t border-border-soft/70 bg-surface-muted/35 py-14">
+    <section className="border-t border-border-soft/70 bg-surface-muted/35 py-10 sm:py-14">
       <PageSectionContainer as="div">
-        <SurfaceCard variant="editorial" className="p-8">
+        <SurfaceCard variant="editorial" className="p-5 sm:p-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <div className="section-kicker mb-4">Commercial terms</div>
-              <h2 className="mb-6 text-3xl font-semibold text-text-primary">Purchase Options</h2>
+              <h2 className="mb-6 text-2xl font-semibold text-text-primary sm:text-3xl">Purchase Options</h2>
 
               <div className="space-y-6">
                 <QuantitySelector

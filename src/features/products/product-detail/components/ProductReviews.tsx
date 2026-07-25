@@ -55,12 +55,12 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
   })
 
   return (
-    <section id="product-reviews" className="bg-surface-muted/45 py-12">
+    <section id="product-reviews" className="bg-surface-muted/45 py-10 sm:py-12">
       <PageSectionContainer as="div">
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="mb-2 text-3xl font-semibold text-text-primary">Product Reviews</h2>
-            <div className="flex items-center space-x-4">
+            <h2 className="mb-2 text-2xl font-semibold text-text-primary sm:text-3xl">Product Reviews</h2>
+            <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center space-x-2">
                 <StarRating rating={averageRating} size="lg" className="text-yellow-400" />
                 <span className="text-2xl font-bold text-brand">{averageRating.toFixed(1)}</span>
@@ -74,7 +74,7 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
 
         {/* Rating Breakdown */}
         {reviews.length > 0 && (
-          <SurfaceCard className="mb-8 w-full p-8 lg:w-1/2">
+          <SurfaceCard className="mb-8 w-full p-5 sm:p-8 lg:w-1/2">
             <div>
               <h3 className="mb-6 text-xl font-semibold text-text-primary">Rating Breakdown</h3>
               <div className="space-y-4">
@@ -96,13 +96,13 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
         {reviews.length > 0 ? (
           <div className="space-y-6">
             {reviews.map((review) => (
-              <SurfaceCard key={review.id} className="p-8">
+              <SurfaceCard key={review.id} className="p-5 sm:p-8">
                 <div className="flex items-start space-x-4">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand text-primary-foreground">
                     <span className="text-lg font-semibold">{review.username.charAt(0).toUpperCase()}</span>
                   </div>
                   <div className="flex-1">
-                    <div className="mb-2 flex items-center justify-between">
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <div className="font-semibold text-text-primary">{review.username}</div>
                       </div>

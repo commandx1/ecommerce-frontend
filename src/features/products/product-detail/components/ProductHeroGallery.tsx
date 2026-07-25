@@ -29,7 +29,7 @@ const ProductHeroGallery = ({ title, sku, mainImage, thumbnailImages, badge }: P
         role="img"
         aria-label="Product image with magnifier"
       >
-        <div className="aspect-square relative p-8">
+        <div className="aspect-square relative p-4 sm:p-6 md:p-8">
           <LoadableImage
             ref={imageRef}
             src={selectedImage}
@@ -54,7 +54,7 @@ const ProductHeroGallery = ({ title, sku, mainImage, thumbnailImages, badge }: P
             <Heart className="h-5 w-5 text-text-secondary" fill="none" stroke="currentColor" />
           </button>
         </div>
-        <div className="absolute bottom-4 right-4">
+        <div className="absolute bottom-4 right-4 hidden lg:block">
           <button
             type="button"
             onClick={toggleMagnifier}
@@ -72,7 +72,7 @@ const ProductHeroGallery = ({ title, sku, mainImage, thumbnailImages, badge }: P
         {isEnabled && <ImageMagnifierOverlay imageSrc={selectedImage} position={position} />}
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-4 gap-2 sm:gap-4">
         {images.map((image, index) => (
           <button
             key={`${sku}-thumbnail-${index}-${image}`}
