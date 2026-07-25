@@ -27,7 +27,7 @@ const MainSearchbox = ({ className = "" }: MainSearchboxProps) => {
 
   return (
     <div
-      className={`relative mx-auto flex w-full max-w-2xl rounded-2xl border border-border-soft bg-surface-elevated/95 shadow-soft backdrop-blur-sm transition-[border-color,box-shadow] focus-within:border-brand/40 focus-within:ring-3 focus-within:ring-ring/50 ${className}`}
+      className={`relative mx-auto flex w-full max-w-2xl rounded-xl border border-border-soft bg-surface-elevated/95 shadow-soft backdrop-blur-sm transition-[border-color,box-shadow] focus-within:border-brand/40 focus-within:ring-3 focus-within:ring-ring/50 sm:rounded-2xl ${className}`}
     >
       <CategorySelect />
       <div className="relative flex-1">

@@ -15,18 +15,18 @@ const CategorySelect = () => {
   // Alternatively, we show a simple div/button placeholder on the server.
   if (!mounted) {
     return (
-      <div className="flex h-11 w-[132px] items-center border-r border-border-soft bg-transparent px-4 text-sm font-medium text-text-secondary">
+      <div className="flex h-10 w-[84px] shrink-0 items-center border-r border-border-soft bg-transparent px-2.5 text-xs font-medium text-text-secondary sm:h-11 sm:w-[132px] sm:px-4 sm:text-sm">
         Categories
       </div>
     )
   }
 
   return (
-    <div className="w-fit">
+    <div className="w-fit shrink-0">
       <Select value={selectedCategory} onValueChange={setSelectedCategory}>
         <SelectTrigger
           value={selectedCategory}
-          className="h-11 min-w-[132px] rounded-r-none border-0 border-r border-border-soft bg-transparent font-medium text-text-secondary shadow-none backdrop-blur-0 hover:bg-surface-muted/60 focus-visible:border-transparent focus-visible:ring-0"
+          className="h-10 min-w-[84px] rounded-r-none border-0 border-r border-border-soft bg-transparent px-2.5 text-xs font-medium text-text-secondary shadow-none backdrop-blur-0 hover:bg-surface-muted/60 focus-visible:border-transparent focus-visible:ring-0 sm:h-11 sm:min-w-[132px] sm:px-4 sm:text-sm"
         >
           <SelectValue placeholder="Categories" />
         </SelectTrigger>

@@ -32,7 +32,7 @@ const SearchResultsDropdown = ({
   return (
     <div
       ref={dropdownRef}
-      className="absolute z-50 mt-3 max-h-96 w-full overflow-y-auto rounded-2xl border border-border-soft bg-surface-elevated/98 shadow-panel backdrop-blur-xl"
+      className="absolute z-50 mt-2 max-h-[70vh] w-full overflow-y-auto rounded-xl border border-border-soft bg-surface-elevated/98 shadow-panel backdrop-blur-xl sm:mt-3 sm:max-h-96 sm:rounded-2xl"
     >
       {results.length > 0 ? (
         <div className="py-2">
