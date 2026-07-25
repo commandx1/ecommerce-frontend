@@ -12,12 +12,14 @@ export default function OrderSummary() {
   const router = useRouter()
   const {
     currentStep,
+    isTaxLoading,
     items,
     selectedShippingEtaText,
     selectedVendorShippingMethods,
     shipping,
     shippingAddress,
     subtotal,
+    tax,
     total,
     volumeDiscount,
   } = useOrderSummary()
@@ -48,9 +50,11 @@ export default function OrderSummary() {
       />
 
       <OrderSummaryTotals
+        isTaxLoading={isTaxLoading}
         itemCount={items.reduce((totalQuantity, item) => totalQuantity + item.quantity, 0)}
         subtotal={subtotal}
         shipping={shipping}
+        tax={tax}
         total={total}
         volumeDiscount={volumeDiscount}
       />

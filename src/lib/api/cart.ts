@@ -30,9 +30,27 @@ export interface Cart {
   cartItems: CartItem[]
 }
 
+export interface TaxEstimatePayload {
+  addressId: string
+  shippingAmount: string
+}
+
+export interface TaxEstimate {
+  subtotal: number
+  shippingAmount: number
+  taxAmount: number
+  totalAmount: number
+  currency: string
+}
+
 class CartAPI {
   async getCart(): Promise<Cart> {
     const response = await apiClient.get<Cart>("/cart")
+    return response.data
+  }
+
+  async getTaxEstimate(payload: TaxEstimatePayload): Promise<TaxEstimate> {
+    const response = await apiClient.post<TaxEstimate>("/cart/tax-estimate", payload)
     return response.data
   }
 

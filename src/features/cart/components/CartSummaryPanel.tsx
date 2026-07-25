@@ -1,3 +1,4 @@
+import { Loader2 } from "lucide-react"
 import NotificationCard from "@/components/feedback/NotificationCard"
 import ActionButton from "@/components/ui/ActionButton"
 import SurfaceCard from "@/components/ui/SurfaceCard"
@@ -8,12 +9,14 @@ interface CartSummaryPanelProps {
   blockingItemsCount: number
   hasBlockingItems: boolean
   isCheckoutDisabled: boolean
+  isTaxLoading: boolean
   itemsCount: number
   onCheckout: () => void
   totals: CartTotals
 }
 
 interface SummaryRow {
+  isLoading?: boolean
   label: string
   value: string
 }
@@ -22,11 +25,13 @@ export default function CartSummaryPanel({
   blockingItemsCount,
   hasBlockingItems,
   isCheckoutDisabled,
+  isTaxLoading,
   itemsCount,
   onCheckout,
   totals,
 }: CartSummaryPanelProps) {
   const summaryRows: SummaryRow[] = [
+    { label: "Estimated Tax", value: formatCurrency(totals.tax), isLoading: isTaxLoading },
     { label: `Subtotal (${itemsCount} items)`, value: formatCurrency(totals.subtotal) },
     { label: "Shipping", value: totals.shipping === 0 ? "Free" : formatCurrency(totals.shipping) },
   ]
@@ -38,7 +43,11 @@ export default function CartSummaryPanel({
         {summaryRows.map((row) => (
           <div key={row.label} className="flex justify-between text-sm">
             <span className="text-text-secondary">{row.label}</span>
-            <span className="font-medium text-text-primary">{row.value}</span>
+            {row.isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
+            ) : (
+              <span className="font-medium text-text-primary">{row.value}</span>
+            )}
           </div>
         ))}
         <div className="border-t border-border-soft pt-3">

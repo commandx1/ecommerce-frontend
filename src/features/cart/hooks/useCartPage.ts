@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import type { CartSellerGroup, CartTotals } from "@/features/cart/types"
 import { getBlockingCartItems } from "@/features/cart/utils/cart-alerts"
+import { addressAPI } from "@/lib/api/address"
+import { cartAPI } from "@/lib/api/cart"
 import { useDebouncedPerKeyCallback } from "@/lib/hooks/useDebouncedPerKeyCallback"
 import type { CartItem } from "@/stores/cartStore"
 import { useCartStore } from "@/stores/cartStore"
@@ -25,6 +27,7 @@ interface UseCartPageResult {
   blockingItemsCount: number
   hasBlockingItems: boolean
   isClearConfirmOpen: boolean
+  isTaxLoading: boolean
   items: CartItem[]
   sellerGroups: Record<string, CartSellerGroup>
   totals: CartTotals
@@ -44,6 +47,9 @@ export function useCartPage(): UseCartPageResult {
   const { setStep } = useCheckoutStore()
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false)
   const [pendingQuantities, setPendingQuantities] = useState<Record<string, number>>({})
+  const [defaultAddressId, setDefaultAddressId] = useState<string | null>(null)
+  const [taxAmount, setTaxAmount] = useState(0)
+  const [isTaxLoading, setIsTaxLoading] = useState(false)
 
   const { schedule, cancel, cancelAll } = useDebouncedPerKeyCallback<string, number>({
     delayMs: QUANTITY_DEBOUNCE_MS,
@@ -94,9 +100,65 @@ export function useCartPage(): UseCartPageResult {
     return {
       subtotal,
       shipping,
-      total: subtotal + shipping,
+      tax: taxAmount,
+      total: subtotal + shipping + taxAmount,
     }
-  }, [itemsWithPendingQuantity])
+  }, [itemsWithPendingQuantity, taxAmount])
+
+  useEffect(() => {
+    const fetchDefaultAddress = async () => {
+      try {
+        const addresses = await addressAPI.getAddresses()
+        const defaultAddress = addresses.find((address) => address.defaultAddress) || addresses[0]
+        setDefaultAddressId(defaultAddress?.id ?? null)
+      } catch (_error) {
+        setDefaultAddressId(null)
+      }
+    }
+
+    void fetchDefaultAddress()
+  }, [])
+
+  useEffect(() => {
+    if (!defaultAddressId || itemsWithPendingQuantity.length === 0) {
+      setTaxAmount(0)
+      setIsTaxLoading(false)
+      return
+    }
+
+    const shipping = itemsWithPendingQuantity.reduce(
+      (sum, item) => sum + (item.userProduct.shipmentFee ?? 0) * item.quantity,
+      0,
+    )
+
+    let isCancelled = false
+    const fetchTaxEstimate = async () => {
+      setIsTaxLoading(true)
+      try {
+        const estimate = await cartAPI.getTaxEstimate({
+          addressId: defaultAddressId,
+          shippingAmount: String(shipping),
+        })
+        if (!isCancelled) {
+          setTaxAmount(estimate.taxAmount)
+        }
+      } catch (_error) {
+        if (!isCancelled) {
+          setTaxAmount(0)
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsTaxLoading(false)
+        }
+      }
+    }
+
+    void fetchTaxEstimate()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [defaultAddressId, itemsWithPendingQuantity])
 
   const sellerGroups = useMemo<Record<string, CartSellerGroup>>(() => {
     return itemsWithPendingQuantity.reduce<Record<string, CartSellerGroup>>((groups, item) => {
@@ -204,6 +266,7 @@ export function useCartPage(): UseCartPageResult {
     blockingItemsCount,
     hasBlockingItems,
     isClearConfirmOpen,
+    isTaxLoading,
     items: itemsWithPendingQuantity,
     sellerGroups,
     totals,
