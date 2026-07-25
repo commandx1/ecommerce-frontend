@@ -43,7 +43,7 @@ export default function ThemeToggle() {
       onClick={handleToggle}
       className="rounded-full border border-border-soft/80 bg-surface/90 shadow-soft backdrop-blur"
     >
-      {isDark ? <SunMedium className="h-[18px] w-[18px]" /> : <MoonStar className="h-[18px] w-[18px]" />}
+      {isDark ? <SunMedium className="h-4.5 w-4.5" /> : <MoonStar className="h-4.5 w-4.5" />}
     </Button>
   )
 }
