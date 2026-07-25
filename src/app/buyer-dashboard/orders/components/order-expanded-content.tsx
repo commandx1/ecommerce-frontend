@@ -1,12 +1,15 @@
 "use client"
 
-import { ChevronDown, ExternalLink, FileText, RotateCcw, Undo2, XCircle } from "lucide-react"
-import { Collapse, CollapseContent, CollapseTrigger } from "@/components/ui/collapse"
+import { ChevronDown, Download, ExternalLink, FileText, RotateCcw, Undo2, XCircle } from "lucide-react"
 import Link from "next/link"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Collapse, CollapseContent, CollapseTrigger } from "@/components/ui/collapse"
+import { showToast } from "@/components/ui/Toast"
 import AddressContactInfo from "@/features/checkout/components/AddressContactInfo"
 import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
 import type { BuyerOrder } from "@/lib/api/buyer-orders"
+import { invoicesAPI } from "@/lib/api/invoices"
 import { getFullImageUrl } from "@/lib/api/products"
 import { isPreShippingCancelableStatus } from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
@@ -29,14 +32,18 @@ interface OrderExpandedContentProps {
   summary: BuyerOrderViewModel
 }
 
-function getItemAccentClasses(statusValue: string | undefined, cancelledByCustomer: boolean, cancelledBySeller: boolean): string {
-  if (cancelledByCustomer || cancelledBySeller) return 'border-l-danger bg-background'
-  const s = (statusValue ?? '').toUpperCase()
-  if (s.includes('REJECT')) return 'border-l-danger bg-background'
-  if (s === 'DELIVERED') return 'border-l-success bg-background'
-  if (s.includes('RETURN')) return 'border-l-brand bg-background'
-  if (s.includes('SHIP') || s.includes('TRANSIT')) return 'border-l-brand bg-background'
-  return 'border-l-border-strong/50 bg-background'
+function getItemAccentClasses(
+  statusValue: string | undefined,
+  cancelledByCustomer: boolean,
+  cancelledBySeller: boolean,
+): string {
+  if (cancelledByCustomer || cancelledBySeller) return "border-l-danger bg-background"
+  const s = (statusValue ?? "").toUpperCase()
+  if (s.includes("REJECT")) return "border-l-danger bg-background"
+  if (s === "DELIVERED") return "border-l-success bg-background"
+  if (s.includes("RETURN")) return "border-l-brand bg-background"
+  if (s.includes("SHIP") || s.includes("TRANSIT")) return "border-l-brand bg-background"
+  return "border-l-border-strong/50 bg-background"
 }
 
 export default function OrderExpandedContent({ order, summary }: OrderExpandedContentProps) {
@@ -45,7 +52,27 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
     cancelingSellerKey: state.cancelingSellerKey,
     reorderingItemId: state.reorderingItemId,
   }))
-  const { handleReorder, requestCancelAction, requestRefundAction, setTrackingModalLinks } = useBuyerOrdersTableActions()
+  const { handleReorder, requestCancelAction, requestRefundAction, setTrackingModalLinks } =
+    useBuyerOrdersTableActions()
+  const [downloadingInvoiceKey, setDownloadingInvoiceKey] = useState<string | null>(null)
+
+  const handleDownloadInvoice = async (sellerId: string, sellerKey: string) => {
+    setDownloadingInvoiceKey(sellerKey)
+    try {
+      const { blob, fileName } = await invoicesAPI.downloadInvoice(order.orderId, sellerId)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = fileName
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to download invoice"
+      showToast.error(msg)
+    } finally {
+      setDownloadingInvoiceKey(null)
+    }
+  }
 
   return (
     <div className="bg-surface-muted/55 p-6 shadow-inner">
@@ -73,232 +100,256 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
 
               return (
                 <Collapse key={group.sellerId}>
-                <section className="overflow-hidden rounded-[8px] border border-border-soft">
-                  <CollapseTrigger className="group flex w-full items-center justify-between bg-linear-to-r from-surface-muted/45 to-surface-muted/75 px-4 py-3 transition-colors hover:from-surface-muted/60 hover:to-surface-muted/90 data-[state=open]:border-b data-[state=open]:border-border-soft">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand text-xs font-bold text-primary-foreground shadow-sm">
-                        {getSellerFirstTwoLetters(sellerDisplayName)}
+                  <section className="overflow-hidden rounded-[8px] border border-border-soft">
+                    <CollapseTrigger className="group flex w-full items-center justify-between bg-linear-to-r from-surface-muted/45 to-surface-muted/75 px-4 py-3 transition-colors hover:from-surface-muted/60 hover:to-surface-muted/90 data-[state=open]:border-b data-[state=open]:border-border-soft">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand text-xs font-bold text-primary-foreground shadow-sm">
+                          {getSellerFirstTwoLetters(sellerDisplayName)}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-text-primary">{sellerDisplayName || "Seller"}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-semibold text-text-primary">{sellerDisplayName || "Seller"}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-text-primary">{formatCurrency(sellerTotal)}</p>
-                        <p className="text-xs text-text-muted">
-                          {sellerItemCount} item{sellerItemCount > 1 ? "s" : ""}
-                        </p>
-                      </div>
-                      <ChevronDown className="h-4 w-4 shrink-0 text-text-muted transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                    </div>
-                  </CollapseTrigger>
-
-                  <CollapseContent>
-                  <div className="space-y-3 bg-surface-elevated p-3">
-                    {group.orderItems.map((item) => {
-                      const productId = resolveOrderItemProductId(item)
-                      const productHref = productId
-                        ? `/products/${encodeURIComponent(productId)}?vendorId=${encodeURIComponent(item.userProductId)}`
-                        : null
-                      const trackingLinks = resolveActiveTrackingLinks(item)
-                      const shippingLinks = resolveActiveShippingLinks(item)
-                      const hasReturnFlow = Boolean(item.returnRefundStatus)
-                      const metadataStatusValue = hasReturnFlow ? item.returnRefundStatus ?? item.status : item.status
-                      const metadataStatusLabel = hasReturnFlow
-                        ? `Return ${formatOrderItemStatus(metadataStatusValue)}`
-                        : formatOrderItemStatus(metadataStatusValue)
-                      const canRequestItemReturn =
-                        item.returnenable === true &&
-                        !(typeof item.returnDate === "string" && item.returnDate.trim().length > 0)
-
-                      return (
-                        <div
-                          key={item.id}
-                          className={`rounded-[8px] border border-border-soft border-l-4 ${getItemAccentClasses(metadataStatusValue, Boolean(item.cancelledByCustomer), Boolean(item.cancelledBySeller))} p-4 transition-all hover:shadow-sm`}
+                      <div className="flex items-center gap-3">
+                        {/* biome-ignore lint/a11y/useSemanticElements: cannot nest a <button> inside CollapseTrigger's <button> */}
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          aria-disabled={downloadingInvoiceKey === sellerKey}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            if (downloadingInvoiceKey === sellerKey) return
+                            void handleDownloadInvoice(group.sellerId, sellerKey)
+                          }}
+                          onKeyDown={(event) => {
+                            if (event.key !== "Enter" && event.key !== " ") return
+                            event.preventDefault()
+                            event.stopPropagation()
+                            if (downloadingInvoiceKey === sellerKey) return
+                            void handleDownloadInvoice(group.sellerId, sellerKey)
+                          }}
+                          className="inline-flex cursor-pointer items-center gap-1 rounded-[8px] border border-border-strong/70 bg-transparent px-2.5 py-1 text-[11px] font-semibold text-text-secondary hover:bg-surface-muted hover:text-text-primary aria-disabled:pointer-events-none aria-disabled:opacity-70"
                         >
-                          {/* Product header: image + name + status */}
-                          <div className="flex items-start gap-3">
-                            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md bg-surface-elevated shadow-sm ring-1 ring-border-soft/50">
-                              <ProductImageWithFallback
-                                src={
-                                  getFullImageUrl(item.productCoverPhotoPath) || "/dentypro-product-placeholder.png"
-                                }
-                                alt={item.productName}
-                                width={56}
-                                height={56}
-                                className="h-full w-full object-cover"
-                              />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-start justify-between gap-3">
-                                <p className="text-sm font-semibold leading-snug text-text-primary">
-                                  {productHref ? (
-                                    <Link
-                                      href={productHref}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="transition-colors hover:text-brand"
-                                    >
-                                      {item.productName}
-                                    </Link>
-                                  ) : (
-                                    item.productName
-                                  )}
-                                </p>
-                                {!item.cancelledByCustomer && !item.cancelledBySeller ? (
-                                  <span
-                                    className={`mt-0.5 shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${getOrderItemStatusTagClass(metadataStatusValue)}`}
-                                  >
-                                    {metadataStatusLabel}
-                                  </span>
-                                ) : null}
-                              </div>
-                              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-muted">
-                                <span className="rounded bg-surface-muted px-1.5 py-0.5 font-medium">
-                                  {item.quantity} unit{item.quantity > 1 ? "s" : ""}
-                                </span>
-                                <span className="text-border-strong">·</span>
-                                <span className="font-semibold text-text-primary">
-                                  {item.price * item.quantity === 0
-                                    ? "FREE"
-                                    : formatCurrency(item.price * item.quantity)}
-                                </span>
-                                {item.quantity > 1 ? (
-                                  <span className="text-[11px]">({formatCurrency(item.price)} each)</span>
-                                ) : null}
-                                <span className="text-border-strong">·</span>
-                                {item.shipmentFreeBySeller ? (
-                                  <span className="font-medium text-success">Free Shipping</span>
-                                ) : (
-                                  <span>Shipment: {formatCurrency(getOrderItemShipmentFee(item))}</span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
+                          <Download className="h-3 w-3" />
+                          {downloadingInvoiceKey === sellerKey ? "Downloading..." : "Invoice"}
+                        </span>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-text-primary">{formatCurrency(sellerTotal)}</p>
+                          <p className="text-xs text-text-muted">
+                            {sellerItemCount} item{sellerItemCount > 1 ? "s" : ""}
+                          </p>
+                        </div>
+                        <ChevronDown className="h-4 w-4 shrink-0 text-text-muted transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                      </div>
+                    </CollapseTrigger>
 
-                          {/* Actions */}
-                          <div className="mt-3 flex w-full flex-wrap items-center gap-2 border-t border-border-soft pt-3">
+                    <CollapseContent>
+                      <div className="space-y-3 bg-surface-elevated p-3">
+                        {group.orderItems.map((item) => {
+                          const productId = resolveOrderItemProductId(item)
+                          const productHref = productId
+                            ? `/products/${encodeURIComponent(productId)}?vendorId=${encodeURIComponent(item.userProductId)}`
+                            : null
+                          const trackingLinks = resolveActiveTrackingLinks(item)
+                          const shippingLinks = resolveActiveShippingLinks(item)
+                          const hasReturnFlow = Boolean(item.returnRefundStatus)
+                          const metadataStatusValue = hasReturnFlow
+                            ? (item.returnRefundStatus ?? item.status)
+                            : item.status
+                          const metadataStatusLabel = hasReturnFlow
+                            ? `Return ${formatOrderItemStatus(metadataStatusValue)}`
+                            : formatOrderItemStatus(metadataStatusValue)
+                          const canRequestItemReturn =
+                            item.returnenable === true &&
+                            !(typeof item.returnDate === "string" && item.returnDate.trim().length > 0)
+
+                          return (
+                            <div
+                              key={item.id}
+                              className={`rounded-[8px] border border-border-soft border-l-4 ${getItemAccentClasses(metadataStatusValue, Boolean(item.cancelledByCustomer), Boolean(item.cancelledBySeller))} p-4 transition-all hover:shadow-sm`}
+                            >
+                              {/* Product header: image + name + status */}
+                              <div className="flex items-start gap-3">
+                                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md bg-surface-elevated shadow-sm ring-1 ring-border-soft/50">
+                                  <ProductImageWithFallback
+                                    src={
+                                      getFullImageUrl(item.productCoverPhotoPath) || "/dentypro-product-placeholder.png"
+                                    }
+                                    alt={item.productName}
+                                    width={56}
+                                    height={56}
+                                    className="h-full w-full object-cover"
+                                  />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <p className="text-sm font-semibold leading-snug text-text-primary">
+                                      {productHref ? (
+                                        <Link
+                                          href={productHref}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="transition-colors hover:text-brand"
+                                        >
+                                          {item.productName}
+                                        </Link>
+                                      ) : (
+                                        item.productName
+                                      )}
+                                    </p>
+                                    {!item.cancelledByCustomer && !item.cancelledBySeller ? (
+                                      <span
+                                        className={`mt-0.5 shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${getOrderItemStatusTagClass(metadataStatusValue)}`}
+                                      >
+                                        {metadataStatusLabel}
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                  <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-muted">
+                                    <span className="rounded bg-surface-muted px-1.5 py-0.5 font-medium">
+                                      {item.quantity} unit{item.quantity > 1 ? "s" : ""}
+                                    </span>
+                                    <span className="text-border-strong">·</span>
+                                    <span className="font-semibold text-text-primary">
+                                      {item.price * item.quantity === 0
+                                        ? "FREE"
+                                        : formatCurrency(item.price * item.quantity)}
+                                    </span>
+                                    {item.quantity > 1 ? (
+                                      <span className="text-[11px]">({formatCurrency(item.price)} each)</span>
+                                    ) : null}
+                                    <span className="text-border-strong">·</span>
+                                    {item.shipmentFreeBySeller ? (
+                                      <span className="font-medium text-success">Free Shipping</span>
+                                    ) : (
+                                      <span>Shipment: {formatCurrency(getOrderItemShipmentFee(item))}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Actions */}
+                              <div className="mt-3 flex w-full flex-wrap items-center gap-2 border-t border-border-soft pt-3">
+                                <Button
+                                  type="button"
+                                  variant="unstyled"
+                                  onClick={() =>
+                                    void handleReorder(item.userProductId, item.quantity, item.productName)
+                                  }
+                                  disabled={
+                                    reorderingItemId === item.userProductId ||
+                                    cancelingItemId === item.id ||
+                                    isCancelingSellerGroup
+                                  }
+                                  className="inline-flex items-center gap-1 rounded-[8px] bg-accent-strong px-2.5 py-1 text-[11px] font-semibold text-neutral-800 hover:brightness-95 disabled:opacity-70"
+                                >
+                                  <RotateCcw className="h-3 w-3" />
+                                  {reorderingItemId === item.userProductId ? "Adding..." : "Reorder"}
+                                </Button>
+                                {isPreShippingCancelableStatus(item.status) ? (
                                   <Button
                                     type="button"
                                     variant="unstyled"
                                     onClick={() =>
-                                      void handleReorder(item.userProductId, item.quantity, item.productName)
+                                      requestCancelAction({
+                                        orderItemIds: [item.id],
+                                        description: `${item.productName} cancellation request was submitted.`,
+                                        options: { cancelingItemId: item.id },
+                                      })
                                     }
+                                    disabled={
+                                      cancelingItemId === item.id ||
+                                      reorderingItemId === item.userProductId ||
+                                      isCancelingSellerGroup
+                                    }
+                                    className="inline-flex items-center gap-1 rounded-[8px] border border-danger/40 bg-danger/15 px-2.5 py-1 text-[11px] font-semibold text-danger hover:bg-danger/25 disabled:opacity-70"
+                                  >
+                                    <XCircle className="h-3 w-3" />
+                                    {cancelingItemId === item.id ? "Canceling..." : "Cancel Item"}
+                                  </Button>
+                                ) : null}
+                                {trackingLinks.length > 0 ? (
+                                  <Button
+                                    type="button"
+                                    variant="unstyled"
+                                    onClick={() =>
+                                      setTrackingModalLinks({ title: "Tracking links", links: trackingLinks })
+                                    }
+                                    className="inline-flex items-center gap-1 rounded-[8px] border border-border-strong/70 bg-transparent px-2.5 py-1 text-[11px] font-semibold text-text-secondary hover:bg-surface-muted hover:text-text-primary"
+                                  >
+                                    <ExternalLink className="h-3 w-3" />
+                                    Track
+                                  </Button>
+                                ) : null}
+                                {shippingLinks.length > 0 ? (
+                                  <Button
+                                    type="button"
+                                    variant="unstyled"
+                                    onClick={() =>
+                                      setTrackingModalLinks({ title: "Shipping labels", links: shippingLinks })
+                                    }
+                                    className="inline-flex items-center gap-1 rounded-[8px] border border-border-strong/70 bg-transparent px-2.5 py-1 text-[11px] font-semibold text-text-secondary hover:bg-surface-muted hover:text-text-primary"
+                                  >
+                                    <FileText className="h-3 w-3" />
+                                    Shipping Label
+                                  </Button>
+                                ) : null}
+                                {canRequestItemReturn ? (
+                                  <Button
+                                    type="button"
+                                    variant="unstyled"
+                                    onClick={() => requestRefundAction(order, item)}
                                     disabled={
                                       reorderingItemId === item.userProductId ||
                                       cancelingItemId === item.id ||
                                       isCancelingSellerGroup
                                     }
-                                    className="inline-flex items-center gap-1 rounded-[8px] bg-accent-strong px-2.5 py-1 text-[11px] font-semibold text-neutral-800 hover:brightness-95 disabled:opacity-70"
+                                    className="inline-flex items-center gap-1 rounded-[8px] border border-brand/40 bg-brand/12 px-2.5 py-1 text-[11px] font-semibold text-brand hover:bg-brand/20 disabled:opacity-70"
                                   >
-                                    <RotateCcw className="h-3 w-3" />
-                                    {reorderingItemId === item.userProductId ? "Adding..." : "Reorder"}
+                                    <Undo2 className="h-3 w-3" />
+                                    Request Return
                                   </Button>
-                                  {isPreShippingCancelableStatus(item.status) ? (
-                                    <Button
-                                      type="button"
-                                      variant="unstyled"
-                                      onClick={() =>
-                                        requestCancelAction({
-                                          orderItemIds: [item.id],
-                                          description: `${item.productName} cancellation request was submitted.`,
-                                          options: { cancelingItemId: item.id },
-                                        })
-                                      }
-                                      disabled={
-                                        cancelingItemId === item.id ||
-                                        reorderingItemId === item.userProductId ||
-                                        isCancelingSellerGroup
-                                      }
-                                      className="inline-flex items-center gap-1 rounded-[8px] border border-danger/40 bg-danger/15 px-2.5 py-1 text-[11px] font-semibold text-danger hover:bg-danger/25 disabled:opacity-70"
-                                    >
-                                      <XCircle className="h-3 w-3" />
-                                      {cancelingItemId === item.id ? "Canceling..." : "Cancel Item"}
-                                    </Button>
-                                  ) : null}
-                                  {trackingLinks.length > 0 ? (
-                                    <Button
-                                      type="button"
-                                      variant="unstyled"
-                                      onClick={() =>
-                                        setTrackingModalLinks({ title: "Tracking links", links: trackingLinks })
-                                      }
-                                      className="inline-flex items-center gap-1 rounded-[8px] border border-border-strong/70 bg-transparent px-2.5 py-1 text-[11px] font-semibold text-text-secondary hover:bg-surface-muted hover:text-text-primary"
-                                    >
-                                      <ExternalLink className="h-3 w-3" />
-                                      Track
-                                    </Button>
-                                  ) : null}
-                                  {shippingLinks.length > 0 ? (
-                                    <Button
-                                      type="button"
-                                      variant="unstyled"
-                                      onClick={() =>
-                                        setTrackingModalLinks({ title: "Shipping labels", links: shippingLinks })
-                                      }
-                                      className="inline-flex items-center gap-1 rounded-[8px] border border-border-strong/70 bg-transparent px-2.5 py-1 text-[11px] font-semibold text-text-secondary hover:bg-surface-muted hover:text-text-primary"
-                                    >
-                                      <FileText className="h-3 w-3" />
-                                      Shipping Label
-                                    </Button>
-                                  ) : null}
-                                  {canRequestItemReturn ? (
-                                    <Button
-                                      type="button"
-                                      variant="unstyled"
-                                      onClick={() => requestRefundAction(order, item)}
-                                      disabled={
-                                        reorderingItemId === item.userProductId ||
-                                        cancelingItemId === item.id ||
-                                        isCancelingSellerGroup
-                                      }
-                                      className="inline-flex items-center gap-1 rounded-[8px] border border-brand/40 bg-brand/12 px-2.5 py-1 text-[11px] font-semibold text-brand hover:bg-brand/20 disabled:opacity-70"
-                                    >
-                                      <Undo2 className="h-3 w-3" />
-                                      Request Return
-                                    </Button>
-                                  ) : null}
-                          </div>
+                                ) : null}
+                              </div>
 
-                          {/* Timeline — no extra card border, just a separator */}
-                          <div className="mt-3 border-t border-border-soft pt-3">
-                            <FulfillmentTimeline item={item} orderDate={summary.orderDate} />
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
+                              {/* Timeline — no extra card border, just a separator */}
+                              <div className="mt-3 border-t border-border-soft pt-3">
+                                <FulfillmentTimeline item={item} orderDate={summary.orderDate} />
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
 
-                  <div className="flex items-center justify-between border-t border-border-soft bg-surface-muted/55 px-4 py-3 text-sm text-text-muted">
-                    <span>Updated: {formatDateTime(group.orderItems[0]?.updatedDate)}</span>
-                    {hasCancelableItems ? (
-                      <Button
-                        type="button"
-                        variant="unstyled"
-                        onClick={() =>
-                          requestCancelAction({
-                            orderItemIds: cancelableItemIds,
-                            description: `${sellerDisplayName} items cancellation request was submitted.`,
-                            options: { cancelingSellerKey: sellerKey },
-                          })
-                        }
-                        disabled={isCancelingSellerGroup}
-                        className="rounded-[8px] border border-danger/40 bg-danger/15 px-2.5 py-1 text-[11px] font-semibold text-danger hover:bg-danger/25 disabled:opacity-70"
-                      >
-                        <XCircle className="h-3 w-3" />
-                        {isCancelingSellerGroup ? (
-                          "Canceling items..."
-                        ) : (
-                          <>
-                            Cancel All Items from <b className="-ml-1">{sellerDisplayName}</b>
-                          </>
-                        )}
-                      </Button>
-                    ) : null}
-                  </div>
-                  </CollapseContent>
-                </section>
+                      <div className="flex items-center justify-between border-t border-border-soft bg-surface-muted/55 px-4 py-3 text-sm text-text-muted">
+                        <span>Updated: {formatDateTime(group.orderItems[0]?.updatedDate)}</span>
+                        {hasCancelableItems ? (
+                          <Button
+                            type="button"
+                            variant="unstyled"
+                            onClick={() =>
+                              requestCancelAction({
+                                orderItemIds: cancelableItemIds,
+                                description: `${sellerDisplayName} items cancellation request was submitted.`,
+                                options: { cancelingSellerKey: sellerKey },
+                              })
+                            }
+                            disabled={isCancelingSellerGroup}
+                            className="rounded-[8px] border border-danger/40 bg-danger/15 px-2.5 py-1 text-[11px] font-semibold text-danger hover:bg-danger/25 disabled:opacity-70"
+                          >
+                            <XCircle className="h-3 w-3" />
+                            {isCancelingSellerGroup ? (
+                              "Canceling items..."
+                            ) : (
+                              <>
+                                Cancel All Items from <b className="-ml-1">{sellerDisplayName}</b>
+                              </>
+                            )}
+                          </Button>
+                        ) : null}
+                      </div>
+                    </CollapseContent>
+                  </section>
                 </Collapse>
               )
             })}
