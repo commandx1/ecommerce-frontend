@@ -47,14 +47,16 @@ const SOCIAL_LINKS = [
 
 function FooterLinkColumn({ title, links }: { title: string; links: readonly (readonly [string, string])[] }) {
   return (
-    <div>
-      <h3 className="mb-4 text-lg font-semibold text-text-primary dark:text-inverse-foreground">{title}</h3>
-      <ul className="space-y-3">
+    <div className="text-center lg:text-left">
+      <h3 className="mb-3 text-base font-semibold text-text-primary dark:text-inverse-foreground sm:mb-4 sm:text-lg">
+        {title}
+      </h3>
+      <ul className="space-y-2.5 sm:space-y-3">
         {links.map(([label, href]) => (
           <li key={href}>
             <Link
               href={href}
-              className="text-text-secondary transition-colors hover:text-brand dark:text-inverse-muted dark:hover:text-inverse-foreground"
+              className="text-sm text-text-secondary transition-colors hover:text-brand dark:text-inverse-muted dark:hover:text-inverse-foreground sm:text-base"
             >
               {label}
             </Link>
@@ -69,26 +71,26 @@ const Footer = () => {
   return (
     <footer className="border-t border-border-soft bg-surface-muted/75 dark:bg-brand-surface">
       <div className="app-container mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
-        <div className="grid grid-cols-1 gap-8 py-16 md:grid-cols-2 lg:grid-cols-5">
-          <div className="lg:col-span-2">
-            <div className="mb-6 flex items-center gap-3">
+        <div className="grid grid-cols-1 gap-10 py-10 sm:gap-8 sm:py-12 md:grid-cols-2 lg:grid-cols-5 lg:py-16">
+          <div className="flex flex-col items-center text-center lg:items-start lg:text-left lg:col-span-2">
+            <div className="mb-6 flex flex-col items-center gap-3 lg:flex-row lg:items-center">
               <Logo />
               <div>
-                <span className="block font-display text-3xl font-semibold text-text-primary dark:text-inverse-foreground">
+                <span className="block font-display text-2xl font-semibold text-text-primary dark:text-inverse-foreground sm:text-3xl">
                   DentyPro
                 </span>
-                <span className="mt-1 block text-[0.7rem] uppercase tracking-[0.28em] text-text-muted dark:text-inverse-muted">
+                <span className="mt-1 block text-[0.65rem] uppercase tracking-[0.28em] text-text-muted dark:text-inverse-muted sm:text-[0.7rem]">
                   Clinical Supply Network
                 </span>
               </div>
             </div>
 
-            <p className="mb-6 max-w-xl leading-relaxed text-text-secondary dark:text-inverse-muted">
-              The leading B2B marketplace for dental professionals in the United States. Connect with verified
-              vendors, access competitive pricing, and streamline your practice procurement.
+            <p className="mb-6 max-w-xl text-sm leading-relaxed text-text-secondary dark:text-inverse-muted sm:text-base">
+              The leading B2B marketplace for dental professionals in the United States. Connect with verified vendors,
+              access competitive pricing, and streamline your practice procurement.
             </p>
 
-            <div className="mb-8 flex flex-wrap gap-3">
+            <div className="mb-8 flex flex-wrap justify-center gap-3 lg:justify-start">
               <span className="rounded-full border border-border-soft bg-surface-elevated px-3 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.24em] text-text-primary dark:border-white/14 dark:bg-white/12 dark:text-inverse-foreground">
                 Verified sourcing
               </span>
@@ -122,20 +124,22 @@ const Footer = () => {
           <FooterLinkColumn title="Support" links={SUPPORT_LINKS} />
         </div>
 
-        <div className="mt-4 border-t border-border-soft py-8 dark:border-white/10">
-          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <div className="flex flex-wrap justify-center gap-6 md:justify-start">
+        <div className="mt-2 border-t border-border-soft py-6 dark:border-white/10 sm:mt-4 sm:py-8">
+          <div className="flex flex-col items-center justify-between gap-4 lg:flex-row">
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:justify-start">
               {POLICY_LINKS.map(([label, href]) => (
                 <Link
                   key={href}
                   href={href}
-                  className="text-sm text-text-muted transition-colors hover:text-brand dark:text-inverse-muted dark:hover:text-inverse-foreground"
+                  className="text-xs text-text-muted transition-colors hover:text-brand dark:text-inverse-muted dark:hover:text-inverse-foreground sm:text-sm"
                 >
                   {label}
                 </Link>
               ))}
             </div>
-            <div className="text-sm text-text-muted dark:text-inverse-muted">© 2026 DentyPro. All rights reserved.</div>
+            <div className="text-xs text-text-muted dark:text-inverse-muted sm:text-sm">
+              © 2026 DentyPro. All rights reserved.
+            </div>
           </div>
         </div>
       </div>
