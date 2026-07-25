@@ -74,7 +74,7 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
       className="sticky top-0 z-40 border-b border-border-soft/80 bg-background/85 backdrop-blur-xl"
     >
       <div className="app-container mx-auto px-3 sm:px-6 lg:px-8 xl:px-10">
-        <div className="flex min-h-16 items-center justify-between gap-2 border-b border-border-soft/80 py-3 sm:min-h-[4.5rem] sm:gap-4 sm:py-4 lg:min-h-20 lg:gap-6">
+        <div className="flex min-h-16 items-center justify-between gap-2 border-b border-border-soft/80 py-3 sm:min-h-18 sm:gap-4 sm:py-4 lg:min-h-20 lg:gap-6">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <button
               type="button"
@@ -200,7 +200,7 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
       <div
         id={mobileMenuId}
         className={`overflow-hidden border-t border-border-soft/80 bg-background/95 backdrop-blur-xl transition-[max-height,opacity] duration-300 ease-in-out lg:hidden ${
-          mobileMenuOpen ? "max-h-[36rem] opacity-100" : "max-h-0 opacity-0"
+          mobileMenuOpen ? "max-h-144 opacity-100" : "max-h-0 opacity-0"
         }`}
       >
         <nav className="app-container mx-auto flex flex-col gap-1 px-3 py-4 sm:px-6">

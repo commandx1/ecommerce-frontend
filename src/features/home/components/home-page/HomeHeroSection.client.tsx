@@ -258,7 +258,7 @@ export default function HomeHeroSectionClient() {
         <div className="app-container hero-stage relative z-10 hidden w-full overflow-hidden sm:block sm:flex-1">
           <div
             aria-hidden
-            className="hero-network-map pointer-events-none absolute inset-0 [contain:layout_style_paint]"
+            className="hero-network-map pointer-events-none absolute inset-0 contain-[layout_style_paint]"
           >
             <svg aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none" className="hero-network-svg" style={{ willChange: 'transform' }}>
               {/* Route paths + traveling packets */}
