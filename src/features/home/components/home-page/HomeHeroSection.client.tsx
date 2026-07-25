@@ -1,11 +1,10 @@
 "use client"
 
-import { Building2, ChevronLeft, ChevronRight, UserRound } from "lucide-react"
 import useEmblaCarousel from "embla-carousel-react"
+import { Building2, ChevronLeft, ChevronRight, UserRound } from "lucide-react"
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react"
-import Image from "next/image"
-import { useCallback, useEffect, useState } from "react"
 import { useTheme } from "next-themes"
+import { useCallback, useEffect, useState } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import { BackgroundGradientAnimation } from "@/components/ui/background-gradient-animation"
 import { ShineBorder } from "@/components/ui/shine-border"
@@ -25,10 +24,12 @@ const revealVariants = {
 const heroBanners = [
   {
     image: "/banner1.avif",
+    mobileImage: "/banner1-mobile.avif",
     alt: "Essential dental supplies and instruments arranged on a modern clinic workspace",
   },
   {
     image: "/banner2.avif",
+    mobileImage: "/banner2-mobile.avif",
     alt: "Modern dental procurement visual with shipment boxes and logistics flow",
   },
 ] as const
@@ -159,7 +160,7 @@ export default function HomeHeroSectionClient() {
   return (
     <PageSectionContainer
       as="section"
-      className="hero-cinematic relative isolate h-[calc(100vh-8.75rem)] overflow-hidden p-0"
+      className="hero-cinematic relative isolate h-auto overflow-hidden p-0 sm:h-[calc(100vh-8.75rem)]"
       containerClassName="relative z-20 h-full"
     >
       <BackgroundGradientAnimation
@@ -193,17 +194,20 @@ export default function HomeHeroSectionClient() {
           <div className="relative overflow-hidden rounded-[1.6rem] border border-border-soft/75 bg-surface-elevated/92 shadow-panel backdrop-blur-xl sm:rounded-4xl">
             <div ref={emblaRef} className="overflow-hidden">
               <div className="flex">
-                {heroBanners.map((banner) => (
+                {heroBanners.map((banner, index) => (
                   <div key={banner.image} className="min-w-0 shrink-0 basis-full">
-                    <article className="relative aspect-4/1 w-full bg-surface-muted/60">
-                      <Image
-                        src={banner.image}
-                        alt={banner.alt}
-                        fill
-                        priority
-                        sizes="(min-width: 1280px) 1152px, (min-width: 640px) calc(100vw - 48px), calc(100vw - 24px)"
-                        className="object-contain"
-                      />
+                    <article className="relative aspect-square w-full bg-surface-muted/60 sm:aspect-4/1">
+                      <picture className="absolute inset-0 block h-full w-full">
+                        <source media="(min-width: 640px)" srcSet={banner.image} />
+                        <img
+                          src={banner.mobileImage}
+                          alt={banner.alt}
+                          loading={index === 0 ? "eager" : "lazy"}
+                          fetchPriority={index === 0 ? "high" : "auto"}
+                          decoding="async"
+                          className="h-full w-full object-cover"
+                        />
+                      </picture>
                     </article>
                   </div>
                 ))}
@@ -251,8 +255,11 @@ export default function HomeHeroSectionClient() {
           </div>
         </motion.div>
 
-        <div className="app-container hero-stage relative z-10 w-full flex-1 overflow-hidden">
-          <div aria-hidden className="hero-network-map pointer-events-none absolute inset-0 [contain:layout_style_paint]">
+        <div className="app-container hero-stage relative z-10 hidden w-full overflow-hidden sm:block sm:flex-1">
+          <div
+            aria-hidden
+            className="hero-network-map pointer-events-none absolute inset-0 [contain:layout_style_paint]"
+          >
             <svg aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none" className="hero-network-svg" style={{ willChange: 'transform' }}>
               {/* Route paths + traveling packets */}
               {networkRoutes.map((route) => (
