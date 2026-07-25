@@ -508,37 +508,37 @@ export default function VendorPromotionsPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1150px]">
+          <table className="w-full min-w-287.5">
             <thead className="border-y border-border-soft bg-surface-muted/70">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   Campaign
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   Status
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   Channel
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   Budget
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   Spend
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   Revenue
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   ROAS
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   CTR
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   Start / End
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   Actions
                 </th>
               </tr>
@@ -546,11 +546,11 @@ export default function VendorPromotionsPage() {
             <tbody>
               {filteredRows.map((campaign) => (
                 <tr key={campaign.id} className="border-b border-border-soft/80">
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 text-center">
                     <div className="font-medium text-text-primary">{campaign.name}</div>
                     <div className="text-xs text-text-secondary">{campaign.objective}</div>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 text-center">
                     <span
                       className={cn(
                         "inline-flex rounded-full border px-2 py-0.5 text-xs",
@@ -560,19 +560,19 @@ export default function VendorPromotionsPage() {
                       {campaign.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-text-secondary">{campaign.channel}</td>
-                  <td className="px-4 py-3 text-right text-text-primary">{formatCurrency(campaign.budget)}</td>
-                  <td className="px-4 py-3 text-right text-text-primary">{formatCurrency(campaign.spend)}</td>
-                  <td className="px-4 py-3 text-right font-semibold text-text-primary">
+                  <td className="px-4 py-3 text-center text-text-secondary">{campaign.channel}</td>
+                  <td className="px-4 py-3 text-center text-text-primary">{formatCurrency(campaign.budget)}</td>
+                  <td className="px-4 py-3 text-center text-text-primary">{formatCurrency(campaign.spend)}</td>
+                  <td className="px-4 py-3 text-center font-semibold text-text-primary">
                     {formatCurrency(campaign.revenue)}
                   </td>
-                  <td className="px-4 py-3 text-right text-text-primary">{getRoas(campaign).toFixed(2)}x</td>
-                  <td className="px-4 py-3 text-right text-text-primary">{getCtr(campaign).toFixed(2)}%</td>
-                  <td className="px-4 py-3 text-sm text-text-secondary">
+                  <td className="px-4 py-3 text-center text-text-primary">{getRoas(campaign).toFixed(2)}x</td>
+                  <td className="px-4 py-3 text-center text-text-primary">{getCtr(campaign).toFixed(2)}%</td>
+                  <td className="px-4 py-3 text-center text-sm text-text-secondary">
                     {campaign.startDate} → {campaign.endDate}
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-1">
+                  <td className="px-4 py-3 text-center">
+                    <div className="flex items-center justify-center gap-1">
                       <ActionIconButton
                         onClick={() => openEditModal(campaign)}
                         icon={<Pencil className="h-4 w-4" />}

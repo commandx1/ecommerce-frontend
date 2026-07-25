@@ -84,10 +84,10 @@ export default function ShippingMethodsTable() {
   return (
     <div className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-panel sm:rounded-3xl">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px]">
+        <table className="w-full min-w-160">
           <thead className="bg-brand-surface text-inverse-foreground">
             <tr>
-              <th className="text-left p-4 sm:p-6 font-semibold text-sm sm:text-base">Feature</th>
+              <th className="text-center p-4 sm:p-6 font-semibold text-sm sm:text-base">Feature</th>
               <th className="text-center p-4 sm:p-6 font-semibold text-sm sm:text-base">
                 <div className="flex flex-col items-center">
                   <Zap className="mb-2 h-6 w-6 text-accent-strong sm:h-8 sm:w-8" />
@@ -108,7 +108,9 @@ export default function ShippingMethodsTable() {
                 key={row.feature}
                 className={`${row.striped ? "bg-surface-muted/45" : ""} border-b border-border-soft`}
               >
-                <td className="p-4 text-sm font-medium text-text-primary sm:p-6 sm:text-base">{row.feature}</td>
+                <td className="p-4 text-center text-sm font-medium text-text-primary sm:p-6 sm:text-base">
+                  {row.feature}
+                </td>
                 <td className="p-4 sm:p-6 text-center">
                   <ShippingCell cell={row.uber} />
                 </td>

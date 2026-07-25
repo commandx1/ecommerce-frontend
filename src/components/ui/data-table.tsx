@@ -64,7 +64,7 @@ export default function DataTable<TData>({
   const visibleColumnCount = table.getVisibleLeafColumns().length
 
   return (
-    <table className={cn("w-full border-collapse text-left", minTableWidthClassName, tableClassName)}>
+    <table className={cn("w-full border-collapse text-center", minTableWidthClassName, tableClassName)}>
       <thead>
         {table.getHeaderGroups().map((headerGroup) => (
           <tr
@@ -75,7 +75,11 @@ export default function DataTable<TData>({
               const meta = header.column.columnDef.meta as DataTableColumnMeta | undefined
               return (
                 <th key={header.id} colSpan={header.colSpan} className={cn("p-4", meta?.headerClassName)}>
-                  {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                  {header.isPlaceholder ? null : (
+                    <div className="flex items-center justify-center">
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </div>
+                  )}
                 </th>
               )
             })}
@@ -127,7 +131,9 @@ export default function DataTable<TData>({
                     const meta = cell.column.columnDef.meta as DataTableColumnMeta | undefined
                     return (
                       <td key={cell.id} className={cn("p-4", meta?.cellClassName)}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        <div className="flex items-center justify-center">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </div>
                       </td>
                     )
                   })}

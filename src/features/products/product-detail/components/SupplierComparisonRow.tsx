@@ -24,7 +24,7 @@ const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }:
       onClick={() => onSelect(supplier)}
     >
       <td className="px-6 py-4">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center justify-center space-x-4">
           {supplier.logo && (
             <div className="relative flex h-12 w-12 items-center justify-center rounded-xl border border-border-soft bg-surface-muted">
               <ProductImageWithFallback

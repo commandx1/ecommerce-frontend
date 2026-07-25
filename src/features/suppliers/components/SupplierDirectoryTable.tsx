@@ -25,22 +25,22 @@ export default function SupplierDirectoryTable({ suppliers, onToggleFavorite }: 
         <table className="w-full min-w-[860px]">
           <thead className="border-b border-border-soft bg-surface-muted/60">
             <tr>
-              <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+              <th className="px-5 py-4 text-center text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
                 Supplier
               </th>
-              <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+              <th className="px-5 py-4 text-center text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
                 Category
               </th>
-              <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+              <th className="px-5 py-4 text-center text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
                 Location
               </th>
-              <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+              <th className="px-5 py-4 text-center text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
                 Rating
               </th>
-              <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+              <th className="px-5 py-4 text-center text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
                 Delivery
               </th>
-              <th className="px-5 py-4 text-right text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+              <th className="px-5 py-4 text-center text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
                 Actions
               </th>
             </tr>
@@ -49,7 +49,7 @@ export default function SupplierDirectoryTable({ suppliers, onToggleFavorite }: 
             {suppliers.map((supplier) => (
               <tr key={supplier.id} className="border-b border-border-soft/70 last:border-b-0">
                 <td className="px-5 py-4">
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start justify-center gap-3">
                     <button
                       type="button"
                       onClick={() => onToggleFavorite?.(String(supplier.id))}
@@ -69,10 +69,10 @@ export default function SupplierDirectoryTable({ suppliers, onToggleFavorite }: 
                     </div>
                   </div>
                 </td>
-                <td className="px-5 py-4 text-sm font-medium text-text-primary">{supplier.category}</td>
-                <td className="px-5 py-4 text-sm text-text-secondary">{supplier.location}</td>
+                <td className="px-5 py-4 text-center text-sm font-medium text-text-primary">{supplier.category}</td>
+                <td className="px-5 py-4 text-center text-sm text-text-secondary">{supplier.location}</td>
                 <td className="px-5 py-4">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-center gap-2">
                     <div className="flex items-center gap-1 text-amber-400">
                       {Array.from({ length: 5 }, (_, index) => (
                         <Star
@@ -91,7 +91,7 @@ export default function SupplierDirectoryTable({ suppliers, onToggleFavorite }: 
                   </div>
                 </td>
                 <td className="px-5 py-4">
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap justify-center gap-1.5">
                     {(supplier.deliveryMethods ?? []).slice(0, 2).map((deliveryMethod) => (
                       <span
                         key={`${supplier.id}-${deliveryMethod}`}
@@ -103,7 +103,7 @@ export default function SupplierDirectoryTable({ suppliers, onToggleFavorite }: 
                   </div>
                 </td>
                 <td className="px-5 py-4">
-                  <div className="flex justify-end gap-2">
+                  <div className="flex justify-center gap-2">
                     <Link
                       href={`/products?vendor=${supplier.slug}`}
                       className="rounded-full bg-brand px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand-strong"

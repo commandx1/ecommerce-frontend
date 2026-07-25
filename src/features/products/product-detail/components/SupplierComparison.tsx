@@ -41,7 +41,7 @@ const SupplierComparison = ({
           <table className="w-full">
             <thead className="bg-brand text-inverse-foreground dark:bg-brand-surface">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold tracking-[0.08em] text-inverse-foreground uppercase">
+                <th className="px-6 py-4 text-center text-sm font-semibold tracking-[0.08em] text-inverse-foreground uppercase">
                   Supplier
                 </th>
                 <th className="px-6 py-4 text-center text-sm font-semibold tracking-[0.08em] text-inverse-foreground uppercase">

@@ -134,19 +134,19 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
 
       <DashboardPanel title="Recent Order Snapshot" description="Operational timeline for the most recent transactions">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px]">
+          <table className="w-full min-w-160">
             <thead>
               <tr className="border-b border-border-soft">
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   Order
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   Amount
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   Created
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-text-secondary">
                   Status
                 </th>
               </tr>
@@ -154,10 +154,10 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
             <tbody>
               {recentOrders.map((order) => (
                 <tr key={order.id} className="border-b border-border-soft/80">
-                  <td className="px-4 py-3 font-medium text-text-primary">{order.orderNumber}</td>
-                  <td className="px-4 py-3 text-text-primary">{formatCurrency(order.amount)}</td>
-                  <td className="px-4 py-3 text-text-secondary">{formatLastOrder(order.daysAgo)}</td>
-                  <td className="px-4 py-3 text-text-secondary">{order.status}</td>
+                  <td className="px-4 py-3 text-center font-medium text-text-primary">{order.orderNumber}</td>
+                  <td className="px-4 py-3 text-center text-text-primary">{formatCurrency(order.amount)}</td>
+                  <td className="px-4 py-3 text-center text-text-secondary">{formatLastOrder(order.daysAgo)}</td>
+                  <td className="px-4 py-3 text-center text-text-secondary">{order.status}</td>
                 </tr>
               ))}
             </tbody>
