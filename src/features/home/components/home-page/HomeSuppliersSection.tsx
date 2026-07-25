@@ -8,7 +8,7 @@ interface HomeSuppliersSectionProps {
 
 export default function HomeSuppliersSection({ suppliers }: HomeSuppliersSectionProps) {
   return (
-    <PageSectionContainer as="section" className="relative py-14 lg:py-18">
+    <PageSectionContainer as="section" className="relative py-6 lg:py-18">
       <h2 className="max-w-[18ch] m-auto text-center font-display text-4xl leading-[1.03] text-text-primary md:text-5xl">
         Compare trusted suppliers before you buy.
       </h2>

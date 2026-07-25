@@ -9,7 +9,7 @@ interface HomeBuyLaneSectionProps {
 
 export default function HomeBuyLaneSection({ items }: HomeBuyLaneSectionProps) {
   return (
-    <PageSectionContainer as="section" className="relative py-14 lg:py-18">
+    <PageSectionContainer as="section" className="relative py-6 lg:py-18">
       <div className="grid gap-4 md:grid-cols-3">
         {items.map((item) => {
           const Icon = item.icon

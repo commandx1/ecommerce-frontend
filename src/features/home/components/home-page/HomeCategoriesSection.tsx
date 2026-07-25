@@ -8,7 +8,7 @@ interface HomeCategoriesSectionProps {
 
 export default function HomeCategoriesSection({ categories }: HomeCategoriesSectionProps) {
   return (
-    <PageSectionContainer as="section" className="relative py-14 lg:py-18">
+    <PageSectionContainer as="section" className="relative py-6 lg:py-18">
       <h2 className="max-w-[20ch] m-auto text-center font-display text-4xl leading-[1.03] text-text-primary md:text-5xl">
         Shop by category, not by confusion.
       </h2>
