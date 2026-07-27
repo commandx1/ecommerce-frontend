@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useEffect, useId, useRef, useState } from "react"
+import { DashboardMobileSidebarProvider } from "@/components/layout/DashboardMobileSidebarContext"
 import { cookieStorage } from "@/lib/storage/cookie-storage"
 import { useAuthStore } from "@/stores/authStore"
 import BuyerDashboardLayoutSkeleton from "./components/BuyerDashboardLayoutSkeleton"
@@ -86,14 +87,16 @@ export default function BuyerDashboardLayout({ children }: { children: React.Rea
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-canvas">
-      <BuyerHeader />
-      <div className="flex flex-1">
-        <DashboardSidebar />
-        <main id={mainContentId} className="flex-1 overflow-auto p-6">
-          {children}
-        </main>
+    <DashboardMobileSidebarProvider>
+      <div className="flex min-h-screen flex-col bg-canvas">
+        <BuyerHeader />
+        <div className="flex flex-1">
+          <DashboardSidebar />
+          <main id={mainContentId} className="min-w-0 flex-1 overflow-auto p-4 md:p-6">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </DashboardMobileSidebarProvider>
   )
 }

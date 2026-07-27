@@ -17,7 +17,7 @@ const STATS: Array<{ value: string; label: string }> = [
 
 export default function RegisterSidebar() {
   return (
-    <div className="flex flex-col justify-center bg-linear-to-br from-brand-surface via-brand to-brand-strong p-12 dark:from-surface dark:via-surface-elevated dark:to-surface-muted">
+    <div className="flex flex-col justify-center bg-linear-to-br from-brand-surface via-brand to-brand-strong p-8 lg:p-12 dark:from-surface dark:via-surface-elevated dark:to-surface-muted">
       <div className="mb-8 text-inverse-foreground">
         <h2 className="mb-4 text-3xl font-bold text-inverse-muted">Join the Professional Network</h2>
         <p className="mb-6 text-lg leading-relaxed text-inverse-muted">

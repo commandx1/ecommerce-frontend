@@ -19,7 +19,7 @@ export default function LoginForm() {
   } = useLoginForm()
 
   return (
-    <div className="p-12">
+    <div className="p-6 sm:p-8 lg:p-12">
       <LoginFormIntro />
 
       <form onSubmit={handleSubmit}>

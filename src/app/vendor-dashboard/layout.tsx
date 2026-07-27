@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useId, useState } from "react"
+import { DashboardMobileSidebarProvider } from "@/components/layout/DashboardMobileSidebarContext"
 import { showToast } from "@/components/ui/Toast"
 import { cookieStorage } from "@/lib/storage/cookie-storage"
 import { useAuthStore } from "@/stores/authStore"
@@ -110,14 +111,16 @@ export default function VendorDashboardLayout({ children }: { children: React.Re
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-canvas">
-      <VendorHeader />
-      <div className="flex flex-1">
-        <VendorSidebar />
-        <main id={mainContentId} className="flex-1 p-8">
-          {children}
-        </main>
+    <DashboardMobileSidebarProvider>
+      <div className="flex min-h-screen flex-col bg-canvas">
+        <VendorHeader />
+        <div className="flex flex-1">
+          <VendorSidebar />
+          <main id={mainContentId} className="min-w-0 flex-1 p-4 md:p-8">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </DashboardMobileSidebarProvider>
   )
 }

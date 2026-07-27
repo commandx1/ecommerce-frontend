@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, ShoppingCart } from "lucide-react"
+import { LogOut, Menu, ShoppingCart, X } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useId } from "react"
@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
 import AccountMenu from "./AccountMenu"
+import { useDashboardMobileSidebar } from "./DashboardMobileSidebarContext"
 import Logo from "./Logo"
 
 export type DashboardHeaderNavItem = {
@@ -37,6 +38,7 @@ export default function DashboardHeader({
   const { user, logout } = useAuthStore()
   const cartCount = useCartStore((state) => state.cartCount)
   const fetchCart = useCartStore((state) => state.fetchCart)
+  const { isOpen: isMobileSidebarOpen, toggle: toggleMobileSidebar } = useDashboardMobileSidebar()
 
   const displayName = user ? `${user.name} ${user.surname}`.trim() || user.email : accountFallbackName
 
@@ -62,12 +64,22 @@ export default function DashboardHeader({
 
   return (
     <header id={headerId} className="sticky top-0 z-50 border-b border-border-soft bg-surface-elevated shadow-soft">
-      <div className="max-w-full px-6">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center space-x-8">
-            <Link href="/" className="flex items-center">
+      <div className="max-w-full px-4 sm:px-6">
+        <div className="flex h-16 items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-3 sm:space-x-8">
+            <button
+              type="button"
+              onClick={toggleMobileSidebar}
+              aria-label={isMobileSidebarOpen ? "Close menu" : "Open menu"}
+              aria-expanded={isMobileSidebarOpen}
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-surface-muted hover:text-text-primary md:hidden"
+            >
+              {isMobileSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+
+            <Link href="/" className="flex min-w-0 items-center">
               <Logo />
-              <span className="ml-3 text-2xl font-bold text-text-primary">DentyPro</span>
+              <span className="ml-3 truncate text-xl font-bold text-text-primary sm:text-2xl">DentyPro</span>
             </Link>
 
             <nav className="hidden space-x-8 md:flex">
@@ -88,14 +100,14 @@ export default function DashboardHeader({
             </nav>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             {showCart ? (
               <Link
                 href="/cart"
-                className="relative flex items-center gap-2 rounded-full border border-border-soft bg-surface px-3 py-2 text-sm text-text-secondary shadow-soft transition-colors hover:text-brand"
+                className="relative flex items-center gap-2 rounded-full border border-border-soft bg-surface px-2.5 py-2 text-sm text-text-secondary shadow-soft transition-colors hover:text-brand sm:px-3"
               >
                 <ShoppingCart className="h-4 w-4" />
-                <span className="font-semibold">Cart</span>
+                <span className="hidden font-semibold sm:inline">Cart</span>
                 {cartCount > 0 ? (
                   <span className="absolute -top-2 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent-strong px-1 text-[10px] font-bold text-accent-foreground">
                     {cartCount}

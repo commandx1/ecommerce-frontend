@@ -17,7 +17,7 @@ const SECURITY_POINTS = [
 
 export default function ForgotPasswordInfoPanel() {
   return (
-    <div className="flex flex-col justify-center bg-linear-to-br from-brand-surface via-brand to-brand-strong p-8 text-inverse-foreground lg:p-12 dark:from-surface dark:via-surface-elevated dark:to-surface-muted">
+    <div className="flex flex-col justify-center bg-linear-to-br from-brand-surface via-brand to-brand-strong p-6 text-inverse-foreground sm:p-8 lg:p-12 dark:from-surface dark:via-surface-elevated dark:to-surface-muted">
       <div className="mb-8">
         <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-inverse-foreground/15">
           <ShieldCheck className="h-8 w-8 text-inverse-foreground" />

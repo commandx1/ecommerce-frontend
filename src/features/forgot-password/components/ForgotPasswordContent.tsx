@@ -19,8 +19,8 @@ export default function ForgotPasswordContent() {
       <div className="fixed top-4 right-4 z-50">
         <ThemeToggle />
       </div>
-      <section className="py-12 h-screen flex flex-col items-center justify-center">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <section className="flex min-h-screen flex-col items-center justify-center py-12">
+        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="overflow-hidden rounded-3xl border border-border-soft bg-surface-elevated shadow-panel">
             <div className="grid grid-cols-1 lg:grid-cols-2">
               <ForgotPasswordForm

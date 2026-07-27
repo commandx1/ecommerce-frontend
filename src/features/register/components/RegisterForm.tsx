@@ -48,7 +48,7 @@ export default function RegisterForm() {
   }, [errors.submit])
 
   return (
-    <div className="p-12">
+    <div className="p-6 sm:p-8 lg:p-12">
       <RegisterFormIntro />
 
       <form onSubmit={handleSubmit}>

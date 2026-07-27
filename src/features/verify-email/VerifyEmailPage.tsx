@@ -3,7 +3,7 @@ import VerifyEmailContent from "@/features/verify-email/components/VerifyEmailCo
 
 export default function VerifyEmailPage() {
   return (
-    <div className="min-h-screen bg-gray-50 font-inter flex items-center justify-center p-4">
+    <div className="flex min-h-screen items-center justify-center bg-canvas p-4 font-inter">
       <div className="fixed top-4 right-4 z-50">
         <ThemeToggle />
       </div>

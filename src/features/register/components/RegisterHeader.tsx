@@ -16,14 +16,14 @@ export default function RegisterHeader({ signInPath = "/login" }: RegisterHeader
   return (
     <header className="border-b border-border-soft bg-surface-elevated shadow-soft">
       <PageSectionContainer as="div">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
+        <div className="flex h-16 items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center">
             <Logo />
-            <span className="ml-3 text-2xl font-bold text-text-primary">DentyPro</span>
+            <span className="ml-3 truncate text-lg font-bold text-text-primary sm:text-2xl">DentyPro</span>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-4">
             <ThemeToggle />
-            <span className="text-text-secondary">Already have an account?</span>
+            <span className="hidden text-text-secondary sm:inline">Already have an account?</span>
             <ActionButton type="button" onClick={() => router.push(signInPath)} size="sm">
               Sign In
             </ActionButton>

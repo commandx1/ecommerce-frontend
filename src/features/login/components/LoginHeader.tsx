@@ -17,14 +17,14 @@ export default function LoginHeader({ signUpPath = "/register" }: LoginHeaderPro
   return (
     <header className="border-b border-border-soft bg-surface-elevated shadow-soft">
       <PageSectionContainer as="div">
-        <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center">
+        <div className="flex h-16 items-center justify-between gap-2">
+          <Link href="/" className="flex min-w-0 items-center">
             <Logo />
-            <span className="ml-3 text-2xl font-bold text-text-primary">DentyPro</span>
+            <span className="ml-3 truncate text-lg font-bold text-text-primary sm:text-2xl">DentyPro</span>
           </Link>
-          <div className="flex items-center space-x-4">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-4">
             <ThemeToggle />
-            <span className="text-text-secondary">Don't have an account?</span>
+            <span className="hidden text-text-secondary sm:inline">Don't have an account?</span>
             <ActionButton type="button" onClick={() => router.push(signUpPath)} size="sm">
               Sign Up
             </ActionButton>
