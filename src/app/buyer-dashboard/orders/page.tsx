@@ -1,6 +1,7 @@
 "use client"
 
 import CancelConfirmModal from "./components/cancel-confirm-modal"
+import OrdersMobileList from "./components/orders-mobile-list"
 import OrdersPagination from "./components/orders-pagination"
 import OrdersStatusTabs from "./components/orders-status-tabs"
 import OrdersTable from "./components/orders-table"
@@ -21,11 +22,13 @@ function BuyerOrdersPageContent() {
 
   return (
     <>
-      <section className="mb-8">
-        <div className="mb-6 flex items-center justify-between">
+      <section className="mb-6 md:mb-8">
+        <div className="mb-4 flex items-center justify-between md:mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-text-primary">Your Orders</h1>
-            <p className="mt-1 text-text-secondary">Track and review all orders placed from your account</p>
+            <h1 className="text-2xl font-bold text-text-primary sm:text-3xl">Your Orders</h1>
+            <p className="mt-1 text-sm text-text-secondary sm:text-base">
+              Track and review all orders placed from your account
+            </p>
           </div>
         </div>
       </section>
@@ -35,8 +38,12 @@ function BuyerOrdersPageContent() {
           <OrdersStatusTabs />
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="hidden md:block md:overflow-x-auto">
           <OrdersTable />
+        </div>
+
+        <div className="p-3 sm:p-4 md:hidden">
+          <OrdersMobileList />
         </div>
 
         <OrdersPagination />
