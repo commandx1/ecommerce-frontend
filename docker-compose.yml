@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        BACKEND_URL: http://ecommerce-api:8080
     image: dentb2b-frontend:latest
     container_name: dentb2b-frontend
     ports:
