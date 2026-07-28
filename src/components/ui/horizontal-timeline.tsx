@@ -17,6 +17,7 @@ export interface HorizontalTimelineStep {
 interface HorizontalTimelineProps {
   steps: HorizontalTimelineStep[]
   className?: string
+  orientation?: "horizontal" | "vertical"
 }
 
 function StepIndicator({ state }: { state: HorizontalTimelineStepState }) {
@@ -62,7 +63,36 @@ function separatorClass(state: HorizontalTimelineStepState): string {
   return "bg-border-soft"
 }
 
-export function HorizontalTimeline({ steps, className }: HorizontalTimelineProps) {
+export function HorizontalTimeline({ steps, className, orientation = "horizontal" }: HorizontalTimelineProps) {
+  if (orientation === "vertical") {
+    return (
+      <Steps.Root count={steps.length} step={steps.length} className={cn("w-full", className)}>
+        <Steps.List className="flex w-full flex-col">
+          {steps.map((step, index) => (
+            <Steps.Item key={`${step.label}-${index}`} index={index} className="relative flex items-start gap-3">
+              <div className="flex flex-col items-center">
+                <StepIndicator state={step.state} />
+                {index < steps.length - 1 ? (
+                  <div className={cn("my-1 w-0.5 flex-1 min-h-6", separatorClass(step.state))} />
+                ) : null}
+              </div>
+              <div className="flex flex-col gap-0.5 pb-6 pt-0.5">
+                <p className={cn("text-sm font-semibold leading-tight", stepLabelClass(step.state))}>{step.label}</p>
+                {step.date && step.date !== "-" ? (
+                  <p className="text-xs text-text-muted leading-tight">{step.date}</p>
+                ) : null}
+                {step.sublabel ? (
+                  <p className={cn("text-xs font-medium leading-tight", stepLabelClass(step.state))}>{step.sublabel}</p>
+                ) : null}
+                {step.extra ?? null}
+              </div>
+            </Steps.Item>
+          ))}
+        </Steps.List>
+      </Steps.Root>
+    )
+  }
+
   return (
     <Steps.Root count={steps.length} step={steps.length} className={cn("w-full", className)}>
       <Steps.List className="flex w-full items-start">
@@ -88,12 +118,7 @@ export function HorizontalTimeline({ steps, className }: HorizontalTimelineProps
               {step.extra ?? null}
             </div>
             {index < steps.length - 1 ? (
-              <div
-                className={cn(
-                  "mt-3.5 h-0.5 flex-1 mx-1.5 shrink",
-                  separatorClass(step.state),
-                )}
-              />
+              <div className={cn("mt-3.5 h-0.5 flex-1 mx-1.5 shrink", separatorClass(step.state))} />
             ) : null}
           </Steps.Item>
         ))}
