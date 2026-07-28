@@ -6,6 +6,10 @@ import { useEffect, useState, type MouseEvent } from "react"
 import { flushSync } from "react-dom"
 import { Button } from "@/components/ui/button"
 
+interface ViewTransitionLike {
+  ready: Promise<void>
+}
+
 export default function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
@@ -23,14 +27,42 @@ export default function ThemeToggle() {
       return
     }
 
-    const x = e.clientX
-    const y = e.clientY
+    // Origin = the toggle itself. clientX/Y is 0 for keyboard activation,
+    // so fall back to the button's own center.
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX || rect.left + rect.width / 2
+    const y = e.clientY || rect.top + rect.height / 2
+
+    // Radius that reaches the farthest viewport corner from the origin.
+    const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y))
+
     document.documentElement.style.setProperty("--theme-x", `${x}px`)
     document.documentElement.style.setProperty("--theme-y", `${y}px`)
 
-    ;(document as Document & { startViewTransition: (cb: () => void) => void })
-      .startViewTransition(() => {
-        flushSync(() => setTheme(next))
+    const transition = (
+      document as Document & { startViewTransition: (cb: () => void) => ViewTransitionLike }
+    ).startViewTransition(() => {
+      flushSync(() => setTheme(next))
+    })
+
+    // Drive the reveal from JS so the origin never depends on a CSS variable
+    // resolving inside the view-transition pseudo tree.
+    transition.ready
+      .then(() => {
+        document.documentElement.animate(
+          {
+            clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`],
+          },
+          {
+            duration: 650,
+            easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+            fill: "both",
+            pseudoElement: "::view-transition-new(root)",
+          },
+        )
+      })
+      .catch(() => {
+        // Transition was skipped (e.g. hidden tab) — theme still applies.
       })
   }
 
