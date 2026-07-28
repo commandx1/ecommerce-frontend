@@ -33,7 +33,7 @@ function BuyerOrdersPageContent() {
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
+      <section className="overflow-hidden border-border-soft bg-surface-elevated max-md:border-y max-md:-mx-4 md:rounded-2xl md:border md:shadow-soft">
         <div className="border-b border-border-soft px-4 pt-4 sm:px-6">
           <OrdersStatusTabs />
         </div>
@@ -42,11 +42,13 @@ function BuyerOrdersPageContent() {
           <OrdersTable />
         </div>
 
-        <div className="p-3 sm:p-4 md:hidden">
+        <div className="px-4 py-4 md:hidden">
           <OrdersMobileList />
         </div>
 
-        <OrdersPagination />
+        <div className="px-4 md:px-0">
+          <OrdersPagination />
+        </div>
       </section>
 
       <CancelConfirmModal />
