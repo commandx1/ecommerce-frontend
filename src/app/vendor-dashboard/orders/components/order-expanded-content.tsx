@@ -4,6 +4,7 @@ import { ExternalLink, Loader2 } from "lucide-react"
 import FulfillmentTimeline from "@/app/buyer-dashboard/orders/components/fulfillment-timeline"
 import { formatOrderItemStatus, getOrderItemStatusTagClass } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
 import { Button } from "@/components/ui/button"
+import AddressContactInfo from "@/features/checkout/components/AddressContactInfo"
 import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
 import { getFullImageUrl } from "@/lib/api/products"
 import type { VendorOrder, VendorOrderItem } from "@/lib/api/vendor-orders"
@@ -85,45 +86,54 @@ export default function VendorOrderExpandedContent({
   onRequestCancel,
   onConfirmReturn,
 }: VendorOrderExpandedContentProps) {
+  const itemsSubtotal = order.orderItems.reduce((sum, item) => sum + (item.totalPrice ?? 0), 0)
+  const shippingTotal = typeof order.totalShippingCost === "number" ? order.totalShippingCost : 0
+  const orderTotal = itemsSubtotal + shippingTotal
+  const customerName = [order.buyerName, order.buyerSurname].filter(Boolean).join(" ").trim()
+  const customerAddress = order.sellerAddress?.formattedAddress || order.sellerAddress?.addressLine
+  const customerPhone = order.sellerAddress?.phoneNumber
+
   return (
-    <div className="bg-surface-muted/55 p-6 shadow-inner">
-      <div className="space-y-3">
-        {order.orderItems.map((item) => {
-          const hasReturnFlowStarted = hasVendorOrderItemReturnFlowStarted(item)
-          const returnTrackingUrls = resolveVendorReturnTrackingUrls(item)
-          const trackingUrls = hasReturnFlowStarted ? returnTrackingUrls : resolveVendorTrackingUrls(item)
-          const shippingUrls = hasReturnFlowStarted ? [] : resolveVendorShippingUrls(item)
-          const isCancelledByParty = Boolean(item.cancelledByCustomer) || Boolean(item.cancelledBySeller)
-          const normalizedReturnStatus = item.returnRefundStatus?.toUpperCase()
-          const normalizedItemStatus = item.status.toUpperCase()
-          const canManageDeliveredReturn =
-            normalizedReturnStatus === "DELIVERED" && normalizedItemStatus === "DELIVERED"
-          const isConfirmingReturn = returnActionItemId === item.id && returnActionType === "confirm"
-          const isReturnActionLoading = isConfirmingReturn
-          const hasReturnFlow = Boolean(item.returnRefundStatus)
-          const metadataStatusValue = hasReturnFlow ? (item.returnRefundStatus ?? item.status) : item.status
-          const metadataStatusLabel = hasReturnFlow
-            ? `Return ${formatOrderItemStatus(metadataStatusValue)}`
-            : formatOrderItemStatus(metadataStatusValue)
+    <div className="bg-surface-muted/55 p-2 md:p-6 shadow-inner">
+      <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
+        <div className="min-w-0 flex-1 space-y-3">
+          {order.orderItems.map((item) => {
+            const hasReturnFlowStarted = hasVendorOrderItemReturnFlowStarted(item)
+            const returnTrackingUrls = resolveVendorReturnTrackingUrls(item)
+            const trackingUrls = hasReturnFlowStarted ? returnTrackingUrls : resolveVendorTrackingUrls(item)
+            const shippingUrls = hasReturnFlowStarted ? [] : resolveVendorShippingUrls(item)
+            const isCancelledByParty = Boolean(item.cancelledByCustomer) || Boolean(item.cancelledBySeller)
+            const normalizedReturnStatus = item.returnRefundStatus?.toUpperCase()
+            const normalizedItemStatus = item.status.toUpperCase()
+            const canManageDeliveredReturn =
+              normalizedReturnStatus === "DELIVERED" && normalizedItemStatus === "DELIVERED"
+            const isConfirmingReturn = returnActionItemId === item.id && returnActionType === "confirm"
+            const isReturnActionLoading = isConfirmingReturn
+            const hasReturnFlow = Boolean(item.returnRefundStatus)
+            const metadataStatusValue = hasReturnFlow ? (item.returnRefundStatus ?? item.status) : item.status
+            const metadataStatusLabel = hasReturnFlow
+              ? `Return ${formatOrderItemStatus(metadataStatusValue)}`
+              : formatOrderItemStatus(metadataStatusValue)
 
-          const isCancelledByPartyEarly = Boolean(item.cancelledByCustomer) || Boolean(item.cancelledBySeller)
+            const isCancelledByPartyEarly = Boolean(item.cancelledByCustomer) || Boolean(item.cancelledBySeller)
 
-          function getVendorItemAccent(): string {
-            if (isCancelledByPartyEarly) return 'border-l-danger bg-danger/[0.03]'
-            const s = (metadataStatusValue ?? '').toUpperCase()
-            if (s.includes('REJECT')) return 'border-l-danger bg-danger/[0.03]'
-            if (s === 'DELIVERED') return 'border-l-success bg-success/[0.03]'
-            if (s.includes('RETURN') || s.includes('SHIP') || s.includes('TRANSIT')) return 'border-l-brand bg-brand/[0.03]'
-            return 'border-l-border-strong/50'
-          }
+            function getVendorItemAccent(): string {
+              if (isCancelledByPartyEarly) return "border-l-danger bg-danger/[0.03]"
+              const s = (metadataStatusValue ?? "").toUpperCase()
+              if (s.includes("REJECT")) return "border-l-danger bg-danger/[0.03]"
+              if (s === "DELIVERED") return "border-l-success bg-success/[0.03]"
+              if (s.includes("RETURN") || s.includes("SHIP") || s.includes("TRANSIT"))
+                return "border-l-brand bg-brand/[0.03]"
+              return "border-l-border-strong/50"
+            }
 
-          return (
-            <div
-              key={item.id}
-              className={`rounded-[8px] border border-border-soft border-l-4 ${getVendorItemAccent()} p-4 transition-all hover:shadow-sm`}
-            >
-              {/* Product header */}
-              <div className="flex items-start gap-3">
+            return (
+              <div
+                key={item.id}
+                className={`rounded-[8px] border border-border-soft border-l-4 ${getVendorItemAccent()} p-4 transition-all hover:shadow-sm`}
+              >
+                {/* Product header */}
+                <div className="flex items-start gap-3">
                   <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md bg-surface-elevated shadow-sm ring-1 ring-border-soft/50">
                     <ProductImageWithFallback
                       src={getFullImageUrl(item.productCoverPhotoPath) || "/dentypro-product-placeholder.png"}
@@ -240,15 +250,41 @@ export default function VendorOrderExpandedContent({
                       ) : null}
                     </div>
                   </div>
-              </div>
+                </div>
 
-              {/* Timeline */}
-              <div className="mt-3 border-t border-border-soft pt-3">
-                <FulfillmentTimeline item={item} orderDate={orderDate} />
+                {/* Timeline */}
+                <div className="mt-3 border-t border-border-soft pt-3">
+                  <FulfillmentTimeline item={item} orderDate={orderDate} />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        <div className="flex w-full flex-col gap-6 lg:w-80">
+          <div className="rounded-[8px] border border-border-soft bg-surface-muted/55 p-4">
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between text-text-muted">
+                <span>Subtotal</span>
+                <span className="text-text-primary">{formatCurrency(itemsSubtotal)}</span>
+              </div>
+              <div className="flex justify-between text-text-muted">
+                <span>Shipping</span>
+                <span className="text-text-primary">{shippingTotal > 0 ? formatCurrency(shippingTotal) : "FREE"}</span>
+              </div>
+              <div className="mt-2 flex justify-between border-t border-border-soft pt-2 font-semibold">
+                <span className="text-text-primary">Total</span>
+                <span className="text-text-primary">{formatCurrency(orderTotal)}</span>
               </div>
             </div>
-          )
-        })}
+          </div>
+
+          <div className="rounded-[8px] border border-border-soft bg-surface-muted/55 p-4">
+            <h4 className="mb-3 text-sm font-semibold text-text-primary">Customer Details</h4>
+            <p className="text-sm font-semibold text-text-secondary">{customerName || "-"}</p>
+            <AddressContactInfo className="mt-2" address={customerAddress ?? ""} phone={customerPhone} />
+          </div>
+        </div>
       </div>
     </div>
   )

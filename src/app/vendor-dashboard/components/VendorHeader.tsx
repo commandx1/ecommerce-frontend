@@ -11,11 +11,5 @@ const VENDOR_NAV_ITEMS: DashboardHeaderNavItem[] = [
 ]
 
 export default function VendorHeader() {
-  return (
-    <DashboardHeader
-      navItems={VENDOR_NAV_ITEMS}
-      accountFallbackName="Vendor"
-      accountMenuClassName="hidden sm:flex"
-    />
-  )
+  return <DashboardHeader navItems={VENDOR_NAV_ITEMS} accountFallbackName="Vendor" />
 }

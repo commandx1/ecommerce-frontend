@@ -127,7 +127,7 @@ export default function OrdersMobileList() {
               isOpen ? "border-brand/30 bg-surface-muted/40" : "border-border-soft"
             }`}
           >
-            <CollapseTrigger className="flex w-full flex-col gap-4 p-4 text-left sm:p-5">
+            <CollapseTrigger className="flex w-full flex-col gap-4 p-2 md:p-4 text-left sm:p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-base font-semibold text-text-primary">{summary.orderDate}</p>
