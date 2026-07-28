@@ -9,7 +9,7 @@ RUN npm ci
 FROM node:20-alpine AS build
 WORKDIR /app
 
-ARG BACKEND_URL=http://dentb2b-backend:8080
+ARG BACKEND_URL=http://ecommerce-api:8080
 ENV BACKEND_URL=$BACKEND_URL
 
 COPY --from=deps /app/node_modules ./node_modules
