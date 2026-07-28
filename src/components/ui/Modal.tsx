@@ -16,6 +16,13 @@ interface ModalProps {
   overlayClassName?: string
   closeOnOverlayClick?: boolean
   closeOnEscape?: boolean
+  /**
+   * By default Radix moves focus to the first focusable element inside the dialog when it opens.
+   * If that element is something like a tooltip trigger, this steals focus and can pop the tooltip
+   * open unintentionally. Set this to opt out of that automatic focus for dialogs whose content
+   * doesn't need (or would be harmed by) an autofocused control.
+   */
+  preventAutoFocus?: boolean
 }
 
 export default function Modal({
@@ -31,6 +38,7 @@ export default function Modal({
   overlayClassName,
   closeOnOverlayClick = true,
   closeOnEscape = true,
+  preventAutoFocus = false,
 }: ModalProps) {
   return (
     <Dialog
@@ -58,6 +66,11 @@ export default function Modal({
         }}
         onPointerDownOutside={(event) => {
           if (!closeOnOverlayClick) {
+            event.preventDefault()
+          }
+        }}
+        onOpenAutoFocus={(event) => {
+          if (preventAutoFocus) {
             event.preventDefault()
           }
         }}
