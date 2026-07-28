@@ -189,6 +189,14 @@
   --shadow-floating: 0 32px 80px rgba(0, 0, 0, 0.32);
 }
 
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
