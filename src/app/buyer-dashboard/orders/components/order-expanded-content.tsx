@@ -82,7 +82,7 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
           ({summary.totalQuantity} items from {summary.sellerCount} seller{summary.sellerCount > 1 ? "s" : ""})
         </p>
       </div>
-      <div className="flex flex-col gap-6 rounded-[8px] border border-border-soft bg-surface-elevated p-3 sm:p-6 lg:flex-row lg:gap-8">
+      <div className="flex flex-col gap-6 rounded-[8px] border-0 md:border border-border-soft md:bg-surface-elevated md:p-6 lg:flex-row lg:gap-8">
         <div className="min-w-0 flex-1">
           <div className="space-y-6">
             {summary.sellerGroups.map((group) => {
@@ -99,16 +99,17 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
               return (
                 <Collapse key={group.sellerId}>
                   <section className="overflow-hidden rounded-[8px] border border-border-soft">
-                    <CollapseTrigger className="group flex w-full flex-wrap items-center justify-between gap-x-3 gap-y-2 bg-linear-to-r from-surface-muted/45 to-surface-muted/75 px-3 py-3 transition-colors hover:from-surface-muted/60 hover:to-surface-muted/90 data-[state=open]:border-b data-[state=open]:border-border-soft sm:px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand text-xs font-bold text-primary-foreground shadow-sm">
-                          {getSellerFirstTwoLetters(sellerDisplayName)}
-                        </div>
-                        <div>
+                    <CollapseTrigger className="group flex w-full flex-col gap-2 bg-linear-to-r from-surface-muted/45 to-surface-muted/75 px-3 py-3 transition-colors hover:from-surface-muted/60 hover:to-surface-muted/90 data-[state=open]:border-b data-[state=open]:border-border-soft md:flex-row md:items-center md:justify-between md:gap-3 sm:px-4">
+                      <div className="flex items-center justify-between gap-3 md:justify-start">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand text-xs font-bold text-primary-foreground shadow-sm">
+                            {getSellerFirstTwoLetters(sellerDisplayName)}
+                          </div>
                           <p className="text-sm font-semibold text-text-primary">{sellerDisplayName || "Seller"}</p>
                         </div>
+                        <ChevronDown className="h-4 w-4 shrink-0 text-text-muted transition-transform duration-200 group-data-[state=open]:rotate-180 md:hidden" />
                       </div>
-                      <div className="ml-auto flex items-center gap-2 sm:gap-3">
+                      <div className="flex items-center justify-between gap-2 md:ml-auto md:justify-end md:gap-3">
                         {/* biome-ignore lint/a11y/useSemanticElements: cannot nest a <button> inside CollapseTrigger's <button> */}
                         <span
                           role="button"
@@ -137,7 +138,7 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                             {sellerItemCount} item{sellerItemCount > 1 ? "s" : ""}
                           </p>
                         </div>
-                        <ChevronDown className="h-4 w-4 shrink-0 text-text-muted transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                        <ChevronDown className="hidden h-4 w-4 shrink-0 text-text-muted transition-transform duration-200 group-data-[state=open]:rotate-180 md:block" />
                       </div>
                     </CollapseTrigger>
 
