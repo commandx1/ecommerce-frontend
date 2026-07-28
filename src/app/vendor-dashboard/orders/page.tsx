@@ -637,7 +637,7 @@ export default function VendorOrdersPage() {
                 </div>
                 {isQzReady && (
                   <div className="flex flex-wrap gap-3 mt-2 text-xs">
-                    <div className="flex-1 min-w-[140px]">
+                    <div className="flex-1 min-w-35">
                       <label
                         htmlFor={`${id}-printer-select`}
                         className="block text-[11px] font-medium text-text-secondary mb-1"
