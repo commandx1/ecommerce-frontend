@@ -11,7 +11,7 @@ export default function OrdersStatusTabs() {
 
   return (
     <div className="mb-4">
-      <div className="inline-flex flex-wrap items-center gap-2 rounded-sm border border-border-soft bg-surface p-1.5 shadow-soft">
+      <div className="no-scrollbar flex w-full items-center gap-1.5 overflow-x-auto rounded-sm border border-border-soft bg-surface p-1.5 shadow-soft sm:gap-2">
         {ORDER_STATUS_TABS.map((tab) => {
           const isActive = selectedTab === tab
 
@@ -20,7 +20,7 @@ export default function OrdersStatusTabs() {
               key={tab}
               type="button"
               onClick={() => handleTabChange(tab)}
-              className={`rounded-sm px-4 py-2 text-sm font-medium transition-colors ${
+              className={`shrink-0 whitespace-nowrap rounded-sm px-3 py-2 text-xs font-medium transition-colors sm:px-4 sm:text-sm ${
                 isActive
                   ? "bg-brand text-muted shadow-soft"
                   : "text-text-secondary hover:bg-surface-muted hover:text-text-primary"

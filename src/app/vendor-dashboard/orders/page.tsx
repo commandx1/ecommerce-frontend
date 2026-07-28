@@ -20,6 +20,7 @@ import { type ProcessUberDeliveriesResponse, type VendorOrder, type VendorOrderF
 import { OrderItemStatus } from "@/lib/constants/order-item-status"
 import { getQzConnectionStatus, printShippingLabel, type QzPrintOptions } from "@/lib/qz/printLabel"
 import { useAuthStore } from "@/stores/authStore"
+import OrdersMobileList from "./components/orders-mobile-list"
 import OrdersTable from "./components/orders-table"
 
 const VENDOR_ORDER_TABS = ["All", "Pending", "Shipped", "Delivered", "Cancelled", "Returned"] as const
@@ -395,13 +396,13 @@ export default function VendorOrdersPage() {
       >
         <div className="border-b border-border-soft px-4 pt-4 sm:px-6">
           <div className="mb-4">
-            <div className="inline-flex flex-wrap items-center gap-2 rounded-sm border border-border-soft bg-surface p-1.5 shadow-soft">
+            <div className="no-scrollbar flex w-full items-center gap-1.5 overflow-x-auto rounded-sm border border-border-soft bg-surface p-1.5 shadow-soft sm:gap-2">
               {VENDOR_ORDER_TABS.map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => handleTabChange(tab)}
-                  className={`rounded-sm px-4 py-2 text-sm font-medium transition-colors ${
+                  className={`shrink-0 whitespace-nowrap rounded-sm px-3 py-2 text-xs font-medium transition-colors sm:px-4 sm:text-sm ${
                     selectedTab === tab
                       ? "bg-brand text-muted shadow-soft"
                       : "text-text-secondary hover:bg-surface-muted hover:text-text-primary"
@@ -415,8 +416,31 @@ export default function VendorOrdersPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="hidden md:block md:overflow-x-auto">
           <OrdersTable
+            orders={orders}
+            isLoading={isLoading}
+            sortBy={sortBy}
+            sortDir={sortDir}
+            expandedOrderId={expandedOrderId}
+            processingOrderId={processingOrderId}
+            cancelingItemId={cancelingItemId}
+            cancelingOrderId={cancelingOrderId}
+            returnActionItemId={returnActionItemId}
+            returnActionType={returnActionType}
+            uberProcessedOrderIds={uberProcessedOrderIds}
+            onSortToggle={handleSortToggle}
+            onExpandedOrderChange={setExpandedOrderId}
+            onCallUber={(order) => void handleCallUber(order)}
+            onRequestCancel={(action) => setPendingCancelAction(action)}
+            onOpenLabelModal={setLabelModalLinks}
+            onConfirmReturn={(item) => void handleConfirmReturn(item)}
+            onRejectReturn={openRejectReturnModal}
+          />
+        </div>
+
+        <div className="px-4 py-4 md:hidden">
+          <OrdersMobileList
             orders={orders}
             isLoading={isLoading}
             sortBy={sortBy}

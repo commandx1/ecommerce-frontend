@@ -134,11 +134,11 @@ export default function VendorOrderExpandedContent({
                     />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-col items-start gap-1.5 sm:flex-row sm:justify-between sm:gap-3">
                       <p className="text-sm font-semibold leading-snug text-text-primary">{item.productName}</p>
                       {!isCancelledByPartyEarly ? (
                         <span
-                          className={`mt-0.5 shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${getOrderItemStatusTagClass(metadataStatusValue)}`}
+                          className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold sm:mt-0.5 ${getOrderItemStatusTagClass(metadataStatusValue)}`}
                         >
                           {metadataStatusLabel}
                         </span>
