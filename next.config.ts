@@ -5,6 +5,7 @@ const backendBaseUrl = process.env.BACKEND_URL ?? "http://localhost:8080"
 const backendHostname = new URL(backendBaseUrl).hostname
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   reactCompiler: true,
   turbopack: {
     root: path.join(__dirname),
