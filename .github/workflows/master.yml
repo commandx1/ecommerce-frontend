@@ -36,21 +36,6 @@ jobs:
       - name: Configure Git to use SSH for GitHub
         run: git config --global url."ssh://git@github.com/".insteadOf "https://github.com/"
 
-      # Node / Next
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      # Install deps
-      - name: Install dependencies
-        run: npm ci
-
-      # Build React / Next
-      - name: Build frontend
-        run: npm run build
-
       # AWS Auth
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -65,18 +50,21 @@ jobs:
         with:
           registry-type: public
 
+      # Docker Buildx (needed for GHA cache backend)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       # Docker Build + Push
       - name: Build, tag, and push docker image
-        env:
-          REGISTRY: public.ecr.aws/u3n2f4w8
-          REPOSITORY: dentlab/ecommerce-frontend
-          IMAGE_TAG: ${{ env.timestamp }}-${{ env.sha }}
-        run: |
-          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-          docker tag $REGISTRY/$REPOSITORY:$IMAGE_TAG $REGISTRY/$REPOSITORY:latest
-
-          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-          docker push $REGISTRY/$REPOSITORY:latest
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            public.ecr.aws/u3n2f4w8/dentlab/ecommerce-frontend:${{ env.timestamp }}-${{ env.sha }}
+            public.ecr.aws/u3n2f4w8/dentlab/ecommerce-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       # Slack Success
       - name: Notify Slack on Success
