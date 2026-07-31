@@ -389,6 +389,7 @@ function CreateProductPageContent() {
         price: String(userProduct.price),
         stock: String(userProduct.stock),
         shipmentFee: userProduct.shipmentFee != null ? String(userProduct.shipmentFee) : "",
+        heavyShippingSurcharge: userProduct.heavyShippingSurcharge != null ? String(userProduct.heavyShippingSurcharge) : "",
       })
 
       const coverPhoto = product.coverPhotoPath ? getFullImageUrl(product.coverPhotoPath) : null
@@ -719,7 +720,7 @@ function CreateProductPageContent() {
         ["width", "Width"],
         ["weight", "Weight"],
         ["shipmentFee", "Shipment fee"],
-        ["heavyShippingSurcharge", "Heavy shipping surcharge"],
+        ["heavyShippingSurcharge", "Heavy shipping fee"],
       ]
       for (const [field, label] of optionalNumericFields) {
         const value = formData[field] as string

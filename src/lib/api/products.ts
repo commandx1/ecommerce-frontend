@@ -359,6 +359,7 @@ export interface UserProductDetailResponse {
   weight: number
   massUnit: string
   shipmentFee: number
+  heavyShippingSurcharge?: number
 }
 
 // Mirrors backend ProductReviewStatusDto
