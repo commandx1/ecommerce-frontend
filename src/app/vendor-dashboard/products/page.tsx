@@ -10,6 +10,7 @@ import {
   Download,
   Edit,
   FileEdit,
+  HelpCircle,
   Loader2,
   Search,
   Trash2,
@@ -26,6 +27,7 @@ import DataTable from "@/components/ui/data-table"
 import Modal from "@/components/ui/Modal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   getFullImageUrl,
   type Product,
@@ -625,11 +627,16 @@ export default function ProductsPage() {
 
     if (reviewStatus.approved === false) {
       return (
-        <span
-          className="px-3 py-1 text-xs font-medium rounded-full border border-danger/20 bg-danger/14 text-danger"
-          title={reviewStatus.rejectedReason ?? undefined}
-        >
+        <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full border border-danger/20 bg-danger/14 text-danger">
           Rejected
+          {reviewStatus.rejectedReason ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-3.5 w-3.5 shrink-0 cursor-help text-danger" />
+              </TooltipTrigger>
+              <TooltipContent>{reviewStatus.rejectedReason}</TooltipContent>
+            </Tooltip>
+          ) : null}
         </span>
       )
     }
