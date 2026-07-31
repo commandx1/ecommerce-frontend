@@ -720,7 +720,7 @@ function CreateProductPageContent() {
         ["width", "Width"],
         ["weight", "Weight"],
         ["shipmentFee", "Shipment fee"],
-        ["heavyShippingSurcharge", "Heavy shipping fee"],
+        ["heavyShippingSurcharge", "Heavy shipping fee"]
       ]
       for (const [field, label] of optionalNumericFields) {
         const value = formData[field] as string
