@@ -160,7 +160,7 @@ export default function ProductsPage() {
   const selectedUserProductId = searchParams.get("userProductId")
   const [selectedPeriodTab, setSelectedPeriodTab] = useState<PeriodTab>("3 months")
   const [viewMode, setViewMode] = useState<ViewMode>("products")
-  const [reviewApprovedFilter, setReviewApprovedFilter] = useState<ReviewApprovedFilter>("NULL")
+  const [reviewApprovedFilter, setReviewApprovedFilter] = useState<ReviewApprovedFilter>("ALL")
   const [pageSize, setPageSize] = useState<number>(25)
   const [currentPage, setCurrentPage] = useState<number>(0)
   const [totalPages, setTotalPages] = useState<number>(1)
