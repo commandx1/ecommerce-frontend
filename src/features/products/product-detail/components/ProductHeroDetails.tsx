@@ -120,19 +120,21 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
         ))}
       </div>
 
-      <NoticeBanner
-        tone="warning"
-        title="Professional Verification Required"
-        icon={<ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" />}
-      >
-        <p className="text-sm text-yellow-700">
-          This product requires verification of your dental license to view pricing and place orders.{" "}
-          <a href="/verification" className="font-medium underline">
-            Complete verification
-          </a>{" "}
-          to access exclusive professional pricing.
-        </p>
-      </NoticeBanner>
+      {product.dentalLicenseRequired ? (
+        <NoticeBanner
+          tone="warning"
+          title="Professional Verification Required"
+          icon={<ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" />}
+        >
+          <p className="text-sm text-yellow-700">
+            This product requires verification of your dental license to view pricing and place orders.{" "}
+            <a href="/verification" className="font-medium underline">
+              Complete verification
+            </a>{" "}
+            to access exclusive professional pricing.
+          </p>
+        </NoticeBanner>
+      ) : null}
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { Loader2 } from "lucide-react"
+import Link from "next/link"
 import NotificationCard from "@/components/feedback/NotificationCard"
 import ActionButton from "@/components/ui/ActionButton"
 import SurfaceCard from "@/components/ui/SurfaceCard"
@@ -9,6 +10,7 @@ interface CartSummaryPanelProps {
   blockingItemsCount: number
   hasBlockingItems: boolean
   isCheckoutDisabled: boolean
+  isLicenseBlocked: boolean
   isTaxLoading: boolean
   itemsCount: number
   onCheckout: () => void
@@ -25,6 +27,7 @@ export default function CartSummaryPanel({
   blockingItemsCount,
   hasBlockingItems,
   isCheckoutDisabled,
+  isLicenseBlocked,
   isTaxLoading,
   itemsCount,
   onCheckout,
@@ -64,6 +67,21 @@ export default function CartSummaryPanel({
           description={`Remove ${blockingItemsCount} unavailable item${blockingItemsCount > 1 ? "s" : ""} to continue.`}
           className="mb-4 rounded-lg px-3 py-2"
         />
+      ) : null}
+      {isLicenseBlocked ? (
+        <NotificationCard
+          tone="warning"
+          title="Dental license required"
+          description="One or more items in your cart require a valid, approved dental license. Add or wait for approval of your license to continue."
+          className="mb-4 rounded-lg px-3 py-2"
+        >
+          <Link
+            href="/buyer-dashboard/settings"
+            className="mt-1 inline-block text-sm font-semibold text-brand underline underline-offset-2 hover:text-brand-strong"
+          >
+            Add your license
+          </Link>
+        </NotificationCard>
       ) : null}
       <ActionButton
         type="button"

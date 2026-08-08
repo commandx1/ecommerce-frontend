@@ -3,7 +3,7 @@
 import { ChevronDown, LogOut, Menu, Settings, ShoppingCart, User, X } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useId, useState } from "react"
+import { useEffect, useState } from "react"
 import ThemeToggle from "@/components/theme/ThemeToggle"
 import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
@@ -41,7 +41,7 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
   const [mounted, setMounted] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const headerId = "main-header"
-  const mobileMenuId = useId()
+  const mobileMenuId = "main-navbar-mobile-menu"
 
   useEffect(() => {
     setMounted(true)

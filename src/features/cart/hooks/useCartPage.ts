@@ -5,8 +5,10 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import type { CartSellerGroup, CartTotals } from "@/features/cart/types"
 import { getBlockingCartItems } from "@/features/cart/utils/cart-alerts"
+import { cartRequiresDentalLicense, hasValidDentalLicense } from "@/features/cart/utils/license-check"
 import { addressAPI } from "@/lib/api/address"
 import { cartAPI } from "@/lib/api/cart"
+import { licenseAPI } from "@/lib/api/licenses"
 import { useDebouncedPerKeyCallback } from "@/lib/hooks/useDebouncedPerKeyCallback"
 import type { CartItem } from "@/stores/cartStore"
 import { useCartStore } from "@/stores/cartStore"
@@ -27,6 +29,7 @@ interface UseCartPageResult {
   blockingItemsCount: number
   hasBlockingItems: boolean
   isClearConfirmOpen: boolean
+  isLicenseBlocked: boolean
   isTaxLoading: boolean
   items: CartItem[]
   sellerGroups: Record<string, CartSellerGroup>
@@ -50,6 +53,7 @@ export function useCartPage(): UseCartPageResult {
   const [defaultAddressId, setDefaultAddressId] = useState<string | null>(null)
   const [taxAmount, setTaxAmount] = useState(0)
   const [isTaxLoading, setIsTaxLoading] = useState(false)
+  const [hasValidLicense, setHasValidLicense] = useState(true)
 
   const { schedule, cancel, cancelAll } = useDebouncedPerKeyCallback<string, number>({
     delayMs: QUANTITY_DEBOUNCE_MS,
@@ -120,6 +124,19 @@ export function useCartPage(): UseCartPageResult {
   }, [])
 
   useEffect(() => {
+    const fetchLicenses = async () => {
+      try {
+        const licenses = await licenseAPI.getLicenses()
+        setHasValidLicense(hasValidDentalLicense(licenses))
+      } catch (_error) {
+        setHasValidLicense(false)
+      }
+    }
+
+    void fetchLicenses()
+  }, [])
+
+  useEffect(() => {
     if (!defaultAddressId || itemsWithPendingQuantity.length === 0) {
       setTaxAmount(0)
       setIsTaxLoading(false)
@@ -184,6 +201,10 @@ export function useCartPage(): UseCartPageResult {
 
   const hasBlockingItems = blockingItemsCount > 0
 
+  const isLicenseBlocked = useMemo(() => {
+    return cartRequiresDentalLicense(itemsWithPendingQuantity) && !hasValidLicense
+  }, [itemsWithPendingQuantity, hasValidLicense])
+
   const viewState: CartViewState = useMemo(() => {
     if (isLoading && itemsWithPendingQuantity.length === 0) {
       return "loading"
@@ -213,9 +234,17 @@ export function useCartPage(): UseCartPageResult {
       return
     }
 
+    if (isLicenseBlocked) {
+      showToast.warning(
+        "Dental license required",
+        "Add a valid, approved dental license in your account settings before checking out.",
+      )
+      return
+    }
+
     setStep(2)
     router.push("/checkout")
-  }, [itemsWithPendingQuantity, router, setStep])
+  }, [itemsWithPendingQuantity, isLicenseBlocked, router, setStep])
 
   const onQuantityChange = useCallback(
     (userProductId: string, currentQuantity: number, delta: number) => {
@@ -266,6 +295,7 @@ export function useCartPage(): UseCartPageResult {
     blockingItemsCount,
     hasBlockingItems,
     isClearConfirmOpen,
+    isLicenseBlocked,
     isTaxLoading,
     items: itemsWithPendingQuantity,
     sellerGroups,

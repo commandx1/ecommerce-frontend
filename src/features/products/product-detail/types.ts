@@ -21,6 +21,7 @@ export interface ProductDetail {
   bestPriceVendorUserProductId?: string | null
   overallStar?: number
   reviewCount?: number
+  dentalLicenseRequired?: string | null
 }
 
 export interface UserProduct {
@@ -157,6 +158,7 @@ export interface ProductHeroViewModel {
   mainImage: string
   thumbnailImages: string[]
   badge?: string
+  dentalLicenseRequired: boolean
 }
 
 export interface TechnicalSpecItem {

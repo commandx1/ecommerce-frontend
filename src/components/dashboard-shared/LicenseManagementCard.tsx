@@ -9,8 +9,14 @@ import { Label } from "@/components/ui/label"
 import Modal from "@/components/ui/Modal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
+import usStateList from "@/data/usstate-list.json"
 import { type CreateLicensePayload, type License, licenseAPI, type LicenseType } from "@/lib/api/licenses"
 import { cn } from "@/lib/utils"
+
+const US_STATES = usStateList.slice(
+  0,
+  usStateList.findIndex((state) => state.name === "Alberta"),
+)
 
 const LICENSE_TYPE_LABELS: Record<LicenseType, string> = {
   DEA: "DEA",
@@ -254,16 +260,21 @@ export default function LicenseManagementCard() {
               <Label htmlFor={stateOfLicenseId} className="text-text-secondary">
                 State of License
               </Label>
-              <Input
-                id={stateOfLicenseId}
-                type="text"
-                required
-                maxLength={2}
-                value={formData.stateOfLicense || ""}
-                onChange={(e) => setFormData({ ...formData, stateOfLicense: e.target.value.toUpperCase() })}
-                placeholder="CA"
-                className="uppercase"
-              />
+              <Select
+                value={formData.stateOfLicense || undefined}
+                onValueChange={(value: string) => setFormData({ ...formData, stateOfLicense: value })}
+              >
+                <SelectTrigger id={stateOfLicenseId} className="w-full">
+                  <SelectValue placeholder="Select a state" />
+                </SelectTrigger>
+                <SelectContent>
+                  {US_STATES.map((state) => (
+                    <SelectItem key={state.abbreviation} value={state.abbreviation}>
+                      {state.name} ({state.abbreviation})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 

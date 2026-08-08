@@ -16,6 +16,7 @@ export interface ProductInfo {
   name: string
   coverPhotoPath: string
   productAlert: string | null
+  dentalLicenseRequired: string | null
 }
 
 export interface CartItem {

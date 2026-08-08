@@ -29,6 +29,7 @@ export interface ProductDetailPageViewModel {
     mainImage: string
     thumbnailImages: string[]
     badge: string
+    dentalLicenseRequired: boolean
   }
   technicalSpecs: ReturnType<typeof buildTechnicalSpecs>
   description: ReturnType<typeof buildDescription>
@@ -76,6 +77,7 @@ export function buildProductDetailViewModel(id: string, data: ProductDetailPageD
       mainImage,
       thumbnailImages,
       badge: "Available",
+      dentalLicenseRequired: product.dentalLicenseRequired === "Yes",
     },
     technicalSpecs,
     description,
