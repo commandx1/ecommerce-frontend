@@ -35,6 +35,7 @@ export interface UserProduct {
   vendorDistance?: string
   vendorDistanceTime?: string
   shipmentFee?: number
+  heavyShippingSurcharge?: number
 }
 
 /** Spring Data page sort block */

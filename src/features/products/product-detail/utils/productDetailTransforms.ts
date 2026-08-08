@@ -87,8 +87,10 @@ export const buildSuppliers = (userProducts: UserProduct[], bestPriceVendorUserP
 
   return [...userProducts]
     .sort((a, b) => a.price - b.price)
-    .map(
-      (up, index): SupplierViewModel => ({
+    .map((up, index): SupplierViewModel => {
+      const shippingTotal = (up.shipmentFee ?? 0) + (up.heavyShippingSurcharge ?? 0)
+
+      return {
         id: index + 1,
         userProductId: up.id,
         name: up.vendor || "Vendor",
@@ -101,17 +103,12 @@ export const buildSuppliers = (userProducts: UserProduct[], bestPriceVendorUserP
         stock: up.stock > 0 ? "In Stock" : "Out of Stock",
         stockColor: up.stock > 0 ? "green" : "gray",
         stockCount: up.stock || 0,
-        shipping:
-          typeof up.shipmentFee === "number"
-            ? up.shipmentFee <= 0
-              ? "Free"
-              : `$${up.shipmentFee.toFixed(2)}`
-            : "Free",
+        shipping: shippingTotal <= 0 ? "Free" : `$${shippingTotal.toFixed(2)}`,
         shippingNote: "Standard shipping",
         distance: up.vendorDistance,
         distanceTime: up.vendorDistanceTime,
         rating: 4.5,
         starCount: 5,
-      }),
-    )
+      }
+    })
 }

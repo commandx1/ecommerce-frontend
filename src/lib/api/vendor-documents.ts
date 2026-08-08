@@ -57,20 +57,6 @@ class VendorDocumentsAPI {
     })
   }
 
-  async reviseDocument(id: string, file: File, token: string): Promise<VendorDocument> {
-    const formData = new FormData()
-    formData.append("file", file)
-    // Use "app" client (no default Content-Type) so XHR can set multipart/form-data with boundary
-    return apiRequest.requestJson<VendorDocument>({
-      client: "app",
-      method: "POST",
-      url: `/backend-api/products/documents/${id}/revision`,
-      headers: { Authorization: `Bearer ${token}` },
-      data: formData,
-      fallbackMessage: "Failed to submit revision",
-    })
-  }
-
   async getDocuments(
     params: { page?: number; size?: number; sort?: "asc" | "desc" },
     token: string,

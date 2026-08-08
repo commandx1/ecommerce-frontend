@@ -64,10 +64,9 @@ const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }:
           {supplier.stock}
         </span>
       </td>
-      {/* <td className="px-6 py-4 text-center">
+      <td className="px-6 py-4 text-center">
         <div className="text-sm font-medium text-text-primary">{supplier.shipping}</div>
-        <div className="text-xs text-text-muted">{supplier.shippingNote}</div>
-      </td> */}
+      </td>
       <td className="px-6 py-4">
         <div className="flex flex-col items-center justify-center">
           <div className="text-sm font-medium text-text-primary">{supplier.distance || "-"}</div>

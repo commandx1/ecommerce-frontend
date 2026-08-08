@@ -1,6 +1,6 @@
 "use client"
 
-import { Download, FileUp, Loader2, RefreshCw, Trash2, Upload, X } from "lucide-react"
+import { Download, FileUp, Loader2, Trash2, Upload, X } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import Modal from "@/components/ui/Modal"
@@ -97,14 +97,12 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const revisionFileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   // History tab state
   const [documents, setDocuments] = useState<VendorDocument[]>([])
   const [isLoadingDocs, setIsLoadingDocs] = useState(false)
   const [currentPage, setCurrentPage] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
-  const [revisingId, setRevisingId] = useState<string | null>(null)
   const [deletingIds, setDeletingIds] = useState<Map<string, boolean>>(new Map())
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
@@ -158,28 +156,6 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
       showToast.error(msg)
     } finally {
       setIsUploading(false)
-    }
-  }
-
-  const handleRevisionFileChange = async (docId: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !accessToken) return
-    if (!file.name.endsWith(".xlsx") && !file.name.endsWith(".xls")) {
-      showToast.error("Please select an Excel file (.xlsx or .xls)")
-      return
-    }
-    setRevisingId(docId)
-    try {
-      await vendorDocumentsAPI.reviseDocument(docId, file, accessToken)
-      showToast.success("Revision submitted", "Your revised document has been uploaded.")
-      void fetchDocuments(currentPage)
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to submit revision"
-      showToast.error(msg)
-    } finally {
-      setRevisingId(null)
-      const input = revisionFileInputRefs.current[docId]
-      if (input) input.value = ""
     }
   }
 
@@ -410,75 +386,8 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
                         ) : (
                           <Download className="h-3.5 w-3.5" />
                         )}
-                        Original
+                        File
                       </button>
-
-                      {/* Download revised */}
-                      {doc.revisedFilePath && (
-                        <button
-                          type="button"
-                          disabled={downloadingId === `${doc.id}-revised`}
-                          onClick={() => handleDownload(doc, "revised")}
-                          className="flex items-center gap-1.5 rounded-lg border border-brand/30 bg-brand/8 px-3 py-1.5 text-xs font-medium text-brand transition-colors hover:bg-brand/15 disabled:opacity-50"
-                        >
-                          {downloadingId === `${doc.id}-revised` ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Download className="h-3.5 w-3.5" />
-                          )}
-                          Revised
-                        </button>
-                      )}
-
-                      {/* Download invalid records */}
-                      {doc.invalidRecordsFilePath && (
-                        <button
-                          type="button"
-                          disabled={downloadingId === `${doc.id}-invalid`}
-                          onClick={() => handleDownload(doc, "invalid")}
-                          className="flex items-center gap-1.5 rounded-lg border border-danger/30 bg-danger/8 px-3 py-1.5 text-xs font-medium text-danger transition-colors hover:bg-danger/15 disabled:opacity-50"
-                        >
-                          {downloadingId === `${doc.id}-invalid` ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Download className="h-3.5 w-3.5" />
-                          )}
-                          Invalid Records
-                        </button>
-                      )}
-
-                      {/* Upload revision — hide when auto-failed (admin must re-request first) */}
-                      {doc.revisionRequested && !doc.approved && doc.revisionApproved !== false && (
-                        <>
-                          <input
-                            ref={(el) => {
-                              revisionFileInputRefs.current[doc.id] = el
-                            }}
-                            type="file"
-                            accept=".xlsx,.xls"
-                            className="hidden"
-                            onChange={(e) => handleRevisionFileChange(doc.id, e)}
-                          />
-                          <button
-                            type="button"
-                            disabled={revisingId === doc.id}
-                            onClick={() => revisionFileInputRefs.current[doc.id]?.click()}
-                            className={cn(
-                              "flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50",
-                              doc.revisedFilePath
-                                ? "border-border-soft text-text-muted hover:bg-surface-muted"
-                                : "border-warning/50 bg-warning/10 text-warning hover:bg-warning/20",
-                            )}
-                          >
-                            {revisingId === doc.id ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <RefreshCw className="h-3.5 w-3.5" />
-                            )}
-                            {doc.revisedFilePath ? "Re-upload" : "Upload Revision"}
-                          </button>
-                        </>
-                      )}
 
                       {/* Delete (only pending) */}
                       {!doc.approved && !doc.deleted && (
