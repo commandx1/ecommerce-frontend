@@ -23,6 +23,11 @@ const LICENSE_TYPE_LABELS: Record<LicenseType, string> = {
   STATE_DENTAL: "State Dental",
 }
 
+function formatStateOfLicense(abbreviation: string) {
+  const state = US_STATES.find((s) => s.abbreviation === abbreviation)
+  return state ? `${state.name} (${state.abbreviation})` : abbreviation
+}
+
 function formatExpiration(license: License) {
   const date = new Date(license.year, license.month - 1, license.day)
   return date.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })
@@ -191,12 +196,21 @@ export default function LicenseManagementCard() {
                 )}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-text-primary">
+                  <div className="space-y-1">
+                    <p className="text-sm text-text-primary">
+                      <span className="font-semibold text-text-secondary">License Type:</span>{" "}
                       {LICENSE_TYPE_LABELS[license.licenseType]}
-                      {license.stateOfLicense ? ` · ${license.stateOfLicense}` : ""}
                     </p>
-                    <p className="mt-0.5 text-sm text-text-secondary">#{license.licenseNumber}</p>
+                    {license.stateOfLicense && (
+                      <p className="text-sm text-text-primary">
+                        <span className="font-semibold text-text-secondary">State:</span>{" "}
+                        {formatStateOfLicense(license.stateOfLicense)}
+                      </p>
+                    )}
+                    <p className="text-sm text-text-primary">
+                      <span className="font-semibold text-text-secondary">License Number:</span>{" "}
+                      {license.licenseNumber}
+                    </p>
                   </div>
                   <StatusBadge license={license} />
                 </div>

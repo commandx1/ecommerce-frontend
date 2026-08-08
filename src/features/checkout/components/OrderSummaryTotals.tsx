@@ -23,14 +23,6 @@ export default function OrderSummaryTotals({
   return (
     <div className="mb-6 space-y-3">
       <div className="flex justify-between text-sm">
-        <span className="text-text-secondary">Estimated Tax</span>
-        {isTaxLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
-        ) : (
-          <span className="font-medium text-text-primary">{formatCurrency(tax)}</span>
-        )}
-      </div>
-      <div className="flex justify-between text-sm">
         <span className="text-text-secondary">Subtotal ({itemCount} items)</span>
         <span className="font-medium text-text-primary">{formatCurrency(subtotal)}</span>
       </div>
@@ -43,6 +35,14 @@ export default function OrderSummaryTotals({
       <div className="flex justify-between text-sm">
         <span className="text-text-secondary">Shipping</span>
         <span className="font-medium text-text-primary">{shipping === 0 ? "Free" : formatCurrency(shipping)}</span>
+      </div>
+      <div className="flex justify-between text-sm">
+        <span className="text-text-secondary">Estimated Tax</span>
+        {isTaxLoading ? (
+          <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
+        ) : (
+          <span className="font-medium text-text-primary">{formatCurrency(tax)}</span>
+        )}
       </div>
       <div className="border-t border-border-soft pt-3">
         <div className="flex justify-between">

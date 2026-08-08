@@ -34,9 +34,9 @@ export default function CartSummaryPanel({
   totals,
 }: CartSummaryPanelProps) {
   const summaryRows: SummaryRow[] = [
-    { label: "Estimated Tax", value: formatCurrency(totals.tax), isLoading: isTaxLoading },
     { label: `Subtotal (${itemsCount} items)`, value: formatCurrency(totals.subtotal) },
     { label: "Shipping", value: totals.shipping === 0 ? "Free" : formatCurrency(totals.shipping) },
+    { label: "Estimated Tax", value: formatCurrency(totals.tax), isLoading: isTaxLoading },
   ]
 
   return (
