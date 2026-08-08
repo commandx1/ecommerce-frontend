@@ -6,10 +6,18 @@ interface CartItemPriceProps {
   discount: number
   quantity: number
   shipmentFee: number
+  heavyShippingSurcharge: number
 }
 
-export default function CartItemPrice({ oldPrice, price, discount, quantity, shipmentFee }: CartItemPriceProps) {
-  const shippingTotal = shipmentFee * quantity
+export default function CartItemPrice({
+  oldPrice,
+  price,
+  discount,
+  quantity,
+  shipmentFee,
+  heavyShippingSurcharge,
+}: CartItemPriceProps) {
+  const shippingTotal = (shipmentFee + heavyShippingSurcharge) * quantity
   const formattedDiscount = Number.isInteger(discount) ? `${discount}` : discount.toFixed(1)
 
   return (

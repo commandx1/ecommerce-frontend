@@ -6,6 +6,7 @@ export interface UserProduct {
   price: number
   discount: number
   shipmentFee: number
+  heavyShippingSurcharge: number
   stock: number
   stockAlert: string | null
   userProductAlert: string | null

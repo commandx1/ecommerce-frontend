@@ -82,6 +82,7 @@ export default function CartItemCard({ item, onQuantityChange, onRemoveItem }: C
                 discount={userProduct.discount}
                 quantity={quantity}
                 shipmentFee={userProduct.shipmentFee}
+                heavyShippingSurcharge={userProduct.heavyShippingSurcharge ?? 0}
               />
               <button
                 type="button"
