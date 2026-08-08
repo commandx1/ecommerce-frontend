@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Download,
   Edit,
+  Eye,
   FileEdit,
   HelpCircle,
   Loader2,
@@ -40,6 +41,7 @@ import {
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
 import ImportDocumentsModal from "./components/ImportDocumentsModal"
+import ProductDetailModal from "./components/ProductDetailModal"
 import ProductStatsCards, { type FilterType } from "./components/ProductStatsCards"
 
 // Debounce hook
@@ -180,6 +182,7 @@ export default function ProductsPage() {
     productId: null,
     productName: "",
   })
+  const [detailModalProduct, setDetailModalProduct] = useState<ProductWithDetails | null>(null)
 
   // Debounced search query
   const debouncedSearchQuery = useDebounce(searchQuery, 500)
@@ -760,8 +763,8 @@ export default function ProductsPage() {
       header: () => <div className="flex justify-center">Discount</div>,
       cell: renderDiscountCell,
       meta: {
-        headerClassName: "border-l-2 border-border-soft px-6 py-4 text-center",
-        cellClassName: "border-l-2 border-border-soft px-6 py-4 text-center",
+        headerClassName: "px-6 py-4 text-center",
+        cellClassName: "px-6 py-4 text-center",
       },
     },
     {
@@ -937,6 +940,14 @@ export default function ProductsPage() {
 
         return (
           <div className="flex items-center justify-center space-x-2">
+            <button
+              type="button"
+              onClick={() => setDetailModalProduct(product)}
+              className="rounded-lg p-2 text-text-secondary transition-colors hover:bg-surface-muted"
+              title="View details"
+            >
+              <Eye className="w-4 h-4" />
+            </button>
             <button
               type="button"
               onClick={() => (isEditing ? void handleInlineEditSave(product) : handleInlineEditStart(product))}
@@ -1234,6 +1245,15 @@ export default function ProductsPage() {
         confirmText="Delete"
         cancelText="Cancel"
       />
+
+      {detailModalProduct && (
+        <ProductDetailModal
+          productId={detailModalProduct.productId}
+          userProductId={detailModalProduct.id}
+          productName={detailModalProduct.productName}
+          onClose={() => setDetailModalProduct(null)}
+        />
+      )}
     </>
   )
 }
