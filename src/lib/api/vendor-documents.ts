@@ -50,7 +50,7 @@ class VendorDocumentsAPI {
     return apiRequest.requestJson<VendorDocument>({
       client: "app",
       method: "POST",
-      url: "/backend-api/products/documents/upload",
+      url: "/backend-api/products/documents/upload-and-import",
       headers: { Authorization: `Bearer ${token}` },
       data: formData,
       fallbackMessage: "Failed to upload document",

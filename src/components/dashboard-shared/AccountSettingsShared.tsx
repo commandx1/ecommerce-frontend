@@ -25,6 +25,7 @@ export default function AccountSettingsShared({
   infoSidebarContent,
 }: AccountSettingsSharedProps) {
   const { user, setUser, accessToken } = useAuthStore()
+  const isVendor = user?.roleName === "Vendor"
   const idBase = useId()
   const firstNameId = `${idBase}-first-name`
   const lastNameId = `${idBase}-last-name`
@@ -111,8 +112,8 @@ export default function AccountSettingsShared({
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         {/* Profile Section */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start">
-            <section className="flex-1 overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
+            <section className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
               <div className="flex items-center space-x-3 border-b border-border-soft p-6">
                 <User className="h-5 w-5 text-brand" />
                 <h2 className="text-xl font-semibold text-text-primary">Personal Information</h2>
@@ -195,7 +196,7 @@ export default function AccountSettingsShared({
               </form>
             </section>
 
-            <LicenseManagementCard />
+            {!isVendor && <LicenseManagementCard />}
           </div>
 
           {/* Security Section */}
