@@ -36,7 +36,7 @@ export default function ProductDetailModal({
     setHasError(false)
 
     Promise.all([
-      productsAPI.getProductByIdForAdmin(productId, accessToken),
+      productsAPI.getProductByIdForOwner(productId, accessToken),
       productsAPI.getUserProductById(userProductId, accessToken),
     ])
       .then(([productData, userProductData]) => {
@@ -94,7 +94,7 @@ export default function ProductDetailModal({
       <div className="flex items-start justify-between gap-4 border-b border-border-soft bg-surface-muted/60 px-6 py-4">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-widest text-brand">Product · Details</p>
-          <h2 className="mt-0.5 truncate text-lg font-semibold text-text-primary">{product?.name || productName}</h2>
+          <h2 className="mt-0.5 text-lg font-semibold text-text-primary">{product?.name || productName}</h2>
         </div>
         {product && (
           <span

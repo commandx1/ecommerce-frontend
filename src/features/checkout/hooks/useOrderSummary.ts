@@ -13,6 +13,9 @@ interface UseOrderSummaryResult {
   items: ReturnType<typeof useCartStore.getState>["items"]
   subtotal: number
   shipping: number
+  shipmentFee: number
+  heavyShipmentFee: number
+  totalShipmentFee: number
   tax: number
   isTaxLoading: boolean
   total: number
@@ -40,6 +43,14 @@ export function useOrderSummary(): UseOrderSummaryResult {
   const volumeDiscount = subtotal > 2000 ? subtotal * 0.05 : 0
   const shipping = selectedShippingCost
   const total = subtotal - volumeDiscount + shipping + tax
+
+  const shipmentFee = useMemo(() => {
+    return items.reduce((sum, item) => sum + (item.userProduct.shipmentFee ?? 0) * item.quantity, 0)
+  }, [items])
+  const heavyShipmentFee = useMemo(() => {
+    return items.reduce((sum, item) => sum + (item.userProduct.heavyShippingSurcharge ?? 0) * item.quantity, 0)
+  }, [items])
+  const totalShipmentFee = shipmentFee + heavyShipmentFee
 
   const addressId = orderPayload?.addressId
 
@@ -87,6 +98,9 @@ export function useOrderSummary(): UseOrderSummaryResult {
     items,
     subtotal,
     shipping,
+    shipmentFee,
+    heavyShipmentFee,
+    totalShipmentFee,
     tax,
     isTaxLoading,
     total,

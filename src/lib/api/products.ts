@@ -83,6 +83,7 @@ export interface Product {
   distanceUnit?: string
   weight?: number
   massUnit?: string
+  attributes?: ProductAttribute[]
 }
 
 // Data payload for multipart/form-data (JSON string in 'data' field)
@@ -332,6 +333,9 @@ export interface UserProduct {
   active: boolean
   periodicSellCount?: number
   periodicGrossRevenue?: number
+  skuCode?: string
+  shipmentFee?: number
+  heavyShippingSurcharge?: number
   // Populated client-side by merging in GET /api/products/my-products (not part of the filter response)
   reviewStatus?: ProductReviewStatus
 }
@@ -571,15 +575,15 @@ class ProductsAPI {
   }
 
   /**
-   * Get product by ID regardless of active status (owner/admin only).
+   * Get product by ID regardless of active status (owner or admin only).
    * Needed for rejected/pending products, which are not active yet.
-   * GET /api/products/:id/admin
+   * GET /api/products/:id/owner
    */
-  async getProductByIdForAdmin(id: string, token?: string): Promise<Product> {
+  async getProductByIdForOwner(id: string, token?: string): Promise<Product> {
     return apiRequest.requestJson<Product>({
       client: "app",
       method: "GET",
-      url: `${BASE_URL}/api/products/${id}/admin`,
+      url: `${BASE_URL}/api/products/${id}/owner`,
       headers: this.getAuthHeaders(token),
       withCredentials: true,
       fallbackMessage: "Failed to fetch product",
@@ -1098,10 +1102,29 @@ class ProductsAPI {
    */
   async updateUserProduct(
     id: string,
-    payload: { price: number; discount: number; stock: number; active: boolean },
+    payload: {
+      price: number
+      discount: number
+      stock: number
+      active: boolean
+      skuCode?: string
+      shipmentFee?: number
+      heavyShippingSurcharge?: number
+    },
     token: string,
   ): Promise<UserProduct> {
-    return apiRequest.requestJson<UserProduct, { price: number; discount: number; stock: number; active: boolean }>({
+    return apiRequest.requestJson<
+      UserProduct,
+      {
+        price: number
+        discount: number
+        stock: number
+        active: boolean
+        skuCode?: string
+        shipmentFee?: number
+        heavyShippingSurcharge?: number
+      }
+    >({
       client: "app",
       method: "PUT",
       url: `${BASE_URL}/api/user-products/${id}`,

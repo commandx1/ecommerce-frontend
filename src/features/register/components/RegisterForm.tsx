@@ -25,6 +25,7 @@ export default function RegisterForm() {
     handleAddressSelect,
     handleChange,
     handleCompanyFieldChange,
+    handleCompanyPhoneNumberChange,
     handleConfirmPasswordChange,
     handlePhoneNumberChange,
     handlePostalCodeChange,
@@ -61,7 +62,12 @@ export default function RegisterForm() {
             emailReadOnly={!!initialToken}
           />
 
-          <CompanyInfoSection company={formData.company} errors={errors} onFieldChange={handleCompanyFieldChange} />
+          <CompanyInfoSection
+            company={formData.company}
+            errors={errors}
+            onFieldChange={handleCompanyFieldChange}
+            onPhoneNumberChange={handleCompanyPhoneNumberChange}
+          />
 
           <AddressSection
             address={formData.address}

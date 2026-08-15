@@ -96,17 +96,23 @@ export function useCartPage(): UseCartPageResult {
 
   const totals = useMemo<CartTotals>(() => {
     const subtotal = itemsWithPendingQuantity.reduce((sum, item) => sum + item.userProduct.price * item.quantity, 0)
-    const shipping = itemsWithPendingQuantity.reduce(
-      (sum, item) =>
-        sum + ((item.userProduct.shipmentFee ?? 0) + (item.userProduct.heavyShippingSurcharge ?? 0)) * item.quantity,
+    const shipmentFee = itemsWithPendingQuantity.reduce(
+      (sum, item) => sum + (item.userProduct.shipmentFee ?? 0) * item.quantity,
       0,
     )
+    const heavyShipmentFee = itemsWithPendingQuantity.reduce(
+      (sum, item) => sum + (item.userProduct.heavyShippingSurcharge ?? 0) * item.quantity,
+      0,
+    )
+    const totalShipmentFee = shipmentFee + heavyShipmentFee
 
     return {
       subtotal,
-      shipping,
+      shipmentFee,
+      heavyShipmentFee,
+      totalShipmentFee,
       tax: taxAmount,
-      total: subtotal + shipping + taxAmount,
+      total: subtotal + totalShipmentFee + taxAmount,
     }
   }, [itemsWithPendingQuantity, taxAmount])
 

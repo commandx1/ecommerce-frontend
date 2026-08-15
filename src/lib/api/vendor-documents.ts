@@ -16,6 +16,16 @@ export interface VendorDocument {
   systemRejected: boolean
 }
 
+export interface ImportResult {
+  documentId: string
+  success: boolean
+  message: string
+  acceptedCount: number
+  skippedCount: number
+  wrongCount: number
+  invalidRecordsFilePath: string | null
+}
+
 export interface VendorDocumentsResponse {
   content: VendorDocument[]
   pageable: {
@@ -43,11 +53,11 @@ function extractFileName(filePath: string): string {
 export { extractFileName }
 
 class VendorDocumentsAPI {
-  async uploadDocument(file: File, token: string): Promise<VendorDocument> {
+  async uploadDocument(file: File, token: string): Promise<ImportResult> {
     const formData = new FormData()
     formData.append("file", file)
     // Use "app" client (no default Content-Type) so XHR can set multipart/form-data with boundary
-    return apiRequest.requestJson<VendorDocument>({
+    return apiRequest.requestJson<ImportResult>({
       client: "app",
       method: "POST",
       url: "/backend-api/products/documents/upload-and-import",

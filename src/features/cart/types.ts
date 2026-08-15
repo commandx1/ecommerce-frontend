@@ -2,7 +2,9 @@ import type { CartItem } from "@/stores/cartStore"
 
 export interface CartTotals {
   subtotal: number
-  shipping: number
+  shipmentFee: number
+  heavyShipmentFee: number
+  totalShipmentFee: number
   tax: number
   total: number
 }

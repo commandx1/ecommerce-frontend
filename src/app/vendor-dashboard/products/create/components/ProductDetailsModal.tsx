@@ -32,6 +32,7 @@ interface DetailRow {
 interface DetailSections {
   specs: DetailRow[]
   wide: DetailRow[]
+  attributes: DetailRow[]
   description: string
 }
 
@@ -91,6 +92,7 @@ function buildDetailSections(product: NormalizedSearchProduct): DetailSections {
           { label: "Contributors", value: fmtList(p.contributors, ", ") },
           { label: "Features", value: fmtList(p.features, ", ") },
         ],
+        attributes: [],
         description: p.description?.trim() || "",
       }
     }
@@ -105,6 +107,7 @@ function buildDetailSections(product: NormalizedSearchProduct): DetailSections {
         { label: "Category", value: fmt(p.category) },
         { label: "Barcode Format", value: fmt(p.barcodeFormats) },
       ],
+      attributes: [],
       description: "",
     }
   }
@@ -139,8 +142,20 @@ function buildDetailSections(product: NormalizedSearchProduct): DetailSections {
       { label: "Size", value: fmt(p.size) },
       { label: "Type", value: fmt(p.type) },
       { label: "Dimensions", value: dimensions },
+      { label: "Barcode Format", value: fmt(p.barcodeFormats) },
+      { label: "SDS", value: fmt(p.sds) },
+      { label: "Dental License Required", value: fmt(p.dentalLicenseRequired) },
+      { label: "Reorder ID", value: fmt(p.reorderId) },
+      { label: "Reference Number", value: fmt(p.referanceNumber) },
+      { label: "Example Variations Product ID", value: fmt(p.exampleVariationsProductId) },
     ],
-    wide: [{ label: "Detailed Name", value: fmt(p.detailedName !== p.name ? p.detailedName : undefined) }],
+    wide: [
+      { label: "Detailed Name", value: fmt(p.detailedName !== p.name ? p.detailedName : undefined) },
+      { label: "Manufacturer Site Product Page", value: fmt(p.manufacturerSiteProductPage) },
+    ],
+    attributes: (p.attributes || [])
+      .filter((attr) => attr.attributeName?.trim() && attr.attributeValue?.trim())
+      .map((attr) => ({ label: attr.attributeName, value: attr.attributeValue })),
     description: p.aboutProduct?.trim() || p.description?.trim() || "",
   }
 }
@@ -219,7 +234,7 @@ export default function ProductDetailsModal({ product, isOpen, onClose, onSucces
     }
   }, [isOpen])
 
-  const { specs, wide, description } = buildDetailSections(product)
+  const { specs, wide, attributes: attributeRows, description } = buildDetailSections(product)
   const canSubmit = Boolean(product.title.trim())
 
   const validateInputs = (): string | null => {
@@ -389,6 +404,20 @@ export default function ProductDetailsModal({ product, isOpen, onClose, onSucces
                 </p>
               </div>
             ))}
+          </div>
+        )}
+
+        {attributeRows.length > 0 && (
+          <div className="border-t border-border-soft pt-4">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted mb-3">Attributes</p>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-4">
+              {attributeRows.map((row) => (
+                <div key={row.label} className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{row.label}</p>
+                  <p className="truncate text-sm text-text-primary">{row.value}</p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

@@ -1,6 +1,7 @@
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { z } from "zod"
+import { showToast } from "@/components/ui/Toast"
 import { authAPIDirect as authAPI, type CompanyPayload, type RegisterPayload } from "@/lib/api/auth-direct"
 import type { ParsedAddress } from "@/lib/utils/google-maps"
 import { normalizePhoneNumber } from "@/lib/utils/phone-number"
@@ -222,6 +223,7 @@ export const useRegisterForm = (options?: { initialEmail?: string; initialToken?
           },
           company: formData.company,
         })
+        showToast.love("Welcome to DentzPro!", "Thank you for registering with us — we're thrilled to have you!")
         router.push(`/login?email=${encodeURIComponent(formData.email)}`)
         return
       }
@@ -245,6 +247,7 @@ export const useRegisterForm = (options?: { initialEmail?: string; initialToken?
           }),
         )
       }
+      showToast.love("Welcome to DentzPro!", "Thank you for registering with us — we're thrilled to have you!")
       router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`)
     } catch (error: unknown) {
       const err = error as { message?: string; data?: unknown }
@@ -333,6 +336,20 @@ export const useRegisterForm = (options?: { initialEmail?: string; initialToken?
     clearError("submit")
   }
 
+  const handleCompanyPhoneNumberChange = (value: string) => {
+    const normalizedPhoneNumber = normalizePhoneNumber(value)
+
+    setFormData((prev) => ({
+      ...prev,
+      company: {
+        ...prev.company,
+        phoneNumber: normalizedPhoneNumber,
+      },
+    }))
+    clearError("companyPhoneNumber")
+    clearError("submit")
+  }
+
   const handleConfirmPasswordChange = (value: string) => {
     setConfirmPassword(value)
     clearError("confirmPassword")
@@ -382,6 +399,7 @@ export const useRegisterForm = (options?: { initialEmail?: string; initialToken?
     handleAddressSelect,
     handleChange,
     handleCompanyFieldChange,
+    handleCompanyPhoneNumberChange,
     handleConfirmPasswordChange,
     handlePhoneNumberChange,
     handlePostalCodeChange,

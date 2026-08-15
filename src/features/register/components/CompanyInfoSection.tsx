@@ -1,14 +1,21 @@
 import { TextAreaField } from "@/components/form/TextAreaField"
 import { TextField } from "@/components/form/TextField"
 import type { RegisterFormData, RegisterFormErrors } from "@/features/register/types"
+import { formatPhoneNumber } from "@/lib/utils/phone-number"
 
 interface CompanyInfoSectionProps {
   company: RegisterFormData["company"]
   errors: RegisterFormErrors
   onFieldChange: (field: keyof RegisterFormData["company"], value: string) => void
+  onPhoneNumberChange: (value: string) => void
 }
 
-export default function CompanyInfoSection({ company, errors, onFieldChange }: CompanyInfoSectionProps) {
+export default function CompanyInfoSection({
+  company,
+  errors,
+  onFieldChange,
+  onPhoneNumberChange,
+}: CompanyInfoSectionProps) {
   return (
     <div className="border-t border-border-soft pt-6">
       <h3 className="mb-4 text-lg font-semibold text-text-primary">Company Information</h3>
@@ -51,9 +58,9 @@ export default function CompanyInfoSection({ company, errors, onFieldChange }: C
             label="Company Phone"
             type="tel"
             required
-            value={company.phoneNumber}
-            onChange={(e) => onFieldChange("phoneNumber", e.target.value)}
-            placeholder="02123334455"
+            value={formatPhoneNumber(company.phoneNumber)}
+            onChange={(e) => onPhoneNumberChange(e.target.value)}
+            placeholder="(555) 123-4567"
             error={errors.companyPhoneNumber}
           />
         </div>

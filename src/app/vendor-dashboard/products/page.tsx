@@ -151,7 +151,6 @@ export default function ProductsPage() {
   const [isFetching, setIsFetching] = useState(false)
   const hasLoadedOnce = useRef(false)
   const fetchProductsAbortRef = useRef<AbortController | null>(null)
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [sortField, setSortField] = useState<UserProductSortBy | null>(null)
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
@@ -173,6 +172,8 @@ export default function ProductsPage() {
     discount: string
     stock: string
     active: ProductStatusDraft
+    shipmentFee: string
+    heavyShippingSurcharge: string
   } | null>(null)
   const [savingProductId, setSavingProductId] = useState<string | null>(null)
   const [imageFallbacks, setImageFallbacks] = useState<Record<string, boolean>>({})
@@ -419,20 +420,6 @@ export default function ProductsPage() {
     reviewApprovedFilter,
   ])
 
-  const handleSelectProduct = (productId: string) => {
-    setSelectedProducts((prev) =>
-      prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId],
-    )
-  }
-
-  const handleSelectAll = () => {
-    if (selectedProducts.length === products.length) {
-      setSelectedProducts([])
-    } else {
-      setSelectedProducts(products.map((p) => p.id))
-    }
-  }
-
   const handleSort = (field: UserProductSortBy) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc")
@@ -527,6 +514,62 @@ export default function ProductsPage() {
     )
   }, [])
 
+  const renderShipmentFeeCell = useCallback((info: CellContext<ProductWithDetails, unknown>) => {
+    const product = info.row.original
+    const { editingProductId, editingDraft, savingProductId } = editingStateRef.current
+    const isEditing = editingProductId === product.id
+    const isSaving = savingProductId === product.id
+    const draftShipmentFee = editingDraft?.shipmentFee ?? ""
+
+    return (
+      <div className="text-sm font-medium text-text-primary">
+        {isEditing ? (
+          <input
+            type="number"
+            min={0}
+            step="0.01"
+            value={draftShipmentFee}
+            onChange={(event) =>
+              setEditingDraft((prev) => (prev ? { ...prev, shipmentFee: event.target.value } : prev))
+            }
+            className="h-9 w-24 rounded-lg border border-border-strong bg-surface px-3 text-sm font-medium text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
+            disabled={isSaving}
+          />
+        ) : (
+          `$${(product.shipmentFee ?? 0).toFixed(2)}`
+        )}
+      </div>
+    )
+  }, [])
+
+  const renderHeavyShippingSurchargeCell = useCallback((info: CellContext<ProductWithDetails, unknown>) => {
+    const product = info.row.original
+    const { editingProductId, editingDraft, savingProductId } = editingStateRef.current
+    const isEditing = editingProductId === product.id
+    const isSaving = savingProductId === product.id
+    const draftHeavyShippingSurcharge = editingDraft?.heavyShippingSurcharge ?? ""
+
+    return (
+      <div className="text-sm font-medium text-text-primary">
+        {isEditing ? (
+          <input
+            type="number"
+            min={0}
+            step="0.01"
+            value={draftHeavyShippingSurcharge}
+            onChange={(event) =>
+              setEditingDraft((prev) => (prev ? { ...prev, heavyShippingSurcharge: event.target.value } : prev))
+            }
+            className="h-9 w-24 rounded-lg border border-border-strong bg-surface px-3 text-sm font-medium text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
+            disabled={isSaving}
+          />
+        ) : (
+          `$${(product.heavyShippingSurcharge ?? 0).toFixed(2)}`
+        )}
+      </div>
+    )
+  }, [])
+
   const handleInlineEditStart = (product: ProductWithDetails) => {
     setEditingProductId(product.id)
     setEditingDraft({
@@ -534,6 +577,8 @@ export default function ProductsPage() {
       discount: String(product.discount ?? 0),
       stock: String(product.stock),
       active: product.active ? "active" : "inactive",
+      shipmentFee: String(product.shipmentFee ?? 0),
+      heavyShippingSurcharge: String(product.heavyShippingSurcharge ?? 0),
     })
   }
 
@@ -544,6 +589,8 @@ export default function ProductsPage() {
     const nextDiscount = Number.parseFloat(editingDraft.discount)
     const nextStock = Number.parseInt(editingDraft.stock, 10)
     const nextActive = editingDraft.active === "active"
+    const nextShipmentFee = Number.parseFloat(editingDraft.shipmentFee)
+    const nextHeavyShippingSurcharge = Number.parseFloat(editingDraft.heavyShippingSurcharge)
 
     if (
       !Number.isFinite(nextPrice) ||
@@ -551,7 +598,11 @@ export default function ProductsPage() {
       !Number.isFinite(nextDiscount) ||
       nextDiscount < 0 ||
       !Number.isInteger(nextStock) ||
-      nextStock < 0
+      nextStock < 0 ||
+      !Number.isFinite(nextShipmentFee) ||
+      nextShipmentFee < 0 ||
+      !Number.isFinite(nextHeavyShippingSurcharge) ||
+      nextHeavyShippingSurcharge < 0
     ) {
       return
     }
@@ -565,6 +616,9 @@ export default function ProductsPage() {
           stock: nextStock,
           discount: nextDiscount,
           active: nextActive,
+          skuCode: product.skuCode,
+          shipmentFee: nextShipmentFee,
+          heavyShippingSurcharge: nextHeavyShippingSurcharge,
         },
         accessToken,
       )
@@ -668,31 +722,6 @@ export default function ProductsPage() {
 
   const productColumns: Array<ColumnDef<ProductWithDetails, unknown>> = [
     {
-      id: "select",
-      header: () => (
-        <input
-          type="checkbox"
-          checked={selectedProducts.length === products.length && products.length > 0}
-          onChange={handleSelectAll}
-          className="w-4 h-4 text-brand bg-surface-muted border-border-strong rounded focus:ring-brand/40"
-          aria-label="Select all products"
-        />
-      ),
-      cell: ({ row }) => (
-        <input
-          type="checkbox"
-          checked={selectedProducts.includes(row.original.id)}
-          onChange={() => handleSelectProduct(row.original.id)}
-          className="w-4 h-4 text-brand bg-surface-muted border-border-strong rounded focus:ring-brand/40"
-          aria-label={`Select ${row.original.productName}`}
-        />
-      ),
-      meta: {
-        headerClassName: "w-14 px-6 py-4",
-        cellClassName: "px-6 py-4",
-      },
-    },
-    {
       id: "product",
       header: () => "Product",
       cell: ({ row }) => {
@@ -762,6 +791,24 @@ export default function ProductsPage() {
       id: "discount",
       header: () => <div className="flex justify-center">Discount</div>,
       cell: renderDiscountCell,
+      meta: {
+        headerClassName: "px-6 py-4 text-center",
+        cellClassName: "px-6 py-4 text-center",
+      },
+    },
+    {
+      id: "shipmentFee",
+      header: () => <div className="flex justify-center">Shipment Fee</div>,
+      cell: renderShipmentFeeCell,
+      meta: {
+        headerClassName: "px-6 py-4 text-center",
+        cellClassName: "px-6 py-4 text-center",
+      },
+    },
+    {
+      id: "heavyShippingSurcharge",
+      header: () => <div className="flex justify-center">Heavy Shipping Fee</div>,
+      cell: renderHeavyShippingSurchargeCell,
       meta: {
         headerClassName: "px-6 py-4 text-center",
         cellClassName: "px-6 py-4 text-center",
@@ -922,16 +969,24 @@ export default function ProductsPage() {
         const draftPrice = editingDraft?.price ?? ""
         const draftDiscount = editingDraft?.discount ?? ""
         const draftStock = editingDraft?.stock ?? ""
+        const draftShipmentFee = editingDraft?.shipmentFee ?? ""
+        const draftHeavyShippingSurcharge = editingDraft?.heavyShippingSurcharge ?? ""
         const parsedDraftPrice = Number.parseFloat(draftPrice)
         const parsedDraftDiscount = Number.parseFloat(draftDiscount)
         const parsedDraftStock = Number.parseInt(draftStock, 10)
+        const parsedDraftShipmentFee = Number.parseFloat(draftShipmentFee)
+        const parsedDraftHeavyShippingSurcharge = Number.parseFloat(draftHeavyShippingSurcharge)
         const canSaveDraft =
           Number.isFinite(parsedDraftPrice) &&
           parsedDraftPrice >= 0 &&
           Number.isFinite(parsedDraftDiscount) &&
           parsedDraftDiscount >= 0 &&
           Number.isInteger(parsedDraftStock) &&
-          parsedDraftStock >= 0
+          parsedDraftStock >= 0 &&
+          Number.isFinite(parsedDraftShipmentFee) &&
+          parsedDraftShipmentFee >= 0 &&
+          Number.isFinite(parsedDraftHeavyShippingSurcharge) &&
+          parsedDraftHeavyShippingSurcharge >= 0
 
         const reviewApproved = product.reviewStatus?.approved
         const isRejected = reviewApproved === false
@@ -1145,7 +1200,7 @@ export default function ProductsPage() {
             getRowId={(product) => product.id}
             isLoading={isLoading}
             loadingText="Loading products..."
-            minTableWidthClassName="min-w-[1480px]"
+            minTableWidthClassName="min-w-[1700px]"
             noRowsText="No products found. Create your first product!"
           />
         </div>

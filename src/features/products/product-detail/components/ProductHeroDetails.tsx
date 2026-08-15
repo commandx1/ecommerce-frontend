@@ -1,4 +1,5 @@
 import { Check, ShieldCheck } from "lucide-react"
+import Link from "next/link"
 import NoticeBanner from "@/components/feedback/NoticeBanner"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import type { ProductHeroViewModel, SupplierViewModel } from "../types"
@@ -123,14 +124,14 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
       {product.dentalLicenseRequired ? (
         <NoticeBanner
           tone="warning"
-          title="Professional Verification Required"
+          title="License Required"
           icon={<ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" />}
         >
           <p className="text-sm text-yellow-700">
             This product requires verification of your dental license to view pricing and place orders.{" "}
-            <a href="/verification" className="font-medium underline">
+            <Link href="/buyer-dashboard/settings" className="font-medium underline">
               Complete verification
-            </a>{" "}
+            </Link>{" "}
             to access exclusive professional pricing.
           </p>
         </NoticeBanner>

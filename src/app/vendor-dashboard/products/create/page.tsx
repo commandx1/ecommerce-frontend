@@ -356,7 +356,7 @@ function CreateProductPageContent() {
       setIsLoading(true)
 
       const [product, userProduct] = await Promise.all([
-        productsAPI.getProductByIdForAdmin(reviewProductId, accessToken),
+        productsAPI.getProductByIdForOwner(reviewProductId, accessToken),
         productsAPI.getUserProductById(reviewUserProductId, accessToken),
       ])
 
