@@ -1,4 +1,4 @@
-import type { ProductDetailPageData } from "@/features/products/product-detail/types"
+import type { ProductDetailPageData, ReviewsResponse } from "@/features/products/product-detail/types"
 import {
   buildDescription,
   buildFeatures,
@@ -35,9 +35,11 @@ export interface ProductDetailPageViewModel {
   description: ReturnType<typeof buildDescription>
   suppliers: ReturnType<typeof buildSuppliers>
   bestPriceVendorUserProductId: string | null
-  reviews: ProductDetailPageData["reviews"]
+  reviews: ReviewsResponse | null
+  /** The vendor the SSR reviews were fetched for; undefined means "all vendors". */
+  reviewsUserProductId?: string
   questions: ProductDetailPageData["questions"]
-  questionVendors: Array<{ id: string; vendor: string }>
+  vendors: Array<{ id: string; vendor: string }>
 }
 
 function buildRelatedProductSeed(id: string) {
@@ -45,7 +47,12 @@ function buildRelatedProductSeed(id: string) {
   return Number.isFinite(seed) && seed > 0 ? seed : 1
 }
 
-export function buildProductDetailViewModel(id: string, data: ProductDetailPageData): ProductDetailPageViewModel {
+export function buildProductDetailViewModel(
+  id: string,
+  data: ProductDetailPageData,
+  reviews: ReviewsResponse | null,
+  reviewsUserProductId?: string,
+): ProductDetailPageViewModel {
   const product = data.productData.product
   const userProducts = data.productData.userProducts || []
 
@@ -83,9 +90,10 @@ export function buildProductDetailViewModel(id: string, data: ProductDetailPageD
     description,
     suppliers,
     bestPriceVendorUserProductId,
-    reviews: data.reviews,
+    reviews,
+    reviewsUserProductId,
     questions: data.questions,
-    questionVendors: userProducts.map((userProduct) => ({
+    vendors: userProducts.map((userProduct) => ({
       id: userProduct.id,
       vendor: userProduct.vendor || "Vendor",
     })),

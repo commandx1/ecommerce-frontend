@@ -36,6 +36,8 @@ export interface UserProduct {
   vendorDistanceTime?: string
   shipmentFee?: number
   heavyShippingSurcharge?: number
+  vendorRating?: number
+  vendorReviewCount?: number
 }
 
 /** Spring Data page sort block */
@@ -57,6 +59,9 @@ export interface SpringPageable {
 export interface Review {
   id: string
   productId: string
+  /** The vendor listing this review was written for. Null on legacy rows with no vendor attribution. */
+  userProductId?: string | null
+  vendorDisplayName?: string | null
   star: number
   userId: string
   username: string
@@ -121,7 +126,6 @@ export interface ProductDetailPageData {
     product: ProductDetail
     userProducts?: UserProduct[]
   }
-  reviews: ReviewsResponse | null
   questions: QuestionsResponse | null
 }
 
@@ -143,7 +147,7 @@ export interface SupplierViewModel {
   distance?: string
   distanceTime?: string
   rating: number
-  starCount: number
+  reviewCount: number
 }
 
 export interface ProductHeroViewModel {

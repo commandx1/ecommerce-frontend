@@ -17,7 +17,7 @@ const sizeClasses: Record<NonNullable<StarRatingProps["size"]>, string> = {
 const StarRating = ({ rating, max = 5, size = "md", className }: StarRatingProps) => {
   const filledCount = Math.floor(rating)
   return (
-    <div className={cn("flex items-center", className)} aria-label={`Rated ${rating} out of ${max}`}>
+    <div className={cn("flex items-center", className)} aria-label={`Rated ${rating.toFixed(1)} out of ${max}`}>
       {Array.from({ length: max }, (_, index) => {
         const filled = index < filledCount
         return (

@@ -61,12 +61,10 @@ function buildFriendlyProductError(status: number, backendErrorMessage: string) 
   return backendErrorMessage || "Failed to load product. Please try again."
 }
 
-export async function fetchProductDetailPageData(id: string): Promise<ProductDetailPageData> {
-  const baseUrl = requireBackendUrl()
-
+async function resolveBackendHeaders(baseUrl: string): Promise<Record<string, string>> {
   const accessToken = await getAccessTokenFromCookie()
 
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "User-Agent": "Mozilla/5.0",
     Accept: "application/json",
@@ -74,7 +72,7 @@ export async function fetchProductDetailPageData(id: string): Promise<ProductDet
 
   // Keep existing behavior (only attach token if /users/me doesn't say "User not found")
   if (accessToken) {
-    const authHeaders: HeadersInit = {
+    const authHeaders: Record<string, string> = {
       ...headers,
       Authorization: `Bearer ${accessToken}`,
     }
@@ -93,6 +91,35 @@ export async function fetchProductDetailPageData(id: string): Promise<ProductDet
     }
   }
 
+  return headers
+}
+
+/**
+ * Reviews are fetched separately from the rest of the page because they depend on the
+ * selected vendor (`?vendorId`), while product and questions do not. Keeping them apart
+ * lets the product fetch stay shared with generateMetadata via React `cache()`.
+ */
+export async function fetchProductReviews(productId: string, userProductId?: string): Promise<ReviewsResponse | null> {
+  const baseUrl = requireBackendUrl()
+  const headers = await resolveBackendHeaders(baseUrl)
+
+  return apiRequest
+    .requestJson<ReviewsResponse>({
+      client: "app",
+      method: "GET",
+      url: `${baseUrl}/api/reviews/product/${productId}`,
+      params: { page: 0, size: 10, ...(userProductId ? { userProductId } : {}) },
+      headers,
+      fallbackMessage: "Failed to fetch reviews",
+    })
+    .catch(() => null)
+}
+
+export async function fetchProductDetailPageData(id: string): Promise<ProductDetailPageData> {
+  const baseUrl = requireBackendUrl()
+
+  const headers = await resolveBackendHeaders(baseUrl)
+
   let productResponse: Awaited<
     ReturnType<typeof apiRequest.requestResponse<(Record<string, unknown> & { product?: unknown }) | string>>
   >
@@ -109,29 +136,17 @@ export async function fetchProductDetailPageData(id: string): Promise<ProductDet
     throw new Error("Unable to connect to server. Please check your internet connection.")
   }
 
-  // Reviews & questions are optional
-  const [reviewsResponse, questionsResponse] = await Promise.all([
-    apiRequest
-      .requestJson<ReviewsResponse>({
-        client: "app",
-        method: "GET",
-        url: `${baseUrl}/api/reviews/product/${id}`,
-        params: { page: 0, size: 10 },
-        headers,
-        fallbackMessage: "Failed to fetch reviews",
-      })
-      .catch(() => null),
-    apiRequest
-      .requestJson<QuestionsResponse>({
-        client: "app",
-        method: "GET",
-        url: `${baseUrl}/api/product-questions/product/${id}`,
-        params: { page: 0, size: 10 },
-        headers,
-        fallbackMessage: "Failed to fetch questions",
-      })
-      .catch(() => null),
-  ])
+  // Questions are optional
+  const questionsResponse = await apiRequest
+    .requestJson<QuestionsResponse>({
+      client: "app",
+      method: "GET",
+      url: `${baseUrl}/api/product-questions/product/${id}`,
+      params: { page: 0, size: 10 },
+      headers,
+      fallbackMessage: "Failed to fetch questions",
+    })
+    .catch(() => null)
 
   if (productResponse.status < 200 || productResponse.status >= 300) {
     let backendErrorMessage = ""
@@ -157,7 +172,6 @@ export async function fetchProductDetailPageData(id: string): Promise<ProductDet
 
   return {
     productData,
-    reviews: reviewsResponse,
     questions: questionsResponse,
   } as ProductDetailPageData
 }

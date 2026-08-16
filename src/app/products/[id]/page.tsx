@@ -6,10 +6,14 @@ import {
   FALLBACK_PRODUCT_DETAIL_METADATA,
 } from "@/features/products/product-detail/metadata/build-product-detail-metadata"
 import { buildProductDetailViewModel } from "@/features/products/product-detail/server/build-product-detail-view-model"
-import { getProductDetailPageData } from "@/features/products/product-detail/server/get-product-detail-page-data"
+import {
+  getProductDetailPageData,
+  getProductReviews,
+} from "@/features/products/product-detail/server/get-product-detail-page-data"
 
 interface ProductDetailPageProps {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ vendorId?: string | string[] }>
 }
 
 export const dynamic = "force-dynamic"
@@ -26,12 +30,18 @@ export async function generateMetadata({ params }: ProductDetailPageProps): Prom
   }
 }
 
-export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
+export default async function ProductDetailPage({ params, searchParams }: ProductDetailPageProps) {
   const { id } = await params
+  const { vendorId } = await searchParams
+  // `?vendorId` holds the selected vendor's UserProduct id; ignore repeated params.
+  const selectedUserProductId = Array.isArray(vendorId) ? vendorId[0] : vendorId
 
   try {
-    const data = await getProductDetailPageData(id)
-    const viewModel = buildProductDetailViewModel(id, data)
+    const [data, reviews] = await Promise.all([
+      getProductDetailPageData(id),
+      getProductReviews(id, selectedUserProductId),
+    ])
+    const viewModel = buildProductDetailViewModel(id, data, reviews, selectedUserProductId)
 
     return <ProductDetailPageView viewModel={viewModel} />
   } catch (error) {

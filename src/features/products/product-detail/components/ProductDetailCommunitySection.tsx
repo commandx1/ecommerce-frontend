@@ -9,11 +9,18 @@ interface ProductDetailCommunitySectionProps {
 export default function ProductDetailCommunitySection({ viewModel }: ProductDetailCommunitySectionProps) {
   return (
     <>
-      <ProductReviews productId={viewModel.productId} initialReviews={viewModel.reviews} />
+      {/* Remount when the server-rendered vendor slice changes so the filter state stays in sync. */}
+      <ProductReviews
+        key={viewModel.reviewsUserProductId ?? "all"}
+        productId={viewModel.productId}
+        initialReviews={viewModel.reviews}
+        initialUserProductId={viewModel.reviewsUserProductId}
+        userProducts={viewModel.vendors}
+      />
       <ProductQuestions
         productId={viewModel.productId}
         initialQuestions={viewModel.questions}
-        userProducts={viewModel.questionVendors}
+        userProducts={viewModel.vendors}
       />
     </>
   )

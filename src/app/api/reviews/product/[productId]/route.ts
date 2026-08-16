@@ -9,6 +9,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { searchParams } = new URL(request.url)
     const page = searchParams.get("page") || "0"
     const size = searchParams.get("size") || "10"
+    const userProductId = searchParams.get("userProductId")
 
     const authHeader = getAuthorizationHeader(request)
 
@@ -22,7 +23,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       headers.Authorization = authHeader
     }
 
-    const response = await serverRequest(`/api/reviews/product/${productId}?page=${page}&size=${size}`, {
+    const query = new URLSearchParams({ page, size })
+    if (userProductId) {
+      query.set("userProductId", userProductId)
+    }
+
+    const response = await serverRequest(`/api/reviews/product/${productId}?${query.toString()}`, {
       method: "GET",
       headers,
       cache: "no-store", // Always fetch fresh data for SSR

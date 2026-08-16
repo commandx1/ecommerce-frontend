@@ -107,8 +107,8 @@ export const buildSuppliers = (userProducts: UserProduct[], bestPriceVendorUserP
         shippingNote: "Standard shipping",
         distance: up.vendorDistance,
         distanceTime: up.vendorDistanceTime,
-        rating: 4.5,
-        starCount: 5,
+        rating: up.vendorRating ?? 0,
+        reviewCount: up.vendorReviewCount ?? 0,
       }
     })
 }

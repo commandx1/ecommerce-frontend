@@ -6,9 +6,11 @@ import WriteReviewModal from "./WriteReviewModal"
 
 interface WriteReviewButtonProps {
   productId: string
+  userProductId?: string
+  vendorName?: string
 }
 
-export default function WriteReviewButton({ productId }: WriteReviewButtonProps) {
+export default function WriteReviewButton({ productId, userProductId, vendorName }: WriteReviewButtonProps) {
   const router = useRouter()
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -29,6 +31,8 @@ export default function WriteReviewButton({ productId }: WriteReviewButtonProps)
 
       <WriteReviewModal
         productId={productId}
+        userProductId={userProductId}
+        vendorName={vendorName}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleSuccess}

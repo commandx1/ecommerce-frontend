@@ -74,10 +74,16 @@ const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }:
         </div>
       </td>
       <td className="px-6 py-4 text-center">
-        <div className="flex items-center justify-center space-x-1">
-          <StarRating rating={supplier.starCount} size="sm" className="text-yellow-400" />
-          <span className="text-sm text-text-secondary">{supplier.rating}</span>
-        </div>
+        {supplier.reviewCount > 0 ? (
+          <div className="flex items-center justify-center space-x-1">
+            <StarRating rating={supplier.rating} size="sm" className="text-yellow-400" />
+            <span className="text-sm text-text-secondary">
+              {supplier.rating.toFixed(1)} ({supplier.reviewCount})
+            </span>
+          </div>
+        ) : (
+          <span className="text-sm text-text-muted">No reviews yet</span>
+        )}
       </td>
       <td className="px-6 py-4 text-center">
         <button

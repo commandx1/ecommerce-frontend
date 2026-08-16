@@ -22,8 +22,8 @@ export async function POST(request: NextRequest) {
     })
 
     if (!response.ok) {
-      const errorText = await response.text()
-      return NextResponse.json({ error: errorText || "Failed to create review" }, { status: response.status })
+      const error = await response.json().catch(() => ({ message: "Failed to create review" }))
+      return NextResponse.json(error, { status: response.status })
     }
 
     const data = await response.json()

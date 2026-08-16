@@ -1,50 +1,122 @@
 "use client"
 
-import { Edit2, Reply, ThumbsUp } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { Edit2, Reply, ThumbsUp, Trash2 } from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useState } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import SurfaceCard from "@/components/ui/SurfaceCard"
+import { showToast } from "@/components/ui/Toast"
+import { fetchReviewsByProduct } from "@/lib/api/product-reviews"
 import { useAuthStore } from "@/stores/authStore"
 import type { Review, ReviewsResponse } from "../types"
 import { formatRelativeDate } from "../utils/relativeDate"
+import { resolveSelectedUserProductId } from "../utils/selectedVendor"
+import DeleteReviewModal from "./DeleteReviewModal"
 import EditReviewModal from "./EditReviewModal"
 import StarRating from "./StarRating"
 import WriteReviewButton from "./WriteReviewButton"
 
+interface UserProduct {
+  id: string
+  vendor: string
+}
+
 interface ProductReviewsProps {
   productId: string
   initialReviews?: ReviewsResponse | null
+  /** Vendor the SSR reviews were fetched for; undefined means they cover all vendors. */
+  initialUserProductId?: string
+  userProducts: UserProduct[]
 }
 
-export default function ProductReviews({ productId, initialReviews }: ProductReviewsProps) {
+const ALL_VENDORS = "all" as const
+
+export default function ProductReviews({
+  productId,
+  initialReviews,
+  initialUserProductId,
+  userProducts,
+}: ProductReviewsProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user } = useAuthStore()
   const [editingReview, setEditingReview] = useState<Review | null>(null)
+  const [deletingReview, setDeletingReview] = useState<Review | null>(null)
 
-  // Default empty reviews if not provided
-  const reviewsData: ReviewsResponse = initialReviews || {
-    content: [],
-    pageable: {
-      pageNumber: 0,
-      pageSize: 10,
-      sort: { empty: true, sorted: false, unsorted: true },
-      offset: 0,
-      paged: true,
-      unpaged: false,
-    },
-    last: true,
-    totalPages: 0,
-    totalElements: 0,
-    size: 10,
-    number: 0,
-    sort: { empty: true, sorted: false, unsorted: true },
-    numberOfElements: 0,
-    first: true,
-    empty: true,
+  // Which vendor's reviews are being shown. Starts at whatever the server rendered.
+  const [activeFilter, setActiveFilter] = useState<string>(initialUserProductId ?? ALL_VENDORS)
+  const [fetchedReviews, setFetchedReviews] = useState<ReviewsResponse | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  // The vendor selected in the supplier table drives where a *new* review is submitted,
+  // independently of which vendor's reviews are currently being read.
+  const purchaseUserProductId = resolveSelectedUserProductId(searchParams.get("vendorId"), userProducts)
+  const purchaseVendorName = userProducts.find((up) => up.id === purchaseUserProductId)?.vendor
+
+  const activeVendorName = userProducts.find((up) => up.id === activeFilter)?.vendor
+
+  const ssrFilter = initialUserProductId ?? ALL_VENDORS
+
+  /** Loads a slice, falling back to the server-rendered one when it is the slice being asked for. */
+  const loadReviews = async (filter: string) => {
+    if (filter === ssrFilter) {
+      setFetchedReviews(null)
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const result = await fetchReviewsByProduct({
+        productId,
+        userProductId: filter === ALL_VENDORS ? undefined : filter,
+      })
+      setFetchedReviews(result)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
+  const handleFilterChange = async (nextFilter: string) => {
+    if (nextFilter === activeFilter) return
+
+    const previousFilter = activeFilter
+    setActiveFilter(nextFilter)
+
+    try {
+      await loadReviews(nextFilter)
+    } catch (error) {
+      showToast.error((error as Error)?.message || "Failed to load reviews")
+      setActiveFilter(previousFilter)
+    }
+  }
+
+  // Default empty reviews if not provided
+  const reviewsData: ReviewsResponse = fetchedReviews ||
+    initialReviews || {
+      content: [],
+      pageable: {
+        pageNumber: 0,
+        pageSize: 10,
+        sort: { empty: true, sorted: false, unsorted: true },
+        offset: 0,
+        paged: true,
+        unpaged: false,
+      },
+      last: true,
+      totalPages: 0,
+      totalElements: 0,
+      size: 10,
+      number: 0,
+      sort: { empty: true, sorted: false, unsorted: true },
+      numberOfElements: 0,
+      first: true,
+      empty: true,
+    }
+
+  // The backend already scoped this page to the active filter, so no client-side filtering.
   const reviews = reviewsData.content || []
+  const reviewCountLabel = reviewsData.totalElements
   const averageRating = reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.star, 0) / reviews.length : 0
 
   // Calculate rating breakdown
@@ -66,14 +138,39 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
                 <span className="text-2xl font-bold text-brand">{averageRating.toFixed(1)}</span>
                 <span className="text-text-secondary">out of 5</span>
               </div>
-              <span className="text-text-secondary">Based on {reviewsData.totalElements} reviews</span>
+              <span className="text-text-secondary">
+                Based on {reviewCountLabel} reviews
+                {activeVendorName ? ` for ${activeVendorName}` : " across all vendors"}
+              </span>
             </div>
           </div>
-          <WriteReviewButton productId={productId} />
+          <WriteReviewButton
+            productId={productId}
+            userProductId={purchaseUserProductId}
+            vendorName={purchaseVendorName}
+          />
         </div>
 
+        {userProducts.length > 1 && (
+          <div className="mb-8 flex flex-wrap items-center gap-3">
+            <span className="text-sm font-medium text-text-secondary">Show reviews for:</span>
+            <Select value={activeFilter} onValueChange={handleFilterChange} disabled={isLoading}>
+              <SelectTrigger className="h-9 w-full rounded-full border-border-soft bg-surface px-4 py-2 shadow-soft sm:w-72">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[{ id: ALL_VENDORS, vendor: "All vendors" }, ...userProducts].map((option) => (
+                  <SelectItem key={option.id} value={option.id}>
+                    {option.vendor}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         {/* Rating Breakdown */}
-        {reviews.length > 0 && (
+        {!isLoading && reviews.length > 0 && (
           <SurfaceCard className="mb-8 w-full p-5 sm:p-8 lg:w-1/2">
             <div>
               <h3 className="mb-6 text-xl font-semibold text-text-primary">Rating Breakdown</h3>
@@ -93,7 +190,16 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
         )}
 
         {/* Individual Reviews */}
-        {reviews.length > 0 ? (
+        {isLoading ? (
+          <div className="space-y-6">
+            {Array.from({ length: 3 }, (_, index) => (
+              <div
+                key={`review-skeleton-${index + 1}`}
+                className="h-36 animate-pulse rounded-[1.75rem] bg-surface-muted"
+              />
+            ))}
+          </div>
+        ) : reviews.length > 0 ? (
           <div className="space-y-6">
             {reviews.map((review) => (
               <SurfaceCard key={review.id} className="p-5 sm:p-8">
@@ -115,14 +221,24 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
                     <p className="mb-4 leading-relaxed text-text-secondary">{review.comment}</p>
                     <div className="flex items-center space-x-6 text-sm text-text-secondary">
                       {user?.id === review.userId && (
-                        <button
-                          type="button"
-                          onClick={() => setEditingReview(review)}
-                          className="flex items-center space-x-1 transition-colors hover:text-brand"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                          <span>Edit</span>
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setEditingReview(review)}
+                            className="flex items-center space-x-1 transition-colors hover:text-brand"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeletingReview(review)}
+                            className="flex items-center space-x-1 transition-colors hover:text-danger"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            <span>Delete</span>
+                          </button>
+                        </>
                       )}
                       <button type="button" className="flex items-center space-x-1 transition-colors hover:text-brand">
                         <ThumbsUp className="w-4 h-4" />
@@ -140,11 +256,15 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
           </div>
         ) : (
           <SurfaceCard className="p-8 text-center">
-            <p className="text-text-secondary">No reviews yet. Be the first to review this product!</p>
+            <p className="text-text-secondary">
+              {activeFilter !== ALL_VENDORS
+                ? "No reviews for this vendor yet."
+                : "No reviews yet. Be the first to review this product!"}
+            </p>
           </SurfaceCard>
         )}
 
-        {!reviewsData.last && (
+        {!isLoading && !reviewsData.last && (
           <div className="mt-8 text-center">
             <button
               type="button"
@@ -164,6 +284,20 @@ export default function ProductReviews({ productId, initialReviews }: ProductRev
           onSuccess={() => {
             setEditingReview(null)
             router.refresh()
+          }}
+        />
+      )}
+
+      {deletingReview && (
+        <DeleteReviewModal
+          review={deletingReview}
+          isOpen={!!deletingReview}
+          onClose={() => setDeletingReview(null)}
+          onSuccess={() => {
+            setDeletingReview(null)
+            // Refresh the server data (hero counts, supplier ratings) and reload the visible slice.
+            router.refresh()
+            loadReviews(activeFilter).catch(() => setFetchedReviews(null))
           }}
         />
       )}

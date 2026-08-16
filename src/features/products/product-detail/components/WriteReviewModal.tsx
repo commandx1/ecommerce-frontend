@@ -15,12 +15,21 @@ import { useAuthStore } from "@/stores/authStore"
 
 interface WriteReviewModalProps {
   productId: string
+  userProductId?: string
+  vendorName?: string
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
 }
 
-export default function WriteReviewModal({ productId, isOpen, onClose, onSuccess }: WriteReviewModalProps) {
+export default function WriteReviewModal({
+  productId,
+  userProductId,
+  vendorName,
+  isOpen,
+  onClose,
+  onSuccess,
+}: WriteReviewModalProps) {
   const { accessToken, isAuthenticated } = useAuthStore()
   const id = useId()
   const [rating, setRating] = useState(0)
@@ -52,12 +61,18 @@ export default function WriteReviewModal({ productId, isOpen, onClose, onSuccess
       return
     }
 
+    if (!userProductId) {
+      showToast.error("Please select a vendor from the supplier table first")
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
       await createReview({
         accessToken,
         productId,
+        userProductId,
         star: rating,
         title: title.trim(),
         comment: comment.trim(),
@@ -102,8 +117,22 @@ export default function WriteReviewModal({ productId, isOpen, onClose, onSuccess
             <NoticeBanner tone="warning" description="You need to log in to write a review." className="rounded-lg" />
           )}
 
-          {isAuthenticated && (
+          {isAuthenticated && !userProductId && (
+            <NoticeBanner
+              tone="warning"
+              description="Please select a vendor from the supplier table first."
+              className="rounded-lg"
+            />
+          )}
+
+          {isAuthenticated && userProductId && (
             <>
+              <NoticeBanner tone="info" className="rounded-lg" title="Review destination">
+                <p className="text-sm font-medium text-text-primary">
+                  Review will be submitted for: <span className="font-bold">{vendorName || "Selected Vendor"}</span>
+                </p>
+              </NoticeBanner>
+
               <div>
                 <p className="mb-2 block text-sm font-medium text-text-primary">Your Rating *</p>
                 <div className="flex items-center space-x-2">

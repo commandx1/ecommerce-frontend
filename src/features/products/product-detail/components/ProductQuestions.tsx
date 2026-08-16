@@ -6,6 +6,7 @@ import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import SectionHeading from "@/components/layout/SectionHeading"
 import type { Question, QuestionsResponse } from "../types"
 import { formatRelativeDate } from "../utils/relativeDate"
+import { resolveSelectedUserProductId } from "../utils/selectedVendor"
 import AskQuestionButton from "./AskQuestionButton"
 
 interface UserProduct {
@@ -21,10 +22,7 @@ interface ProductQuestionsProps {
 
 export default function ProductQuestions({ productId, initialQuestions, userProducts }: ProductQuestionsProps) {
   const searchParams = useSearchParams()
-  const vendorIdFromUrl = searchParams.get("vendorId")
-  const selectedSupplierUserProductId = userProducts.some((userProduct) => userProduct.id === vendorIdFromUrl)
-    ? vendorIdFromUrl || undefined
-    : undefined
+  const selectedSupplierUserProductId = resolveSelectedUserProductId(searchParams.get("vendorId"), userProducts)
 
   // Extract questions from response
   const allQuestions: Question[] = initialQuestions?.content || []

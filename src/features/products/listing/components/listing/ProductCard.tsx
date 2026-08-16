@@ -92,7 +92,7 @@ const ProductCard = ({ data }: ProductCardProps) => {
                 ))}
               </div>
               <span className="text-xs font-medium text-text-secondary sm:text-sm">
-                {data.overallStar} ({data.reviewCount ?? 0} reviews)
+                {data.overallStar.toFixed(1)} ({data.reviewCount ?? 0} reviews)
               </span>
             </div>
           )}
