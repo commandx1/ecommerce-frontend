@@ -39,6 +39,22 @@ interface CheckoutStore {
   selectedSavedCardId: string
   paymentMethodId: string
   paymentMethodSummary: string
+  /**
+   * Consent to upgrade the selected saved card to off-session payments, so the
+   * auto order items in this order can be charged later (`openToAutoOrder`).
+   */
+  autoOrderConsent: boolean
+  /**
+   * When a new card is being saved: allow it to be charged off-session and make
+   * it the auto order card (`cardOpenToAutoPayment` / `cardAutoOrderCard`).
+   */
+  newCardAutoPaymentConsent: boolean
+  /**
+   * userProductIds the buyer set to repeat, snapshotted when the order is placed.
+   * The confirmation screen waits for these to show up in `GET /auto-orders`,
+   * which only happens once the Stripe webhook has captured the payment.
+   */
+  autoOrderUserProductIds: string[]
   termsAgreed: boolean
   selectedShippingEtaText: string
   selectedVendorShippingMethods: Record<string, VendorShippingSelection>
@@ -57,6 +73,9 @@ interface CheckoutStore {
   setSelectedSavedCardId: (cardId: string) => void
   setPaymentMethodId: (paymentMethodId: string) => void
   setPaymentMethodSummary: (summary: string) => void
+  setAutoOrderConsent: (consent: boolean) => void
+  setNewCardAutoPaymentConsent: (consent: boolean) => void
+  setAutoOrderUserProductIds: (userProductIds: string[]) => void
   setTermsAgreed: (agreed: boolean) => void
   setSelectedShippingEtaText: (etaText: string) => void
   setSelectedVendorShippingMethods: (
@@ -100,6 +119,9 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
   selectedSavedCardId: "",
   paymentMethodId: "",
   paymentMethodSummary: "",
+  autoOrderConsent: false,
+  newCardAutoPaymentConsent: false,
+  autoOrderUserProductIds: [],
   termsAgreed: false,
   selectedShippingEtaText: "",
   selectedVendorShippingMethods: {},
@@ -118,6 +140,9 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
   setSelectedSavedCardId: (cardId) => set({ selectedSavedCardId: cardId }),
   setPaymentMethodId: (paymentMethodId) => set({ paymentMethodId }),
   setPaymentMethodSummary: (summary) => set({ paymentMethodSummary: summary }),
+  setAutoOrderConsent: (consent) => set({ autoOrderConsent: consent }),
+  setNewCardAutoPaymentConsent: (consent) => set({ newCardAutoPaymentConsent: consent }),
+  setAutoOrderUserProductIds: (userProductIds) => set({ autoOrderUserProductIds: userProductIds }),
   setTermsAgreed: (agreed) => set({ termsAgreed: agreed }),
   setSelectedShippingEtaText: (etaText) => set({ selectedShippingEtaText: etaText }),
   setSelectedVendorShippingMethods: (methods) =>
@@ -142,6 +167,9 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
       selectedSavedCardId: "",
       paymentMethodId: "",
       paymentMethodSummary: "",
+      autoOrderConsent: false,
+      newCardAutoPaymentConsent: false,
+      autoOrderUserProductIds: [],
       termsAgreed: false,
       selectedShippingEtaText: "Express Delivery - 2-3 business days",
       selectedVendorShippingMethods: {},

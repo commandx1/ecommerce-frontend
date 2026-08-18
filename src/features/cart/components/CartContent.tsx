@@ -3,10 +3,12 @@ import SectionHeading from "@/components/layout/SectionHeading"
 import CartItemsPanel from "@/features/cart/components/CartItemsPanel"
 import CartSummaryPanel from "@/features/cart/components/CartSummaryPanel"
 import type { CartSellerGroup, CartTotals } from "@/features/cart/types"
+import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
 import type { CartItem } from "@/stores/cartStore"
 
 interface CartContentProps {
   cartId: string | null
+  autoOrderItemsCount: number
   blockingItemsCount: number
   hasBlockingItems: boolean
   isClearConfirmOpen: boolean
@@ -14,6 +16,7 @@ interface CartContentProps {
   isTaxLoading: boolean
   items: CartItem[]
   sellerGroups: Record<string, CartSellerGroup>
+  onAutoOrderChange: (userProductId: string, period: AutoOrderPeriod | null) => Promise<void>
   onCheckout: () => void
   onCloseClearConfirm: () => void
   onConfirmClearCart: () => Promise<void>
@@ -25,6 +28,7 @@ interface CartContentProps {
 
 export default function CartContent({
   cartId,
+  autoOrderItemsCount,
   blockingItemsCount,
   hasBlockingItems,
   isClearConfirmOpen,
@@ -32,6 +36,7 @@ export default function CartContent({
   isTaxLoading,
   items,
   sellerGroups,
+  onAutoOrderChange,
   onCheckout,
   onCloseClearConfirm,
   onConfirmClearCart,
@@ -50,6 +55,7 @@ export default function CartContent({
             isClearConfirmOpen={isClearConfirmOpen}
             items={items}
             sellerGroups={sellerGroups}
+            onAutoOrderChange={onAutoOrderChange}
             onCloseClearConfirm={onCloseClearConfirm}
             onConfirmClearCart={onConfirmClearCart}
             onOpenClearConfirm={onOpenClearConfirm}
@@ -59,6 +65,7 @@ export default function CartContent({
         </div>
         <div className="lg:w-1/3">
           <CartSummaryPanel
+            autoOrderItemsCount={autoOrderItemsCount}
             blockingItemsCount={blockingItemsCount}
             hasBlockingItems={hasBlockingItems}
             isCheckoutDisabled={items.length === 0}

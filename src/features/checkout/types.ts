@@ -1,4 +1,5 @@
 import type { ShipmentRate, UberQuote } from "@/lib/api/shipment"
+import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
 
 export type ShippingRate = ShipmentRate | UberQuote
 
@@ -7,6 +8,8 @@ export interface SellerGroupItem {
   productId: string
   name: string
   quantity: number
+  /** Carried over from the cart item; null for a one-off purchase. */
+  autoOrder: AutoOrderPeriod | null
 }
 
 export interface SellerGroup {

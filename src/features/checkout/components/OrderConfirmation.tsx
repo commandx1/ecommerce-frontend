@@ -4,10 +4,12 @@ import { useRouter } from "next/navigation"
 import { useEffect, useRef } from "react"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import OrderConfirmationActions from "@/features/checkout/components/OrderConfirmationActions"
+import OrderConfirmationAutoOrderNotice from "@/features/checkout/components/OrderConfirmationAutoOrderNotice"
 import OrderConfirmationHeader from "@/features/checkout/components/OrderConfirmationHeader"
 import OrderConfirmationItems from "@/features/checkout/components/OrderConfirmationItems"
 import OrderConfirmationShipping from "@/features/checkout/components/OrderConfirmationShipping"
 import OrderConfirmationStats from "@/features/checkout/components/OrderConfirmationStats"
+import { useAutoOrderRegistration } from "@/features/checkout/hooks/useAutoOrderRegistration"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
@@ -15,6 +17,7 @@ export default function OrderConfirmation() {
   const router = useRouter()
   const { clearCart } = useCartStore()
   const { reset, orderResult, selectedVendorShippingMethods, selectedShippingCost } = useCheckoutStore()
+  const autoOrderRegistration = useAutoOrderRegistration()
   const confirmationRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -43,6 +46,8 @@ export default function OrderConfirmation() {
             <OrderConfirmationItems orderResult={orderResult} />
           </>
         ) : null}
+        <OrderConfirmationAutoOrderNotice {...autoOrderRegistration} />
+
         <OrderConfirmationActions onContinueShopping={onContinueShopping} />
       </SurfaceCard>
     </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import { ArrowRight } from "lucide-react"
+import NoticeBanner from "@/components/feedback/NoticeBanner"
 import ActionButton from "@/components/ui/ActionButton"
 import ShippingAddressSection from "@/features/checkout/components/ShippingAddressSection"
 import ShippingMethodsSection from "@/features/checkout/components/ShippingMethodsSection"
@@ -14,6 +15,7 @@ export default function ShippingDetails() {
     selectedAddressId,
     selectedRates,
     sellerGroups,
+    showAutoOrderAddressNotice,
     onAddAddress,
     onAddressChange,
     onRateSelect,
@@ -29,6 +31,14 @@ export default function ShippingDetails() {
         onAddAddress={onAddAddress}
         onSelectAddress={onAddressChange}
       />
+
+      {showAutoOrderAddressNotice ? (
+        <NoticeBanner
+          tone="warning"
+          title="Repeat deliveries use your primary address"
+          description="This order ships where you chose above, but future automatic re-orders always go to your primary address. Set this one as primary if that's where you want them."
+        />
+      ) : null}
 
       {selectedAddressId && cartId && Object.keys(sellerGroups).length > 0 ? (
         <ShippingMethodsSection

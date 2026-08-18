@@ -1,26 +1,26 @@
 "use client"
 
 import type { ColumnDef, Row } from "@tanstack/react-table"
-import { ChevronDown, ChevronUp, ChevronsUpDown, Package, Store } from "lucide-react"
+import { ChevronDown, ChevronsUpDown, ChevronUp, Package, Store } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import DataTable from "@/components/ui/data-table"
 import type { BuyerOrder } from "@/lib/api/buyer-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useBuyerOrdersTableActions, useBuyerOrdersTableSelector } from "../context/buyer-orders-context"
 import { buildBuyerOrderViewModel } from "../lib/order-view-utils"
+import AutoOrderBadge from "./auto-order-badge"
 import OrderExpandedContent from "./order-expanded-content"
 
 export default function OrdersTable() {
-  const { sortField, sortDir, expandedState, filteredOrders, isLoading, summariesByOrderId } = useBuyerOrdersTableSelector(
-    (state) => ({
+  const { sortField, sortDir, expandedState, filteredOrders, isLoading, summariesByOrderId } =
+    useBuyerOrdersTableSelector((state) => ({
       sortField: state.sortField,
       sortDir: state.sortDir,
       expandedState: state.expandedState,
       filteredOrders: state.filteredOrders,
       isLoading: state.isLoading,
       summariesByOrderId: state.summariesByOrderId,
-    }),
-  )
+    }))
 
   const { handleSort, handleExpandedChange } = useBuyerOrdersTableActions()
 
@@ -38,7 +38,11 @@ export default function OrdersTable() {
         >
           Date
           {sortField === "createdDate" ? (
-            sortDir === "desc" ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />
+            sortDir === "desc" ? (
+              <ChevronDown className="h-3 w-3" />
+            ) : (
+              <ChevronUp className="h-3 w-3" />
+            )
           ) : (
             <ChevronsUpDown className="h-2.5 w-2.5 text-text-muted/50" />
           )}
@@ -50,6 +54,7 @@ export default function OrdersTable() {
           <>
             <p>{summary.orderDate}</p>
             <p className="text-xs">{summary.orderTime}</p>
+            {row.original.autoOrder ? <AutoOrderBadge /> : null}
           </>
         )
       },
@@ -105,7 +110,11 @@ export default function OrdersTable() {
         >
           Net Total
           {sortField === "totalPrice" ? (
-            sortDir === "desc" ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />
+            sortDir === "desc" ? (
+              <ChevronDown className="h-3 w-3" />
+            ) : (
+              <ChevronUp className="h-3 w-3" />
+            )
           ) : (
             <ChevronsUpDown className="h-2.5 w-2.5 text-text-muted/50" />
           )}

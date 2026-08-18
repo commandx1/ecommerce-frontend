@@ -1,6 +1,7 @@
 "use client"
 
 import { ChevronDown, ChevronsUpDown, ChevronUp, Loader2 } from "lucide-react"
+import AutoOrderBadge from "@/app/buyer-dashboard/orders/components/auto-order-badge"
 import { formatDateOnly, formatTimeOnly } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
 import { Button } from "@/components/ui/button"
 import { Collapse, CollapseContent, CollapseTrigger } from "@/components/ui/collapse"
@@ -185,6 +186,7 @@ export default function VendorOrdersMobileList({
                   <p className="mt-0.5 text-xs text-text-muted">
                     {formatDateOnly(order.orderCreatedDate)} · {formatTimeOnly(order.orderCreatedDate)}
                   </p>
+                  {order.autoOrder ? <AutoOrderBadge isBuyerView={false} /> : null}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <span

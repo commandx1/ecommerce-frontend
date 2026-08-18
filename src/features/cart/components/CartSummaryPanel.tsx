@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react"
+import { Loader2, Repeat } from "lucide-react"
 import Link from "next/link"
 import NotificationCard from "@/components/feedback/NotificationCard"
 import ActionButton from "@/components/ui/ActionButton"
@@ -7,6 +7,7 @@ import type { CartTotals } from "@/features/cart/types"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 
 interface CartSummaryPanelProps {
+  autoOrderItemsCount: number
   blockingItemsCount: number
   hasBlockingItems: boolean
   isCheckoutDisabled: boolean
@@ -24,6 +25,7 @@ interface SummaryRow {
 }
 
 export default function CartSummaryPanel({
+  autoOrderItemsCount,
   blockingItemsCount,
   hasBlockingItems,
   isCheckoutDisabled,
@@ -68,6 +70,17 @@ export default function CartSummaryPanel({
           </div>
         </div>
       </div>
+      {autoOrderItemsCount > 0 ? (
+        <div className="mb-4 flex items-start gap-2 rounded-lg border border-brand/25 bg-brand/5 px-3 py-2">
+          <Repeat className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+          <p className="text-xs text-text-secondary">
+            <span className="font-semibold text-text-primary">
+              {autoOrderItemsCount} item{autoOrderItemsCount > 1 ? "s" : ""} set to repeat.
+            </span>{" "}
+            You'll confirm automatic payments at checkout, and you can pause or cancel anytime.
+          </p>
+        </div>
+      ) : null}
       {hasBlockingItems ? (
         <NotificationCard
           tone="error"

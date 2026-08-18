@@ -3,6 +3,7 @@
 import type { ColumnDef, ExpandedState, OnChangeFn, Row } from "@tanstack/react-table"
 import { ChevronDown, ChevronsUpDown, ChevronUp, Loader2 } from "lucide-react"
 import { useMemo } from "react"
+import AutoOrderBadge from "@/app/buyer-dashboard/orders/components/auto-order-badge"
 import { formatDateOnly, formatTimeOnly } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
 import { Button } from "@/components/ui/button"
 import DataTable from "@/components/ui/data-table"
@@ -103,7 +104,11 @@ export default function VendorOrdersTable({
         >
           Created
           {sortBy === "createdDate" ? (
-            sortDir === "desc" ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />
+            sortDir === "desc" ? (
+              <ChevronDown className="h-3 w-3" />
+            ) : (
+              <ChevronUp className="h-3 w-3" />
+            )
           ) : (
             <ChevronsUpDown className="h-3 w-3 opacity-70" />
           )}
@@ -113,6 +118,7 @@ export default function VendorOrdersTable({
         <>
           <p>{formatDateOnly(row.original.orderCreatedDate)}</p>
           <p className="text-xs">{formatTimeOnly(row.original.orderCreatedDate)}</p>
+          {row.original.autoOrder ? <AutoOrderBadge isBuyerView={false} /> : null}
         </>
       ),
       meta: {

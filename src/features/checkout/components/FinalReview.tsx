@@ -4,10 +4,12 @@ import { Elements } from "@stripe/react-stripe-js"
 import { loadStripe } from "@stripe/stripe-js"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import FinalReviewAddressCards from "@/features/checkout/components/FinalReviewAddressCards"
+import FinalReviewAutoOrderSummary from "@/features/checkout/components/FinalReviewAutoOrderSummary"
 import FinalReviewNavigation from "@/features/checkout/components/FinalReviewNavigation"
 import FinalReviewPaymentSummary from "@/features/checkout/components/FinalReviewPaymentSummary"
 import FinalReviewReadyNotice from "@/features/checkout/components/FinalReviewReadyNotice"
 import FinalReviewUnavailable from "@/features/checkout/components/FinalReviewUnavailable"
+import { useCheckoutAutoOrder } from "@/features/checkout/hooks/useCheckoutAutoOrder"
 import { useFinalReview } from "@/features/checkout/hooks/useFinalReview"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
@@ -17,6 +19,7 @@ const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : 
 function FinalReviewContent() {
   const { shippingAddress, previousStep } = useCheckoutStore()
   const { isPlacingOrder, paymentMethodSummary, submitDisabled, onPlaceOrder } = useFinalReview()
+  const { autoOrderLines } = useCheckoutAutoOrder()
 
   return (
     <SurfaceCard variant="editorial" className="mb-8 p-8">
@@ -30,6 +33,7 @@ function FinalReviewContent() {
       <div className="space-y-6 mb-8">
         <FinalReviewAddressCards shippingAddress={shippingAddress} />
         <FinalReviewPaymentSummary paymentMethodSummary={paymentMethodSummary} />
+        <FinalReviewAutoOrderSummary autoOrderLines={autoOrderLines} />
       </div>
 
       <FinalReviewReadyNotice />

@@ -19,6 +19,7 @@ export default function CartPage() {
   return (
     <CartContent
       cartId={cartPage.cartId}
+      autoOrderItemsCount={cartPage.autoOrderItemsCount}
       blockingItemsCount={cartPage.blockingItemsCount}
       hasBlockingItems={cartPage.hasBlockingItems}
       isClearConfirmOpen={cartPage.isClearConfirmOpen}
@@ -26,6 +27,7 @@ export default function CartPage() {
       isTaxLoading={cartPage.isTaxLoading}
       items={cartPage.items}
       sellerGroups={cartPage.sellerGroups}
+      onAutoOrderChange={cartPage.onAutoOrderChange}
       onCheckout={cartPage.onCheckout}
       onCloseClearConfirm={cartPage.onCloseClearConfirm}
       onConfirmClearCart={cartPage.onConfirmClearCart}

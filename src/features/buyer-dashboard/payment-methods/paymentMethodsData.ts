@@ -14,6 +14,10 @@ export interface SavedPaymentMethod {
   billingAddress: string
   status: PaymentMethodStatus
   stripePaymentMethodId?: string
+  /** Card carries an off-session Stripe mandate, so it can be charged unattended. */
+  openToAutoPayment: boolean
+  /** The buyer's single card used to pay for auto orders. */
+  autoOrderCard: boolean
 }
 
 export interface BankMethod {
@@ -45,6 +49,8 @@ export const initialSavedPaymentMethods: ReadonlyArray<SavedPaymentMethod> = [
     expiryYear: "2028",
     billingAddress: "201 Madison Ave, New York, NY",
     status: "default",
+    openToAutoPayment: true,
+    autoOrderCard: true,
   },
   {
     id: "pm-2",
@@ -57,6 +63,8 @@ export const initialSavedPaymentMethods: ReadonlyArray<SavedPaymentMethod> = [
     expiryYear: "2029",
     billingAddress: "201 Madison Ave, New York, NY",
     status: "backup",
+    openToAutoPayment: false,
+    autoOrderCard: false,
   },
   {
     id: "pm-3",
@@ -69,6 +77,8 @@ export const initialSavedPaymentMethods: ReadonlyArray<SavedPaymentMethod> = [
     expiryYear: "2027",
     billingAddress: "201 Madison Ave, New York, NY",
     status: "active",
+    openToAutoPayment: false,
+    autoOrderCard: false,
   },
 ]
 

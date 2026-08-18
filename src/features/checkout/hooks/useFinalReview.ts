@@ -3,6 +3,7 @@
 import { useStripe } from "@stripe/react-stripe-js"
 import { useCallback, useMemo, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
+import { useCheckoutAutoOrder } from "@/features/checkout/hooks/useCheckoutAutoOrder"
 import { ordersAPI } from "@/lib/api/orders"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
@@ -50,8 +51,13 @@ export function useFinalReview(): UseFinalReviewResult {
     setOrderResult,
     saveCard,
     cardName,
+    autoOrderConsent,
+    newCardAutoPaymentConsent,
+    selectedSavedCardId,
+    setAutoOrderUserProductIds,
   } = useCheckoutStore()
   const { cartId } = useCartStore()
+  const { hasAutoOrderItems, autoOrderLines } = useCheckoutAutoOrder()
   const stripe = useStripe()
 
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
@@ -104,21 +110,38 @@ export function useFinalReview(): UseFinalReviewResult {
         }
 
         payload.paymentMethodId = paymentMethodId
-        if (saveCard) {
+
+        const isNewCard = selectedSavedCardId === ""
+        // Repeat items can only be charged later from a saved card, so the
+        // backend refuses a new card that is not saved with an off-session mandate.
+        const mustSaveCard = saveCard || (isNewCard && hasAutoOrderItems)
+
+        if (mustSaveCard) {
           const trimmedCardName = cardName.trim()
           if (!trimmedCardName) {
             showToast.error("Please enter a card name to save this card.")
             return
           }
-          payload.cardSave = 1
+          payload.cardSave = true
           payload.cardName = trimmedCardName
+          payload.cardOpenToAutoPayment = hasAutoOrderItems || newCardAutoPaymentConsent
+          payload.cardAutoOrderCard = hasAutoOrderItems || newCardAutoPaymentConsent
         } else {
-          payload.cardSave = 0
+          payload.cardSave = false
           payload.cardName = ""
+        }
+
+        // Only consulted for a saved card that is not open to auto payments yet.
+        if (!isNewCard && hasAutoOrderItems && autoOrderConsent) {
+          payload.openToAutoOrder = true
         }
       }
 
       const response = await ordersAPI.placeOrder(payload)
+
+      // Snapshot before the cart is cleared, so the confirmation screen can wait
+      // for exactly these schedules to appear
+      setAutoOrderUserProductIds(autoOrderLines.map((line) => line.userProductId))
 
       let finalOrderStatus = response.status
       let paymentStatus = response.status
@@ -185,14 +208,20 @@ export function useFinalReview(): UseFinalReviewResult {
       setIsPlacingOrder(false)
     }
   }, [
+    autoOrderConsent,
+    autoOrderLines,
     cardName,
     cartId,
+    hasAutoOrderItems,
+    setAutoOrderUserProductIds,
+    newCardAutoPaymentConsent,
     nextStep,
     orderPayload,
     paymentMethod.type,
     paymentMethodId,
     pollPaymentStatus,
     saveCard,
+    selectedSavedCardId,
     setOrderResult,
     stripe,
   ])

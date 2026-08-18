@@ -101,6 +101,8 @@ export interface BuyerOrder {
   cardLast4?: string | null
   cardExpMonth?: number | null
   cardExpYear?: number | null
+  /** True when the scheduler placed this order from a standing auto order. */
+  autoOrder?: boolean
   sellerGroups?: BuyerOrderSellerGroup[]
   orderItems?: BuyerOrderItem[]
 }
@@ -113,13 +115,7 @@ export interface BuyerOrdersResponse {
   pageSize: number
 }
 
-export type BuyerOrderFilterType =
-  | "ALL"
-  | "WAITING_FOR_SHIPMENT"
-  | "ON_WAY"
-  | "DELIVERED"
-  | "CANCELLED"
-  | "RETURNED"
+export type BuyerOrderFilterType = "ALL" | "WAITING_FOR_SHIPMENT" | "ON_WAY" | "DELIVERED" | "CANCELLED" | "RETURNED"
 
 export interface CancelDuringDeliveryByCustomerPayload {
   orderItemIds: string[]

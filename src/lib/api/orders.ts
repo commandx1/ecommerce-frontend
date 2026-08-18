@@ -1,8 +1,11 @@
+import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
 import apiClient from "./client"
 
 export interface OrderProduct {
   userProductId: string
   quantity: number
+  /** Turns this line into a standing auto order once the payment succeeds. */
+  autoOrder?: AutoOrderPeriod | null
 }
 
 export interface ShippoRateOrder {
@@ -23,8 +26,17 @@ export interface PlaceOrderPayload {
   shippoRateOrders: ShippoRateOrder[]
   uberRateOrders: UberRateOrder[]
   paymentMethodId?: string
-  cardSave?: number
+  cardSave?: boolean
   cardName?: string
+  /** Only used with `cardSave`: saves the new card with an off-session mandate. */
+  cardOpenToAutoPayment?: boolean
+  /** Only used with `cardSave`: makes the new card the buyer's auto order card. */
+  cardAutoOrderCard?: boolean
+  /**
+   * Consent to upgrade an already saved card to off-session payments so it can
+   * cover the auto order items in this request.
+   */
+  openToAutoOrder?: boolean
 }
 
 export interface OrderItem {
@@ -59,6 +71,9 @@ export interface SavedCard {
   last4: string
   expMonth: number
   expYear: number
+  isDefault?: boolean
+  openToAutoPayment?: boolean
+  autoOrderCard?: boolean
   createdDate: string
 }
 

@@ -4,6 +4,7 @@ import SectionHeading from "@/components/layout/SectionHeading"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import CartItemCard from "@/features/cart/components/CartItemCard"
 import type { CartSellerGroup } from "@/features/cart/types"
+import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
 import type { CartItem } from "@/stores/cartStore"
 
 interface CartItemsPanelProps {
@@ -11,6 +12,7 @@ interface CartItemsPanelProps {
   isClearConfirmOpen: boolean
   items: CartItem[]
   sellerGroups: Record<string, CartSellerGroup>
+  onAutoOrderChange: (userProductId: string, period: AutoOrderPeriod | null) => Promise<void>
   onCloseClearConfirm: () => void
   onConfirmClearCart: () => Promise<void>
   onOpenClearConfirm: () => void
@@ -23,6 +25,7 @@ export default function CartItemsPanel({
   isClearConfirmOpen,
   items,
   sellerGroups,
+  onAutoOrderChange,
   onCloseClearConfirm,
   onConfirmClearCart,
   onOpenClearConfirm,
@@ -67,6 +70,7 @@ export default function CartItemsPanel({
                 <CartItemCard
                   key={item.id}
                   item={item}
+                  onAutoOrderChange={onAutoOrderChange}
                   onQuantityChange={onQuantityChange}
                   onRemoveItem={onRemoveItem}
                 />

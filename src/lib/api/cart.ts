@@ -1,3 +1,4 @@
+import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
 import apiClient from "./client"
 
 export interface UserProduct {
@@ -10,6 +11,8 @@ export interface UserProduct {
   stock: number
   stockAlert: string | null
   userProductAlert: string | null
+  sellerId: string
+  sellerName: string
 }
 
 export interface ProductInfo {
@@ -23,6 +26,8 @@ export interface ProductInfo {
 export interface CartItem {
   id: string
   quantity: number
+  /** Recurring purchase schedule for this line, null for a one-off purchase. */
+  autoOrder: AutoOrderPeriod | null
   userProduct: UserProduct
   product: ProductInfo
 }
@@ -56,12 +61,21 @@ class CartAPI {
     return response.data
   }
 
-  async addItem(userProductId: string, quantity: number): Promise<void> {
-    await apiClient.post("/cart/items", { userProductId, quantity })
+  /**
+   * The backend replaces the item's schedule with whatever `autoOrder` holds on
+   * every write, so both calls always send it explicitly — omitting it would
+   * silently clear a schedule the buyer already picked.
+   */
+  async addItem(userProductId: string, quantity: number, autoOrder: AutoOrderPeriod | null = null): Promise<void> {
+    await apiClient.post("/cart/items", { userProductId, quantity, autoOrder })
   }
 
-  async updateItemQuantity(userProductId: string, quantity: number): Promise<void> {
-    await apiClient.put("/cart/items", { userProductId, quantity })
+  async updateItemQuantity(
+    userProductId: string,
+    quantity: number,
+    autoOrder: AutoOrderPeriod | null = null,
+  ): Promise<void> {
+    await apiClient.put("/cart/items", { userProductId, quantity, autoOrder })
   }
 
   async removeItem(userProductId: string): Promise<void> {

@@ -5,16 +5,10 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import type { SellerGroup, ShippingRate } from "@/features/checkout/types"
 import { type Address, addressAPI } from "@/lib/api/address"
+import type { ShippoRateOrder, UberRateOrder } from "@/lib/api/orders"
 import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
-
-interface UserProductSellerMeta {
-  sellerName?: string
-  sellerId?: string
-  userId?: string
-  vendor?: string
-}
 
 interface SelectedRateInfo {
   type: "shippo" | "uber"
@@ -30,6 +24,11 @@ interface UseShippingDetailsResult {
   selectedRates: Record<string, SelectedRateInfo>
   sellerGroups: Record<string, SellerGroup>
   userId: string
+  /**
+   * True when this order sets up repeat deliveries but the chosen address is not
+   * the primary one — the scheduler always ships auto orders to the primary.
+   */
+  showAutoOrderAddressNotice: boolean
   onAddAddress: () => void
   onAddressChange: (address: Address) => void
   onRateSelect: (vendorId: string, rate: ShippingRate) => void
@@ -92,9 +91,8 @@ export function useShippingDetails(): UseShippingDetailsResult {
 
   const sellerGroups = useMemo<Record<string, SellerGroup>>(() => {
     return items.reduce<Record<string, SellerGroup>>((groups, item) => {
-      const userProduct = item.userProduct as UserProductSellerMeta
-      const sellerName = userProduct.sellerName || userProduct.vendor || "Standard Seller"
-      const sellerId = userProduct.sellerId || userProduct.userId || sellerName
+      const sellerName = item.userProduct.sellerName || "Standard Seller"
+      const sellerId = item.userProduct.sellerId || sellerName
 
       if (!groups[sellerId]) {
         groups[sellerId] = {
@@ -108,6 +106,7 @@ export function useShippingDetails(): UseShippingDetailsResult {
         productId: item.product.id,
         name: item.product.name,
         quantity: item.quantity,
+        autoOrder: item.autoOrder,
       })
 
       return groups
@@ -159,25 +158,19 @@ export function useShippingDetails(): UseShippingDetailsResult {
         return
       }
 
-      const shippoRateOrders: {
-        shippoRateId: string
-        userId: string
-        products: { userProductId: string; quantity: number }[]
-      }[] = []
-
-      const uberRateOrders: {
-        uberRateId: string
-        userId: string
-        products: { userProductId: string; quantity: number }[]
-      }[] = []
+      const shippoRateOrders: ShippoRateOrder[] = []
+      const uberRateOrders: UberRateOrder[] = []
 
       Object.entries(sellerGroups).forEach(([sellerId, group]) => {
         const selection = selectedRates[sellerId]
         if (!selection) return
 
+        // The backend reads the recurrence off the order payload, not the cart,
+        // and it looks at both shippo and uber lines.
         const products = group.items.map((item) => ({
           userProductId: item.userProductId,
           quantity: item.quantity,
+          autoOrder: item.autoOrder,
         }))
 
         if (selection.type === "shippo") {
@@ -215,6 +208,14 @@ export function useShippingDetails(): UseShippingDetailsResult {
     router.push("/buyer-dashboard/settings/addresses")
   }, [router])
 
+  const showAutoOrderAddressNotice = useMemo(() => {
+    if (!items.some((item) => item.autoOrder !== null)) return false
+    if (!selectedAddressId) return false
+
+    const primaryAddress = addresses.find((address) => address.defaultAddress)
+    return !primaryAddress || primaryAddress.id !== selectedAddressId
+  }, [addresses, items, selectedAddressId])
+
   return {
     addresses,
     cartId: cartId || "",
@@ -223,6 +224,7 @@ export function useShippingDetails(): UseShippingDetailsResult {
     selectedRates,
     sellerGroups,
     userId: user?.id || "",
+    showAutoOrderAddressNotice,
     onAddAddress,
     onAddressChange,
     onRateSelect,

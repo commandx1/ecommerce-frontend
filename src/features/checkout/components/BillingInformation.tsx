@@ -26,9 +26,14 @@ function BillingInformationContent() {
     saveCard,
     savedCards,
     selectedSavedCardId,
+    hasAutoOrderItems,
+    autoOrderConsent,
+    newCardAutoPaymentConsent,
     setCardName,
     setSaveCard,
     setSelectedSavedCardId,
+    setAutoOrderConsent,
+    setNewCardAutoPaymentConsent,
     onSubmit,
   } = useBillingInformation()
 
@@ -53,6 +58,11 @@ function BillingInformationContent() {
             setCardName={setCardName}
             setSaveCard={setSaveCard}
             setSelectedSavedCardId={setSelectedSavedCardId}
+            hasAutoOrderItems={hasAutoOrderItems}
+            autoOrderConsent={autoOrderConsent}
+            setAutoOrderConsent={setAutoOrderConsent}
+            newCardAutoPaymentConsent={newCardAutoPaymentConsent}
+            setNewCardAutoPaymentConsent={setNewCardAutoPaymentConsent}
           />
         ) : null}
 

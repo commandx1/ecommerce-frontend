@@ -9,6 +9,7 @@ import { cartRequiresDentalLicense, hasValidDentalLicense } from "@/features/car
 import { addressAPI } from "@/lib/api/address"
 import { cartAPI } from "@/lib/api/cart"
 import { licenseAPI } from "@/lib/api/licenses"
+import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
 import { useDebouncedPerKeyCallback } from "@/lib/hooks/useDebouncedPerKeyCallback"
 import type { CartItem } from "@/stores/cartStore"
 import { useCartStore } from "@/stores/cartStore"
@@ -17,15 +18,9 @@ import { useCheckoutStore } from "@/stores/checkoutStore"
 type CartViewState = "loading" | "empty" | "ready"
 const QUANTITY_DEBOUNCE_MS = 450
 
-interface UserProductSellerMeta {
-  sellerName?: string
-  sellerId?: string
-  userId?: string
-  vendor?: string
-}
-
 interface UseCartPageResult {
   cartId: string | null
+  autoOrderItemsCount: number
   blockingItemsCount: number
   hasBlockingItems: boolean
   isClearConfirmOpen: boolean
@@ -35,6 +30,7 @@ interface UseCartPageResult {
   sellerGroups: Record<string, CartSellerGroup>
   totals: CartTotals
   viewState: CartViewState
+  onAutoOrderChange: (userProductId: string, period: AutoOrderPeriod | null) => Promise<void>
   onCheckout: () => void
   onCloseClearConfirm: () => void
   onConfirmClearCart: () => Promise<void>
@@ -46,7 +42,8 @@ interface UseCartPageResult {
 
 export function useCartPage(): UseCartPageResult {
   const router = useRouter()
-  const { cartId, items, fetchCart, isLoading, clearCart, updateQuantity, removeFromCart, error } = useCartStore()
+  const { cartId, items, fetchCart, isLoading, clearCart, updateQuantity, setItemAutoOrder, removeFromCart, error } =
+    useCartStore()
   const { setStep } = useCheckoutStore()
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false)
   const [pendingQuantities, setPendingQuantities] = useState<Record<string, number>>({})
@@ -187,9 +184,8 @@ export function useCartPage(): UseCartPageResult {
 
   const sellerGroups = useMemo<Record<string, CartSellerGroup>>(() => {
     return itemsWithPendingQuantity.reduce<Record<string, CartSellerGroup>>((groups, item) => {
-      const userProduct = item.userProduct as UserProductSellerMeta
-      const sellerName = userProduct.sellerName || userProduct.vendor || "Standard Seller"
-      const sellerId = userProduct.sellerId || userProduct.userId || sellerName
+      const sellerName = item.userProduct.sellerName || "Standard Seller"
+      const sellerId = item.userProduct.sellerId || sellerName
 
       if (!groups[sellerId]) {
         groups[sellerId] = {
@@ -205,6 +201,10 @@ export function useCartPage(): UseCartPageResult {
 
   const blockingItemsCount = useMemo(() => {
     return getBlockingCartItems(itemsWithPendingQuantity).length
+  }, [itemsWithPendingQuantity])
+
+  const autoOrderItemsCount = useMemo(() => {
+    return itemsWithPendingQuantity.filter((item) => item.autoOrder !== null).length
   }, [itemsWithPendingQuantity])
 
   const hasBlockingItems = blockingItemsCount > 0
@@ -269,6 +269,30 @@ export function useCartPage(): UseCartPageResult {
     [pendingQuantities, schedule],
   )
 
+  const onAutoOrderChange = useCallback(
+    async (userProductId: string, period: AutoOrderPeriod | null) => {
+      // Quantity and schedule go through the same endpoint, and the backend
+      // replaces the schedule on every write. Flush any still-debounced quantity
+      // edit into this single write instead of letting the two race.
+      cancel(userProductId)
+      const pendingQuantity = pendingQuantities[userProductId]
+
+      try {
+        await setItemAutoOrder(userProductId, period, pendingQuantity)
+        if (pendingQuantity !== undefined) {
+          setPendingQuantities((prev) => {
+            const { [userProductId]: _removed, ...rest } = prev
+            return rest
+          })
+        }
+      } catch (error) {
+        showToast.error("Could not update auto-reorder", "We couldn't save the schedule for this item. Try again.")
+        throw error
+      }
+    },
+    [cancel, pendingQuantities, setItemAutoOrder],
+  )
+
   const onRemoveItem = useCallback(
     (userProductId: string) => {
       cancel(userProductId)
@@ -300,6 +324,7 @@ export function useCartPage(): UseCartPageResult {
 
   return {
     cartId,
+    autoOrderItemsCount,
     blockingItemsCount,
     hasBlockingItems,
     isClearConfirmOpen,
@@ -309,6 +334,7 @@ export function useCartPage(): UseCartPageResult {
     sellerGroups,
     totals,
     viewState,
+    onAutoOrderChange,
     onCheckout,
     onCloseClearConfirm,
     onConfirmClearCart,

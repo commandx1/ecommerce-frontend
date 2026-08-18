@@ -1,12 +1,6 @@
 import apiClient from "./client"
 
-export type VendorOrderFilterType =
-  | "ALL"
-  | "WAITING_FOR_SHIPMENT"
-  | "ON_WAY"
-  | "DELIVERED"
-  | "CANCELLED"
-  | "RETURNED"
+export type VendorOrderFilterType = "ALL" | "WAITING_FOR_SHIPMENT" | "ON_WAY" | "DELIVERED" | "CANCELLED" | "RETURNED"
 
 export interface VendorTrackingLink {
   trackingUrl: string
@@ -95,6 +89,8 @@ export interface VendorOrder {
   totalShippingCost?: number | null
   cancellationShipmentFee?: number | null
   cancellationShipmentRefundFee?: number | null
+  /** True when the scheduler placed this order from a buyer's auto order. */
+  autoOrder?: boolean
   sellerAddress?: VendorOrderAddress
   orderItems: VendorOrderItem[]
 }

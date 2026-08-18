@@ -1,12 +1,32 @@
 import { create } from "zustand"
 import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
 import { type CartItem, cartAPI } from "@/lib/api/cart"
+import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
 
 const FETCH_DEDUP_WINDOW_MS = 1000
 let inFlightCartFetch: Promise<void> | null = null
 
 interface FetchCartOptions {
   force?: boolean
+}
+
+/**
+ * The backend overwrites `cart_item.auto_order` with whatever the request body
+ * carries, so a write that does not mention the schedule would wipe it. Passing
+ * `undefined` means "keep whatever is on the item"; pass `null` to clear it.
+ */
+type AutoOrderWrite = AutoOrderPeriod | null | undefined
+
+function findItem(items: CartItem[], userProductId: string): CartItem | undefined {
+  return items.find((item) => item.userProduct.userProductId === userProductId)
+}
+
+function resolveAutoOrder(items: CartItem[], userProductId: string, requested: AutoOrderWrite): AutoOrderPeriod | null {
+  if (requested !== undefined) {
+    return requested
+  }
+
+  return findItem(items, userProductId)?.autoOrder ?? null
 }
 
 interface CartStore {
@@ -18,9 +38,10 @@ interface CartStore {
   lastFetchedAt: number
   resetCart: () => void
   fetchCart: (options?: FetchCartOptions) => Promise<void>
-  addToCart: (userProductId: string, quantity?: number) => Promise<void>
+  addToCart: (userProductId: string, quantity?: number, autoOrder?: AutoOrderWrite) => Promise<void>
   removeFromCart: (userProductId: string) => Promise<void>
-  updateQuantity: (userProductId: string, quantity: number) => Promise<void>
+  updateQuantity: (userProductId: string, quantity: number, autoOrder?: AutoOrderWrite) => Promise<void>
+  setItemAutoOrder: (userProductId: string, autoOrder: AutoOrderPeriod | null, quantity?: number) => Promise<void>
   clearCart: () => Promise<void>
 }
 
@@ -101,10 +122,10 @@ export const useCartStore = create<CartStore>((set, get) => ({
     }
   },
 
-  addToCart: async (userProductId, quantity = 1) => {
+  addToCart: async (userProductId, quantity = 1, autoOrder) => {
     set({ isLoading: true, error: null })
     try {
-      await cartAPI.addItem(userProductId, quantity)
+      await cartAPI.addItem(userProductId, quantity, resolveAutoOrder(get().items, userProductId, autoOrder))
       await get().fetchCart({ force: true })
     } catch (error: unknown) {
       set({ isLoading: false })
@@ -138,14 +159,14 @@ export const useCartStore = create<CartStore>((set, get) => ({
     }
   },
 
-  updateQuantity: async (userProductId, quantity) => {
+  updateQuantity: async (userProductId, quantity, autoOrder) => {
     if (quantity <= 0) {
       await get().removeFromCart(userProductId)
       return
     }
     set({ isLoading: true, error: null })
     try {
-      await cartAPI.updateItemQuantity(userProductId, quantity)
+      await cartAPI.updateItemQuantity(userProductId, quantity, resolveAutoOrder(get().items, userProductId, autoOrder))
       await get().fetchCart({ force: true })
     } catch (error: unknown) {
       if (isAuthHandledError(error)) {
@@ -155,6 +176,34 @@ export const useCartStore = create<CartStore>((set, get) => ({
 
       const message = error instanceof Error ? error.message : "Failed to update quantity"
       set({ error: message, isLoading: false })
+    }
+  },
+
+  /**
+   * Quantity and schedule share one endpoint, so an explicit `quantity` lets the
+   * caller flush a still-debounced quantity edit in the same write.
+   */
+  setItemAutoOrder: async (userProductId, autoOrder, quantity) => {
+    const item = findItem(get().items, userProductId)
+    if (!item) return
+
+    const nextQuantity = quantity ?? item.quantity
+    if (nextQuantity <= 0) {
+      await get().removeFromCart(userProductId)
+      return
+    }
+
+    set({ isLoading: true, error: null })
+    try {
+      await cartAPI.updateItemQuantity(userProductId, nextQuantity, autoOrder)
+      await get().fetchCart({ force: true })
+    } catch (error: unknown) {
+      set({ isLoading: false })
+      if (isAuthHandledError(error)) {
+        return
+      }
+
+      throw error
     }
   },
 

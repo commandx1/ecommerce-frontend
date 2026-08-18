@@ -8,6 +8,7 @@ import {
   Home,
   MapPin,
   Plus,
+  Repeat,
   RotateCcw,
   Search,
   ShoppingBag,
@@ -24,6 +25,7 @@ const NAV_GROUPS: DashboardSidebarGroup[] = [
     items: [
       { href: "/buyer-dashboard", label: "Overview", icon: Home },
       { href: "/buyer-dashboard/orders", label: "All Orders", icon: ShoppingBag },
+      { href: "/buyer-dashboard/auto-orders", label: "Auto Orders", icon: Repeat },
       { href: "/buyer-dashboard/vendors/favorites", label: "Favorites", icon: Heart },
       { href: "/buyer-dashboard/invoices", label: "Invoices", icon: FileText },
       { href: "/buyer-dashboard/payment-methods", label: "Payment Methods", icon: CreditCard },

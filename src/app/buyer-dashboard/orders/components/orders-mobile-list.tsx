@@ -6,6 +6,7 @@ import type { BuyerOrder } from "@/lib/api/buyer-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useBuyerOrdersTableActions, useBuyerOrdersTableSelector } from "../context/buyer-orders-context"
 import { buildBuyerOrderViewModel, getOrderStatusBadgeClasses, getOrderStatusLabel } from "../lib/order-view-utils"
+import AutoOrderBadge from "./auto-order-badge"
 import OrderExpandedContent from "./order-expanded-content"
 
 function SortButton({
@@ -132,6 +133,7 @@ export default function OrdersMobileList() {
                 <div className="min-w-0">
                   <p className="text-base font-semibold text-text-primary">{summary.orderDate}</p>
                   <p className="mt-0.5 text-xs text-text-muted">{summary.orderTime}</p>
+                  {order.autoOrder ? <AutoOrderBadge /> : null}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <span

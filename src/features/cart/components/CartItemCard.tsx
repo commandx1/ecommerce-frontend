@@ -1,6 +1,7 @@
 import { Trash2 } from "lucide-react"
 import Link from "next/link"
 import NotificationCard from "@/components/feedback/NotificationCard"
+import CartItemAutoOrder from "@/features/cart/components/CartItemAutoOrder"
 import CartItemPrice from "@/features/cart/components/CartItemPrice"
 import CartItemQuantityControl from "@/features/cart/components/CartItemQuantityControl"
 import type { CartItemCardProps } from "@/features/cart/types"
@@ -8,7 +9,7 @@ import { getCartItemAlerts } from "@/features/cart/utils/cart-alerts"
 import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
 import { getFullImageUrl } from "@/lib/api/products"
 
-export default function CartItemCard({ item, onQuantityChange, onRemoveItem }: CartItemCardProps) {
+export default function CartItemCard({ item, onAutoOrderChange, onQuantityChange, onRemoveItem }: CartItemCardProps) {
   const { userProduct, product, quantity } = item
   const productDetailHref = `/products/${product.id}?vendorId=${encodeURIComponent(userProduct.userProductId)}`
   const productImageSrc = getFullImageUrl(product.coverPhotoPath) || "/dentypro-product-placeholder.png"
@@ -94,6 +95,13 @@ export default function CartItemCard({ item, onQuantityChange, onRemoveItem }: C
               </button>
             </div>
           </div>
+
+          <CartItemAutoOrder
+            userProductId={userProduct.userProductId}
+            value={item.autoOrder}
+            onChange={onAutoOrderChange}
+            disabled={hasAlerts}
+          />
         </div>
       </div>
     </div>
