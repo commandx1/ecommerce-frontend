@@ -174,6 +174,7 @@ export const useRegisterForm = (options?: { initialEmail?: string; initialToken?
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<ErrorMap>({})
+  const [submitErrorToken, setSubmitErrorToken] = useState(0)
 
   const clearError = (key: string) => {
     if (!errors[key]) return
@@ -252,10 +253,24 @@ export const useRegisterForm = (options?: { initialEmail?: string; initialToken?
     } catch (error: unknown) {
       const err = error as { message?: string; data?: unknown }
       const errorData = err.data
+      const knownFieldKeys = [
+        "name",
+        "surname",
+        "email",
+        "phoneNumber",
+        "address",
+        "addressPostalCode",
+        "password",
+        "confirmPassword",
+        "companyName",
+        "companyEmail",
+        "companyPhoneNumber",
+        "taxNumber",
+      ]
 
       if (errorData && typeof errorData === "object") {
         const fieldError = Object.entries(errorData).find(
-          ([key, value]) => key !== "message" && typeof value === "string" && value.trim(),
+          ([key, value]) => knownFieldKeys.includes(key) && typeof value === "string" && value.trim(),
         )
 
         if (fieldError) {
@@ -266,10 +281,12 @@ export const useRegisterForm = (options?: { initialEmail?: string; initialToken?
 
       if (err.message) {
         setErrors({ submit: err.message })
+        setSubmitErrorToken((token) => token + 1)
         return
       }
 
       setErrors({ submit: "An error occurred during registration" })
+      setSubmitErrorToken((token) => token + 1)
     } finally {
       setIsLoading(false)
     }
@@ -395,6 +412,7 @@ export const useRegisterForm = (options?: { initialEmail?: string; initialToken?
     errors,
     formData,
     isLoading,
+    submitErrorToken,
     handleAddressFieldChange,
     handleAddressSelect,
     handleChange,

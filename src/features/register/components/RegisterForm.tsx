@@ -31,9 +31,10 @@ export default function RegisterForm() {
     handlePostalCodeChange,
     handleSubmit,
     isLoading,
+    submitErrorToken,
   } = useRegisterForm({ initialEmail, initialToken })
 
-  const lastSubmitErrorRef = useRef<string | null>(null)
+  const lastSubmitErrorTokenRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (initialToken && isAuthenticated) {
@@ -42,11 +43,11 @@ export default function RegisterForm() {
   }, [initialToken, isAuthenticated, logout])
 
   useEffect(() => {
-    if (errors.submit && errors.submit !== lastSubmitErrorRef.current) {
+    if (errors.submit && submitErrorToken !== lastSubmitErrorTokenRef.current) {
       showToast.error(errors.submit)
-      lastSubmitErrorRef.current = errors.submit
+      lastSubmitErrorTokenRef.current = submitErrorToken
     }
-  }, [errors.submit])
+  }, [errors.submit, submitErrorToken])
 
   return (
     <div className="p-6 sm:p-8 lg:p-12">
