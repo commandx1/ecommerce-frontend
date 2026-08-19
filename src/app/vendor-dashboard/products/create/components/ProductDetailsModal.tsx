@@ -144,7 +144,7 @@ function buildDetailSections(product: NormalizedSearchProduct): DetailSections {
       { label: "Dimensions", value: dimensions },
       { label: "Barcode Format", value: fmt(p.barcodeFormats) },
       { label: "SDS", value: fmt(p.sds) },
-      { label: "Dental License Required", value: fmt(p.dentalLicenseRequired) },
+      { label: "Dental License Required", value: p.dentalLicenseRequired === "Yes" ? "Yes" : "No" },
       { label: "Reorder ID", value: fmt(p.reorderId) },
       { label: "Reference Number", value: fmt(p.referanceNumber) },
       { label: "Example Variations Product ID", value: fmt(p.exampleVariationsProductId) },

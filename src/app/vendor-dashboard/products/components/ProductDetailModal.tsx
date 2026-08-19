@@ -191,7 +191,7 @@ export default function ProductDetailModal({
                   <SpecItem label="Barcode format" value={product.barcodeFormats} />
                   <SpecItem label="Type" value={product.type} />
                   <SpecItem label="SDS" value={product.sds} />
-                  <SpecItem label="License required" value={product.dentalLicenseRequired} />
+                  <SpecItem label="License required" value={product.dentalLicenseRequired === "Yes" ? "Yes" : "No"} />
                   <SpecItem label="SKU code" value={userProduct?.skuCode} mono />
                 </dl>
               </div>
