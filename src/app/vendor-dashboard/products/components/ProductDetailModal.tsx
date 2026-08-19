@@ -229,7 +229,7 @@ export default function ProductDetailModal({
                     value={userProduct.discount ? `${userProduct.discount}%` : "—"}
                   />
                   <MetricCard icon={<Package size={14} />} label="Stock" value={String(userProduct.stock)} />
-                  <MetricCard icon={<Package size={14} />} label="Sell count" value={String(userProduct.sellCount)} />
+                  <MetricCard icon={<Package size={14} />} label="Sales count" value={String(userProduct.sellCount)} />
                   <MetricCard
                     icon={<Tag size={14} />}
                     label="Shipment fee"
