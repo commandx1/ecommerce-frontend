@@ -50,7 +50,7 @@ export default function AddressSection({
           onChange={(event) => onAddressFieldChange("title", event.target.value)}
         >
           <option value="Home">Home</option>
-          <option value="Business">Business</option>
+          <option value="Business">Company</option>
         </SelectField>
         <TextField
           id={`${idBase}-addressCity`}

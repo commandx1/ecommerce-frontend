@@ -60,7 +60,7 @@ const initialFormData: RegisterPayload = {
   password: "",
   phoneNumber: "",
   address: {
-    title: "Home",
+    title: "Business",
     fullName: "",
     phoneNumber: "",
     country: "",
@@ -361,7 +361,7 @@ export const useRegisterForm = (options?: { initialEmail?: string; initialToken?
     setFormData((prev) => ({
       ...prev,
       address: {
-        title: "Home",
+        title: "Business",
         fullName: fullName || prev.address.fullName,
         phoneNumber: prev.phoneNumber,
         country: parsedAddress.country,
