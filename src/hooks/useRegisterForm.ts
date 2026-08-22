@@ -1,11 +1,16 @@
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { z } from "zod"
 import { showToast } from "@/components/ui/Toast"
+import type { InviteRole } from "@/features/register/types"
 import { authAPIDirect as authAPI, type CompanyPayload, type RegisterPayload } from "@/lib/api/auth-direct"
 import type { ParsedAddress } from "@/lib/utils/google-maps"
 import { normalizePhoneNumber } from "@/lib/utils/phone-number"
 import { useAuthStore } from "@/stores/authStore"
+
+const PASSWORD_COMPLEXITY_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d\s]).+$/
+const PASSWORD_COMPLEXITY_MESSAGE =
+  "Password must contain an uppercase letter, a lowercase letter, a number and a special character"
 
 const VERIFY_EMAIL_AUTLOGIN_KEY = "verify_email_autologin_credentials"
 
@@ -135,17 +140,25 @@ const mapZodErrors = (errors: z.ZodIssue[]) => {
   return fieldErrors
 }
 
-const tokenSignupSchema = z
+const inviteBaseFields = {
+  name: z.string().trim().min(1, "First name is required"),
+  surname: z.string().trim().min(1, "Last name is required"),
+  phoneNumber: z
+    .string()
+    .trim()
+    .min(1, "Phone number is required")
+    .refine((value) => /^\d{10}$/.test(value.replace(/\s/g, "")), "Please enter a valid 10-digit phone number"),
+  password: z
+    .string()
+    .min(1, "Password is required")
+    .min(6, "Password must be at least 6 characters")
+    .regex(PASSWORD_COMPLEXITY_REGEX, PASSWORD_COMPLEXITY_MESSAGE),
+  confirmPassword: z.string().min(1, "Confirm password is required"),
+}
+
+const ownerInviteSchema = z
   .object({
-    name: z.string().trim().min(1, "First name is required"),
-    surname: z.string().trim().min(1, "Last name is required"),
-    phoneNumber: z
-      .string()
-      .trim()
-      .min(1, "Phone number is required")
-      .refine((value) => /^\d{10}$/.test(value.replace(/\s/g, "")), "Please enter a valid 10-digit phone number"),
-    password: z.string().min(1, "Password is required").min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string().min(1, "Confirm password is required"),
+    ...inviteBaseFields,
     address: z.object({
       postalCode: z.string().min(1, "Zip code is required"),
       placeId: z.string().min(1, "Address is required"),
@@ -162,7 +175,20 @@ const tokenSignupSchema = z
     path: ["confirmPassword"],
   })
 
-export const useRegisterForm = (options?: { initialEmail?: string; initialToken?: string }) => {
+const teamMemberInviteSchema = z
+  .object({
+    ...inviteBaseFields,
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  })
+
+export const useRegisterForm = (options?: {
+  initialEmail?: string
+  initialToken?: string
+  initialRole?: InviteRole
+}) => {
   const router = useRouter()
   const { setError } = useAuthStore()
   const isTokenFlow = !!options?.initialToken
@@ -175,6 +201,41 @@ export const useRegisterForm = (options?: { initialEmail?: string; initialToken?
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<ErrorMap>({})
   const [submitErrorToken, setSubmitErrorToken] = useState(0)
+  // The invite role is not user-selectable: it is implied by the link the invitee arrived from.
+  // Admin invites land on /register (company owner), company invites on /vendor-manager-add (team member).
+  const inviteRole: InviteRole = options?.initialRole ?? "OWNER"
+  const [tokenStatus, setTokenStatus] = useState<"idle" | "checking" | "valid" | "invalid">("idle")
+  const [tokenErrorMessage, setTokenErrorMessage] = useState<string | undefined>(undefined)
+
+  const initialToken = options?.initialToken
+
+  useEffect(() => {
+    if (!initialToken) {
+      return
+    }
+
+    let cancelled = false
+    setTokenStatus("checking")
+
+    authAPI
+      .validateSignupToken(initialToken)
+      .then(() => {
+        if (!cancelled) {
+          setTokenStatus("valid")
+        }
+      })
+      .catch(() => {
+        if (cancelled) return
+        setTokenErrorMessage(
+          "This invitation link is no longer valid. Please ask the person who invited you for a new one.",
+        )
+        setTokenStatus("invalid")
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [initialToken])
 
   const clearError = (key: string) => {
     if (!errors[key]) return
@@ -186,7 +247,7 @@ export const useRegisterForm = (options?: { initialEmail?: string; initialToken?
   }
 
   const validateForm = () => {
-    const schema = isTokenFlow ? tokenSignupSchema : registerSchema
+    const schema = isTokenFlow ? (inviteRole === "OWNER" ? ownerInviteSchema : teamMemberInviteSchema) : registerSchema
     const result = schema.safeParse({ ...formData, confirmPassword })
 
     if (result.success) {
@@ -210,20 +271,30 @@ export const useRegisterForm = (options?: { initialEmail?: string; initialToken?
 
     try {
       if (isTokenFlow) {
-        const fullName = `${formData.name} ${formData.surname}`.trim()
-        await authAPI.completeVendorSignup({
-          token: options!.initialToken!,
-          name: formData.name,
-          surname: formData.surname,
-          phoneNumber: normalizePhoneNumber(formData.phoneNumber),
-          password: formData.password,
-          address: {
-            ...formData.address,
-            fullName: fullName || formData.address.fullName,
+        if (inviteRole === "OWNER") {
+          const fullName = `${formData.name} ${formData.surname}`.trim()
+          await authAPI.completeVendorInviteRegister({
+            token: options?.initialToken ?? "",
+            name: formData.name,
+            surname: formData.surname,
             phoneNumber: normalizePhoneNumber(formData.phoneNumber),
-          },
-          company: formData.company,
-        })
+            password: formData.password,
+            address: {
+              ...formData.address,
+              fullName: fullName || formData.address.fullName,
+              phoneNumber: normalizePhoneNumber(formData.phoneNumber),
+            },
+            company: formData.company,
+          })
+        } else {
+          await authAPI.completeVendorManagerAdd({
+            token: options?.initialToken ?? "",
+            name: formData.name,
+            surname: formData.surname,
+            phoneNumber: normalizePhoneNumber(formData.phoneNumber),
+            password: formData.password,
+          })
+        }
         showToast.love("Welcome to DentzPro!", "Thank you for registering with us — we're thrilled to have you!")
         router.push(`/login?email=${encodeURIComponent(formData.email)}`)
         return
@@ -253,6 +324,44 @@ export const useRegisterForm = (options?: { initialEmail?: string; initialToken?
     } catch (error: unknown) {
       const err = error as { message?: string; data?: unknown }
       const errorData = err.data
+
+      if (isTokenFlow && err.message) {
+        if (err.message.includes("This invitation is for company managers")) {
+          setErrors({
+            submit:
+              "This invitation is for joining an existing company, but this page sets up a new one. Please open the link from your invitation email, or ask the person who invited you to resend it.",
+          })
+          setSubmitErrorToken((token) => token + 1)
+          return
+        }
+
+        if (err.message.includes("Vendor owners cannot complete manager registration")) {
+          setErrors({
+            submit:
+              "This invitation is for setting up a new company. Please open the link from your invitation email, or ask the person who invited you to resend it.",
+          })
+          setSubmitErrorToken((token) => token + 1)
+          return
+        }
+
+        if (err.message.includes("Company name already exists")) {
+          setErrors({ companyName: err.message })
+          return
+        }
+
+        if (
+          err.message.includes("Invalid signup token") ||
+          err.message.includes("already been used") ||
+          err.message.includes("is expired")
+        ) {
+          setTokenErrorMessage(
+            "This invitation link is no longer valid. Please ask the person who invited you for a new one.",
+          )
+          setTokenStatus("invalid")
+          return
+        }
+      }
+
       const knownFieldKeys = [
         "name",
         "surname",
@@ -349,7 +458,15 @@ export const useRegisterForm = (options?: { initialEmail?: string; initialToken?
         [field]: value,
       },
     }))
-    clearError(field === "name" ? "companyName" : field === "email" ? "companyEmail" : field === "phoneNumber" ? "companyPhoneNumber" : field)
+    clearError(
+      field === "name"
+        ? "companyName"
+        : field === "email"
+          ? "companyEmail"
+          : field === "phoneNumber"
+            ? "companyPhoneNumber"
+            : field,
+    )
     clearError("submit")
   }
 
@@ -413,6 +530,9 @@ export const useRegisterForm = (options?: { initialEmail?: string; initialToken?
     formData,
     isLoading,
     submitErrorToken,
+    inviteRole,
+    tokenStatus,
+    tokenErrorMessage,
     handleAddressFieldChange,
     handleAddressSelect,
     handleChange,
