@@ -65,7 +65,15 @@ const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }:
         </span>
       </td>
       <td className="px-6 py-4 text-center">
-        <div className="text-sm font-medium text-text-primary">{supplier.shipping}</div>
+        <div className="flex flex-col items-center gap-0.5">
+          <div className="text-xs text-text-muted">
+            Shipping: <span className="font-medium text-text-primary">{supplier.shippingFee}</span>
+          </div>
+          <div className="text-xs text-text-muted">
+            Heavy: <span className="font-medium text-text-primary">{supplier.heavyShippingFee}</span>
+          </div>
+          <div className="text-sm font-semibold text-brand">Total: {supplier.shipping}</div>
+        </div>
       </td>
       <td className="px-6 py-4">
         <div className="flex flex-col items-center justify-center">

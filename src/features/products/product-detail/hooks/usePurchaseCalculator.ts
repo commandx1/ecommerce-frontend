@@ -32,6 +32,8 @@ interface PurchaseCalculatorInput {
   warrantyOptions: WarrantyOption[]
   orderSummary: OrderSummary
   selectedSupplierPrice?: string
+  selectedSupplierShippingFee?: string
+  selectedSupplierHeavyShippingFee?: string
   stockCount: number
 }
 
@@ -67,6 +69,8 @@ export const usePurchaseCalculator = ({
   warrantyOptions,
   orderSummary,
   selectedSupplierPrice,
+  selectedSupplierShippingFee,
+  selectedSupplierHeavyShippingFee,
   stockCount,
 }: PurchaseCalculatorInput) => {
   const defaultWarranty = useMemo(() => {
@@ -98,8 +102,13 @@ export const usePurchaseCalculator = ({
     return parsePrice(selected?.price || orderSummary.warranty)
   }, [orderSummary.warranty, selectedWarranty, warrantyOptions])
 
-  const shippingUnitPrice = parsePrice(orderSummary.shipping)
-  const shippingPrice = shippingUnitPrice * quantity
+  const shippingFeeUnitPrice = selectedSupplierShippingFee
+    ? parsePrice(selectedSupplierShippingFee)
+    : parsePrice(orderSummary.shipping)
+  const heavyShippingFeeUnitPrice = selectedSupplierHeavyShippingFee ? parsePrice(selectedSupplierHeavyShippingFee) : 0
+  const shippingFeePrice = shippingFeeUnitPrice * quantity
+  const heavyShippingFeePrice = heavyShippingFeeUnitPrice * quantity
+  const shippingPrice = shippingFeePrice + heavyShippingFeePrice
   const productTotal = unitPrice * quantity
   const subtotal = productTotal + warrantyPrice
   const tax = subtotal * 0.1
@@ -113,6 +122,8 @@ export const usePurchaseCalculator = ({
     activeTier,
     unitPrice,
     warrantyPrice,
+    shippingFeePrice,
+    heavyShippingFeePrice,
     shippingPrice,
     productTotal,
     subtotal,

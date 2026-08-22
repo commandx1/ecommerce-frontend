@@ -42,6 +42,18 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
         </div>
         <div className="hidden h-6 w-px bg-border-soft md:block" />
         <span className="text-text-secondary">SKU: {product.sku}</span>
+        {product.brand ? (
+          <>
+            <div className="hidden h-6 w-px bg-border-soft md:block" />
+            <span className="text-text-secondary">Brand: {product.brand}</span>
+          </>
+        ) : null}
+        {product.manufacturerCode ? (
+          <>
+            <div className="hidden h-6 w-px bg-border-soft md:block" />
+            <span className="text-text-secondary">Manufacturer Code: {product.manufacturerCode}</span>
+          </>
+        ) : null}
       </div>
 
       <div className="rounded-3xl border border-border-soft bg-surface p-5">
@@ -64,8 +76,17 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
             </div>
           </div>
           {selectedSupplier ? (
-            <div className="rounded-full border border-border-soft bg-surface-elevated px-3 py-1.5 text-sm text-text-secondary">
-              Shipping: <span className="font-semibold text-text-primary">{selectedSupplier.shipping}</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="rounded-full border border-border-soft bg-surface-elevated px-3 py-1.5 text-sm text-text-secondary">
+                Shipping: <span className="font-semibold text-text-primary">{selectedSupplier.shippingFee}</span>
+              </div>
+              <div className="rounded-full border border-border-soft bg-surface-elevated px-3 py-1.5 text-sm text-text-secondary">
+                Heavy shipping:{" "}
+                <span className="font-semibold text-text-primary">{selectedSupplier.heavyShippingFee}</span>
+              </div>
+              <div className="rounded-full border border-brand/30 bg-brand/10 px-3 py-1.5 text-sm text-text-secondary">
+                Total shipping: <span className="font-semibold text-brand">{selectedSupplier.shipping}</span>
+              </div>
             </div>
           ) : null}
         </div>

@@ -144,6 +144,8 @@ export interface SupplierViewModel {
   stockCount: number
   shipping: string
   shippingNote: string
+  shippingFee: string
+  heavyShippingFee: string
   distance?: string
   distanceTime?: string
   rating: number
@@ -159,16 +161,13 @@ export interface ProductHeroViewModel {
   rating: number
   reviewCount: number
   sku: string
+  brand?: string
+  manufacturerCode?: string
   features: string[]
   mainImage: string
   thumbnailImages: string[]
   badge?: string
   dentalLicenseRequired: boolean
-}
-
-export interface TechnicalSpecItem {
-  label: string
-  value: string
 }
 
 export interface ProductDescriptionContent {

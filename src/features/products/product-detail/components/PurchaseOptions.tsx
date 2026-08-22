@@ -74,13 +74,6 @@ const PurchaseOptions = ({
   }, [bestPriceVendorUserProductId, selectedVendorId, suppliers])
   const stockCount = selectedSupplier?.stockCount ?? 15
   const [isAddingToCart, setIsAddingToCart] = useState(false)
-  const orderSummaryWithSelectedShipping = useMemo(
-    () => ({
-      ...orderSummary,
-      shipping: selectedSupplier?.shipping ?? orderSummary.shipping,
-    }),
-    [orderSummary, selectedSupplier?.shipping],
-  )
 
   const {
     quantity,
@@ -90,6 +83,8 @@ const PurchaseOptions = ({
     activeTier,
     unitPrice,
     warrantyPrice,
+    shippingFeePrice,
+    heavyShippingFeePrice,
     shippingPrice,
     productTotal,
     subtotal,
@@ -98,8 +93,10 @@ const PurchaseOptions = ({
   } = usePurchaseCalculator({
     bulkPricing,
     warrantyOptions,
-    orderSummary: orderSummaryWithSelectedShipping,
+    orderSummary,
     selectedSupplierPrice: selectedSupplier?.price,
+    selectedSupplierShippingFee: selectedSupplier?.shippingFee,
+    selectedSupplierHeavyShippingFee: selectedSupplier?.heavyShippingFee,
     stockCount,
   })
 
@@ -169,6 +166,8 @@ const PurchaseOptions = ({
                 unitPrice={unitPrice}
                 productTotal={productTotal}
                 warrantyPrice={warrantyPrice}
+                shippingFeePrice={shippingFeePrice}
+                heavyShippingFeePrice={heavyShippingFeePrice}
                 shippingPrice={shippingPrice}
                 subtotal={subtotal}
                 tax={tax}

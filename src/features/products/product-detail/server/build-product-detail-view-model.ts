@@ -4,7 +4,6 @@ import {
   buildFeatures,
   buildPhotoPaths,
   buildSuppliers,
-  buildTechnicalSpecs,
   buildThumbnailImages,
   resolveBestPriceVendorUserProductId,
   resolveMainImage,
@@ -25,13 +24,14 @@ export interface ProductDetailPageViewModel {
     rating: number
     reviewCount: number
     sku: string
+    brand?: string
+    manufacturerCode?: string
     features: string[]
     mainImage: string
     thumbnailImages: string[]
     badge: string
     dentalLicenseRequired: boolean
   }
-  technicalSpecs: ReturnType<typeof buildTechnicalSpecs>
   description: ReturnType<typeof buildDescription>
   suppliers: ReturnType<typeof buildSuppliers>
   bestPriceVendorUserProductId: string | null
@@ -59,7 +59,6 @@ export function buildProductDetailViewModel(
   const photoPaths = buildPhotoPaths(product)
   const mainImage = resolveMainImage(product, photoPaths)
   const features = buildFeatures(product)
-  const technicalSpecs = buildTechnicalSpecs(product)
   const description = buildDescription(product, features)
   const bestPriceVendorUserProductId = resolveBestPriceVendorUserProductId(product, userProducts)
   const suppliers = buildSuppliers(userProducts, bestPriceVendorUserProductId)
@@ -80,13 +79,14 @@ export function buildProductDetailViewModel(
       rating: product.overallStar || 0,
       reviewCount: product.reviewCount || 0,
       sku: product.id.substring(0, 8).toUpperCase(),
+      brand: product.brand,
+      manufacturerCode: product.manufacturerCode,
       features,
       mainImage,
       thumbnailImages,
       badge: "Available",
       dentalLicenseRequired: product.dentalLicenseRequired === "Yes",
     },
-    technicalSpecs,
     description,
     suppliers,
     bestPriceVendorUserProductId,

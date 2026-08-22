@@ -10,6 +10,8 @@ interface OrderSummaryCardProps {
   unitPrice: number
   productTotal: number
   warrantyPrice?: number
+  shippingFeePrice: number
+  heavyShippingFeePrice: number
   shippingPrice: number
   subtotal: number
   tax: number
@@ -22,6 +24,8 @@ const OrderSummaryCard = ({
   unitPrice,
   productTotal,
   //warrantyPrice,
+  shippingFeePrice,
+  heavyShippingFeePrice,
   shippingPrice,
   subtotal,
   tax,
@@ -48,11 +52,25 @@ const OrderSummaryCard = ({
           <span className="text-text-secondary">Extended Warranty</span>
           <span className="font-semibold">{formatCurrency(warrantyPrice)}</span>
         </div> */}
-        <div className="flex justify-between">
-          <span className="text-text-secondary">Shipping</span>
-          <span className="font-semibold text-success">
-            {shippingPrice === 0 ? "Free" : formatCurrency(shippingPrice)}
-          </span>
+        <div className="space-y-1.5 rounded-2xl bg-surface-muted/60 px-3 py-2.5">
+          <div className="flex justify-between text-sm">
+            <span className="text-text-secondary">Shipping</span>
+            <span className="font-medium text-text-primary">
+              {shippingFeePrice === 0 ? "Free" : formatCurrency(shippingFeePrice)}
+            </span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-text-secondary">Heavy shipping surcharge</span>
+            <span className="font-medium text-text-primary">
+              {heavyShippingFeePrice === 0 ? "Free" : formatCurrency(heavyShippingFeePrice)}
+            </span>
+          </div>
+          <div className="flex justify-between border-t border-border-soft pt-1.5">
+            <span className="font-medium text-text-secondary">Total shipping</span>
+            <span className="font-semibold text-success">
+              {shippingPrice === 0 ? "Free" : formatCurrency(shippingPrice)}
+            </span>
+          </div>
         </div>
         <div className="border-t border-border-soft pt-3">
           <div className="flex justify-between">

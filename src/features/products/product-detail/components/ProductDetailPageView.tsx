@@ -3,7 +3,6 @@ import ProductDetailCommunitySection from "./ProductDetailCommunitySection"
 import ProductDetailHeroSection from "./ProductDetailHeroSection"
 import ProductDetailPurchaseSection from "./ProductDetailPurchaseSection"
 import ProductDetailRecommendationsSection from "./ProductDetailRecommendationsSection"
-import ProductDetailTechnicalSpecsSection from "./ProductDetailTechnicalSpecsSection"
 
 interface ProductDetailPageViewProps {
   viewModel: ProductDetailPageViewModel
@@ -13,7 +12,6 @@ export default function ProductDetailPageView({ viewModel }: ProductDetailPageVi
   return (
     <>
       <ProductDetailHeroSection viewModel={viewModel} />
-      <ProductDetailTechnicalSpecsSection viewModel={viewModel} />
       <ProductDetailPurchaseSection viewModel={viewModel} />
       <ProductDetailCommunitySection viewModel={viewModel} />
       <ProductDetailRecommendationsSection relatedProductSeed={viewModel.relatedProductSeed} />
