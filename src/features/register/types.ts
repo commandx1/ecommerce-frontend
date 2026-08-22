@@ -20,3 +20,5 @@ export interface RegisterFormErrors {
 export type RegisterFormData = RegisterPayload
 export type RegisterAddress = RegisterPayload["address"]
 export type { ParsedAddress }
+
+export type InviteRole = "OWNER" | "TEAM_MEMBER"
