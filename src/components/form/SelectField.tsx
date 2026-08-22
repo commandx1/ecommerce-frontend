@@ -28,7 +28,7 @@ export const SelectField = ({
   children,
 }: SelectFieldProps) => {
   const normalizedOptions = Children.toArray(children).flatMap((child) => {
-    if (!isValidElement(child) || child.type !== "option") {
+    if (!isValidElement<ComponentProps<"option">>(child) || child.type !== "option") {
       return []
     }
 
