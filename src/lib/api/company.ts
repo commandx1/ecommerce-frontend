@@ -41,3 +41,20 @@ export async function updateMyCompany(payload: UpdateCompanyPayload): Promise<Co
     fallbackMessage: "Failed to update company information",
   })
 }
+
+export type InvitableCompanyRole = Exclude<CompanyRole, "OWNER">
+
+export interface InviteCompanyUserPayload {
+  email: string
+  companyRole: InvitableCompanyRole
+}
+
+export async function inviteCompanyUser(payload: InviteCompanyUserPayload): Promise<void> {
+  await apiRequest.requestJson<void, InviteCompanyUserPayload>({
+    client: "backend",
+    method: "POST",
+    url: "/mail/invite-company-user",
+    data: payload,
+    fallbackMessage: "Failed to send invitation",
+  })
+}

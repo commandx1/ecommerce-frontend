@@ -33,6 +33,16 @@ export interface CompanyPayload {
   active: boolean
 }
 
+export interface VendorInviteRegisterPayload {
+  token: string
+  name: string
+  surname: string
+  phoneNumber: string
+  password: string
+  company: CompanyPayload
+  address: AddressPayload
+}
+
 export interface RegisterPayload {
   name: string
   surname: string
@@ -123,14 +133,12 @@ class AuthAPIDirect {
     })
   }
 
-  async completeVendorSignup(payload: {
+  async completeVendorManagerAdd(payload: {
     token: string
     name: string
     surname: string
     phoneNumber: string
     password: string
-    address: AddressPayload
-    company: CompanyPayload
   }) {
     return apiRequest.requestJson({
       client: "backend",
@@ -138,6 +146,26 @@ class AuthAPIDirect {
       url: "/users/vendor-manager-add",
       data: payload,
       fallbackMessage: "Failed to complete signup",
+    })
+  }
+
+  async completeVendorInviteRegister(payload: VendorInviteRegisterPayload) {
+    return apiRequest.requestJson({
+      client: "backend",
+      method: "POST",
+      url: "/users/register/vendor/invite",
+      data: payload,
+      fallbackMessage: "Failed to complete registration",
+    })
+  }
+
+  async validateSignupToken(token: string) {
+    return apiRequest.requestJson<void>({
+      client: "backend",
+      method: "GET",
+      url: "/users/signup-token/validate",
+      params: { token },
+      fallbackMessage: "Failed to validate signup token",
     })
   }
 

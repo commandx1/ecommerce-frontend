@@ -328,6 +328,8 @@ export interface UserProduct {
   subCategoriesId: string
   productName: string
   price: number
+  // Price before the current discount was applied (backend UserProductResponse.oldPrice)
+  oldPrice?: number
   discount: number
   stock: number
   active: boolean
@@ -965,6 +967,43 @@ class ProductsAPI {
    * Filter user products
    * GET /api/user-products/filter?type=TOTAL&price=true&stock=false&page=0&size=10
    */
+  /**
+   * Apply the same discount percentage to several of the vendor's products
+   * POST /api/user-products/bulk-discount
+   */
+  async bulkDiscount(
+    token: string,
+    payload: { userProductIds: string[]; discount: number },
+    signal?: AbortSignal,
+  ): Promise<UserProduct[]> {
+    return apiRequest.requestJson<UserProduct[]>({
+      client: "app",
+      method: "POST",
+      url: `${BASE_URL}/api/user-products/bulk-discount`,
+      headers: this.getAuthHeaders(token),
+      withCredentials: true,
+      data: payload,
+      signal,
+      fallbackMessage: "Failed to apply bulk discount",
+    })
+  }
+
+  /**
+   * Distinct brands of the authenticated vendor's own products
+   * GET /api/user-products/brands
+   */
+  async getUserProductBrands(token: string, signal?: AbortSignal): Promise<string[]> {
+    return apiRequest.requestJson<string[]>({
+      client: "app",
+      method: "GET",
+      url: `${BASE_URL}/api/user-products/brands`,
+      headers: this.getAuthHeaders(token),
+      withCredentials: true,
+      signal,
+      fallbackMessage: "Failed to fetch vendor brands",
+    })
+  }
+
   async filterUserProducts(
     token: string,
     type: "ACTIVE" | "INACTIVE" | "OUT_OF_STOCK" | "LOW_STOCK" | "TOTAL",
@@ -975,6 +1014,7 @@ class ProductsAPI {
     search?: string,
     howManySoldDay?: number,
     userProductId?: string,
+    brand?: string,
     signal?: AbortSignal,
   ): Promise<UserProductsFilterResponse> {
     const response = await apiRequest.requestResponse<unknown>({
@@ -992,6 +1032,7 @@ class ProductsAPI {
         ...(search !== undefined ? { search: search || "" } : {}),
         ...(howManySoldDay !== undefined ? { howManySoldDay } : {}),
         ...(userProductId !== undefined ? { userProductId } : {}),
+        ...(brand ? { brand } : {}),
       },
       signal,
       validateStatus: () => true,
