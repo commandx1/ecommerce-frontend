@@ -14,6 +14,13 @@ import { cn } from "@/lib/utils"
 import type { ParsedAddress } from "@/lib/utils/google-maps"
 import { useAuthStore } from "@/stores/authStore"
 
+/** Register-time address parts that the summary line above doesn't always spell out. */
+const formatAddressDetails = (address: Address) =>
+  [address.district, address.city, address.state, address.postalCode, address.country]
+    .map((part) => part?.trim())
+    .filter((part, index, parts) => Boolean(part) && parts.indexOf(part) === index)
+    .join(" · ")
+
 interface AddressManagementSharedProps {
   /** Renders as a compact card section (for embedding inside another settings page) instead of a standalone page. */
   embedded?: boolean
@@ -296,6 +303,7 @@ export default function AddressManagementShared({ embedded = false }: AddressMan
             <div className="mb-6 space-y-1 pl-[3.25rem] text-sm text-text-muted">
               <p>{address.formattedAddress || address.addressLine}</p>
               <p>{address.phoneNumber}</p>
+              {formatAddressDetails(address) && <p>{formatAddressDetails(address)}</p>}
             </div>
             <div className="flex items-center gap-4 border-t border-border-soft pt-4">
               <Button

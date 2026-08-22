@@ -1,9 +1,28 @@
 "use client"
 
-import { BadgeCheck, Fingerprint, Lock, Mail, MapPinned, Phone, Save, Shield, Sparkles, User } from "lucide-react"
+import {
+  AlertTriangle,
+  BadgeCheck,
+  Building2,
+  Check,
+  Copy,
+  CreditCard,
+  Fingerprint,
+  Lock,
+  Mail,
+  MapPinned,
+  Phone,
+  Save,
+  Shield,
+  ShieldAlert,
+  Sparkles,
+  User,
+} from "lucide-react"
 import type { ReactNode } from "react"
 import { useEffect, useId, useState } from "react"
+import CompanyInfoCard from "@/components/dashboard-shared/CompanyInfoCard"
 import LicenseManagementCard from "@/components/dashboard-shared/LicenseManagementCard"
+import StripeConnectCard from "@/components/dashboard-shared/StripeConnectCard"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -36,6 +55,8 @@ export default function AccountSettingsShared({
   const phoneId = `${idBase}-phone`
   const twoFactorId = `${idBase}-two-factor`
   const profileSectionId = `${idBase}-profile-section`
+  const companySectionId = `${idBase}-company-section`
+  const payoutsSectionId = `${idBase}-payouts-section`
   const securitySectionId = `${idBase}-security-section`
   const extraSectionId = `${idBase}-extra-section`
 
@@ -49,6 +70,11 @@ export default function AccountSettingsShared({
 
   const [isUpdating, setIsUpdating] = useState(false)
   const [isUpdating2FA, setIsUpdating2FA] = useState(false)
+  const [idCopied, setIdCopied] = useState(false)
+
+  const isEmailVerified = Boolean(user?.emailConfirmed)
+  const lockedUntil = user?.lockoutEnd ? new Date(user.lockoutEnd) : null
+  const isLockedOut = lockedUntil !== null && lockedUntil.getTime() > Date.now()
   const memberSince = user?.createdDate
     ? new Date(user.createdDate).toLocaleDateString("en-US", {
         month: "short",
@@ -80,6 +106,18 @@ export default function AccountSettingsShared({
     const updatedUser = await updateMe(accessToken, newData)
     setUser(updatedUser)
     return updatedUser
+  }
+
+  const handleCopyAccountId = async () => {
+    if (!user?.id) return
+
+    try {
+      await navigator.clipboard.writeText(user.id)
+      setIdCopied(true)
+      setTimeout(() => setIdCopied(false), 2000)
+    } catch {
+      showToast.error("Could not copy the account ID.")
+    }
   }
 
   const handleUpdate = async (e: React.FormEvent) => {
@@ -135,6 +173,17 @@ export default function AccountSettingsShared({
             <span className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface/80 px-3 py-1.5 text-xs font-medium text-text-secondary backdrop-blur-sm">
               Member since {memberSince}
             </span>
+            {user?.id && (
+              <button
+                type="button"
+                onClick={handleCopyAccountId}
+                title="Copy your full account ID"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface/80 px-3 py-1.5 font-mono text-xs font-medium text-text-secondary backdrop-blur-sm transition-colors hover:border-brand/40 hover:text-brand"
+              >
+                {idCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                {idCopied ? "Copied" : `ID ${user.id.slice(0, 8)}`}
+              </button>
+            )}
             <span
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold",
@@ -147,6 +196,26 @@ export default function AccountSettingsShared({
           </div>
         </div>
       </div>
+
+      {isLockedOut && lockedUntil && (
+        <div className="fade-up flex items-start gap-3 rounded-2xl border border-danger/30 bg-danger/10 p-4">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-danger" />
+          <div>
+            <h2 className="font-medium text-text-primary">Account temporarily locked</h2>
+            <p className="text-sm text-text-secondary">
+              Too many failed sign-in attempts. Access is restored on{" "}
+              {lockedUntil.toLocaleString("en-US", {
+                month: "short",
+                day: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+              .
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Quick nav */}
       <nav
@@ -161,6 +230,24 @@ export default function AccountSettingsShared({
           <User className="h-3.5 w-3.5" />
           Profile
         </a>
+        {isVendor && (
+          <a
+            href={`#${companySectionId}`}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface-elevated px-4 py-1.5 text-xs font-semibold text-text-secondary shadow-soft transition-colors hover:border-brand/40 hover:text-brand"
+          >
+            <Building2 className="h-3.5 w-3.5" />
+            Company
+          </a>
+        )}
+        {isVendor && (
+          <a
+            href={`#${payoutsSectionId}`}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface-elevated px-4 py-1.5 text-xs font-semibold text-text-secondary shadow-soft transition-colors hover:border-brand/40 hover:text-brand"
+          >
+            <CreditCard className="h-3.5 w-3.5" />
+            Payouts
+          </a>
+        )}
         <a
           href={`#${securitySectionId}`}
           className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface-elevated px-4 py-1.5 text-xs font-semibold text-text-secondary shadow-soft transition-colors hover:border-brand/40 hover:text-brand"
@@ -226,9 +313,20 @@ export default function AccountSettingsShared({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor={emailId} className="text-xs font-semibold uppercase tracking-wide text-text-muted">
-                  Email Address
-                </Label>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Label htmlFor={emailId} className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                    Email Address
+                  </Label>
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
+                      isEmailVerified ? "bg-success/10 text-success" : "bg-warning/10 text-warning",
+                    )}
+                  >
+                    {isEmailVerified ? <BadgeCheck className="h-3.5 w-3.5" /> : <ShieldAlert className="h-3.5 w-3.5" />}
+                    {isEmailVerified ? "Verified" : "Not verified"}
+                  </span>
+                </div>
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
                   <Input
@@ -275,6 +373,18 @@ export default function AccountSettingsShared({
             </div>
           )}
         </div>
+
+        {isVendor && (
+          <div id={companySectionId} className="fade-up scroll-mt-24" style={{ animationDelay: "160ms" }}>
+            <CompanyInfoCard />
+          </div>
+        )}
+
+        {isVendor && (
+          <div id={payoutsSectionId} className="fade-up scroll-mt-24" style={{ animationDelay: "180ms" }}>
+            <StripeConnectCard />
+          </div>
+        )}
 
         {/* Security Section */}
         <div id={securitySectionId} className="scroll-mt-24">
