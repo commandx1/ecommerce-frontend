@@ -31,6 +31,7 @@ interface DataTableProps<TData> {
   minTableWidthClassName?: string
   noRowsText?: string
   onExpandedChange?: OnChangeFn<ExpandedState>
+  onRowClick?: (row: Row<TData>, event: React.MouseEvent<HTMLTableRowElement>) => void
   renderExpandedContent?: (row: Row<TData>) => ReactNode
   tableClassName?: string
 }
@@ -47,6 +48,7 @@ export default function DataTable<TData>({
   minTableWidthClassName = "",
   noRowsText = "No rows found.",
   onExpandedChange,
+  onRowClick,
   renderExpandedContent,
   tableClassName,
 }: DataTableProps<TData>) {
@@ -94,7 +96,10 @@ export default function DataTable<TData>({
                 {table.getVisibleLeafColumns().map((column, colIndex) => {
                   const meta = column.columnDef.meta as DataTableColumnMeta | undefined
                   return (
-                    <td key={`loading-skeleton-cell-${rowIndex}-${column.id}`} className={cn("p-4", meta?.cellClassName)}>
+                    <td
+                      key={`loading-skeleton-cell-${rowIndex}-${column.id}`}
+                      className={cn("p-4", meta?.cellClassName)}
+                    >
                       {lastColumnSkeletonCircle && colIndex === visibleColumnCount - 1 ? (
                         <div className="mx-auto h-7 w-7 animate-pulse rounded-full bg-surface-muted" />
                       ) : (
@@ -126,7 +131,11 @@ export default function DataTable<TData>({
           table.getRowModel().rows.map((row) => {
             return (
               <Fragment key={row.id}>
-                <tr key={row.id} className={cn("border-b border-border-soft", getRowClassName?.(row))}>
+                <tr
+                  key={row.id}
+                  className={cn("border-b border-border-soft", onRowClick && "cursor-pointer", getRowClassName?.(row))}
+                  onClick={onRowClick ? (event) => onRowClick(row, event) : undefined}
+                >
                   {row.getVisibleCells().map((cell) => {
                     const meta = cell.column.columnDef.meta as DataTableColumnMeta | undefined
                     return (
