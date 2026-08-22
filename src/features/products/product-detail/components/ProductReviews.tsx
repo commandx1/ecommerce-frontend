@@ -211,6 +211,9 @@ export default function ProductReviews({
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <div className="font-semibold text-text-primary">{review.username}</div>
+                        {review.vendorDisplayName && (
+                          <div className="text-sm text-text-muted">{review.vendorDisplayName}</div>
+                        )}
                       </div>
                       <div className="text-right">
                         <StarRating rating={review.star} size="sm" className="text-yellow-400 mb-1" />
