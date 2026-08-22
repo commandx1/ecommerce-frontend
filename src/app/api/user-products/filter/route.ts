@@ -1,9 +1,7 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
-import { serverRequest } from "@/lib/api/server-request"
-
-
 import { getAuthorizationHeader } from "@/lib/api/server-auth"
+import { serverRequest } from "@/lib/api/server-request"
 
 // Filter User Products - GET /api/user-products/filter?type=ACTIVE&price=false&page=0&size=10
 export async function GET(request: NextRequest) {
@@ -21,6 +19,7 @@ export async function GET(request: NextRequest) {
     const page = searchParams.get("page") || "0"
     const size = searchParams.get("size") || "10"
     const search = searchParams.get("search")
+    const brand = searchParams.get("brand")
     const howManySoldDay = searchParams.get("howManySoldDay") || "0"
     const sortBy = searchParams.get("sortBy")
     const sortDir = searchParams.get("sortDir")
@@ -46,6 +45,9 @@ export async function GET(request: NextRequest) {
     }
     if (search !== null && search !== "") {
       queryParams.append("search", search)
+    }
+    if (brand !== null && brand !== "") {
+      queryParams.append("brand", brand)
     }
     if (sortBy !== null && sortBy !== "") {
       queryParams.append("sortBy", sortBy)
