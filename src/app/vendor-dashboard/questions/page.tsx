@@ -110,7 +110,7 @@ function QuestionCard({ question, currentUserId, onAnswerCreated, onAnswerUpdate
           <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Question</p>
           <p className="text-sm leading-relaxed text-text-primary">{question.question}</p>
           <p className="text-xs text-text-muted">
-            Asked by <span className="font-medium text-text-secondary">{question.questionerName}</span>
+            Asked by <span className="font-medium text-text-secondary capitalize">{question.questionerName}</span>
           </p>
         </div>
 
@@ -140,7 +140,7 @@ function QuestionCard({ question, currentUserId, onAnswerCreated, onAnswerUpdate
               </div>
               <p className="text-sm leading-relaxed text-text-primary">{existingAnswer.answer}</p>
               <p className="text-xs text-text-muted">
-                By <span className="font-medium text-text-secondary">{existingAnswer.answererName}</span>
+                By <span className="font-medium text-text-secondary capitalize">{existingAnswer.answererName}</span>
                 {existingAnswer.createdDate && <> · {formatRelativeDate(existingAnswer.createdDate)}</>}
               </p>
             </div>
