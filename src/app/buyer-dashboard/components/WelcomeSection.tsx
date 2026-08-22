@@ -1,3 +1,7 @@
+"use client"
+
+import { useAuthStore } from "@/stores/authStore"
+
 const WelcomeSection = () => {
   const today = new Date().toLocaleDateString("en-US", {
     year: "numeric",
@@ -5,12 +9,24 @@ const WelcomeSection = () => {
     day: "numeric",
   })
 
+  const user = useAuthStore((state) => state.user)
+  const capitalize = (value: string) =>
+    value
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((word) => word.charAt(0).toLocaleUpperCase() + word.slice(1).toLocaleLowerCase())
+      .join(" ")
+  const fullName = user ? capitalize(`${user.name} ${user.surname}`) : ""
+  const displayName = fullName || user?.email || ""
+
   return (
     <section id="welcome-section" className="mb-8">
       <div className="home-spotlight rounded-2xl border border-border-soft bg-brand-surface p-8 text-inverse-foreground shadow-panel">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2 text-inverse-foreground">Welcome back, Dr. Johnson!</h1>
+            <h1 className="text-3xl font-bold mb-2 text-inverse-foreground">
+              {displayName ? `Welcome back, ${displayName}!` : "Welcome back!"}
+            </h1>
             <p className="text-lg text-inverse-muted">
               Here&apos;s what&apos;s happening with your dental supply orders
             </p>
