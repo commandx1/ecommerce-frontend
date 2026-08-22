@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import Link from "next/link"
 import { useSearchParams } from "next/navigation"
+import { useEffect, useRef } from "react"
 import { showToast } from "@/components/ui/Toast"
 import AddressSection from "@/features/register/components/AddressSection"
 import CompanyInfoSection from "@/features/register/components/CompanyInfoSection"
@@ -16,11 +17,16 @@ export default function RegisterForm() {
   const searchParams = useSearchParams()
   const initialEmail = searchParams.get("email") ?? undefined
   const initialToken = searchParams.get("token") ?? undefined
+  const initialRole = searchParams.get("role") === "TEAM_MEMBER" ? "TEAM_MEMBER" : undefined
+  const isTokenFlow = !!initialToken
   const { logout, isAuthenticated } = useAuthStore()
   const {
     confirmPassword,
     errors,
     formData,
+    inviteRole,
+    tokenStatus,
+    tokenErrorMessage,
     handleAddressFieldChange,
     handleAddressSelect,
     handleChange,
@@ -32,7 +38,9 @@ export default function RegisterForm() {
     handleSubmit,
     isLoading,
     submitErrorToken,
-  } = useRegisterForm({ initialEmail, initialToken })
+  } = useRegisterForm({ initialEmail, initialToken, initialRole })
+
+  const showCompanyAndAddress = !isTokenFlow || inviteRole === "OWNER"
 
   const lastSubmitErrorTokenRef = useRef<number | null>(null)
 
@@ -49,6 +57,33 @@ export default function RegisterForm() {
     }
   }, [errors.submit, submitErrorToken])
 
+  if (isTokenFlow && tokenStatus === "checking") {
+    return (
+      <div className="p-6 sm:p-8 lg:p-12">
+        <RegisterFormIntro />
+        <p className="text-text-secondary">Checking your invitation link…</p>
+      </div>
+    )
+  }
+
+  if (isTokenFlow && tokenStatus === "invalid") {
+    return (
+      <div className="p-6 sm:p-8 lg:p-12">
+        <RegisterFormIntro />
+        <p className="text-text-secondary">
+          {tokenErrorMessage ??
+            "This invitation link is no longer valid. Please ask the person who invited you for a new one."}
+        </p>
+        <Link
+          href="/login"
+          className="mt-6 inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-primary-foreground transition-colors hover:bg-brand-strong"
+        >
+          Go to login
+        </Link>
+      </div>
+    )
+  }
+
   return (
     <div className="p-6 sm:p-8 lg:p-12">
       <RegisterFormIntro />
@@ -63,20 +98,24 @@ export default function RegisterForm() {
             emailReadOnly={!!initialToken}
           />
 
-          <CompanyInfoSection
-            company={formData.company}
-            errors={errors}
-            onFieldChange={handleCompanyFieldChange}
-            onPhoneNumberChange={handleCompanyPhoneNumberChange}
-          />
+          {showCompanyAndAddress && (
+            <CompanyInfoSection
+              company={formData.company}
+              errors={errors}
+              onFieldChange={handleCompanyFieldChange}
+              onPhoneNumberChange={handleCompanyPhoneNumberChange}
+            />
+          )}
 
-          <AddressSection
-            address={formData.address}
-            errors={errors}
-            onAddressSelect={handleAddressSelect}
-            onAddressFieldChange={handleAddressFieldChange}
-            onPostalCodeChange={handlePostalCodeChange}
-          />
+          {showCompanyAndAddress && (
+            <AddressSection
+              address={formData.address}
+              errors={errors}
+              onAddressSelect={handleAddressSelect}
+              onAddressFieldChange={handleAddressFieldChange}
+              onPostalCodeChange={handlePostalCodeChange}
+            />
+          )}
 
           <PasswordSection
             password={formData.password}
