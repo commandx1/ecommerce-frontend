@@ -6,6 +6,7 @@ import { DashboardMobileSidebarProvider } from "@/components/layout/DashboardMob
 import { showToast } from "@/components/ui/Toast"
 import { cookieStorage } from "@/lib/storage/cookie-storage"
 import { useAuthStore } from "@/stores/authStore"
+import { CompanyRoleProvider } from "./CompanyRoleContext"
 import VendorDashboardLayoutSkeleton from "./components/VendorDashboardLayoutSkeleton"
 import VendorHeader from "./components/VendorHeader"
 import VendorSidebar from "./components/VendorSidebar"
@@ -111,16 +112,18 @@ export default function VendorDashboardLayout({ children }: { children: React.Re
   }
 
   return (
-    <DashboardMobileSidebarProvider>
-      <div className="flex min-h-screen flex-col bg-canvas">
-        <VendorHeader />
-        <div className="flex flex-1">
-          <VendorSidebar />
-          <main id={mainContentId} className="min-w-0 flex-1 p-4 md:p-8">
-            {children}
-          </main>
+    <CompanyRoleProvider>
+      <DashboardMobileSidebarProvider>
+        <div className="flex min-h-screen flex-col bg-canvas">
+          <VendorHeader />
+          <div className="flex flex-1">
+            <VendorSidebar />
+            <main id={mainContentId} className="min-w-0 flex-1 p-4 md:p-8">
+              {children}
+            </main>
+          </div>
         </div>
-      </div>
-    </DashboardMobileSidebarProvider>
+      </DashboardMobileSidebarProvider>
+    </CompanyRoleProvider>
   )
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import type { CellContext, ColumnDef } from "@tanstack/react-table"
+import type { CellContext, ColumnDef, Row } from "@tanstack/react-table"
 import {
   ArrowDown,
   ArrowUp,
@@ -13,6 +13,7 @@ import {
   FileEdit,
   HelpCircle,
   Loader2,
+  Percent,
   Search,
   Trash2,
   Upload,
@@ -139,6 +140,23 @@ const REVIEW_APPROVED_FILTER_OPTIONS: ReadonlyArray<{ label: string; value: Revi
   { label: "All", value: "ALL" },
 ]
 
+const BRAND_FILTER_ALL = "ALL_BRANDS"
+
+// Discount math on the backend leaves float noise behind (32.219249999999995),
+// which is unreadable once it lands in an <input>. Seed drafts with a rounded
+// value for display...
+const toDecimalInput = (value: number | undefined, fractionDigits = 2) =>
+  String(Number((value ?? 0).toFixed(fractionDigits)))
+
+// ...and send the untouched original back when the user never edited the field,
+// so the rounding alone is not seen as a change. That matters because the backend
+// rejects updating price and discount together and clears the discount whenever
+// the price changes.
+const keepOriginalIfUnchanged = (nextValue: number, originalValue: number | undefined, fractionDigits = 2) => {
+  const original = originalValue ?? 0
+  return Number(original.toFixed(fractionDigits)) === nextValue ? original : nextValue
+}
+
 const VALID_FILTER_TYPES: FilterType[] = ["ALL", "TOTAL", "ACTIVE", "INACTIVE", "OUT_OF_STOCK", "LOW_STOCK"]
 
 export default function ProductsPage() {
@@ -184,6 +202,12 @@ export default function ProductsPage() {
     productName: "",
   })
   const [detailModalProduct, setDetailModalProduct] = useState<ProductWithDetails | null>(null)
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([])
+  const [isBulkDiscountModalOpen, setIsBulkDiscountModalOpen] = useState(false)
+  const [bulkDiscountValue, setBulkDiscountValue] = useState("")
+  const [isApplyingBulkDiscount, setIsApplyingBulkDiscount] = useState(false)
+  const [brandOptions, setBrandOptions] = useState<string[]>([])
+  const [selectedBrand, setSelectedBrand] = useState<string>(BRAND_FILTER_ALL)
 
   // Debounced search query
   const debouncedSearchQuery = useDebounce(searchQuery, 500)
@@ -246,6 +270,7 @@ export default function ProductsPage() {
                 subCategoriesId: item.product.subCategoriesId,
                 productName: up.productName,
                 price: up.price,
+                oldPrice: up.oldPrice,
                 discount: up.discount,
                 stock: up.stock,
                 active: up.active,
@@ -271,6 +296,7 @@ export default function ProductsPage() {
             debouncedSearchQuery,
             howManySoldDay,
             selectedUserProductId ?? undefined,
+            selectedBrand === BRAND_FILTER_ALL ? undefined : selectedBrand,
             controller.signal,
           )
 
@@ -388,6 +414,86 @@ export default function ProductsPage() {
     setCurrentPage(0) // Reset to first page when search changes
   }
 
+  // Handle brand filter change
+  const handleBrandChange = (brand: string) => {
+    setSelectedBrand(brand)
+    setCurrentPage(0) // Reset to first page when brand changes
+  }
+
+  // Row selection is only meaningful for the rows currently on screen, so drop
+  // it whenever the underlying query changes.
+  const clearSelection = () => setSelectedProductIds([])
+
+  // Clicking anywhere on a row toggles its selection, except on the controls
+  // (inline edit inputs, action buttons, links) that live inside the row.
+  const handleRowClick = (row: Row<ProductWithDetails>, event: React.MouseEvent<HTMLTableRowElement>) => {
+    const productId = row.original.id
+
+    // A row being inline-edited is not selectable — clicking around its inputs
+    // should not toggle selection out from under the draft.
+    if (editingProductId === productId) {
+      return
+    }
+
+    const target = event.target as HTMLElement
+    if (target.closest('button, a, input, select, textarea, [role="button"], [role="dialog"]')) {
+      return
+    }
+
+    setSelectedProductIds((prev) =>
+      prev.includes(productId) ? prev.filter((item) => item !== productId) : [...prev, productId],
+    )
+  }
+
+  const handleApplyBulkDiscount = async () => {
+    if (!accessToken || selectedProductIds.length === 0) return
+
+    const discount = Number(bulkDiscountValue)
+    if (!Number.isFinite(discount) || discount < 0 || discount > 100) {
+      showToast.error("Invalid discount", "Discount must be a number between 0 and 100.")
+      return
+    }
+
+    try {
+      setIsApplyingBulkDiscount(true)
+      await productsAPI.bulkDiscount(accessToken, { userProductIds: selectedProductIds, discount })
+
+      showToast.success(
+        "Discount applied",
+        `${discount}% discount applied to ${selectedProductIds.length} product${selectedProductIds.length > 1 ? "s" : ""}.`,
+      )
+      setIsBulkDiscountModalOpen(false)
+      setBulkDiscountValue("")
+      clearSelection()
+      await fetchProducts() // Refresh prices/discounts
+    } catch (error) {
+      console.error("Error applying bulk discount:", error)
+      showToast.error("Bulk discount failed", error instanceof Error ? error.message : "Failed to apply discount")
+    } finally {
+      setIsApplyingBulkDiscount(false)
+    }
+  }
+
+  // Load the vendor's distinct brands for the filter dropdown
+  useEffect(() => {
+    if (!isAuthenticated || !accessToken) return
+
+    const controller = new AbortController()
+
+    productsAPI
+      .getUserProductBrands(accessToken, controller.signal)
+      .then((brands) => {
+        if (controller.signal.aborted) return
+        setBrandOptions(Array.isArray(brands) ? brands.filter(Boolean) : [])
+      })
+      .catch(() => {
+        if (controller.signal.aborted) return
+        setBrandOptions([])
+      })
+
+    return () => controller.abort()
+  }, [isAuthenticated, accessToken])
+
   // Handle view mode change (All Products / Review Queue)
   const handleViewModeChange = (mode: ViewMode) => {
     setViewMode(mode)
@@ -415,6 +521,25 @@ export default function ProductsPage() {
     pageSize,
     currentPage,
     debouncedSearchQuery,
+    selectedBrand,
+    selectedPeriodTab,
+    viewMode,
+    reviewApprovedFilter,
+  ])
+
+  // Selection refers to rows on the current page of the current query,
+  // so any change to the query invalidates it.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <selection is reset on query change only>
+  useEffect(() => {
+    setSelectedProductIds([])
+  }, [
+    selectedFilter,
+    sortField,
+    sortDirection,
+    pageSize,
+    currentPage,
+    debouncedSearchQuery,
+    selectedBrand,
     selectedPeriodTab,
     viewMode,
     reviewApprovedFilter,
@@ -441,6 +566,10 @@ export default function ProductsPage() {
     const isSaving = savingProductId === product.id
     const draftPrice = editingDraft?.price ?? ""
 
+    // A discount rewrites `price` and keeps the pre-discount value in `oldPrice`.
+    const oldPrice = product.oldPrice ?? 0
+    const hasDiscount = (product.discount ?? 0) > 0 && oldPrice > product.price
+
     return (
       <div className="text-sm font-semibold text-brand">
         {isEditing ? (
@@ -453,6 +582,11 @@ export default function ProductsPage() {
             className="h-9 w-28 rounded-lg border border-border-strong bg-surface px-3 text-sm font-semibold text-brand focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
             disabled={isSaving}
           />
+        ) : hasDiscount ? (
+          <div className="flex flex-wrap items-baseline justify-center gap-x-1.5 gap-y-0.5">
+            <span className="text-xs font-medium text-text-muted line-through">${oldPrice.toFixed(2)}</span>
+            <span>${product.price.toFixed(2)}</span>
+          </div>
         ) : (
           `$${product.price.toFixed(2)}`
         )}
@@ -473,6 +607,7 @@ export default function ProductsPage() {
           <input
             type="number"
             min={0}
+            max={100}
             step="0.01"
             value={draftDiscount}
             onChange={(event) => setEditingDraft((prev) => (prev ? { ...prev, discount: event.target.value } : prev))}
@@ -480,7 +615,8 @@ export default function ProductsPage() {
             disabled={isSaving}
           />
         ) : (
-          `$${(product.discount ?? 0).toFixed(2)}`
+          // `discount` is a percentage (0-100) on the backend, not an amount.
+          `${Number((product.discount ?? 0).toFixed(2))}%`
         )}
       </div>
     )
@@ -573,12 +709,12 @@ export default function ProductsPage() {
   const handleInlineEditStart = (product: ProductWithDetails) => {
     setEditingProductId(product.id)
     setEditingDraft({
-      price: String(product.price),
-      discount: String(product.discount ?? 0),
+      price: toDecimalInput(product.price),
+      discount: toDecimalInput(product.discount),
       stock: String(product.stock),
       active: product.active ? "active" : "inactive",
-      shipmentFee: String(product.shipmentFee ?? 0),
-      heavyShippingSurcharge: String(product.heavyShippingSurcharge ?? 0),
+      shipmentFee: toDecimalInput(product.shipmentFee),
+      heavyShippingSurcharge: toDecimalInput(product.heavyShippingSurcharge),
     })
   }
 
@@ -612,13 +748,13 @@ export default function ProductsPage() {
       const updatedProduct = await productsAPI.updateUserProduct(
         product.id,
         {
-          price: nextPrice,
+          price: keepOriginalIfUnchanged(nextPrice, product.price),
           stock: nextStock,
-          discount: nextDiscount,
+          discount: keepOriginalIfUnchanged(nextDiscount, product.discount),
           active: nextActive,
           skuCode: product.skuCode,
-          shipmentFee: nextShipmentFee,
-          heavyShippingSurcharge: nextHeavyShippingSurcharge,
+          shipmentFee: keepOriginalIfUnchanged(nextShipmentFee, product.shipmentFee),
+          heavyShippingSurcharge: keepOriginalIfUnchanged(nextHeavyShippingSurcharge, product.heavyShippingSurcharge),
         },
         accessToken,
       )
@@ -1149,13 +1285,28 @@ export default function ProductsPage() {
             )}
 
             {viewMode === "products" ? (
-              <AnimatedTabs<PeriodTab>
-                value={selectedPeriodTab}
-                options={PERIOD_TABS}
-                onValueChange={setSelectedPeriodTab}
-                disabled={isLoading || isFetching}
-                className="self-start lg:self-auto"
-              />
+              <div className="flex flex-col gap-3 self-start sm:flex-row sm:items-center lg:self-auto">
+                <AnimatedTabs<PeriodTab>
+                  value={selectedPeriodTab}
+                  options={PERIOD_TABS}
+                  onValueChange={setSelectedPeriodTab}
+                  disabled={isLoading || isFetching}
+                  className="self-start sm:self-auto"
+                />
+                <Select value={selectedBrand} onValueChange={handleBrandChange} disabled={brandOptions.length === 0}>
+                  <SelectTrigger className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft sm:w-56">
+                    <SelectValue placeholder="All Brands" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={BRAND_FILTER_ALL}>All Brands</SelectItem>
+                    {brandOptions.map((brand) => (
+                      <SelectItem key={brand} value={brand}>
+                        {brand}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             ) : (
               <Select
                 value={reviewApprovedFilter}
@@ -1184,6 +1335,31 @@ export default function ProductsPage() {
               of <span className="font-semibold text-brand">{totalElements}</span> products
             </div>
           </div>
+
+          {/* Bulk actions — visible only while rows are selected */}
+          {viewMode === "products" && selectedProductIds.length > 0 && (
+            <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-brand/25 bg-brand/8 px-4 py-3 shadow-soft sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-brand px-2 text-xs font-semibold text-primary-foreground">
+                  {selectedProductIds.length}
+                </span>
+                <span className="text-sm font-medium text-text-primary">
+                  product{selectedProductIds.length > 1 ? "s" : ""} selected
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="quiet" onClick={clearSelection} className="rounded-lg px-3">
+                  <X className="h-4 w-4" />
+                  Clear
+                </Button>
+                <Button type="button" onClick={() => setIsBulkDiscountModalOpen(true)} className="rounded-lg px-4">
+                  <Percent className="h-4 w-4" />
+                  Bulk Discount
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div
@@ -1196,8 +1372,15 @@ export default function ProductsPage() {
           <DataTable
             columns={productColumns}
             data={products}
-            getRowClassName={() => "transition-colors hover:bg-surface-muted/80"}
+            getRowClassName={(row) =>
+              cn(
+                "border-l-4 border-l-transparent transition-colors hover:bg-surface-muted/80",
+                selectedProductIds.includes(row.original.id) && "border-l-brand bg-brand/8 hover:bg-brand/12",
+                editingProductId === row.original.id && "cursor-default hover:bg-transparent",
+              )
+            }
             getRowId={(product) => product.id}
+            onRowClick={handleRowClick}
             isLoading={isLoading}
             loadingText="Loading products..."
             minTableWidthClassName="min-w-[1700px]"
@@ -1290,6 +1473,73 @@ export default function ProductsPage() {
       </section>
 
       <ImportDocumentsModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
+
+      <Modal
+        isOpen={isBulkDiscountModalOpen}
+        onClose={() => setIsBulkDiscountModalOpen(false)}
+        title="Bulk Discount"
+        maxWidthClassName="max-w-md"
+        overlayClassName="bg-brand-strong/40 backdrop-blur-[2px]"
+        contentClassName="rounded-2xl border border-border-soft bg-surface-elevated p-0"
+      >
+        <div className="p-6">
+          <div className="mb-4 flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/12 text-brand">
+              <Percent className="h-5 w-5" />
+            </span>
+            <div>
+              <h3 className="text-lg font-semibold text-text-primary">Bulk Discount</h3>
+              <p className="text-sm text-text-secondary">
+                Applies to {selectedProductIds.length} selected product
+                {selectedProductIds.length > 1 ? "s" : ""}.
+              </p>
+            </div>
+          </div>
+
+          <label htmlFor={`${id}-bulk-discount-input`} className="mb-1.5 block text-sm font-medium text-text-primary">
+            Discount (%)
+          </label>
+          <div className="relative">
+            <input
+              id={`${id}-bulk-discount-input`}
+              type="number"
+              min={0}
+              max={100}
+              step={1}
+              inputMode="decimal"
+              value={bulkDiscountValue}
+              onChange={(e) => setBulkDiscountValue(e.target.value)}
+              placeholder="e.g. 12"
+              className="w-full rounded-lg border border-border-strong py-2 pl-4 pr-10 text-text-primary placeholder:text-text-muted focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
+            />
+            <Percent className="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-text-muted" />
+          </div>
+          <p className="mt-2 text-xs text-text-muted">
+            Enter a value between 0 and 100. Use 0 to remove the existing discount.
+          </p>
+
+          <div className="mt-6 flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsBulkDiscountModalOpen(false)}
+              disabled={isApplyingBulkDiscount}
+              className="rounded-lg px-4"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleApplyBulkDiscount}
+              disabled={isApplyingBulkDiscount || bulkDiscountValue.trim() === ""}
+              className="rounded-lg px-4"
+            >
+              {isApplyingBulkDiscount && <Loader2 className="h-4 w-4 animate-spin" />}
+              Apply Discount
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <ConfirmationModal
         isOpen={deleteModal.isOpen}
