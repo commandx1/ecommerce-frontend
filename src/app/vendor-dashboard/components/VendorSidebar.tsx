@@ -1,10 +1,24 @@
 "use client"
 
-import { Box, Megaphone, MessageSquare, Plus, ShoppingBag, Star, Tag, TrendingUp, User, Warehouse } from "lucide-react"
+import {
+  Box,
+  Megaphone,
+  MessageSquare,
+  Plus,
+  ShoppingBag,
+  Star,
+  Tag,
+  TrendingUp,
+  User,
+  Users,
+  Warehouse,
+} from "lucide-react"
+import { useMemo } from "react"
 import CommonDashboardSidebar, {
   type DashboardSidebarGroup,
   type DashboardSidebarQuickAction,
 } from "@/components/layout/DashboardSidebar"
+import { useCompanyRole } from "../CompanyRoleContext"
 
 const VENDOR_QUICK_ACTIONS: DashboardSidebarQuickAction[] = [
   { href: "/vendor-dashboard/products/create", label: "Add Product", icon: Plus, tone: "brand" },
@@ -48,13 +62,39 @@ const VENDOR_NAV_GROUPS: DashboardSidebarGroup[] = [
   },
 ]
 
+const TEAM_NAV_ITEM = {
+  href: "/vendor-dashboard/team",
+  label: "Team",
+  icon: Users,
+  matchMode: "startsWith" as const,
+}
+
 const VendorSidebar = () => {
+  const { companyRole } = useCompanyRole()
+
+  const navGroups = useMemo<DashboardSidebarGroup[]>(() => {
+    if (companyRole !== "OWNER") {
+      return VENDOR_NAV_GROUPS
+    }
+
+    return VENDOR_NAV_GROUPS.map((group) => {
+      const accountIndex = group.items.findIndex((item) => item.href === "/vendor-dashboard/settings")
+      if (accountIndex === -1) {
+        return group
+      }
+
+      const items = [...group.items]
+      items.splice(accountIndex, 0, TEAM_NAV_ITEM)
+      return { ...group, items }
+    })
+  }, [companyRole])
+
   return (
     <CommonDashboardSidebar
       collapseStorageKey="vendor-dashboard-sidebar-collapsed"
       quickActions={VENDOR_QUICK_ACTIONS}
       quickActionSize="compact"
-      groups={VENDOR_NAV_GROUPS}
+      groups={navGroups}
       groupVariant="stacked"
       showGroupTitles={false}
     />
