@@ -7,7 +7,7 @@ import type { SearchProduct } from "@/lib/api/product-search"
 import SearchResultItem from "./SearchResultItem"
 
 interface SearchResultsDropdownProps {
-  dropdownRef: RefObject<HTMLDivElement>
+  dropdownRef: RefObject<HTMLDivElement | null>
   results: SearchProduct[]
   isLoading: boolean
   show: boolean

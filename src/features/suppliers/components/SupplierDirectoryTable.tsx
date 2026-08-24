@@ -55,7 +55,9 @@ export default function SupplierDirectoryTable({ suppliers, onToggleFavorite }: 
                       onClick={() => onToggleFavorite?.(String(supplier.id))}
                       className={cn(
                         "mt-0.5 transition-colors",
-                        supplier.isFavorite ? "text-rose-500 hover:text-rose-600" : "text-text-muted hover:text-rose-500",
+                        supplier.isFavorite
+                          ? "text-rose-500 hover:text-rose-600"
+                          : "text-text-muted hover:text-rose-500",
                       )}
                       aria-label={supplier.isFavorite ? "Remove from favorites" : "Save to favorites"}
                     >

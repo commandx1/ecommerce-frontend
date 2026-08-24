@@ -1,12 +1,10 @@
 import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from "lucide-react"
-
-import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
   return (
     <nav
-      role="navigation"
       aria-label="pagination"
       data-slot="pagination"
       className={cn("mx-auto flex w-full justify-center", className)}
@@ -16,13 +14,7 @@ function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
 }
 
 function PaginationContent({ className, ...props }: React.ComponentProps<"ul">) {
-  return (
-    <ul
-      data-slot="pagination-content"
-      className={cn("flex flex-row items-center gap-1", className)}
-      {...props}
-    />
-  )
+  return <ul data-slot="pagination-content" className={cn("flex flex-row items-center gap-1", className)} {...props} />
 }
 
 function PaginationItem({ ...props }: React.ComponentProps<"li">) {
@@ -39,11 +31,7 @@ function PaginationLink({ className, isActive, ...props }: PaginationLinkProps) 
       aria-current={isActive ? "page" : undefined}
       data-slot="pagination-link"
       data-active={isActive}
-      className={cn(
-        buttonVariants({ variant: isActive ? "outline" : "ghost", size: "icon" }),
-        "rounded-md",
-        className,
-      )}
+      className={cn(buttonVariants({ variant: isActive ? "outline" : "ghost", size: "icon" }), "rounded-md", className)}
       {...props}
     />
   )

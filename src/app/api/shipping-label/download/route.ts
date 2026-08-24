@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
+import { getAuthorizationHeader } from "@/lib/api/server-auth"
 
 const ALLOWED_LABEL_HOSTS = new Set(["deliver.goshippo.com"])
 
@@ -15,6 +16,11 @@ function getSafeFileName(value: string | null): string {
 }
 
 export async function GET(request: NextRequest) {
+  const authHeader = getAuthorizationHeader(request)
+  if (!authHeader) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+  }
+
   const labelUrlValue = request.nextUrl.searchParams.get("url")
 
   if (!labelUrlValue) {
@@ -32,7 +38,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ message: "Shipping label host is not allowed" }, { status: 400 })
   }
 
-  const response = await fetch(labelUrl.toString(), { cache: "no-store" })
+  let response: Response
+  try {
+    response = await fetch(labelUrl.toString(), { cache: "no-store" })
+  } catch {
+    return NextResponse.json({ message: "Shipping label could not be downloaded" }, { status: 502 })
+  }
+
   if (!response.ok || !response.body) {
     return NextResponse.json({ message: "Shipping label could not be downloaded" }, { status: response.status || 502 })
   }

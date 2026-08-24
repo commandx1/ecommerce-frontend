@@ -1,6 +1,6 @@
 import axios, { type InternalAxiosRequestConfig } from "axios"
 import { useAuthStore } from "@/stores/authStore"
-import { type AuthHandledAxiosError, isAuthErrorStatus } from "./auth-error"
+import { type AuthHandledAxiosError, isAuthErrorStatus, isJwtExpired } from "./auth-error"
 
 const apiClient = axios.create({
   baseURL: "/backend-api",
@@ -73,11 +73,32 @@ const resolveAccessToken = (): string | null => {
       const authData = JSON.parse(cookiePart.substring(name.length, cookiePart.length))
       return authData.state?.accessToken || null
     } catch {
-      return null
+      // Cookie present but unparseable (corrupted/partial value) - fall through to the
+      // `localStorage` fallback below instead of returning null and silently dropping the token.
+      break
     }
   }
 
   return localStorage.getItem("token")
+}
+
+/**
+ * A 401 always means the session is gone. A 403 usually does not — it is a business-rule
+ * rejection (missing role, unapproved account) on a live session and must surface inline.
+ *
+ * The backend, however, also answers 403 for an expired JWT: its security filter lets the
+ * ExpiredJwtException escape, and with no AuthenticationEntryPoint configured Spring falls
+ * back to Http403ForbiddenEntryPoint. Without this check such a user stays on the page
+ * retrying forever behind a generic error toast. So a 403 counts as session expiry only when
+ * the token this browser is actually holding is already past its own `exp` — which no
+ * business-rule 403 ever is.
+ */
+const isExpiredSessionResponse = (status: number | undefined): boolean => {
+  if (isAuthErrorStatus(status)) {
+    return true
+  }
+
+  return status === 403 && isJwtExpired(resolveAccessToken())
 }
 
 const attachTokenInterceptor = (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
@@ -97,7 +118,7 @@ const attachAuthInterceptors = (client: typeof apiClient): void => {
     async (error: AuthHandledAxiosError) => {
       const status = error.response?.status
 
-      if (isAuthErrorStatus(status)) {
+      if (isExpiredSessionResponse(status)) {
         error.authHandled = true
         await handleAuthFailure()
       }

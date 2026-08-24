@@ -2,16 +2,16 @@ import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-
 // Create Product Details - POST /api/products/details
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get("Authorization")
-    const body = await request.json()
 
     if (!authHeader) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
+
+    const body = await request.json()
 
     const response = await serverRequest(`/api/products/details`, {
       method: "POST",

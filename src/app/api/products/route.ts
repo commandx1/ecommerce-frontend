@@ -2,7 +2,6 @@ import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-
 // Create Product - POST /api/products
 // Content-Type: multipart/form-data
 // Fields: data (JSON string), coverPhoto (file), photos (file[])

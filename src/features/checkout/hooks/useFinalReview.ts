@@ -1,9 +1,10 @@
 "use client"
 
 import { useStripe } from "@stripe/react-stripe-js"
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useMemo, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import { useCheckoutAutoOrder } from "@/features/checkout/hooks/useCheckoutAutoOrder"
+import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
 import { ordersAPI } from "@/lib/api/orders"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
@@ -18,6 +19,9 @@ interface UseFinalReviewResult {
 const SUCCESSFUL_PAYMENT_INTENT_STATUSES = new Set(["succeeded", "processing", "requires_capture"])
 const POLL_INTERVAL_MS = 3000
 const MAX_PAYMENT_STATUS_RETRIES = 3
+/** Sentinel returned by `pollPaymentStatus` when the session died mid-poll, so the caller
+ * cannot mistake an unconfirmed payment for a successful one. */
+const PAYMENT_STATUS_AUTH_FAILURE = "auth-failure"
 
 function mapPaymentIntentStatusToOrderStatus(paymentIntentStatus: string): string {
   if (paymentIntentStatus === "canceled") {
@@ -61,6 +65,10 @@ export function useFinalReview(): UseFinalReviewResult {
   const stripe = useStripe()
 
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
+  // Re-entrancy guard: a ref, because a state update is asynchronous and would not close the
+  // window between two synchronous calls (form onSubmit, Enter key, a caller that ignores
+  // `submitDisabled`) — each of which would otherwise create a second order and a second charge.
+  const isPlacingOrderRef = useRef(false)
 
   const submitDisabled = useMemo(() => {
     if (isPlacingOrder) return true
@@ -78,8 +86,16 @@ export function useFinalReview(): UseFinalReviewResult {
         if (normalizedStatus === "canceled" || normalizedStatus === "succeeded") {
           return normalizedStatus
         }
-      } catch {
-        // Continue retry loop for transient polling failures.
+      } catch (error: unknown) {
+        if (isAuthHandledError(error) || isAuthErrorStatus(extractErrorStatus(error))) {
+          // The session expired: the axios interceptor already logs the buyer out, so stop
+          // immediately instead of burning the remaining attempts and falling back to Stripe's
+          // optimistic status.
+          return PAYMENT_STATUS_AUTH_FAILURE
+        }
+
+        // Transient failure (5xx, network): keep retrying, but do not swallow it silently.
+        console.warn("Payment status polling attempt failed", error)
       }
 
       if (attempt < MAX_PAYMENT_STATUS_RETRIES) {
@@ -91,12 +107,31 @@ export function useFinalReview(): UseFinalReviewResult {
   }, [])
 
   const onPlaceOrder = useCallback(async () => {
-    if (!orderPayload) {
-      showToast.error("Order information is missing. Please go back and review your shipping details.")
+    if (isPlacingOrderRef.current) {
       return
     }
+    isPlacingOrderRef.current = true
 
     try {
+      if (!orderPayload) {
+        showToast.error("Order information is missing. Please go back and review your shipping details.")
+        return
+      }
+
+      // Everything that decides whether the charge can happen at all is checked BEFORE the order
+      // is created, so a missing SDK or card can never leave an unpaid order behind.
+      if (paymentMethod.type === "card") {
+        if (!paymentMethodId) {
+          showToast.error("Payment details are missing. Please go back to Billing and re-enter your card.")
+          return
+        }
+
+        if (!stripe) {
+          showToast.error("Stripe is not ready. Please refresh and try again.")
+          return
+        }
+      }
+
       setIsPlacingOrder(true)
       const payload = {
         ...orderPayload,
@@ -104,11 +139,6 @@ export function useFinalReview(): UseFinalReviewResult {
       }
 
       if (paymentMethod.type === "card") {
-        if (!paymentMethodId) {
-          showToast.error("Payment details are missing. Please go back to Billing and re-enter your card.")
-          return
-        }
-
         payload.paymentMethodId = paymentMethodId
 
         const isNewCard = selectedSavedCardId === ""
@@ -139,9 +169,9 @@ export function useFinalReview(): UseFinalReviewResult {
 
       const response = await ordersAPI.placeOrder(payload)
 
-      // Snapshot before the cart is cleared, so the confirmation screen can wait
-      // for exactly these schedules to appear
-      setAutoOrderUserProductIds(autoOrderLines.map((line) => line.userProductId))
+      // Cleared up front so a failed attempt cannot leave the previous checkout's
+      // expectations behind for the confirmation screen to poll for.
+      setAutoOrderUserProductIds([])
 
       let finalOrderStatus = response.status
       let paymentStatus = response.status
@@ -149,16 +179,17 @@ export function useFinalReview(): UseFinalReviewResult {
 
       if (paymentMethod.type === "card") {
         if (!response.clientSecret) {
-          showToast.error("Payment could not be initiated. Missing client secret.")
+          // Backend contract violation: the order row exists but no payment can be started.
+          // Say so plainly instead of a vague toast, and record the unpaid order.
+          showToast.error(
+            `Payment could not be initiated. Order ${response.orderId} was created but not paid — please contact support before trying again.`,
+          )
+          setOrderResult({ ...response, status: "PENDING_PAYMENT", paymentStatus: "PENDING_PAYMENT" })
           return
         }
 
-        if (!paymentMethodId) {
-          showToast.error("Payment method is missing. Please go back to Billing.")
-          return
-        }
-
-        if (!stripe) {
+        // Both were verified before the order was created; kept as type guards.
+        if (!paymentMethodId || !stripe) {
           showToast.error("Stripe is not ready. Please refresh and try again.")
           return
         }
@@ -178,6 +209,15 @@ export function useFinalReview(): UseFinalReviewResult {
 
         const initialPaymentIntentStatus = cardResult.paymentIntent.status
         const terminalPolledStatus = await pollPaymentStatus(cardResult.paymentIntent.id)
+
+        if (terminalPolledStatus === PAYMENT_STATUS_AUTH_FAILURE) {
+          showToast.error(
+            `Your session expired before the payment could be confirmed. Order ${response.orderId} is not confirmed — please sign in again and check it before paying twice.`,
+          )
+          setOrderResult({ ...response, status: "PENDING_PAYMENT", paymentStatus: "unknown" })
+          return
+        }
+
         const resolvedPaymentIntentStatus = terminalPolledStatus ?? initialPaymentIntentStatus
         paymentStatus = resolvedPaymentIntentStatus
 
@@ -193,6 +233,14 @@ export function useFinalReview(): UseFinalReviewResult {
         isPaymentCanceled = resolvedPaymentIntentStatus === "canceled"
       }
 
+      // Auto-order schedules are only written once Stripe's `payment_intent.succeeded` webhook
+      // lands, so snapshot the expected ids only when the payment actually went through. Doing it
+      // right after `placeOrder` left the confirmation screen polling ~90s for schedules that a
+      // canceled or unconfirmed payment never creates.
+      if (!isPaymentCanceled && finalOrderStatus !== "PENDING_PAYMENT") {
+        setAutoOrderUserProductIds(autoOrderLines.map((line) => line.userProductId))
+      }
+
       if (isPaymentCanceled) {
         showToast.error(`Order placed but payment was canceled. Order ID: ${response.orderId}`)
       } else {
@@ -205,6 +253,7 @@ export function useFinalReview(): UseFinalReviewResult {
       const maybeError = error as { response?: { data?: { message?: string } } }
       showToast.error(maybeError.response?.data?.message || "Failed to place order. Please try again.")
     } finally {
+      isPlacingOrderRef.current = false
       setIsPlacingOrder(false)
     }
   }, [

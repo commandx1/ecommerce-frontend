@@ -1,7 +1,7 @@
 "use client"
 
-import { useId, useState } from "react"
 import { Search } from "lucide-react"
+import { useId, useState } from "react"
 import { CheckboxField } from "@/components/form/CheckboxField"
 import { Input } from "@/components/ui/input"
 import type { CompanyOption } from "@/lib/api/public-products"
@@ -17,9 +17,7 @@ const CompanyFilter = ({ companies }: CompanyFilterProps) => {
   const [search, setSearch] = useState("")
   const { navigate, currentCompanyId } = useProductFiltersNavigation()
 
-  const filtered = search
-    ? companies.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
-    : companies
+  const filtered = search ? companies.filter((c) => c.name.toLowerCase().includes(search.toLowerCase())) : companies
   const { showAll, visibleItems, toggleShowAll } = useExpandableList(filtered)
 
   const toggle = (id: string) => {

@@ -2,7 +2,6 @@ import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-
 // Get All Barcode Products - GET /api/barcode/products
 export async function GET(request: NextRequest) {
   try {

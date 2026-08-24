@@ -4,18 +4,20 @@ import { ChevronLeft, ChevronRight, Loader2, Star } from "lucide-react"
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
-import SupplierDirectoryCard from "@/features/suppliers/components/SupplierDirectoryCard"
-import {
-  supplierCategories,
-  supplierTestimonials,
-  supplierTrustItems,
-} from "@/features/suppliers/suppliersPageData"
-import { type VendorListParams, addVendorFavorite, getVendors, getMyFavoriteVendorIds, removeVendorFavorite } from "@/lib/api/vendors"
-import { showToast } from "@/components/ui/Toast"
-import type { VendorListItem } from "@/lib/api/vendors"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useAuthStore } from "@/stores/authStore"
+import { showToast } from "@/components/ui/Toast"
+import SupplierDirectoryCard from "@/features/suppliers/components/SupplierDirectoryCard"
+import { supplierCategories, supplierTestimonials, supplierTrustItems } from "@/features/suppliers/suppliersPageData"
+import type { VendorListItem } from "@/lib/api/vendors"
+import {
+  addVendorFavorite,
+  getMyFavoriteVendorIds,
+  getVendors,
+  removeVendorFavorite,
+  type VendorListParams,
+} from "@/lib/api/vendors"
 import { cn } from "@/lib/utils"
+import { useAuthStore } from "@/stores/authStore"
 
 const ITEMS_PER_PAGE = 6
 
@@ -133,7 +135,6 @@ export default function SuppliersDirectorySection() {
     return () => controller.abort()
   }, [currentPage, selectedSort, selectedRating])
 
-
   const supplierItems = useMemo(() => vendors.map(vendorToSupplierItem), [vendors])
 
   const currentStart = totalCount === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1
@@ -176,7 +177,9 @@ export default function SuppliersDirectorySection() {
                 </SelectTrigger>
                 <SelectContent>
                   {ratingOptions.map((option) => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -195,7 +198,9 @@ export default function SuppliersDirectorySection() {
                 </SelectTrigger>
                 <SelectContent>
                   {sortOptions.map((option) => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -419,4 +424,3 @@ function HeroMetric({ value, label }: { value: string; label: string }) {
     </div>
   )
 }
-

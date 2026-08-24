@@ -2,7 +2,7 @@
 
 import { MoonStar, SunMedium } from "lucide-react"
 import { useTheme } from "next-themes"
-import { useEffect, useState, type MouseEvent } from "react"
+import { type MouseEvent, useEffect, useState } from "react"
 import { flushSync } from "react-dom"
 import { Button } from "@/components/ui/button"
 
@@ -14,7 +14,9 @@ export default function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
-  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const isDark = mounted && resolvedTheme === "dark"
 

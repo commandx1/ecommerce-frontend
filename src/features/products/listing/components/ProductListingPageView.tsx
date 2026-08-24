@@ -30,6 +30,7 @@ export default function ProductListingPageView({ data, params }: ProductListingP
       minRating={params.minRating}
       inStock={params.inStock}
       selectedAttributes={params.attributes}
+      companyId={params.companyId}
     />
   )
 }

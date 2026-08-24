@@ -1,6 +1,14 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 
+/**
+ * Y16: statuses Google returns for its own quota/availability problems, not for anything the
+ * caller did wrong. These must not be reported as a 400 (client error) - they are upstream
+ * failures, so we answer with a 502 instead. `INVALID_REQUEST` (a malformed request we built) is
+ * intentionally excluded and stays a 400.
+ */
+const GOOGLE_UPSTREAM_ERROR_STATUSES = new Set(["OVER_QUERY_LIMIT", "REQUEST_DENIED", "UNKNOWN_ERROR"])
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
@@ -31,10 +39,8 @@ export async function GET(request: NextRequest) {
     const data = await response.json()
 
     if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
-      return NextResponse.json(
-        { message: `Google Maps API error: ${data.status}`, status: data.status },
-        { status: 400 },
-      )
+      const status = GOOGLE_UPSTREAM_ERROR_STATUSES.has(data.status) ? 502 : 400
+      return NextResponse.json({ message: `Google Maps API error: ${data.status}`, status: data.status }, { status })
     }
 
     return NextResponse.json({ predictions: data.predictions || [] })

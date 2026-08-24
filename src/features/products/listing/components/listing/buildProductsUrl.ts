@@ -11,6 +11,7 @@ interface BuildUrlBase {
   minRating: number | null
   inStock: boolean
   attributes: string[]
+  companyId: string | null
 }
 
 interface BuildUrlOverrides {
@@ -34,6 +35,7 @@ export const createProductsUrlBuilder = (base: BuildUrlBase) => {
     if (base.minRating != null) params.set("minRating", String(base.minRating))
     if (!base.inStock) params.set("inStock", "false")
     for (const attr of base.attributes) params.append("attributes", attr)
+    if (base.companyId) params.set("companyId", base.companyId)
 
     return `/products?${params.toString()}`
   }

@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { MessageSquare, Star } from "lucide-react"
+import { useEffect, useState } from "react"
 import StarRating from "@/features/products/product-detail/components/StarRating"
 import { formatRelativeDate } from "@/features/products/product-detail/utils/relativeDate"
 import { getVendorReviewDashboard, type VendorReviewDashboard } from "@/lib/api/vendor-reviews"
@@ -105,9 +105,7 @@ export default function VendorReviewsPage() {
                       onClick={() => setSelectedStars(isActive ? null : item.stars)}
                       className={cn(
                         "flex w-full items-center gap-3 rounded-lg px-2 py-1.5 transition-colors",
-                        isActive
-                          ? "bg-brand/10 ring-1 ring-brand/30"
-                          : "hover:bg-surface-muted/60",
+                        isActive ? "bg-brand/10 ring-1 ring-brand/30" : "hover:bg-surface-muted/60",
                       )}
                     >
                       <div className={cn("w-10 text-sm font-medium", isActive ? "text-brand" : "text-text-primary")}>
@@ -119,7 +117,12 @@ export default function VendorReviewsPage() {
                           style={{ width: `${item.percentage}%` }}
                         />
                       </div>
-                      <div className={cn("w-12 text-right text-sm", isActive ? "font-semibold text-brand" : "text-text-secondary")}>
+                      <div
+                        className={cn(
+                          "w-12 text-right text-sm",
+                          isActive ? "font-semibold text-brand" : "text-text-secondary",
+                        )}
+                      >
                         {item.count}
                       </div>
                     </button>
@@ -167,14 +170,14 @@ export default function VendorReviewsPage() {
 
       <DashboardPanel
         title={selectedStars !== null ? `${selectedStars}-Star Reviews` : "Latest Product Reviews"}
-        description={selectedStars !== null ? `Showing ${reviews.length} review${reviews.length !== 1 ? "s" : ""} with ${selectedStars} star${selectedStars !== 1 ? "s" : ""}` : "Feedback feed from customers who purchased your products"}
+        description={
+          selectedStars !== null
+            ? `Showing ${reviews.length} review${reviews.length !== 1 ? "s" : ""} with ${selectedStars} star${selectedStars !== 1 ? "s" : ""}`
+            : "Feedback feed from customers who purchased your products"
+        }
         action={
           selectedStars !== null ? (
-            <button
-              type="button"
-              onClick={() => setSelectedStars(null)}
-              className="text-sm text-brand hover:underline"
-            >
+            <button type="button" onClick={() => setSelectedStars(null)} className="text-sm text-brand hover:underline">
               Show all
             </button>
           ) : (

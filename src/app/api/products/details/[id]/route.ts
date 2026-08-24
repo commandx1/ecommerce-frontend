@@ -2,13 +2,12 @@ import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-
 // Get Product Details by ID - GET /api/products/details/:id
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
 
-    const response = await serverRequest(`/api/products/details/${id}`, {
+    const response = await serverRequest(`/api/products/details/${encodeURIComponent(id)}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -48,13 +47,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params
     const authHeader = request.headers.get("Authorization")
-    const body = await request.json()
 
     if (!authHeader) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    const response = await serverRequest(`/api/products/details/${id}`, {
+    const body = await request.json()
+
+    const response = await serverRequest(`/api/products/details/${encodeURIComponent(id)}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -101,7 +101,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    const response = await serverRequest(`/api/products/details/${id}`, {
+    const response = await serverRequest(`/api/products/details/${encodeURIComponent(id)}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",

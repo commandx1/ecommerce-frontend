@@ -7,10 +7,20 @@ const mockUseBuyerOrdersPaginationSelector = vi.fn()
 const mockUseBuyerOrdersPaginationActions = vi.fn()
 
 vi.mock("../context/buyer-orders-context", () => ({
-  useBuyerOrdersPaginationSelector: (selector: (state: ReturnType<typeof mockUseBuyerOrdersPaginationSelector>) => unknown) =>
-    selector(mockUseBuyerOrdersPaginationSelector()),
+  useBuyerOrdersPaginationSelector: (
+    selector: (state: ReturnType<typeof mockUseBuyerOrdersPaginationSelector>) => unknown,
+  ) => selector(mockUseBuyerOrdersPaginationSelector()),
   useBuyerOrdersPaginationActions: () => mockUseBuyerOrdersPaginationActions(),
 }))
+
+/**
+ * The prev/next controls are shadcn `PaginationPrevious`/`PaginationNext` anchors. They have no
+ * `href`, so they expose no implicit ARIA role and `getByRole("button" | "link")` cannot reach
+ * them — `getByLabelText` against their `aria-label` is the closest accessible query available.
+ * See the a11y note in the accompanying report.
+ */
+const PREV_LABEL = "Go to previous page"
+const NEXT_LABEL = "Go to next page"
 
 function createStateValue(overrides?: Partial<ReturnType<typeof mockUseBuyerOrdersPaginationSelector>>) {
   return {
@@ -37,19 +47,21 @@ describe("OrdersPagination", () => {
     expect(screen.getByText("Showing 11 to 20 of 35 results")).toBeInTheDocument()
   })
 
-  it("disables prev/next correctly at boundaries", () => {
+  it("marks prev/next as disabled at boundaries", () => {
     mockUseBuyerOrdersPaginationSelector.mockReturnValue(createStateValue({ currentPage: 0 }))
     mockUseBuyerOrdersPaginationActions.mockReturnValue({ handlePageChange: vi.fn() })
     const { rerender } = render(<OrdersPagination />)
 
-    expect(screen.getByRole("button", { name: "Prev" })).toBeDisabled()
-    expect(screen.getByRole("button", { name: "Next" })).not.toBeDisabled()
+    // `DashboardPagination` renders prev/next through shadcn's `PaginationPrevious`/`PaginationNext`,
+    // which express the boundary state with `aria-disabled` rather than the `disabled` attribute.
+    expect(screen.getByLabelText(PREV_LABEL)).toHaveAttribute("aria-disabled", "true")
+    expect(screen.getByLabelText(NEXT_LABEL)).toHaveAttribute("aria-disabled", "false")
 
     mockUseBuyerOrdersPaginationSelector.mockReturnValue(createStateValue({ currentPage: 3 }))
     rerender(<OrdersPagination />)
 
-    expect(screen.getByRole("button", { name: "Prev" })).not.toBeDisabled()
-    expect(screen.getByRole("button", { name: "Next" })).toBeDisabled()
+    expect(screen.getByLabelText(PREV_LABEL)).toHaveAttribute("aria-disabled", "false")
+    expect(screen.getByLabelText(NEXT_LABEL)).toHaveAttribute("aria-disabled", "true")
   })
 
   it("calls handlePageChange for prev, next and index buttons", async () => {
@@ -60,8 +72,8 @@ describe("OrdersPagination", () => {
 
     render(<OrdersPagination />)
 
-    await user.click(screen.getByRole("button", { name: "Prev" }))
-    await user.click(screen.getByRole("button", { name: "Next" }))
+    await user.click(screen.getByLabelText(PREV_LABEL))
+    await user.click(screen.getByLabelText(NEXT_LABEL))
     await user.click(screen.getByRole("button", { name: "3" }))
 
     expect(handlePageChange).toHaveBeenNthCalledWith(1, 0)

@@ -1,6 +1,5 @@
 "use client"
 
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
   Pagination,
@@ -10,6 +9,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import { cn } from "@/lib/utils"
 
 interface DashboardPaginationProps {
   currentPage: number // 0-indexed
@@ -55,7 +55,12 @@ export default function DashboardPagination({
   const to = Math.min((currentPage + 1) * pageSize, totalElements)
 
   return (
-    <div className={cn("flex flex-wrap items-center justify-between gap-3 border-t border-border-soft p-4 text-sm text-text-muted", className)}>
+    <div
+      className={cn(
+        "flex flex-wrap items-center justify-between gap-3 border-t border-border-soft p-4 text-sm text-text-muted",
+        className,
+      )}
+    >
       <span>
         {totalElements > 0
           ? `Showing ${from} to ${to} of ${totalElements.toLocaleString()} results`
@@ -67,7 +72,10 @@ export default function DashboardPagination({
           <PaginationContent className="gap-0.5 rounded-lg border border-border-soft p-1">
             <PaginationItem>
               <PaginationPrevious
-                onClick={(e) => { e.preventDefault(); onPageChange(Math.max(0, currentPage - 1)) }}
+                onClick={(e) => {
+                  e.preventDefault()
+                  onPageChange(Math.max(0, currentPage - 1))
+                }}
                 aria-disabled={currentPage === 0}
                 className={currentPage === 0 ? "pointer-events-none opacity-40" : "cursor-pointer"}
               />
@@ -98,7 +106,10 @@ export default function DashboardPagination({
 
             <PaginationItem>
               <PaginationNext
-                onClick={(e) => { e.preventDefault(); onPageChange(Math.min(totalPages - 1, currentPage + 1)) }}
+                onClick={(e) => {
+                  e.preventDefault()
+                  onPageChange(Math.min(totalPages - 1, currentPage + 1))
+                }}
                 aria-disabled={currentPage >= totalPages - 1}
                 className={currentPage >= totalPages - 1 ? "pointer-events-none opacity-40" : "cursor-pointer"}
               />

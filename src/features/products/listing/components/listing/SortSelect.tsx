@@ -2,8 +2,8 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { VALID_SORT_VALUES, type SortValue } from "../../server/parse-listing-search-params"
 import { useProductFiltersNavigation } from "../../hooks/useProductFiltersNavigation"
+import { type SortValue, VALID_SORT_VALUES } from "../../server/parse-listing-search-params"
 
 const SORT_LABELS: Record<SortValue, string> = {
   "best-match": "Best Match",

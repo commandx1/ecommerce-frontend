@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 import { apiRequest } from "@/lib/api/request"
 import type { ProductRequestMethod } from "./types"
 
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8080"
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8081"
 const DEFAULT_HEADERS = {
   "User-Agent": "Mozilla/5.0",
   Accept: "application/json",
@@ -50,18 +50,21 @@ export async function proxyRequest({
   method,
   authHeader,
   body,
+  suffix = "",
 }: {
   id: string
   method: ProductRequestMethod
   authHeader?: string | null
   body?: unknown
+  /** Trusted, server-authored path appended after the encoded id (e.g. "/owner") — never derived from user input. */
+  suffix?: string
 }) {
   const baseUrl = requireBackendUrl()
 
   return apiRequest.requestResponse<unknown>({
     client: "app",
     method,
-    url: `${baseUrl}/api/products/${id}`,
+    url: `${baseUrl}/api/products/${encodeURIComponent(id)}${suffix}`,
     headers: createHeaders(authHeader ?? undefined, method === "PUT"),
     data: body,
     validateStatus: () => true,

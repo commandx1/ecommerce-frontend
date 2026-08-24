@@ -132,7 +132,8 @@ describe("useBuyerOrdersPage", () => {
       expect(result.current.isLoading).toBe(false)
     })
 
-    expect(mockGetBuyerOrders).toHaveBeenCalledWith(0, 10, "createdDate", "desc", "ALL")
+    // The 6th argument is the AbortSignal the hook uses to cancel in-flight fetches.
+    expect(mockGetBuyerOrders).toHaveBeenCalledWith(0, 10, "createdDate", "desc", "ALL", expect.any(AbortSignal))
     expect(result.current.filteredOrders).toHaveLength(1)
     expect(result.current.totalPages).toBe(3)
     expect(result.current.totalElements).toBe(25)

@@ -20,7 +20,7 @@ const initialPosition: MagnifierPosition = {
   isVisible: false,
 }
 
-export const useImageMagnifier = (imageRef: RefObject<HTMLImageElement>) => {
+export const useImageMagnifier = (imageRef: RefObject<HTMLImageElement | null>) => {
   const [isEnabled, setIsEnabled] = useState(false)
   const [position, setPosition] = useState<MagnifierPosition>(initialPosition)
 

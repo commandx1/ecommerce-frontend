@@ -1,13 +1,13 @@
 "use client"
 
 import type { AttributeGroup, FilterOption, VendorOption } from "@/lib/api/public-products"
+import { useProductFiltersNavigation } from "../../hooks/useProductFiltersNavigation"
 import AttributeFilter from "../AttributeFilter"
 import BrandFilter from "../BrandFilter"
 import CategoryFilter from "../CategoryFilter"
-import VendorFilter from "../VendorFilter"
 import ManufacturerFilter from "../ManufacturerFilter"
 import RatingFilter from "../RatingFilter"
-import { useProductFiltersNavigation } from "../../hooks/useProductFiltersNavigation"
+import VendorFilter from "../VendorFilter"
 import ActiveFilters from "./ActiveFilters"
 import AvailabilityFilter from "./AvailabilityFilter"
 import PriceRangeFilter from "./PriceRangeFilter"
@@ -20,13 +20,31 @@ interface ProductFiltersPanelProps {
   attributeGroups: AttributeGroup[]
 }
 
-const ProductFiltersPanel = ({ brands, manufacturers, categories, vendors, attributeGroups }: ProductFiltersPanelProps) => {
+const ProductFiltersPanel = ({
+  brands,
+  manufacturers,
+  categories,
+  vendors,
+  attributeGroups,
+}: ProductFiltersPanelProps) => {
   return (
-    <FiltersPanelContent brands={brands} manufacturers={manufacturers} categories={categories} vendors={vendors} attributeGroups={attributeGroups} />
+    <FiltersPanelContent
+      brands={brands}
+      manufacturers={manufacturers}
+      categories={categories}
+      vendors={vendors}
+      attributeGroups={attributeGroups}
+    />
   )
 }
 
-function FiltersPanelContent({ brands, manufacturers, categories, vendors, attributeGroups }: ProductFiltersPanelProps) {
+function FiltersPanelContent({
+  brands,
+  manufacturers,
+  categories,
+  vendors,
+  attributeGroups,
+}: ProductFiltersPanelProps) {
   const { isPending } = useProductFiltersNavigation()
 
   return (

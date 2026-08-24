@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization")

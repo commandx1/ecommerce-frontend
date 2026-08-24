@@ -3,8 +3,8 @@
 import { Barcode } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-
 import type { SearchProduct } from "@/lib/api/product-search"
+import formatCurrency from "@/lib/helpers/formatCurrency"
 
 interface SearchResultItemProps {
   product: SearchProduct
@@ -44,13 +44,13 @@ const SearchResultItem = ({ product, imageSrc, onImageError, onClick }: SearchRe
           <div className="mt-1 flex flex-wrap items-baseline gap-x-2 text-xs font-bold text-brand sm:text-sm">
             {product.discount > 0 ? (
               <>
-                <span className="line-through text-text-muted">${product.oldPrice}</span>
+                <span className="line-through text-text-muted">{formatCurrency(product.oldPrice)}</span>
                 <span>
-                  ${product.price} ({product.discount}% discount)
+                  {formatCurrency(product.price)} ({Math.round(product.discount)}% discount)
                 </span>
               </>
             ) : (
-              <span>${product.price}</span>
+              <span>{formatCurrency(product.price)}</span>
             )}
           </div>
         </div>

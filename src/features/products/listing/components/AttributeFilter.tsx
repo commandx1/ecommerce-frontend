@@ -33,9 +33,7 @@ const AttributeFilter = ({ group }: AttributeFilterProps) => {
     navigate({ attributes: next })
   }
 
-  const label = group.attributeName
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase())
+  const label = group.attributeName.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
 
   return (
     <div className="border-b border-border-soft p-6">
@@ -44,7 +42,9 @@ const AttributeFilter = ({ group }: AttributeFilterProps) => {
         {activeForGroup.length > 0 && (
           <button
             type="button"
-            onClick={() => navigate({ attributes: currentAttributes.filter((a) => !a.startsWith(`${group.attributeName}:`)) })}
+            onClick={() =>
+              navigate({ attributes: currentAttributes.filter((a) => !a.startsWith(`${group.attributeName}:`)) })
+            }
             className="text-xs font-medium text-text-muted hover:text-brand transition-colors"
           >
             Clear

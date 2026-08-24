@@ -5,7 +5,7 @@ import type { ChangeEventHandler, RefObject } from "react"
 import { Input } from "@/components/ui/input"
 
 interface SearchInputProps {
-  inputRef: RefObject<HTMLInputElement>
+  inputRef: RefObject<HTMLInputElement | null>
   value: string
   onChange: ChangeEventHandler<HTMLInputElement>
   onFocus: () => void

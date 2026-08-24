@@ -40,6 +40,14 @@ function parseCookieValue(cookieString: string, name: string): string | null {
  * Cookie storage implementation for Zustand persist
  * Only works client-side - server-side access is handled by Next.js middleware
  */
+// `Secure` can only be added when the page is actually served over HTTPS - on plain http://
+// (e.g. localhost dev, e2e) the browser silently refuses to set a cookie carrying `Secure` at
+// all, which would break the entire session flow. Match this on both `setItem` and `removeItem`:
+// a delete cookie without `Secure` on an https page does not overwrite the `Secure` original,
+// so the "logout" cookie fails to clear it.
+const secureCookieSuffix = (): string =>
+  typeof location !== "undefined" && location.protocol === "https:" ? "; Secure" : ""
+
 export const cookieStorage: Storage = {
   getItem: (name: string): string | null => {
     // Only works client-side
@@ -68,7 +76,7 @@ export const cookieStorage: Storage = {
     const expires = new Date()
     expires.setTime(expires.getTime() + 30 * 24 * 60 * 60 * 1000)
 
-    document.cookie = `${name}=${encodeURIComponent(stringValue)}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`
+    document.cookie = `${name}=${encodeURIComponent(stringValue)}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureCookieSuffix()}`
   },
 
   removeItem: (name: string): void => {
@@ -76,6 +84,6 @@ export const cookieStorage: Storage = {
       return
     }
 
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;${secureCookieSuffix()}`
   },
 }

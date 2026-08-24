@@ -10,8 +10,8 @@ import {
   type BuyerOrderFilterType,
   type BuyerOrderItem,
   type BuyerOrderTrackingLink,
-  type RefundOrderPayload,
   buyerOrdersAPI,
+  type RefundOrderPayload,
 } from "@/lib/api/buyer-orders"
 import { OrderItemStatus } from "@/lib/constants/order-item-status"
 import { useAuthStore } from "@/stores/authStore"
@@ -360,9 +360,7 @@ export function useBuyerOrdersPage() {
         const refundedItemIds = new Set(payload.items.map((item) => item.orderItemId))
         const refundReasonByOrderItemId = new Map(payload.items.map((item) => [item.orderItemId, item.returnReason]))
         const submittedAt = new Date().toISOString()
-        const linksByItemId = new Map(
-          (response.itemLinks ?? []).map((link) => [link.orderItemId, link]),
-        )
+        const linksByItemId = new Map((response.itemLinks ?? []).map((link) => [link.orderItemId, link]))
 
         setOrders((prev) =>
           prev.map((order) => {

@@ -1,8 +1,8 @@
 import { ArrowUpRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { cn } from "@/lib/utils"
 import { SpotlightCard } from "@/components/ui/spotlight-card"
+import { cn } from "@/lib/utils"
 
 interface CategoryCardProps {
   title: string
@@ -28,7 +28,13 @@ export default function CategoryCard({
   className,
 }: CategoryCardProps) {
   return (
-    <SpotlightCard radius={28} className={cn("group h-full rounded-[1.75rem] shadow-soft transition-all hover:-translate-y-1 hover:shadow-panel",className)}>
+    <SpotlightCard
+      radius={28}
+      className={cn(
+        "group h-full rounded-[1.75rem] shadow-soft transition-all hover:-translate-y-1 hover:shadow-panel",
+        className,
+      )}
+    >
       <Link
         href={href}
         className={cn(

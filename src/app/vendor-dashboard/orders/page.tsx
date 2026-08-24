@@ -1,23 +1,23 @@
 "use client"
 
-import {
-  CheckCircle2,
-  ExternalLink,
-  Loader2,
-  Printer,
-  X,
-} from "lucide-react"
+import { CheckCircle2, ExternalLink, Loader2, Printer, X } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
-import formatCurrency from "@/lib/helpers/formatCurrency"
+import { extractApiErrorMessage } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
 import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
 import Modal from "@/components/ui/Modal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
-import { extractApiErrorMessage } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
-import { type ProcessUberDeliveriesResponse, type VendorOrder, type VendorOrderFilterType, type VendorOrderItem, vendorOrdersAPI } from "@/lib/api/vendor-orders"
+import {
+  type ProcessUberDeliveriesResponse,
+  type VendorOrder,
+  type VendorOrderFilterType,
+  type VendorOrderItem,
+  vendorOrdersAPI,
+} from "@/lib/api/vendor-orders"
 import { OrderItemStatus } from "@/lib/constants/order-item-status"
+import formatCurrency from "@/lib/helpers/formatCurrency"
 import { getQzConnectionStatus, printShippingLabel, type QzPrintOptions } from "@/lib/qz/printLabel"
 import { useAuthStore } from "@/stores/authStore"
 import OrdersMobileList from "./components/orders-mobile-list"
@@ -105,7 +105,14 @@ export default function VendorOrdersPage() {
 
       try {
         setIsLoading(true)
-        const response = await vendorOrdersAPI.getVendorOrders(currentPage, pageSize, sortBy, sortDir, TAB_TO_FILTER[selectedTab], controller.signal)
+        const response = await vendorOrdersAPI.getVendorOrders(
+          currentPage,
+          pageSize,
+          sortBy,
+          sortDir,
+          TAB_TO_FILTER[selectedTab],
+          controller.signal,
+        )
         setOrders(response.orders)
         setTotalPages(response.totalPages)
         setTotalElements(response.totalElements)

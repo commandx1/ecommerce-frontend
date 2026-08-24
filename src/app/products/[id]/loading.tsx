@@ -38,14 +38,24 @@ export default function ProductDetailLoading() {
       <div className="bg-surface py-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
-
             {/* Image skeleton */}
             <div className="space-y-4">
               <div className="skeleton-mint relative aspect-square w-full overflow-hidden rounded-2xl">
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                   <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-elevated/60">
-                    <svg className="h-8 w-8 text-steel-blue opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <svg
+                      aria-hidden="true"
+                      className="h-8 w-8 text-steel-blue opacity-60"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
                     </svg>
                   </div>
                 </div>
@@ -154,7 +164,10 @@ export default function ProductDetailLoading() {
               <div className="rounded-2xl bg-surface p-8">
                 <div className="space-y-5">
                   {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-                    <div key={i} className="flex items-center justify-between border-b border-border-soft pb-4 last:border-0 last:pb-0">
+                    <div
+                      key={i}
+                      className="flex items-center justify-between border-b border-border-soft pb-4 last:border-0 last:pb-0"
+                    >
                       <div className="skeleton-white h-4 w-28 rounded-full" />
                       <div className="skeleton-white h-4 w-36 rounded-full" />
                     </div>
@@ -223,7 +236,7 @@ export default function ProductDetailLoading() {
                 </div>
                 <div className="mt-4 space-y-3">
                   <div className="skeleton-mint h-12 w-full rounded-lg" />
-                  <div className="h-12 w-full rounded-lg bg-pale-lime/30" style={{ backgroundImage: 'none' }} />
+                  <div className="h-12 w-full rounded-lg bg-pale-lime/30" style={{ backgroundImage: "none" }} />
                   <div className="skeleton-white h-10 w-full rounded-lg" />
                 </div>
               </div>

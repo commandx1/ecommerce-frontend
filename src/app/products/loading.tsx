@@ -56,11 +56,9 @@ export default function ProductListingLoading() {
       <div className="bg-surface-muted">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="flex gap-8">
-
             {/* Sidebar skeleton */}
             <aside className="hidden w-80 shrink-0 lg:block">
               <div className="rounded-2xl border border-border-soft bg-surface p-6">
-
                 {/* Active filters */}
                 <div className="mb-6 border-b border-border-soft pb-6">
                   <div className="skeleton-white mb-4 h-5 w-32 rounded-lg" />
@@ -135,7 +133,6 @@ export default function ProductListingLoading() {
 
             {/* Main area */}
             <main className="min-w-0 flex-1">
-
               {/* Results summary */}
               <div className="mb-6 rounded-2xl border border-border-soft bg-surface p-6">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -154,19 +151,26 @@ export default function ProductListingLoading() {
               {/* Loading state indicator */}
               <div className="mb-6 rounded-2xl border border-border-soft bg-surface p-8">
                 <div className="flex flex-col items-center justify-center">
-
                   {/* Animated icon */}
                   <div className="relative mb-6">
                     <div className="icon-float flex h-20 w-20 items-center justify-center rounded-full border-4 border-surface-muted">
                       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-steel-blue/10">
-                        <svg className="h-8 w-8 animate-pulse text-steel-blue opacity-80" fill="currentColor" viewBox="0 0 24 24">
+                        <svg
+                          aria-hidden="true"
+                          className="h-8 w-8 animate-pulse text-steel-blue opacity-80"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
                           <path d="M12 2C9.5 2 7.5 3.5 7 5.5c-.3 1-.2 2.1.2 3-.8.5-1.5 1.3-1.8 2.3-.5 1.5 0 3.1 1 4.1.2 3.2 1.8 7.1 5.6 7.1s5.4-3.9 5.6-7.1c1-.9 1.5-2.6 1-4.1-.3-1-.9-1.8-1.8-2.3.4-.9.5-2 .2-3C16.5 3.5 14.5 2 12 2z" />
                         </svg>
                       </div>
                     </div>
                     {/* Spinning ring */}
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="h-20 w-20 rounded-full border-4 border-transparent border-t-steel-blue" style={{ animation: 'spin 1.2s linear infinite' }} />
+                      <div
+                        className="h-20 w-20 rounded-full border-4 border-transparent border-t-steel-blue"
+                        style={{ animation: "spin 1.2s linear infinite" }}
+                      />
                     </div>
                     {/* Orbiting dot */}
                     <div className="absolute -right-0.5 -top-0.5 h-4 w-4 rounded-full bg-pale-lime ring-2 ring-surface" />
@@ -192,7 +196,12 @@ export default function ProductListingLoading() {
                   <div className="flex items-center gap-6 text-xs text-text-muted">
                     <div className="flex items-center gap-1.5">
                       <div className="flex h-5 w-5 items-center justify-center rounded-full bg-steel-blue/20">
-                        <svg className="h-2.5 w-2.5 text-steel-blue" fill="currentColor" viewBox="0 0 20 20">
+                        <svg
+                          aria-hidden="true"
+                          className="h-2.5 w-2.5 text-steel-blue"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
                           <path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z" />
                           <path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z" />
                           <path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z" />
@@ -203,8 +212,17 @@ export default function ProductListingLoading() {
                     <div className="h-px w-8 bg-border-soft" />
                     <div className="flex items-center gap-1.5">
                       <div className="flex h-5 w-5 items-center justify-center rounded-full bg-steel-blue/20">
-                        <svg className="h-2.5 w-2.5 text-steel-blue" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.553.894l-4 2A1 1 0 016 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
+                        <svg
+                          aria-hidden="true"
+                          className="h-2.5 w-2.5 text-steel-blue"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.553.894l-4 2A1 1 0 016 17v-5.586L3.293 6.707A1 1 0 013 6V3z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </div>
                       <span>Applying filters</span>
@@ -212,8 +230,17 @@ export default function ProductListingLoading() {
                     <div className="h-px w-8 bg-border-soft" />
                     <div className="flex items-center gap-1.5 opacity-40">
                       <div className="flex h-5 w-5 items-center justify-center rounded-full bg-steel-blue/20">
-                        <svg className="h-2.5 w-2.5 text-steel-blue" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        <svg
+                          aria-hidden="true"
+                          className="h-2.5 w-2.5 text-steel-blue"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </div>
                       <span>Ready</span>
@@ -271,7 +298,6 @@ export default function ProductListingLoading() {
                   </div>
                 </div>
               </div>
-
             </main>
           </div>
         </div>

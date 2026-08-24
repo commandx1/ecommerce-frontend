@@ -69,12 +69,14 @@ export default function PasswordSection({
           <>
             <p className="mb-3 text-sm font-medium text-text-primary">Password rules</p>
             <ul className="space-y-2">
-              {passwordRules.filter((rule) => !rule.isValid).map((rule) => (
-                <li key={rule.label} className="flex items-center gap-2 text-sm text-text-muted">
-                  <Circle className="h-4 w-4" />
-                  <span>{rule.label}</span>
-                </li>
-              ))}
+              {passwordRules
+                .filter((rule) => !rule.isValid)
+                .map((rule) => (
+                  <li key={rule.label} className="flex items-center gap-2 text-sm text-text-muted">
+                    <Circle className="h-4 w-4" />
+                    <span>{rule.label}</span>
+                  </li>
+                ))}
             </ul>
           </>
         )}

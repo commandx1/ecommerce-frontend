@@ -92,6 +92,7 @@ export default function DataTable<TData>({
         {isLoading ? (
           <>
             {Array.from({ length: 6 }, (_, rowIndex) => (
+              // biome-ignore lint/a11y/noAriaHiddenOnFocusable: a <tr> is not focusable; this hides placeholder skeleton rows
               <tr key={`loading-skeleton-row-${rowIndex}`} className="border-b border-border-soft" aria-hidden="true">
                 {table.getVisibleLeafColumns().map((column, colIndex) => {
                   const meta = column.columnDef.meta as DataTableColumnMeta | undefined

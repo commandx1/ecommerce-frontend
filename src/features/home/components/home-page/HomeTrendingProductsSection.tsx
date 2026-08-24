@@ -1,8 +1,8 @@
 import { ArrowRight } from "lucide-react"
 import Link from "next/link"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
-import ProductCard, { type ProductCardData } from "@/features/products/listing/components/listing/ProductCard"
 import type { HomeProductItem } from "@/features/home/types"
+import ProductCard, { type ProductCardData } from "@/features/products/listing/components/listing/ProductCard"
 
 interface HomeTrendingProductsSectionProps {
   products: ReadonlyArray<HomeProductItem>

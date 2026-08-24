@@ -13,7 +13,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const response = await proxyRequest({
-      id: `${id}/owner`,
+      id,
+      suffix: "/owner",
       method: "GET",
       authHeader,
     })

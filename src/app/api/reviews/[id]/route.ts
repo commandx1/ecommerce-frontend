@@ -15,7 +15,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       headers.Authorization = authHeader
     }
 
-    const response = await serverRequest(`/api/reviews/${id}`, {
+    const response = await serverRequest(`/api/reviews/${encodeURIComponent(id)}`, {
       method: "PUT",
       headers,
       body: JSON.stringify(body),
@@ -46,7 +46,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       headers.Authorization = authHeader
     }
 
-    const response = await serverRequest(`/api/reviews/${id}`, {
+    const response = await serverRequest(`/api/reviews/${encodeURIComponent(id)}`, {
       method: "DELETE",
       headers,
     })

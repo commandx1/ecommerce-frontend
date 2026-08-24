@@ -89,27 +89,41 @@ interface CheckoutStore {
   reset: () => void
 }
 
+/**
+ * Empty by design. This used to hold a hardcoded demo record ("Michael Chen /
+ * Pacific Dental Group / 2847 Mission Street"), which `useShippingDetails`
+ * overwrites once the buyer's saved addresses load - but if that request fails
+ * or returns nothing, the checkout form stayed pre-filled with a stranger's
+ * address and an unnoticed order would ship there. `reset()` restores this
+ * same empty record, so a second checkout no longer inherits it either.
+ */
 const initialShippingAddress: ShippingAddress = {
-  firstName: "Michael",
-  lastName: "Chen",
-  company: "Pacific Dental Group",
-  street: "2847 Mission Street, Suite 300",
-  city: "San Francisco",
-  state: "CA",
-  zipCode: "94110",
-  phone: "(415) 555-0123",
+  firstName: "",
+  lastName: "",
+  company: "",
+  street: "",
+  city: "",
+  state: "",
+  zipCode: "",
+  phone: "",
 }
 
 const initialPaymentMethod: PaymentMethod = {
   type: "card",
 }
 
-export const useCheckoutStore = create<CheckoutStore>((set) => ({
-  currentStep: 1,
+/**
+ * Single source of truth for the store's starting values. Both the store creator and `reset()`
+ * spread this object, so the two can never drift apart again (Y7: `reset()` used to write a
+ * hardcoded "Express Delivery - 2-3 business days" for `selectedShippingEtaText` while the
+ * declared initial value was `""`, leaving the store in a state `reset()` itself never produced).
+ */
+const initialState = {
+  currentStep: 1 as CheckoutStep,
   shippingAddress: initialShippingAddress,
   paymentMethod: initialPaymentMethod,
-  orderPayload: null,
-  orderResult: null,
+  orderPayload: null as PlaceOrderPayload | null,
+  orderResult: null as PlaceOrderResponse | null,
   poNumber: "",
   department: "",
   specialInstructions: "",
@@ -121,16 +135,36 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
   paymentMethodSummary: "",
   autoOrderConsent: false,
   newCardAutoPaymentConsent: false,
-  autoOrderUserProductIds: [],
+  autoOrderUserProductIds: [] as string[],
   termsAgreed: false,
   selectedShippingEtaText: "",
-  selectedVendorShippingMethods: {},
+  selectedVendorShippingMethods: {} as Record<string, VendorShippingSelection>,
   selectedShippingCost: 0,
+}
+
+const CARD_ONLY_FIELDS = {
+  selectedSavedCardId: "",
+  paymentMethodId: "",
+  paymentMethodSummary: "",
+} as const
+
+export const useCheckoutStore = create<CheckoutStore>((set) => ({
+  ...initialState,
   setStep: (step) => set({ currentStep: step }),
   nextStep: () => set((state) => ({ currentStep: Math.min(5, state.currentStep + 1) as CheckoutStep })),
   previousStep: () => set((state) => ({ currentStep: Math.max(1, state.currentStep - 1) as CheckoutStep })),
   updateShippingAddress: (address) => set((state) => ({ shippingAddress: { ...state.shippingAddress, ...address } })),
-  updatePaymentMethod: (method) => set((state) => ({ paymentMethod: { ...state.paymentMethod, ...method } })),
+  updatePaymentMethod: (method) =>
+    set((state) => {
+      const nextPaymentMethod = { ...state.paymentMethod, ...method }
+      // Y8: whenever the selected payment method is not (or is no longer) card-based, drop the
+      // card-specific selection so a stale `paymentMethodId` can't ride along into the order
+      // payload for a payment method that no longer uses it (e.g. net30/wire/financing).
+      if (nextPaymentMethod.type !== "card") {
+        return { paymentMethod: nextPaymentMethod, ...CARD_ONLY_FIELDS }
+      }
+      return { paymentMethod: nextPaymentMethod }
+    }),
   updatePONumber: (po) => set({ poNumber: po }),
   updateDepartment: (dept) => set({ department: dept }),
   updateSpecialInstructions: (instructions) => set({ specialInstructions: instructions }),
@@ -153,28 +187,5 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
   setSelectedShippingCost: (cost) => set({ selectedShippingCost: cost }),
   setOrderPayload: (payload) => set({ orderPayload: payload }),
   setOrderResult: (result) => set({ orderResult: result }),
-  reset: () =>
-    set({
-      currentStep: 1,
-      shippingAddress: initialShippingAddress,
-      paymentMethod: initialPaymentMethod,
-      poNumber: "",
-      department: "",
-      specialInstructions: "",
-      applyTaxExemption: true,
-      saveCard: false,
-      cardName: "",
-      selectedSavedCardId: "",
-      paymentMethodId: "",
-      paymentMethodSummary: "",
-      autoOrderConsent: false,
-      newCardAutoPaymentConsent: false,
-      autoOrderUserProductIds: [],
-      termsAgreed: false,
-      selectedShippingEtaText: "Express Delivery - 2-3 business days",
-      selectedVendorShippingMethods: {},
-      selectedShippingCost: 0,
-      orderPayload: null,
-      orderResult: null,
-    }),
+  reset: () => set({ ...initialState }),
 }))

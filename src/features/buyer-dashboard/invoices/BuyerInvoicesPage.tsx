@@ -163,13 +163,17 @@ export default function BuyerInvoicesPage() {
   const toggleSelectAllVisible = () => {
     if (allVisibleSelected) {
       const next = new Set(selectedInvoiceIds)
-      pagedInvoices.forEach((invoice) => next.delete(invoice.id))
+      pagedInvoices.forEach((invoice) => {
+        next.delete(invoice.id)
+      })
       setSelectedInvoiceIds(next)
       return
     }
 
     const next = new Set(selectedInvoiceIds)
-    pagedInvoices.forEach((invoice) => next.add(invoice.id))
+    pagedInvoices.forEach((invoice) => {
+      next.add(invoice.id)
+    })
     setSelectedInvoiceIds(next)
   }
 
@@ -442,7 +446,7 @@ export default function BuyerInvoicesPage() {
 }
 
 function Label({ children }: { children: React.ReactNode }) {
-  return <label className="mb-2 block text-sm font-medium text-text-secondary">{children}</label>
+  return <span className="mb-2 block text-sm font-medium text-text-secondary">{children}</span>
 }
 
 function SelectField({

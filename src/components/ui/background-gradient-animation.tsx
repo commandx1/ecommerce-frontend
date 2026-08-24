@@ -1,7 +1,7 @@
 "use client"
 
-import { cn } from "@/lib/utils"
 import { useEffect, useRef, useState } from "react"
+import { cn } from "@/lib/utils"
 
 // Safari detection is no longer used — we use the same blur path for all browsers
 // since the SVG goo filter (feGaussianBlur + feColorMatrix + feBlend + CSS blur) is
@@ -95,9 +95,7 @@ export function BackgroundGradientAnimation({
       )}
     >
       <div className={cn("", className)}>{children}</div>
-      <div
-        className="gradients-container h-full w-full blur-2xl will-change-transform contain-[layout_style_paint]"
-      >
+      <div className="gradients-container h-full w-full blur-2xl will-change-transform contain-[layout_style_paint]">
         <div
           className={cn(
             "absolute [background:radial-gradient(circle_at_center,var(--first-color)_0,var(--first-color)_50%)_no-repeat]",
@@ -145,6 +143,7 @@ export function BackgroundGradientAnimation({
         />
         {interactive && (
           <div
+            aria-hidden="true"
             ref={interactiveRef}
             onMouseMove={handleMouseMove}
             className={cn(

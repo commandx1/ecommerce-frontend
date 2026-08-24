@@ -1,5 +1,5 @@
 import { Filter, X } from "lucide-react"
-import type { AttributeGroup, VendorOption, FilterOption } from "@/lib/api/public-products"
+import type { AttributeGroup, FilterOption, VendorOption } from "@/lib/api/public-products"
 import ProductFiltersPanel from "./ProductFiltersPanel"
 
 interface MobileFiltersProps {
@@ -22,7 +22,13 @@ const MobileFilters = ({ brands, manufacturers, categories, vendors, attributeGr
           <X className="w-4 h-4 text-gray-400" />
         </summary>
         <div className="border-t border-gray-200">
-          <ProductFiltersPanel brands={brands} manufacturers={manufacturers} categories={categories} vendors={vendors} attributeGroups={attributeGroups} />
+          <ProductFiltersPanel
+            brands={brands}
+            manufacturers={manufacturers}
+            categories={categories}
+            vendors={vendors}
+            attributeGroups={attributeGroups}
+          />
         </div>
       </details>
     </div>

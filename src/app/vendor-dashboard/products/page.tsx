@@ -276,6 +276,11 @@ export default function ProductsPage() {
                 active: up.active,
                 periodicSellCount: up.periodicSellCount,
                 periodicGrossRevenue: up.periodicGrossRevenue,
+                // Carried over so the inline editor in this view does not save $0.00 shipping
+                // over the vendor's real fees when a row is saved untouched.
+                skuCode: up.skuCode,
+                shipmentFee: up.shipmentFee,
+                heavyShippingSurcharge: up.heavyShippingSurcharge,
                 reviewStatus: item.reviewStatus,
                 product: item.product,
                 image: up.coverPhotoPath ? getFullImageUrl(up.coverPhotoPath) : undefined,
@@ -584,11 +589,11 @@ export default function ProductsPage() {
           />
         ) : hasDiscount ? (
           <div className="flex flex-wrap items-baseline justify-center gap-x-1.5 gap-y-0.5">
-            <span className="text-xs font-medium text-text-muted line-through">${oldPrice.toFixed(2)}</span>
-            <span>${product.price.toFixed(2)}</span>
+            <span className="text-xs font-medium text-text-muted line-through">{formatCurrency(oldPrice)}</span>
+            <span>{formatCurrency(product.price)}</span>
           </div>
         ) : (
-          `$${product.price.toFixed(2)}`
+          formatCurrency(product.price)
         )}
       </div>
     )
@@ -672,7 +677,7 @@ export default function ProductsPage() {
             disabled={isSaving}
           />
         ) : (
-          `$${(product.shipmentFee ?? 0).toFixed(2)}`
+          formatCurrency(product.shipmentFee ?? 0)
         )}
       </div>
     )
@@ -700,7 +705,7 @@ export default function ProductsPage() {
             disabled={isSaving}
           />
         ) : (
-          `$${(product.heavyShippingSurcharge ?? 0).toFixed(2)}`
+          formatCurrency(product.heavyShippingSurcharge ?? 0)
         )}
       </div>
     )
@@ -874,12 +879,7 @@ export default function ProductsPage() {
                   "w-full h-full object-contain",
                   imageFallbacks[product.id] || !product.image ? "scale-110" : "",
                 )}
-                onError={() =>
-                  setImageFallbacks((prev) => ({
-                    ...prev,
-                    [product.id]: true,
-                  }))
-                }
+                onError={() => setImageFallbacks((prev) => (prev[product.id] ? prev : { ...prev, [product.id]: true }))}
               />
             </div>
             <div className="font-medium text-text-primary">{product.productName}</div>

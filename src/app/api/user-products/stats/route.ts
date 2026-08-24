@@ -1,8 +1,8 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import type { UserProduct } from "@/lib/api/products"
-import { serverRequest } from "@/lib/api/server-request"
 import { getAuthorizationHeader } from "@/lib/api/server-auth"
+import { serverRequest } from "@/lib/api/server-request"
 
 const FILTER_FALLBACK_PAGE_SIZE = 1000
 

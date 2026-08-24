@@ -20,9 +20,7 @@ const BrandFilter = ({ brands }: BrandFilterProps) => {
   const { showAll, visibleItems, toggleShowAll } = useExpandableList(filtered)
 
   const toggle = (name: string) => {
-    const next = currentBrands.includes(name)
-      ? currentBrands.filter((b) => b !== name)
-      : [...currentBrands, name]
+    const next = currentBrands.includes(name) ? currentBrands.filter((b) => b !== name) : [...currentBrands, name]
     navigate({ brands: next })
   }
 

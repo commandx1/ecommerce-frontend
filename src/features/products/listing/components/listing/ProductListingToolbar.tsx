@@ -1,7 +1,7 @@
 "use client"
 
-import { Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import { useProductFiltersNavigation } from "../../hooks/useProductFiltersNavigation"
 import SortSelect from "./SortSelect"
@@ -24,6 +24,7 @@ const PageSizeButtons = ({ pageSize }: { pageSize: number }) => {
       {[10, 20, 50, 100].map((size) => (
         <button
           key={size}
+          type="button"
           disabled={isPending}
           onClick={() => handleSize(size)}
           className={`rounded-full px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${

@@ -5,7 +5,6 @@ import { useCallback, useEffect, useId, useState } from "react"
 import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
 import ConfirmationModal from "@/components/feedback/ConfirmationModal"
 import { showToast } from "@/components/ui/Toast"
-import { cn } from "@/lib/utils"
 import {
   type ProductAnswerResponse,
   type ProductQuestionResponse,
@@ -13,6 +12,7 @@ import {
   type SellerQuestionCounts,
   vendorQuestionsAPI,
 } from "@/lib/api/vendor-questions"
+import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
 
 const PAGE_SIZE = 10
@@ -43,7 +43,13 @@ interface QuestionCardProps {
   onAnswerDeleted: (questionId: string, answerId: string) => void
 }
 
-function QuestionCard({ question, currentUserId, onAnswerCreated, onAnswerUpdated, onAnswerDeleted }: QuestionCardProps) {
+function QuestionCard({
+  question,
+  currentUserId,
+  onAnswerCreated,
+  onAnswerUpdated,
+  onAnswerDeleted,
+}: QuestionCardProps) {
   const cardId = useId()
   const existingAnswer = question.answers[0] ?? null
   const isMyAnswer = existingAnswer?.answererUserId === currentUserId
@@ -54,9 +60,18 @@ function QuestionCard({ question, currentUserId, onAnswerCreated, onAnswerUpdate
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
-  const startCompose = () => { setDraftText(""); setMode("composing") }
-  const startEdit = () => { setDraftText(existingAnswer?.answer ?? ""); setMode("editing") }
-  const cancelEdit = () => { setDraftText(""); setMode("view") }
+  const startCompose = () => {
+    setDraftText("")
+    setMode("composing")
+  }
+  const startEdit = () => {
+    setDraftText(existingAnswer?.answer ?? "")
+    setMode("editing")
+  }
+  const cancelEdit = () => {
+    setDraftText("")
+    setMode("view")
+  }
 
   const handleSubmit = async () => {
     const trimmed = draftText.trim()
@@ -225,23 +240,26 @@ export default function VendorQuestionsPage() {
     }
   }, [isAuthenticated])
 
-  const fetchQuestions = useCallback(async (page: number, filter: QuestionFilter) => {
-    if (!isAuthenticated) return
-    setIsLoading(true)
-    try {
-      const response = await vendorQuestionsAPI.getSellerQuestions(page, PAGE_SIZE, filter)
-      setQuestions(response.content)
-      setTotalPages(response.totalPages)
-      setTotalElements(response.totalElements)
-    } catch {
-      showToast.error("Failed to load questions", "Please refresh the page.")
-      setQuestions([])
-      setTotalPages(0)
-      setTotalElements(0)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [isAuthenticated])
+  const fetchQuestions = useCallback(
+    async (page: number, filter: QuestionFilter) => {
+      if (!isAuthenticated) return
+      setIsLoading(true)
+      try {
+        const response = await vendorQuestionsAPI.getSellerQuestions(page, PAGE_SIZE, filter)
+        setQuestions(response.content)
+        setTotalPages(response.totalPages)
+        setTotalElements(response.totalElements)
+      } catch {
+        showToast.error("Failed to load questions", "Please refresh the page.")
+        setQuestions([])
+        setTotalPages(0)
+        setTotalElements(0)
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [isAuthenticated],
+  )
 
   useEffect(() => {
     void fetchQuestions(currentPage, activeFilter)
@@ -256,12 +274,13 @@ export default function VendorQuestionsPage() {
     setCurrentPage(0)
   }
 
-  const handleAnswerCreated = useCallback((questionId: string, answer: ProductAnswerResponse) => {
-    setQuestions((prev) =>
-      prev.map((q) => (q.id === questionId ? { ...q, answers: [answer, ...q.answers] } : q)),
-    )
-    void fetchCounts()
-  }, [fetchCounts])
+  const handleAnswerCreated = useCallback(
+    (questionId: string, answer: ProductAnswerResponse) => {
+      setQuestions((prev) => prev.map((q) => (q.id === questionId ? { ...q, answers: [answer, ...q.answers] } : q)))
+      void fetchCounts()
+    },
+    [fetchCounts],
+  )
 
   const handleAnswerUpdated = useCallback((questionId: string, answer: ProductAnswerResponse) => {
     setQuestions((prev) =>
@@ -271,14 +290,15 @@ export default function VendorQuestionsPage() {
     )
   }, [])
 
-  const handleAnswerDeleted = useCallback((questionId: string, answerId: string) => {
-    setQuestions((prev) =>
-      prev.map((q) =>
-        q.id === questionId ? { ...q, answers: q.answers.filter((a) => a.id !== answerId) } : q,
-      ),
-    )
-    void fetchCounts()
-  }, [fetchCounts])
+  const handleAnswerDeleted = useCallback(
+    (questionId: string, answerId: string) => {
+      setQuestions((prev) =>
+        prev.map((q) => (q.id === questionId ? { ...q, answers: q.answers.filter((a) => a.id !== answerId) } : q)),
+      )
+      void fetchCounts()
+    },
+    [fetchCounts],
+  )
 
   if (!isAuthenticated) {
     return (
@@ -310,7 +330,11 @@ export default function VendorQuestionsPage() {
           <div className="inline-flex items-center gap-1.5 rounded-sm border border-border-soft bg-surface p-1.5 shadow-soft">
             {FILTER_TABS.map(({ key, label }) => {
               const count = counts
-                ? key === "all" ? counts.total : key === "answered" ? counts.answered : counts.unanswered
+                ? key === "all"
+                  ? counts.total
+                  : key === "answered"
+                    ? counts.answered
+                    : counts.unanswered
                 : null
               return (
                 <button

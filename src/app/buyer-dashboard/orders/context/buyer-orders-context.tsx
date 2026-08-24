@@ -1,7 +1,7 @@
 "use client"
 
-import { createContext, useContext, useMemo, type ReactNode } from "react"
-import { useBuyerOrdersPage, type UseBuyerOrdersPageResult } from "../hooks/use-buyer-orders-page"
+import { createContext, type ReactNode, useContext, useMemo } from "react"
+import { type UseBuyerOrdersPageResult, useBuyerOrdersPage } from "../hooks/use-buyer-orders-page"
 
 type BuyerOrdersAuthState = Pick<UseBuyerOrdersPageResult, "isAuthenticated">
 type BuyerOrdersTabsState = Pick<UseBuyerOrdersPageResult, "selectedTab">
@@ -30,13 +30,19 @@ type BuyerOrdersTableActions = Pick<
   | "setTrackingModalLinks"
 >
 
-type BuyerOrdersPaginationState = Pick<UseBuyerOrdersPageResult, "currentPage" | "pageSize" | "totalElements" | "totalPages">
+type BuyerOrdersPaginationState = Pick<
+  UseBuyerOrdersPageResult,
+  "currentPage" | "pageSize" | "totalElements" | "totalPages"
+>
 
 type BuyerOrdersPaginationActions = Pick<UseBuyerOrdersPageResult, "handlePageChange">
 
 type BuyerOrdersCancelModalState = Pick<UseBuyerOrdersPageResult, "isConfirmingCancel" | "pendingCancelAction">
 
-type BuyerOrdersCancelModalActions = Pick<UseBuyerOrdersPageResult, "confirmPendingCancelAction" | "setPendingCancelAction">
+type BuyerOrdersCancelModalActions = Pick<
+  UseBuyerOrdersPageResult,
+  "confirmPendingCancelAction" | "setPendingCancelAction"
+>
 
 type BuyerOrdersRefundModalState = Pick<UseBuyerOrdersPageResult, "isSubmittingRefund" | "pendingRefundOrder">
 
@@ -217,92 +223,98 @@ export function BuyerOrdersProvider({ children }: BuyerOrdersProviderProps) {
 
   return composeProviders(
     [
-    {
-      render: (providerChildren) => (
-        <BuyerOrdersAuthStateContext.Provider value={authState}>{providerChildren}</BuyerOrdersAuthStateContext.Provider>
-      ),
-    },
-    {
-      render: (providerChildren) => (
-        <BuyerOrdersTabsStateContext.Provider value={tabsState}>{providerChildren}</BuyerOrdersTabsStateContext.Provider>
-      ),
-    },
-    {
-      render: (providerChildren) => (
-        <BuyerOrdersTabsActionsContext.Provider value={tabsActions}>
-          {providerChildren}
-        </BuyerOrdersTabsActionsContext.Provider>
-      ),
-    },
-    {
-      render: (providerChildren) => (
-        <BuyerOrdersTableStateContext.Provider value={tableState}>{providerChildren}</BuyerOrdersTableStateContext.Provider>
-      ),
-    },
-    {
-      render: (providerChildren) => (
-        <BuyerOrdersTableActionsContext.Provider value={tableActions}>
-          {providerChildren}
-        </BuyerOrdersTableActionsContext.Provider>
-      ),
-    },
-    {
-      render: (providerChildren) => (
-        <BuyerOrdersPaginationStateContext.Provider value={paginationState}>
-          {providerChildren}
-        </BuyerOrdersPaginationStateContext.Provider>
-      ),
-    },
-    {
-      render: (providerChildren) => (
-        <BuyerOrdersPaginationActionsContext.Provider value={paginationActions}>
-          {providerChildren}
-        </BuyerOrdersPaginationActionsContext.Provider>
-      ),
-    },
-    {
-      render: (providerChildren) => (
-        <BuyerOrdersCancelModalStateContext.Provider value={cancelModalState}>
-          {providerChildren}
-        </BuyerOrdersCancelModalStateContext.Provider>
-      ),
-    },
-    {
-      render: (providerChildren) => (
-        <BuyerOrdersCancelModalActionsContext.Provider value={cancelModalActions}>
-          {providerChildren}
-        </BuyerOrdersCancelModalActionsContext.Provider>
-      ),
-    },
-    {
-      render: (providerChildren) => (
-        <BuyerOrdersRefundModalStateContext.Provider value={refundModalState}>
-          {providerChildren}
-        </BuyerOrdersRefundModalStateContext.Provider>
-      ),
-    },
-    {
-      render: (providerChildren) => (
-        <BuyerOrdersRefundModalActionsContext.Provider value={refundModalActions}>
-          {providerChildren}
-        </BuyerOrdersRefundModalActionsContext.Provider>
-      ),
-    },
-    {
-      render: (providerChildren) => (
-        <BuyerOrdersTrackingModalStateContext.Provider value={trackingModalState}>
-          {providerChildren}
-        </BuyerOrdersTrackingModalStateContext.Provider>
-      ),
-    },
-    {
-      render: (providerChildren) => (
-        <BuyerOrdersTrackingModalActionsContext.Provider value={trackingModalActions}>
-          {providerChildren}
-        </BuyerOrdersTrackingModalActionsContext.Provider>
-      ),
-    },
-  ],
+      {
+        render: (providerChildren) => (
+          <BuyerOrdersAuthStateContext.Provider value={authState}>
+            {providerChildren}
+          </BuyerOrdersAuthStateContext.Provider>
+        ),
+      },
+      {
+        render: (providerChildren) => (
+          <BuyerOrdersTabsStateContext.Provider value={tabsState}>
+            {providerChildren}
+          </BuyerOrdersTabsStateContext.Provider>
+        ),
+      },
+      {
+        render: (providerChildren) => (
+          <BuyerOrdersTabsActionsContext.Provider value={tabsActions}>
+            {providerChildren}
+          </BuyerOrdersTabsActionsContext.Provider>
+        ),
+      },
+      {
+        render: (providerChildren) => (
+          <BuyerOrdersTableStateContext.Provider value={tableState}>
+            {providerChildren}
+          </BuyerOrdersTableStateContext.Provider>
+        ),
+      },
+      {
+        render: (providerChildren) => (
+          <BuyerOrdersTableActionsContext.Provider value={tableActions}>
+            {providerChildren}
+          </BuyerOrdersTableActionsContext.Provider>
+        ),
+      },
+      {
+        render: (providerChildren) => (
+          <BuyerOrdersPaginationStateContext.Provider value={paginationState}>
+            {providerChildren}
+          </BuyerOrdersPaginationStateContext.Provider>
+        ),
+      },
+      {
+        render: (providerChildren) => (
+          <BuyerOrdersPaginationActionsContext.Provider value={paginationActions}>
+            {providerChildren}
+          </BuyerOrdersPaginationActionsContext.Provider>
+        ),
+      },
+      {
+        render: (providerChildren) => (
+          <BuyerOrdersCancelModalStateContext.Provider value={cancelModalState}>
+            {providerChildren}
+          </BuyerOrdersCancelModalStateContext.Provider>
+        ),
+      },
+      {
+        render: (providerChildren) => (
+          <BuyerOrdersCancelModalActionsContext.Provider value={cancelModalActions}>
+            {providerChildren}
+          </BuyerOrdersCancelModalActionsContext.Provider>
+        ),
+      },
+      {
+        render: (providerChildren) => (
+          <BuyerOrdersRefundModalStateContext.Provider value={refundModalState}>
+            {providerChildren}
+          </BuyerOrdersRefundModalStateContext.Provider>
+        ),
+      },
+      {
+        render: (providerChildren) => (
+          <BuyerOrdersRefundModalActionsContext.Provider value={refundModalActions}>
+            {providerChildren}
+          </BuyerOrdersRefundModalActionsContext.Provider>
+        ),
+      },
+      {
+        render: (providerChildren) => (
+          <BuyerOrdersTrackingModalStateContext.Provider value={trackingModalState}>
+            {providerChildren}
+          </BuyerOrdersTrackingModalStateContext.Provider>
+        ),
+      },
+      {
+        render: (providerChildren) => (
+          <BuyerOrdersTrackingModalActionsContext.Provider value={trackingModalActions}>
+            {providerChildren}
+          </BuyerOrdersTrackingModalActionsContext.Provider>
+        ),
+      },
+    ],
     children,
   )
 }

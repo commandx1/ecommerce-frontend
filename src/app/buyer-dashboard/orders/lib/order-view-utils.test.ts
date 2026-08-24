@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest"
 import type { BuyerOrder, BuyerOrderItem } from "@/lib/api/buyer-orders"
-import {
-  buildBuyerOrderViewModel,
-  resolveActiveShippingLinks,
-  resolveActiveTrackingLinks,
-} from "./order-view-utils"
+import { buildBuyerOrderViewModel, resolveActiveShippingLinks, resolveActiveTrackingLinks } from "./order-view-utils"
 
 const orderFixture: BuyerOrder = {
   orderId: "order-fixture-1",

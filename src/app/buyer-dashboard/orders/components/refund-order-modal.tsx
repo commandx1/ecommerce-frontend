@@ -7,8 +7,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import Modal from "@/components/ui/Modal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { getOrderItems } from "../lib/order-view-utils"
 import { useBuyerOrdersRefundModalActions, useBuyerOrdersRefundModalState } from "../context/buyer-orders-context"
+import { getOrderItems } from "../lib/order-view-utils"
 
 interface RefundFormItemState {
   isSelected: boolean
@@ -161,12 +161,16 @@ export default function RefundOrderModal() {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-text-primary">{item.productName}</p>
                     <p className="mt-1 text-xs text-text-muted">
-                      Max refundable quantity: <span className="font-semibold text-text-secondary">{item.quantity}</span>
+                      Max refundable quantity:{" "}
+                      <span className="font-semibold text-text-secondary">{item.quantity}</span>
                     </p>
 
                     <div className="mt-3 grid gap-3 md:grid-cols-2">
                       <div>
-                        <label htmlFor={`refund-qty-${item.id}`} className="mb-1 block text-xs font-medium text-text-secondary">
+                        <label
+                          htmlFor={`refund-qty-${item.id}`}
+                          className="mb-1 block text-xs font-medium text-text-secondary"
+                        >
                           Quantity to refund
                         </label>
                         <Input

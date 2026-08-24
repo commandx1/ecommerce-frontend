@@ -39,7 +39,9 @@ export function useFilterNavigationProvider(): FilterNavigationState {
 
   useEffect(() => {
     document.body.style.cursor = isPending ? "wait" : ""
-    return () => { document.body.style.cursor = "" }
+    return () => {
+      document.body.style.cursor = ""
+    }
   }, [isPending])
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -57,8 +59,7 @@ export function useFilterNavigationProvider(): FilterNavigationState {
       if (sort) params.set("sort", sort)
 
       const brands = "brands" in updates ? updates.brands : searchParams.getAll("brands")
-      const manufacturers =
-        "manufacturers" in updates ? updates.manufacturers : searchParams.getAll("manufacturers")
+      const manufacturers = "manufacturers" in updates ? updates.manufacturers : searchParams.getAll("manufacturers")
       const categories = "categories" in updates ? updates.categories : searchParams.getAll("categories")
       const vendors = "vendors" in updates ? updates.vendors : searchParams.getAll("vendors")
       const companyId = "companyId" in updates ? updates.companyId : searchParams.get("companyId")

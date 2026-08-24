@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-
 // Public Search Products - GET /api/products/public-search?Search=...&page=0&size=20
 export async function GET(request: NextRequest) {
   try {

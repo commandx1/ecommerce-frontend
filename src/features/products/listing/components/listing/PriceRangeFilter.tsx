@@ -18,11 +18,15 @@ function matchPreset(min: number | null, max: number | null) {
   return PRICE_PRESETS.findIndex((p) => p.min === (min ?? 0) && p.max === max)
 }
 
+const RANGE_ERROR_MESSAGE = "Min price must not be greater than max price."
+
 const PriceRangeFilter = () => {
   const uid = useId()
+  const errorId = `${uid}-price-range-error`
   const { navigate, currentMinPrice, currentMaxPrice } = useProductFiltersNavigation()
   const [minInput, setMinInput] = useState(currentMinPrice != null ? String(currentMinPrice) : "")
   const [maxInput, setMaxInput] = useState(currentMaxPrice != null ? String(currentMaxPrice) : "")
+  const [rangeError, setRangeError] = useState<string | null>(null)
 
   useEffect(() => {
     setMinInput(currentMinPrice != null ? String(currentMinPrice) : "")
@@ -38,16 +42,25 @@ const PriceRangeFilter = () => {
   const applyCustom = () => {
     const min = minInput !== "" ? Number(minInput) : null
     const max = maxInput !== "" ? Number(maxInput) : null
+
+    if (min != null && max != null && min > max) {
+      setRangeError(RANGE_ERROR_MESSAGE)
+      return
+    }
+
+    setRangeError(null)
     navigate({ minPrice: min, maxPrice: max })
   }
 
   const selectPreset = (preset: (typeof PRICE_PRESETS)[number]) => {
+    setRangeError(null)
     setMinInput(preset.min > 0 ? String(preset.min) : "")
     setMaxInput(preset.max != null ? String(preset.max) : "")
     navigate({ minPrice: preset.min > 0 ? preset.min : null, maxPrice: preset.max })
   }
 
   const clearPrice = () => {
+    setRangeError(null)
     setMinInput("")
     setMaxInput("")
     navigate({ minPrice: null, maxPrice: null })
@@ -79,9 +92,14 @@ const PriceRangeFilter = () => {
                 placeholder="0"
                 className="w-full pl-7 pr-3 py-2 text-sm"
                 value={minInput}
-                onChange={(e) => setMinInput(e.target.value)}
+                onChange={(e) => {
+                  setRangeError(null)
+                  setMinInput(e.target.value)
+                }}
                 onBlur={applyCustom}
                 onKeyDown={(e) => e.key === "Enter" && applyCustom()}
+                aria-invalid={rangeError ? true : undefined}
+                aria-describedby={rangeError ? errorId : undefined}
               />
             </div>
           </div>
@@ -95,13 +113,24 @@ const PriceRangeFilter = () => {
                 placeholder="Any"
                 className="w-full pl-7 pr-3 py-2 text-sm"
                 value={maxInput}
-                onChange={(e) => setMaxInput(e.target.value)}
+                onChange={(e) => {
+                  setRangeError(null)
+                  setMaxInput(e.target.value)
+                }}
                 onBlur={applyCustom}
                 onKeyDown={(e) => e.key === "Enter" && applyCustom()}
+                aria-invalid={rangeError ? true : undefined}
+                aria-describedby={rangeError ? errorId : undefined}
               />
             </div>
           </div>
         </div>
+
+        {rangeError && (
+          <p id={errorId} className="-mt-2 text-sm text-danger">
+            {rangeError}
+          </p>
+        )}
 
         <div className="space-y-2">
           {PRICE_PRESETS.map((preset, idx) => (

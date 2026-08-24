@@ -1,0 +1,92 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": true,
+    // Playwright run artefacts (traces, .last-run.json, html report) are generated
+    // output, not source - formatting them would fail `biome check .` after every e2e run.
+    "includes": ["**", "!test-results", "!playwright-report"]
+  },
+  "formatter": {
+    "enabled": true,
+    "formatWithErrors": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "lineWidth": 120,
+    "attributePosition": "auto",
+    "bracketSpacing": true,
+    "bracketSameLine": false
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      // TECHNICAL DEBT — the "warn" entries below are deliberate, not permanent.
+      // They are broad/stylistic rules with a large existing violation count in src/;
+      // fixing them all at once would carry real regression risk. They stay visible as
+      // warnings (CI stays green) and are meant to be driven to zero and flipped back to
+      // "error" incrementally, one rule at a time.
+      "suspicious": {
+        "noUnknownAtRules": "off",
+        "noExplicitAny": "warn",
+        "noConsole": "warn",
+        "noArrayIndexKey": "warn",
+        "noDocumentCookie": "warn"
+      },
+      "correctness": {
+        "noUnusedVariables": "warn",
+        "useExhaustiveDependencies": "warn",
+        "noUnusedImports": "warn",
+        "noConstAssign": "error",
+        "useUniqueElementIds": "warn",
+        "noUnusedFunctionParameters": "warn"
+      },
+      "complexity": {
+        "useOptionalChain": "warn",
+        "noUselessFragments": "warn"
+      },
+      "style": {
+        "noNonNullAssertion": "warn",
+        "useConst": "error",
+        "useTemplate": "warn"
+      },
+      "a11y": {
+        "useKeyWithClickEvents": "off"
+      }
+    }
+  },
+  // public/ holds static assets served verbatim, including the vendored upstream QZ Tray
+  // connector (public/qz-tray.js, LGPL-2.1, pulled in at runtime via <script src>, never
+  // bundled or type-checked). Linting it only produces noise about upstream style, and
+  // patching it in place would break the upgrade path, so it is excluded here.
+  "overrides": [
+    {
+      "includes": ["public/**"],
+      "linter": { "enabled": false },
+      "formatter": { "enabled": false }
+    }
+  ],
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "jsxQuoteStyle": "double",
+      "quoteProperties": "asNeeded",
+      "trailingCommas": "all",
+      "semicolons": "asNeeded",
+      "arrowParentheses": "always",
+      "bracketSpacing": true,
+      "bracketSameLine": false
+    }
+  }
+}

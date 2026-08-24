@@ -1,8 +1,7 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
-import { serverRequest } from "@/lib/api/server-request"
 import { getAuthorizationHeader } from "@/lib/api/server-auth"
-
+import { serverRequest } from "@/lib/api/server-request"
 
 export async function GET(request: NextRequest) {
   try {

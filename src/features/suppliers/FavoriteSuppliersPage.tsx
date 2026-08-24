@@ -2,10 +2,10 @@
 
 import { LayoutGrid, Loader2, Rows3 } from "lucide-react"
 import { useEffect, useState } from "react"
+import { showToast } from "@/components/ui/Toast"
 import SupplierDirectoryCard from "@/features/suppliers/components/SupplierDirectoryCard"
 import SupplierDirectoryTable from "@/features/suppliers/components/SupplierDirectoryTable"
-import { type VendorListItem, addVendorFavorite, getMyFavoriteVendors, removeVendorFavorite } from "@/lib/api/vendors"
-import { showToast } from "@/components/ui/Toast"
+import { addVendorFavorite, getMyFavoriteVendors, removeVendorFavorite, type VendorListItem } from "@/lib/api/vendors"
 import { cn } from "@/lib/utils"
 
 type ViewMode = "grid" | "table"
@@ -108,10 +108,7 @@ export default function FavoriteSuppliersPage() {
           ))}
         </div>
       ) : (
-        <SupplierDirectoryTable
-          suppliers={supplierItems}
-          onToggleFavorite={handleToggleFavorite}
-        />
+        <SupplierDirectoryTable suppliers={supplierItems} onToggleFavorite={handleToggleFavorite} />
       )}
     </section>
   )

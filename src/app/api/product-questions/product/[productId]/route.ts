@@ -1,8 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { serverRequest } from "@/lib/api/server-request"
-
-
 import { getAuthorizationHeader } from "@/lib/api/server-auth"
+import { serverRequest } from "@/lib/api/server-request"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ productId: string }> }) {
   try {
@@ -26,7 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const response = await serverRequest(
-      `/api/product-questions/product/${productId}?page=${page}&size=${size}`,
+      `/api/product-questions/product/${encodeURIComponent(productId)}?page=${page}&size=${size}`,
       {
         method: "GET",
         headers,

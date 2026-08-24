@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react"
 import type { VendorOption } from "@/lib/api/public-products"
+import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useProductFiltersNavigation } from "../../hooks/useProductFiltersNavigation"
 
 interface ActiveFiltersProps {
@@ -24,7 +25,7 @@ const ActiveFilters = ({ vendors }: ActiveFiltersProps) => {
 
   const priceLabel =
     currentMinPrice != null || currentMaxPrice != null
-      ? `$${currentMinPrice ?? 0} – ${currentMaxPrice != null ? `$${currentMaxPrice}` : "Any"}`
+      ? `${formatCurrency(currentMinPrice ?? 0)} – ${currentMaxPrice != null ? formatCurrency(currentMaxPrice) : "Any"}`
       : null
 
   const attributeGroups = currentAttributes.reduce<Record<string, string[]>>((acc, attr) => {
@@ -91,8 +92,7 @@ const ActiveFilters = ({ vendors }: ActiveFiltersProps) => {
       chips: values.map((v) => ({
         key: `attr-${attrName}-${v}`,
         text: v,
-        onRemove: () =>
-          navigate({ attributes: currentAttributes.filter((a) => a !== `${attrName}:${v}`) }),
+        onRemove: () => navigate({ attributes: currentAttributes.filter((a) => a !== `${attrName}:${v}`) }),
       })),
     })),
   ].filter((g) => g.chips.length > 0)

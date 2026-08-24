@@ -3,6 +3,7 @@
 import { Eye, Heart, Scale, Star, Truck } from "lucide-react"
 import Link from "next/link"
 import { SpotlightCard } from "@/components/ui/spotlight-card"
+import formatCurrency from "@/lib/helpers/formatCurrency"
 import ProductImageWithFallback from "../ProductImageWithFallback"
 
 export interface ProductCardData {
@@ -23,9 +24,8 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ data }: ProductCardProps) => {
-  const discount = data.oldPrice && data.oldPrice > data.price
-    ? Math.round((1 - data.price / data.oldPrice) * 100)
-    : null
+  const discount =
+    data.oldPrice && data.oldPrice > data.price ? Math.round((1 - data.price / data.oldPrice) * 100) : null
 
   return (
     <SpotlightCard
@@ -101,11 +101,11 @@ const ProductCard = ({ data }: ProductCardProps) => {
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2 sm:mb-4 sm:gap-4">
               <div>
                 <span className="text-xl font-semibold text-brand sm:text-2xl md:text-3xl">
-                  ${data.price.toFixed(2)}
+                  {formatCurrency(data.price)}
                 </span>
                 {data.oldPrice && data.oldPrice > data.price ? (
                   <span className="ml-2 text-xs text-text-muted line-through sm:text-sm">
-                    ${data.oldPrice.toFixed(2)}
+                    {formatCurrency(data.oldPrice)}
                   </span>
                 ) : null}
               </div>

@@ -1,7 +1,7 @@
 "use client"
 
-import { useId, useState } from "react"
 import { Search } from "lucide-react"
+import { useId, useState } from "react"
 import { CheckboxField } from "@/components/form/CheckboxField"
 import { Input } from "@/components/ui/input"
 import type { VendorOption } from "@/lib/api/public-products"
@@ -17,15 +17,11 @@ const VendorFilter = ({ vendors }: VendorFilterProps) => {
   const [search, setSearch] = useState("")
   const { navigate, currentVendors } = useProductFiltersNavigation()
 
-  const filtered = search
-    ? vendors.filter((v) => v.name.toLowerCase().includes(search.toLowerCase()))
-    : vendors
+  const filtered = search ? vendors.filter((v) => v.name.toLowerCase().includes(search.toLowerCase())) : vendors
   const { showAll, visibleItems, toggleShowAll } = useExpandableList(filtered)
 
   const toggle = (id: string) => {
-    const next = currentVendors.includes(id)
-      ? currentVendors.filter((v) => v !== id)
-      : [...currentVendors, id]
+    const next = currentVendors.includes(id) ? currentVendors.filter((v) => v !== id) : [...currentVendors, id]
     navigate({ vendors: next })
   }
 

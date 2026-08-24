@@ -7,15 +7,22 @@ export async function proxy(request: NextRequest) {
 
   // Helper function to parse auth cookie (safe parse for URL encoded cookies)
   const parseAuthCookie = (authCookie: { value: string }) => {
+    // `request.cookies.get(...).value` is already the raw (undecoded) cookie value here, so
+    // this decodes it exactly once. A second `decodeURIComponent` pass on an already-decoded
+    // value that happens to contain a literal `%` (not a valid escape sequence) throws and used
+    // to make the whole cookie get dropped, silently logging the user out.
+    let decoded: string
     try {
-      const decoded = decodeURIComponent(authCookie.value)
+      decoded = decodeURIComponent(authCookie.value)
+    } catch {
+      // Malformed percent-encoding - fall back to the raw value rather than crashing the proxy.
+      decoded = authCookie.value
+    }
+
+    try {
       return JSON.parse(decoded)
     } catch {
-      try {
-        return JSON.parse(authCookie.value)
-      } catch {
-        return null
-      }
+      return null
     }
   }
 
@@ -32,7 +39,12 @@ export async function proxy(request: NextRequest) {
   // Vendor users can only access vendor dashboard routes
   // Exception: /register?token=... is the admin-invited signup flow — let it through
   const isSignupLinkFlow = pathname === "/register" && url.searchParams.has("token")
-  if (user?.roleName === "Vendor" && !pathname.startsWith("/vendor-dashboard") && !isSignupLinkFlow) {
+  if (
+    isAuthenticated &&
+    user?.roleName === "Vendor" &&
+    !pathname.startsWith("/vendor-dashboard") &&
+    !isSignupLinkFlow
+  ) {
     return NextResponse.redirect(new URL("/vendor-dashboard", request.url))
   }
 
@@ -58,5 +70,10 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|backend-api|_next/static|_next/image|favicon.ico|qz-tray\\.js).*)"],
+  matcher: [
+    // The lookahead is anchored to a segment boundary (`api/` or end-of-path) so that a page
+    // whose first segment merely STARTS with an excluded name (`/apidocs`, `/api-status`)
+    // still goes through the auth guard.
+    "/((?!api/|api$|backend-api/|backend-api$|_next/static|_next/image|favicon\\.ico$|qz-tray\\.js$).*)",
+  ],
 }

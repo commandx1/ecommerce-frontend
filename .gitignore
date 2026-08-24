@@ -45,3 +45,7 @@ llm.txt
 .agents
 .vscode
 skills-lock.json
+
+# Playwright
+/test-results
+/playwright-report

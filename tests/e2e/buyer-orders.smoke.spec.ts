@@ -1,170 +1,192 @@
-import { expect, test } from "@playwright/test"
+import {
+  makeBuyerOrder,
+  makeBuyerOrderItem,
+  makeBuyerOrderSellerGroup,
+  makeBuyerOrdersResponse,
+} from "@/test/factories/order.factory"
+import { expect, test } from "./fixtures/auth.fixture"
+import { registerAllMocks } from "./mocks"
+import { BuyerOrdersPage } from "./pages/buyer-orders.page"
 
-const buyerOrdersResponse = {
-  orders: [
-    {
-      orderId: "order-1",
-      totalPrice: 240,
-      orderStatus: "PAID",
-      createdDate: "2026-05-20T10:30:00Z",
-      addressTitle: "Home",
-      addressFormattedAddress: "Bagdat Caddesi 10, Kadikoy / Istanbul",
-      shipmentAddress: {
-        title: "Home",
-        fullName: "Jane Doe",
-        phoneNumber: "5551234567",
-        country: "TR",
-        city: "Istanbul",
-        district: "Kadikoy",
-        postalCode: "34000",
-        addressLine: "Bagdat Caddesi 10",
-        formattedAddress: "Bagdat Caddesi 10, Kadikoy / Istanbul",
-        latitude: 0,
-        longitude: 0,
-        placeId: "place-1",
-      },
-      cardName: "Jane Doe",
-      cardBrand: "visa",
-      cardLast4: "4242",
-      cardExpMonth: 12,
-      cardExpYear: 2030,
-      sellerGroups: [
-        {
-          sellerId: "seller-1",
-          sellerName: "Acme",
-          sellerSurname: "Store",
-          orderItems: [
-            {
-              id: "item-1",
-              userProductId: "up-1",
-              productId: "product-1",
-              productName: "Dental Kit",
-              price: 100,
-              quantity: 2,
-              status: "WAITING_FOR_SHIPMENT",
-              productCoverPhotoPath: null,
-              sellerName: "Acme",
-              sellerSurname: "Store",
-              shipmentPrice: 5,
-              shipmentFreeBySeller: false,
-              trackingLinks: [
-                {
-                  trackingUrl: "https://track.example/1",
-                  status: "IN_TRANSIT",
-                  updatedDate: "2026-05-20T11:00:00Z",
-                },
-              ],
-              updatedDate: "2026-05-20T11:00:00Z",
-            },
-            {
-              id: "item-2",
-              userProductId: "up-2",
-              productId: "product-2",
-              productName: "Toothpaste",
-              price: 30,
-              quantity: 1,
-              status: "DELIVERED",
-              productCoverPhotoPath: null,
-              sellerName: "Acme",
-              sellerSurname: "Store",
-              shipmentPrice: 0,
-              shipmentFreeBySeller: true,
-              updatedDate: "2026-05-20T11:10:00Z",
-            },
-          ],
-        },
-      ],
-    },
-  ],
-  currentPage: 0,
-  totalPages: 1,
-  totalElements: 1,
-  pageSize: 10,
-}
+/**
+ * /buyer-dashboard/orders smoke test - rewritten on top of the Faz 8.1/8.2
+ * infra (buyerPage + apiMock + registerAllMocks + BuyerOrdersPage), dropping
+ * the pre-migration inline cookie and inline `page.route("**\/backend-api/**")`
+ * catch-all this file used to hand-roll.
+ *
+ * FINDING (test-authoring bug in the OLD version of this file, not a product
+ * bug): the previous assertions checked for "Payment Method", "Payment
+ * Status", "Shipment Status" and "Tracking" *columns*. OrdersTable
+ * (src/app/buyer-dashboard/orders/components/orders-table.tsx) has never had
+ * those columns - the real ones are Date, Seller / Store, Items, Net Total,
+ * Shipment Fee, plus an unlabeled trailing expander column. Those old
+ * assertions could only have been passing against role="columnheader"
+ * matching partial/looser text, or were never actually run since being
+ * written - either way they've been replaced with the real columns below.
+ * `npm run test:smoke` depends on this filename staying the same.
+ *
+ * Viewport: this spec targets the desktop `OrdersTable` (the columns/rows
+ * the task asked for) specifically, not `OrdersMobileList` - the sibling
+ * `md:hidden` card list rendered on narrow viewports
+ * (src/app/buyer-dashboard/orders/page.tsx toggles between them purely via
+ * Tailwind's `md:` breakpoint, i.e. viewport width). `npm run test:smoke`
+ * runs every configured project, including a narrow `mobile-chrome` one
+ * (playwright.config.ts) where `OrdersTable` is CSS-hidden and none of these
+ * column/table assertions would ever find anything - so this file pins a
+ * desktop-width viewport regardless of project so the table (not the card
+ * list) is what's actually exercised everywhere it runs.
+ */
+test.use({ viewport: { width: 1280, height: 900 } })
 
-test.beforeEach(async ({ context, page }) => {
-  await context.addCookies([
-    {
-      name: "auth-storage",
-      value: encodeURIComponent(
-        JSON.stringify({
-          state: {
-            user: {
-              id: "user-1",
-              name: "Jane",
-              surname: "Doe",
-              email: "jane@example.com",
-              phoneNumber: "5551234567",
-              emailConfirmed: true,
-              phoneNumberConfirmed: true,
-              twoFactorEnabled: false,
-              lockoutEnd: null,
-              createdDate: "2026-01-01T00:00:00Z",
-            },
-            accessToken: "test-token",
-            refreshToken: "test-refresh",
-            isAuthenticated: true,
-            isAdminImpersonating: false,
-          },
-          version: 0,
+const TWO_ITEM_ORDER = makeBuyerOrder({
+  orderId: "order-1",
+  totalPrice: 245,
+  orderStatus: "PAID",
+  createdDate: "2026-05-20T10:30:00Z",
+  sellerGroups: [
+    makeBuyerOrderSellerGroup({
+      sellerId: "seller-1",
+      sellerName: "Acme",
+      sellerSurname: "Store",
+      orderItems: [
+        makeBuyerOrderItem({
+          id: "item-1",
+          userProductId: "up-1",
+          productId: "product-1",
+          productName: "Dental Kit",
+          price: 100,
+          quantity: 2,
+          status: "WAITING_FOR_SHIPMENT",
+          shipmentPrice: 5,
+          shipmentFreeBySeller: false,
         }),
-      ),
-      url: "http://localhost:3000",
-    },
-  ])
-
-  await page.route("**/backend-api/**", async (route) => {
-    const requestUrl = new URL(route.request().url())
-
-    if (requestUrl.pathname.endsWith("/orders/buyer")) {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(buyerOrdersResponse),
-      })
-      return
-    }
-
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({}),
-    })
-  })
+        makeBuyerOrderItem({
+          id: "item-2",
+          userProductId: "up-2",
+          productId: "product-2",
+          productName: "Toothpaste",
+          price: 30,
+          quantity: 1,
+          status: "DELIVERED",
+          shipmentPrice: 0,
+          shipmentFreeBySeller: true,
+        }),
+      ],
+    }),
+  ],
 })
 
-test("renders buyer orders table and expanded order details from API response", async ({ page }) => {
-  await page.goto("/buyer-dashboard/orders")
+test.describe("buyer orders smoke", () => {
+  test("renders the orders table with the real columns and expanded order details", async ({ buyerPage, apiMock }) => {
+    apiMock.on("GET", "/backend-api/orders/buyer", () => ({
+      body: makeBuyerOrdersResponse({ orders: [TWO_ITEM_ORDER] }),
+    }))
+    registerAllMocks(apiMock)
 
-  await expect(page.getByRole("heading", { name: "Your Orders" })).toBeVisible()
+    const orders = new BuyerOrdersPage(buyerPage)
+    await orders.goto()
 
-  await expect(page.getByRole("columnheader", { name: "Date" })).toBeVisible()
-  await expect(page.getByRole("columnheader", { name: "Seller / Store" })).toBeVisible()
-  await expect(page.getByRole("columnheader", { name: "Items" })).toBeVisible()
-  await expect(page.getByRole("columnheader", { name: "Payment Method" })).toBeVisible()
-  await expect(page.getByRole("columnheader", { name: "Payment Status" })).toBeVisible()
-  await expect(page.getByRole("columnheader", { name: "Shipment Status" })).toBeVisible()
-  await expect(page.getByRole("columnheader", { name: "Tracking" })).toBeVisible()
-  await expect(page.getByRole("columnheader", { name: "Net Total" })).toBeVisible()
-  await expect(page.getByRole("columnheader", { name: "Shipment Fee" })).toBeVisible()
+    await expect(buyerPage.getByRole("heading", { name: "Your Orders" })).toBeVisible()
 
-  await expect(page.getByText("Acme Store")).toBeVisible()
-  await expect(page.getByText("3 items")).toBeVisible()
-  await expect(page.getByText("VISA •••• 4242")).toBeVisible()
-  await expect(page.getByText("Paid")).toBeVisible()
-  await expect(page.getByText("1 link")).toBeVisible()
-  await expect(page.getByText("$240.00")).toBeVisible()
-  await expect(page.getByText("$10.00")).toBeVisible()
+    await expect(orders.dateColumnHeader).toBeVisible()
+    await expect(orders.sellerColumnHeader).toBeVisible()
+    await expect(orders.itemsColumnHeader).toBeVisible()
+    await expect(orders.netTotalColumnHeader).toBeVisible()
+    await expect(orders.shipmentFeeColumnHeader).toBeVisible()
+    // No Payment Method/Payment Status/Shipment Status/Tracking columns exist.
+    await expect(buyerPage.getByRole("columnheader", { name: "Payment Method" })).toHaveCount(0)
+    await expect(buyerPage.getByRole("columnheader", { name: "Payment Status" })).toHaveCount(0)
+    await expect(buyerPage.getByRole("columnheader", { name: "Shipment Status" })).toHaveCount(0)
+    await expect(buyerPage.getByRole("columnheader", { name: "Tracking" })).toHaveCount(0)
 
-  await page.locator("tbody tr").first().getByRole("button").click()
+    await expect(buyerPage.getByText("Acme Store").first()).toBeVisible()
+    await expect(buyerPage.getByText("3 items", { exact: true }).first()).toBeVisible()
+    await expect(buyerPage.getByText("$245.00").first()).toBeVisible()
+    // Shipment fee column: item-1's 5.00 * qty 2 = 10.00, item-2 is seller-free.
+    await expect(buyerPage.getByText("$10.00").first()).toBeVisible()
 
-  await expect(page.getByRole("heading", { name: "Order Items" })).toBeVisible()
-  await expect(page.getByText("Dental Kit")).toBeVisible()
-  await expect(page.getByText("Toothpaste")).toBeVisible()
-  await expect(page.getByText("Customer Details")).toBeVisible()
-  await expect(page.getByText("Fulfillment").first()).toBeVisible()
-  await expect(page.getByRole("button", { name: "Reorder" }).first()).toBeVisible()
-  await expect(page.getByRole("button", { name: "Track" })).toBeVisible()
-  await expect(page.getByRole("button", { name: "Cancel Item" })).toBeVisible()
-  await expect(page.getByRole("button", { name: "Cancel All Items from Acme Store" })).toBeVisible()
+    await orders.expandFirstRow()
+
+    await expect(orders.orderItemsHeading).toBeVisible()
+    await expect(buyerPage.getByText("Dental Kit").first()).toBeVisible()
+    await expect(buyerPage.getByText("Toothpaste").first()).toBeVisible()
+    await expect(orders.customerDetailsHeading).toBeVisible()
+    await expect(orders.reorderButton()).toBeVisible()
+    await expect(orders.cancelItemButton()).toBeVisible()
+    await expect(orders.cancelAllFromSellerButton("Acme Store")).toBeVisible()
+  })
+
+  test("switching a status tab requests the matching `type` filter and re-fetches orders", async ({
+    buyerPage,
+    apiMock,
+  }) => {
+    apiMock.on("GET", "/backend-api/orders/buyer", ({ url }) => {
+      const type = url.searchParams.get("type")
+      if (type === "DELIVERED") {
+        return {
+          body: makeBuyerOrdersResponse({
+            orders: [
+              makeBuyerOrder({
+                orderId: "order-delivered",
+                orderStatus: "DELIVERED",
+                sellerGroups: [
+                  makeBuyerOrderSellerGroup({
+                    sellerId: "seller-2",
+                    sellerName: "Beta",
+                    sellerSurname: "Dental",
+                    orderItems: [makeBuyerOrderItem({ status: "DELIVERED" })],
+                  }),
+                ],
+              }),
+            ],
+          }),
+        }
+      }
+      return { body: makeBuyerOrdersResponse({ orders: [TWO_ITEM_ORDER] }) }
+    })
+    registerAllMocks(apiMock)
+
+    const orders = new BuyerOrdersPage(buyerPage)
+    await orders.goto()
+    await expect(buyerPage.getByText("Acme Store").first()).toBeVisible()
+
+    const deliveredRequest = buyerPage.waitForRequest(
+      (request) =>
+        request.method() === "GET" &&
+        request.url().includes("/backend-api/orders/buyer") &&
+        new URL(request.url()).searchParams.get("type") === "DELIVERED",
+    )
+    await orders.statusTab("Delivered").click()
+    await deliveredRequest
+
+    await expect(buyerPage.getByText("Acme Store").first()).toBeHidden()
+  })
+
+  test("renders pagination controls driven by the API's page metadata", async ({ buyerPage, apiMock }) => {
+    apiMock.on("GET", "/backend-api/orders/buyer", () => ({
+      body: makeBuyerOrdersResponse({
+        orders: [TWO_ITEM_ORDER],
+        currentPage: 0,
+        totalPages: 3,
+        totalElements: 25,
+        pageSize: 10,
+      }),
+    }))
+    registerAllMocks(apiMock)
+
+    const orders = new BuyerOrdersPage(buyerPage)
+    await orders.goto()
+    await expect(buyerPage.getByText("Acme Store").first()).toBeVisible()
+
+    await expect(orders.nextPageButton).toBeVisible()
+
+    const page2Request = buyerPage.waitForRequest(
+      (request) =>
+        request.method() === "GET" &&
+        request.url().includes("/backend-api/orders/buyer") &&
+        new URL(request.url()).searchParams.get("page") === "1",
+    )
+    await orders.nextPageButton.click()
+    await page2Request
+  })
 })

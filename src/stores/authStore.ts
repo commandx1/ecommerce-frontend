@@ -2,6 +2,12 @@ import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { cookieStorage } from "@/lib/storage/cookie-storage"
 
+// Mirrors the `authFailurePromise` pattern in `src/lib/api/client.ts`: without this, calling
+// `logout()` twice concurrently (e.g. `Promise.all([logout(), logout()])`) fires two
+// `POST /auth/logout` requests instead of the second call simply riding the first's in-flight
+// promise. Cleared in `finally` so a later, genuinely new logout is not swallowed.
+let logoutPromise: Promise<void> | null = null
+
 interface User {
   id: string
   name: string
@@ -83,31 +89,48 @@ export const useAuthStore = create<AuthState>()(
         }),
 
       logout: async () => {
-        const currentState = get()
-        try {
-          if (currentState.refreshToken && currentState.accessToken) {
-            const { authAPIDirect } = await import("@/lib/api/auth-direct")
-            await authAPIDirect.logout({ refreshToken: currentState.refreshToken }, currentState.accessToken)
-          }
-        } catch {
-          // Hata olsa bile local state'i temizle
-        } finally {
-          // Clear auth state
-          set({
-            user: null,
-            accessToken: null,
-            refreshToken: null,
-            isAuthenticated: false,
-            isAdminImpersonating: false,
-            error: null,
-          })
-
-          // Clear cart state
-          const { useCartStore } = await import("./cartStore")
-          useCartStore.getState().resetCart()
-
-          // Router push operation will be handled in components
+        if (logoutPromise) {
+          return logoutPromise
         }
+
+        logoutPromise = (async () => {
+          const currentState = get()
+          try {
+            if (currentState.refreshToken && currentState.accessToken) {
+              const { authAPIDirect } = await import("@/lib/api/auth-direct")
+              await authAPIDirect.logout({ refreshToken: currentState.refreshToken }, currentState.accessToken)
+            }
+          } catch {
+            // Hata olsa bile local state'i temizle
+          } finally {
+            // Clear auth state
+            set({
+              user: null,
+              accessToken: null,
+              refreshToken: null,
+              isAuthenticated: false,
+              isAdminImpersonating: false,
+              error: null,
+            })
+
+            // `set()` above only rewrites the persisted cookie with an empty state (via the
+            // persist middleware's setItem call) - it does not delete it. Explicitly remove the
+            // cookie so `auth-storage` is actually gone, matching what `src/proxy.ts` expects
+            // (code that only checks cookie *presence* would otherwise keep treating the session
+            // as logged in).
+            useAuthStore.persist.clearStorage()
+
+            // Clear cart state
+            const { useCartStore } = await import("./cartStore")
+            useCartStore.getState().resetCart()
+
+            // Router push operation will be handled in components
+          }
+        })().finally(() => {
+          logoutPromise = null
+        })
+
+        return logoutPromise
       },
 
       setLoading: (loading) =>

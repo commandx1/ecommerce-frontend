@@ -70,14 +70,12 @@ export const useCartStore = create<CartStore>((set, get) => ({
     const now = Date.now()
     const { lastFetchedAt } = get()
 
-    if (!force) {
-      if (inFlightCartFetch) {
-        return inFlightCartFetch
-      }
+    if (inFlightCartFetch) {
+      return inFlightCartFetch
+    }
 
-      if (now - lastFetchedAt < FETCH_DEDUP_WINDOW_MS) {
-        return
-      }
+    if (!force && now - lastFetchedAt < FETCH_DEDUP_WINDOW_MS) {
+      return
     }
 
     const fetchTask = async () => {
@@ -93,7 +91,10 @@ export const useCartStore = create<CartStore>((set, get) => ({
         })
       } catch (error: unknown) {
         if (isAuthHandledError(error)) {
-          set({ isLoading: false, lastFetchedAt: Date.now() })
+          // Don't stamp `lastFetchedAt` here: the auth interceptor already ran `resetCart()`
+          // (zeroing it) before this rejection reached us. Re-stamping "now" would re-open the
+          // dedup window and leave the user staring at an empty cart for ~1s right after login.
+          set({ isLoading: false })
           return
         }
 
@@ -104,14 +105,11 @@ export const useCartStore = create<CartStore>((set, get) => ({
           set({ items: [], cartCount: 0, cartId: null, isLoading: false, lastFetchedAt: Date.now() })
         } else {
           const message = error instanceof Error ? error.message : "Failed to fetch cart"
-          set({ error: message, isLoading: false })
+          // Still stamp `lastFetchedAt` on failure so the dedup window is actually established -
+          // otherwise a downed backend gets hammered with an uninterrupted stream of retries.
+          set({ error: message, isLoading: false, lastFetchedAt: Date.now() })
         }
       }
-    }
-
-    if (force) {
-      await fetchTask()
-      return
     }
 
     inFlightCartFetch = fetchTask()
@@ -140,6 +138,9 @@ export const useCartStore = create<CartStore>((set, get) => ({
 
       const message = error instanceof Error ? error.message : "Failed to add item"
       set({ error: message })
+      // Rethrown so the caller's catch block actually runs. Swallowing it here left the UI
+      // showing a finished spinner and no warning at all while the item never entered the cart.
+      throw error
     }
   },
 
@@ -198,11 +199,18 @@ export const useCartStore = create<CartStore>((set, get) => ({
       await cartAPI.updateItemQuantity(userProductId, nextQuantity, autoOrder)
       await get().fetchCart({ force: true })
     } catch (error: unknown) {
-      set({ isLoading: false })
       if (isAuthHandledError(error)) {
+        set({ isLoading: false })
         return
       }
 
+      // Deliberately does NOT write the shared `error` state, unlike addToCart. The only caller
+      // (useCartPage) already shows its own "Could not update auto-reorder" toast from the
+      // rethrow below, and it ALSO renders a generic "Cart unavailable" toast whenever `error`
+      // changes - setting it here fires both toasts for one failure. The wider inconsistency
+      // (addToCart/setItemAutoOrder throw, removeFromCart/updateQuantity return silently) is a
+      // contract decision tracked in TEST-FINDINGS.md, not something to fix one function at a time.
+      set({ isLoading: false })
       throw error
     }
   },
@@ -213,7 +221,9 @@ export const useCartStore = create<CartStore>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       await cartAPI.clearCart(cartId)
-      set({ items: [], cartCount: 0, cartId: null, isLoading: false })
+      // Reset `lastFetchedAt` (not a self-triggered refetch) so the dedup window doesn't shadow
+      // the next `fetchCart` with now-stale pre-clear data.
+      set({ items: [], cartCount: 0, cartId: null, isLoading: false, lastFetchedAt: 0 })
     } catch (error: unknown) {
       if (isAuthHandledError(error)) {
         set({ isLoading: false })

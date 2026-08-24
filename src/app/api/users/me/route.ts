@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { sanitizeUpstreamErrorMessage } from "@/lib/api/sanitize-upstream-error"
 import { serverRequest } from "@/lib/api/server-request"
-
 
 export async function PUT(request: NextRequest) {
   try {
@@ -22,7 +22,8 @@ export async function PUT(request: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text()
-      return NextResponse.json({ error: errorText || "Failed to update user" }, { status: response.status })
+      const message = errorText ? sanitizeUpstreamErrorMessage(errorText, response.status) : "Failed to update user"
+      return NextResponse.json({ error: message }, { status: response.status })
     }
 
     const data = await response.json()
@@ -48,7 +49,8 @@ export async function DELETE(request: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text()
-      return NextResponse.json({ error: errorText || "Failed to delete user" }, { status: response.status })
+      const message = errorText ? sanitizeUpstreamErrorMessage(errorText, response.status) : "Failed to delete user"
+      return NextResponse.json({ error: message }, { status: response.status })
     }
 
     return NextResponse.json({ success: true })

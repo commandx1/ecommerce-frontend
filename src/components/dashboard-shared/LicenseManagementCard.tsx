@@ -10,7 +10,7 @@ import Modal from "@/components/ui/Modal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
 import usStateList from "@/data/usstate-list.json"
-import { type CreateLicensePayload, type License, licenseAPI, type LicenseType } from "@/lib/api/licenses"
+import { type CreateLicensePayload, type License, type LicenseType, licenseAPI } from "@/lib/api/licenses"
 import { cn } from "@/lib/utils"
 
 const US_STATES = usStateList.slice(
@@ -208,8 +208,7 @@ export default function LicenseManagementCard() {
                       </p>
                     )}
                     <p className="text-sm text-text-primary">
-                      <span className="font-semibold text-text-secondary">License Number:</span>{" "}
-                      {license.licenseNumber}
+                      <span className="font-semibold text-text-secondary">License Number:</span> {license.licenseNumber}
                     </p>
                   </div>
                   <StatusBadge license={license} />

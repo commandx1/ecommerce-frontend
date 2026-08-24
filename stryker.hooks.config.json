@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "packageManager": "npm",
+  "testRunner": "vitest",
+  "vitest": {
+    "configFile": "vitest.stryker.jsdom.config.mts"
+  },
+  "mutate": [
+    "src/features/checkout/hooks/useFinalReview.ts",
+    "src/features/products/product-detail/hooks/usePurchaseCalculator.ts"
+  ],
+  "concurrency": 4,
+  "coverageAnalysis": "perTest",
+  "reporters": ["html", "clear-text", "progress"],
+  "htmlReporter": {
+    "fileName": "reports/mutation/hooks/index.html"
+  },
+  "timeoutMS": 60000
+}

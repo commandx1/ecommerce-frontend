@@ -130,9 +130,7 @@ const SidebarNavItem = ({
       />
       <span className={collapsed ? "md:sr-only" : undefined}>{item.label}</span>
       {item.trailingText ? (
-        <span className={cn("ml-auto text-sm text-text-muted", collapsed ? "md:hidden" : "")}>
-          {item.trailingText}
-        </span>
+        <span className={cn("ml-auto text-sm text-text-muted", collapsed ? "md:hidden" : "")}>{item.trailingText}</span>
       ) : null}
       {item.badge ? (
         <span

@@ -2,8 +2,8 @@
 
 import { Check, ChevronDown, Loader2, Search, Tag, X } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { useDebounce } from "@/lib/hooks/useDebounce"
 import { productsAPI } from "@/lib/api/products"
+import { useDebounce } from "@/lib/hooks/useDebounce"
 
 const PAGE_SIZE = 20
 const SCROLL_THRESHOLD_PX = 48
@@ -37,6 +37,7 @@ export default function BrandFilterDropdown({
 
   const containerRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const debouncedQuery = useDebounce(query, 400)
 
@@ -50,6 +51,12 @@ export default function BrandFilterDropdown({
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
+
+  // Focus the search field when the dropdown opens (replaces the `autoFocus` attribute,
+  // which fires on mount regardless of user intent).
+  useEffect(() => {
+    if (isOpen) searchInputRef.current?.focus()
+  }, [isOpen])
 
   const fetchBrands = useCallback(
     async (searchTerm: string, targetPage: number, options: { append?: boolean } = {}) => {
@@ -80,9 +87,11 @@ export default function BrandFilterDropdown({
         if (!options.append) setBrands([])
         setHasMore(false)
       } finally {
-        if (controller.signal.aborted) return
-        if (options.append) setIsLoadingMore(false)
-        else setIsLoading(false)
+        // Never `return` from `finally` — it would silently swallow returns/throws from try/catch.
+        if (!controller.signal.aborted) {
+          if (options.append) setIsLoadingMore(false)
+          else setIsLoading(false)
+        }
       }
     },
     [accessToken],
@@ -132,6 +141,7 @@ export default function BrandFilterDropdown({
           {value || (hideAllOption ? "Select brand" : "All Brands")}
         </span>
         {!hideAllOption && value && (
+          // biome-ignore lint/a11y/useSemanticElements: nested inside the trigger <button>, and a nested <button> is invalid HTML
           <span
             role="button"
             tabIndex={0}
@@ -150,7 +160,9 @@ export default function BrandFilterDropdown({
             <X className="w-4 h-4" />
           </span>
         )}
-        <ChevronDown className={`w-4 h-4 text-text-muted shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDown
+          className={`w-4 h-4 text-text-muted shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
+        />
       </button>
 
       {isOpen && (
@@ -159,7 +171,7 @@ export default function BrandFilterDropdown({
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
               <input
-                autoFocus
+                ref={searchInputRef}
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}

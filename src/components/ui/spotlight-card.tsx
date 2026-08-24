@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useRef, type ReactNode } from "react"
+import React, { type ReactNode, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 
 type GlowColor = "blue" | "purple" | "green" | "red" | "orange"
@@ -13,11 +13,11 @@ interface SpotlightCardProps {
 }
 
 const glowColorMap: Record<GlowColor, { base: number; spread: number }> = {
-  blue:   { base: 220, spread: 80 },
+  blue: { base: 220, spread: 80 },
   purple: { base: 280, spread: 100 },
-  green:  { base: 120, spread: 80 },
-  red:    { base: 0,   spread: 80 },
-  orange: { base: 30,  spread: 80 },
+  green: { base: 120, spread: 80 },
+  red: { base: 0, spread: 80 },
+  orange: { base: 30, spread: 80 },
 }
 
 export function SpotlightCard({ children, className, glowColor = "blue", radius = 20 }: SpotlightCardProps) {

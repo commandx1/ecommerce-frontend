@@ -1,11 +1,11 @@
 import type { APIProduct } from "@/features/products/listing/components/ProductListingClient"
-import type { AttributeGroup, FilterOption, VendorOption } from "@/lib/api/public-products"
+import type { AttributeGroup, FilterOption, PublicProductsResponse, VendorOption } from "@/lib/api/public-products"
 import {
   getProductAttributeOptions,
   getProductBrandOptions,
   getProductCategoryOptions,
-  getProductVendorOptions,
   getProductManufacturerOptions,
+  getProductVendorOptions,
   getPublicProducts,
 } from "@/lib/api/public-products"
 import type { ParsedListingSearchParams } from "./parse-listing-search-params"
@@ -49,7 +49,7 @@ export async function getListingPageData({
       inStock,
       sort,
       attributes,
-    }),
+    }).catch((): PublicProductsResponse<APIProduct> => ({ content: [], totalElements: 0, totalPages: 1 })),
     getProductBrandOptions(),
     getProductManufacturerOptions(),
     getProductCategoryOptions(),

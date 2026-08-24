@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { sanitizeUpstreamErrorMessage } from "@/lib/api/sanitize-upstream-error"
 import { serverRequest } from "@/lib/api/server-request"
-
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,7 +23,8 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text()
-      return NextResponse.json({ error: errorText || "Failed to create question" }, { status: response.status })
+      const message = errorText ? sanitizeUpstreamErrorMessage(errorText, response.status) : "Failed to create question"
+      return NextResponse.json({ error: message }, { status: response.status })
     }
 
     const data = await response.json()

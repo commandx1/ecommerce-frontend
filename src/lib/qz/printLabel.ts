@@ -10,6 +10,7 @@ interface QzApi {
   websocket?: {
     isActive?: () => boolean
     connect: () => Promise<void>
+    disconnect?: () => Promise<void>
   }
   printers: {
     find: () => Promise<string[]>
@@ -328,8 +329,9 @@ export async function printShippingLabel(url: string, options: QzPrintOptions = 
     return
   }
 
+  let qz: QzApi | null = null
   try {
-    const qz = await ensureQzConnected()
+    qz = await ensureQzConnected()
     const config = qz.configs.create(options.printer || null, {
       copies: options.copies ?? 1,
       colorType: options.colorType ?? "color",
@@ -344,5 +346,16 @@ export async function printShippingLabel(url: string, options: QzPrintOptions = 
   } catch (error) {
     reportQzIssue("error", "QZ Tray print failed:", error)
     window.open(url, "_blank", "noopener,noreferrer")
+  } finally {
+    // Y14: close the websocket QZ Tray opened for this print job on every path (success or
+    // failure) so it doesn't stay connected indefinitely. A disconnect failure must not mask
+    // whatever happened above, so it is only logged.
+    if (qz?.websocket?.isActive?.()) {
+      try {
+        await qz.websocket.disconnect?.()
+      } catch (disconnectError) {
+        reportQzIssue("warn", "QZ Tray disconnect failed:", disconnectError)
+      }
+    }
   }
 }

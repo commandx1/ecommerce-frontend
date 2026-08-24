@@ -2,7 +2,6 @@ import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
 
-
 // Search Products by Title - GET /api/barcode/products/search?title=...
 export async function GET(request: NextRequest) {
   try {
@@ -18,18 +17,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: "Title parameter is required" }, { status: 400 })
     }
 
-    const response = await serverRequest(
-      `/api/barcode/products/search?title=${encodeURIComponent(title)}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "User-Agent": "Mozilla/5.0",
-          Accept: "application/json",
-          Authorization: authHeader,
-        },
+    const response = await serverRequest(`/api/barcode/products/search?title=${encodeURIComponent(title)}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0",
+        Accept: "application/json",
+        Authorization: authHeader,
       },
-    )
+    })
 
     const contentType = response.headers.get("content-type")
     const hasJson = contentType?.includes("application/json")

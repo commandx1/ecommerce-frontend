@@ -187,10 +187,7 @@ export default function HomeHeroSectionClient() {
         style={prefersReducedMotion ? undefined : { y: heroY, opacity: heroOpacity }}
         className="relative flex h-full flex-col gap-4 py-4 sm:gap-5 sm:py-6 will-change-transform"
       >
-        <motion.div
-          variants={revealVariants}
-          className="relative z-20 app-container"
-        >
+        <motion.div variants={revealVariants} className="relative z-20 app-container">
           <div className="relative overflow-hidden rounded-[1.6rem] border border-border-soft/75 bg-surface-elevated/92 shadow-panel backdrop-blur-xl sm:rounded-4xl">
             <div ref={emblaRef} className="overflow-hidden">
               <div className="flex">
@@ -260,14 +257,25 @@ export default function HomeHeroSectionClient() {
             aria-hidden
             className="hero-network-map pointer-events-none absolute inset-0 contain-[layout_style_paint]"
           >
-            <svg aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none" className="hero-network-svg" style={{ willChange: 'transform' }}>
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              className="hero-network-svg"
+              style={{ willChange: "transform" }}
+            >
               {/* Route paths + traveling packets */}
               {networkRoutes.map((route) => (
                 <g key={route.id}>
                   <path id={`hero-route-${route.id}`} d={route.path} className="hero-route-path" />
                   {/* Single traveling packet per route */}
                   <circle r="0.55" className="hero-route-packet">
-                    <animateMotion dur={`${route.duration}s`} begin={`${route.delay}s`} repeatCount="indefinite" rotate="auto">
+                    <animateMotion
+                      dur={`${route.duration}s`}
+                      begin={`${route.delay}s`}
+                      repeatCount="indefinite"
+                      rotate="auto"
+                    >
                       <mpath href={`#hero-route-${route.id}`} />
                     </animateMotion>
                   </circle>
@@ -280,8 +288,23 @@ export default function HomeHeroSectionClient() {
                 .map((node, i) => (
                   <g key={`vendor-fx-${node.id}`}>
                     <circle cx={node.x} cy={node.y} r="0" className="hero-vendor-ring">
-                      <animate attributeName="r" values="0.6;5.5" dur="3.5s" begin={`${i * 2}s`} repeatCount="indefinite" calcMode="spline" keySplines="0.2 0.8 0.4 1" keyTimes="0;1" />
-                      <animate attributeName="opacity" values="0.6;0" dur="3.5s" begin={`${i * 2}s`} repeatCount="indefinite" />
+                      <animate
+                        attributeName="r"
+                        values="0.6;5.5"
+                        dur="3.5s"
+                        begin={`${i * 2}s`}
+                        repeatCount="indefinite"
+                        calcMode="spline"
+                        keySplines="0.2 0.8 0.4 1"
+                        keyTimes="0;1"
+                      />
+                      <animate
+                        attributeName="opacity"
+                        values="0.6;0"
+                        dur="3.5s"
+                        begin={`${i * 2}s`}
+                        repeatCount="indefinite"
+                      />
                     </circle>
                     <circle cx={node.x} cy={node.y} r="0.48" className="hero-vendor-dot" />
                   </g>

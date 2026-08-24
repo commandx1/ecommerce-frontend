@@ -1,7 +1,7 @@
 "use client"
 
-import { useId, useState } from "react"
 import { ChevronDown, ChevronRight } from "lucide-react"
+import { useId, useState } from "react"
 import { CheckboxField } from "@/components/form/CheckboxField"
 import type { FilterOption } from "@/lib/api/public-products"
 import { useProductFiltersNavigation } from "../hooks/useProductFiltersNavigation"
@@ -68,9 +68,7 @@ function TreeNode({ node, depth, uid, currentCategories, toggle }: TreeNodeProps
               )}
               <span className="select-none">{node.label}</span>
             </button>
-            {node.count !== null && (
-              <span className="ml-auto shrink-0 text-xs text-text-muted">{node.count}</span>
-            )}
+            {node.count !== null && <span className="ml-auto shrink-0 text-xs text-text-muted">{node.count}</span>}
           </>
         ) : (
           <div className="flex items-center justify-between gap-2 w-full">

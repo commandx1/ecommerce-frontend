@@ -20,7 +20,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
 
     const formData = await request.formData()
 
-    const response = await serverRequest(`/api/products/review/${id}`, {
+    const response = await serverRequest(`/api/products/review/${encodeURIComponent(id)}`, {
       method: "PUT",
       headers: {
         "User-Agent": "Mozilla/5.0",

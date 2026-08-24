@@ -25,7 +25,6 @@ import BrandFilterDropdown from "@/app/vendor-dashboard/products/create/componen
 import ProductDetailsModal from "@/app/vendor-dashboard/products/create/components/ProductDetailsModal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
-import { useDebounce } from "@/lib/hooks/useDebounce"
 import {
   type CreateUserProductPayload,
   getFullImageUrl,
@@ -35,6 +34,7 @@ import {
   type ProductVendorRequestData,
   productsAPI,
 } from "@/lib/api/products"
+import { useDebounce } from "@/lib/hooks/useDebounce"
 import { useAuthStore } from "@/stores/authStore"
 
 const SEARCH_PAGE_SIZE = 10
@@ -286,9 +286,11 @@ function CreateProductPageContent() {
         if (!options.append) setSearchResults([])
         setHasMoreResults(false)
       } finally {
-        if (controller.signal.aborted) return
-        if (options.append) setIsLoadingMoreResults(false)
-        else setIsSearching(false)
+        // Never `return` from `finally` — it would silently swallow returns/throws from try/catch.
+        if (!controller.signal.aborted) {
+          if (options.append) setIsLoadingMoreResults(false)
+          else setIsSearching(false)
+        }
       }
     },
     [accessToken],
@@ -389,7 +391,8 @@ function CreateProductPageContent() {
         price: String(userProduct.price),
         stock: String(userProduct.stock),
         shipmentFee: userProduct.shipmentFee != null ? String(userProduct.shipmentFee) : "",
-        heavyShippingSurcharge: userProduct.heavyShippingSurcharge != null ? String(userProduct.heavyShippingSurcharge) : "",
+        heavyShippingSurcharge:
+          userProduct.heavyShippingSurcharge != null ? String(userProduct.heavyShippingSurcharge) : "",
       })
 
       const coverPhoto = product.coverPhotoPath ? getFullImageUrl(product.coverPhotoPath) : null
@@ -720,7 +723,7 @@ function CreateProductPageContent() {
         ["width", "Width"],
         ["weight", "Weight"],
         ["shipmentFee", "Shipment fee"],
-        ["heavyShippingSurcharge", "Heavy shipping fee"]
+        ["heavyShippingSurcharge", "Heavy shipping fee"],
       ]
       for (const [field, label] of optionalNumericFields) {
         const value = formData[field] as string
@@ -1789,8 +1792,8 @@ function CreateProductPageContent() {
                       Cover Photo *<span className="text-text-muted font-normal ml-2">(Main product image)</span>
                     </legend>
                     <p className="text-text-muted text-sm mb-4">
-                      Upload a high-quality cover image for your product, or add it via a link. This will be the
-                      main image displayed.
+                      Upload a high-quality cover image for your product, or add it via a link. This will be the main
+                      image displayed.
                     </p>
 
                     <div className="flex items-center gap-2 mb-4">
@@ -1836,7 +1839,9 @@ function CreateProductPageContent() {
                       <div className="relative inline-block">
                         <div className="w-48 h-48 bg-surface rounded-lg overflow-hidden border-2 border-brand">
                           <Image
-                            src={fileData.coverPhotoPreview || existingImages.coverPhoto || linkedImages.coverPhoto || ""}
+                            src={
+                              fileData.coverPhotoPreview || existingImages.coverPhoto || linkedImages.coverPhoto || ""
+                            }
                             alt="Cover preview"
                             className="w-full h-full object-cover"
                             width={192}

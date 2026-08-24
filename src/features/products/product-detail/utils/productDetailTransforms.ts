@@ -1,4 +1,5 @@
 import { getFullImageUrl } from "@/lib/api/products"
+import formatCurrency from "@/lib/helpers/formatCurrency"
 import type { ProductDescriptionContent, ProductDetail, SupplierViewModel, UserProduct } from "../types"
 
 const FALLBACK_IMAGE = "/dentypro-product-placeholder.png"
@@ -80,16 +81,16 @@ export const buildSuppliers = (userProducts: UserProduct[], bestPriceVendorUserP
         logo: up.vendorLogo,
         alt: `${up.vendor || "Vendor"} logo`,
         badge: up.id === bestPriceVendorUserProductId ? "Best Seller" : "Verified",
-        price: `$${up.price.toFixed(2)}`,
-        originalPrice: up.oldPrice && up.oldPrice !== up.price ? `$${up.oldPrice.toFixed(2)}` : null,
+        price: formatCurrency(up.price),
+        originalPrice: up.oldPrice && up.oldPrice !== up.price ? formatCurrency(up.oldPrice) : null,
         discount: typeof up.discount === "number" ? up.discount : 0,
         stock: up.stock > 0 ? "In Stock" : "Out of Stock",
         stockColor: up.stock > 0 ? "green" : "gray",
         stockCount: up.stock || 0,
-        shipping: shippingTotal <= 0 ? "Free" : `$${shippingTotal.toFixed(2)}`,
+        shipping: shippingTotal <= 0 ? "Free" : formatCurrency(shippingTotal),
         shippingNote: "Standard shipping",
-        shippingFee: shipmentFee <= 0 ? "Free" : `$${shipmentFee.toFixed(2)}`,
-        heavyShippingFee: heavyShippingSurcharge <= 0 ? "Free" : `$${heavyShippingSurcharge.toFixed(2)}`,
+        shippingFee: shipmentFee <= 0 ? "Free" : formatCurrency(shipmentFee),
+        heavyShippingFee: heavyShippingSurcharge <= 0 ? "Free" : formatCurrency(heavyShippingSurcharge),
         distance: up.vendorDistance,
         distanceTime: up.vendorDistanceTime,
         rating: up.vendorRating ?? 0,
