@@ -9,11 +9,9 @@ export default function RegisterPage() {
 
       <section className="py-12">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="overflow-hidden rounded-3xl border border-border-soft bg-surface-elevated shadow-panel">
-            <Suspense fallback={<div className="p-12" />}>
-              <RegisterForm />
-            </Suspense>
-          </div>
+          <Suspense fallback={<div className="p-12" />}>
+            <RegisterForm />
+          </Suspense>
         </div>
       </section>
     </div>

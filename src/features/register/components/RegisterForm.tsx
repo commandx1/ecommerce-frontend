@@ -1,11 +1,11 @@
 "use client"
 
-import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useEffect, useRef } from "react"
 import { showToast } from "@/components/ui/Toast"
 import AddressSection from "@/features/register/components/AddressSection"
 import CompanyInfoSection from "@/features/register/components/CompanyInfoSection"
+import InviteTokenNotice from "@/features/register/components/InviteTokenNotice"
 import PasswordSection from "@/features/register/components/PasswordSection"
 import PersonalInfoFields from "@/features/register/components/PersonalInfoFields"
 import RegisterFormActions from "@/features/register/components/RegisterFormActions"
@@ -59,7 +59,7 @@ export default function RegisterForm() {
 
   if (isTokenFlow && tokenStatus === "checking") {
     return (
-      <div className="p-6 sm:p-8 lg:p-12">
+      <div>
         <RegisterFormIntro />
         <p className="text-text-secondary">Checking your invitation link…</p>
       </div>
@@ -68,24 +68,15 @@ export default function RegisterForm() {
 
   if (isTokenFlow && tokenStatus === "invalid") {
     return (
-      <div className="p-6 sm:p-8 lg:p-12">
+      <div>
         <RegisterFormIntro />
-        <p className="text-text-secondary">
-          {tokenErrorMessage ??
-            "This invitation link is no longer valid. Please ask the person who invited you for a new one."}
-        </p>
-        <Link
-          href="/login"
-          className="mt-6 inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-primary-foreground transition-colors hover:bg-brand-strong"
-        >
-          Go to login
-        </Link>
+        <InviteTokenNotice message={tokenErrorMessage} />
       </div>
     )
   }
 
   return (
-    <div className="p-6 sm:p-8 lg:p-12">
+    <div className="overflow-hidden rounded-3xl border border-border-soft bg-surface-elevated p-6 shadow-panel sm:p-8 lg:p-12">
       <RegisterFormIntro />
 
       <form onSubmit={handleSubmit}>
