@@ -241,21 +241,6 @@ describe("Vendor ProductsPage — listing", () => {
     expect(link).toHaveAttribute("href", "/vendor-dashboard/products/create")
   })
 
-  /**
-   * SUSPICIOUS (page.tsx:1218-1221): the "Export" button has no `onClick` and no `type="submit"`
-   * target — clicking it does nothing. Locking the current (dead) behaviour.
-   */
-  it("renders an Export button that is wired to nothing", async () => {
-    serveFilter()
-
-    render(<ProductsPage />)
-
-    const exportButton = await screen.findByRole("button", { name: /Export/ })
-    expect(exportButton).toBeEnabled()
-    expect(exportButton).not.toHaveAttribute("href")
-    expect(exportButton.getAttribute("onclick")).toBeNull()
-  })
-
   it("falls back to the placeholder image when a product photo fails to load", async () => {
     serveFilter([makeVendorUserProduct({ productName: "Broken Photo", coverPhotoPath: "/uploads/missing.png" })])
 

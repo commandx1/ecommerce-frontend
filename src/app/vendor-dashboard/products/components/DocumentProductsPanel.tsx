@@ -1,5 +1,6 @@
 "use client"
 
+import { useQuery } from "@tanstack/react-query"
 import type { ColumnDef, ExpandedState, Row } from "@tanstack/react-table"
 import type { LucideIcon } from "lucide-react"
 import { ChevronDown, CircleAlert, CircleCheck, CircleX, Layers, Loader2 } from "lucide-react"
@@ -8,7 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import DataTable from "@/components/ui/data-table"
 import { getFullImageUrl } from "@/lib/api/products"
-import { type DocumentProductsResponse, vendorDocumentsAPI } from "@/lib/api/vendor-documents"
+import { type DocumentProductsResponse, documentProductsQueryKey, vendorDocumentsAPI } from "@/lib/api/vendor-documents"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
@@ -240,30 +241,23 @@ export default function DocumentProductsPanel({
   rowIssues?: string[]
 }) {
   const { accessToken } = useAuthStore()
-  const [data, setData] = useState<DocumentProductsResponse | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<TabValue>("all")
   const [expanded, setExpanded] = useState<ExpandedState>({})
 
-  const fetchProducts = useCallback(async () => {
-    if (!accessToken) return
-    setIsLoading(true)
-    setError(null)
-    try {
-      const res = await vendorDocumentsAPI.getDocumentProducts(documentId, accessToken)
-      setData(res)
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to load imported products")
-      setData(null)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [accessToken, documentId])
+  // An import result is derived from a file that never changes, so re-opening the
+  // same document should not hit the network again. The window is finite rather
+  // than infinite because the rows carry live UserProduct fields (price, stock)
+  // that the vendor can edit elsewhere.
+  const { data, isPending, error, refetch } = useQuery({
+    queryKey: documentProductsQueryKey(documentId),
+    queryFn: () => vendorDocumentsAPI.getDocumentProducts(documentId, accessToken as string),
+    enabled: Boolean(accessToken),
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
+  })
 
-  useEffect(() => {
-    void fetchProducts()
-  }, [fetchProducts])
+  const isLoading = isPending && Boolean(accessToken)
+  const errorMessage = error instanceof Error ? error.message : error ? "Failed to load imported products" : null
 
   const rows = useMemo(() => (data ? toRows(data, rowIssues) : []), [data, rowIssues])
 
@@ -299,8 +293,10 @@ export default function DocumentProductsPanel({
       setActiveTab("all")
       return
     }
-    setActiveTab(counts.wrong > 0 ? "wrong" : "all")
-  }, [hasStatuses, counts.wrong])
+    // Open on what was imported; fall back to "All" when nothing landed, so the
+    // selected pill is never an empty (and therefore disabled) group.
+    setActiveTab(counts.success > 0 ? "success" : "all")
+  }, [hasStatuses, counts.success])
 
   const filteredRows = useMemo(
     () => (activeTab === "all" ? rows : rows.filter((row) => row.status === activeTab)),
@@ -394,14 +390,14 @@ export default function DocumentProductsPanel({
     })
   }, [])
 
-  if (error) {
+  if (errorMessage) {
     return (
       <div className="flex items-center justify-between gap-3 rounded-xl border border-danger/25 bg-danger/8 p-4">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-text-primary">Couldn't load imported products</p>
-          <p className="text-xs text-danger">{error}</p>
+          <p className="text-xs text-danger">{errorMessage}</p>
         </div>
-        <Button type="button" variant="outline" size="sm" onClick={() => void fetchProducts()}>
+        <Button type="button" variant="outline" size="sm" onClick={() => void refetch()}>
           Try again
         </Button>
       </div>

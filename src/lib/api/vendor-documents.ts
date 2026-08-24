@@ -59,6 +59,13 @@ export interface VendorDocumentsResponse {
   empty: boolean
 }
 
+// Query keys live next to the calls they describe so cache invalidation and
+// fetching can never drift apart.
+export const vendorDocumentsQueryKey = (page?: number) =>
+  page === undefined ? (["vendor-documents"] as const) : (["vendor-documents", page] as const)
+
+export const documentProductsQueryKey = (documentId: string) => ["document-products", documentId] as const
+
 function extractFileName(filePath: string): string {
   const parts = filePath.split("/")
   const raw = parts[parts.length - 1] ?? filePath

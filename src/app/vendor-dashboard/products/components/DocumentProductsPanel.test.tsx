@@ -1,3 +1,4 @@
+import { QueryClient } from "@tanstack/react-query"
 import userEvent from "@testing-library/user-event"
 import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it } from "vitest"
@@ -68,7 +69,7 @@ beforeEach(() => {
 })
 
 describe("DocumentProductsPanel", () => {
-  it("labels each filter pill with its row count and opens on the failed rows", async () => {
+  it("labels each filter pill with its row count and opens on the imported rows", async () => {
     serveDocumentProducts(mixed)
     render(<DocumentProductsPanel documentId={DOCUMENT_ID} />)
 
@@ -76,21 +77,23 @@ describe("DocumentProductsPanel", () => {
     expect(screen.getByRole("button", { name: "1 Imported" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "1 Skipped" })).toBeInTheDocument()
 
-    // A failed row needs attention, so that pill is selected first.
+    // The imported rows are what the vendor came for, so that pill opens selected.
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "1 Failed" })).toHaveAttribute("aria-pressed", "true"),
+      expect(screen.getByRole("button", { name: "1 Imported" })).toHaveAttribute("aria-pressed", "true"),
     )
 
     await waitFor(() => expect(tableRows()).toHaveLength(1))
-    expect(within(tableRows()[0]).getByText("104-160003")).toBeInTheDocument()
+    expect(within(tableRows()[0]).getByText("SKU-1")).toBeInTheDocument()
   })
 
   // Spreadsheet cells arrive as strings, so a failed row still has to render
   // its price and stock as real values rather than a dash.
   it("reads the numeric columns off a failed row", async () => {
     serveDocumentProducts(mixed)
+    const user = userEvent.setup()
     render(<DocumentProductsPanel documentId={DOCUMENT_ID} />)
 
+    await user.click(await screen.findByRole("button", { name: "1 Failed" }))
     const row = within((await screen.findByText("104-160003")).closest("tr") as HTMLElement)
     expect(row.getByText("$43.40")).toBeInTheDocument()
     expect(row.getByText("50")).toBeInTheDocument()
@@ -101,6 +104,7 @@ describe("DocumentProductsPanel", () => {
     serveDocumentProducts(mixed)
     render(<DocumentProductsPanel documentId={DOCUMENT_ID} />)
 
+    await user.click(await screen.findByRole("button", { name: "1 Failed" }))
     await user.click(await screen.findByText("104-160003"))
 
     expect(await screen.findByText("Fulfillment Policy")).toBeInTheDocument()
@@ -169,6 +173,49 @@ describe("DocumentProductsPanel", () => {
 
     expect(await screen.findByText("Composite Resin Kit")).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /Imported|Skipped|Failed|All/ })).not.toBeInTheDocument()
+  })
+
+  // An import result is derived from a file that cannot change, so re-opening the
+  // same document must not hit the network again.
+  it("serves a re-opened document from cache instead of refetching", async () => {
+    let requests = 0
+    server.use(
+      http.get("*/backend-api/user-products/documents/:documentId/products", () => {
+        requests += 1
+        return HttpResponse.json(mixed)
+      }),
+    )
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+    const first = render(<DocumentProductsPanel documentId={DOCUMENT_ID} />, { queryClient })
+    expect(await screen.findByRole("button", { name: "1 Imported" })).toBeInTheDocument()
+    await waitFor(() => expect(requests).toBe(1))
+    first.unmount()
+
+    render(<DocumentProductsPanel documentId={DOCUMENT_ID} />, { queryClient })
+    expect(await screen.findByRole("button", { name: "1 Imported" })).toBeInTheDocument()
+    expect(requests).toBe(1)
+  })
+
+  // A different document is a different file, so it still has to be fetched.
+  it("fetches a different document rather than reusing the cached one", async () => {
+    let requests = 0
+    server.use(
+      http.get("*/backend-api/user-products/documents/:documentId/products", () => {
+        requests += 1
+        return HttpResponse.json(mixed)
+      }),
+    )
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+    const first = render(<DocumentProductsPanel documentId={DOCUMENT_ID} />, { queryClient })
+    expect(await screen.findByRole("button", { name: "1 Imported" })).toBeInTheDocument()
+    first.unmount()
+
+    render(<DocumentProductsPanel documentId="doc-2" />, { queryClient })
+    await waitFor(() => expect(requests).toBe(2))
   })
 
   it("surfaces a load failure with a retry", async () => {

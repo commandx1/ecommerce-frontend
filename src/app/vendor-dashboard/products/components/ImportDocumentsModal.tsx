@@ -1,11 +1,18 @@
 "use client"
 
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Download, FileUp, ListChecks, Loader2, Trash2, Upload, X } from "lucide-react"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import Modal from "@/components/ui/Modal"
 import { showToast } from "@/components/ui/Toast"
-import { extractFileName, type ImportResult, type VendorDocument, vendorDocumentsAPI } from "@/lib/api/vendor-documents"
+import {
+  extractFileName,
+  type ImportResult,
+  type VendorDocument,
+  vendorDocumentsAPI,
+  vendorDocumentsQueryKey,
+} from "@/lib/api/vendor-documents"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
 import DocumentProductsPanel from "./DocumentProductsPanel"
@@ -172,38 +179,33 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // History tab state
-  const [documents, setDocuments] = useState<VendorDocument[]>([])
-  const [isLoadingDocs, setIsLoadingDocs] = useState(false)
   const [currentPage, setCurrentPage] = useState(0)
-  const [totalPages, setTotalPages] = useState(1)
   const [deletingIds, setDeletingIds] = useState<Map<string, boolean>>(new Map())
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
   const [expandedDocId, setExpandedDocId] = useState<string | null>(null)
 
-  const fetchDocuments = useCallback(
-    async (page = 0) => {
-      if (!accessToken) return
-      setIsLoadingDocs(true)
-      try {
-        const res = await vendorDocumentsAPI.getDocuments({ page, size: 10, sort: "desc" }, accessToken)
-        setDocuments(res.content)
-        setTotalPages(res.totalPages)
-        setCurrentPage(page)
-      } catch {
-        showToast.error("Failed to load upload history")
-      } finally {
-        setIsLoadingDocs(false)
-      }
-    },
-    [accessToken],
-  )
+  const queryClient = useQueryClient()
 
-  useEffect(() => {
-    if (isOpen) {
-      void fetchDocuments(0)
-    }
-  }, [isOpen, fetchDocuments])
+  // Unlike an import result, this list moves: admins approve documents or ask for
+  // revisions, and the vendor uploads and deletes. It is cached only long enough
+  // to survive tab switches, and invalidated outright after an upload or delete.
+  const {
+    data: documentsPage,
+    isPending: isLoadingDocs,
+    isError: documentsFailed,
+  } = useQuery({
+    queryKey: vendorDocumentsQueryKey(currentPage),
+    queryFn: () =>
+      vendorDocumentsAPI.getDocuments({ page: currentPage, size: 10, sort: "desc" }, accessToken as string),
+    enabled: isOpen && Boolean(accessToken),
+    staleTime: 15_000,
+  })
+
+  const documents: VendorDocument[] = documentsPage?.content ?? []
+  const totalPages = documentsPage?.totalPages ?? 1
+
+  const refreshDocuments = () => queryClient.invalidateQueries({ queryKey: vendorDocumentsQueryKey() })
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -223,6 +225,11 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
       setImportResult(result)
       setSelectedFile(null)
       if (fileInputRef.current) fileInputRef.current.value = ""
+
+      // Without this the vendor lands on a "My Uploads" tab that is missing the
+      // file they just sent.
+      setCurrentPage(0)
+      void refreshDocuments()
 
       if (result.acceptedCount > 0 && result.skippedCount === 0 && result.wrongCount === 0) {
         showToast.success("Import complete", `${result.acceptedCount} product(s) imported successfully.`)
@@ -298,7 +305,8 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
       await vendorDocumentsAPI.deleteDocument(docId, accessToken)
       showToast.success("Document deleted")
       setConfirmDeleteId(null)
-      setDocuments((prev) => prev.filter((d) => d.id !== docId))
+      setExpandedDocId((prev) => (prev === docId ? null : prev))
+      void refreshDocuments()
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to delete document"
       showToast.error(msg)
@@ -315,6 +323,7 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
     setSelectedFile(null)
     setImportResult(null)
     setExpandedDocId(null)
+    setCurrentPage(0)
     setActiveTab("upload")
     onClose()
   }
@@ -445,6 +454,13 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
             {isLoadingDocs ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-brand" />
+              </div>
+            ) : documentsFailed ? (
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-danger/25 bg-danger/8 p-4">
+                <p className="text-sm font-semibold text-text-primary">Failed to load upload history</p>
+                <Button type="button" variant="outline" size="sm" onClick={() => void refreshDocuments()}>
+                  Try again
+                </Button>
               </div>
             ) : documents.length === 0 ? (
               <div className="py-12 text-center">
@@ -582,7 +598,7 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
                     <button
                       type="button"
                       disabled={currentPage === 0}
-                      onClick={() => fetchDocuments(currentPage - 1)}
+                      onClick={() => setCurrentPage((page) => Math.max(0, page - 1))}
                       className="rounded-lg border border-border-soft px-3 py-1.5 text-sm disabled:opacity-40"
                     >
                       Previous
@@ -593,7 +609,7 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
                     <button
                       type="button"
                       disabled={currentPage >= totalPages - 1}
-                      onClick={() => fetchDocuments(currentPage + 1)}
+                      onClick={() => setCurrentPage((page) => page + 1)}
                       className="rounded-lg border border-border-soft px-3 py-1.5 text-sm disabled:opacity-40"
                     >
                       Next

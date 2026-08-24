@@ -6,6 +6,7 @@ import "./globals.css"
 import AuthHydration from "@/components/auth/AuthHydration"
 import ConditionalFooter from "@/components/layout/ConditionalFooter"
 import ConditionalNavbar from "@/components/layout/ConditionalNavbar"
+import QueryProvider from "@/components/providers/QueryProvider"
 import ThemeProvider from "@/components/theme/ThemeProvider"
 
 const manrope = Manrope({
@@ -52,11 +53,13 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${manrope.variable} ${sora.variable} font-sans antialiased`} suppressHydrationWarning>
         <ThemeProvider>
-          <AuthHydration />
-          <ConditionalNavbar initialAuthState={initialState} />
-          {children}
-          <ConditionalFooter />
-          <Toaster position="top-right" richColors />
+          <QueryProvider>
+            <AuthHydration />
+            <ConditionalNavbar initialAuthState={initialState} />
+            {children}
+            <ConditionalFooter />
+            <Toaster position="top-right" richColors />
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>
