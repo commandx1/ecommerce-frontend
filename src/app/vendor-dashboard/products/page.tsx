@@ -7,7 +7,6 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
-  Download,
   Edit,
   Eye,
   FileEdit,
@@ -1221,10 +1220,6 @@ export default function ProductsPage() {
             <p className="text-text-secondary mt-1">Manage your entire product catalog, inventory, and pricing</p>
           </div>
           <div className="flex items-center space-x-3">
-            <Button type="button" variant="outline" className="rounded-lg px-4 font-medium">
-              <Download className="mr-2 w-4 h-4" />
-              Export
-            </Button>
             <Button
               type="button"
               variant="secondary"
