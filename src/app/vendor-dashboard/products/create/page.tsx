@@ -1,5 +1,6 @@
 "use client"
 
+import { useQueryClient } from "@tanstack/react-query"
 import {
   AlertCircle,
   ArrowLeft,
@@ -33,7 +34,9 @@ import {
   type ProductAttribute,
   type ProductVendorRequestData,
   productsAPI,
+  userProductBrandsQueryKey,
 } from "@/lib/api/products"
+import { vendorProductStatsQueryKey } from "@/lib/api/vendor-products"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -162,6 +165,15 @@ const barcodeFormatOptions = [
 
 function CreateProductPageContent() {
   const router = useRouter()
+  const queryClient = useQueryClient()
+
+  // The products page caches the brand filter and the stat cards, so creating or
+  // editing a listing here has to knock both down before navigating back to it.
+  const invalidateProductsPageCaches = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: userProductBrandsQueryKey() }),
+      queryClient.invalidateQueries({ queryKey: vendorProductStatsQueryKey() }),
+    ])
   const searchParams = useSearchParams()
   const { accessToken, isAuthenticated, user } = useAuthStore()
 
@@ -776,6 +788,7 @@ function CreateProductPageContent() {
 
         showToast.success("Product updated successfully!")
 
+        void invalidateProductsPageCaches()
         // Redirect immediately
         router.push("/vendor-dashboard/products")
         return
@@ -799,6 +812,7 @@ function CreateProductPageContent() {
         await productsAPI.createUserProduct(userProductPayload, accessToken || "")
 
         showToast.success("Product created successfully!")
+        void invalidateProductsPageCaches()
         router.push("/vendor-dashboard/products")
         return
       }
@@ -865,6 +879,7 @@ function CreateProductPageContent() {
         showToast.success("Product submitted for review!")
       }
 
+      void invalidateProductsPageCaches()
       // Redirect immediately
       router.push("/vendor-dashboard/products")
     } catch (error: unknown) {

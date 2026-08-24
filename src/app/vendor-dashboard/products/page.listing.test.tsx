@@ -192,13 +192,20 @@ describe("Vendor ProductsPage — listing", () => {
     expect(toastSpies.error).not.toHaveBeenCalled()
   })
 
-  it("logs the vendor out and redirects to /login when the products request returns 403", async () => {
+  /**
+   * The backend answers 403 both for an expired JWT and for ordinary business-rule
+   * rejections. Only the first is a session ending, and the axios interceptor is the
+   * one that tells them apart. A 403 on a live token must therefore leave the vendor
+   * signed in and on the page.
+   */
+  it("keeps the vendor signed in when the products request returns a business-rule 403", async () => {
     server.use(http.get("*/api/user-products/filter", () => HttpResponse.json({ message: "nope" }, { status: 403 })))
 
     const { router } = render(<ProductsPage />)
 
-    await waitFor(() => expect(router.push).toHaveBeenCalledWith("/login"))
-    expect(useAuthStore.getState().isAuthenticated).toBe(false)
+    expect(await screen.findByText("No products found. Create your first product!")).toBeInTheDocument()
+    expect(useAuthStore.getState().isAuthenticated).toBe(true)
+    expect(router.push).not.toHaveBeenCalledWith("/login")
   })
 
   it("renders the vendor's product statistics above the table", async () => {

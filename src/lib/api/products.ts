@@ -17,6 +17,9 @@ function normalizeBackendImagePath(path: string): string {
 }
 
 // Helper function to get full image URL
+// Query key for the vendor's brand filter options.
+export const userProductBrandsQueryKey = () => ["user-product-brands"] as const
+
 export function getFullImageUrl(path: string | null | undefined): string {
   if (!path || typeof path !== "string" || path.trim() === "") return ""
 

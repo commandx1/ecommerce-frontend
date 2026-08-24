@@ -1,8 +1,8 @@
 "use client"
 
+import { useQuery } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useState } from "react"
-import { fetchUserProductStats, type ProductStats } from "@/lib/api/vendor-products"
+import { fetchUserProductStats, vendorProductStatsQueryKey } from "@/lib/api/vendor-products"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
 import { RING_TONE_CLASS_MAP } from "../../components/shared/dashboardToneMaps"
@@ -56,37 +56,25 @@ const PRODUCT_STAT_CONFIG = [
 
 const ProductStatsCards = ({ selectedFilter = "TOTAL", onFilterChange }: ProductStatsCardsProps) => {
   const router = useRouter()
-  const [stats, setStats] = useState<ProductStats | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const { accessToken, isAuthenticated } = useAuthStore()
 
-  const fetchStats = useCallback(async () => {
-    if (!accessToken) return
+  // Counts move whenever the vendor adds, deletes or deactivates a product, so the
+  // window is short; it exists to spare a refetch on every remount of the page.
+  const {
+    data: stats,
+    isPending,
+    error: queryError,
+  } = useQuery({
+    queryKey: vendorProductStatsQueryKey(),
+    queryFn: () => fetchUserProductStats({ accessToken: accessToken as string, router }),
+    enabled: isAuthenticated && Boolean(accessToken),
+    staleTime: 60_000,
+  })
 
-    try {
-      setIsLoading(true)
-      setError(null)
-
-      const data = await fetchUserProductStats({ accessToken, router })
-      setStats(data)
-    } catch (err) {
-      console.warn("Error fetching product stats:", err)
-      // If handleApiError already logged out, no need to show error here
-      if (err instanceof Error && err.message.includes("Unauthorized")) {
-        return // Logout yapıldı, component unmount olacak
-      }
-      setError(err instanceof Error ? err.message : "Failed to load stats")
-    } finally {
-      setIsLoading(false)
-    }
-  }, [accessToken, router])
-
-  useEffect(() => {
-    if (isAuthenticated && accessToken) {
-      void fetchStats()
-    }
-  }, [isAuthenticated, accessToken, fetchStats])
+  const isLoading = isPending && isAuthenticated && Boolean(accessToken)
+  // A logout triggered by the interceptor unmounts this tree; surfacing that as a
+  // failed-stats panel would just flash an error on the way out.
+  const error = queryError instanceof Error && !queryError.message.includes("Unauthorized") ? queryError.message : null
 
   if (isLoading) {
     return (

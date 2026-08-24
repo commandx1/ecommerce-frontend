@@ -1,5 +1,6 @@
 "use client"
 
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import type { CellContext, ColumnDef, Row } from "@tanstack/react-table"
 import {
   ArrowDown,
@@ -36,8 +37,10 @@ import {
   productsAPI,
   type UserProduct,
   type UserProductSortBy,
+  userProductBrandsQueryKey,
   type VendorProductReviewItem,
 } from "@/lib/api/products"
+import { vendorProductStatsQueryKey } from "@/lib/api/vendor-products"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
 import ImportDocumentsModal from "./components/ImportDocumentsModal"
@@ -205,7 +208,6 @@ export default function ProductsPage() {
   const [isBulkDiscountModalOpen, setIsBulkDiscountModalOpen] = useState(false)
   const [bulkDiscountValue, setBulkDiscountValue] = useState("")
   const [isApplyingBulkDiscount, setIsApplyingBulkDiscount] = useState(false)
-  const [brandOptions, setBrandOptions] = useState<string[]>([])
   const [selectedBrand, setSelectedBrand] = useState<string>(BRAND_FILTER_ALL)
 
   // Debounced search query
@@ -350,15 +352,13 @@ export default function ProductsPage() {
           return
         }
 
-        // 403 veya 401 hatası kontrolü
-        if (apiError && typeof apiError === "object" && "status" in apiError) {
-          const errorStatus = (apiError as { status: number }).status
-          if (errorStatus === 401 || errorStatus === 403) {
-            const { logout } = useAuthStore.getState()
-            await logout()
-            router.push("/login")
-            return // Component unmount olacak
-          }
+        // Session expiry is handled centrally by the axios interceptor, which logs out
+        // and redirects on a 401 (or a 403 whose JWT has actually expired) and marks the
+        // error as `authHandled`. Treating every 403 as expiry here logged the vendor out
+        // on ordinary business-rule rejections too, so those now fall through and surface
+        // as an empty result instead.
+        if ((apiError as { authHandled?: boolean } | null)?.authHandled) {
+          return
         }
 
         // Sadece gerçek hataları logla (boş objeleri değil)
@@ -479,24 +479,25 @@ export default function ProductsPage() {
   }
 
   // Load the vendor's distinct brands for the filter dropdown
-  useEffect(() => {
-    if (!isAuthenticated || !accessToken) return
+  const queryClient = useQueryClient()
 
-    const controller = new AbortController()
+  // The stat cards are cached, so any change to a product's stock or active flag —
+  // or a deletion — has to knock them down explicitly.
+  const invalidateProductStats = () => queryClient.invalidateQueries({ queryKey: vendorProductStatsQueryKey() })
 
-    productsAPI
-      .getUserProductBrands(accessToken, controller.signal)
-      .then((brands) => {
-        if (controller.signal.aborted) return
-        setBrandOptions(Array.isArray(brands) ? brands.filter(Boolean) : [])
-      })
-      .catch(() => {
-        if (controller.signal.aborted) return
-        setBrandOptions([])
-      })
-
-    return () => controller.abort()
-  }, [isAuthenticated, accessToken])
+  // The vendor's brand list barely moves and the filter needs it on every visit,
+  // so it is cached across mounts. A failure degrades to an empty option list
+  // rather than blocking the page.
+  const { data: brandOptions = [] } = useQuery({
+    queryKey: userProductBrandsQueryKey(),
+    queryFn: async ({ signal }) => {
+      const brands = await productsAPI.getUserProductBrands(accessToken as string, signal)
+      return Array.isArray(brands) ? brands.filter(Boolean) : []
+    },
+    enabled: isAuthenticated && Boolean(accessToken),
+    staleTime: 10 * 60_000,
+    retry: false,
+  })
 
   // Handle view mode change (All Products / Review Queue)
   const handleViewModeChange = (mode: ViewMode) => {
@@ -772,6 +773,8 @@ export default function ProductsPage() {
       )
       setEditingProductId(null)
       setEditingDraft(null)
+      // Stock and the active flag both feed the stat cards.
+      void invalidateProductStats()
     } catch (error) {
       console.error("Error updating product:", error)
       showToast.error("Update failed", error instanceof Error ? error.message : "Failed to update product")
@@ -799,6 +802,7 @@ export default function ProductsPage() {
     try {
       await productsAPI.deleteUserProduct(deleteModal.productId, accessToken)
       setDeleteModal({ isOpen: false, productId: null, productName: "" })
+      void invalidateProductStats()
       await fetchProducts() // Refresh the list
     } catch (error) {
       console.error("Error deleting product:", error)

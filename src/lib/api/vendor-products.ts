@@ -9,6 +9,10 @@ export interface ProductStats {
   lowStockProducts: number
 }
 
+// Query key lives next to the call it describes so invalidation and fetching
+// cannot drift apart.
+export const vendorProductStatsQueryKey = () => ["vendor-product-stats"] as const
+
 export async function fetchUserProductStats(params: {
   accessToken: string
   router: AppRouterInstance
