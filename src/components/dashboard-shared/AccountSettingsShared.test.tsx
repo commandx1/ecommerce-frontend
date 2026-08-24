@@ -114,13 +114,15 @@ describe("AccountSettingsShared", () => {
     )
 
     renderSettings()
-    expect(screen.getByText("2FA Off")).toBeInTheDocument()
+    expect(screen.getByRole("checkbox", { name: /Toggle two-factor authentication/ })).not.toBeChecked()
 
     await user.click(screen.getByRole("checkbox", { name: /Toggle two-factor authentication/ }))
 
     await waitFor(() => expect(toastSpies.success).toHaveBeenCalledWith("Two-factor authentication enabled"))
     expect(payload).toMatchObject({ twoFactorEnabled: true })
-    expect(await screen.findByText("2FA Enabled")).toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.getByRole("checkbox", { name: /Toggle two-factor authentication/ })).toBeChecked(),
+    )
   })
 
   it("leaves the two-factor switch untouched when the update fails", async () => {
@@ -134,7 +136,6 @@ describe("AccountSettingsShared", () => {
 
     await waitFor(() => expect(toastSpies.error).toHaveBeenCalledWith("Failed to update security settings."))
     expect(screen.getByRole("checkbox", { name: /Toggle two-factor authentication/ })).not.toBeChecked()
-    expect(screen.getByText("2FA Off")).toBeInTheDocument()
   })
 
   it("warns while the account is locked out", () => {
@@ -177,17 +178,20 @@ describe("AccountSettingsShared", () => {
     expect(screen.getByText("Address manager")).toBeInTheDocument()
   })
 
-  it("copies the account id to the clipboard", async () => {
-    const user = userEvent.setup()
-    const writeText = vi.fn().mockResolvedValue(undefined)
-    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } })
-    signIn({ id: "0123456789abcdef" })
+  it("places the extra section between personal information and security", () => {
+    signIn()
+    renderSettings(<div>Address manager</div>)
 
-    renderSettings()
-
-    await user.click(screen.getByRole("button", { name: "ID 01234567" }))
-
-    expect(writeText).toHaveBeenCalledWith("0123456789abcdef")
-    expect(await screen.findByRole("button", { name: "Copied" })).toBeInTheDocument()
+    const order = [
+      screen.getByRole("heading", { name: "Personal Information" }),
+      screen.getByText("Address manager"),
+      screen.getByRole("heading", { name: "Security" }),
+    ]
+    for (const [before, after] of [
+      [order[0], order[1]],
+      [order[1], order[2]],
+    ]) {
+      expect(before.compareDocumentPosition(after) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    }
   })
 })

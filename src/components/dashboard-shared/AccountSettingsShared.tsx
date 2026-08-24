@@ -4,8 +4,6 @@ import {
   AlertTriangle,
   BadgeCheck,
   Building2,
-  Check,
-  Copy,
   CreditCard,
   Fingerprint,
   Lock,
@@ -36,7 +34,7 @@ interface AccountSettingsSharedProps {
   description: string
   /** Label used for the quick-nav pill that jumps to `children`. */
   extraSectionLabel?: string
-  /** Extra section(s) rendered below Security, e.g. an embedded address manager. */
+  /** Extra section(s) rendered right after Personal Information, e.g. an embedded address manager. */
   children?: ReactNode
 }
 
@@ -70,7 +68,6 @@ export default function AccountSettingsShared({
 
   const [isUpdating, setIsUpdating] = useState(false)
   const [isUpdating2FA, setIsUpdating2FA] = useState(false)
-  const [idCopied, setIdCopied] = useState(false)
 
   const isEmailVerified = Boolean(user?.emailConfirmed)
   const lockedUntil = user?.lockoutEnd ? new Date(user.lockoutEnd) : null
@@ -106,18 +103,6 @@ export default function AccountSettingsShared({
     const updatedUser = await updateMe(accessToken, newData)
     setUser(updatedUser)
     return updatedUser
-  }
-
-  const handleCopyAccountId = async () => {
-    if (!user?.id) return
-
-    try {
-      await navigator.clipboard.writeText(user.id)
-      setIdCopied(true)
-      setTimeout(() => setIdCopied(false), 2000)
-    } catch {
-      showToast.error("Could not copy the account ID.")
-    }
   }
 
   const handleUpdate = async (e: React.FormEvent) => {
@@ -173,26 +158,6 @@ export default function AccountSettingsShared({
             <span className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface/80 px-3 py-1.5 text-xs font-medium text-text-secondary backdrop-blur-sm">
               Member since {memberSince}
             </span>
-            {user?.id && (
-              <button
-                type="button"
-                onClick={handleCopyAccountId}
-                title="Copy your full account ID"
-                className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface/80 px-3 py-1.5 font-mono text-xs font-medium text-text-secondary backdrop-blur-sm transition-colors hover:border-brand/40 hover:text-brand"
-              >
-                {idCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                {idCopied ? "Copied" : `ID ${user.id.slice(0, 8)}`}
-              </button>
-            )}
-            <span
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold",
-                formData.twoFactorEnabled ? "bg-success/10 text-success" : "bg-surface/80 text-text-muted",
-              )}
-            >
-              <BadgeCheck className="h-3.5 w-3.5" />
-              2FA {formData.twoFactorEnabled ? "Enabled" : "Off"}
-            </span>
           </div>
         </div>
       </div>
@@ -230,6 +195,15 @@ export default function AccountSettingsShared({
           <User className="h-3.5 w-3.5" />
           Profile
         </a>
+        {children && (
+          <a
+            href={`#${extraSectionId}`}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface-elevated px-4 py-1.5 text-xs font-semibold text-text-secondary shadow-soft transition-colors hover:border-brand/40 hover:text-brand"
+          >
+            <MapPinned className="h-3.5 w-3.5" />
+            {extraSectionLabel}
+          </a>
+        )}
         {isVendor && (
           <a
             href={`#${companySectionId}`}
@@ -255,15 +229,6 @@ export default function AccountSettingsShared({
           <Shield className="h-3.5 w-3.5" />
           Security
         </a>
-        {children && (
-          <a
-            href={`#${extraSectionId}`}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface-elevated px-4 py-1.5 text-xs font-semibold text-text-secondary shadow-soft transition-colors hover:border-brand/40 hover:text-brand"
-          >
-            <MapPinned className="h-3.5 w-3.5" />
-            {extraSectionLabel}
-          </a>
-        )}
       </nav>
 
       <div className="space-y-6">
@@ -374,6 +339,12 @@ export default function AccountSettingsShared({
           )}
         </div>
 
+        {children && (
+          <div id={extraSectionId} className="scroll-mt-24">
+            {children}
+          </div>
+        )}
+
         {isVendor && (
           <div id={companySectionId} className="fade-up scroll-mt-24" style={{ animationDelay: "160ms" }}>
             <CompanyInfoCard />
@@ -453,12 +424,6 @@ export default function AccountSettingsShared({
             </div>
           </section>
         </div>
-
-        {children && (
-          <div id={extraSectionId} className="scroll-mt-24">
-            {children}
-          </div>
-        )}
       </div>
     </div>
   )
