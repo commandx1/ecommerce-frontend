@@ -1,3 +1,4 @@
+import type { UserProductDetailResponse } from "./products"
 import { apiRequest } from "./request"
 
 export interface VendorDocument {
@@ -24,6 +25,22 @@ export interface ImportResult {
   skippedCount: number
   wrongCount: number
   invalidRecordsFilePath: string | null
+}
+
+// Mirrors backend DocumentProductStatusDto — `status` is null when the document
+// produced no invalid-records file (the backend then scans the original file and
+// has no per-row status to report).
+export interface DocumentProductStatus {
+  status: "success" | "skip" | null
+  product: UserProductDetailResponse
+}
+
+// Mirrors backend DocumentProductsResponseDto (GET /api/user-products/documents/:id/products)
+export interface DocumentProductsResponse {
+  documentId: string
+  products: DocumentProductStatus[]
+  // Raw spreadsheet cells for rows that failed; column names are file-driven, not fixed.
+  wrongRows: Record<string, string>[]
 }
 
 export interface VendorDocumentsResponse {
@@ -82,6 +99,16 @@ class VendorDocumentsAPI {
         sort: params.sort ?? "desc",
       },
       fallbackMessage: "Failed to fetch documents",
+    })
+  }
+
+  async getDocumentProducts(documentId: string, token: string): Promise<DocumentProductsResponse> {
+    return apiRequest.requestJson<DocumentProductsResponse>({
+      client: "backend",
+      method: "GET",
+      url: `/user-products/documents/${documentId}/products`,
+      headers: { Authorization: `Bearer ${token}` },
+      fallbackMessage: "Failed to load imported products",
     })
   }
 

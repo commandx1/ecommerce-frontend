@@ -1,6 +1,6 @@
 "use client"
 
-import { CircleAlert, CircleCheck, CircleX, Download, FileUp, Loader2, Trash2, Upload, X } from "lucide-react"
+import { Download, FileUp, ListChecks, Loader2, Trash2, Upload, X } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import Modal from "@/components/ui/Modal"
@@ -8,6 +8,7 @@ import { showToast } from "@/components/ui/Toast"
 import { extractFileName, type ImportResult, type VendorDocument, vendorDocumentsAPI } from "@/lib/api/vendor-documents"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
+import DocumentProductsPanel from "./DocumentProductsPanel"
 
 type Tab = "upload" | "history"
 
@@ -101,23 +102,6 @@ function parseImportMessage(message: string): { summary: string; rowIssues: stri
   return { summary: (summary ?? message).trim(), rowIssues }
 }
 
-function StatPill({ label, value, tone }: { label: string; value: number; tone: "success" | "warning" | "danger" }) {
-  const toneClasses = {
-    success: "border-success/25 bg-success/8 text-success",
-    warning: "border-warning/25 bg-warning/10 text-warning",
-    danger: "border-danger/25 bg-danger/8 text-danger",
-  }[tone]
-  const Icon = { success: CircleCheck, warning: CircleAlert, danger: CircleX }[tone]
-
-  return (
-    <div className={cn("flex flex-col items-center gap-1 rounded-xl border px-4 py-3", toneClasses)}>
-      <Icon className="h-5 w-5" />
-      <span className="text-xl font-semibold">{value}</span>
-      <span className="text-xs font-medium">{label}</span>
-    </div>
-  )
-}
-
 function ImportResultView({
   result,
   onUploadAnother,
@@ -135,26 +119,9 @@ function ImportResultView({
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-3 gap-3">
-        <StatPill label="Accepted" value={result.acceptedCount} tone="success" />
-        <StatPill label="Skipped" value={result.skippedCount} tone="warning" />
-        <StatPill label="Wrong" value={result.wrongCount} tone="danger" />
-      </div>
-
       <p className="text-sm text-text-secondary">{summary}</p>
 
-      {rowIssues.length > 0 && (
-        <div className="rounded-xl border border-border-soft bg-surface p-4">
-          <p className="mb-2 text-sm font-semibold text-text-primary">Row details</p>
-          <ul className="max-h-48 space-y-1.5 overflow-y-auto pr-1">
-            {rowIssues.map((issue) => (
-              <li key={issue} className="rounded-lg bg-danger/6 px-3 py-2 text-xs text-danger">
-                {issue}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <DocumentProductsPanel documentId={result.documentId} rowIssues={rowIssues} />
 
       {result.invalidRecordsFilePath && (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-warning/25 bg-warning/8 p-4">
@@ -212,6 +179,7 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
   const [deletingIds, setDeletingIds] = useState<Map<string, boolean>>(new Map())
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
+  const [expandedDocId, setExpandedDocId] = useState<string | null>(null)
 
   const fetchDocuments = useCallback(
     async (page = 0) => {
@@ -346,6 +314,7 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
   const handleClose = () => {
     setSelectedFile(null)
     setImportResult(null)
+    setExpandedDocId(null)
     setActiveTab("upload")
     onClose()
   }
@@ -542,6 +511,16 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
                         File
                       </button>
 
+                      {/* Toggle per-product import result for this document */}
+                      <button
+                        type="button"
+                        onClick={() => setExpandedDocId(expandedDocId === doc.id ? null : doc.id)}
+                        className="flex items-center gap-1.5 rounded-lg border border-border-soft px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-surface-muted"
+                      >
+                        <ListChecks className="h-3.5 w-3.5" />
+                        {expandedDocId === doc.id ? "Hide details" : "Details"}
+                      </button>
+
                       {/* Delete (only pending) */}
                       {!doc.approved && !doc.deleted && (
                         <div className="relative">
@@ -588,6 +567,12 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
                         </div>
                       )}
                     </div>
+
+                    {expandedDocId === doc.id && (
+                      <div className="mt-3 border-t border-border-soft pt-3">
+                        <DocumentProductsPanel documentId={doc.id} />
+                      </div>
+                    )}
                   </div>
                 ))}
 

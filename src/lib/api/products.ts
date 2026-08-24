@@ -348,6 +348,7 @@ export interface UserProductDetailResponse {
   userId: string
   productId: string
   productName: string
+  brand?: string
   price: number
   oldPrice: number
   discount: number
@@ -366,6 +367,7 @@ export interface UserProductDetailResponse {
   massUnit: string
   shipmentFee: number
   heavyShippingSurcharge?: number
+  fulfillmentPolicy?: string
 }
 
 // Mirrors backend ProductReviewStatusDto
