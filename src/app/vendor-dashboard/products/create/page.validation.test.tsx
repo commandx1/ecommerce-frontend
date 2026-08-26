@@ -44,7 +44,8 @@ vi.mock("./components/BrandFilterDropdown", () => ({
     ) : null,
 }))
 
-const submitButton = () => screen.getByRole("button", { name: /Create Product/ })
+const submitButton = () => screen.getByRole("button", { name: /^Submit$/ })
+const nextButton = () => screen.getByRole("button", { name: "Next" })
 
 /** Tab headers get an appended "N errors" a11y label once a tab has errors, so match by prefix. */
 const tabButton = (label: string) => screen.getByRole("button", { name: new RegExp(`^${label}`) })
@@ -97,11 +98,11 @@ beforeEach(() => {
 })
 
 describe("CreateProductPage — form validation", () => {
-  it("shows inline errors for all Basic-tab fields on an empty submit and does not toast", async () => {
+  it("shows inline errors for all Basic-tab fields on clicking Next and does not toast", async () => {
     const user = userEvent.setup()
     await openBlankForm(user)
 
-    await user.click(submitButton())
+    await user.click(nextButton())
 
     expect(await screen.findByText("Product name is required")).toBeInTheDocument()
     expect(screen.getByText("SKU code is required")).toBeInTheDocument()
@@ -160,7 +161,7 @@ describe("CreateProductPage — form validation", () => {
   it("clears an inline error once its field is fixed, and the Basic badge disappears once all Basic errors are fixed", async () => {
     const user = userEvent.setup()
     await openBlankForm(user)
-    await user.click(submitButton())
+    await user.click(nextButton())
     expect(await screen.findByText("Product name is required")).toBeInTheDocument()
 
     await user.type(screen.getByLabelText(/Product Name/), "Composite Kit")
@@ -182,12 +183,16 @@ describe("CreateProductPage — form validation", () => {
     await openBlankForm(user)
 
     await user.type(screen.getByLabelText(/Product Name/), "Composite Kit")
+    await user.type(screen.getByLabelText("SKU Code *"), "SKU-1")
     await user.type(screen.getByLabelText("Price *"), "0")
     await user.type(screen.getByLabelText("Stock *"), "5")
-    await user.click(submitButton())
+    await user.type(screen.getByLabelText("Shipment Fee *"), "5")
+    await user.type(screen.getByLabelText("Heavy Shipping Fee *"), "3")
+    await user.type(screen.getByLabelText("Fulfillment Policy *"), "Ships within 2 business days")
+    await user.click(nextButton())
 
-    // Other Basic-tab fields are still missing, so errors do appear — but none for price
-    expect(await screen.findByText("SKU code is required")).toBeInTheDocument()
+    // Basic tab passed validation (moved on to Details) — no error for price.
+    expect(await screen.findByLabelText("Detailed Description *")).toBeInTheDocument()
     expect(screen.queryByText(/^Price (is|must)/)).not.toBeInTheDocument()
   })
 
@@ -205,11 +210,9 @@ describe("CreateProductPage — form validation", () => {
     const user = userEvent.setup()
     await openBlankForm(user)
 
-    await user.type(screen.getByLabelText(/Product Name/), "Composite Kit")
-    await user.type(screen.getByLabelText("Price *"), "10")
-    await user.type(screen.getByLabelText("Stock *"), "5")
+    await fillBasicTab(user)
     await user.type(screen.getByLabelText(/Barcode$/), "not-a-number")
-    await user.click(submitButton())
+    await user.click(nextButton())
 
     expect(await screen.findByText("Barcode must be a number")).toBeInTheDocument()
   })
@@ -230,14 +233,15 @@ describe("CreateProductPage — form validation", () => {
     expect(screen.getByText("Weight must be greater than 0")).toBeInTheDocument()
   })
 
-  it("requires a cover photo even when every other field is valid, and jumps to Media on submit", async () => {
+  it("requires a cover photo even when every other field is valid, and shows the error on Media", async () => {
     const user = userEvent.setup()
     const requestJson = vi.spyOn(apiRequest, "requestJson")
 
     await openBlankForm(user)
     await fillBasicTab(user)
-    await user.click(tabButton("Product Details"))
+    await user.click(nextButton())
     await fillDetailsTab(user)
+    await user.click(nextButton())
     await user.click(submitButton())
 
     expect(await screen.findByText("Cover photo is required")).toBeInTheDocument()
@@ -250,11 +254,11 @@ describe("CreateProductPage — form validation", () => {
     ).toBe(false)
   })
 
-  it("keeps the submit button clickable so validation can report the problem", async () => {
+  it("keeps the Next button clickable so validation can report the problem", async () => {
     const user = userEvent.setup()
     await openBlankForm(user)
 
-    expect(submitButton()).toBeEnabled()
+    expect(nextButton()).toBeEnabled()
   })
 
   it("edit mode validates only price and stock, leaving the details tab untouched", async () => {
@@ -275,9 +279,43 @@ describe("CreateProductPage — form validation", () => {
     expect(screen.queryByLabelText("SKU Code *")).not.toBeInTheDocument()
 
     await user.clear(priceInput)
-    await user.click(screen.getByRole("button", { name: /Update Product/ }))
+    await user.click(nextButton())
 
     expect(await screen.findByText("Price is required")).toBeInTheDocument()
     expect(screen.queryByLabelText("Detailed Description *")).not.toBeInTheDocument()
+  })
+
+  it("removes the header submit button and switches the bottom button between Next and Submit", async () => {
+    const user = userEvent.setup()
+    await openBlankForm(user)
+
+    expect(screen.queryByRole("button", { name: /Create Product/ })).not.toBeInTheDocument()
+    expect(nextButton()).toBeInTheDocument()
+
+    await fillBasicTab(user)
+    await user.click(nextButton())
+    await fillDetailsTab(user)
+    await user.click(nextButton())
+
+    expect(submitButton()).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Next" })).not.toBeInTheDocument()
+  })
+
+  it("edit mode: reaching the Media tab shows an Update Product submit button", async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.get("*/api/user-products", () =>
+        HttpResponse.json([makeVendorUserProduct({ id: "up-9", price: 56, stock: 40 })]),
+      ),
+      http.get("*/api/products/:id", ({ params }) => HttpResponse.json(makeProduct({ id: String(params.id) }))),
+    )
+
+    render(<CreateProductPage />, { searchParams: "edit=up-9" })
+
+    await screen.findByLabelText("Price *")
+    await user.click(nextButton())
+    await user.click(nextButton())
+
+    expect(await screen.findByRole("button", { name: "Update Product" })).toBeInTheDocument()
   })
 })

@@ -162,7 +162,7 @@ describe("CreateProductPage — submitting a new product", () => {
 
     await openBlankForm(user)
     await fillRequiredFields(user)
-    await user.click(screen.getByRole("button", { name: /Create Product/ }))
+    await user.click(screen.getByRole("button", { name: "Submit" }))
 
     await waitFor(() => expect(toastSpies.success).toHaveBeenCalledWith("Product submitted for review!"))
 
@@ -185,7 +185,7 @@ describe("CreateProductPage — submitting a new product", () => {
 
     await openBlankForm(user)
     await fillRequiredFields(user)
-    await user.click(screen.getByRole("button", { name: /Create Product/ }))
+    await user.click(screen.getByRole("button", { name: "Submit" }))
 
     await waitFor(() => expect(toastSpies.success).toHaveBeenCalled())
 
@@ -202,7 +202,7 @@ describe("CreateProductPage — submitting a new product", () => {
 
     await openBlankForm(user)
     await fillRequiredFields(user)
-    await user.click(screen.getByRole("button", { name: /Create Product/ }))
+    await user.click(screen.getByRole("button", { name: "Submit" }))
 
     await waitFor(() => expect(toastSpies.success).toHaveBeenCalled())
     expect(readReviewPayload(requestJson)?.json).toMatchObject({ manufacturer: "MARK3", weight: 1.5 })
@@ -214,7 +214,7 @@ describe("CreateProductPage — submitting a new product", () => {
 
     await openBlankForm(user)
     await fillRequiredFields(user)
-    await user.click(screen.getByRole("button", { name: /Create Product/ }))
+    await user.click(screen.getByRole("button", { name: "Submit" }))
 
     await waitFor(() => expect(toastSpies.success).toHaveBeenCalled())
   })
@@ -230,7 +230,7 @@ describe("CreateProductPage — submitting a new product", () => {
 
     await openBlankForm(user)
     await fillRequiredFields(user)
-    await user.click(screen.getByRole("button", { name: /Create Product/ }))
+    await user.click(screen.getByRole("button", { name: "Submit" }))
 
     expect(await screen.findByText("Barcode already registered")).toBeInTheDocument()
     expect(toastSpies.error).toHaveBeenCalledWith("Barcode already registered")
@@ -245,9 +245,11 @@ describe("CreateProductPage — submitting a new product", () => {
     const requestJson = spyOnRequestJson()
 
     await openBlankForm(user)
-    await user.click(screen.getByRole("button", { name: /Create Product/ }))
+    // Reach Media with a valid Basic + Details but no cover photo.
+    await fillRequiredFields(user, { coverPhoto: "none" })
+    await user.click(screen.getByRole("button", { name: "Submit" }))
 
-    expect(await screen.findByText("Product name is required")).toBeInTheDocument()
+    expect(await screen.findByText("Cover photo is required")).toBeInTheDocument()
     expect(calledReviewEndpoint(requestJson)).toBe(false)
     expect(toastSpies.error).not.toHaveBeenCalled()
   })
@@ -259,7 +261,7 @@ describe("CreateProductPage — submitting a new product", () => {
     await openBlankForm(user)
     await fillRequiredFields(user, { coverPhoto: "upload" })
 
-    await user.click(screen.getByRole("button", { name: /Create Product/ }))
+    await user.click(screen.getByRole("button", { name: "Submit" }))
 
     await waitFor(() => expect(toastSpies.success).toHaveBeenCalled())
     const payload = readReviewPayload(requestJson)
@@ -289,7 +291,7 @@ describe("CreateProductPage — submitting a new product", () => {
     await openBlankForm(user)
     await fillRequiredFields(user, { coverPhoto: "link" })
 
-    await user.click(screen.getByRole("button", { name: /Create Product/ }))
+    await user.click(screen.getByRole("button", { name: "Submit" }))
 
     await waitFor(() => expect(toastSpies.success).toHaveBeenCalled())
     const payload = readReviewPayload(requestJson)

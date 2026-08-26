@@ -1070,27 +1070,6 @@ function CreateProductPageContent() {
           >
             Cancel
           </button>
-          {view === "form" && (
-            <button
-              type="submit"
-              form="create-product-form"
-              disabled={isLoading}
-              className="px-6 py-2 bg-brand text-white rounded-lg hover:bg-opacity-90 transition-colors font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              {isLoading
-                ? isReviewEditMode
-                  ? "Resubmitting..."
-                  : isEditMode
-                    ? "Updating..."
-                    : "Creating..."
-                : isReviewEditMode
-                  ? "Resubmit for Review"
-                  : isEditMode
-                    ? "Update Product"
-                    : "Create Product"}
-            </button>
-          )}
         </div>
       </div>
 
@@ -2384,18 +2363,38 @@ function CreateProductPageContent() {
                 >
                   Previous
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (activeTab === "basic") tryLeaveTab("details")
-                    else if (activeTab === "details") tryLeaveTab("media")
-                  }}
-                  className={`px-6 py-2 bg-accent-strong text-muted rounded-lg hover:bg-opacity-90 transition-colors font-medium ${
-                    activeTab === "media" ? "invisible" : ""
-                  }`}
-                >
-                  Next
-                </button>
+                {activeTab === "media" ? (
+                  <button
+                    type="submit"
+                    form="create-product-form"
+                    disabled={isLoading}
+                    className="px-6 py-2 bg-brand text-white rounded-lg hover:bg-opacity-90 transition-colors font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    {isLoading
+                      ? isReviewEditMode
+                        ? "Resubmitting..."
+                        : isEditMode
+                          ? "Updating..."
+                          : "Submitting..."
+                      : isReviewEditMode
+                        ? "Resubmit for Review"
+                        : isEditMode
+                          ? "Update Product"
+                          : "Submit"}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (activeTab === "basic") tryLeaveTab("details")
+                      else if (activeTab === "details") tryLeaveTab("media")
+                    }}
+                    className="px-6 py-2 bg-accent-strong text-muted rounded-lg hover:bg-opacity-90 transition-colors font-medium"
+                  >
+                    Next
+                  </button>
+                )}
               </div>
             </div>
           </form>
