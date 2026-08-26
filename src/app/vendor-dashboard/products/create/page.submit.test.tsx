@@ -18,7 +18,31 @@ const toastSpies = vi.hoisted(() => ({
 }))
 
 vi.mock("@/components/ui/Toast", () => ({ showToast: toastSpies }))
-vi.mock("./components/BrandFilterDropdown", () => ({ default: () => null }))
+// Brand is now a required field, so the mock needs to behave like a real controlled input.
+// The search view also renders BrandFilterDropdown without an `id`; only give it an
+// aria-label when `id` is present so `getByLabelText("Brand")` in the form stays unambiguous.
+vi.mock("./components/BrandFilterDropdown", () => ({
+  default: ({
+    id,
+    value,
+    onChange,
+    disabled,
+  }: {
+    id?: string
+    value: string | null
+    onChange: (v: string | null) => void
+    disabled?: boolean
+  }) =>
+    id ? (
+      <input
+        id={id}
+        aria-label="Brand"
+        value={value ?? ""}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value || null)}
+      />
+    ) : null,
+}))
 
 /**
  * `createProductForReview` sends multipart/form-data. An MSW round-trip of a FormData body
@@ -50,6 +74,9 @@ const readReviewPayload = (spy: ReturnType<typeof spyOnRequestJson>) => {
   }
 }
 
+const calledReviewEndpoint = (spy: ReturnType<typeof spyOnRequestJson>) =>
+  spy.mock.calls.some(([config]) => String((config as { url?: string }).url).includes("/api/products/review"))
+
 const openBlankForm = async (user: ReturnType<typeof userEvent.setup>) => {
   render(<CreateProductPage />)
   await user.type(screen.getByPlaceholderText(/Search by barcode, name/), "composite")
@@ -58,10 +85,59 @@ const openBlankForm = async (user: ReturnType<typeof userEvent.setup>) => {
   )
 }
 
-const fillRequiredFields = async (user: ReturnType<typeof userEvent.setup>) => {
+/** Tab headers get an appended "N errors" a11y label once a tab has errors, so match by prefix. */
+const tabButton = (label: string) => screen.getByRole("button", { name: new RegExp(`^${label}`) })
+
+/** Fills every required Basic-tab field; leaves the form on the Basic tab. */
+const fillBasicTab = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.type(screen.getByLabelText(/Product Name/), "Composite Kit")
+  await user.type(screen.getByLabelText("SKU Code *"), "SKU-1")
   await user.type(screen.getByLabelText("Price *"), "42")
   await user.type(screen.getByLabelText("Stock *"), "7")
+  await user.type(screen.getByLabelText("Shipment Fee *"), "5")
+  await user.type(screen.getByLabelText("Heavy Shipping Fee *"), "3")
+  await user.type(screen.getByLabelText("Fulfillment Policy *"), "Ships within 2 business days")
+}
+
+/** Fills every required Details-tab field; leaves the form on the Details tab. */
+const fillDetailsTab = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.type(screen.getByLabelText("Detailed Description *"), "A great dental product")
+  await user.type(screen.getByLabelText("Manufacturer Code *"), "MNF-1")
+  await user.type(screen.getByLabelText("Manufacturer *"), "MARK3")
+  await user.type(screen.getByLabelText("Brand"), "Acme Dental")
+  await user.type(screen.getByLabelText("Manufacturer Site Product Page *"), "https://example.com/products/item")
+  await user.type(screen.getByLabelText("Reorder ID *"), "RO-1001")
+  await user.type(screen.getByLabelText("Reference Number *"), "REF-2024-01")
+  await user.type(screen.getByLabelText("Weight *"), "1.5")
+}
+
+/**
+ * Fills every required field across all three tabs, navigating forward via the tab headers
+ * (Basic must be valid before "Next"/"Product Details" unlocks Details, same for Media).
+ * `coverPhoto` controls how the Media tab's required cover photo is satisfied:
+ * "upload" (default) attaches a file, "link" adds an image URL, "none" leaves the form on the
+ * Media tab without a cover photo (for tests that assert the missing-cover-photo behavior).
+ */
+const fillRequiredFields = async (
+  user: ReturnType<typeof userEvent.setup>,
+  options: { coverPhoto?: "upload" | "link" | "none" } = {},
+) => {
+  const coverPhoto = options.coverPhoto ?? "upload"
+
+  await fillBasicTab(user)
+  await user.click(tabButton("Product Details"))
+  await fillDetailsTab(user)
+  await user.click(tabButton("Media"))
+
+  if (coverPhoto === "upload") {
+    const file = new File(["cover-bytes"], "cover.png", { type: "image/png" })
+    const fileInput = document.querySelector("#coverPhotoInput") as HTMLInputElement
+    await user.upload(fileInput, file)
+  } else if (coverPhoto === "link") {
+    await user.click(screen.getAllByRole("button", { name: /Add via Link/ })[0] as HTMLElement)
+    await user.type(screen.getByPlaceholderText("https://example.com/image.jpg"), "https://cdn.example/cover.png")
+    await user.click(screen.getByRole("button", { name: "Add" }))
+  }
 }
 
 beforeEach(() => {
@@ -86,7 +162,6 @@ describe("CreateProductPage — submitting a new product", () => {
 
     await openBlankForm(user)
     await fillRequiredFields(user)
-    await user.type(screen.getByLabelText("SKU Code *"), "SKU-1")
     await user.click(screen.getByRole("button", { name: /Create Product/ }))
 
     await waitFor(() => expect(toastSpies.success).toHaveBeenCalledWith("Product submitted for review!"))
@@ -116,9 +191,9 @@ describe("CreateProductPage — submitting a new product", () => {
 
     const json = readReviewPayload(requestJson)?.json ?? {}
     expect(json).not.toHaveProperty("detailedName")
-    expect(json).not.toHaveProperty("manufacturer")
     expect(json).not.toHaveProperty("height")
     expect(json).not.toHaveProperty("attributes")
+    expect(json).not.toHaveProperty("exampleVariationsProductId")
   })
 
   it("carries the details tab's values into the payload", async () => {
@@ -127,11 +202,6 @@ describe("CreateProductPage — submitting a new product", () => {
 
     await openBlankForm(user)
     await fillRequiredFields(user)
-
-    await user.click(screen.getByRole("button", { name: "Product Details" }))
-    await user.type(screen.getByLabelText("Manufacturer *"), "MARK3")
-    await user.type(screen.getByLabelText("Weight *"), "1.5")
-
     await user.click(screen.getByRole("button", { name: /Create Product/ }))
 
     await waitFor(() => expect(toastSpies.success).toHaveBeenCalled())
@@ -142,11 +212,7 @@ describe("CreateProductPage — submitting a new product", () => {
     const user = userEvent.setup()
     spyOnRequestJson()
 
-    render(<CreateProductPage />)
-    await user.type(screen.getByPlaceholderText(/Search by barcode, name/), "composite")
-    await user.click(
-      await screen.findByRole("button", { name: /Can't find your product\? Create new/ }, { timeout: 4000 }),
-    )
+    await openBlankForm(user)
     await fillRequiredFields(user)
     await user.click(screen.getByRole("button", { name: /Create Product/ }))
 
@@ -168,7 +234,22 @@ describe("CreateProductPage — submitting a new product", () => {
 
     expect(await screen.findByText("Barcode already registered")).toBeInTheDocument()
     expect(toastSpies.error).toHaveBeenCalledWith("Barcode already registered")
+
+    // Submission failure doesn't move the active tab, so go back to Basic (always allowed) to check.
+    await user.click(tabButton("Basic Information"))
     expect(screen.getByLabelText(/Product Name/)).toHaveValue("Composite Kit")
+  })
+
+  it("does not call the API when required fields are missing", async () => {
+    const user = userEvent.setup()
+    const requestJson = spyOnRequestJson()
+
+    await openBlankForm(user)
+    await user.click(screen.getByRole("button", { name: /Create Product/ }))
+
+    expect(await screen.findByText("Product name is required")).toBeInTheDocument()
+    expect(calledReviewEndpoint(requestJson)).toBe(false)
+    expect(toastSpies.error).not.toHaveBeenCalled()
   })
 
   it("attaches an uploaded cover photo to the multipart payload", async () => {
@@ -176,12 +257,7 @@ describe("CreateProductPage — submitting a new product", () => {
     const requestJson = spyOnRequestJson()
 
     await openBlankForm(user)
-    await fillRequiredFields(user)
-
-    await user.click(screen.getByRole("button", { name: "Media" }))
-    const file = new File(["cover-bytes"], "cover.png", { type: "image/png" })
-    const fileInput = document.querySelector("#coverPhotoInput") as HTMLInputElement
-    await user.upload(fileInput, file)
+    await fillRequiredFields(user, { coverPhoto: "upload" })
 
     await user.click(screen.getByRole("button", { name: /Create Product/ }))
 
@@ -193,8 +269,9 @@ describe("CreateProductPage — submitting a new product", () => {
   it("rejects a cover photo link that is not an http(s) URL", async () => {
     const user = userEvent.setup()
     await openBlankForm(user)
+    // Reach the Media tab legitimately: Basic and Details must be valid first.
+    await fillRequiredFields(user, { coverPhoto: "none" })
 
-    await user.click(screen.getByRole("button", { name: "Media" }))
     // The first "Add via Link" belongs to the cover photo fieldset
     await user.click(screen.getAllByRole("button", { name: /Add via Link/ })[0] as HTMLElement)
     await user.type(screen.getByPlaceholderText("https://example.com/image.jpg"), "ftp://example.com/a.png")
@@ -210,12 +287,7 @@ describe("CreateProductPage — submitting a new product", () => {
     const requestJson = spyOnRequestJson()
 
     await openBlankForm(user)
-    await fillRequiredFields(user)
-
-    await user.click(screen.getByRole("button", { name: "Media" }))
-    await user.click(screen.getAllByRole("button", { name: /Add via Link/ })[0] as HTMLElement)
-    await user.type(screen.getByPlaceholderText("https://example.com/image.jpg"), "https://cdn.example/cover.png")
-    await user.click(screen.getByRole("button", { name: "Add" }))
+    await fillRequiredFields(user, { coverPhoto: "link" })
 
     await user.click(screen.getByRole("button", { name: /Create Product/ }))
 

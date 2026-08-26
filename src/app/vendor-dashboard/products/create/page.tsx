@@ -52,6 +52,55 @@ function isValidImageUrl(value: string): boolean {
   }
 }
 
+const TAB_FIELDS = {
+  basic: [
+    "name",
+    "detailedName",
+    "barcode",
+    "barcodeFormats",
+    "active",
+    "skuCode",
+    "price",
+    "discount",
+    "stock",
+    "shipmentFee",
+    "heavyShippingSurcharge",
+    "exportPackaging",
+    "fulfillmentPolicy",
+  ],
+  details: [
+    "description",
+    "manufacturerCode",
+    "manufacturer",
+    "brand",
+    "exampleVariationsProductId",
+    "categoryLevel1",
+    "categoryLevel2",
+    "categoryLevel3",
+    "categoryLevel4",
+    "categoryLevel5",
+    "manufacturerSiteProductPage",
+    "dentalLicenseRequired",
+    "reorderId",
+    "referanceNumber",
+    "height",
+    "length",
+    "width",
+    "weight",
+  ],
+  media: ["coverPhoto"],
+} as const
+
+const TAB_ORDER = ["basic", "details", "media"] as const
+type TabKey = (typeof TAB_ORDER)[number]
+
+// Determine which tab contains a given field
+function getTabForField(fieldName: string): TabKey {
+  if ((TAB_FIELDS.basic as readonly string[]).includes(fieldName)) return "basic"
+  if ((TAB_FIELDS.details as readonly string[]).includes(fieldName)) return "details"
+  return "media"
+}
+
 interface FormData {
   // Product fields
   name: string
@@ -113,7 +162,7 @@ const initialFormData: FormData = {
   categoryLevel4: "",
   categoryLevel5: "",
   manufacturerSiteProductPage: "",
-  dentalLicenseRequired: "",
+  dentalLicenseRequired: "No",
   reorderId: "",
   referanceNumber: "",
   height: "",
@@ -204,7 +253,7 @@ function CreateProductPageContent() {
   const [photoUrlError, setPhotoUrlError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [activeTab, setActiveTab] = useState<"basic" | "details" | "media">("basic")
+  const [activeTab, setActiveTab] = useState<TabKey>("basic")
   const [isProductSelected, setIsProductSelected] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<NormalizedSearchProduct | null>(null)
 
@@ -392,7 +441,7 @@ function CreateProductPageContent() {
         categoryLevel4: product.categoryLevel4 || "",
         categoryLevel5: product.categoryLevel5 || "",
         manufacturerSiteProductPage: product.manufacturerSiteProductPage || "",
-        dentalLicenseRequired: product.dentalLicenseRequired || "",
+        dentalLicenseRequired: product.dentalLicenseRequired || "No",
         reorderId: product.reorderId || "",
         referanceNumber: product.referanceNumber || "",
         height: product.height != null ? String(product.height) : "",
@@ -524,49 +573,6 @@ function CreateProductPageContent() {
     }
   }
 
-  // Determine which tab contains the first error
-  const getTabForField = (fieldName: string): "basic" | "details" | "media" => {
-    const basicFields = [
-      "name",
-      "detailedName",
-      "barcode",
-      "barcodeFormats",
-      "active",
-      "skuCode",
-      "price",
-      "discount",
-      "stock",
-      "shipmentFee",
-      "heavyShippingSurcharge",
-      "exportPackaging",
-      "fulfillmentPolicy",
-    ]
-    const detailsFields = [
-      "description",
-      "manufacturerCode",
-      "manufacturer",
-      "brand",
-      "exampleVariationsProductId",
-      "categoryLevel1",
-      "categoryLevel2",
-      "categoryLevel3",
-      "categoryLevel4",
-      "categoryLevel5",
-      "manufacturerSiteProductPage",
-      "dentalLicenseRequired",
-      "reorderId",
-      "referanceNumber",
-      "height",
-      "length",
-      "width",
-      "weight",
-    ]
-
-    if (basicFields.includes(fieldName)) return "basic"
-    if (detailsFields.includes(fieldName)) return "details"
-    return "media"
-  }
-
   // Redirect to login if not authenticated
   if (!isAuthenticated || !user) {
     return (
@@ -589,6 +595,16 @@ function CreateProductPageContent() {
     )
   }
 
+  // Clear a single field's error, if any
+  const clearError = (name: string) => {
+    setErrors((prev) => {
+      if (!prev[name]) return prev
+      const newErrors = { ...prev }
+      delete newErrors[name]
+      return newErrors
+    })
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
     const checked = (e.target as HTMLInputElement).checked
@@ -599,13 +615,7 @@ function CreateProductPageContent() {
     }))
 
     // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev }
-        delete newErrors[name]
-        return newErrors
-      })
-    }
+    clearError(name)
   }
 
   // Handle cover photo selection
@@ -621,6 +631,7 @@ function CreateProductPageContent() {
         coverPhoto: file,
         coverPhotoPreview: URL.createObjectURL(file),
       }))
+      clearError("coverPhoto")
     }
   }
 
@@ -671,6 +682,7 @@ function CreateProductPageContent() {
     setLinkedImages((prev) => ({ ...prev, coverPhoto: coverPhotoUrlInput.trim() }))
     setCoverPhotoUrlInput("")
     setCoverPhotoUrlError("")
+    clearError("coverPhoto")
   }
 
   // Remove linked cover photo
@@ -698,68 +710,178 @@ function CreateProductPageContent() {
     }))
   }
 
-  const validateForm = (): boolean => {
+  // Pure validation for a subset of fields. Mode-aware: in plain edit mode (not review-edit),
+  // only price/stock/discount are validated (current behavior); otherwise the full rule set
+  // that mirrors the backend's ProductServiceImpl.validate() requirements applies.
+  const validateFields = (fields: readonly string[]): Record<string, string> => {
+    const fieldSet = new Set(fields)
+    const has = (name: string) => fieldSet.has(name)
     const newErrors: Record<string, string> = {}
 
-    if (!formData.name.trim()) {
+    if (isEditMode && !isReviewEditMode) {
+      if (has("price")) {
+        if (!formData.price.trim()) {
+          newErrors.price = "Price is required"
+        } else if (Number.isNaN(Number(formData.price)) || Number(formData.price) < 0) {
+          newErrors.price = "Price must be a non-negative number"
+        }
+      }
+
+      if (has("stock")) {
+        if (!formData.stock.trim()) {
+          newErrors.stock = "Stock is required"
+        } else if (Number.isNaN(Number(formData.stock)) || Number(formData.stock) < 0) {
+          newErrors.stock = "Stock must be a non-negative number"
+        }
+      }
+
+      if (has("discount") && editDiscount.trim() && (Number.isNaN(Number(editDiscount)) || Number(editDiscount) < 0)) {
+        newErrors.discount = "Discount must be a non-negative number"
+      }
+
+      return newErrors
+    }
+
+    if (has("name") && !formData.name.trim()) {
       newErrors.name = "Product name is required"
     }
 
-    if (formData.barcode && Number.isNaN(Number(formData.barcode))) {
-      newErrors.barcode = "Barcode must be a number"
-    }
-
-    // Validate user product fields
-    if (!formData.price.trim()) {
-      newErrors.price = "Price is required"
-    } else if (Number.isNaN(Number(formData.price)) || Number(formData.price) <= 0) {
-      newErrors.price = "Price must be a positive number"
-    }
-
-    if (!formData.stock.trim()) {
-      newErrors.stock = "Stock is required"
-    } else if (Number.isNaN(Number(formData.stock)) || Number(formData.stock) < 0) {
-      newErrors.stock = "Stock must be a non-negative number"
-    }
-
-    if (isEditMode && !isReviewEditMode) {
-      // Discount is optional, but if provided, must be a valid non-negative number
-      if (editDiscount.trim() && (Number.isNaN(Number(editDiscount)) || Number(editDiscount) < 0)) {
-        newErrors.discount = "Discount must be a non-negative number"
-      }
-    } else {
-      // Optional numeric fields must be valid numbers when provided
-      const optionalNumericFields: Array<[keyof FormData, string]> = [
-        ["height", "Height"],
-        ["length", "Length"],
-        ["width", "Width"],
-        ["weight", "Weight"],
-        ["shipmentFee", "Shipment fee"],
-        ["heavyShippingSurcharge", "Heavy shipping fee"],
-      ]
-      for (const [field, label] of optionalNumericFields) {
-        const value = formData[field] as string
-        if (value.trim() && (Number.isNaN(Number(value)) || Number(value) < 0)) {
-          newErrors[field] = `${label} must be a non-negative number`
-        }
+    if (has("barcode") && formData.barcode.trim()) {
+      if (Number.isNaN(Number(formData.barcode))) {
+        newErrors.barcode = "Barcode must be a number"
+      } else if (Number(formData.barcode) <= 0) {
+        newErrors.barcode = "Barcode must be a positive number"
       }
     }
 
+    if (has("skuCode") && !formData.skuCode.trim()) {
+      newErrors.skuCode = "SKU code is required"
+    }
+
+    if (has("price")) {
+      if (!formData.price.trim()) {
+        newErrors.price = "Price is required"
+      } else if (Number.isNaN(Number(formData.price)) || Number(formData.price) < 0) {
+        newErrors.price = "Price must be a non-negative number"
+      }
+    }
+
+    if (has("stock")) {
+      if (!formData.stock.trim()) {
+        newErrors.stock = "Stock is required"
+      } else if (Number.isNaN(Number(formData.stock)) || Number(formData.stock) < 0) {
+        newErrors.stock = "Stock must be a non-negative number"
+      }
+    }
+
+    if (has("shipmentFee")) {
+      if (!formData.shipmentFee.trim()) {
+        newErrors.shipmentFee = "Shipment fee is required"
+      } else if (Number.isNaN(Number(formData.shipmentFee)) || Number(formData.shipmentFee) < 0) {
+        newErrors.shipmentFee = "Shipment fee must be a non-negative number"
+      }
+    }
+
+    if (has("heavyShippingSurcharge")) {
+      if (!formData.heavyShippingSurcharge.trim()) {
+        newErrors.heavyShippingSurcharge = "Heavy shipping fee is required"
+      } else if (Number.isNaN(Number(formData.heavyShippingSurcharge)) || Number(formData.heavyShippingSurcharge) < 0) {
+        newErrors.heavyShippingSurcharge = "Heavy shipping fee must be a non-negative number"
+      }
+    }
+
+    if (has("fulfillmentPolicy") && !formData.fulfillmentPolicy.trim()) {
+      newErrors.fulfillmentPolicy = "Fulfillment policy is required"
+    }
+
+    if (has("description") && !formData.description.trim()) {
+      newErrors.description = "Description is required"
+    }
+
+    if (has("manufacturerCode") && !formData.manufacturerCode.trim()) {
+      newErrors.manufacturerCode = "Manufacturer code is required"
+    }
+
+    if (has("manufacturer") && !formData.manufacturer.trim()) {
+      newErrors.manufacturer = "Manufacturer is required"
+    }
+
+    if (has("brand") && !formData.brand.trim()) {
+      newErrors.brand = "Brand is required"
+    }
+
+    if (has("manufacturerSiteProductPage")) {
+      if (!formData.manufacturerSiteProductPage.trim()) {
+        newErrors.manufacturerSiteProductPage = "Manufacturer site product page is required"
+      } else if (!isValidImageUrl(formData.manufacturerSiteProductPage)) {
+        newErrors.manufacturerSiteProductPage =
+          "Manufacturer site product page must be a valid URL (starting with http:// or https://)"
+      }
+    }
+
+    if (has("reorderId") && !formData.reorderId.trim()) {
+      newErrors.reorderId = "Reorder ID is required"
+    }
+
+    if (has("referanceNumber") && !formData.referanceNumber.trim()) {
+      newErrors.referanceNumber = "Reference number is required"
+    }
+
+    if (has("weight")) {
+      if (!formData.weight.trim()) {
+        newErrors.weight = "Weight is required"
+      } else if (Number.isNaN(Number(formData.weight)) || Number(formData.weight) <= 0) {
+        newErrors.weight = "Weight must be greater than 0"
+      }
+    }
+
+    const optionalNonNegativeFields: Array<[keyof FormData, string]> = [
+      ["height", "Height"],
+      ["length", "Length"],
+      ["width", "Width"],
+    ]
+    for (const [field, label] of optionalNonNegativeFields) {
+      if (!has(field)) continue
+      const value = formData[field] as string
+      if (value.trim() && (Number.isNaN(Number(value)) || Number(value) < 0)) {
+        newErrors[field] = `${label} must be a non-negative number`
+      }
+    }
+
+    if (has("coverPhoto") && !(fileData.coverPhoto || existingImages.coverPhoto || linkedImages.coverPhoto)) {
+      newErrors.coverPhoto = "Cover photo is required"
+    }
+
+    return newErrors
+  }
+
+  const validateForm = (): boolean => {
+    const allFields = [...TAB_FIELDS.basic, ...TAB_FIELDS.details, ...TAB_FIELDS.media]
+    const newErrors = validateFields(allFields)
     setErrors(newErrors)
 
-    // If there are errors, show toast and switch to the tab with the first error
     if (Object.keys(newErrors).length > 0) {
       const firstErrorField = Object.keys(newErrors)[0]
-      const errorTab = getTabForField(firstErrorField)
-      setActiveTab(errorTab)
-
-      const errorCount = Object.keys(newErrors).length
-      const errorMessage =
-        errorCount === 1 ? `${newErrors[firstErrorField]}` : `Please fill in ${errorCount} required fields`
-
-      showToast.error(errorMessage)
+      setActiveTab(getTabForField(firstErrorField))
     }
+
     return Object.keys(newErrors).length === 0
+  }
+
+  // Validate the tab being left when moving forward; backward navigation is always allowed
+  const tryLeaveTab = (to: TabKey) => {
+    const fromIndex = TAB_ORDER.indexOf(activeTab)
+    const toIndex = TAB_ORDER.indexOf(to)
+
+    if (toIndex > fromIndex) {
+      const tabErrors = validateFields(TAB_FIELDS[activeTab])
+      if (Object.keys(tabErrors).length > 0) {
+        setErrors((prev) => ({ ...prev, ...tabErrors }))
+        return
+      }
+    }
+
+    setActiveTab(to)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -892,6 +1014,16 @@ function CreateProductPageContent() {
       setIsLoading(false)
     }
   }
+
+  const basicErrorCount = Object.keys(errors).filter(
+    (k) => k !== "submit" && (TAB_FIELDS.basic as readonly string[]).includes(k),
+  ).length
+  const detailsErrorCount = Object.keys(errors).filter(
+    (k) => k !== "submit" && (TAB_FIELDS.details as readonly string[]).includes(k),
+  ).length
+  const mediaErrorCount = Object.keys(errors).filter(
+    (k) => k !== "submit" && (TAB_FIELDS.media as readonly string[]).includes(k),
+  ).length
 
   return (
     <div className="p-8">
@@ -1132,39 +1264,72 @@ function CreateProductPageContent() {
             <div className="flex space-x-8 px-8">
               <button
                 type="button"
-                onClick={() => setActiveTab("basic")}
+                onClick={() => tryLeaveTab("basic")}
                 className={`py-4 px-2 font-medium border-b-2 transition-colors ${
                   activeTab === "basic"
                     ? "text-brand border-brand"
-                    : "text-text-secondary border-transparent hover:text-brand"
+                    : basicErrorCount > 0
+                      ? "text-destructive border-transparent hover:text-brand"
+                      : "text-text-secondary border-transparent hover:text-brand"
                 }`}
               >
                 <Package className="w-4 h-4 inline mr-2" />
                 Basic Information
+                {basicErrorCount > 0 && (
+                  <span className="inline-flex" title={`${basicErrorCount} error${basicErrorCount === 1 ? "" : "s"}`}>
+                    <AlertCircle
+                      className="w-4 h-4 inline ml-2 text-destructive"
+                      aria-label={`${basicErrorCount} error${basicErrorCount === 1 ? "" : "s"}`}
+                    />
+                  </span>
+                )}
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab("details")}
+                onClick={() => tryLeaveTab("details")}
                 className={`py-4 px-2 font-medium border-b-2 transition-colors ${
                   activeTab === "details"
                     ? "text-brand border-brand"
-                    : "text-text-secondary border-transparent hover:text-brand"
+                    : detailsErrorCount > 0
+                      ? "text-destructive border-transparent hover:text-brand"
+                      : "text-text-secondary border-transparent hover:text-brand"
                 }`}
               >
                 <FileText className="w-4 h-4 inline mr-2" />
                 Product Details
+                {detailsErrorCount > 0 && (
+                  <span
+                    className="inline-flex"
+                    title={`${detailsErrorCount} error${detailsErrorCount === 1 ? "" : "s"}`}
+                  >
+                    <AlertCircle
+                      className="w-4 h-4 inline ml-2 text-destructive"
+                      aria-label={`${detailsErrorCount} error${detailsErrorCount === 1 ? "" : "s"}`}
+                    />
+                  </span>
+                )}
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab("media")}
+                onClick={() => tryLeaveTab("media")}
                 className={`py-4 px-2 font-medium border-b-2 transition-colors ${
                   activeTab === "media"
                     ? "text-brand border-brand"
-                    : "text-text-secondary border-transparent hover:text-brand"
+                    : mediaErrorCount > 0
+                      ? "text-destructive border-transparent hover:text-brand"
+                      : "text-text-secondary border-transparent hover:text-brand"
                 }`}
               >
                 <ImageIcon className="w-4 h-4 inline mr-2" />
                 Media
+                {mediaErrorCount > 0 && (
+                  <span className="inline-flex" title={`${mediaErrorCount} error${mediaErrorCount === 1 ? "" : "s"}`}>
+                    <AlertCircle
+                      className="w-4 h-4 inline ml-2 text-destructive"
+                      aria-label={`${mediaErrorCount} error${mediaErrorCount === 1 ? "" : "s"}`}
+                    />
+                  </span>
+                )}
               </button>
             </div>
           </div>
@@ -1291,9 +1456,10 @@ function CreateProductPageContent() {
                             name="skuCode"
                             value={formData.skuCode}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent"
+                            className={`w-full px-4 py-3 border ${errors.skuCode ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
                             placeholder="e.g., SKU-12345"
                           />
+                          {errors.skuCode && <p className="text-destructive text-sm mt-1">{errors.skuCode}</p>}
                         </div>
 
                         <div>
@@ -1386,9 +1552,12 @@ function CreateProductPageContent() {
                             name="fulfillmentPolicy"
                             value={formData.fulfillmentPolicy}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent"
+                            className={`w-full px-4 py-3 border ${errors.fulfillmentPolicy ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
                             placeholder="e.g., Ships within 2 business days"
                           />
+                          {errors.fulfillmentPolicy && (
+                            <p className="text-destructive text-sm mt-1">{errors.fulfillmentPolicy}</p>
+                          )}
                         </div>
 
                         <div className="flex items-center">
@@ -1502,9 +1671,10 @@ function CreateProductPageContent() {
                       onChange={handleInputChange}
                       disabled={isProductSelected}
                       rows={4}
-                      className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent resize-none disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+                      className={`w-full px-4 py-3 border ${errors.description ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent resize-none disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
                       placeholder="Detailed product description..."
                     />
+                    {errors.description && <p className="text-destructive text-sm mt-1">{errors.description}</p>}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1519,9 +1689,12 @@ function CreateProductPageContent() {
                         value={formData.manufacturerCode}
                         onChange={handleInputChange}
                         disabled={isProductSelected}
-                        className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+                        className={`w-full px-4 py-3 border ${errors.manufacturerCode ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
                         placeholder="e.g., MNF-4452"
                       />
+                      {errors.manufacturerCode && (
+                        <p className="text-destructive text-sm mt-1">{errors.manufacturerCode}</p>
+                      )}
                     </div>
 
                     <div>
@@ -1535,9 +1708,10 @@ function CreateProductPageContent() {
                         value={formData.manufacturer}
                         onChange={handleInputChange}
                         disabled={isProductSelected}
-                        className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+                        className={`w-full px-4 py-3 border ${errors.manufacturer ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
                         placeholder="e.g., DentPro Inc."
                       />
+                      {errors.manufacturer && <p className="text-destructive text-sm mt-1">{errors.manufacturer}</p>}
                     </div>
 
                     <div>
@@ -1547,12 +1721,16 @@ function CreateProductPageContent() {
                       <BrandFilterDropdown
                         id="brand"
                         value={formData.brand || null}
-                        onChange={(brand) => setFormData((prev) => ({ ...prev, brand: brand ?? "" }))}
+                        onChange={(brand) => {
+                          setFormData((prev) => ({ ...prev, brand: brand ?? "" }))
+                          clearError("brand")
+                        }}
                         accessToken={accessToken}
                         disabled={isProductSelected}
                         hideAllOption
-                        triggerClassName="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+                        triggerClassName={`w-full px-4 py-3 border ${errors.brand ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
                       />
+                      {errors.brand && <p className="text-destructive text-sm mt-1">{errors.brand}</p>}
                     </div>
                   </div>
 
@@ -1603,9 +1781,12 @@ function CreateProductPageContent() {
                         value={formData.manufacturerSiteProductPage}
                         onChange={handleInputChange}
                         disabled={isProductSelected}
-                        className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+                        className={`w-full px-4 py-3 border ${errors.manufacturerSiteProductPage ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
                         placeholder="https://example.com/products/item"
                       />
+                      {errors.manufacturerSiteProductPage && (
+                        <p className="text-destructive text-sm mt-1">{errors.manufacturerSiteProductPage}</p>
+                      )}
                     </div>
 
                     <div>
@@ -1655,9 +1836,10 @@ function CreateProductPageContent() {
                         value={formData.reorderId}
                         onChange={handleInputChange}
                         disabled={isProductSelected}
-                        className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+                        className={`w-full px-4 py-3 border ${errors.reorderId ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
                         placeholder="e.g., RO-1001"
                       />
+                      {errors.reorderId && <p className="text-destructive text-sm mt-1">{errors.reorderId}</p>}
                     </div>
 
                     <div>
@@ -1671,9 +1853,12 @@ function CreateProductPageContent() {
                         value={formData.referanceNumber}
                         onChange={handleInputChange}
                         disabled={isProductSelected}
-                        className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+                        className={`w-full px-4 py-3 border ${errors.referanceNumber ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
                         placeholder="e.g., REF-2024-01"
                       />
+                      {errors.referanceNumber && (
+                        <p className="text-destructive text-sm mt-1">{errors.referanceNumber}</p>
+                      )}
                     </div>
 
                     <div>
@@ -1933,6 +2118,7 @@ function CreateProductPageContent() {
                         {coverPhotoUrlError && <p className="text-destructive text-sm mt-2">{coverPhotoUrlError}</p>}
                       </div>
                     )}
+                    {errors.coverPhoto && <p className="text-destructive text-sm mt-2">{errors.coverPhoto}</p>}
                   </fieldset>
 
                   {/* Additional Photos Section */}
@@ -2189,8 +2375,8 @@ function CreateProductPageContent() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (activeTab === "details") setActiveTab("basic")
-                    else if (activeTab === "media") setActiveTab("details")
+                    if (activeTab === "details") tryLeaveTab("basic")
+                    else if (activeTab === "media") tryLeaveTab("details")
                   }}
                   className={`px-6 py-2 border border-border-soft rounded-lg text-text-primary hover:bg-surface-muted transition-colors font-medium ${
                     activeTab === "basic" ? "invisible" : ""
@@ -2201,8 +2387,8 @@ function CreateProductPageContent() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (activeTab === "basic") setActiveTab("details")
-                    else if (activeTab === "details") setActiveTab("media")
+                    if (activeTab === "basic") tryLeaveTab("details")
+                    else if (activeTab === "details") tryLeaveTab("media")
                   }}
                   className={`px-6 py-2 bg-accent-strong text-muted rounded-lg hover:bg-opacity-90 transition-colors font-medium ${
                     activeTab === "media" ? "invisible" : ""
