@@ -60,6 +60,9 @@ jobs:
         with:
           context: .
           push: true
+          build-args: |
+            NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=${{ secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY }}
+            NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
           tags: |
             public.ecr.aws/u3n2f4w8/dentlab/ecommerce-frontend:${{ env.timestamp }}-${{ env.sha }}
             public.ecr.aws/u3n2f4w8/dentlab/ecommerce-frontend:latest
