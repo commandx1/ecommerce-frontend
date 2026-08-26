@@ -11,6 +11,8 @@ services:
       - "3000:8080"
     environment:
       - BACKEND_URL=http://ecommerce-api:8080
+      - HOSTNAME=0.0.0.0
+      - PORT=8080
     networks:
       - dentb2b-net
 
