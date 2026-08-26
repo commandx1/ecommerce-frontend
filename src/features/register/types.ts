@@ -6,6 +6,7 @@ export interface RegisterFormErrors {
   surname?: string
   email?: string
   phoneNumber?: string
+  businessDescribe?: string
   address?: string
   addressPostalCode?: string
   password?: string

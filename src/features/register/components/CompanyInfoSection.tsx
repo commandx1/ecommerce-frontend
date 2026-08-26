@@ -1,12 +1,13 @@
 import { TextAreaField } from "@/components/form/TextAreaField"
 import { TextField } from "@/components/form/TextField"
-import type { RegisterFormData, RegisterFormErrors } from "@/features/register/types"
+import type { RegisterFormErrors } from "@/features/register/types"
+import type { CompanyPayload } from "@/lib/api/auth-direct"
 import { formatPhoneNumber } from "@/lib/utils/phone-number"
 
 interface CompanyInfoSectionProps {
-  company: RegisterFormData["company"]
+  company: CompanyPayload
   errors: RegisterFormErrors
-  onFieldChange: (field: keyof RegisterFormData["company"], value: string) => void
+  onFieldChange: (field: keyof CompanyPayload, value: string) => void
   onPhoneNumberChange: (value: string) => void
 }
 

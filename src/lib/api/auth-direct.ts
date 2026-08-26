@@ -1,5 +1,6 @@
 // Direct API calls to backend through Next.js rewrites (proxy)
 // This bypasses CORS issues and Mixed Content (HTTPS -> HTTP) by routing through same-origin
+import type { BusinessType } from "@/lib/constants/business-types"
 import { appApiClient } from "./client"
 import { apiRequest } from "./request"
 
@@ -49,8 +50,9 @@ export interface RegisterPayload {
   email: string
   password: string
   phoneNumber: string
+  businessDescribe: BusinessType | ""
   address: AddressPayload
-  company: CompanyPayload
+  company?: CompanyPayload
 }
 
 export interface LoginPayload {

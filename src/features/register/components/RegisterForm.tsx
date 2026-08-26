@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation"
 import { useEffect, useRef } from "react"
 import { showToast } from "@/components/ui/Toast"
 import AddressSection from "@/features/register/components/AddressSection"
+import BusinessTypeField from "@/features/register/components/BusinessTypeField"
 import CompanyInfoSection from "@/features/register/components/CompanyInfoSection"
 import InviteTokenNotice from "@/features/register/components/InviteTokenNotice"
 import PasswordSection from "@/features/register/components/PasswordSection"
@@ -41,6 +42,7 @@ export default function RegisterForm() {
   } = useRegisterForm({ initialEmail, initialToken, initialRole })
 
   const showCompanyAndAddress = !isTokenFlow || inviteRole === "OWNER"
+  const showCompanyInfo = isTokenFlow && inviteRole === "OWNER"
 
   const lastSubmitErrorTokenRef = useRef<number | null>(null)
 
@@ -89,9 +91,18 @@ export default function RegisterForm() {
             emailReadOnly={!!initialToken}
           />
 
-          {showCompanyAndAddress && (
+          {!isTokenFlow && (
+            <BusinessTypeField
+              value={formData.businessDescribe}
+              error={errors.businessDescribe}
+              onChange={handleChange}
+            />
+          )}
+
+          {showCompanyInfo && (
             <CompanyInfoSection
-              company={formData.company}
+              // Company info only renders for the token+OWNER flow, where formData.company is always initialized.
+              company={formData.company as NonNullable<typeof formData.company>}
               errors={errors}
               onFieldChange={handleCompanyFieldChange}
               onPhoneNumberChange={handleCompanyPhoneNumberChange}

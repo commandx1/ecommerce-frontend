@@ -42,16 +42,7 @@ const registerSchema = z
       placeId: z.string().min(1, "Address is required"),
       formattedAddress: z.string().optional(),
     }),
-    company: z.object({
-      name: z.string().trim().min(1, "Company name is required"),
-      taxNumber: z.string().trim().min(1, "Tax number is required"),
-      email: z.string().trim().min(1, "Company email is required").email("Please enter a valid email address"),
-      phoneNumber: z.string().trim().min(1, "Company phone is required"),
-      website: z.string().optional(),
-      description: z.string().optional(),
-      companyPhoto: z.string().optional(),
-      active: z.boolean().optional(),
-    }),
+    businessDescribe: z.string().min(1, "Business type is required"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -64,6 +55,7 @@ const initialFormData: RegisterPayload = {
   email: "",
   password: "",
   phoneNumber: "",
+  businessDescribe: "",
   address: {
     title: "Business",
     fullName: "",
@@ -284,7 +276,8 @@ export const useRegisterForm = (options?: {
               fullName: fullName || formData.address.fullName,
               phoneNumber: normalizePhoneNumber(formData.phoneNumber),
             },
-            company: formData.company,
+            // Company info is only collected in the token+OWNER flow, where formData.company is always initialized.
+            company: formData.company as CompanyPayload,
           })
         } else {
           await authAPI.completeVendorManagerAdd({
@@ -301,9 +294,10 @@ export const useRegisterForm = (options?: {
       }
 
       const fullName = `${formData.name} ${formData.surname}`.trim()
+      const { company: _company, ...registerFields } = formData
 
       await authAPI.register({
-        ...formData,
+        ...registerFields,
         address: {
           ...formData.address,
           city: formData.address.state,
@@ -367,6 +361,7 @@ export const useRegisterForm = (options?: {
         "surname",
         "email",
         "phoneNumber",
+        "businessDescribe",
         "address",
         "addressPostalCode",
         "password",
@@ -454,7 +449,7 @@ export const useRegisterForm = (options?: {
     setFormData((prev) => ({
       ...prev,
       company: {
-        ...prev.company,
+        ...(prev.company as CompanyPayload),
         [field]: value,
       },
     }))
@@ -476,7 +471,7 @@ export const useRegisterForm = (options?: {
     setFormData((prev) => ({
       ...prev,
       company: {
-        ...prev.company,
+        ...(prev.company as CompanyPayload),
         phoneNumber: normalizedPhoneNumber,
       },
     }))

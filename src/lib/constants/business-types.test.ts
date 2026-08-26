@@ -6,6 +6,10 @@ describe("BUSINESS_TYPES", () => {
     expect(BUSINESS_TYPES.PERSONAL_CUSTOMER).toBe("Personal_Customer")
     expect(BUSINESS_TYPES.DENTAL_PRACTICE).toBe("Dental_Practice")
   })
+
+  it("has exactly 15 values", () => {
+    expect(Object.values(BUSINESS_TYPES)).toHaveLength(15)
+  })
 })
 
 describe("BUSINESS_TYPE_LABELS", () => {
@@ -23,11 +27,12 @@ describe("BUSINESS_TYPE_LABELS", () => {
 })
 
 describe("BUSINESS_TYPE_OPTIONS", () => {
-  it("contains one option per business type, in declaration order", () => {
-    expect(BUSINESS_TYPE_OPTIONS).toEqual([
-      { value: "Personal_Customer", label: "Personal Customer" },
-      { value: "Dental_Practice", label: "Dental Practice" },
-    ])
+  it("has one option per business type value", () => {
+    expect(BUSINESS_TYPE_OPTIONS).toHaveLength(Object.values(BUSINESS_TYPES).length)
+  })
+
+  it("starts with Dental Practice", () => {
+    expect(BUSINESS_TYPE_OPTIONS[0]).toEqual({ value: "Dental_Practice", label: "Dental Practice" })
   })
 
   it("keeps each option's value and label in sync with the source maps", () => {
