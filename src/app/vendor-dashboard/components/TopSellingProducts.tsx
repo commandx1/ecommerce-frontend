@@ -2,7 +2,8 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { Button } from "@/components/ui/button"
 import { getFullImageUrl } from "@/lib/api/products"
 import { type VendorTopSellingProduct, vendorDashboardAPI } from "@/lib/api/vendor-dashboard"
 import { useAuthStore } from "@/stores/authStore"
@@ -14,37 +15,42 @@ const TopSellingProducts = () => {
   const { isAuthenticated } = useAuthStore()
   const [products, setProducts] = useState<VendorTopSellingProduct[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(false)
   const [imageFallbacks, setImageFallbacks] = useState<Record<string, boolean>>({})
   const abortControllerRef = useRef<AbortController | null>(null)
 
-  useEffect(() => {
-    const fetchTopSellingProducts = async () => {
-      if (!isAuthenticated) return
+  const fetchTopSellingProducts = useCallback(async () => {
+    if (!isAuthenticated) return
 
-      abortControllerRef.current?.abort()
-      const controller = new AbortController()
-      abortControllerRef.current = controller
+    abortControllerRef.current?.abort()
+    const controller = new AbortController()
+    abortControllerRef.current = controller
 
-      try {
-        setIsLoading(true)
-        const response = await vendorDashboardAPI.getTopSellingProducts(0, 4, 30, "desc", controller.signal)
-        setProducts(response.content)
-      } catch {
-        if (controller.signal.aborted) return
-        setProducts([])
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsLoading(false)
-        }
+    try {
+      setIsLoading(true)
+      setFetchError(false)
+      const response = await vendorDashboardAPI.getTopSellingProducts(0, 4, 30, "desc", controller.signal)
+      // Guard against a malformed 200 body — `content` missing, null, or not an array would
+      // otherwise throw on `.map` and blank the whole dashboard (infra note #26).
+      setProducts(Array.isArray(response.content) ? response.content : [])
+    } catch {
+      if (controller.signal.aborted) return
+      setProducts([])
+      setFetchError(true)
+    } finally {
+      if (!controller.signal.aborted) {
+        setIsLoading(false)
       }
     }
+  }, [isAuthenticated])
 
+  useEffect(() => {
     void fetchTopSellingProducts()
 
     return () => {
       abortControllerRef.current?.abort()
     }
-  }, [isAuthenticated])
+  }, [fetchTopSellingProducts])
 
   return (
     <DashboardPanel
@@ -63,6 +69,18 @@ const TopSellingProducts = () => {
           {[0, 1, 2, 3].map((placeholder) => (
             <div key={placeholder} className="h-16 animate-pulse rounded-xl bg-surface-muted" />
           ))}
+        </div>
+      ) : fetchError ? (
+        <div className="flex flex-col items-center justify-center gap-3 px-6 py-10 text-center">
+          <p className="text-sm font-medium text-danger">Couldn't load top selling products. Please try again.</p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => void fetchTopSellingProducts()}
+            className="rounded-lg px-4"
+          >
+            Retry
+          </Button>
         </div>
       ) : (
         <div className="space-y-4">

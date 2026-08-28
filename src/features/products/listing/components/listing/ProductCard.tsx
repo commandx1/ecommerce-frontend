@@ -1,6 +1,6 @@
 "use client"
 
-import { Eye, Heart, Scale, Star, Truck } from "lucide-react"
+import { Eye, Star, Truck } from "lucide-react"
 import Link from "next/link"
 import { SpotlightCard } from "@/components/ui/spotlight-card"
 import formatCurrency from "@/lib/helpers/formatCurrency"
@@ -41,13 +41,6 @@ const ProductCard = ({ data }: ProductCardProps) => {
             fill
             className="object-contain p-4 transition-transform duration-500 group-hover:scale-105 sm:p-6"
           />
-          <button
-            type="button"
-            className="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full border border-border-soft bg-surface-elevated/90 text-text-muted shadow-soft backdrop-blur-sm transition-colors hover:text-danger sm:right-4 sm:top-4 sm:h-10 sm:w-10"
-            aria-label="Add to favorites"
-          >
-            <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
-          </button>
           {data.stock !== undefined && (
             <div className="absolute bottom-2.5 left-2.5 sm:bottom-4 sm:left-4">
               <div
@@ -130,16 +123,11 @@ const ProductCard = ({ data }: ProductCardProps) => {
               </button>
               <Link
                 href={data.href}
+                aria-label={`View ${data.name} details`}
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border-strong text-brand transition-colors hover:bg-accent sm:h-11 sm:w-11"
               >
                 <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
               </Link>
-              <button
-                type="button"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border-soft text-text-muted transition-colors hover:border-brand/35 hover:text-brand sm:h-11 sm:w-11"
-              >
-                <Scale className="h-4 w-4 sm:h-5 sm:w-5" />
-              </button>
             </div>
           </div>
         </div>

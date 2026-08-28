@@ -11,7 +11,8 @@ const ProductListingBreadcrumb = () => {
             Home
           </Link>
           <ChevronRight className="h-3 w-3 text-text-muted" />
-          <Link href="/categories" className="text-brand hover:underline">
+          {/* /categories is not a route - the catalogue itself is the category landing. */}
+          <Link href="/products" className="text-brand hover:underline">
             Categories
           </Link>
           <ChevronRight className="h-3 w-3 text-text-muted" />

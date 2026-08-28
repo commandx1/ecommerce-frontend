@@ -111,7 +111,7 @@ describe("shipmentAPI.getRates contract", () => {
     expect(response.shippoRates[0]?.amount).toBe("8.50")
     expect(typeof response.shippoRates[0]?.amount).toBe("string")
     expect(typeof response.shippoRates[0]?.estimatedDays).toBe("number")
-    expect(response.shippoRates[0]?.servicelevel.token).toBe("usps_priority")
+    expect(response.shippoRates[0]?.servicelevel?.token).toBe("usps_priority")
     expect(response.shippoRates[0]?.arrivesBy).toBeNull()
 
     // The Uber quote price is a *number in cents* — checkout divides `fee` by 100 to display it.
@@ -141,6 +141,40 @@ describe("shipmentAPI.getRates contract", () => {
 
     expect(response.shippoRates).toEqual([])
     expect(response.uberQuote?.fee).toBe(899)
+  })
+
+  // C axis: ShipmentService.mapToRateResponse (ecommerce-api) only builds `servicelevel` when
+  // Shippo's own `rate.servicelevel()` is present, and every field inside it comes off `.orElse
+  // (null)` — a real carrier rate can have a null `servicelevel`, or a present one with a null
+  // `name`. Both must pass through unchanged rather than the client inventing a shape.
+  it("passes through a rate whose servicelevel is entirely null", async () => {
+    useRatesHandler(() =>
+      HttpResponse.json({
+        shippoRates: [makeShippoRate({ servicelevel: null })],
+        uberQuote: null,
+      }),
+    )
+
+    const response = await shipmentAPI.getRates(makePayload({ userId: "seller-no-servicelevel" }))
+
+    expect(response.shippoRates[0]?.servicelevel).toBeNull()
+  })
+
+  it("passes through a rate whose servicelevel has no name", async () => {
+    useRatesHandler(() =>
+      HttpResponse.json({
+        shippoRates: [
+          makeShippoRate({
+            servicelevel: { name: null, token: null, terms: null, extendedToken: null, parentServicelevel: null },
+          }),
+        ],
+        uberQuote: null,
+      }),
+    )
+
+    const response = await shipmentAPI.getRates(makePayload({ userId: "seller-nameless-servicelevel" }))
+
+    expect(response.shippoRates[0]?.servicelevel?.name).toBeNull()
   })
 
   it("returns multiple rates in the order the backend sent them", async () => {
@@ -180,9 +214,14 @@ describe("shipmentAPI.getRates contract", () => {
   })
 
   it.each([
-    [400, "Parcel dimensions are missing"],
-    [404, "Address not found"],
-    [500, "Shippo is unavailable"],
+    // ShipmentController.java has no @RestControllerAdvice of its own and ShipmentService.java
+    // only ever throws plain `RuntimeException` (e.g. line 94 "Default address not found for
+    // user", line 231 "No rates returned from Shippo"). Nothing in the shipment package is a
+    // package-specific exception type, so every failure falls through to
+    // GlobalExceptionHandler.handleRuntimeException -> 400. There is no reachable 404 or 500 for
+    // this endpoint today.
+    [400, "Default address not found for user: seller-1"],
+    [400, "No rates returned from Shippo"],
   ])("rejects on %i", async (status, message) => {
     useRatesHandler(() => HttpResponse.json({ message }, { status }))
 
@@ -234,7 +273,9 @@ describe("shipmentAPI.getRates contract", () => {
         requestCount += 1
         attempt += 1
         if (attempt === 1) {
-          return HttpResponse.json({ message: "Temporarily unavailable" }, { status: 500 })
+          // Every failure on this endpoint is a 400 (see the "rejects on" cases above) -- kept
+          // consistent here even though this test is really about the dedup cache, not the status.
+          return HttpResponse.json({ message: "Temporarily unavailable" }, { status: 400 })
         }
         return HttpResponse.json({ shippoRates: [makeShippoRate()], uberQuote: null })
       }),

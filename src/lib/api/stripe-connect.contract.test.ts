@@ -121,9 +121,13 @@ describe("createStripeAccountLink contract", () => {
   })
 
   it.each([
+    // StripeConnectService.java createAccountAndLink/createAccount only wrap Stripe SDK failures
+    // and validation ("User does not belong to a company.") in a plain `RuntimeException`, which
+    // is not caught by any package-specific handler and falls to
+    // GlobalExceptionHandler.handleRuntimeException -> 400. There is no 409 or 500 mapping for
+    // this endpoint.
     [400, "Vendor company is missing a country"],
-    [409, "Onboarding is already in progress"],
-    [500, "Stripe is unavailable"],
+    [400, "User does not belong to a company."],
   ])("rejects on %i with the backend message", async (status, message) => {
     server.use(http.post("*/backend-api/stripe/connect/account", () => HttpResponse.json({ message }, { status })))
 
@@ -167,13 +171,16 @@ describe("getStripeLoginLink contract", () => {
   })
 
   it("reads the `error` field when the backend uses it instead of `message`", async () => {
+    // StripeConnectService.java:126 throws StripeAccountNotEnabledException when onboarding is
+    // incomplete, which GlobalExceptionHandler.handleStripeAccountNotEnabled maps to 422
+    // (HttpStatus.UNPROCESSABLE_ENTITY) -- not 409.
     server.use(
       http.get("*/backend-api/stripe/connect/login-link", () =>
-        HttpResponse.json({ error: "Account not enabled" }, { status: 409 }),
+        HttpResponse.json({ error: "Account not enabled" }, { status: 422 }),
       ),
     )
 
-    await expect(getStripeLoginLink()).rejects.toMatchObject({ message: "Account not enabled", status: 409 })
+    await expect(getStripeLoginLink()).rejects.toMatchObject({ message: "Account not enabled", status: 422 })
   })
 
   it("tolerates an empty url string", async () => {

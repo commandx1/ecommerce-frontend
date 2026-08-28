@@ -64,6 +64,22 @@ describe("useAutoOrders", () => {
     expect(result.current.autoOrders).toEqual([])
   })
 
+  // `?? []` only catches null/undefined. A malformed 200 carrying a wrong-typed truthy value
+  // passes through it and reaches .map()/.length in the list, blanking the page
+  // (infra note #26 - the same root pattern found in twelve other modules this week).
+  it.each([
+    ["an object", { nope: true }],
+    ["a string", "nope"],
+    ["a number", 3],
+  ])("shows an empty list instead of crashing when autoOrders is %s", async (_label, autoOrders) => {
+    server.use(http.get("*/backend-api/auto-orders", () => HttpResponse.json({ autoOrders, total: 0 })))
+
+    const { result } = renderHook(() => useAutoOrders())
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(result.current.autoOrders).toEqual([])
+  })
+
   it("surfaces a toast and stops loading when the initial fetch fails", async () => {
     server.use(http.get("*/backend-api/auto-orders", () => HttpResponse.json({ message: "boom" }, { status: 500 })))
 

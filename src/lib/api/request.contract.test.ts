@@ -137,6 +137,22 @@ describe("apiRequest error normalisation", () => {
     expect(error.status).toBe(409)
   })
 
+  it("extracts the first message from a flat field-error map (bean-validation shape)", async () => {
+    // GlobalExceptionHandler.handleValidationExceptions (ecommerce-api
+    // auth/exception/GlobalExceptionHandler.java) returns exactly this shape - a flat
+    // `Map<String, String>` of `{ fieldName: violationMessage }` - for every @Valid failure on
+    // e.g. CompanyUpdateRequest or CreateLicenseRequest. There is no `message`/`error` key.
+    const error = await expectApiError(400, { name: "Company name cannot be left blank" })
+
+    expect(error.message).toBe("Company name cannot be left blank")
+    expect(error.status).toBe(400)
+  })
+
+  it("does not misread an array body or an object with non-string values as a field-error map", async () => {
+    expect((await expectApiError(400, ["boom"] as unknown as Record<string, unknown>, "Nope")).message).toBe("Nope")
+    expect((await expectApiError(400, { count: 3 }, "Nope")).message).toBe("Nope")
+  })
+
   it("uses the fallback message for a blank message, a non-object body and a 404", async () => {
     expect((await expectApiError(400, { message: "   " }, "Nope")).message).toBe("Nope")
     expect((await expectApiError(500, "boom", "Nope")).message).toBe("Nope")

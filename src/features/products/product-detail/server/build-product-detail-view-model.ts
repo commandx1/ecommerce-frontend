@@ -54,7 +54,10 @@ export function buildProductDetailViewModel(
   reviewsUserProductId?: string,
 ): ProductDetailPageViewModel {
   const product = data.productData.product
-  const userProducts = data.productData.userProducts || []
+  // Array.isArray, not `|| []`: a malformed 200 body can send userProducts as a truthy
+  // non-array (object, string, number) that `||` lets straight through, crashing every
+  // downstream .map/.reduce/.some call (SSR render failure for the whole page).
+  const userProducts = Array.isArray(data.productData.userProducts) ? data.productData.userProducts : []
 
   const photoPaths = buildPhotoPaths(product)
   const mainImage = resolveMainImage(product, photoPaths)

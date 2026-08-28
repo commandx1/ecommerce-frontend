@@ -51,15 +51,32 @@ describe("submitProductQuestion contract", () => {
     expect(capturedQuestionHeaders?.get("authorization")).toBe("Bearer token-123")
   })
 
-  it("omits the Authorization header when accessToken is null", async () => {
-    await submitProductQuestion({
+  // BFF gate (F40): POST /api/product-questions (src/app/api/product-questions/route.ts, line
+  // ~7-9) returns 401 immediately when Authorization is missing, without calling upstream.
+  // `submitProductQuestion` sends no header at all when accessToken is null, so this is the real
+  // outcome, not a hypothetical one.
+  it("rejects with 401 (no upstream call) when accessToken is null", async () => {
+    let upstreamCalled = false
+    server.use(
+      http.post("*/api/product-questions", ({ request }) => {
+        if (!request.headers.get("authorization")) {
+          return HttpResponse.json({ message: "Unauthorized" }, { status: 401 })
+        }
+        upstreamCalled = true
+        return new HttpResponse(null, { status: 200 })
+      }),
+    )
+
+    const error = await submitProductQuestion({
       accessToken: null,
       productId: "p-1",
       userProductId: "up-1",
       question: "Anonymous question",
-    })
+    }).catch((e) => e)
 
-    expect(capturedQuestionHeaders?.get("authorization")).toBeNull()
+    expect(error).toBeInstanceOf(ApiRequestError)
+    expect((error as ApiRequestError).status).toBe(401)
+    expect(upstreamCalled).toBe(false)
   })
 
   it("tolerates an empty-string question", async () => {
@@ -153,21 +170,47 @@ describe("submitProductAnswer contract", () => {
     expect(capturedAnswerHeaders?.get("authorization")).toBe("Bearer token-456")
   })
 
-  it("omits the Authorization header when accessToken is null", async () => {
-    await submitProductAnswer({ accessToken: null, productQuestionId: "q-1", answer: "Yes" })
+  // BFF gate (F40): POST /api/product-answers (src/app/api/product-answers/route.ts, line ~7-9)
+  // returns 401 immediately when Authorization is missing, without calling upstream.
+  it("rejects with 401 (no upstream call) when accessToken is null", async () => {
+    let upstreamCalled = false
+    server.use(
+      http.post("*/api/product-answers", ({ request }) => {
+        if (!request.headers.get("authorization")) {
+          return HttpResponse.json({ message: "Unauthorized" }, { status: 401 })
+        }
+        upstreamCalled = true
+        return new HttpResponse(null, { status: 200 })
+      }),
+    )
 
-    expect(capturedAnswerHeaders?.get("authorization")).toBeNull()
+    const error = await submitProductAnswer({ accessToken: null, productQuestionId: "q-1", answer: "Yes" }).catch(
+      (e) => e,
+    )
+
+    expect(error).toBeInstanceOf(ApiRequestError)
+    expect((error as ApiRequestError).status).toBe(401)
+    expect(upstreamCalled).toBe(false)
   })
 
-  it("rejects with 409 conflict (question already answered by this vendor)", async () => {
+  // Backend: ProductAnswerServiceImpl.create (product/service/ProductAnswerServiceImpl.java,
+  // line ~29-39) has NO "already answered" duplicate check at all - a seller can post multiple
+  // answers to the same question with no conflict. There is no 409 path in this method; the one
+  // realistic non-2xx path (besides validation/not-found) is
+  // `throw new AccessDeniedException("Only the seller of the product can answer")` when the
+  // caller isn't the listing's seller. AccessDeniedException (product/exception, not Spring
+  // Security's) extends RuntimeException directly and isn't registered in
+  // GlobalExceptionHandler.java, so it falls to the RuntimeException catch-all - 400, not 403 or
+  // 409.
+  it("rejects on 400 when the caller isn't the seller of the related product", async () => {
     server.use(
       http.post("*/api/product-answers", () =>
-        HttpResponse.json({ message: "Question already answered" }, { status: 409 }),
+        HttpResponse.json({ message: "Only the seller of the product can answer" }, { status: 400 }),
       ),
     )
 
     await expect(submitProductAnswer({ accessToken: "t", productQuestionId: "q-1", answer: "A" })).rejects.toThrow(
-      "Question already answered",
+      "Only the seller of the product can answer",
     )
   })
 

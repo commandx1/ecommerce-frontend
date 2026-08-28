@@ -186,26 +186,17 @@ describe("vendorOrdersAPI.processUberDeliveries contract", () => {
     expect(response.failureCount).toBe(1)
   })
 
-  it("rejects with a 400 when Uber delivery cannot be scheduled", async () => {
+  it("rejects with a 500 when Uber delivery cannot be scheduled", async () => {
+    // OrderUberDeliveryService.java only ever throws ShipmentProcessException (e.g. "No default
+    // address found for user", "Error calling Uber delivery API"), which OrderExceptionHandler.java
+    // maps to 500 -- there is no 400 or 409 mapping for this endpoint.
     server.use(
       http.post("*/backend-api/orders/uber/process-deliveries", () =>
-        HttpResponse.json({ message: "No delivery quote available for this address" }, { status: 400 }),
+        HttpResponse.json({ message: "No default address found for user" }, { status: 500 }),
       ),
     )
 
-    await expect(vendorOrdersAPI.processUberDeliveries({ orderItemIds: ["item-1"] })).rejects.toThrow(/400/)
-  })
-
-  it("rejects with a 409 when the order item is already in an Uber delivery", async () => {
-    server.use(
-      http.post("*/backend-api/orders/uber/process-deliveries", () =>
-        HttpResponse.json({ message: "Delivery already requested" }, { status: 409 }),
-      ),
-    )
-
-    const error = await vendorOrdersAPI.processUberDeliveries({ orderItemIds: ["item-1"] }).catch((e) => e)
-
-    expect(error.response?.status).toBe(409)
+    await expect(vendorOrdersAPI.processUberDeliveries({ orderItemIds: ["item-1"] })).rejects.toThrow(/500/)
   })
 })
 
@@ -220,24 +211,30 @@ describe("vendorOrdersAPI.cancelBySeller contract", () => {
     expect(response.successCount).toBe(1)
   })
 
-  it("rejects with a 409 when the order has already shipped", async () => {
+  it("rejects with a 400 when the order item's cancellation window has expired", async () => {
+    // OrderCancellationService.java:427 (`validateSellerOwnershipAndEligibility`) throws
+    // OrderCancellationException for a stale or non-cancellable item, which OrderExceptionHandler.java
+    // maps to 400 -- there is no 409 or 500 mapping for cancelBySeller (Shippo/Stripe failures in
+    // this flow are also wrapped into OrderCancellationException, e.g. line 656 "Stripe refund failed").
     server.use(
       http.post("*/backend-api/orders/cancelBySeller", () =>
-        HttpResponse.json({ message: "Order already shipped, cannot be cancelled" }, { status: 409 }),
+        HttpResponse.json({ message: "Order item cancellation window expired: item-1" }, { status: 400 }),
       ),
     )
 
-    await expect(vendorOrdersAPI.cancelBySeller({ orderItemIds: ["item-1"] })).rejects.toThrow(/409/)
+    await expect(vendorOrdersAPI.cancelBySeller({ orderItemIds: ["item-1"] })).rejects.toThrow(/400/)
   })
 
-  it("rejects with a 500 server error", async () => {
+  it("rejects with a 403 when the order item belongs to another seller", async () => {
     server.use(
       http.post("*/backend-api/orders/cancelBySeller", () =>
-        HttpResponse.json({ message: "Server error" }, { status: 500 }),
+        HttpResponse.json({ message: "Order item does not belong to the current seller" }, { status: 403 }),
       ),
     )
 
-    await expect(vendorOrdersAPI.cancelBySeller({ orderItemIds: ["item-1"] })).rejects.toThrow(/500/)
+    const error = await vendorOrdersAPI.cancelBySeller({ orderItemIds: ["item-1"] }).catch((e) => e)
+
+    expect(error.response?.status).toBe(403)
   })
 })
 
@@ -288,16 +285,19 @@ describe("vendorOrdersAPI.sellerRejectReturn contract", () => {
     expect(capturedRejectReturnPayload).toEqual(payload)
   })
 
-  it("rejects with a 404 when the order item does not exist", async () => {
+  it("rejects with a 400 when the order item does not exist", async () => {
+    // OrderRefundService.java (sellerRejectReturn validation, ~line 836) throws
+    // OrderCancellationException for an unknown order item, which OrderExceptionHandler.java
+    // maps to 400 -- there is no 404 mapping for sellerRejectReturn.
     server.use(
       http.post("*/backend-api/orders/sellerRejectReturn", () =>
-        HttpResponse.json({ message: "Order item not found" }, { status: 404 }),
+        HttpResponse.json({ message: "Order item not found: missing" }, { status: 400 }),
       ),
     )
 
     await expect(
       vendorOrdersAPI.sellerRejectReturn({ items: [{ orderItemId: "missing", returnRejectReason: "x" }] }),
-    ).rejects.toThrow(/404/)
+    ).rejects.toThrow(/400/)
   })
 
   it("rejects on a network failure", async () => {

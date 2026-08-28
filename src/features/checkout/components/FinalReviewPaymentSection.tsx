@@ -24,6 +24,17 @@ interface FinalReviewPaymentSectionProps {
   setNewCardAutoPaymentConsent: (value: boolean) => void
 }
 
+// The backend field is `String`/`Integer` (nullable), but props are trusted at the type level
+// only — a broken/wrong-typed value must never surface as the literal "null"/"NaN"/"undefined"
+// text a raw `.toUpperCase()`/template interpolation would otherwise produce (see F101).
+function formatCardBrand(brand: unknown): string {
+  return typeof brand === "string" ? brand.toUpperCase() : ""
+}
+
+function formatExpiryPart(value: unknown): string {
+  return typeof value === "number" && Number.isFinite(value) ? String(value) : "--"
+}
+
 function CardBadge({ label, tone }: { label: string; tone: "brand" | "success" | "neutral" }) {
   const toneClass =
     tone === "brand"
@@ -63,9 +74,19 @@ export default function FinalReviewPaymentSection({
 
   const isDark = mounted && resolvedTheme === "dark"
 
+  // Backend: `OrderMapper.toSavedCardResponse` returns `null` for a null `SavedCard` entity, and
+  // that `null` is collected straight into the list handed back to the client
+  // (`CardManagementService`/`OrderQueryService`, both `.stream().map(orderMapper::toSavedCardResponse)`).
+  // A malformed/non-array prop is guarded the same way, matching the pattern used everywhere else
+  // list fields come back from this backend.
+  const validSavedCards = useMemo(
+    () => (Array.isArray(savedCards) ? savedCards.filter((card): card is SavedCard => card != null) : []),
+    [savedCards],
+  )
+
   const selectedCard = useMemo(
-    () => savedCards.find((card) => card.stripeCardId === selectedSavedCardId),
-    [savedCards, selectedSavedCardId],
+    () => validSavedCards.find((card) => card.stripeCardId === selectedSavedCardId),
+    [validSavedCards, selectedSavedCardId],
   )
 
   // A card that already carries an off-session mandate can cover auto orders as
@@ -121,11 +142,11 @@ export default function FinalReviewPaymentSection({
             <div className="text-xs text-text-muted">Loading saved cards...</div>
           ) : (
             <>
-              {savedCards.length > 0 ? (
+              {validSavedCards.length > 0 ? (
                 <div className="space-y-2">
                   <div className="text-xs font-medium text-text-muted">Saved Cards</div>
                   <div className="space-y-2">
-                    {savedCards.map((card) => (
+                    {validSavedCards.map((card) => (
                       <label
                         key={card.id}
                         className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors ${
@@ -149,14 +170,14 @@ export default function FinalReviewPaymentSection({
                           <div>
                             <div className="flex flex-wrap items-center gap-2">
                               <span className="text-sm font-medium text-text-primary">
-                                {card.brand?.toUpperCase()} •••• {card.last4}
+                                {formatCardBrand(card.brand)} •••• {card.last4}
                               </span>
                               {card.isDefault ? <CardBadge label="Default" tone="neutral" /> : null}
                               {card.autoOrderCard ? <CardBadge label="Auto order card" tone="brand" /> : null}
                               {card.openToAutoPayment ? <CardBadge label="Auto payments on" tone="success" /> : null}
                             </div>
                             <div className="text-xs text-text-muted">
-                              Expires {card.expMonth}/{card.expYear}
+                              Expires {formatExpiryPart(card.expMonth)}/{formatExpiryPart(card.expYear)}
                             </div>
                           </div>
                         </div>

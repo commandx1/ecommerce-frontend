@@ -5,6 +5,7 @@ import { loadStripe } from "@stripe/stripe-js"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import FinalReviewAddressCards from "@/features/checkout/components/FinalReviewAddressCards"
 import FinalReviewAutoOrderSummary from "@/features/checkout/components/FinalReviewAutoOrderSummary"
+import FinalReviewExcludedNotice from "@/features/checkout/components/FinalReviewExcludedNotice"
 import FinalReviewNavigation from "@/features/checkout/components/FinalReviewNavigation"
 import FinalReviewPaymentSummary from "@/features/checkout/components/FinalReviewPaymentSummary"
 import FinalReviewReadyNotice from "@/features/checkout/components/FinalReviewReadyNotice"
@@ -17,7 +18,7 @@ const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null
 
 function FinalReviewContent() {
-  const { shippingAddress, previousStep } = useCheckoutStore()
+  const { shippingAddress, previousStep, excludedFromOrder } = useCheckoutStore()
   const { isPlacingOrder, paymentMethodSummary, submitDisabled, onPlaceOrder } = useFinalReview()
   const { autoOrderLines } = useCheckoutAutoOrder()
 
@@ -29,6 +30,8 @@ function FinalReviewContent() {
         </div>
         <h2 className="text-2xl font-semibold text-text-primary">Final Review</h2>
       </div>
+
+      <FinalReviewExcludedNotice excludedFromOrder={excludedFromOrder} />
 
       <div className="space-y-6 mb-8">
         <FinalReviewAddressCards shippingAddress={shippingAddress} />

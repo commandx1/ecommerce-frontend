@@ -5,6 +5,10 @@ export default function BuyerDashboardLayoutSkeleton() {
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas animate-pulse">
+      {/* sr-only: the real page's h1 ("Welcome back, ...!" in WelcomeSection) only
+          mounts once auth-check/hydration finishes; this skeleton renders first,
+          so without this the page has zero headings while it's up. */}
+      <h1 className="sr-only">Buyer Dashboard</h1>
       <header className="h-16 border-b border-border-soft bg-surface-elevated px-6">
         <div className="mx-auto flex h-full w-full max-w-screen-2xl items-center justify-between">
           <div className="h-7 w-44 rounded-md bg-surface-muted" />

@@ -35,7 +35,14 @@ const SortSelect = () => {
 
   return (
     <Select value={currentSort} onValueChange={handleChange} disabled={isPending}>
-      <SelectTrigger className="h-9 rounded-full border-border-soft bg-surface px-4 py-2 shadow-soft">
+      {/* aria-label, not just the SelectValue: the trigger's only text is the selected option,
+          which Radix fills in on the client - until then the control has no accessible name at
+          all (axe `button-name`, seen intermittently on /products). A static label also tells a
+          screen-reader user WHAT is being sorted, which "Best Match" alone never did. */}
+      <SelectTrigger
+        aria-label="Sort products"
+        className="h-9 rounded-full border-border-soft bg-surface px-4 py-2 shadow-soft"
+      >
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

@@ -5,9 +5,8 @@ import { AUTH, BACKEND, createCapture, jsonRequest, record, routeRequest } from 
 import { POST } from "./route"
 
 /**
- * Review creation. Unlike the vendor routes, this handler does NOT require an Authorization
- * header — it forwards one if present and otherwise calls the backend anonymously. The
- * "unauthenticated -> 401" contract lives in the backend only; pinned below.
+ * Review creation requires an Authorization header (F19): the BFF now gates unauthenticated
+ * requests with a 401 before ever reading the body or calling the backend.
  */
 
 const UPSTREAM = `${BACKEND}/api/reviews`
@@ -36,7 +35,7 @@ describe("POST /api/reviews", () => {
     expect(body).toEqual({ productId: "p-1", rating: 5, comment: "Great" })
   })
 
-  it("still calls the backend when no Authorization header is present", async () => {
+  it("answers 401 without calling the backend when unauthenticated", async () => {
     const captured = createCapture()
     server.use(
       http.post(UPSTREAM, ({ request }) => {
@@ -47,10 +46,8 @@ describe("POST /api/reviews", () => {
 
     const response = await POST(jsonRequest("/api/reviews", { productId: "p-1", rating: 5 }))
 
-    // Pinned, not endorsed: the BFF does not gate anonymous review creation.
-    expect(captured.count).toBe(1)
-    expect(captured.authorization).toBeNull()
-    expect(response.status).toBe(200)
+    expect(response.status).toBe(401)
+    expect(captured.count).toBe(0)
   })
 
   it.each([400, 401, 403, 409, 500])("forwards the backend error payload and status %i", async (status) => {
@@ -72,10 +69,25 @@ describe("POST /api/reviews", () => {
   })
 
   it("answers 500 without a stack trace when the request body is not JSON", async () => {
-    const response = await POST(routeRequest("/api/reviews", { method: "POST", body: "not-json" }))
+    const response = await POST(routeRequest("/api/reviews", { method: "POST", body: "not-json", authorization: AUTH }))
 
     expect(response.status).toBe(500)
     await expect(response.json()).resolves.toEqual({ error: "Internal server error" })
+  })
+
+  it("checks auth BEFORE reading the body, so an anonymous malformed payload is still a 401", async () => {
+    const captured = createCapture()
+    server.use(
+      http.post(UPSTREAM, ({ request }) => {
+        record(captured, request)
+        return HttpResponse.json(review)
+      }),
+    )
+
+    const response = await POST(routeRequest("/api/reviews", { method: "POST", body: "not-json" }))
+
+    expect(response.status).toBe(401)
+    expect(captured.count).toBe(0)
   })
 
   it("answers 500 when the backend is unreachable", async () => {

@@ -75,9 +75,24 @@ describe("ProductHeroGallery", () => {
     expect(screen.getByAltText("Intra Oral Mixing Tips")).toHaveAttribute("src", "/uploads/alt-1.png")
   })
 
-  it("keeps the favourites control present but inert", () => {
+  // Removed 27 Aug 2026 (user decision) - it had no handler, so it was a silent no-op.
+  it("offers no favourites control that does nothing when clicked", () => {
     renderGallery()
 
-    expect(screen.getByRole("button", { name: "Add to favorites" })).toBeEnabled()
+    expect(screen.queryByRole("button", { name: "Add to favorites" })).not.toBeInTheDocument()
+  })
+
+  // A11y: axe's `nested-interactive` flagged this on /products/p-1 - `role="img"` used to sit on
+  // the OUTER container, which also holds the "Toggle magnifier" button, and an element with
+  // role="img" isn't allowed to contain focusable content (AT treats its subtree as one image, so
+  // the button becomes unreachable). jsdom/Testing Library's `getByRole` doesn't enforce that
+  // nesting rule the way axe/real assistive tech does, so this asserts the DOM structure directly:
+  // the element carrying role="img" must not contain a button.
+  it("keeps the magnifier toggle button out of the role=img element", () => {
+    renderGallery()
+
+    const imgRoleEl = screen.getByRole("img", { name: "Product image with magnifier" })
+    expect(imgRoleEl.querySelector("button")).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Toggle magnifier" })).toBeInTheDocument()
   })
 })

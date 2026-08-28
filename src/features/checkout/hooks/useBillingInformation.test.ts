@@ -98,6 +98,21 @@ describe("useBillingInformation — saved card loading", () => {
     expect(result.current.savedCards[0].isDefault).toBe(true)
   })
 
+  // `|| []` only catches null/undefined. A malformed 200 carrying a wrong-typed truthy value
+  // passes through it and reaches .map() in the saved-card picker, blanking the payment step
+  // (infra note #26 - the same root pattern found in twelve other modules this week).
+  it.each([
+    ["an object", { nope: true }],
+    ["a string", "nope"],
+    ["a number", 2],
+  ])("falls back to the new-card form instead of crashing when cards is %s", async (_label, cards) => {
+    server.use(http.get("*/backend-api/orders/saved-cards", () => HttpResponse.json({ cards, total: 0 })))
+
+    const { result } = await mountHook()
+
+    expect(result.current.savedCards).toEqual([])
+  })
+
   it("treats the backend's 'No active cards' response as an empty list, not an error", async () => {
     serveSavedCardsError("No active cards found for this user")
 
@@ -233,20 +248,54 @@ describe("useBillingInformation — new card", () => {
     expect(useCheckoutStore.getState().paymentMethodId).toBe("")
   })
 
-  /**
-   * RISK, locked in as-is: a *network* failure inside `stripe.createPaymentMethod` is not a
-   * Stripe error object, it is a rejected promise — and `onSubmit` has no try/catch, so the
-   * rejection escapes the handler. The buyer sees no toast and no spinner reset.
-   */
-  it("lets a network rejection escape onSubmit instead of showing an error", async () => {
+  it("shows an error and clears the submitting state when Stripe can't be reached over the network", async () => {
     fakeStripe().createPaymentMethod.mockRejectedValue(new Error("Network request failed"))
     const { result } = await mountHook()
 
-    await expect(result.current.onSubmit(submitEvent()) as unknown as Promise<void>).rejects.toThrow(
-      "Network request failed",
-    )
+    await submit(result.current.onSubmit)
+
+    expect(errorToast).toHaveBeenCalledWith("We couldn't reach Stripe. Please check your connection and try again.")
+    expect(useCheckoutStore.getState().paymentMethodId).toBe("")
+    expect(useCheckoutStore.getState().currentStep).toBe(1)
+    expect(result.current.isSubmitting).toBe(false)
+  })
+
+  it("does not show a second toast when the failed Stripe call was actually a handled session expiry", async () => {
+    fakeStripe().createPaymentMethod.mockRejectedValue(Object.assign(new Error("Unauthorized"), { authHandled: true }))
+    const { result } = await mountHook()
+
+    await submit(result.current.onSubmit)
+
     expect(errorToast).not.toHaveBeenCalled()
     expect(useCheckoutStore.getState().paymentMethodId).toBe("")
+    expect(result.current.isSubmitting).toBe(false)
+  })
+
+  it("marks the submission in-flight only while waiting on Stripe", async () => {
+    let resolveCreate: (value: unknown) => void = () => {}
+    fakeStripe().createPaymentMethod.mockReturnValue(
+      new Promise((resolve) => {
+        resolveCreate = resolve
+      }),
+    )
+    const { result } = await mountHook()
+
+    expect(result.current.isSubmitting).toBe(false)
+
+    let submitPromise!: Promise<void>
+    act(() => {
+      submitPromise = result.current.onSubmit(submitEvent()) as unknown as Promise<void>
+    })
+
+    await waitFor(() => expect(result.current.isSubmitting).toBe(true))
+
+    await act(async () => {
+      resolveCreate(stripePaymentMethod("pm_new_card"))
+      await submitPromise
+    })
+
+    expect(result.current.isSubmitting).toBe(false)
+    expect(useCheckoutStore.getState().paymentMethodId).toBe("pm_new_card")
   })
 
   it("requires a card name before a card may be saved", async () => {

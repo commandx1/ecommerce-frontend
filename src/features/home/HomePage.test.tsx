@@ -14,6 +14,18 @@ describe("HomePage", () => {
     expect(screen.getByRole("heading", { name: /Compare trusted suppliers before you buy/ })).toBeInTheDocument()
   })
 
+  // A11y: the hero is an image carousel with no visible title, and every section
+  // heading below it is per-section (h2), so the page had zero <h1> (FINDING on
+  // `/`, 27 Ağu 2026 measurement). A visually-hidden <h1> restores exactly one
+  // page-level heading without changing anything a sighted user sees.
+  it("has exactly one page-level h1 describing the storefront", () => {
+    render(<HomePage />)
+
+    const h1s = screen.getAllByRole("heading", { level: 1 })
+    expect(h1s).toHaveLength(1)
+    expect(h1s[0]).toHaveTextContent("DentyPro — B2B dental supply marketplace")
+  })
+
   it("features exactly four trending products, each linked to its detail page", () => {
     render(<HomePage />)
 

@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "packageManager": "npm",
+  "testRunner": "vitest",
+  "vitest": {
+    "configFile": "vitest.stryker.jsdom.config.mts"
+  },
+  "mutate": [
+    "src/features/cart/utils/license-check.ts",
+    "src/lib/helpers/formatCurrency.ts",
+    "src/features/checkout/components/OrderSummaryTotals.tsx",
+    "src/features/cart/components/CartSummaryPanel.tsx",
+    "src/features/checkout/components/VendorShipmentRates.tsx",
+    "src/app/buyer-dashboard/orders/lib/order-view-utils.ts"
+  ],
+  "concurrency": 4,
+  "coverageAnalysis": "perTest",
+  "reporters": ["html", "clear-text", "progress"],
+  "htmlReporter": {
+    "fileName": "reports/mutation/ui/index.html"
+  },
+  "timeoutMS": 60000
+}

@@ -3,16 +3,17 @@ import { serverRequest } from "@/lib/api/server-request"
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params
     const authHeader = request.headers.get("authorization")
+    if (!authHeader) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    }
+
+    const { id } = await params
     const body = await request.json()
 
     const headers: HeadersInit = {
       "Content-Type": "application/json",
-    }
-
-    if (authHeader) {
-      headers.Authorization = authHeader
+      Authorization: authHeader,
     }
 
     const response = await serverRequest(`/api/reviews/${encodeURIComponent(id)}`, {
@@ -35,15 +36,16 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params
     const authHeader = request.headers.get("authorization")
+    if (!authHeader) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    }
+
+    const { id } = await params
 
     const headers: HeadersInit = {
       "Content-Type": "application/json",
-    }
-
-    if (authHeader) {
-      headers.Authorization = authHeader
+      Authorization: authHeader,
     }
 
     const response = await serverRequest(`/api/reviews/${encodeURIComponent(id)}`, {

@@ -101,14 +101,8 @@ describe("LegalPageContent", () => {
       vi.unstubAllGlobals()
     })
 
-    // BULGU: "Download PDF" produces no file — it only raises an informational toast.
-    it("only toasts when the PDF download is requested (current behaviour)", async () => {
-      const user = userEvent.setup()
-      render(<LegalPageContent selectedDocument={document_} selectedId="terms-of-service" />)
-
-      await user.click(screen.getByRole("button", { name: /Download PDF/ }))
-
-      expect(mockToastInfo).toHaveBeenCalledWith("Download requested", "PDF downloads will be available soon.")
-    })
+    // Deferred: PDF export is a dead control for now (product decision: "şimdilik boşverelim").
+    // When wired up, this verifies clicking "Download PDF" actually produces/saves a PDF file.
+    it.todo("clicking Download PDF downloads a PDF file of the document")
   })
 })

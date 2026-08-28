@@ -21,6 +21,7 @@
   --color-accent-strong: var(--accent-strong);
   --color-success: var(--success);
   --color-warning: var(--warning);
+  --color-warning-strong: var(--warning-strong);
   --color-danger: var(--danger);
   --color-border-soft: var(--border-soft);
   --color-border-strong: var(--border-strong);
@@ -85,15 +86,49 @@
   --surface-muted: oklch(96.9% 0.011 84);
   --text-primary: oklch(28.5% 0.02 250);
   --text-secondary: oklch(46.2% 0.016 246);
-  --text-muted: oklch(59.8% 0.015 246);
+  /* WCAG AA (4.5:1). At the previous 59.8% this token measured 3.63:1 on --surface-muted,
+     3.79 on --canvas, 3.91 on --surface and 3.97 on --surface-elevated - failing on every
+     surface. 53% measures 4.81 / 5.03 / 5.19 / 5.26 respectively. 54.6% is the exact break-even
+     on the worst surface, so 53% keeps a margin if a surface token is lightened later.
+     Dark mode was already compliant (5.53-7.91:1) and is unchanged. See A7 in TEST-FINDINGS.md. */
+  --text-muted: oklch(53% 0.015 246);
   --brand: oklch(47.4% 0.09 231);
   --brand-strong: oklch(34.5% 0.08 234);
   --brand-surface: oklch(31% 0.055 235);
   --inverse-foreground: oklch(97.5% 0.004 95);
   --inverse-muted: oklch(88% 0.01 95);
   --accent-strong: oklch(77.9% 0.111 105);
-  --success: oklch(58% 0.12 160);
+  /* WCAG AA (4.5:1). At the previous 58% this token measured 3.69:1 on --surface-muted,
+     3.86 on --canvas, 3.98 on --surface, 4.03 on --surface-elevated - and only 3.35 on the
+     `bg-success/15` tint behind the cart's discount pill - failing everywhere.
+     The badge is the binding case and it moves WITH this token: its background is this same
+     colour at 15% over --canvas, so darkening the text darkens the tint too and gives back part
+     of the gain (50% still measured 4.32 there, and axe rejected it at 4.46 in the browser).
+     48% measures 4.65 on the badge and 5.79 on --canvas; break-even on the badge is ~49.2%.
+     Dark mode is already compliant (5.97-8.55:1) and is unchanged. Same method as A7/F54.
+     28 Aug 2026 update (product detail a11y round): 48% was NOT enough on two more `bg-success`
+     tint contexts axe found on /products/p-1 - the "Save X%" badge on `--surface` (computed 4.353)
+     and the "In Stock" pill on the supplier table's selected-row tint, `bg-success/14` over
+     `bg-accent/80` (computed 4.411). Recomputed oklch->sRGB, alpha-unblended each composite back to
+     its true parent, then reblended at candidate L values (script, not guessed): break-even for
+     BOTH new contexts is ~47%. 45% gives comfortable margin: 4.864 (Save badge) / 4.933 (In Stock
+     pill), and only improves the already-passing 48%-verified surfaces above (darker text over the
+     same light surfaces never loses contrast). Dark mode still unchanged/compliant. */
+  --success: oklch(45% 0.12 160);
   --warning: oklch(73% 0.16 77);
+  /* NOT a change to `--warning` itself - that token is reused all over the app (NoticeBanner,
+     other badges) at a lightness (73%) that reads fine as an ICON/border accent, and darkening it
+     there would be a much bigger, unverified visual change outside this task's scope (same caution
+     as the "don't touch --brand*" rule). This is a NEW token, additive only: nothing that doesn't
+     opt into `text-warning-strong` is affected.
+     The actual failure (axe `color-contrast`, /products/p-1) is TEXT set in `--warning` sitting on
+     its OWN `bg-warning/14` or `/20` tint ("Best Seller" badges in ProductHeroDetails.tsx and
+     SupplierComparisonRow.tsx) - 2.04:1 and 1.93:1, since text and background share the same base
+     hue/lightness. Same oklch->sRGB + alpha-unblend method as above: break-even for BOTH badge
+     contexts is ~48% (4.799 / 4.882 at exactly 48%). 46% keeps a margin: 5.192:1 / 5.265:1.
+     Dark mode's `--warning` (light text on dark surfaces) wasn't reported as failing, so it's left
+     pointing at the unchanged `--warning` rather than getting its own guessed value. */
+  --warning-strong: oklch(46% 0.16 77);
   --danger: oklch(61% 0.2 24);
   --background: var(--canvas);
   --foreground: var(--text-primary);
@@ -150,6 +185,10 @@
   --accent-strong: oklch(68% 0.1 105);
   --success: oklch(74% 0.11 160);
   --warning: oklch(78% 0.14 80);
+  /* Dark mode's own "Best Seller" tint wasn't reported as failing (light text on the dark tint
+     already has good contrast, same reasoning as F92's dark `--success`), so this deliberately
+     points at the unchanged `--warning` rather than a separately-guessed value. */
+  --warning-strong: var(--warning);
   --danger: oklch(62% 0.16 24);
   --background: var(--canvas);
   --foreground: var(--text-primary);

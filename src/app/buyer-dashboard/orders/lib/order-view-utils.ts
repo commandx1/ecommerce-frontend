@@ -227,7 +227,7 @@ export function getOrderSellerGroups(order: BuyerOrder): BuyerOrderSellerGroup[]
 }
 
 export function resolvePaymentSummary(order: BuyerOrder): { title: string; detail: string } {
-  if (order.cardBrand && order.cardLast4) {
+  if (typeof order.cardBrand === "string" && order.cardBrand && order.cardLast4) {
     const brand = order.cardBrand.toUpperCase()
     const expiration =
       order.cardExpMonth && order.cardExpYear
@@ -247,8 +247,14 @@ export function resolvePaymentSummary(order: BuyerOrder): { title: string; detai
 }
 
 export function resolveOrderViewStatus(order: BuyerOrder, orderItems: BuyerOrderItem[]): OrderViewStatus {
-  const normalizedOrderStatus = order.orderStatus.toUpperCase()
-  const itemStatuses = orderItems.map((item) => item.status.toUpperCase())
+  // `.toUpperCase()` on a missing status is the string form of infra note #26's pattern: a single
+  // malformed order used to throw here and take the whole list down with it, because callers map
+  // over every order and one exception unmounts the tree. The entity columns are non-null, but the
+  // wire is not the entity - a partial body or a proxy hiccup is enough.
+  const normalizedOrderStatus = typeof order.orderStatus === "string" ? order.orderStatus.toUpperCase() : ""
+  const itemStatuses = (Array.isArray(orderItems) ? orderItems : []).map((item) =>
+    typeof item?.status === "string" ? item.status.toUpperCase() : "",
+  )
 
   if (normalizedOrderStatus.includes("DELIVERED") || itemStatuses.some((status) => status.includes("DELIVERED"))) {
     return "delivered"
@@ -290,7 +296,10 @@ export function getOrderStatusLabel(status: OrderViewStatus): string {
 }
 
 export function resolvePaymentViewStatus(orderStatus: string): PaymentViewStatus {
-  const normalized = orderStatus.toUpperCase()
+  // Same guard as resolveOrderViewStatus - `buildBuyerOrderViewModel` feeds BOTH from the same
+  // `order.orderStatus`, so hardening only the other one left this path still throwing on a
+  // malformed body (infra note #26, string form).
+  const normalized = typeof orderStatus === "string" ? orderStatus.toUpperCase() : ""
   if (normalized.includes("REFUND")) return "refunded"
   if (normalized.includes("FAIL")) return "failed"
   if (normalized.includes("SUCCESS") || normalized.includes("PAID")) return "paid"
@@ -366,7 +375,8 @@ export function resolveOrderItemFulfillmentState(item: FulfillmentTimelineStateI
   shipping: FulfillmentStepState
   delivered: FulfillmentStepState
 } {
-  const normalizedStatus = item.status.toUpperCase()
+  // See resolveOrderViewStatus: a non-string status must degrade, not throw (infra note #26).
+  const normalizedStatus = typeof item?.status === "string" ? item.status.toUpperCase() : ""
   const isCancelled =
     Boolean(item.cancelledByCustomer) || Boolean(item.cancelledBySeller) || normalizedStatus.includes("CANCEL")
   const isCancelledDuringShipping = isCancelled && Boolean(item.cancelledWithShippingFee)
@@ -412,7 +422,7 @@ export function getTimelineLabelClass(state: FulfillmentStepState): string {
 }
 
 export function getRefundTimelineClass(refundStatus: string): { dot: string; label: string } {
-  const normalizedStatus = refundStatus.toUpperCase()
+  const normalizedStatus = typeof refundStatus === "string" ? refundStatus.toUpperCase() : ""
 
   if (normalizedStatus === "APPROVED") {
     return { dot: "bg-success", label: "text-success" }
@@ -426,6 +436,7 @@ export function getRefundTimelineClass(refundStatus: string): { dot: string; lab
 }
 
 export function getSellerFirstTwoLetters(value: string): string {
+  if (typeof value !== "string") return "SE"
   const words = value
     .split(/\s+/)
     .map((word) => word.trim())
@@ -438,7 +449,7 @@ export function getSellerFirstTwoLetters(value: string): string {
 }
 
 export function getOrderItemStatusTagClass(status: string): string {
-  const normalizedStatus = status.toUpperCase()
+  const normalizedStatus = typeof status === "string" ? status.toUpperCase() : ""
 
   if (normalizedStatus.includes("CANCEL")) {
     return "border border-danger/40 bg-danger/15 text-danger"
@@ -446,7 +457,10 @@ export function getOrderItemStatusTagClass(status: string): string {
   if (normalizedStatus.includes("DELIVER")) {
     return "border border-success/40 bg-success/15 text-success"
   }
-  if (normalizedStatus.includes("SHIP")) {
+  // Excludes "WAITING" so a not-yet-shipped item (real backend value WAITING_FOR_SHIPMENT,
+  // which itself contains the substring "SHIP") isn't tagged with the same "already shipped"
+  // brand color as an item that has actually shipped (e.g. SHIPMENT_ERROR).
+  if (normalizedStatus.includes("SHIP") && !normalizedStatus.includes("WAITING")) {
     return "border border-brand/40 bg-brand/15 text-brand"
   }
   if (normalizedStatus.includes("REFUND") || normalizedStatus.includes("RETURN")) {
@@ -457,6 +471,7 @@ export function getOrderItemStatusTagClass(status: string): string {
 }
 
 export function formatOrderItemStatus(status: string): string {
+  if (typeof status !== "string") return ""
   return status
     .toLowerCase()
     .split("_")
@@ -465,7 +480,7 @@ export function formatOrderItemStatus(status: string): string {
 }
 
 export function formatRefundStatus(refundStatus: string): string {
-  const normalizedStatus = refundStatus.toUpperCase()
+  const normalizedStatus = typeof refundStatus === "string" ? refundStatus.toUpperCase() : ""
   if (normalizedStatus === "APPROVED") return "Return Approved"
   if (normalizedStatus === "CANCELLED") return "Return Cancelled"
   if (normalizedStatus === "PENDING") return "Return Pending"

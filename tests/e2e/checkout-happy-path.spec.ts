@@ -178,6 +178,14 @@ test.describe("checkout happy path", () => {
       expect(Array.isArray(body.parcels)).toBe(true)
     }
 
+    // Wait for both vendors' rate lists to have RENDERED, not just for their requests to have
+    // been sent. Each VendorShipmentRates card grows when its rates arrive, which pushes this
+    // button down the page; clicking mid-reflow fails with Playwright's "element is not stable"
+    // (seen once on mobile-chrome, where the narrower layout stacks the cards vertically).
+    // Scoped to the shipment radios (`name="shipment-<sellerId>"`, VendorShipmentRates) rather
+    // than every radio on the step - the address picker has its own checked radio, and counting
+    // all of them would break the moment that section changes.
+    await expect(buyerPage.locator('input[name^="shipment-"]:checked')).toHaveCount(2)
     await expect(checkout.continueToBillingButton).toBeEnabled()
     await checkout.continueToBillingButton.click()
 

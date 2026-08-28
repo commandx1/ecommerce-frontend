@@ -100,7 +100,12 @@ export default function AccountSettingsShared({
     if (!accessToken) {
       throw new Error("Authentication required. Please log in again.")
     }
-    const updatedUser = await updateMe(accessToken, newData)
+    // PUT /users/me (auth/dto/UserUpdateRequest.java) has no `email` field. Jackson drops the
+    // extra key silently rather than erroring, which is worse than a failure: the buyer edits
+    // their email, sees "saved", and nothing changed. Send only what the endpoint accepts.
+    // See UpdateMePayload in @/lib/api/account.
+    const { name, surname, phoneNumber, twoFactorEnabled } = newData
+    const updatedUser = await updateMe(accessToken, { name, surname, phoneNumber, twoFactorEnabled })
     setUser(updatedUser)
     return updatedUser
   }
@@ -298,12 +303,15 @@ export default function AccountSettingsShared({
                     id={emailId}
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    readOnly
+                    disabled
                     className="pl-10"
                     placeholder="name@company.com"
-                    required
                   />
                 </div>
+                {/* Read-only on purpose: PUT /users/me cannot change the email, so an editable
+                    field here would accept a new address, report success and save nothing. */}
+                <p className="text-xs text-text-muted">Your email address can't be changed here.</p>
               </div>
 
               <div className="space-y-2">

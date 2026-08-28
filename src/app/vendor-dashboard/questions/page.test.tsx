@@ -306,6 +306,51 @@ describe("VendorQuestionsPage", () => {
       expect(await screen.findByText("No questions yet")).toBeInTheDocument()
       expect(toastSpies.error).toHaveBeenCalledWith("Failed to load questions", "Please refresh the page.")
     })
+
+    // A broken 200 body must not white-screen the page - same class of bug as F77 (vendor
+    // orders) / F83 (brand filter): an unguarded `.length`/`.map` on a missing/non-array field.
+    it.each([
+      ["content is missing entirely", { totalPages: 1, totalElements: 1, number: 0, size: 10 }],
+      ["content is null", { content: null, totalPages: 1, totalElements: 1, number: 0, size: 10 }],
+      [
+        "content is a non-array object",
+        { content: { 0: makeQuestion() }, totalPages: 1, totalElements: 1, number: 0, size: 10 },
+      ],
+    ])("shows the empty state instead of crashing when %s", async (_label, body) => {
+      server.use(
+        http.get("*/backend-api/product-questions/seller", () => HttpResponse.json(body)),
+        http.get("*/backend-api/product-questions/seller/counts", () =>
+          HttpResponse.json({ total: 0, answered: 0, unanswered: 0 }),
+        ),
+      )
+
+      render(<VendorQuestionsPage />)
+
+      expect(await screen.findByText("No questions yet")).toBeInTheDocument()
+    })
+
+    it("renders a question whose own `answers` field is missing instead of crashing", async () => {
+      const questionWithoutAnswers = { ...makeQuestion(), answers: undefined }
+      server.use(
+        http.get("*/backend-api/product-questions/seller", () =>
+          HttpResponse.json({
+            content: [questionWithoutAnswers],
+            totalPages: 1,
+            totalElements: 1,
+            number: 0,
+            size: 10,
+          }),
+        ),
+        http.get("*/backend-api/product-questions/seller/counts", () =>
+          HttpResponse.json({ total: 1, answered: 0, unanswered: 1 }),
+        ),
+      )
+
+      render(<VendorQuestionsPage />)
+
+      expect(await screen.findByText("Does this kit include extra mixing tips?")).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /Write an answer/i })).toBeInTheDocument()
+    })
   })
 
   describe("answering a question", () => {
@@ -567,21 +612,55 @@ describe("VendorQuestionsPage", () => {
     })
 
     /**
-     * Suspicious: only `answers[0]` is ever rendered. A question carrying more than one answer
-     * silently hides the rest, and the edit/delete controls always target the first one.
-     * Locking current behaviour — see BULGULAR.
+     * Regression test for a fixed bug: the card used to render only `answers[0]`, silently
+     * hiding every other answer and always pointing edit/delete at the first one regardless
+     * of who wrote it. Now every answer renders, and edit/delete only appear on (and target)
+     * the vendor's own answer.
      */
-    it("renders only the first answer when a question has several", async () => {
+    it("renders every answer on a question, and edit/delete only target the vendor's own answer", async () => {
+      const user = userEvent.setup()
       serveStaticQuestions([
         makeQuestion({
-          answers: [makeAnswer(), makeAnswer({ id: "a-2", answer: "A second opinion from a colleague." })],
+          answers: [
+            makeAnswer(),
+            makeAnswer({
+              id: "a-2",
+              answer: "A second opinion from a colleague.",
+              answererUserId: "other-vendor",
+              answererName: "colleague",
+            }),
+          ],
         }),
       ])
+      server.use(
+        http.put("*/backend-api/product-answers/a-1", async ({ request }) => {
+          const body = (await request.json()) as { answer: string }
+          return HttpResponse.json(makeAnswer({ answer: body.answer }))
+        }),
+      )
 
       render(<VendorQuestionsPage />)
 
       expect(await screen.findByText("Yes, it ships with two extra tips.")).toBeInTheDocument()
-      expect(screen.queryByText("A second opinion from a colleague.")).not.toBeInTheDocument()
+      expect(screen.getByText("A second opinion from a colleague.")).toBeInTheDocument()
+      expect(screen.getByText("colleague")).toBeInTheDocument()
+
+      // Only one answer belongs to the signed-in vendor, so only one edit/delete pair renders.
+      expect(answerIconButtons()).toHaveLength(2)
+
+      const [editButton] = answerIconButtons()
+      await user.click(editButton as HTMLElement)
+
+      const textarea = screen.getByPlaceholderText("Type your answer here...")
+      expect(textarea).toHaveValue("Yes, it ships with two extra tips.")
+
+      await user.clear(textarea)
+      await user.type(textarea, "Yes, three extra tips are included.")
+      await user.click(screen.getByRole("button", { name: "Save changes" }))
+
+      // The edit targeted the vendor's own answer (a-1) — the colleague's answer is untouched.
+      expect(await screen.findByText("Yes, three extra tips are included.")).toBeInTheDocument()
+      expect(screen.getByText("A second opinion from a colleague.")).toBeInTheDocument()
     })
   })
 })

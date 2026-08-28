@@ -1,6 +1,6 @@
 import { ExternalLink } from "lucide-react"
 import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
-import type { PlaceOrderResponse } from "@/lib/api/orders"
+import type { OrderItem, PlaceOrderResponse } from "@/lib/api/orders"
 import { getFullImageUrl } from "@/lib/api/products"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 
@@ -9,13 +9,22 @@ interface OrderConfirmationItemsProps {
 }
 
 export default function OrderConfirmationItems({ orderResult }: OrderConfirmationItemsProps) {
-  if (orderResult.orderItems.length === 0) return null
+  // Backend: `OrderMapper.toOrderItemResponse` returns `null` for a null `OrderItem` entity, and
+  // that `null` is collected straight into `CreateOrderResponse.orderItems`
+  // (`toCreateOrderResponse`: `.stream().map(this::toOrderItemResponse).collect(...)`). A
+  // missing/non-array `orderItems` field is guarded the same way the rest of this codebase guards
+  // list fields coming back from this backend.
+  const orderItems = Array.isArray(orderResult.orderItems)
+    ? orderResult.orderItems.filter((item): item is OrderItem => item != null)
+    : []
+
+  if (orderItems.length === 0) return null
 
   return (
     <div className="mb-10">
       <h3 className="mb-4 text-xl font-semibold text-text-primary">Order Items</h3>
       <div className="space-y-4">
-        {orderResult.orderItems.map((item) => (
+        {orderItems.map((item) => (
           <div key={item.id} className="rounded-xl border border-border-soft bg-surface p-4">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex flex-1 gap-4">

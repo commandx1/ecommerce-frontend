@@ -108,20 +108,6 @@ export async function getProductVendorOptions(): Promise<VendorOption[]> {
   }
 }
 
-export async function getProductCompanyOptions(): Promise<CompanyOption[]> {
-  const baseUrl = requireBackendUrl()
-  try {
-    return await apiRequest.requestJson<CompanyOption[]>({
-      client: "app",
-      method: "GET",
-      url: `${baseUrl}/api/products/companies`,
-      fallbackMessage: "Failed to fetch product companies",
-    })
-  } catch {
-    return []
-  }
-}
-
 export async function getProductCategoryOptions(): Promise<FilterOption[]> {
   const baseUrl = requireBackendUrl()
   try {

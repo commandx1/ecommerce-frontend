@@ -13,6 +13,7 @@ interface CartContentProps {
   hasBlockingItems: boolean
   isClearConfirmOpen: boolean
   isLicenseBlocked: boolean
+  licenseCheckFailed: boolean
   isTaxLoading: boolean
   items: CartItem[]
   sellerGroups: Record<string, CartSellerGroup>
@@ -33,6 +34,7 @@ export default function CartContent({
   hasBlockingItems,
   isClearConfirmOpen,
   isLicenseBlocked,
+  licenseCheckFailed,
   isTaxLoading,
   items,
   sellerGroups,
@@ -70,6 +72,7 @@ export default function CartContent({
             hasBlockingItems={hasBlockingItems}
             isCheckoutDisabled={items.length === 0}
             isLicenseBlocked={isLicenseBlocked}
+            licenseCheckFailed={licenseCheckFailed}
             isTaxLoading={isTaxLoading}
             itemsCount={items.reduce((totalQuantity, item) => totalQuantity + item.quantity, 0)}
             onCheckout={onCheckout}

@@ -4,13 +4,17 @@ const ADDRESSES_DEDUP_WINDOW_MS = 2000
 let inFlightAddressesRequest: Promise<Address[]> | null = null
 let recentAddressesCache: { data: Address[]; fetchedAt: number } | null = null
 
+// Mirrors backend `auth/dto/Address{Create,Update}Request.java` and `AddressResponse.java`.
+// None of them has a `state` field. Sending one is silently dropped by Jackson (Spring Boot
+// leaves FAIL_ON_UNKNOWN_PROPERTIES off and this app never re-enables it), and GET never
+// returns it - so a `state` on this type would be a field that looks saved but never is.
+// Keep it in step with the backend DTO.
 export interface Address {
   id: string
   title: string
   fullName: string
   phoneNumber: string
   country: string
-  state: string
   city: string
   district: string
   postalCode: string

@@ -30,16 +30,9 @@ describe("useDocumentActions", () => {
     expect(window.print).toHaveBeenCalledTimes(1)
   })
 
-  it("handleDownload shows an info toast (no real download is wired up yet)", () => {
-    const { result } = renderHook(() => useDocumentActions())
-
-    act(() => {
-      result.current.handleDownload()
-    })
-
-    expect(mockInfo).toHaveBeenCalledWith("Download requested", "PDF downloads will be available soon.")
-    expect(window.print).not.toHaveBeenCalled()
-  })
+  // Deferred: PDF export is a dead control for now (product decision: "şimdilik boşverelim").
+  // When wired up, this verifies handleDownload actually produces/saves a PDF file.
+  it.todo("handleDownload downloads a PDF file of the document")
 
   it("both actions are independent and can be triggered repeatedly", () => {
     const { result } = renderHook(() => useDocumentActions())

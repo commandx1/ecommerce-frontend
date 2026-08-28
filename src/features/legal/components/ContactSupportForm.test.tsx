@@ -84,19 +84,7 @@ describe("ContactSupportForm", () => {
     expect(screen.getByRole("combobox", { name: "Legal Topic" })).toHaveTextContent("Select a topic")
   })
 
-  /**
-   * BULGU (TEST-FINDINGS K6): `useContactSupportForm` contacts nothing. The visitor is told
-   * "Our legal team will contact you shortly" while the request is discarded.
-   */
-  it("submits the consultation request nowhere (current behaviour)", async () => {
-    const user = userEvent.setup({ pointerEventsCheck: 0 })
-    const fetchSpy = vi.spyOn(globalThis, "fetch")
-    render(<ContactSupportForm />)
-
-    await fillRequired(user)
-    await user.click(submit())
-
-    expect(mockToastSuccess).toHaveBeenCalled()
-    expect(fetchSpy).not.toHaveBeenCalled()
-  })
+  // Deferred: no legal-consultation backend endpoint exists yet (BACKEND-HANDOFF.md §2, K6).
+  // Backend implements the endpoint, then this verifies the request is actually POSTed.
+  it.todo("submitting a valid consultation request POSTs it to the legal-support endpoint")
 })

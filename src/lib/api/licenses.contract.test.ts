@@ -36,6 +36,22 @@ beforeEach(() => {
 })
 
 describe("licenseAPI.getLicenses contract", () => {
+  /**
+   * Infra note #26: a malformed 200 is not always null/undefined - it can be a wrong-typed
+   * truthy value that slips past `||`/`??` and reaches `.length`/`.map()`/`.some()` in the UI,
+   * blanking the page. Normalising here protects every call site at once.
+   */
+  it.each([
+    ["an object", { nope: true }],
+    ["a string", "not-a-list"],
+    ["a number", 7],
+    ["null", null],
+  ])("%s in place of the list degrades to an empty array", async (_label, body) => {
+    server.use(http.get("*/backend-api/licenses", () => HttpResponse.json({ licenses: body, total: 0 })))
+
+    await expect(licenseAPI.getLicenses()).resolves.toEqual([])
+  })
+
   it("unwraps the licenses array from the paged envelope", async () => {
     const licenses = await licenseAPI.getLicenses()
 
@@ -133,18 +149,24 @@ describe("licenseAPI.createLicense contract", () => {
     ).rejects.toThrow(/400/)
   })
 
-  it("rejects with a 409 for a duplicate license number", async () => {
+  it("rejects with a 400 when stateOfLicense is missing for STATE_DENTAL", async () => {
+    // LicenseService.validateCreateRequest (ecommerce-api order/service/LicenseService.java) has
+    // no duplicate-license-number check anywhere - createLicense never queries for an existing
+    // license before saving, so a 409 for "duplicate license number" can never happen. The only
+    // create-time business-rule failure is LicenseValidationException (mapped to 400 in
+    // OrderExceptionHandler.java), thrown when a STATE_DENTAL license is missing
+    // `stateOfLicense`.
     server.use(
       http.post("*/backend-api/licenses", () =>
-        HttpResponse.json({ message: "License already registered" }, { status: 409 }),
+        HttpResponse.json({ message: "stateOfLicense is required when licenseType is STATE_DENTAL" }, { status: 400 }),
       ),
     )
 
     const error = await licenseAPI
-      .createLicense({ licenseType: "DEA", licenseNumber: "DEA-1", year: 2024, month: 1, day: 1 })
+      .createLicense({ licenseType: "STATE_DENTAL", licenseNumber: "DDS-1", year: 2024, month: 1, day: 1 })
       .catch((e) => e)
 
-    expect(error.response?.status).toBe(409)
+    expect(error.response?.status).toBe(400)
   })
 })
 
@@ -163,14 +185,20 @@ describe("licenseAPI.deleteLicense contract", () => {
     await expect(licenseAPI.deleteLicense("missing")).rejects.toThrow(/404/)
   })
 
-  it("rejects with a 403 when the license belongs to another user", async () => {
+  it("rejects with a 404 when the license belongs to another user (indistinguishable from not-found)", async () => {
+    // LicenseService.deleteLicense looks up `findByIdAndUserIdAndIsDeletedFalse(licenseId,
+    // userId)` in one query - a license that exists but belongs to someone else produces the
+    // exact same empty Optional, and thus the exact same LicenseNotFoundException -> 404, as a
+    // license that doesn't exist at all. There is no separate 403 code path.
     server.use(
-      http.delete("*/backend-api/licenses/:id", () => HttpResponse.json({ message: "Forbidden" }, { status: 403 })),
+      http.delete("*/backend-api/licenses/:id", () =>
+        HttpResponse.json({ message: "License bulunamadı: someone-elses" }, { status: 404 }),
+      ),
     )
 
     const error = await licenseAPI.deleteLicense("someone-elses").catch((e) => e)
 
-    expect(error.response?.status).toBe(403)
+    expect(error.response?.status).toBe(404)
     expect(error.authHandled).toBeFalsy()
   })
 })

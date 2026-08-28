@@ -157,6 +157,27 @@ describe("useBuyerOrdersPage", () => {
     expect(result.current.totalElements).toBe(0)
   })
 
+  // C axis: a malformed 200 body (e.g. an upstream proxy/cache serving a stale or
+  // truncated shape) must not white-screen the page. Regression for the F77-style
+  // bug where `setOrders(response.orders)` was unguarded - see TEST-FINDINGS.md F77.
+  it.each([
+    { name: "orders field missing entirely", body: {} },
+    { name: "orders is null", body: { orders: null, totalPages: null, totalElements: null } },
+    { name: "orders is a non-array object", body: { orders: {}, totalPages: "3", totalElements: "25" } },
+  ])("survives a 200 response where $name", async ({ body }) => {
+    mockGetBuyerOrders.mockResolvedValue(body)
+
+    const { result } = renderHook(() => useBuyerOrdersPage())
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    expect(result.current.filteredOrders).toEqual([])
+    expect(result.current.totalPages).toBe(0)
+    expect(result.current.totalElements).toBe(0)
+  })
+
   it("shows toast and clears list when fetch fails", async () => {
     mockGetBuyerOrders.mockRejectedValue(new Error("network"))
 
@@ -245,6 +266,45 @@ describe("useBuyerOrdersPage", () => {
 
     const updatedOrder = result.current.filteredOrders[0]
     expect(updatedOrder.sellerGroups?.[0]?.orderItems[0]?.status).toBe(OrderItemStatus.CANCEL_REQUESTED)
+  })
+
+  // C axis: `cancelledOrderItemIds` is a backend List<UUID> - a nullable Java reference,
+  // not a DB-constrained column. A response missing it must not crash the item-status
+  // update (same failure class as the vendor-side F79 fix in TEST-FINDINGS.md).
+  it.each([
+    { name: "cancelledOrderItemIds missing", response: { message: "done" } },
+    { name: "cancelledOrderItemIds is null", response: { message: "done", cancelledOrderItemIds: null } },
+  ])("survives a cancel response where $name", async ({ response }) => {
+    mockGetBuyerOrders.mockResolvedValue({
+      orders: [baseOrder],
+      totalPages: 1,
+      totalElements: 1,
+    })
+    mockCancelDuringDeliveryByCustomer.mockResolvedValue(response)
+
+    const { result } = renderHook(() => useBuyerOrdersPage())
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    act(() => {
+      result.current.requestCancelAction({
+        orderItemIds: ["item-1"],
+        description: "fallback",
+        options: { cancelingItemId: "item-1" },
+      })
+    })
+
+    await act(async () => {
+      await result.current.confirmPendingCancelAction()
+    })
+
+    expect(mockToastSuccess).toHaveBeenCalledWith("Cancellation sent", "done")
+    const updatedOrder = result.current.filteredOrders[0]
+    // No item should be flipped to CANCEL_REQUESTED since the response carried no ids -
+    // the point is that reading it doesn't throw, not that anything gets marked cancelled.
+    expect(updatedOrder.sellerGroups?.[0]?.orderItems[0]?.status).toBe("WAITING_FOR_SHIPMENT")
   })
 
   it("keeps single-expand behavior by switching to the latest expanded row", async () => {

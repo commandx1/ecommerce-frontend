@@ -118,17 +118,8 @@ describe("DataTable", () => {
     expect(within(bodyRow).getByRole("cell", { name: "240" })).toHaveClass("total-cell")
   })
 
-  /**
-   * BULGU (TEST-FINDINGS): the shared table has no sorting, column-visibility or row-selection
-   * support at all — headers render as plain text with no `aria-sort` and no control. Any table
-   * that appears sortable implements it above this component.
-   */
-  it("renders headers with no sorting affordance (current behaviour)", () => {
-    render(<DataTable columns={columns} data={rows} />)
-
-    const header = screen.getByRole("columnheader", { name: "Supplier" })
-    expect(header).not.toHaveAttribute("aria-sort")
-    expect(within(header).queryByRole("button")).not.toBeInTheDocument()
-    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument()
-  })
+  // Deferred: column sorting is a dead control for now (product decision: "şimdilik
+  // boşverelim"). When wired up, this verifies clicking a header sorts the rows and exposes
+  // the sort state via aria-sort.
+  it.todo("clicking a sortable column header sorts the rows and sets aria-sort")
 })

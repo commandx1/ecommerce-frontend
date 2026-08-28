@@ -29,7 +29,7 @@ describe("POST /api/product-answers", () => {
     expect(body).toEqual({ questionId: "q-1", content: "Yes, latex free." })
   })
 
-  it("calls the backend anonymously when the caller has no session", async () => {
+  it("answers 401 without calling the backend when unauthenticated", async () => {
     const captured = createCapture()
     server.use(
       http.post(UPSTREAM, ({ request }) => {
@@ -40,11 +40,23 @@ describe("POST /api/product-answers", () => {
 
     const response = await POST(jsonRequest("/api/product-answers", { questionId: "q-1", content: "x" }))
 
-    // Pinned, not endorsed: only the vendor who owns the product should be able to answer,
-    // and the BFF makes no such check.
-    expect(captured.count).toBe(1)
-    expect(captured.authorization).toBeNull()
-    expect(response.status).toBe(200)
+    expect(response.status).toBe(401)
+    expect(captured.count).toBe(0)
+  })
+
+  it("checks auth BEFORE reading the body, so an anonymous malformed payload is still a 401", async () => {
+    const captured = createCapture()
+    server.use(
+      http.post(UPSTREAM, ({ request }) => {
+        record(captured, request)
+        return HttpResponse.json(answer)
+      }),
+    )
+
+    const response = await POST(routeRequest("/api/product-answers", { method: "POST", body: "not-json" }))
+
+    expect(response.status).toBe(401)
+    expect(captured.count).toBe(0)
   })
 
   it.each([400, 401, 403, 500])(
@@ -89,7 +101,9 @@ describe("POST /api/product-answers", () => {
   })
 
   it("answers 500 without a stack trace when the request body is not JSON", async () => {
-    const response = await POST(routeRequest("/api/product-answers", { method: "POST", body: "not-json" }))
+    const response = await POST(
+      routeRequest("/api/product-answers", { method: "POST", body: "not-json", authorization: AUTH }),
+    )
 
     expect(response.status).toBe(500)
     await expect(response.json()).resolves.toEqual({ error: "Internal server error" })

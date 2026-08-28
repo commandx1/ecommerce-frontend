@@ -144,8 +144,30 @@ export interface RefundOrderItemLinks {
   returnShippingLinks: BuyerOrderShippingLink[]
 }
 
+/**
+ * Mirrors backend `order/dto/RefundOrderResponse.java`.
+ *
+ * IMPORTANT - `refundOrder` is ALL-OR-NOTHING today. `OrderRefundService.refundOrder`
+ * (service/OrderRefundService.java:131-375) has exactly one `return`, and every validation
+ * failure `throw`s an `OrderCancellationException` (-> 400) instead of skipping the item.
+ * That single return hardcodes `.failureCount(0)` and sets `.successCount(orderItemIds.size())`,
+ * i.e. the number of items REQUESTED, not the number that succeeded.
+ *
+ * So these two fields carry no information today: on success they are always
+ * (requested count, 0), and on any failure there is no response body at all - just a 400.
+ * Do NOT build partial-success UI on them; there is no partial success to show. Marking every
+ * requested item as pending (use-buyer-orders-page.ts) is the behaviour that matches the backend.
+ * Whether real partial refunds should exist is BACKEND-HANDOFF.md §13.
+ */
 export interface RefundOrderResponse {
   message?: string
+  /** Always the REQUESTED item count on success - never a partial figure. See the note above. */
+  successCount?: number
+  /** Hardcoded to 0 by the backend. See the note above. */
+  failureCount?: number
+  transactionId?: string
+  shippingPrice?: number
+  orderItemIds?: string[]
   itemLinks?: RefundOrderItemLinks[]
 }
 

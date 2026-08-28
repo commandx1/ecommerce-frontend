@@ -110,10 +110,15 @@ describe("updateMyCompany contract", () => {
     expect(response).toEqual(mockCompany)
   })
 
-  it("rejects with a 400 on invalid payload", async () => {
+  it("rejects with a 400 when the new tax number already belongs to another company", async () => {
+    // CompanyService.updateMyCompany (ecommerce-api auth/service/CompanyService.java) has no tax
+    // number *format* validation at all (CompanyUpdateRequest.taxNumber carries no
+    // constraint), so a merely malformed value never 400s. The one real create-time conflict is
+    // `companyRepository.existsByTaxNumber(newTaxNumber)` -> `new BadRequestException("Tax
+    // number already exists")`, mapped 400 in GlobalExceptionHandler.
     server.use(
       http.put("*/backend-api/companies/me", () =>
-        HttpResponse.json({ message: "Invalid tax number" }, { status: 400 }),
+        HttpResponse.json({ message: "Tax number already exists" }, { status: 400 }),
       ),
     )
 
@@ -121,13 +126,38 @@ describe("updateMyCompany contract", () => {
       updateMyCompany({
         name: "Acme",
         companyPhoto: null,
-        taxNumber: "bad",
+        taxNumber: "999999999",
         email: null,
         phoneNumber: null,
         website: null,
         description: null,
       }),
     ).rejects.toMatchObject({ status: 400 })
+  })
+
+  it("rejects with a 403 when the caller is not the company owner", async () => {
+    // CompanyService.updateMyCompany: `if (user.getCompanyRole() != CompanyRole.OWNER) throw new
+    // ForbiddenException("Only the company owner can update company details")`. Unlike the mail
+    // invite endpoint, ForbiddenException (product/exception/ForbiddenException.java) IS mapped
+    // to 403 in GlobalExceptionHandler - so a real 403 is reachable here.
+    server.use(
+      http.put("*/backend-api/companies/me", () =>
+        HttpResponse.json({ message: "Only the company owner can update company details" }, { status: 403 }),
+      ),
+    )
+
+    const error = await updateMyCompany({
+      name: "Acme",
+      companyPhoto: null,
+      taxNumber: null,
+      email: null,
+      phoneNumber: null,
+      website: null,
+      description: null,
+    }).catch((e) => e)
+
+    expect(error.status).toBe(403)
+    expect(error.authHandled).toBe(false)
   })
 
   it("rejects with a 500 server error", async () => {
@@ -180,29 +210,43 @@ describe("inviteCompanyUser contract", () => {
     })
   })
 
-  it("rejects with a 409 when the email is already invited", async () => {
+  it("rejects with a 400 when the email already belongs to a registered user", async () => {
+    // UserService.inviteCompanyUser (UserService.java:348-350) throws a plain
+    // `new RuntimeException("This email already belongs to a registered user.")` when the
+    // invited email already has a confirmed account. There is no dedicated conflict exception
+    // anywhere in this method - every failure branch is a bare RuntimeException, so the
+    // GlobalExceptionHandler catch-all always answers 400, never 409.
     server.use(
       http.post("*/backend-api/mail/invite-company-user", () =>
-        HttpResponse.json({ message: "User already invited" }, { status: 409 }),
+        HttpResponse.json({ message: "This email already belongs to a registered user." }, { status: 400 }),
       ),
     )
 
     await expect(inviteCompanyUser({ email: "existing@example.com", companyRole: "MEMBER" })).rejects.toMatchObject({
-      status: 409,
-      message: "User already invited",
+      status: 400,
+      message: "This email already belongs to a registered user.",
     })
   })
 
-  it("rejects with a 403 when the caller is not the company owner", async () => {
+  it("rejects with a 400 when the caller is not the company owner", async () => {
+    // UserService.inviteCompanyUser (ecommerce-api auth/service/UserService.java:343-345) throws
+    // a plain `new RuntimeException("Only company OWNER can invite members.")` for this case.
+    // GlobalExceptionHandler has no dedicated handler for it, so it falls through to the
+    // `@ExceptionHandler(RuntimeException.class)` catch-all, which returns 400 - not 403. (This
+    // endpoint's `@PreAuthorize("hasRole('Vendor')")` on MailController.java:48 also can't
+    // surface a real 403: Spring's AccessDeniedException is itself a RuntimeException, so the
+    // same catch-all intercepts it before Spring Security's own 403 handling ever runs. No
+    // custom `AccessDeniedException` handler exists for this controller, unlike order/cart/
+    // invoice's dedicated *AccessDeniedException -> 403 mappings.)
     server.use(
       http.post("*/backend-api/mail/invite-company-user", () =>
-        HttpResponse.json({ message: "Only owners may invite users" }, { status: 403 }),
+        HttpResponse.json({ message: "Only company OWNER can invite members." }, { status: 400 }),
       ),
     )
 
     const error = await inviteCompanyUser({ email: "x@example.com", companyRole: "MEMBER" }).catch((e) => e)
 
-    expect(error.status).toBe(403)
+    expect(error.status).toBe(400)
     expect(error.authHandled).toBe(false)
   })
 

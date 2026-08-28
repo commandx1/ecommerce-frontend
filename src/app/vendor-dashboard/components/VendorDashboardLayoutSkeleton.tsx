@@ -5,6 +5,13 @@ export default function VendorDashboardLayoutSkeleton() {
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas animate-pulse">
+      {/* sr-only: the real page's h1 ("Vendor Dashboard" in DashboardHeader) only
+          mounts once auth-check/hydration finishes; this skeleton renders first,
+          so without this the page has zero headings while it's up. Deliberately
+          worded differently from that final heading so a test waiting for the
+          exact "Vendor Dashboard" accessible name can't resolve early against
+          this transient node (see CartLoadingState for the same footgun). */}
+      <h1 className="sr-only">Loading Vendor Dashboard</h1>
       <header className="h-16 border-b border-border-soft bg-surface-elevated px-6">
         <div className="mx-auto flex h-full w-full max-w-screen-2xl items-center justify-between">
           <div className="h-8 w-48 rounded-md bg-surface-muted" />

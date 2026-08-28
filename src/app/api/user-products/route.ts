@@ -49,7 +49,14 @@ export async function GET(request: NextRequest) {
       headers: requestHeaders,
     })
 
-    if (response.status === 403) {
+    // Backend UserProductController has NO active `GET /api/user-products` mapping - the bare
+    // `getAll` method is block-commented (UserProductController.java:68-73). Spring therefore
+    // returns 404 ("no handler found"), never 403, for this request. The 403 branch below used to
+    // be the only fallback trigger, which meant this codepath silently never fired in production
+    // and callers like vendor-dashboard/products/create/page.tsx would see a raw error instead of
+    // falling back to /filter. Fall back on 404 too (kept 403 as a defensive no-op in case the
+    // backend mapping is ever restored with an authorization check).
+    if (response.status === 403 || response.status === 404) {
       const fallbackResponse = await serverRequest(
         `/api/user-products/filter?type=TOTAL&page=0&size=${FILTER_FALLBACK_PAGE_SIZE}`,
         {
@@ -97,11 +104,12 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get("Authorization")
-    const body = await request.json()
 
     if (!authHeader) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
+
+    const body = await request.json()
 
     const response = await serverRequest(`/api/user-products`, {
       method: "POST",

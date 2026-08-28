@@ -49,12 +49,15 @@ export interface VendorListParams {
 }
 
 export async function getMyFavoriteVendorIds(): Promise<string[]> {
-  return apiRequest.requestJson<string[]>({
+  const ids = await apiRequest.requestJson<string[]>({
     client: "backend",
     method: "GET",
     url: "/vendors/favorite-ids",
     fallbackMessage: "Failed to fetch favorite vendor IDs",
   })
+  // The endpoint is typed `List<String>` (VendorController:51-54), but a malformed 200 is not
+  // an array and callers use `.includes()` on it to decide the starred state (infra note #26).
+  return Array.isArray(ids) ? ids : []
 }
 
 export async function getMyFavoriteVendors(): Promise<VendorListItem[]> {

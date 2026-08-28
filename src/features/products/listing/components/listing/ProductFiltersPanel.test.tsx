@@ -46,10 +46,10 @@ describe("ProductFiltersPanel", () => {
     renderPanel()
 
     for (const heading of ["Category", "Brand", "Manufacturer", "Price Range", "Availability", "Customer Rating"]) {
-      expect(screen.getByRole("heading", { name: heading, level: 3 })).toBeInTheDocument()
+      expect(screen.getByRole("heading", { name: heading, level: 2 })).toBeInTheDocument()
     }
     // `shade_guide` is title-cased for display.
-    expect(screen.getByRole("heading", { name: "Shade Guide", level: 3 })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Shade Guide", level: 2 })).toBeInTheDocument()
   })
 
   it("ticking a brand pushes a /products URL carrying that brand and resets the page", async () => {

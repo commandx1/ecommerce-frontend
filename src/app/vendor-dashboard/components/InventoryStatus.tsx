@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { getFullImageUrl } from "@/lib/api/products"
 import { type VendorStockSummaryResponse, vendorDashboardAPI } from "@/lib/api/vendor-dashboard"
@@ -43,53 +43,65 @@ const InventoryStatus = () => {
   const { isAuthenticated } = useAuthStore()
   const [summary, setSummary] = useState<VendorStockSummaryResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(false)
   const [imageFallbacks, setImageFallbacks] = useState<Record<string, boolean>>({})
   const abortControllerRef = useRef<AbortController | null>(null)
 
-  useEffect(() => {
-    const fetchStockSummary = async () => {
-      if (!isAuthenticated) return
+  const fetchStockSummary = useCallback(async () => {
+    if (!isAuthenticated) return
 
-      abortControllerRef.current?.abort()
-      const controller = new AbortController()
-      abortControllerRef.current = controller
+    abortControllerRef.current?.abort()
+    const controller = new AbortController()
+    abortControllerRef.current = controller
 
-      try {
-        setIsLoading(true)
-        const response = await vendorDashboardAPI.getStockSummary(0, 3, controller.signal)
-        setSummary(response)
-      } catch {
-        if (controller.signal.aborted) return
-        setSummary(null)
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsLoading(false)
-        }
+    try {
+      setIsLoading(true)
+      setFetchError(false)
+      const response = await vendorDashboardAPI.getStockSummary(0, 3, controller.signal)
+      setSummary(response)
+    } catch {
+      if (controller.signal.aborted) return
+      setSummary(null)
+      setFetchError(true)
+    } finally {
+      if (!controller.signal.aborted) {
+        setIsLoading(false)
       }
     }
+  }, [isAuthenticated])
 
+  useEffect(() => {
     void fetchStockSummary()
 
     return () => {
       abortControllerRef.current?.abort()
     }
-  }, [isAuthenticated])
+  }, [fetchStockSummary])
 
+  // A bucket missing from an otherwise-valid `summary` (malformed 200 body) would otherwise
+  // throw on `row.bucket.count` below and blank the whole dashboard (infra note #26).
+  const FALLBACK_BUCKET = { count: 0, percentage: 0 }
   const statusRows = summary
     ? [
-        { key: "inStock", label: "In Stock", color: "green" as const, bucket: summary.inStock, filterType: "ACTIVE" },
+        {
+          key: "inStock",
+          label: "In Stock",
+          color: "green" as const,
+          bucket: summary.inStock ?? FALLBACK_BUCKET,
+          filterType: "ACTIVE",
+        },
         {
           key: "lowStock",
           label: "Low Stock",
           color: "yellow" as const,
-          bucket: summary.lowStock,
+          bucket: summary.lowStock ?? FALLBACK_BUCKET,
           filterType: "LOW_STOCK",
         },
         {
           key: "outOfStock",
           label: "Out of Stock",
           color: "red" as const,
-          bucket: summary.outOfStock,
+          bucket: summary.outOfStock ?? FALLBACK_BUCKET,
           filterType: "OUT_OF_STOCK",
         },
       ]
@@ -109,6 +121,13 @@ const InventoryStatus = () => {
           {[0, 1, 2].map((placeholder) => (
             <div key={placeholder} className="h-16 animate-pulse rounded-xl bg-surface-muted" />
           ))}
+        </div>
+      ) : fetchError ? (
+        <div className="flex flex-col items-center justify-center gap-3 px-6 py-10 text-center">
+          <p className="text-sm font-medium text-danger">Couldn't load inventory status. Please try again.</p>
+          <Button type="button" variant="outline" onClick={() => void fetchStockSummary()} className="rounded-lg px-4">
+            Retry
+          </Button>
         </div>
       ) : (
         <>
@@ -138,35 +157,39 @@ const InventoryStatus = () => {
           <div className="mt-6">
             <h3 className="mb-3 font-semibold text-text-primary">Critical Stock Alerts</h3>
             <div className="space-y-2">
-              {(summary?.criticStockAlerts.content ?? []).map((alert) => {
-                const status = alert.stock <= CRITICAL_STOCK_THRESHOLD ? "critical" : "warning"
-                const imageSrc = imageFallbacks[alert.userProductId]
-                  ? PLACEHOLDER_IMAGE
-                  : getFullImageUrl(alert.coverPhotoPath) || PLACEHOLDER_IMAGE
+              {/* `summary?.criticStockAlerts.content` only guarded `summary`: a response without
+                  `criticStockAlerts` threw on `.content` and blanked the dashboard (infra note #26). */}
+              {(Array.isArray(summary?.criticStockAlerts?.content) ? summary.criticStockAlerts.content : []).map(
+                (alert) => {
+                  const status = alert.stock <= CRITICAL_STOCK_THRESHOLD ? "critical" : "warning"
+                  const imageSrc = imageFallbacks[alert.userProductId]
+                    ? PLACEHOLDER_IMAGE
+                    : getFullImageUrl(alert.coverPhotoPath) || PLACEHOLDER_IMAGE
 
-                return (
-                  <Link
-                    key={alert.userProductId}
-                    href={`/vendor-dashboard/products?userProductId=${alert.userProductId}`}
-                    className="flex items-center justify-between rounded-lg border border-border-soft bg-surface-muted/70 px-3 py-2 text-sm transition-colors hover:bg-surface-muted"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Image
-                        src={imageSrc}
-                        alt={alert.name}
-                        width={32}
-                        height={32}
-                        className="h-8 w-8 rounded-md border border-border-soft object-contain"
-                        onError={() => setImageFallbacks((prev) => ({ ...prev, [alert.userProductId]: true }))}
-                      />
-                      <span className="text-text-secondary">{alert.name}</span>
-                    </div>
-                    <span className={`${statusColorMap[status]} font-medium whitespace-nowrap`}>
-                      {alert.stock} left
-                    </span>
-                  </Link>
-                )
-              })}
+                  return (
+                    <Link
+                      key={alert.userProductId}
+                      href={`/vendor-dashboard/products?userProductId=${alert.userProductId}`}
+                      className="flex items-center justify-between rounded-lg border border-border-soft bg-surface-muted/70 px-3 py-2 text-sm transition-colors hover:bg-surface-muted"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Image
+                          src={imageSrc}
+                          alt={alert.name}
+                          width={32}
+                          height={32}
+                          className="h-8 w-8 rounded-md border border-border-soft object-contain"
+                          onError={() => setImageFallbacks((prev) => ({ ...prev, [alert.userProductId]: true }))}
+                        />
+                        <span className="text-text-secondary">{alert.name}</span>
+                      </div>
+                      <span className={`${statusColorMap[status]} font-medium whitespace-nowrap`}>
+                        {alert.stock} left
+                      </span>
+                    </Link>
+                  )
+                },
+              )}
             </div>
           </div>
         </>

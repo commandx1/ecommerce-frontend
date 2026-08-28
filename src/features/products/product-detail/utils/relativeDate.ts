@@ -1,6 +1,11 @@
 export const formatRelativeDate = (dateString: string): string => {
   try {
     const date = new Date(dateString)
+    // `new Date(...)` never throws — a malformed/missing createdDate (hostile 200 body, or a
+    // legacy row with no timestamp) silently produces an Invalid Date, and the arithmetic below
+    // used to render "NaN years ago" to the user instead of catching it here.
+    if (Number.isNaN(date.getTime())) return "Recently"
+
     const now = new Date()
     const diffInMs = now.getTime() - date.getTime()
     const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24))

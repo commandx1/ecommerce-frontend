@@ -74,6 +74,32 @@ describe("invoicesAPI.downloadInvoice contract", () => {
     })
   })
 
+  it("falls back instead of throwing when the UTF-8 filename is malformed percent-encoding", async () => {
+    // `decodeURIComponent` throws a URIError on a stray "%" or a truncated escape sequence. The
+    // PDF itself downloaded fine, so a malformed filename must degrade to the ascii fallback
+    // rather than turning a successful download into a rejected promise.
+    useInvoiceHandler({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="fatura.pdf"; filename*=UTF-8''fatura-%zz.pdf`,
+    })
+
+    const download = await invoicesAPI.downloadInvoice("order-1", "seller-1")
+
+    expect(download.fileName).toBe("fatura.pdf")
+    expect(download.blob.size).toBe(PDF_BYTES.length)
+  })
+
+  it("falls back to the generic name when both the UTF-8 filename is malformed and no ascii filename is present", async () => {
+    useInvoiceHandler({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": "attachment; filename*=UTF-8''broken-%.pdf",
+    })
+
+    await expect(invoicesAPI.downloadInvoice("order-7", "seller-1")).resolves.toMatchObject({
+      fileName: "invoice-order-7.pdf",
+    })
+  })
+
   it("tolerates a charset suffix on the content type when picking the extension", async () => {
     useInvoiceHandler({ "Content-Type": "application/pdf; charset=binary" })
 
@@ -123,9 +149,15 @@ describe("invoicesAPI.downloadInvoice contract", () => {
   })
 
   it.each([
+    // InvoiceService.java:56/65 -> InvoiceAccessDeniedException -> InvoiceExceptionHandler.java -> 403.
     [403, "You cannot download another vendor's invoice"],
+    // InvoiceService.java:75 -> InvoiceNotFoundException -> 404.
     [404, "Invoice not generated yet"],
-    [409, "Order is not paid"],
+    // InvoiceExceptionHandler.java maps InvoiceAlreadyExistsException to 409, but nothing in
+    // InvoiceService.java currently throws it -- kept here to pin the mapping if that ever
+    // changes, not because it's reachable today.
+    [409, "Invoice already exists for this order"],
+    // InvoiceService.java:147 -> InvoiceGenerationException -> 500.
     [500, "Invoice service unavailable"],
   ])("rejects with an ApiRequestError on %i", async (status, message) => {
     server.use(http.post("*/backend-api/invoices", () => HttpResponse.json({ message }, { status })))

@@ -328,11 +328,16 @@ function CreateProductPageContent() {
           accessToken,
           controller.signal,
         )
-        const normalized = response.content.map((item) => productsAPI.normalizeActiveProductSearchItem(item))
+        // A malformed 200 (missing/null/non-array `content`) must not reach a bare `.map` - that
+        // would throw inside this try block and surface as a raw JS error via the catch below
+        // ("Search error: Cannot read properties of undefined ...") instead of a real result or a
+        // clean status. Same defensive normalization for `number`/`last`, which drive pagination.
+        const rawContent = Array.isArray(response.content) ? response.content : []
+        const normalized = rawContent.map((item) => productsAPI.normalizeActiveProductSearchItem(item))
 
         setSearchResults((prev) => (options.append ? [...prev, ...normalized] : normalized))
-        setSearchResultsPage(response.number)
-        setHasMoreResults(!response.last)
+        setSearchResultsPage(typeof response.number === "number" ? response.number : page)
+        setHasMoreResults(response.last === false)
         setShowDropdown(true)
       } catch (error) {
         if (controller.signal.aborted) return
@@ -454,6 +459,7 @@ function CreateProductPageContent() {
         shipmentFee: userProduct.shipmentFee != null ? String(userProduct.shipmentFee) : "",
         heavyShippingSurcharge:
           userProduct.heavyShippingSurcharge != null ? String(userProduct.heavyShippingSurcharge) : "",
+        fulfillmentPolicy: userProduct.fulfillmentPolicy || "",
       })
 
       const coverPhoto = product.coverPhotoPath ? getFullImageUrl(product.coverPhotoPath) : null
@@ -526,6 +532,9 @@ function CreateProductPageContent() {
     setFormData(initialFormData)
     setAttributes([])
     setEditDiscount("")
+    // Land back on the first tab - otherwise starting a new product after clearing re-opens
+    // wherever the vendor last was (e.g. Media), showing an empty form with the wrong tab active.
+    setActiveTab("basic")
 
     // Clear file data and revoke URLs
     if (fileData.coverPhotoPreview) {
@@ -618,10 +627,43 @@ function CreateProductPageContent() {
     clearError(name)
   }
 
+  // Backend limits (ecommerce-api has NO multipart override, so Spring Boot 3.5.7 defaults apply):
+  //   spring.servlet.multipart.max-file-size    = 1MB  per file
+  //   spring.servlet.multipart.max-request-size = 10MB per request
+  // Enforcing them here turns an opaque backend 400 ("Maximum upload size exceeded") into a
+  // message that names the file and the limit. Raising the 1MB ceiling is a backend change -
+  // see BACKEND-HANDOFF.md §14; if it is raised, update these two constants to match.
+  const MAX_FILE_BYTES = 1024 * 1024
+  const MAX_REQUEST_BYTES = 10 * 1024 * 1024
+  const formatMb = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(bytes % (1024 * 1024) === 0 ? 0 : 1)}MB`
+  const oversizedFile = (file: File) => file.size > MAX_FILE_BYTES
+
   // Handle cover photo selection
   const handleCoverPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
+    if (file && oversizedFile(file)) {
+      showToast.error(
+        "Photo is too large",
+        `${file.name} is ${formatMb(file.size)}. The largest photo the server accepts is ${formatMb(MAX_FILE_BYTES)}.`,
+      )
+      e.target.value = ""
+      return
+    }
+    // The gallery handler below also guards the 10MB total, but only when *it* runs. A vendor who
+    // fills the gallery close to the ceiling first and then uses "Change" to swap the cover photo
+    // never passes through that handler, so the total must be checked here too - otherwise the
+    // request silently exceeds the server's 10MB-per-request limit and bounces with an opaque 400.
     if (file) {
+      const totalBytes = [file, ...fileData.photos].reduce((sum, f) => sum + f.size, 0)
+      if (totalBytes > MAX_REQUEST_BYTES) {
+        showToast.error(
+          "Photos are too large together",
+          `The server accepts up to ${formatMb(MAX_REQUEST_BYTES)} per upload. Remove a photo and try again.`,
+        )
+        e.target.value = ""
+        return
+      }
+
       // Revoke old preview URL to prevent memory leak
       if (fileData.coverPhotoPreview) {
         URL.revokeObjectURL(fileData.coverPhotoPreview)
@@ -633,6 +675,9 @@ function CreateProductPageContent() {
       }))
       clearError("coverPhoto")
     }
+    // Reset the input value so choosing the exact same file again (e.g. after picking the wrong
+    // one first) still fires a change event - browsers don't fire one when the value is unchanged.
+    e.target.value = ""
   }
 
   // Remove cover photo
@@ -653,6 +698,27 @@ function CreateProductPageContent() {
   // Handle additional photos selection
   const handlePhotosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
+    const tooBig = files.filter(oversizedFile)
+    if (tooBig.length > 0) {
+      showToast.error(
+        tooBig.length === 1 ? "Photo is too large" : "Some photos are too large",
+        `${tooBig.map((f) => f.name).join(", ")} — the largest photo the server accepts is ${formatMb(MAX_FILE_BYTES)}.`,
+      )
+      e.target.value = ""
+      return
+    }
+    const accepted = files.filter((file) => !oversizedFile(file))
+    const totalBytes = [fileData.coverPhoto, ...fileData.photos, ...accepted]
+      .filter((f): f is File => Boolean(f))
+      .reduce((sum, f) => sum + f.size, 0)
+    if (totalBytes > MAX_REQUEST_BYTES) {
+      showToast.error(
+        "Photos are too large together",
+        `The server accepts up to ${formatMb(MAX_REQUEST_BYTES)} per upload. Remove a photo and try again.`,
+      )
+      e.target.value = ""
+      return
+    }
     if (files.length > 0) {
       const newPreviews = files.map((file) => URL.createObjectURL(file))
       setFileData((prev) => ({
@@ -661,6 +727,9 @@ function CreateProductPageContent() {
         photosPreviews: [...prev.photosPreviews, ...newPreviews],
       }))
     }
+    // Reset the input value so re-selecting the same file(s) after removing them from the
+    // gallery still fires a change event - browsers don't fire one when the value is unchanged.
+    e.target.value = ""
   }
 
   // Remove a photo by index
@@ -732,6 +801,10 @@ function CreateProductPageContent() {
           newErrors.stock = "Stock is required"
         } else if (Number.isNaN(Number(formData.stock)) || Number(formData.stock) < 0) {
           newErrors.stock = "Stock must be a non-negative number"
+        } else if (!Number.isInteger(Number(formData.stock))) {
+          // Backend UserProduct.stock is an Integer; a decimal value fails JSON deserialization
+          // with an opaque 400 instead of the friendly validation message below.
+          newErrors.stock = "Stock must be a whole number"
         }
       }
 
@@ -751,6 +824,17 @@ function CreateProductPageContent() {
         newErrors.barcode = "Barcode must be a number"
       } else if (Number(formData.barcode) <= 0) {
         newErrors.barcode = "Barcode must be a positive number"
+      } else if (!Number.isInteger(Number(formData.barcode))) {
+        // Backend Product.barcode is a Long; a decimal value fails JSON deserialization
+        // with an opaque 400 instead of the friendly validation message below.
+        newErrors.barcode = "Barcode must be a whole number"
+      } else if (Number(formData.barcode) > Number.MAX_SAFE_INTEGER) {
+        // JS numbers only carry 53 bits of integer precision (~16 digits); Product.barcode is a
+        // 64-bit Long. A longer digit string still parses as a valid-looking integer but silently
+        // rounds to a different value, so the product would be created with the wrong barcode with
+        // no error shown anywhere. Real barcode formats (EAN-13, UPC-A, GTIN-14) top out at 14
+        // digits, well under this ceiling - this only catches mistyped/garbage input.
+        newErrors.barcode = "Barcode is too large to submit accurately"
       }
     }
 
@@ -771,6 +855,10 @@ function CreateProductPageContent() {
         newErrors.stock = "Stock is required"
       } else if (Number.isNaN(Number(formData.stock)) || Number(formData.stock) < 0) {
         newErrors.stock = "Stock must be a non-negative number"
+      } else if (!Number.isInteger(Number(formData.stock))) {
+        // Backend UserProduct.stock is an Integer; a decimal value fails JSON deserialization
+        // with an opaque 400 instead of the friendly validation message below.
+        newErrors.stock = "Stock must be a whole number"
       }
     }
 
@@ -868,13 +956,17 @@ function CreateProductPageContent() {
     return Object.keys(newErrors).length === 0
   }
 
-  // Validate the tab being left when moving forward; backward navigation is always allowed
+  // Validate the tab being left when moving forward; backward navigation is always allowed.
+  // A tab header click can jump forward across more than one tab (e.g. Basic -> Media), so every
+  // tab between the current one and the target - not just the active one - must be validated,
+  // otherwise a skipped tab's required fields go unchecked until the final submit.
   const tryLeaveTab = (to: TabKey) => {
     const fromIndex = TAB_ORDER.indexOf(activeTab)
     const toIndex = TAB_ORDER.indexOf(to)
 
     if (toIndex > fromIndex) {
-      const tabErrors = validateFields(TAB_FIELDS[activeTab])
+      const skippedFields = TAB_ORDER.slice(fromIndex, toIndex).flatMap((tab) => TAB_FIELDS[tab])
+      const tabErrors = validateFields(skippedFields)
       if (Object.keys(tabErrors).length > 0) {
         setErrors((prev) => ({ ...prev, ...tabErrors }))
         return
@@ -2069,7 +2161,7 @@ function CreateProductPageContent() {
                       >
                         <Upload className="w-10 h-10 text-text-muted mx-auto mb-3" />
                         <p className="text-text-secondary font-medium">Click to upload cover photo</p>
-                        <p className="text-text-muted text-sm mt-1">PNG, JPG, GIF up to 10MB</p>
+                        <p className="text-text-muted text-sm mt-1">PNG, JPG, GIF — up to 1MB each, 10MB in total</p>
                       </button>
                     ) : (
                       <div className="border-2 border-dashed border-border-soft rounded-lg p-6 w-full max-w-md">

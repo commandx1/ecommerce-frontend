@@ -7,9 +7,15 @@
   },
   "files": {
     "ignoreUnknown": true,
-    // Playwright run artefacts (traces, .last-run.json, html report) are generated
-    // output, not source - formatting them would fail `biome check .` after every e2e run.
-    "includes": ["**", "!test-results", "!playwright-report"]
+    // Generated run artefacts, not source - linting them fails `biome check .` after a run.
+    // - test-results / playwright-report: Playwright traces, .last-run.json, html report.
+    // - .stryker-tmp: Stryker copies the whole project (including this file) into per-run
+    //   sandboxes; Biome then reports "nested root configuration" and exits non-zero. A killed
+    //   or crashed mutation run leaves these behind, so the gate must not depend on cleanup.
+    //   The glob is deliberate: a run can be pointed at its own temp dir (.stryker-tmp-<name>)
+    //   to avoid colliding with a concurrent one, and those must be ignored too.
+    // - reports: mutation HTML/JSON output; the JSON alone exceeds Biome's 1 MiB file limit.
+    "includes": ["**", "!test-results", "!playwright-report", "!.stryker-tmp*", "!reports"]
   },
   "formatter": {
     "enabled": true,

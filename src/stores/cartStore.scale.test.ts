@@ -127,8 +127,10 @@ describe("useOrderSummary at 10,000 lines — totals and floating-point accumula
     // Volume discount kicks in above $2000 — this cart clears it comfortably.
     expect(result.current.subtotal).toBeGreaterThan(2000)
     expect(result.current.volumeDiscount).toBeCloseTo(expectedSubtotal * 0.05, 6)
+    // No address is set in this suite, so the tax estimate never fires and stays null (not yet
+    // estimated) — the total math treats that the same as $0, same as `useOrderSummary` itself.
     expect(result.current.total).toBeCloseTo(
-      expectedSubtotal - expectedSubtotal * 0.05 + result.current.shipping + result.current.tax,
+      expectedSubtotal - expectedSubtotal * 0.05 + result.current.shipping + (result.current.tax ?? 0),
       6,
     )
 

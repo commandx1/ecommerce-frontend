@@ -159,18 +159,19 @@ describe("Vendor ProductsPage — listing", () => {
   })
 
   /**
-   * SUSPICIOUS (page.tsx:1332-1338): the range start is `currentPage * pageSize + 1` with no
-   * guard for an empty result, so an empty catalog reads "Showing 1-0 of 0 products".
-   * Locking the current (wrong) output.
+   * Regression test for a fixed bug: the range start was `currentPage * pageSize + 1` with no
+   * guard for an empty result, so an empty catalog used to read "Showing 1-0 of 0 products".
+   * The counter is now hidden entirely once the catalog is confirmed empty, rather than
+   * showing a backwards range.
    */
-  it("renders a backwards range for an empty catalog", async () => {
+  it("hides the results counter for an empty catalog instead of showing a backwards range", async () => {
     serveFilter([], { totalElements: 0, totalPages: 0 })
 
     render(<ProductsPage />)
 
     await screen.findByText("No products found. Create your first product!")
-    expect(screen.getByText("1-0")).toBeInTheDocument()
-    expect(within(screen.getByText("1-0").closest("div") as HTMLElement).getByText("0")).toBeInTheDocument()
+    expect(screen.queryByText("1-0")).not.toBeInTheDocument()
+    expect(screen.queryByText(/Showing/)).not.toBeInTheDocument()
   })
 
   it("caps the shown range at the total element count on the last page", async () => {
@@ -181,15 +182,21 @@ describe("Vendor ProductsPage — listing", () => {
     expect(await screen.findByText("1-3")).toBeInTheDocument()
   })
 
-  it("falls back to an empty table when the products request fails", async () => {
+  /**
+   * Regression test for a fixed bug: a failed products request used to fall back to the same
+   * "No products found" empty state as a genuinely empty catalog, with no toast and no banner,
+   * so a vendor whose fetch errored out looked exactly like one with zero products. A failed
+   * load must now show a distinct "failed to load" banner with a retry action instead.
+   */
+  it("shows a distinct failed-to-load banner (not the empty-catalog message) when the products request fails", async () => {
     server.use(http.get("*/api/user-products/filter", () => HttpResponse.json({ message: "boom" }, { status: 500 })))
     vi.spyOn(console, "error").mockImplementation(() => {})
 
     render(<ProductsPage />)
 
-    expect(await screen.findByText("No products found. Create your first product!")).toBeInTheDocument()
-    // A failed load is silent: no toast, no error banner over the table.
-    expect(toastSpies.error).not.toHaveBeenCalled()
+    expect(await screen.findByText("Failed to load products. Please try again.")).toBeInTheDocument()
+    expect(screen.queryByText("No products found. Create your first product!")).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument()
   })
 
   /**
@@ -203,7 +210,7 @@ describe("Vendor ProductsPage — listing", () => {
 
     const { router } = render(<ProductsPage />)
 
-    expect(await screen.findByText("No products found. Create your first product!")).toBeInTheDocument()
+    expect(await screen.findByText("Failed to load products. Please try again.")).toBeInTheDocument()
     expect(useAuthStore.getState().isAuthenticated).toBe(true)
     expect(router.push).not.toHaveBeenCalledWith("/login")
   })

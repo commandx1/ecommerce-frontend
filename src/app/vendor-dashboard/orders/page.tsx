@@ -113,9 +113,13 @@ export default function VendorOrdersPage() {
           TAB_TO_FILTER[selectedTab],
           controller.signal,
         )
-        setOrders(response.orders)
-        setTotalPages(response.totalPages)
-        setTotalElements(response.totalElements)
+        // A malformed 200 (empty/partial body, wrong shape from a misbehaving proxy) parses fine
+        // as JSON but can leave `orders` missing - `orders-mobile-list.tsx` calls `orders.length`
+        // unconditionally (it renders in the DOM, just CSS-hidden on desktop), so an unguarded
+        // `undefined` here white-screens every vendor, not just mobile ones.
+        setOrders(Array.isArray(response.orders) ? response.orders : [])
+        setTotalPages(typeof response.totalPages === "number" ? response.totalPages : 0)
+        setTotalElements(typeof response.totalElements === "number" ? response.totalElements : 0)
       } catch {
         if (controller.signal.aborted) return
         setOrders([])
@@ -151,8 +155,12 @@ export default function VendorOrdersPage() {
         setQzInfo(infoParts || null)
 
         if (status.status === "connected" && status.printers.length > 0) {
-          setPrinters(status.printers)
-          setSelectedPrinter(status.printers[0] || "")
+          // Radix's <SelectItem> throws if given an empty-string value, which would crash the
+          // whole label modal if QZ ever reports a printer with a blank name. Drop those before
+          // they reach the printer picker.
+          const availablePrinters = status.printers.filter((printer) => printer.trim().length > 0)
+          setPrinters(availablePrinters)
+          setSelectedPrinter(availablePrinters[0] || "")
           setIsQzReady(true)
         } else {
           setIsQzReady(false)
@@ -232,8 +240,10 @@ export default function VendorOrdersPage() {
       setUberProcessedOrderIds((prev) => (prev.includes(order.orderId) ? prev : [...prev, order.orderId]))
       showToast.success("Uber request sent", response.message || "Uber delivery has been created.")
     } catch (error: unknown) {
-      const err = error as { message?: string }
-      showToast.error("Call Uber failed", err.message || "Uber delivery could not be created.")
+      // Match the other seller-action handlers: read the backend's message out of the response
+      // body first (axios's own generic "Request failed with status code N" was masking it here).
+      const apiErrorMessage = extractApiErrorMessage(error)
+      showToast.error("Call Uber failed", apiErrorMessage || "Uber delivery could not be created.")
     } finally {
       setProcessingOrderId(null)
     }
@@ -254,11 +264,15 @@ export default function VendorOrdersPage() {
 
     try {
       const response = await vendorOrdersAPI.cancelBySeller({ orderItemIds })
+      // A malformed 200 (proxy/gateway hiccup) can leave this field missing even though the
+      // backend service always sets it on every code path it controls - the wire is not the
+      // service.
+      const cancelledIds = Array.isArray(response.cancelledOrderItemIds) ? response.cancelledOrderItemIds : []
       setOrders((prev) =>
         prev.map((order) => ({
           ...order,
           orderItems: order.orderItems.map((orderItem) =>
-            response.cancelledOrderItemIds.includes(orderItem.id)
+            cancelledIds.includes(orderItem.id)
               ? { ...orderItem, status: OrderItemStatus.CANCEL_REQUESTED }
               : orderItem,
           ),
@@ -299,11 +313,13 @@ export default function VendorOrdersPage() {
     setReturnActionType("confirm")
     try {
       const response = await vendorOrdersAPI.sellerConfirmReturn({ orderItemIds: [item.id] })
+      // See handleCancelDuringDelivery: a malformed 200 can leave this field missing.
+      const confirmedIds = Array.isArray(response.orderItemIds) ? response.orderItemIds : []
       setOrders((prev) =>
         prev.map((order) => ({
           ...order,
           orderItems: order.orderItems.map((orderItem) =>
-            response.orderItemIds.includes(orderItem.id)
+            confirmedIds.includes(orderItem.id)
               ? {
                   ...orderItem,
                   returnRefundStatus: "APPROVED",
@@ -347,11 +363,13 @@ export default function VendorOrdersPage() {
         items: [{ orderItemId: pendingRejectReturnAction.orderItemId, returnRejectReason: reason }],
       })
 
+      // See handleCancelDuringDelivery: a malformed 200 can leave this field missing.
+      const rejectedIds = Array.isArray(response.orderItemIds) ? response.orderItemIds : []
       setOrders((prev) =>
         prev.map((order) => ({
           ...order,
           orderItems: order.orderItems.map((orderItem) =>
-            response.orderItemIds.includes(orderItem.id)
+            rejectedIds.includes(orderItem.id)
               ? {
                   ...orderItem,
                   returnRefundStatus: "REJECTED_BY_SELLER",
@@ -683,7 +701,10 @@ export default function VendorOrdersPage() {
                         onChange={(e) =>
                           setPrintOptions((prev) => ({
                             ...prev,
-                            copies: Number(e.target.value) || 1,
+                            // Keep the state in the same [1, 10] range the spinner advertises via
+                            // min/max — without this, a stray "-" or a fast keystroke landing
+                            // past the visible ceiling reached the print API unclamped.
+                            copies: Math.min(10, Math.max(1, Number(e.target.value) || 1)),
                           }))
                         }
                         className="w-20 rounded-lg border border-border-strong px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand/40"
@@ -840,7 +861,7 @@ export default function VendorOrdersPage() {
                 </div>
                 <div className="rounded-lg border border-border-soft bg-surface px-3 py-2.5">
                   <div className="text-xs uppercase tracking-wide text-text-muted">Delivery ID</div>
-                  <div className="break-all text-sm font-medium text-text-primary">{uberResult.deliveryId}</div>
+                  <div className="break-all text-sm font-medium text-text-primary">{uberResult.deliveryId || "—"}</div>
                 </div>
                 <div className="rounded-lg border border-border-soft bg-surface px-3 py-2.5">
                   <div className="text-xs uppercase tracking-wide text-text-muted">Shipping Price</div>
@@ -852,22 +873,28 @@ export default function VendorOrdersPage() {
 
               <div className="rounded-lg border border-border-soft bg-surface px-3 py-2.5">
                 <div className="mb-1 text-xs uppercase tracking-wide text-text-muted">Tracking URL</div>
-                <div className="break-all text-sm text-text-secondary">
-                  {uberResult.trackingUrl.length > 72
-                    ? `${uberResult.trackingUrl.slice(0, 72)}...`
-                    : uberResult.trackingUrl}
-                </div>
-                <div className="mt-3">
-                  <Link
-                    href={uberResult.trackingUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center rounded-full border border-brand/30 bg-brand/10 px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand/20"
-                  >
-                    Open Tracking
-                    <ExternalLink className="ml-1.5 h-3 w-3" />
-                  </Link>
-                </div>
+                {uberResult.trackingUrl ? (
+                  <>
+                    <div className="break-all text-sm text-text-secondary">
+                      {uberResult.trackingUrl.length > 72
+                        ? `${uberResult.trackingUrl.slice(0, 72)}...`
+                        : uberResult.trackingUrl}
+                    </div>
+                    <div className="mt-3">
+                      <Link
+                        href={uberResult.trackingUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center rounded-full border border-brand/30 bg-brand/10 px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand/20"
+                      >
+                        Open Tracking
+                        <ExternalLink className="ml-1.5 h-3 w-3" />
+                      </Link>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-sm text-text-secondary">Not available yet.</div>
+                )}
               </div>
             </div>
 

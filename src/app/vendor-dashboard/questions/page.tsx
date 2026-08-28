@@ -51,25 +51,29 @@ function QuestionCard({
   onAnswerDeleted,
 }: QuestionCardProps) {
   const cardId = useId()
-  const existingAnswer = question.answers[0] ?? null
-  const isMyAnswer = existingAnswer?.answererUserId === currentUserId
+  // A vendor writes at most one answer per question; find theirs (if any) among however many
+  // other vendors/answerers have also weighed in, instead of assuming it is always first.
+  const myAnswer = question.answers.find((answer) => answer.answererUserId === currentUserId) ?? null
 
   const [mode, setMode] = useState<"view" | "composing" | "editing">("view")
+  const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null)
   const [draftText, setDraftText] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deletingAnswerId, setDeletingAnswerId] = useState<string | null>(null)
 
   const startCompose = () => {
     setDraftText("")
     setMode("composing")
   }
-  const startEdit = () => {
-    setDraftText(existingAnswer?.answer ?? "")
+  const startEdit = (answer: ProductAnswerResponse) => {
+    setEditingAnswerId(answer.id)
+    setDraftText(answer.answer)
     setMode("editing")
   }
   const cancelEdit = () => {
     setDraftText("")
+    setEditingAnswerId(null)
     setMode("view")
   }
 
@@ -82,12 +86,13 @@ function QuestionCard({
         const created = await vendorQuestionsAPI.createAnswer({ productQuestionId: question.id, answer: trimmed })
         onAnswerCreated(question.id, created)
       } else {
-        if (!existingAnswer) return
-        const updated = await vendorQuestionsAPI.updateAnswer(existingAnswer.id, { answer: trimmed })
+        if (!editingAnswerId) return
+        const updated = await vendorQuestionsAPI.updateAnswer(editingAnswerId, { answer: trimmed })
         onAnswerUpdated(question.id, updated)
       }
       setMode("view")
       setDraftText("")
+      setEditingAnswerId(null)
     } catch {
       showToast.error("Failed to save answer", "Please try again.")
     } finally {
@@ -96,13 +101,16 @@ function QuestionCard({
   }
 
   const handleDeleteConfirmed = async () => {
-    if (!existingAnswer) return
+    if (!deletingAnswerId) return
     setIsDeleting(true)
     try {
-      await vendorQuestionsAPI.deleteAnswer(existingAnswer.id)
-      onAnswerDeleted(question.id, existingAnswer.id)
-      setShowDeleteConfirm(false)
-      setMode("view")
+      await vendorQuestionsAPI.deleteAnswer(deletingAnswerId)
+      onAnswerDeleted(question.id, deletingAnswerId)
+      if (editingAnswerId === deletingAnswerId) {
+        setMode("view")
+        setEditingAnswerId(null)
+      }
+      setDeletingAnswerId(null)
     } catch {
       showToast.error("Failed to delete answer", "Please try again.")
     } finally {
@@ -129,51 +137,91 @@ function QuestionCard({
           </p>
         </div>
 
-        <div className="border-t border-border-soft pt-4">
-          {mode === "view" && existingAnswer ? (
-            <div className="space-y-2">
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-success">Answer</p>
-                {isMyAnswer && (
-                  <div className="flex items-center gap-1">
+        <div className="border-t border-border-soft pt-4 space-y-4">
+          {question.answers.map((answer) => {
+            const isMine = answer.answererUserId === currentUserId
+            const isEditingThisAnswer = mode === "editing" && editingAnswerId === answer.id
+
+            if (isEditingThisAnswer) {
+              return (
+                <div key={answer.id} className="space-y-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Edit answer</p>
+                  <textarea
+                    rows={3}
+                    value={draftText}
+                    onChange={(e) => setDraftText(e.target.value)}
+                    placeholder="Type your answer here..."
+                    className="w-full resize-none rounded-xl border border-border-strong bg-surface px-3.5 py-2.5 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand/50 focus:ring-2 focus:ring-brand/20"
+                  />
+                  <div className="flex justify-end gap-2">
                     <button
                       type="button"
-                      onClick={startEdit}
-                      className="rounded-lg p-1.5 text-text-muted transition-colors hover:bg-surface-muted hover:text-text-secondary"
+                      onClick={cancelEdit}
+                      disabled={isSubmitting}
+                      className="flex items-center gap-1.5 rounded-xl border border-border-strong px-3.5 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-muted disabled:opacity-50"
                     >
-                      <Pencil className="h-3.5 w-3.5" />
+                      <X className="h-3.5 w-3.5" />
+                      Cancel
                     </button>
                     <button
                       type="button"
-                      onClick={() => setShowDeleteConfirm(true)}
-                      className="rounded-lg p-1.5 text-text-muted transition-colors hover:bg-danger/10 hover:text-danger"
+                      onClick={() => void handleSubmit()}
+                      disabled={isSubmitting || !draftText.trim()}
+                      className="flex items-center gap-1.5 rounded-xl bg-brand px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      {isSubmitting ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Send className="h-3.5 w-3.5" />
+                      )}
+                      {isSubmitting ? "Saving…" : "Save changes"}
                     </button>
                   </div>
-                )}
+                </div>
+              )
+            }
+
+            return (
+              <div key={answer.id} className="space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-success">Answer</p>
+                  {isMine && (
+                    <div className="flex items-center gap-1">
+                      {/* Icon-only controls need an accessible name of their own - the icon carries
+                          no text, so without this a screen-reader user hears only "button" (same
+                          class as F91/F112). Several answers can sit on one question, so the name
+                          says WHICH answer it acts on. */}
+                      <button
+                        type="button"
+                        aria-label="Edit your answer"
+                        onClick={() => startEdit(answer)}
+                        className="rounded-lg p-1.5 text-text-muted transition-colors hover:bg-surface-muted hover:text-text-secondary"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Delete your answer"
+                        onClick={() => setDeletingAnswerId(answer.id)}
+                        className="rounded-lg p-1.5 text-text-muted transition-colors hover:bg-danger/10 hover:text-danger"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm leading-relaxed text-text-primary">{answer.answer}</p>
+                <p className="text-xs text-text-muted">
+                  By <span className="font-medium text-text-secondary capitalize">{answer.answererName}</span>
+                  {answer.createdDate && <> · {formatRelativeDate(answer.createdDate)}</>}
+                </p>
               </div>
-              <p className="text-sm leading-relaxed text-text-primary">{existingAnswer.answer}</p>
-              <p className="text-xs text-text-muted">
-                By <span className="font-medium text-text-secondary capitalize">{existingAnswer.answererName}</span>
-                {existingAnswer.createdDate && <> · {formatRelativeDate(existingAnswer.createdDate)}</>}
-              </p>
-            </div>
-          ) : mode === "view" ? (
-            <button
-              id={`${cardId}-answer-btn`}
-              type="button"
-              onClick={startCompose}
-              className="flex items-center gap-2 rounded-xl border border-dashed border-border-strong px-4 py-2.5 text-sm font-medium text-text-muted transition-colors hover:border-brand/50 hover:bg-brand/5 hover:text-brand"
-            >
-              <Send className="h-3.5 w-3.5" />
-              Write an answer
-            </button>
-          ) : (
+            )
+          })}
+
+          {mode === "composing" ? (
             <div className="space-y-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">
-                {mode === "editing" ? "Edit answer" : "Your answer"}
-              </p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Your answer</p>
               <textarea
                 rows={3}
                 value={draftText}
@@ -198,16 +246,26 @@ function QuestionCard({
                   className="flex items-center gap-1.5 rounded-xl bg-brand px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-                  {isSubmitting ? "Saving…" : mode === "editing" ? "Save changes" : "Submit answer"}
+                  {isSubmitting ? "Saving…" : "Submit answer"}
                 </button>
               </div>
             </div>
-          )}
+          ) : mode === "view" && !myAnswer ? (
+            <button
+              id={`${cardId}-answer-btn`}
+              type="button"
+              onClick={startCompose}
+              className="flex items-center gap-2 rounded-xl border border-dashed border-border-strong px-4 py-2.5 text-sm font-medium text-text-muted transition-colors hover:border-brand/50 hover:bg-brand/5 hover:text-brand"
+            >
+              <Send className="h-3.5 w-3.5" />
+              Write an answer
+            </button>
+          ) : null}
         </div>
       </div>
       <ConfirmationModal
-        isOpen={showDeleteConfirm}
-        onClose={() => setShowDeleteConfirm(false)}
+        isOpen={deletingAnswerId !== null}
+        onClose={() => setDeletingAnswerId(null)}
         onConfirm={() => void handleDeleteConfirmed()}
         title="Delete answer"
         description="Are you sure you want to delete this answer? This action cannot be undone."
@@ -246,9 +304,14 @@ export default function VendorQuestionsPage() {
       setIsLoading(true)
       try {
         const response = await vendorQuestionsAPI.getSellerQuestions(page, PAGE_SIZE, filter)
-        setQuestions(response.content)
-        setTotalPages(response.totalPages)
-        setTotalElements(response.totalElements)
+        // A broken 200 body (missing/null/non-array `content`, or a question with a missing/
+        // non-array `answers`) must not white-screen the page - same class of bug as the vendor
+        // orders/brand-filter fixes (F77/F83). QuestionCard unconditionally calls
+        // `question.answers.find(...)` and `.map(...)`.
+        const content = Array.isArray(response.content) ? response.content : []
+        setQuestions(content.map((q) => ({ ...q, answers: Array.isArray(q.answers) ? q.answers : [] })))
+        setTotalPages(Number.isFinite(response.totalPages) ? response.totalPages : 0)
+        setTotalElements(Number.isFinite(response.totalElements) ? response.totalElements : 0)
       } catch {
         showToast.error("Failed to load questions", "Please refresh the page.")
         setQuestions([])

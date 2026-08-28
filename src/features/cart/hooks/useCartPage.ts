@@ -25,6 +25,7 @@ interface UseCartPageResult {
   hasBlockingItems: boolean
   isClearConfirmOpen: boolean
   isLicenseBlocked: boolean
+  licenseCheckFailed: boolean
   isTaxLoading: boolean
   items: CartItem[]
   sellerGroups: Record<string, CartSellerGroup>
@@ -48,9 +49,17 @@ export function useCartPage(): UseCartPageResult {
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false)
   const [pendingQuantities, setPendingQuantities] = useState<Record<string, number>>({})
   const [defaultAddressId, setDefaultAddressId] = useState<string | null>(null)
-  const [taxAmount, setTaxAmount] = useState(0)
+  // null = not yet estimated (no address/items) or the estimate call failed — distinct from a
+  // real $0 estimate the backend returned. `totals.tax` carries this through unchanged so the
+  // panel can render "calculated at checkout" instead of a misleading $0.00.
+  const [taxAmount, setTaxAmount] = useState<number | null>(null)
   const [isTaxLoading, setIsTaxLoading] = useState(false)
   const [hasValidLicense, setHasValidLicense] = useState(true)
+  // Distinct from `hasValidLicense === false`: the gate stays fail-closed either way, but
+  // "we could not check" and "you have no approved licence" need different copy. Telling a
+  // buyer whose licence IS approved to "add your licence" sends them to a settings page that
+  // looks fine and leaves them stuck with no idea why checkout is blocked.
+  const [licenseCheckFailed, setLicenseCheckFailed] = useState(false)
 
   const { schedule, cancel, cancelAll } = useDebouncedPerKeyCallback<string, number>({
     delayMs: QUANTITY_DEBOUNCE_MS,
@@ -109,7 +118,10 @@ export function useCartPage(): UseCartPageResult {
       heavyShipmentFee,
       totalShipmentFee,
       tax: taxAmount,
-      total: subtotal + totalShipmentFee + taxAmount,
+      // The real charge is computed and collected server-side, so this total is a display-only
+      // estimate. An unknown tax (null) is treated as 0 here so the number stays finite; the
+      // panel is responsible for telling the buyer tax is still to be added.
+      total: subtotal + totalShipmentFee + (taxAmount ?? 0),
     }
   }, [itemsWithPendingQuantity, taxAmount])
 
@@ -132,8 +144,11 @@ export function useCartPage(): UseCartPageResult {
       try {
         const licenses = await licenseAPI.getLicenses()
         setHasValidLicense(hasValidDentalLicense(licenses))
+        setLicenseCheckFailed(false)
       } catch (_error) {
+        // Stay fail-closed, but remember that this is an unverified state, not a known-missing one.
         setHasValidLicense(false)
+        setLicenseCheckFailed(true)
       }
     }
 
@@ -142,7 +157,7 @@ export function useCartPage(): UseCartPageResult {
 
   useEffect(() => {
     if (!defaultAddressId || itemsWithPendingQuantity.length === 0) {
-      setTaxAmount(0)
+      setTaxAmount(null)
       setIsTaxLoading(false)
       return
     }
@@ -153,20 +168,33 @@ export function useCartPage(): UseCartPageResult {
       0,
     )
 
+    // Backend: CartTaxEstimateRequest.shippingAmount is a Double (@NotNull @PositiveOrZero) — an
+    // unserializable shipping figure (NaN/Infinity) or a negative one can never be estimated, so
+    // skip the request instead of sending a value the backend would 400 on.
+    if (!Number.isFinite(shipping) || shipping < 0) {
+      setTaxAmount(null)
+      setIsTaxLoading(false)
+      return
+    }
+
     let isCancelled = false
     const fetchTaxEstimate = async () => {
       setIsTaxLoading(true)
       try {
         const estimate = await cartAPI.getTaxEstimate({
           addressId: defaultAddressId,
-          shippingAmount: String(shipping),
+          shippingAmount: shipping,
         })
         if (!isCancelled) {
-          setTaxAmount(estimate.taxAmount)
+          // The estimate is money the buyer reads: a non-numeric `taxAmount` from a malformed 200
+          // must fall through to "Calculated at checkout" rather than being stored, where it would
+          // string-concatenate into the total (100 + 5 + "5" -> "1055") and then be floored to
+          // $0.00 by formatCurrency (infra note #26, numeric form).
+          setTaxAmount(Number.isFinite(estimate.taxAmount) ? estimate.taxAmount : null)
         }
       } catch (_error) {
         if (!isCancelled) {
-          setTaxAmount(0)
+          setTaxAmount(null)
         }
       } finally {
         if (!isCancelled) {
@@ -329,6 +357,7 @@ export function useCartPage(): UseCartPageResult {
     hasBlockingItems,
     isClearConfirmOpen,
     isLicenseBlocked,
+    licenseCheckFailed,
     isTaxLoading,
     items: itemsWithPendingQuantity,
     sellerGroups,

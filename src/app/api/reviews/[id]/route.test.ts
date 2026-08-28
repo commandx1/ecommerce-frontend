@@ -51,7 +51,9 @@ describe("PUT /api/reviews/[id]", () => {
     expect(captured.url).toBe(`${BACKEND}/api/reviews/..%2Fusers%2Fme`)
   })
 
-  it("calls the backend even without an Authorization header", async () => {
+  // Same class as F40/F82 (product-questions, product-answers, reviews POST, user-products): an
+  // unauthenticated PUT must not reach the backend anonymously.
+  it("answers 401 and never calls the backend when there is no Authorization header", async () => {
     const captured = createCapture()
     server.use(
       http.put(ANY, ({ request }) => {
@@ -60,10 +62,24 @@ describe("PUT /api/reviews/[id]", () => {
       }),
     )
 
-    await PUT(jsonRequest("/api/reviews/rev-1", { rating: 1 }, { method: "PUT" }), routeParams({ id: "rev-1" }))
+    const response = await PUT(
+      jsonRequest("/api/reviews/rev-1", { rating: 1 }, { method: "PUT" }),
+      routeParams({ id: "rev-1" }),
+    )
 
-    expect(captured.count).toBe(1)
-    expect(captured.authorization).toBeNull()
+    expect(response.status).toBe(401)
+    expect(captured.count).toBe(0)
+  })
+
+  // Auth must be checked before the body is read (F19/F40/F82 pattern): an unauthenticated
+  // caller with a malformed body should get 401, not a 500 from a `request.json()` throw.
+  it("answers 401 (not 500) for a malformed body when there is no Authorization header", async () => {
+    const response = await PUT(
+      routeRequest("/api/reviews/rev-1", { method: "PUT", body: "not json" }),
+      routeParams({ id: "rev-1" }),
+    )
+
+    expect(response.status).toBe(401)
   })
 
   it.each([400, 403, 404, 500])("forwards the backend error payload and status %i", async (status) => {
@@ -102,6 +118,24 @@ describe("PUT /api/reviews/[id]", () => {
 })
 
 describe("DELETE /api/reviews/[id]", () => {
+  it("answers 401 and never calls the backend when there is no Authorization header", async () => {
+    const captured = createCapture()
+    server.use(
+      http.delete(ANY, ({ request }) => {
+        record(captured, request)
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+
+    const response = await DELETE(
+      routeRequest("/api/reviews/rev-1", { method: "DELETE" }),
+      routeParams({ id: "rev-1" }),
+    )
+
+    expect(response.status).toBe(401)
+    expect(captured.count).toBe(0)
+  })
+
   it("answers 204 with no body when the backend deletes the review", async () => {
     const captured = createCapture()
     server.use(

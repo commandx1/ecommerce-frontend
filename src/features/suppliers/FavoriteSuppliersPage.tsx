@@ -18,7 +18,12 @@ export default function FavoriteSuppliersPage() {
 
   useEffect(() => {
     getMyFavoriteVendors()
-      .then(setVendors)
+      // Array.isArray, not the raw response: `GET /vendors/favorites` is typed
+      // `List<VendorListItemDto>` (VendorController:44-49), but a malformed 200 - a partial body,
+      // a proxy hiccup - hands back something that is not an array. `vendors.some(...)` and
+      // `vendors.map(...)` below run unconditionally, so an unguarded value blanks the page
+      // (infra note #26 - the same root pattern found in nineteen other places this week).
+      .then((favorites) => setVendors(Array.isArray(favorites) ? favorites : []))
       .catch(() => setHasError(true))
       .finally(() => setIsLoading(false))
   }, [])
@@ -32,7 +37,7 @@ export default function FavoriteSuppliersPage() {
     } catch {
       showToast.error("Action failed", "Could not update favorites. Please try again.")
       const restored = await getMyFavoriteVendors().catch(() => null)
-      if (restored) setVendors(restored)
+      if (Array.isArray(restored)) setVendors(restored)
     }
   }
 

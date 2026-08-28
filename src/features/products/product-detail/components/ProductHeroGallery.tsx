@@ -1,6 +1,6 @@
 "use client"
 
-import { Heart, Search } from "lucide-react"
+import { Search } from "lucide-react"
 import { useRef } from "react"
 import { useImageMagnifier } from "../hooks/useImageMagnifier"
 import { useProductImageGallery } from "../hooks/useProductImageGallery"
@@ -22,14 +22,24 @@ const ProductHeroGallery = ({ title, sku, mainImage, thumbnailImages, badge }: P
 
   return (
     <div className="space-y-4">
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: onMouseMove/onMouseLeave here only
+          track cursor position for the hover magnifier - no keyboard equivalent is meaningful
+          (there's nothing to "activate"), so no ARIA widget role fits. `role="img"` used to sit
+          here to satisfy this rule, but it also wrapped the real "Toggle magnifier" `<button>`
+          below, which axe flags as `nested-interactive` (role="img" can't contain focusable
+          content). `role="group"`/"region" would satisfy the linter but add a fake landmark/group
+          semantic with no real grouping purpose, which is worse than an explicit ignore here. */}
       <div
         className="relative overflow-hidden rounded-4xl border border-border-soft bg-surface-elevated shadow-panel"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        role="img"
-        aria-label="Product image with magnifier"
       >
-        <div className="aspect-square relative p-4 sm:p-6 md:p-8">
+        {/* `role="img"` lives here instead, on the element that wraps ONLY the picture. An
+            element with role="img" isn't allowed to contain focusable/interactive content (axe
+            `nested-interactive`): AT treats its subtree as a single image, so a button inside it
+            becomes unreachable. Moving the role down here fixes that while keeping the exact
+            same visual layout - only the ARIA role/label attributes moved. */}
+        <div className="aspect-square relative p-4 sm:p-6 md:p-8" role="img" aria-label="Product image with magnifier">
           <LoadableImage
             ref={imageRef}
             src={selectedImage}
@@ -45,15 +55,6 @@ const ProductHeroGallery = ({ title, sku, mainImage, thumbnailImages, badge }: P
             <span className="rounded-full bg-success px-3 py-1 text-sm font-medium text-white">{badge}</span>
           </div>
         )}
-        <div className="absolute top-4 right-4">
-          <button
-            type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-border-soft bg-surface shadow-soft transition-colors hover:text-danger"
-            aria-label="Add to favorites"
-          >
-            <Heart className="h-5 w-5 text-text-secondary" fill="none" stroke="currentColor" />
-          </button>
-        </div>
         <div className="absolute bottom-4 right-4 hidden lg:block">
           <button
             type="button"

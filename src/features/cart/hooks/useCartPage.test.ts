@@ -464,6 +464,31 @@ describe("useCartPage", () => {
     // A 5xx from `GET /licenses` sets `hasValidLicense` to false, so a licence-gated cart cannot
     // reach checkout while the licence service is down. Safe default, but note it turns a backend
     // outage into a hard checkout block for every buyer holding a licence-gated item.
+    // Y3: fail-closed is kept, but the two causes are now distinguishable so the UI can stop
+    // telling an already-licensed buyer to "add your license" when the licence SERVICE is what
+    // broke. `licenseCheckFailed` must be false on the happy path and on a genuine "no licence".
+    it("flags the block as unverified when the licence lookup errors, not as a missing licence", async () => {
+      cartResponse = makeCart({ cartItems: [licensedItem()] })
+      licenseResponse = { status: 500, licenses: [] }
+      const { result } = await renderReadyCartPage()
+
+      await waitFor(() => {
+        expect(result.current.isLicenseBlocked).toBe(true)
+      })
+      expect(result.current.licenseCheckFailed).toBe(true)
+    })
+
+    it("does not flag an unverified check when the buyer genuinely has no approved licence", async () => {
+      cartResponse = makeCart({ cartItems: [licensedItem()] })
+      licenseResponse = { status: 200, licenses: [] }
+      const { result } = await renderReadyCartPage()
+
+      await waitFor(() => {
+        expect(result.current.isLicenseBlocked).toBe(true)
+      })
+      expect(result.current.licenseCheckFailed).toBe(false)
+    })
+
     it("fails closed when the licence lookup errors", async () => {
       cartResponse = makeCart({ cartItems: [licensedItem()] })
       licenseResponse = { status: 500, licenses: [] }
@@ -667,7 +692,58 @@ describe("useCartPage", () => {
       expect(result.current.isTaxLoading).toBe(false)
     })
 
-    it("treats a failed tax estimate as zero tax", async () => {
+    // Backend: CartTaxEstimateRequest.shippingAmount is a Double (@NotNull @PositiveOrZero), not a
+    // string. `String(shipping)` used to be sent instead, which only worked by accident.
+    it("sends shippingAmount as a number, not a string", async () => {
+      let capturedBody: unknown = null
+      cartResponse = makeCart({
+        cartItems: [
+          makeCartItem({
+            quantity: 2,
+            userProduct: makeCartUserProduct({ price: 10, shipmentFee: 4, heavyShippingSurcharge: 1 }),
+          }),
+        ],
+      })
+      server.use(
+        http.post("*/backend-api/cart/tax-estimate", async ({ request }) => {
+          capturedBody = await request.json()
+          return HttpResponse.json(makeTaxEstimate({ taxAmount: 7 }))
+        }),
+      )
+      const { result } = await renderReadyCartPage()
+
+      await waitFor(() => {
+        expect(result.current.totals.tax).toBe(7)
+      })
+
+      expect(capturedBody).toMatchObject({ shippingAmount: 10 })
+      expect(typeof (capturedBody as { shippingAmount: unknown }).shippingAmount).toBe("number")
+    })
+
+    // A malformed 200 can carry `taxAmount` as a non-number. Storing it would skip the
+    // "calculated at checkout" fallback and string-concatenate into the total, which
+    // formatCurrency then floors to $0.00 - the buyer reads a wrong number either way.
+    it.each([
+      ["a string", "5"],
+      ["null", null],
+      ["an object", {}],
+    ])("treats a non-numeric taxAmount (%s) as unestimated, not as a value", async (_label, taxAmount) => {
+      server.use(
+        http.post("*/backend-api/cart/tax-estimate", () =>
+          HttpResponse.json({ subtotal: 100, shippingAmount: 0, taxAmount, totalAmount: 100, currency: "usd" }),
+        ),
+      )
+      const { result } = await renderReadyCartPage()
+
+      await waitFor(() => {
+        expect(result.current.isTaxLoading).toBe(false)
+      })
+
+      expect(result.current.totals.tax).toBeNull()
+      expect(result.current.totals.total).toBe(result.current.totals.subtotal + result.current.totals.totalShipmentFee)
+    })
+
+    it("treats a failed tax estimate as unestimated (null), not zero", async () => {
       server.use(http.post("*/backend-api/cart/tax-estimate", () => new HttpResponse(null, { status: 500 })))
       const { result } = await renderReadyCartPage()
 
@@ -675,7 +751,9 @@ describe("useCartPage", () => {
         expect(result.current.isTaxLoading).toBe(false)
       })
 
-      expect(result.current.totals.tax).toBe(0)
+      // Not 0 — a real $0 estimate and "we couldn't estimate it" must stay distinguishable so the
+      // panel can show "calculated at checkout" instead of a misleading $0.00 tax line.
+      expect(result.current.totals.tax).toBeNull()
       expect(result.current.totals.total).toBe(result.current.totals.subtotal + result.current.totals.totalShipmentFee)
     })
   })

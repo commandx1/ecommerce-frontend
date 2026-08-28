@@ -225,37 +225,46 @@ describe("autoOrdersAPI error paths", () => {
     expect((error as { authHandled?: boolean }).authHandled).toBe(true)
   })
 
-  it("leaves a 403 for the caller to surface inline", async () => {
-    server.use(
-      http.patch("*/backend-api/auto-orders/:autoOrderId", () =>
-        HttpResponse.json({ message: "Not your auto order" }, { status: 403 }),
-      ),
-    )
+  it("returns a bodyless 404 for another buyer's auto order, not a 403", async () => {
+    // AutoOrderService.updateAutoOrder looks the row up with
+    // `autoOrderRepository.findByIdAndUserIdAndDeletedFalse(autoOrderId, userId)` -- there is no
+    // separate ownership check, so an auto order belonging to someone else looks identical to a
+    // missing one: EntityNotFoundException. AutoOrderController.updateAutoOrder only catches
+    // EntityNotFoundException and responds with `ResponseEntity.notFound().build()` -- no JSON
+    // body, and never a 403.
+    server.use(http.patch("*/backend-api/auto-orders/:autoOrderId", () => new HttpResponse(null, { status: 404 })))
 
     const error = await autoOrdersAPI.updateAutoOrder("auto-other", { active: true }).catch((caught: unknown) => caught)
 
-    expect((error as { response?: { status?: number } }).response?.status).toBe(403)
-    expect((error as { authHandled?: boolean }).authHandled).toBeUndefined()
+    expect((error as { response?: { status?: number } }).response?.status).toBe(404)
   })
 
-  it.each([
-    [404, "Auto order not found"],
-    [409, "The auto order card is no longer open to automatic payments"],
-    [500, "Internal server error"],
-  ])("rejects an update on %i with the backend message", async (status, message) => {
-    server.use(http.patch("*/backend-api/auto-orders/:autoOrderId", () => HttpResponse.json({ message }, { status })))
+  it("rejects an update on 400 when the auto order card is not open to automatic payments", async () => {
+    // AutoOrderService.validateBuyerCanRunAutoOrders throws AutoOrderException, which is not
+    // caught by AutoOrderController (only EntityNotFoundException is), so it propagates to the
+    // globally-registered OrderExceptionHandler, which maps AutoOrderException to 400. There is
+    // no 409 or 500 mapping for this endpoint -- every non-404 failure is 400.
+    server.use(
+      http.patch("*/backend-api/auto-orders/:autoOrderId", () =>
+        HttpResponse.json(
+          {
+            message:
+              "You need a saved card that is selected for auto orders and open to automatic payments before activating an auto order.",
+          },
+          { status: 400 },
+        ),
+      ),
+    )
 
-    await expect(autoOrdersAPI.updateAutoOrder("auto-1", { quantity: 2 })).rejects.toMatchObject({
-      response: { status, data: { message } },
+    await expect(autoOrdersAPI.updateAutoOrder("auto-1", { active: true })).rejects.toMatchObject({
+      response: { status: 400 },
     })
   })
 
-  it("rejects deleting an auto order that is already gone", async () => {
-    server.use(
-      http.delete("*/backend-api/auto-orders/:autoOrderId", () =>
-        HttpResponse.json({ message: "Auto order not found" }, { status: 404 }),
-      ),
-    )
+  it("rejects deleting an auto order that is already gone with a bodyless 404", async () => {
+    // AutoOrderController.deleteAutoOrder: `catch (EntityNotFoundException e) { return
+    // ResponseEntity.notFound().build(); }` -- no JSON body.
+    server.use(http.delete("*/backend-api/auto-orders/:autoOrderId", () => new HttpResponse(null, { status: 404 })))
 
     await expect(autoOrdersAPI.deleteAutoOrder("auto-gone")).rejects.toMatchObject({ response: { status: 404 } })
   })

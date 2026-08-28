@@ -39,6 +39,22 @@ beforeEach(() => {
 })
 
 describe("getMyFavoriteVendorIds / getMyFavoriteVendors contract", () => {
+  /**
+   * Infra note #26: a malformed 200 is not always null/undefined - it can be a wrong-typed
+   * truthy value that slips past `||`/`??` and reaches `.length`/`.map()`/`.some()` in the UI,
+   * blanking the page. Normalising here protects every call site at once.
+   */
+  it.each([
+    ["an object", { nope: true }],
+    ["a string", "not-a-list"],
+    ["a number", 7],
+    ["null", null],
+  ])("%s in place of the list degrades to an empty array", async (_label, body) => {
+    server.use(http.get("*/backend-api/vendors/favorite-ids", () => HttpResponse.json(body)))
+
+    await expect(getMyFavoriteVendorIds()).resolves.toEqual([])
+  })
+
   it("returns the favorite id list", async () => {
     const ids = await getMyFavoriteVendorIds()
 

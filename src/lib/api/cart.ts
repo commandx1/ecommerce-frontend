@@ -39,7 +39,10 @@ export interface Cart {
 
 export interface TaxEstimatePayload {
   addressId: string
-  shippingAmount: string
+  // Backend: CartTaxEstimateRequest.shippingAmount is a Double (@NotNull @PositiveOrZero) — send
+  // an actual number, not a string. Callers must guard for Number.isFinite(...) && >= 0 before
+  // calling this (an unserializable amount like NaN should skip the request, not be coerced).
+  shippingAmount: number
 }
 
 export interface TaxEstimate {

@@ -24,13 +24,10 @@ interface NavbarProps {
   } | null
 }
 
-const NAV_LINKS = [
-  { href: "/top-deals", label: "Top Deals" },
-  { href: "/vendors", label: "Vendors" },
-  { href: "/equipment", label: "Equipment" },
-  { href: "/lab-services", label: "Lab Services" },
-  { href: "/resources", label: "Resources" },
-]
+// Only routes that exist. Top Deals, Equipment, Lab Services and Resources were listed here
+// with no `src/app` route, no rewrite and no proxy entry behind them, so four of the five items
+// in the site's main navigation 404'd on click. Re-add each one WITH its page, not before.
+const NAV_LINKS = [{ href: "/vendors", label: "Vendors" }]
 
 const Navbar = ({ initialAuthState }: NavbarProps) => {
   const router = useRouter()
@@ -137,6 +134,11 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
               >
                 <span className="flex h-9 w-9 items-center justify-center rounded-full border border-border-soft bg-surface sm:hidden">
                   <User className="w-4 h-4" />
+                  {/* The visible "Hello, Sign In" label is `hidden sm:block`, so on mobile this
+                      button was icon-only with no accessible name at all. Scoped to the same
+                      `sm:hidden` wrapper so the desktop name still comes from the visible text
+                      (WCAG 2.5.3 Label in Name) instead of being duplicated. */}
+                  <span className="sr-only">Sign in</span>
                 </span>
                 <span className="hidden sm:block">
                   <span className="block text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">

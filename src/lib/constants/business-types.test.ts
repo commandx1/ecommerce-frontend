@@ -27,8 +27,22 @@ describe("BUSINESS_TYPE_LABELS", () => {
 })
 
 describe("BUSINESS_TYPE_OPTIONS", () => {
-  it("has one option per business type value", () => {
-    expect(BUSINESS_TYPE_OPTIONS).toHaveLength(Object.values(BUSINESS_TYPES).length)
+  // BUSINESS_TYPES still carries all 15 backend values, but the register form deliberately
+  // offers only two of them: commit 1fd86af commented the other 13 out of BUSINESS_TYPE_OPTIONS.
+  // The two lists are therefore NOT expected to be the same length — asserting the exact
+  // shortlist is what keeps an accidental re-open (or a further trim) visible.
+  it("offers only the two business types the register form still exposes", () => {
+    expect(BUSINESS_TYPE_OPTIONS).toHaveLength(2)
+    expect(BUSINESS_TYPE_OPTIONS.map((option) => option.value)).toEqual([
+      BUSINESS_TYPES.DENTAL_PRACTICE,
+      BUSINESS_TYPES.PERSONAL_CUSTOMER,
+    ])
+  })
+
+  it("does not offer the commented-out business types", () => {
+    const offered = new Set<string>(BUSINESS_TYPE_OPTIONS.map((option) => option.value))
+    expect(offered.has(BUSINESS_TYPES.EDUCATIONAL_OR_GOVERNMENT_DENTAL_FACILITY)).toBe(false)
+    expect(offered.has(BUSINESS_TYPES.OTHER)).toBe(false)
   })
 
   it("starts with Dental Practice", () => {

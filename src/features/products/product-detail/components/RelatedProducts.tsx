@@ -21,7 +21,8 @@ const RelatedProducts = ({ currentProductId }: RelatedProductsProps) => {
         className="mb-8"
         actions={
           <Link
-            href="/categories/imaging-equipment"
+            // /categories/** is not a route; the catalogue filters by category instead.
+            href="/products?category=imaging"
             className="flex items-center font-medium text-brand hover:underline"
           >
             View All Imaging Equipment

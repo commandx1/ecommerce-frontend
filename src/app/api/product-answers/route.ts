@@ -4,15 +4,17 @@ import { serverRequest } from "@/lib/api/server-request"
 
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("authorization")
+    const authHeader = request.headers.get("Authorization")
+
+    if (!authHeader) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    }
+
     const body = await request.json()
 
     const headers: HeadersInit = {
       "Content-Type": "application/json",
-    }
-
-    if (authHeader) {
-      headers.Authorization = authHeader
+      Authorization: authHeader,
     }
 
     const response = await serverRequest(`/api/product-answers`, {

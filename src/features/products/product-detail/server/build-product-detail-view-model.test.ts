@@ -155,4 +155,42 @@ describe("buildProductDetailViewModel", () => {
     const vm = buildProductDetailViewModel("abcdef1234567890", data, null)
     expect(vm.questions).toBe(emptyQuestions)
   })
+
+  // C axis: a malformed 200 body sending `userProducts` as something other than an array
+  // must not crash the SSR render of the whole product page. Same class as F77/F83/F99/F101/F104
+  // — `|| []` only catches null/undefined, not a wrong-typed truthy value.
+  describe("survives a malformed userProducts field (C axis)", () => {
+    it.each([
+      ["null", null],
+      ["an object instead of an array", {}],
+      ["a string instead of an array", "not-an-array"],
+      ["a number instead of an array", 42],
+    ])("defaults vendors/suppliers to empty when userProducts is %s", (_label, badUserProducts) => {
+      const data = {
+        productData: {
+          product: { id: "abcdef1234567890", name: "Item", price: 10 },
+          userProducts: badUserProducts,
+        },
+        questions: emptyQuestions,
+      } as unknown as ProductDetailPageData
+
+      let vm: ReturnType<typeof buildProductDetailViewModel> | undefined
+      expect(() => {
+        vm = buildProductDetailViewModel("abcdef1234567890", data, null)
+      }).not.toThrow()
+
+      expect(vm?.vendors).toEqual([])
+      expect(vm?.suppliers).toEqual([])
+      expect(vm?.bestPriceVendorUserProductId).toBeNull()
+    })
+  })
+
+  // Impossible per backend code (not written): CustomerUserProductResponseDto.price/stock are
+  // primitive `double`/`int` on the Java side, so a genuine array element can never carry a
+  // null/undefined price or stock — only the array shape itself is worth guarding.
+
+  it("does not crash when a photoPhats value is a non-iterable truthy object", () => {
+    const data = makeData({ photoPhats: {} as unknown as string[] })
+    expect(() => buildProductDetailViewModel("abcdef1234567890", data, null)).not.toThrow()
+  })
 })

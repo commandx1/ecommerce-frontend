@@ -194,7 +194,12 @@ describe("cartAPI.getCart contract", () => {
 })
 
 describe("cartAPI.getTaxEstimate contract", () => {
-  it("sends the shipping amount as a string and returns numeric money fields", async () => {
+  // Backend: CartTaxEstimateRequest.java:15-16 declares `shippingAmount` as `Double` (not a
+  // string) with `@NotNull @PositiveOrZero`. Sending a string here used to work by accident when
+  // the value happened to parse cleanly, but `String(NaN)` -> `"NaN"` and Jackson cannot bind
+  // that onto a Double at all, so a bad caller-side computation turned into a guaranteed 400
+  // instead of the estimate being skipped client-side. The wire payload must be a real number.
+  it("sends the shipping amount as a number and returns numeric money fields", async () => {
     let capturedTaxBody: unknown = null
     server.use(
       http.post("*/backend-api/cart/tax-estimate", async ({ request }) => {
@@ -203,10 +208,9 @@ describe("cartAPI.getTaxEstimate contract", () => {
       }),
     )
 
-    const estimate = await cartAPI.getTaxEstimate({ addressId: "addr-1", shippingAmount: "10.00" })
+    const estimate = await cartAPI.getTaxEstimate({ addressId: "addr-1", shippingAmount: 10 })
 
-    // `shippingAmount` crosses the wire as a decimal string to avoid float rounding.
-    expect(capturedTaxBody).toEqual({ addressId: "addr-1", shippingAmount: "10.00" })
+    expect(capturedTaxBody).toEqual({ addressId: "addr-1", shippingAmount: 10 })
     expect(typeof estimate.subtotal).toBe("number")
     expect(typeof estimate.taxAmount).toBe("number")
     expect(estimate.taxAmount).toBe(8.5)
@@ -221,51 +225,92 @@ describe("cartAPI.getTaxEstimate contract", () => {
       ),
     )
 
-    const estimate = await cartAPI.getTaxEstimate({ addressId: "addr-1", shippingAmount: "10" })
+    const estimate = await cartAPI.getTaxEstimate({ addressId: "addr-1", shippingAmount: 10 })
 
     // Tax exemption is resolved entirely on the backend — the request carries no exemption flag.
     expect(estimate.taxAmount).toBe(0)
     expect(estimate.totalAmount).toBe(110)
   })
 
-  it.each([
-    [400, "Shipping amount is invalid"],
-    [404, "Address not found"],
-    [500, "Tax provider unavailable"],
-  ])("rejects on %i", async (status, message) => {
-    server.use(http.post("*/backend-api/cart/tax-estimate", () => HttpResponse.json({ message }, { status })))
+  it("rejects on 400 with a field-error body when shippingAmount is negative", async () => {
+    // CartTaxEstimateRequest.java:15-16 `@NotNull @PositiveOrZero Double shippingAmount` -- a bean
+    // validation failure throws MethodArgumentNotValidException, which
+    // GlobalExceptionHandler.handleValidationExceptions maps to 400 with a `{ field: message }`
+    // map body, not the `{ message }` shape the cart package's own exception handler uses.
+    server.use(
+      http.post("*/backend-api/cart/tax-estimate", () =>
+        HttpResponse.json({ shippingAmount: "must be greater than or equal to 0" }, { status: 400 }),
+      ),
+    )
 
-    await expect(cartAPI.getTaxEstimate({ addressId: "addr-1", shippingAmount: "10" })).rejects.toMatchObject({
-      response: { status, data: { message } },
+    await expect(cartAPI.getTaxEstimate({ addressId: "addr-1", shippingAmount: -10 })).rejects.toMatchObject({
+      response: { status: 400, data: { shippingAmount: "must be greater than or equal to 0" } },
+    })
+  })
+
+  it("rejects on 403 when the address does not belong to the buyer", async () => {
+    // CartService.java:227-229 `addressRepository.findByIdAndUserId(...).orElseThrow(() -> new
+    // AddressAccessDeniedException(...))` -- CartExceptionHandler.java maps
+    // AddressAccessDeniedException to 403, not 404.
+    server.use(
+      http.post("*/backend-api/cart/tax-estimate", () =>
+        HttpResponse.json({ message: "Address not found or does not belong to the user: addr-1" }, { status: 403 }),
+      ),
+    )
+
+    await expect(cartAPI.getTaxEstimate({ addressId: "addr-1", shippingAmount: 10 })).rejects.toMatchObject({
+      response: { status: 403 },
+    })
+  })
+
+  it("rejects on 502 when the tax provider call fails", async () => {
+    // CartService.java:285 `throw new TaxCalculationException(...)` -- CartExceptionHandler.java
+    // maps TaxCalculationException to 502 (HttpStatus.BAD_GATEWAY), not 500.
+    server.use(
+      http.post("*/backend-api/cart/tax-estimate", () =>
+        HttpResponse.json({ message: "Failed to calculate tax: Stripe unavailable" }, { status: 502 }),
+      ),
+    )
+
+    await expect(cartAPI.getTaxEstimate({ addressId: "addr-1", shippingAmount: 10 })).rejects.toMatchObject({
+      response: { status: 502 },
     })
   })
 })
 
 describe("cartAPI write error paths", () => {
-  it("rejects with 409 when the requested quantity exceeds stock", async () => {
+  it("rejects with 400 when the product is entirely out of stock", async () => {
+    // CartService.java:302 `validateUserProduct` only checks `userProduct.getStock() == 0` --
+    // there is no per-request "requested quantity exceeds remaining stock" check anywhere in
+    // createCartItem/updateCartItem, so a quantity that merely exceeds stock is accepted as-is.
+    // The only stock rejection is zero stock, and UserProductOutOfStockException is mapped to 400
+    // by CartExceptionHandler.java, not 409.
     server.use(
       http.put("*/backend-api/cart/items", () =>
-        HttpResponse.json({ message: "Only 3 left in stock" }, { status: 409 }),
+        HttpResponse.json({ message: "The product is out of stock" }, { status: 400 }),
       ),
     )
 
     await expect(cartAPI.updateItemQuantity("up-1", 99)).rejects.toMatchObject({
-      response: { status: 409, data: { message: "Only 3 left in stock" } },
+      response: { status: 400, data: { message: "The product is out of stock" } },
     })
   })
 
-  it("rejects with 403 when the buyer lacks the required dental license", async () => {
+  it("rejects with 400 when the product has been deactivated", async () => {
+    // CartService.createCartItem has no dental-license check at all -- that validation only
+    // happens later, at order creation time (OrderCreationService.java:670-684
+    // `validateDentalLicenseRequirement`), never when adding an item to the cart. The only
+    // reachable addItem error besides "not found" is UserProductNotActiveException (400),
+    // thrown by validateUserProduct (CartService.java:305).
     server.use(
       http.post("*/backend-api/cart/items", () =>
-        HttpResponse.json({ message: "A dental license is required for this product" }, { status: 403 }),
+        HttpResponse.json({ message: "The product is not active" }, { status: 400 }),
       ),
     )
 
     const error = await cartAPI.addItem("up-1", 1).catch((caught: unknown) => caught)
 
-    expect((error as { response?: { status?: number } }).response?.status).toBe(403)
-    // 403 is a business-rule rejection, so the session is left intact.
-    expect((error as { authHandled?: boolean }).authHandled).toBeUndefined()
+    expect((error as { response?: { status?: number } }).response?.status).toBe(400)
   })
 
   it("rejects with 404 when removing an item that is no longer in the cart", async () => {

@@ -12,7 +12,7 @@ const AvailabilityFilter = () => {
   return (
     <div className="border-b border-border-soft p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-text-primary">Availability</h3>
+        <h2 className="text-lg font-semibold text-text-primary">Availability</h2>
         {isFiltered && (
           <button
             type="button"

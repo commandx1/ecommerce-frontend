@@ -27,6 +27,15 @@ const notificationIconMap: Record<NotificationTone, ReactNode> = {
   error: <CircleX className="mt-0.5 h-5 w-5 shrink-0 text-danger" />,
 }
 
+// Error and warning tones interrupt the user and must be announced immediately;
+// info and success tones are advisory and only need a polite live-region update.
+const notificationRoleMap: Record<NotificationTone, "alert" | "status"> = {
+  info: "status",
+  success: "status",
+  warning: "alert",
+  error: "alert",
+}
+
 export default function NotificationCard({
   tone = "info",
   title,
@@ -35,8 +44,14 @@ export default function NotificationCard({
   className,
   children,
 }: NotificationCardProps) {
+  const role = notificationRoleMap[tone]
+
   return (
-    <div className={cn("rounded-xl border p-4", notificationStyleMap[tone], className)}>
+    <div
+      role={role}
+      aria-live={role === "alert" ? "assertive" : "polite"}
+      className={cn("rounded-xl border p-4", notificationStyleMap[tone], className)}
+    >
       <div className="flex items-start gap-3">
         {icon ?? notificationIconMap[tone]}
         <div className="min-w-0">

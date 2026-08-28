@@ -115,7 +115,9 @@ export default function ProductReviews({
     }
 
   // The backend already scoped this page to the active filter, so no client-side filtering.
-  const reviews = reviewsData.content || []
+  // Array.isArray, not `||`: a malformed 200 body can send `content` as a truthy non-array
+  // (object, string), which `||` lets through and every .filter/.reduce/.map below crashes on.
+  const reviews = Array.isArray(reviewsData.content) ? reviewsData.content : []
   const reviewCountLabel = reviewsData.totalElements
   const averageRating = reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.star, 0) / reviews.length : 0
 
@@ -155,7 +157,13 @@ export default function ProductReviews({
           <div className="mb-8 flex flex-wrap items-center gap-3">
             <span className="text-sm font-medium text-text-secondary">Show reviews for:</span>
             <Select value={activeFilter} onValueChange={handleFilterChange} disabled={isLoading}>
-              <SelectTrigger className="h-9 w-full rounded-full border-border-soft bg-surface px-4 py-2 shadow-soft sm:w-72">
+              {/* Static, not hydration-dependent: Radix only fills the trigger's own text with the
+                  selected option client-side, so before that the button has no accessible name at
+                  all (axe `button-name`) - same root cause and fix as F112 (SortSelect). */}
+              <SelectTrigger
+                aria-label="Filter reviews by vendor"
+                className="h-9 w-full rounded-full border-border-soft bg-surface px-4 py-2 shadow-soft sm:w-72"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -205,7 +213,11 @@ export default function ProductReviews({
               <SurfaceCard key={review.id} className="p-5 sm:p-8">
                 <div className="flex items-start space-x-4">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand text-primary-foreground">
-                    <span className="text-lg font-semibold">{review.username.charAt(0).toUpperCase()}</span>
+                    <span className="text-lg font-semibold">
+                      {typeof review.username === "string" && review.username.length > 0
+                        ? review.username.charAt(0).toUpperCase()
+                        : "?"}
+                    </span>
                   </div>
                   <div className="flex-1">
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-2">

@@ -18,10 +18,22 @@ const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }:
 
   return (
     <tr
-      className={`cursor-pointer text-text-primary transition-colors ${
+      className={`cursor-pointer text-text-primary transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand focus-visible:-outline-offset-2 ${
         isSelected ? "bg-accent/80 shadow-[inset_4px_0_0_0_var(--brand)]" : "hover:bg-surface-muted/70"
       }`}
       onClick={() => onSelect(supplier)}
+      tabIndex={0}
+      // `aria-current`, not `aria-selected`: the latter is only allowed on a row inside a
+      // grid/treegrid, and this is a plain <table> (SupplierComparison.tsx) - axe reports it as
+      // `aria-allowed-attr`. `aria-current` carries the same "this is the one in effect" meaning
+      // and is valid on any element.
+      aria-current={isSelected}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault()
+          onSelect(supplier)
+        }
+      }}
     >
       <td className="px-6 py-4">
         <div className="flex items-center justify-center space-x-4">
@@ -40,7 +52,10 @@ const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }:
             <div className="flex items-center space-x-2">
               <div className="font-semibold text-text-primary">{supplier.name}</div>
               {isBestSeller && (
-                <span className="whitespace-nowrap rounded-full bg-warning/14 px-2 py-0.5 text-xs font-semibold text-warning">
+                // `text-warning-strong`, not `text-warning`: text on its own tint needs a darker
+                // foreground for WCAG AA (axe `color-contrast` measured 1.93:1 here) - see the
+                // `--warning-strong` comment in globals.css.
+                <span className="whitespace-nowrap rounded-full bg-warning/14 px-2 py-0.5 text-xs font-semibold text-warning-strong">
                   Best Seller
                 </span>
               )}

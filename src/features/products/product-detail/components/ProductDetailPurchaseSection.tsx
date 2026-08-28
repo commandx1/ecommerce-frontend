@@ -58,7 +58,6 @@ export default function ProductDetailPurchaseSection({ viewModel }: ProductDetai
         warranty: "0",
         shipping: "0",
         subtotal: String(unitPrice),
-        tax: "0",
         total: String(unitPrice),
       }}
       suppliers={viewModel.suppliers}

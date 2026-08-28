@@ -15,6 +15,7 @@ export default function AddressAutocomplete({ onSelect, selectedAddress, error }
   const [predictions, setPredictions] = useState<Array<{ place_id: string; description: string }>>([])
   const [isLoading, setIsLoading] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [searchError, setSearchError] = useState<string | null>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -41,10 +42,12 @@ export default function AddressAutocomplete({ onSelect, selectedAddress, error }
     if (searchQuery.length < 3) {
       setPredictions([])
       setShowSuggestions(false)
+      setSearchError(null)
       return
     }
 
     setIsLoading(true)
+    setSearchError(null)
     try {
       const results = await searchPlaces(searchQuery)
       setPredictions(results)
@@ -52,6 +55,12 @@ export default function AddressAutocomplete({ onSelect, selectedAddress, error }
     } catch (err) {
       console.error("Error searching places:", err)
       setPredictions([])
+      setShowSuggestions(false)
+      // Without this the buyer sees no suggestions and no explanation - they can't tell an
+      // outage from having typed the wrong thing, and the Save button below stays disabled
+      // forever with no clue why. Surfacing it lets them understand and retry (once Places
+      // recovers, typing again re-triggers a search) instead of silently getting stuck.
+      setSearchError("We couldn't search for addresses right now. Please try again in a moment.")
     } finally {
       setIsLoading(false)
     }
@@ -72,6 +81,7 @@ export default function AddressAutocomplete({ onSelect, selectedAddress, error }
 
   const handleSelectPlace = async (placeId: string, description: string) => {
     setIsLoading(true)
+    setSearchError(null)
     try {
       const addressDetails = await getPlaceDetails(placeId)
       onSelect(addressDetails)
@@ -79,6 +89,7 @@ export default function AddressAutocomplete({ onSelect, selectedAddress, error }
       setShowSuggestions(false)
     } catch (err) {
       console.error("Error fetching place details:", err)
+      setSearchError("We couldn't load that address's details. Please try selecting it again.")
     } finally {
       setIsLoading(false)
     }
@@ -115,18 +126,34 @@ export default function AddressAutocomplete({ onSelect, selectedAddress, error }
           </svg>
         </div>
       )}
+      {/* A listbox is not a list: an interactive ARIA role on <ul>/<li> is invalid, so the
+          container and its rows are plain elements that carry the roles themselves. Each
+          suggestion is a real <button> so keyboard users can Tab to it and press Enter. */}
       {showSuggestions && predictions.length > 0 && (
-        <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+        <div
+          role="listbox"
+          aria-label="Address suggestions"
+          className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto"
+        >
           {predictions.map((prediction) => (
-            <li
-              key={prediction.place_id}
-              onClick={() => handleSelectPlace(prediction.place_id, prediction.description)}
-              className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
-            >
-              <div className="font-medium text-gray-900">{prediction.description}</div>
-            </li>
+            <div key={prediction.place_id} className="border-b border-gray-100 last:border-b-0">
+              <button
+                type="button"
+                role="option"
+                aria-selected={false}
+                onClick={() => handleSelectPlace(prediction.place_id, prediction.description)}
+                className="block w-full px-4 py-2 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+              >
+                <div className="font-medium text-gray-900">{prediction.description}</div>
+              </button>
+            </div>
           ))}
-        </ul>
+        </div>
+      )}
+      {searchError && (
+        <p role="alert" className="text-red-500 text-sm mt-1">
+          {searchError}
+        </p>
       )}
       {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
     </div>

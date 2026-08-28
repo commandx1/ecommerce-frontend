@@ -61,6 +61,28 @@ describe("ProductListingClient", () => {
     vi.restoreAllMocks()
   })
 
+  // A11y: `ProductListingHeader`'s `<h1>Dental Products</h1>` used to be
+  // followed directly by the filter panel's `<h3>` section titles (mobile
+  // filters render before it, the desktop sidebar right after it - both are
+  // in the DOM at once, see infra note #18), an h1 -> h3 level skip. The
+  // filter headings were promoted to h2 so no forward jump exceeds 1, no
+  // matter how mobile/desktop duplication interleaves them.
+  it("has exactly one h1 and no forward heading-level skip", () => {
+    renderListing()
+
+    const h1s = screen.getAllByRole("heading", { level: 1 })
+    expect(h1s).toHaveLength(1)
+    expect(h1s[0]).toHaveTextContent("Dental Products")
+
+    const levels = screen
+      .getAllByRole("heading")
+      .map((el) => Number(el.tagName[1]))
+      .filter((level) => !Number.isNaN(level))
+    for (let i = 1; i < levels.length; i++) {
+      expect(levels[i] - levels[i - 1]).toBeLessThanOrEqual(1)
+    }
+  })
+
   it("reports the result count and renders a card per product", () => {
     renderListing({
       totalElements: 2,
@@ -161,15 +183,9 @@ describe("ProductListingClient", () => {
       expect(new URLSearchParams(link.getAttribute("href")!.split("?")[1]).get("companyId")).toBe("company-9")
     })
 
-    // BULGU: on the first/last page the prev/next affordance becomes a plain <span> with no role,
-    // so keyboard and screen-reader users get no "disabled" control at all — it simply vanishes
-    // from the accessibility tree (TEST-FINDINGS already records the href-less <a> variant).
-    it("renders the edge prev/next affordances as unreachable spans (current behaviour)", () => {
-      renderListing({ currentPage: 1, totalElements: 40, totalPages: 2 })
-
-      const bar = screen.getByText("1-20").closest("div")!
-      // page 1, page 2 and "next" — but no "previous" control exists in the a11y tree.
-      expect(within(bar).getAllByRole("link")).toHaveLength(3)
-    })
+    // Known a11y bug, fix tracked separately (frontend-only, not a backend dependency): on the
+    // first/last page the prev/next affordance should stay in the accessibility tree as a
+    // disabled control, not vanish as a plain <span>.
+    it.todo("renders a disabled (not absent) previous/next control on the first/last page")
   })
 })

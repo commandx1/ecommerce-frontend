@@ -1,6 +1,13 @@
 export default function ProductListingLoading() {
   return (
     <div>
+      {/* Visually hidden - this skeleton is what a11y scans / screen readers
+          can land on while the real page (ProductListingHeader's `<h1>Dental
+          Products</h1>`) is still streaming in. Same text, so there's never a
+          moment with zero or a mismatched page heading. */}
+      {/* This skeleton's own only other heading ("Fetching Products" below) is
+          an h2, one level under this h1 - no skip within the skeleton itself. */}
+      <h1 className="sr-only">Dental Products</h1>
       {/* Top progress bar */}
       <div className="h-1 w-full overflow-hidden bg-border-soft">
         <div className="loading-progress-bar h-full rounded-r-full bg-steel-blue" />
@@ -176,7 +183,7 @@ export default function ProductListingLoading() {
                     <div className="absolute -right-0.5 -top-0.5 h-4 w-4 rounded-full bg-pale-lime ring-2 ring-surface" />
                   </div>
 
-                  <h3 className="mb-2 text-xl font-bold text-steel-blue">Fetching Products</h3>
+                  <h2 className="mb-2 text-xl font-bold text-steel-blue">Fetching Products</h2>
                   <p className="mb-6 max-w-xs text-center text-sm text-text-muted">
                     Searching verified products from trusted suppliers...
                   </p>
@@ -228,8 +235,22 @@ export default function ProductListingLoading() {
                       <span>Applying filters</span>
                     </div>
                     <div className="h-px w-8 bg-border-soft" />
-                    <div className="flex items-center gap-1.5 opacity-40">
-                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-steel-blue/20">
+                    {/* a11y (F54-style contrast fix): the opacity-40 used to sit on this whole
+                        row, so its "Ready" text - already `text-text-muted` from the ancestor
+                        (~4.8-5.3:1 on its own) - got blended down to ~1.7:1 against `bg-surface`,
+                        well under WCAG AA's 4.5:1 (axe `color-contrast`, 1 node on /products - the
+                        loading skeleton, not the loaded page). The dimmed "not reached yet" look
+                        is still conveyed by the icon alone; the text stays at full, readable
+                        opacity. */}
+                    {/* a11y (F54-style contrast fix): the opacity-40 used to sit on this whole
+                        row, so its "Ready" text - already `text-text-muted` from the ancestor
+                        (~4.8-5.3:1 on its own) - got blended down to ~1.7:1 against `bg-surface`,
+                        well under WCAG AA's 4.5:1 (axe `color-contrast`, 1 node on /products - the
+                        loading skeleton, not the loaded page). The dimmed "not reached yet" look
+                        is still conveyed by the icon alone; the text stays at full, readable
+                        opacity. */}
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-steel-blue/20 opacity-40">
                         <svg
                           aria-hidden="true"
                           className="h-2.5 w-2.5 text-steel-blue"

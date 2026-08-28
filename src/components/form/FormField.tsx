@@ -7,18 +7,23 @@ interface FormFieldProps {
   htmlFor?: string
   required?: boolean
   error?: string
+  errorId?: string
   className?: string
   children: ReactNode
 }
 
-export const FormField = ({ label, htmlFor, required, error, className, children }: FormFieldProps) => {
+export const FormField = ({ label, htmlFor, required, error, errorId, className, children }: FormFieldProps) => {
   return (
     <div className={cn(className)}>
       <Label htmlFor={htmlFor} className="mb-2 block text-sm font-medium text-text-primary">
         {label} {required ? "*" : ""}
       </Label>
       {children}
-      {error && <p className="mt-1 text-sm text-danger">{error}</p>}
+      {error && (
+        <p id={errorId} className="mt-1 text-sm text-danger">
+          {error}
+        </p>
+      )}
     </div>
   )
 }

@@ -37,6 +37,7 @@ export default function ConfirmationModal({
             <button
               type="button"
               onClick={onClose}
+              aria-label="Close"
               className="text-text-muted transition-colors hover:text-text-secondary"
             >
               <X className="h-6 w-6" />

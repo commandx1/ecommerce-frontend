@@ -44,7 +44,9 @@ export function useAutoOrders(): UseAutoOrdersResult {
 
   const fetchAutoOrders = useCallback(async (signal?: AbortSignal) => {
     const response = await autoOrdersAPI.getAutoOrders(signal)
-    setAutoOrders(response.autoOrders ?? [])
+    // Array.isArray, not `?? []`: `??` passes a wrong-typed truthy value straight through to
+    // .map()/.length and blanks the page (infra note #26).
+    setAutoOrders(Array.isArray(response.autoOrders) ? response.autoOrders : [])
   }, [])
 
   const fetchReadiness = useCallback(async () => {

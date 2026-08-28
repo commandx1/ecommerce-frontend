@@ -431,4 +431,37 @@ describe("BuyerPaymentMethodsPage", () => {
     )
     expect(await screen.findByText("No saved cards yet. Add a card to get started.")).toBeInTheDocument()
   })
+
+  it("shows an empty wallet instead of crashing when the backend sends a broken 200 body (cards: null)", async () => {
+    server.use(http.get("*/backend-api/cards", () => HttpResponse.json({ cards: null, total: 0 })))
+
+    render(<BuyerPaymentMethodsPage />)
+
+    expect(await screen.findByRole("heading", { name: "Payment Methods" })).toBeInTheDocument()
+    expect(screen.getByText("No saved cards yet. Add a card to get started.")).toBeInTheDocument()
+  })
+
+  it("renders the whole wallet, not just the good cards, when one card in the list has a null brand", async () => {
+    server.use(
+      http.get("*/backend-api/cards", () =>
+        HttpResponse.json({
+          cards: [
+            makeApiSavedCard({ id: "pm-1", name: "Main Clinic Card", isDefault: true }),
+            {
+              ...makeApiSavedCard({ id: "pm-2", name: "Mystery Card", isDefault: false }),
+              brand: null,
+              expMonth: null,
+            },
+          ],
+          total: 2,
+        }),
+      ),
+    )
+
+    render(<BuyerPaymentMethodsPage />)
+
+    expect(await screen.findByRole("heading", { name: "Main Clinic Card" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Mystery Card" })).toBeInTheDocument()
+    expect(screen.getByText("2 cards")).toBeInTheDocument()
+  })
 })

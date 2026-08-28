@@ -30,7 +30,7 @@ const VendorFilter = ({ vendors }: VendorFilterProps) => {
   return (
     <div className="border-b border-border-soft p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-text-primary">Vendor</h3>
+        <h2 className="text-lg font-semibold text-text-primary">Vendor</h2>
         {currentVendors.length > 0 && (
           <button
             type="button"

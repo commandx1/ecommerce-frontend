@@ -89,36 +89,6 @@ export interface Product {
   attributes?: ProductAttribute[]
 }
 
-// Data payload for multipart/form-data (JSON string in 'data' field)
-export interface CreateProductData {
-  name: string
-  detailedName: string
-  aboutProduct: string
-  subCategoriesId: string
-  customerReviews?: string
-  barcode: number
-  barcodeFormats: string
-  active: boolean
-  secureCode?: string
-  description: string
-  manufacturerCode: string
-  brand: string
-  packaging: string
-  primaryMarket: string
-  distanceUnit: string
-  massUnit: string
-  scent: string
-  size: string
-  type: string
-  sds: string
-}
-
-export interface CreateProductPayload {
-  data: CreateProductData
-  coverPhoto?: File
-  photos?: File[]
-}
-
 // Attribute pair for the vendor review flow (ProductAttributeDto)
 export interface ProductAttribute {
   attributeName: string
@@ -168,60 +138,6 @@ export interface CreateProductForReviewPayload {
   data: ProductVendorRequestData
   coverPhoto?: File
   photos?: File[]
-}
-
-export interface UpdateProductPayload {
-  productId?: string
-  name: string
-  detailedName: string
-  aboutProduct: string
-  subCategoriesId: string
-  customerReviews?: string
-  barcode: number
-  barcodeFormats: string
-  active: boolean
-}
-
-// Product Details Types (for backward compatibility)
-export interface ProductDetails {
-  id: string
-  productId: string
-  description: string
-  manufacturerCode: string
-  brand: string
-  packaging: string
-  primaryMarket: string
-  scent: string
-  size: string
-  type: string
-  sds: string
-  createdDate?: string
-}
-
-export interface CreateProductDetailsPayload {
-  productId: string
-  description: string
-  manufacturerCode: string
-  brand: string
-  packaging: string
-  primaryMarket: string
-  scent: string
-  size: string
-  type: string
-  sds: string
-}
-
-export interface UpdateProductDetailsPayload {
-  productId: string
-  description?: string
-  manufacturerCode?: string
-  brand?: string
-  packaging?: string
-  primaryMarket?: string
-  scent?: string
-  size?: string
-  type?: string
-  sds?: string
 }
 
 // Barcode Lookup Types
@@ -425,43 +341,6 @@ class ProductsAPI {
   // ==================== Product CRUD ====================
 
   /**
-   * Create a new product with multipart/form-data
-   * POST /api/products
-   * Content-Type: multipart/form-data
-   * Fields: data (JSON string), coverPhoto (file), photos (file[])
-   */
-  async createProduct(payload: CreateProductPayload, token: string): Promise<Product> {
-    const formData = new FormData()
-
-    // Add JSON data as string
-    formData.append("data", JSON.stringify(payload.data))
-
-    // Add cover photo if provided
-    if (payload.coverPhoto) {
-      formData.append("coverPhoto", payload.coverPhoto)
-    }
-
-    // Add additional photos if provided
-    if (payload.photos && payload.photos.length > 0) {
-      for (const photo of payload.photos) {
-        formData.append("photos", photo)
-      }
-    }
-
-    return apiRequest.requestJson<Product>({
-      client: "app",
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      url: `${BASE_URL}/api/products`,
-      withCredentials: true,
-      data: formData,
-      fallbackMessage: "Failed to create product",
-    })
-  }
-
-  /**
    * Create a new product and submit it for review (vendor flow)
    * POST /api/products/review
    * Content-Type: multipart/form-data
@@ -559,7 +438,9 @@ class ProductsAPI {
         sortBy: params.sortBy ?? "createdDate",
         sortDir: params.sortDir ?? "desc",
         page: params.page ?? 0,
-        size: params.size ?? 1000,
+        // Backend caps this: ProductController.validatePageSize(size, MAX_PAGE_SIZE = 100) rejects
+        // anything larger with a 400. A default of 1000 could never have been served.
+        size: params.size ?? 100,
       },
       signal,
       fallbackMessage: "Failed to fetch review status for products",
@@ -598,21 +479,6 @@ class ProductsAPI {
   }
 
   /**
-   * Update product by ID
-   * PUT /api/products/:id
-   */
-  async updateProduct(id: string, payload: UpdateProductPayload, token: string): Promise<Product> {
-    return apiRequest.requestJson<Product, UpdateProductPayload>({
-      client: "app",
-      method: "PUT",
-      headers: this.getAuthHeaders(token),
-      url: `${BASE_URL}/api/products/${id}`,
-      data: payload,
-      fallbackMessage: "Failed to update product",
-    })
-  }
-
-  /**
    * Delete product by ID
    * DELETE /api/products/:id
    */
@@ -623,114 +489,6 @@ class ProductsAPI {
       headers: this.getAuthHeaders(token),
       url: `${BASE_URL}/api/products/${id}`,
       fallbackMessage: "Failed to delete product",
-    })
-  }
-
-  // ==================== Product Details CRUD ====================
-
-  /**
-   * Create product details
-   * POST /api/products/details
-   */
-  async createProductDetails(payload: CreateProductDetailsPayload, token: string): Promise<ProductDetails> {
-    return apiRequest.requestJson<ProductDetails, CreateProductDetailsPayload>({
-      client: "app",
-      method: "POST",
-      url: `${BASE_URL}/api/products/details`,
-      headers: this.getAuthHeaders(token),
-      withCredentials: true,
-      data: payload,
-      fallbackMessage: "Failed to create product details",
-    })
-  }
-
-  /**
-   * Get product details by ID
-   * GET /api/products/details/:id
-   */
-  async getProductDetailsById(id: string): Promise<ProductDetails> {
-    return apiRequest.requestJson<ProductDetails>({
-      client: "app",
-      method: "GET",
-      headers: this.getAuthHeaders(),
-      url: `${BASE_URL}/api/products/details/${id}`,
-      fallbackMessage: "Failed to fetch product details",
-    })
-  }
-
-  /**
-   * Get product details by product ID
-   * GET /api/products/details/by-product/:productId
-   */
-  async getProductDetailsByProductId(productId: string): Promise<ProductDetails> {
-    return apiRequest.requestJson<ProductDetails>({
-      client: "app",
-      method: "GET",
-      headers: this.getAuthHeaders(),
-      url: `${BASE_URL}/api/products/details/by-product/${productId}`,
-      fallbackMessage: "Failed to fetch product details",
-    })
-  }
-
-  /**
-   * Update product details by ID
-   * PUT /api/products/details/:id
-   */
-  async updateProductDetails(id: string, payload: UpdateProductDetailsPayload, token: string): Promise<ProductDetails> {
-    return apiRequest.requestJson<ProductDetails, UpdateProductDetailsPayload>({
-      client: "app",
-      method: "PUT",
-      headers: this.getAuthHeaders(token),
-      url: `${BASE_URL}/api/products/details/${id}`,
-      data: payload,
-      fallbackMessage: "Failed to update product details",
-    })
-  }
-
-  /**
-   * Update product details by product ID
-   * PUT /api/products/details/by-product/:productId
-   */
-  async updateProductDetailsByProductId(
-    productId: string,
-    payload: UpdateProductDetailsPayload,
-    token: string,
-  ): Promise<ProductDetails> {
-    return apiRequest.requestJson<ProductDetails, UpdateProductDetailsPayload>({
-      client: "app",
-      method: "PUT",
-      headers: this.getAuthHeaders(token),
-      url: `${BASE_URL}/api/products/details/by-product/${productId}`,
-      data: payload,
-      fallbackMessage: "Failed to update product details",
-    })
-  }
-
-  /**
-   * Delete product details by ID
-   * DELETE /api/products/details/:id
-   */
-  async deleteProductDetails(id: string, token: string): Promise<void> {
-    await apiRequest.requestJson<void>({
-      client: "app",
-      method: "DELETE",
-      headers: this.getAuthHeaders(token),
-      url: `${BASE_URL}/api/products/details/${id}`,
-      fallbackMessage: "Failed to delete product details",
-    })
-  }
-
-  /**
-   * Delete product details by product ID
-   * DELETE /api/products/details/by-product/:productId
-   */
-  async deleteProductDetailsByProductId(productId: string, token: string): Promise<void> {
-    await apiRequest.requestJson<void>({
-      client: "app",
-      method: "DELETE",
-      headers: this.getAuthHeaders(token),
-      url: `${BASE_URL}/api/products/details/by-product/${productId}`,
-      fallbackMessage: "Failed to delete product details",
     })
   }
 

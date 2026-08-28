@@ -69,6 +69,14 @@ function statusBadge(doc: VendorDocument) {
 
 const EXPANDABLE_TEXT_LIMIT = 180
 
+// Mirrors the server's default spring.servlet.multipart.max-file-size (1MB) — see
+// handleFileChange below for why this is checked client-side.
+const MAX_FILE_BYTES = 1024 * 1024
+
+function formatMb(bytes: number): string {
+  return `${(bytes / (1024 * 1024)).toFixed(bytes % (1024 * 1024) === 0 ? 0 : 1)}MB`
+}
+
 function ExpandableText({ text, className }: { text: string; className?: string }) {
   const [expanded, setExpanded] = useState(false)
   const isTruncatable = text.length > EXPANDABLE_TEXT_LIMIT
@@ -202,7 +210,9 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
     staleTime: 15_000,
   })
 
-  const documents: VendorDocument[] = documentsPage?.content ?? []
+  // Array.isArray, not `?? []` - a malformed 200 with a non-array `content` reaches .map()
+  // below and blanks the upload history (infra note #26).
+  const documents: VendorDocument[] = Array.isArray(documentsPage?.content) ? documentsPage.content : []
   const totalPages = documentsPage?.totalPages ?? 1
 
   const refreshDocuments = () => queryClient.invalidateQueries({ queryKey: vendorDocumentsQueryKey() })
@@ -212,6 +222,18 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
     if (!file) return
     if (!file.name.endsWith(".xlsx") && !file.name.endsWith(".xls")) {
       showToast.error("Please select an Excel file (.xlsx or .xls)")
+      return
+    }
+    // Spring Boot's default spring.servlet.multipart.max-file-size is 1MB and this
+    // endpoint has no override (verified against ecommerce-api's application*.properties).
+    // Without this check the request reaches the server, fails with
+    // MaxUploadSizeExceededException, and the vendor sees that raw exception text in a
+    // toast instead of an understandable "file is too large" message.
+    if (file.size > MAX_FILE_BYTES) {
+      showToast.error(
+        "File is too large",
+        `${file.name} is ${formatMb(file.size)}. The server accepts up to ${formatMb(MAX_FILE_BYTES)}.`,
+      )
       return
     }
     setSelectedFile(file)
@@ -245,6 +267,11 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
         )
       }
     } catch (err: unknown) {
+      // Session expiry (401, or a 403 whose JWT has actually expired) is handled centrally
+      // by the axios interceptor, which logs out and redirects the vendor and marks the
+      // error `authHandled`. Showing a second toast here would be a redundant error on top
+      // of the redirect the vendor is already seeing.
+      if ((err as { authHandled?: boolean } | null)?.authHandled) return
       const msg = err instanceof Error ? err.message : "Upload failed"
       showToast.error(msg)
     } finally {
@@ -266,6 +293,8 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
       a.click()
       URL.revokeObjectURL(url)
     } catch (err: unknown) {
+      // See handleUpload: session-expiry errors are already surfaced by the redirect.
+      if ((err as { authHandled?: boolean } | null)?.authHandled) return
       const msg = err instanceof Error ? err.message : "Failed to download file"
       showToast.error(msg)
     } finally {
@@ -291,6 +320,8 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
       a.click()
       URL.revokeObjectURL(url)
     } catch (err: unknown) {
+      // See handleUpload: session-expiry errors are already surfaced by the redirect.
+      if ((err as { authHandled?: boolean } | null)?.authHandled) return
       const msg = err instanceof Error ? err.message : "Failed to download file"
       showToast.error(msg)
     } finally {
@@ -308,6 +339,8 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
       setExpandedDocId((prev) => (prev === docId ? null : prev))
       void refreshDocuments()
     } catch (err: unknown) {
+      // See handleUpload: session-expiry errors are already surfaced by the redirect.
+      if ((err as { authHandled?: boolean } | null)?.authHandled) return
       const msg = err instanceof Error ? err.message : "Failed to delete document"
       showToast.error(msg)
     } finally {
@@ -420,7 +453,7 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
                   <>
                     <Upload className="mb-3 h-10 w-10 text-text-muted" />
                     <p className="font-semibold text-text-primary">Click to select your Excel file</p>
-                    <p className="mt-1 text-sm text-text-muted">Supports .xlsx and .xls formats</p>
+                    <p className="mt-1 text-sm text-text-muted">.xlsx or .xls, up to 1MB</p>
                   </>
                 )}
               </label>

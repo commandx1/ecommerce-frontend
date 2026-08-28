@@ -14,7 +14,6 @@ interface OrderSummaryCardProps {
   heavyShippingFeePrice: number
   shippingPrice: number
   subtotal: number
-  tax: number
   total: number
 }
 
@@ -28,7 +27,6 @@ const OrderSummaryCard = ({
   heavyShippingFeePrice,
   shippingPrice,
   subtotal,
-  tax,
   total,
 }: OrderSummaryCardProps) => {
   return (
@@ -76,10 +74,6 @@ const OrderSummaryCard = ({
           <div className="flex justify-between">
             <span className="text-text-secondary">Subtotal</span>
             <span className="font-semibold">{formatCurrency(subtotal)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-text-secondary">Tax (Est.)</span>
-            <span className="font-semibold">{formatCurrency(tax)}</span>
           </div>
         </div>
         <div className="border-t border-border-soft pt-3">

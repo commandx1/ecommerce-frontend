@@ -17,7 +17,20 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({ refreshToken: refreshTokenValue }),
     })
 
-    const data = await response.json()
+    // AuthController.refreshToken (ecommerce-api auth/controller/AuthController.java:82-95)
+    // answers a missing/absent refresh-token cookie with `ResponseEntity.status(UNAUTHORIZED)
+    // .build()` - a genuinely empty body. `response.json()` throws a SyntaxError on that, which
+    // would otherwise fall through to this route's outer catch and mask the real 401 as a
+    // generic 500. Parse defensively and relay the real status either way.
+    const rawText = await response.text()
+    let data: Record<string, unknown> = {}
+    if (rawText) {
+      try {
+        data = JSON.parse(rawText)
+      } catch {
+        // Non-JSON body (rare) - fall through with an empty object rather than crashing.
+      }
+    }
 
     if (!response.ok) {
       return NextResponse.json(data, { status: response.status })

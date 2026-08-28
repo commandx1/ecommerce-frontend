@@ -159,7 +159,7 @@ describe("AttributeFilter", () => {
   it("title-cases the attribute name for its heading", () => {
     renderWithFilterNavigation(<AttributeFilter group={group} />)
 
-    expect(screen.getByRole("heading", { name: "Shade Guide", level: 3 })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Shade Guide", level: 2 })).toBeInTheDocument()
   })
 
   it("clears only its own group and leaves other attributes alone", async () => {

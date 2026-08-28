@@ -3,9 +3,12 @@ import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { server } from "@/mocks/server"
 import { makeCompanyProfile } from "@/test/factories"
+import { installRadixPointerPolyfills } from "@/test/radix"
 import { render, screen, waitFor } from "@/test/render"
 import { CompanyRoleProvider } from "../CompanyRoleContext"
 import VendorTeamPage from "./page"
+
+installRadixPointerPolyfills()
 
 const toastSpies = vi.hoisted(() => ({
   success: vi.fn(),
@@ -137,6 +140,35 @@ describe("VendorTeamPage", () => {
     )
     // The address is kept so the owner can retry without retyping it
     expect(screen.getByLabelText("Email address")).toHaveValue("teammate@company.com")
+  })
+
+  it("sends companyRole: MANAGER when the owner switches the role selector", async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 })
+    serveCompanyRole("OWNER")
+    let payload: Record<string, unknown> | null = null
+    server.use(
+      http.post("*/backend-api/mail/invite-company-user", async ({ request }) => {
+        payload = (await request.json()) as Record<string, unknown>
+        return new HttpResponse(null, { status: 200 })
+      }),
+    )
+
+    renderTeamPage()
+
+    await user.type(await screen.findByLabelText("Email address"), "manager@company.com")
+    await user.click(screen.getByRole("combobox", { name: "Role" }))
+    await user.click(await screen.findByRole("option", { name: "Manager" }))
+    expect(await screen.findByText(/manage products, orders, and promotions/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: /Send invitation/ }))
+
+    await waitFor(() =>
+      expect(toastSpies.success).toHaveBeenCalledWith(
+        "Invitation sent",
+        "An invitation email was sent to manager@company.com.",
+      ),
+    )
+    expect(payload).toEqual({ email: "manager@company.com", companyRole: "MANAGER" })
   })
 
   it("describes what the default MEMBER role can do", async () => {

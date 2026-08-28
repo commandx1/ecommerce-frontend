@@ -64,6 +64,22 @@ beforeEach(() => {
 })
 
 describe("searchPublicProducts contract", () => {
+  /**
+   * Infra note #26: a malformed 200 is not always null/undefined - it can be a wrong-typed
+   * truthy value that slips past `||`/`??` and reaches `.length`/`.map()`/`.some()` in the UI,
+   * blanking the page. Normalising here protects every call site at once.
+   */
+  it.each([
+    ["an object", { nope: true }],
+    ["a string", "not-a-list"],
+    ["a number", 7],
+    ["null", null],
+  ])("%s in place of the list degrades to an empty array", async (_label, body) => {
+    server.use(http.get("*/api/products/public-search", () => HttpResponse.json({ content: body })))
+
+    await expect(searchPublicProducts("drill")).resolves.toEqual([])
+  })
+
   it("returns the typed content array on a successful search", async () => {
     const results = await searchPublicProducts("mixing tips")
 

@@ -54,14 +54,17 @@ describe("productsAPI.getMyProducts contract", () => {
     expect(capturedMyProductsAuthHeader).toBe("Bearer token-1")
   })
 
-  it("defaults approved=ALL, sortBy=createdDate, sortDir=desc, page=0, size=1000", async () => {
+  // The default size must stay within the backend's own ceiling:
+  // ProductController.validatePageSize(size, MAX_PAGE_SIZE = 100) answers 400 for anything larger.
+  it("defaults approved=ALL, sortBy=createdDate, sortDir=desc, page=0, and a size the backend accepts", async () => {
     await productsAPI.getMyProducts("token-1")
 
     expect(capturedMyProductsQuery?.get("approved")).toBe("ALL")
     expect(capturedMyProductsQuery?.get("sortBy")).toBe("createdDate")
     expect(capturedMyProductsQuery?.get("sortDir")).toBe("desc")
     expect(capturedMyProductsQuery?.get("page")).toBe("0")
-    expect(capturedMyProductsQuery?.get("size")).toBe("1000")
+    expect(Number(capturedMyProductsQuery?.get("size"))).toBeLessThanOrEqual(100)
+    expect(capturedMyProductsQuery?.get("size")).toBe("100")
   })
 
   it("serializes explicit params over the defaults", async () => {
@@ -148,12 +151,24 @@ describe("productsAPI.getProductById / getProductByIdForOwner contract", () => {
     expect(product).toEqual(makeProduct({ id: "p-2" }))
   })
 
-  it("getProductById rejects with 'Product not found' shape on 404", async () => {
+  // Backend: ProductServiceImpl.getById (line ~647-651) throws ProductNotFoundException, which
+  // extends RuntimeException directly (product/exception/ProductNotFoundException.java) - it is
+  // NOT a ResourceNotFoundException. GlobalExceptionHandler.java only maps ResourceNotFoundException
+  // to 404; ProductNotFoundException falls through to the trailing
+  // @ExceptionHandler(RuntimeException.class) catch-all, which returns 400. A missing product id
+  // therefore surfaces as 400, never 404.
+  it("getProductById rejects with the 'Product not found' message on 400 (not 404)", async () => {
     server.use(
-      http.get("*/api/products/:id", () => HttpResponse.json({ message: "Product not found" }, { status: 404 })),
+      http.get("*/api/products/:id", () =>
+        HttpResponse.json({ message: "Product not found. ID: missing" }, { status: 400 }),
+      ),
     )
 
-    await expect(productsAPI.getProductById("missing")).rejects.toThrow("Product not found")
+    const error = await productsAPI.getProductById("missing").catch((e) => e)
+
+    expect(error).toBeInstanceOf(ApiRequestError)
+    expect((error as ApiRequestError).status).toBe(400)
+    expect((error as ApiRequestError).message).toBe("Product not found. ID: missing")
   })
 
   it("getProductByIdForOwner rejects with 403 when the requester is not the owner/admin", async () => {

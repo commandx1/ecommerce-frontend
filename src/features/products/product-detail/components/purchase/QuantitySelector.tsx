@@ -31,6 +31,7 @@ const QuantitySelector = ({
             onClick={onDecrement}
             className="px-4 py-2 text-text-secondary transition-colors hover:text-brand disabled:opacity-30"
             disabled={quantity <= 1}
+            aria-label="Decrease quantity"
           >
             <Minus className="w-4 h-4" />
           </button>
@@ -45,6 +46,7 @@ const QuantitySelector = ({
             onClick={onIncrement}
             className="px-4 py-2 text-text-secondary transition-colors hover:text-brand disabled:opacity-30"
             disabled={quantity >= stockCount}
+            aria-label="Increase quantity"
           >
             <Plus className="w-4 h-4" />
           </button>

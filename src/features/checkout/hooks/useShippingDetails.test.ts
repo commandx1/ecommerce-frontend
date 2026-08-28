@@ -110,7 +110,6 @@ describe("useShippingDetails — address selection", () => {
         title: "Clinic HQ",
         addressLine: "1 Main St",
         city: "Boston",
-        state: "MA",
         postalCode: "02110",
         phoneNumber: "+15550001111",
       }),
@@ -125,7 +124,9 @@ describe("useShippingDetails — address selection", () => {
       company: "Clinic HQ",
       street: "1 Main St",
       city: "Boston",
-      state: "MA",
+      // Address (backend AddressResponse) has no `state` field - it was already always
+      // `undefined` at runtime; useShippingDetails now sends "" honestly instead.
+      state: "",
       zipCode: "02110",
       phone: "+15550001111",
     })
@@ -401,6 +402,91 @@ describe("useShippingDetails — submit", () => {
     const payload = useCheckoutStore.getState().orderPayload
     expect(payload?.shippoRateOrders).toHaveLength(1)
     expect(payload?.uberRateOrders).toHaveLength(0)
+  })
+
+  /**
+   * A axis: backend `ShippoRateOrder.userId`/`UberRateOrder.userId` are typed `UUID` (see
+   * `OrderCreationService`'s DTOs) and Jackson rejects the *whole* request body if any field
+   * cannot parse as its declared type. When a cart line carries no `userProduct.sellerId`, the
+   * `sellerGroups` memo (above) falls back to the seller's display name — or "Standard Seller" —
+   * purely to key the UI grouping. That fallback text must never leak into the wire payload's
+   * `userId` field, or the entire order (every vendor, not just this one) would 400.
+   */
+  it("omits userId instead of sending the display-name grouping fallback when the line has no seller id", async () => {
+    useCartStore.setState({
+      items: [
+        makeCartItem({
+          userProduct: makeCartUserProduct({ userProductId: "up-1", sellerId: "", sellerName: "" }),
+        }),
+      ],
+    })
+    const { result } = await mountHook()
+
+    act(() => {
+      result.current.onRateSelect("Standard Seller", makeShippoRate() as ShippingRate)
+    })
+    act(() => {
+      result.current.onSubmit(submitEvent())
+    })
+
+    const payload = useCheckoutStore.getState().orderPayload
+    expect(payload?.shippoRateOrders).toHaveLength(1)
+    // `undefined` here means axios/JSON.stringify drops the key entirely on the wire — this must
+    // never be "Standard Seller" (the UI grouping fallback) sent through as if it were a UUID.
+    expect(payload?.shippoRateOrders[0]?.userId).toBeUndefined()
+  })
+
+  // A seller with no selected rate is dropped from the order. That is not a quiet omission: the
+  // backend orders only what the rate orders carry (OrderCreationService:163-173) and then
+  // soft-deletes the WHOLE cart on payment success (CartService:189-204), so those lines are
+  // ordered by nobody AND gone from the cart. Final Review has to be able to name them.
+  it("records the sellers it could not ship so Final Review can warn about the dropped items", async () => {
+    useCartStore.setState({
+      items: [itemFor("seller-1", "Acme Dental", "up-1"), itemFor("seller-2", "Nordic Dental", "up-2")],
+    })
+    const { result } = await mountHook()
+
+    act(() => {
+      result.current.onRateSelect("seller-1", makeShippoRate() as ShippingRate)
+    })
+    act(() => {
+      result.current.onSubmit(submitEvent())
+    })
+
+    const payload = useCheckoutStore.getState().orderPayload
+    expect(payload?.shippoRateOrders).toHaveLength(1)
+    expect(useCheckoutStore.getState().excludedFromOrder).toEqual([
+      { sellerName: "Nordic Dental", itemNames: ["Product up-2"] },
+    ])
+  })
+
+  it("records no exclusions when every seller has a shipping rate", async () => {
+    useCartStore.setState({ items: [itemFor("seller-1", "Acme Dental", "up-1")] })
+    const { result } = await mountHook()
+
+    act(() => {
+      result.current.onRateSelect("seller-1", makeShippoRate() as ShippingRate)
+    })
+    act(() => {
+      result.current.onSubmit(submitEvent())
+    })
+
+    expect(useCheckoutStore.getState().excludedFromOrder).toEqual([])
+  })
+
+  it("still sends the real seller id as userId when the cart line has one", async () => {
+    useCartStore.setState({ items: [itemFor("seller-1", "Acme Dental", "up-1")] })
+    const { result } = await mountHook()
+
+    act(() => {
+      result.current.onRateSelect("seller-1", makeShippoRate() as ShippingRate)
+    })
+    act(() => {
+      result.current.onSubmit(submitEvent())
+    })
+
+    const payload = useCheckoutStore.getState().orderPayload
+    expect(payload?.shippoRateOrders[0]?.userId).toBe("seller-1")
   })
 })
 

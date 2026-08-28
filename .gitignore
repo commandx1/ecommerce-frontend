@@ -49,3 +49,7 @@ skills-lock.json
 # Playwright
 /test-results
 /playwright-report
+
+# mutation testing (Stryker) run artefacts
+.stryker-tmp*
+/reports

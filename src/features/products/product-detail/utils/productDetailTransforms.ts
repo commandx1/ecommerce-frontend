@@ -5,7 +5,9 @@ import type { ProductDescriptionContent, ProductDetail, SupplierViewModel, UserP
 const FALLBACK_IMAGE = "/dentypro-product-placeholder.png"
 
 export const buildPhotoPaths = (product: ProductDetail) => {
-  const paths = product.photoPhats ? [...product.photoPhats] : []
+  // Array.isArray, not a truthy check: a non-array truthy photoPhats (e.g. `{}`) is not
+  // iterable and `[...product.photoPhats]` throws, taking down the whole SSR render.
+  const paths = Array.isArray(product.photoPhats) ? [...product.photoPhats] : []
   if (product.coverPhotoPath) {
     paths.unshift(product.coverPhotoPath)
   }

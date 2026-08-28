@@ -7,7 +7,7 @@ const VENDOR_NAV_ITEMS: DashboardHeaderNavItem[] = [
   { href: "/vendor-dashboard/products", label: "Products", matchMode: "startsWith" },
   { href: "/vendor-dashboard/orders", label: "Orders", matchMode: "startsWith" },
   { href: "/vendor-dashboard/analytics", label: "Analytics", matchMode: "startsWith" },
-  { href: "/vendor-dashboard/marketing", label: "Marketing", matchMode: "startsWith" },
+  // "Marketing" pointed at /vendor-dashboard/marketing, which has no page - re-add it with the page.
 ]
 
 export default function VendorHeader() {

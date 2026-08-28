@@ -163,9 +163,12 @@ describe("FinalReview", () => {
 
     await waitFor(() => expect(toastSpies.error).toHaveBeenCalledWith("Your card was declined."))
     expect(useCheckoutStore.getState().currentStep).toBe(4)
-    // NOTE: the decline is only announced through a toast — this screen renders no
-    // `role="alert"` region, so an assistive-tech user gets no in-page error.
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+    // The decline reaches assistive tech through sonner's toaster region, which carries
+    // `aria-live="polite"` (sonner 2.x, dist/index.mjs). An earlier version of this test
+    // asserted the absence of a `role="alert"` region and read that as "AT users get no
+    // error" - that inference was wrong, and the assertion was vacuous here anyway because
+    // the toaster is not mounted in this test. Both are gone; the toast assertion above is
+    // what actually proves the vendor is told.
   })
 
   it("does not double-submit while a placement is already running", async () => {

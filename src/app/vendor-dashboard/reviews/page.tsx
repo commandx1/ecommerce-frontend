@@ -35,7 +35,10 @@ export default function VendorReviewsPage() {
 
   const [selectedStars, setSelectedStars] = useState<number | null>(null)
 
-  const allReviews = data?.reviews ?? []
+  // A broken 200 body (non-array `reviews`) must not white-screen the page - same class of bug
+  // as the vendor orders/brand-filter fixes (F77/F83). `?? []` alone only guards null/undefined,
+  // not a wrong-typed truthy value.
+  const allReviews = Array.isArray(data?.reviews) ? data.reviews : []
   const reviews = selectedStars === null ? allReviews : allReviews.filter((r) => r.star === selectedStars)
   const totalReviews = data?.totalReviews ?? 0
   const averageRating = data?.averageRating ?? 0

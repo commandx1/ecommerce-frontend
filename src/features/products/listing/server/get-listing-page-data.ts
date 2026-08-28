@@ -58,7 +58,9 @@ export async function getListingPageData({
   ])
 
   return {
-    products: productsResponse.content || [],
+    // `|| []` only catches null/undefined - a malformed 200 carrying an object or string here
+    // reached .map() and took down the whole listing page (infra note #26).
+    products: Array.isArray(productsResponse.content) ? productsResponse.content : [],
     totalElements: productsResponse.totalElements || 0,
     totalPages: productsResponse.totalPages || 1,
     brands,

@@ -119,4 +119,41 @@ describe("ProductQuestions", () => {
 
     expect(screen.getByText("Showing 2 of 2 questions")).toBeInTheDocument()
   })
+
+  // C axis: a malformed 200 body sending `content` (or a question's `answers`) as something
+  // other than an array must not white-screen the page. Same class as F77/F83/F99/F101/F104.
+  describe("survives a malformed content field (C axis)", () => {
+    it.each([
+      ["missing entirely", undefined],
+      ["null", null],
+      ["an object instead of an array", { foo: "bar" }],
+      ["a string instead of an array", "not-an-array"],
+      ["a number instead of an array", 42],
+    ])("shows the empty state instead of crashing when content is %s", (_label, badContent) => {
+      const initialQuestions = { ...makeQuestionsResponse([]), content: badContent } as unknown as QuestionsResponse
+
+      expect(() =>
+        render(<ProductQuestions productId="p-1" initialQuestions={initialQuestions} userProducts={userProducts} />, {
+          route: "/products/p-1",
+        }),
+      ).not.toThrow()
+
+      expect(screen.getByText("No questions yet. Be the first to ask a question!")).toBeInTheDocument()
+    })
+  })
+
+  describe("survives a malformed answers field on one question (C axis)", () => {
+    it.each([
+      ["missing entirely", undefined],
+      ["null", null],
+      ["an object instead of an array", { foo: "bar" }],
+      ["a string instead of an array", "not-an-array"],
+    ])("shows 'No answer yet' instead of crashing when answers is %s", (_label, badAnswers) => {
+      const question = { ...makeQuestion(), answers: badAnswers } as unknown as Question
+
+      expect(() => renderQuestions([question])).not.toThrow()
+
+      expect(screen.getByText("No answer yet.")).toBeInTheDocument()
+    })
+  })
 })

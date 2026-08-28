@@ -168,11 +168,12 @@ describe("Vendor ProductsPage — inline editing", () => {
   })
 
   /**
-   * SUSPICIOUS (page.tsx:1112 and page.tsx:726): the stock draft is validated with
-   * `Number.parseInt(draft, 10)`, which truncates rather than rejects. A vendor who types 1.5
-   * sees no error — the product is silently saved with a stock of 1. Locking that behaviour.
+   * Regression test for a fixed bug: the stock draft used to be validated with
+   * `Number.parseInt(draft, 10)`, which truncates rather than rejects, so a vendor who typed
+   * 1.5 saw no error and the product silently saved with a stock of 1. A fractional stock must
+   * now block saving and show an inline error instead.
    */
-  it("silently truncates a fractional stock count instead of rejecting it", async () => {
+  it("blocks saving and flags a fractional stock count instead of silently truncating it", async () => {
     const user = setupUser()
     serveFilter([makeVendorUserProduct({ productName: "Fractional Product" })])
     const updates = captureUpdates()
@@ -184,11 +185,53 @@ describe("Vendor ProductsPage — inline editing", () => {
     await user.clear(stockInput)
     await user.type(stockInput, "1.5")
 
-    expect(row.getByRole("button", { name: "Save" })).toBeEnabled()
-    await user.click(row.getByRole("button", { name: "Save" }))
+    expect(row.getByRole("button", { name: "Save" })).toBeDisabled()
+    expect(row.getByText("Whole numbers only")).toBeInTheDocument()
+    expect(updates).toHaveLength(0)
 
+    // Correcting it to a whole number clears the error and re-enables saving.
+    await user.clear(stockInput)
+    await user.type(stockInput, "2")
+    expect(row.queryByText("Whole numbers only")).not.toBeInTheDocument()
+    expect(row.getByRole("button", { name: "Save" })).toBeEnabled()
+
+    await user.click(row.getByRole("button", { name: "Save" }))
     await waitFor(() => expect(updates).toHaveLength(1))
-    expect(updates[0]?.stock).toBe(1)
+    expect(updates[0]?.stock).toBe(2)
+  })
+
+  /**
+   * REGRESSION GUARD: the discount input carries `max={100}` as an HTML hint only — nothing
+   * enforced it, so a vendor who typed e.g. 150 could click Save, round-trip to the backend, and
+   * only then learn `UserProductServiceImpl.update` rejects anything outside 0-100 ("Discount
+   * must be between 0 and 100"). Out-of-range must now be caught inline, the same way the
+   * fractional-stock guard already is.
+   */
+  it("blocks saving and flags a discount above 100 instead of letting the backend reject it", async () => {
+    const user = setupUser()
+    serveFilter([makeVendorUserProduct({ productName: "Overdiscounted Product", discount: 20 })])
+    const updates = captureUpdates()
+
+    render(<ProductsPage />)
+    const row = await startEditing(user, "Overdiscounted Product")
+
+    const discountInput = row.getAllByRole("spinbutton")[1] as HTMLElement
+    await user.clear(discountInput)
+    await user.type(discountInput, "150")
+
+    expect(row.getByRole("button", { name: "Save" })).toBeDisabled()
+    expect(row.getByText("Must be 0–100")).toBeInTheDocument()
+    expect(updates).toHaveLength(0)
+
+    // Correcting it back into range clears the error and re-enables saving.
+    await user.clear(discountInput)
+    await user.type(discountInput, "25")
+    expect(row.queryByText("Must be 0–100")).not.toBeInTheDocument()
+    expect(row.getByRole("button", { name: "Save" })).toBeEnabled()
+
+    await user.click(row.getByRole("button", { name: "Save" }))
+    await waitFor(() => expect(updates).toHaveLength(1))
+    expect(updates[0]?.discount).toBe(25)
   })
 
   it("keeps the row in edit mode and reports the failure when the save request fails", async () => {

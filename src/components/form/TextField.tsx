@@ -1,4 +1,5 @@
 import type { ComponentProps } from "react"
+import { useId } from "react"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { textLikeControlClassName } from "./controlStyles"
@@ -22,13 +23,23 @@ export const TextField = ({
   required,
   ...props
 }: TextFieldProps) => {
+  const uid = useId()
+  const errorId = `${uid}-error`
   const ariaInvalid = Boolean(error) || props["aria-invalid"]
 
   return (
-    <FormField label={label} htmlFor={id} required={required} error={error} className={containerClassName}>
+    <FormField
+      label={label}
+      htmlFor={id}
+      required={required}
+      error={error}
+      errorId={errorId}
+      className={containerClassName}
+    >
       <Input
         id={id}
         aria-invalid={ariaInvalid}
+        aria-describedby={error ? errorId : undefined}
         className={cn(baseInputClassName, error ? "border-danger" : "", inputClassName)}
         {...props}
       />

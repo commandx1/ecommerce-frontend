@@ -65,6 +65,25 @@ describe("FavoriteSuppliersPage", () => {
     expect(await screen.findByText("Unable to load favorite vendors. Please try again later.")).toBeInTheDocument()
   })
 
+  /**
+   * C axis. `GET /vendors/favorites` is typed `List<VendorListItemDto>` (VendorController:44-49),
+   * but a malformed 200 - a partial body, a proxy hiccup - hands back something that is not an
+   * array. The page calls `vendors.some(...)` and `vendors.map(...)` unconditionally, so an
+   * unguarded value throws and blanks the whole page rather than degrading to an empty list.
+   * This is infra note #26's root pattern; it was found in nineteen other places this week.
+   */
+  it.each([
+    ["an object", { nope: true }],
+    ["a string", "not-a-list"],
+    ["a number", 7],
+    ["null", null],
+  ])("shows the empty state instead of crashing when the response is %s", async (_label, body) => {
+    server.use(http.get("*/backend-api/vendors/favorites", () => HttpResponse.json(body)))
+    render(<FavoriteSuppliersPage />)
+
+    expect(await screen.findByText("No favorite vendors yet.")).toBeInTheDocument()
+  })
+
   it("drops a vendor from the list immediately and sends the DELETE", async () => {
     const user = userEvent.setup()
     let deletedId: string | undefined

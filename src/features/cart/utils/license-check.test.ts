@@ -3,10 +3,12 @@ import { makeCartItem, makeLicense } from "@/test/factories"
 import { cartRequiresDentalLicense, hasValidDentalLicense } from "./license-check"
 
 describe("cartRequiresDentalLicense", () => {
-  // Fragile by design: the source does a strict `=== "Yes"` comparison, so only the
-  // exact string "Yes" triggers the requirement. Any other casing, or a boolean true,
-  // silently fails to require a license. Locking this in as-is per instructions.
-  it('requires a license only for the exact string "Yes"', () => {
+  // The `dentalLicenseRequired` field is a free-form string written by two independent
+  // codebases (vendor dashboard and admin panel) with no backend-enforced casing, so the
+  // comparison must be case-insensitive (and whitespace-tolerant) — otherwise a product
+  // that actually requires a license could silently bypass the gate for buyers who don't
+  // have one, just because the stored casing doesn't exactly match "Yes".
+  it('requires a license for the exact string "Yes"', () => {
     const items = [
       makeCartItem({
         product: {
@@ -21,7 +23,7 @@ describe("cartRequiresDentalLicense", () => {
     expect(cartRequiresDentalLicense(items)).toBe(true)
   })
 
-  it('does not require a license for lowercase "yes"', () => {
+  it('requires a license for lowercase "yes"', () => {
     const items = [
       makeCartItem({
         product: {
@@ -33,10 +35,10 @@ describe("cartRequiresDentalLicense", () => {
         },
       }),
     ]
-    expect(cartRequiresDentalLicense(items)).toBe(false)
+    expect(cartRequiresDentalLicense(items)).toBe(true)
   })
 
-  it('does not require a license for uppercase "YES"', () => {
+  it('requires a license for uppercase "YES"', () => {
     const items = [
       makeCartItem({
         product: {
@@ -45,6 +47,36 @@ describe("cartRequiresDentalLicense", () => {
           coverPhotoPath: "/x.png",
           productAlert: null,
           dentalLicenseRequired: "YES",
+        },
+      }),
+    ]
+    expect(cartRequiresDentalLicense(items)).toBe(true)
+  })
+
+  it('requires a license for "Yes" with incidental surrounding whitespace', () => {
+    const items = [
+      makeCartItem({
+        product: {
+          id: "p-1",
+          name: "Item",
+          coverPhotoPath: "/x.png",
+          productAlert: null,
+          dentalLicenseRequired: "  Yes  ",
+        },
+      }),
+    ]
+    expect(cartRequiresDentalLicense(items)).toBe(true)
+  })
+
+  it('does not require a license for an unrelated string like "No"', () => {
+    const items = [
+      makeCartItem({
+        product: {
+          id: "p-1",
+          name: "Item",
+          coverPhotoPath: "/x.png",
+          productAlert: null,
+          dentalLicenseRequired: "No",
         },
       }),
     ]

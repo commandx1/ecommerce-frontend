@@ -22,7 +22,9 @@ const RecentOrders = () => {
       <div className="border-b border-border-soft p-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-text-primary">Recent Orders</h2>
-          <Link href="/orders" className="font-medium text-brand hover:underline">
+          {/* /orders is not a route in this app (no src/app/orders, no rewrite in next.config.ts,
+              no proxy entry) - this link 404'd. The buyer's order list lives under the dashboard. */}
+          <Link href="/buyer-dashboard/orders" className="font-medium text-brand hover:underline">
             View All
           </Link>
         </div>

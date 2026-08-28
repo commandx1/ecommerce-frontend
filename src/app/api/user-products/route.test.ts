@@ -5,9 +5,15 @@ import { AUTH, BACKEND, createCapture, jsonRequest, record, routeRequest } from 
 import { GET, POST } from "./route"
 
 /**
- * The vendor's own offers. The GET has a notable quirk: when the backend answers 403 it silently
- * retries against `/api/user-products/filter?type=TOTAL` with a 1000-row page and returns that
- * instead. These tests pin both the fallback and the shapes it can unwrap.
+ * The vendor's own offers. The GET has a notable quirk: when the backend answers 403 or 404 it
+ * silently retries against `/api/user-products/filter?type=TOTAL` with a 1000-row page and
+ * returns that instead. These tests pin both the fallback and the shapes it can unwrap.
+ *
+ * The 404 branch is not hypothetical: UserProductController has no active `GET /api/user-products`
+ * mapping at all (ecommerce-api UserProductController.java:68-73 - the bare `getAll` is
+ * block-commented), so the real backend answers 404, never 403, for this call. Without the 404
+ * fallback the vendor-dashboard product-create flow (which calls this route) would see a raw
+ * error instead of an empty/real product list.
  */
 
 const LIST = `${BACKEND}/api/user-products`
@@ -83,6 +89,23 @@ describe("GET /api/user-products", () => {
     expect(url.searchParams.get("type")).toBe("TOTAL")
     expect(url.searchParams.get("page")).toBe("0")
     expect(url.searchParams.get("size")).toBe("1000")
+    expect(captured.authorization).toBe(AUTH)
+  })
+
+  it("falls back to the filter endpoint on 404 (the real backend status - GET /api/user-products has no active mapping) and unwraps `content`", async () => {
+    const captured = createCapture()
+    server.use(
+      http.get(LIST, () => HttpResponse.json({ timestamp: "...", status: 404, error: "Not Found" }, { status: 404 })),
+      http.get(FILTER, ({ request }) => {
+        record(captured, request)
+        return HttpResponse.json({ content: [userProduct], totalElements: 1 })
+      }),
+    )
+
+    const response = await GET(routeRequest("/api/user-products", { authorization: AUTH }))
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual([userProduct])
     expect(captured.authorization).toBe(AUTH)
   })
 
@@ -225,6 +248,29 @@ describe("POST /api/user-products", () => {
     )
 
     expect(response.status).toBe(500)
+  })
+
+  /**
+   * REGRESSION GUARD (same class as F19/F40): the auth header used to be read, then the body
+   * parsed with `request.json()`, and only after that was the missing-header case checked. A
+   * malformed body from an unauthenticated caller therefore threw inside the JSON parse and was
+   * caught by the outer try/catch, answering 500 instead of 401 - and never reaching the backend
+   * either way, so the 500 bought nothing. Auth is now checked before the body is read.
+   */
+  it("answers 401 (not 500) for a malformed body when there is no credential", async () => {
+    const captured = createCapture()
+    server.use(
+      http.post(LIST, ({ request }) => {
+        record(captured, request)
+        return HttpResponse.json(userProduct)
+      }),
+    )
+
+    const response = await POST(routeRequest("/api/user-products", { method: "POST", body: "not-json" }))
+
+    expect(response.status).toBe(401)
+    await expect(response.json()).resolves.toEqual({ message: "Unauthorized" })
+    expect(captured.count).toBe(0)
   })
 })
 

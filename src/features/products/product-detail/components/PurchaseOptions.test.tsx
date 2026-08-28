@@ -49,7 +49,6 @@ const orderSummary = {
   warranty: "$0.00",
   shipping: "$5.00",
   subtotal: "$56.00",
-  tax: "$4.62",
   total: "$65.62",
 }
 
@@ -211,20 +210,27 @@ describe("PurchaseOptions", () => {
       expect(screen.getByRole("button", { name: /Buy Now/i })).toBeDisabled()
     })
 
-    // BULGU (TEST-FINDINGS): with `stockCount === 0` the quantity still resolves to 1 because the
-    // clamp uses `stockCount || 1`, so the summary prices a unit that cannot be bought.
-    it("still shows a quantity of one for a zero-stock supplier (current behaviour)", () => {
-      renderPurchase({ suppliers: [makeSupplier({ stockCount: 0 })] })
-
-      expect(quantityBox()).toHaveValue("1")
-      expect(screen.getByText("Units available: 0")).toBeInTheDocument()
-    })
+    // Known bug, fix tracked separately (frontend-only, not a backend dependency): the quantity
+    // clamp uses `stockCount || 1`, so a zero-stock supplier still shows a purchasable quantity
+    // of one instead of reflecting that nothing can be bought.
+    it.todo("shows a quantity that cannot exceed the zero units available for a zero-stock supplier")
   })
 
   it("keeps the quote request available even when the item is out of stock", () => {
     renderPurchase({ suppliers: [makeSupplier({ stockCount: 0 })] })
 
     expect(screen.getByRole("button", { name: /Request Quote/i })).toBeEnabled()
+  })
+
+  // Sales tax is address-based and the backend recalculates it with Stripe Tax at order creation
+  // (OrderCreationService.computeTaxes). This screen has no address, so it must not print a tax
+  // figure at all - it used to show a flat 10% of the subtotal, which no jurisdiction charges and
+  // which made the total the shopper read differ from the one they would be charged.
+  it("shows no tax line and no tax in the total, because it cannot know the tax yet", () => {
+    renderPurchase()
+
+    const summary = screen.getByText("Order Summary").closest("div")!
+    expect(within(summary).queryByText(/tax/i)).not.toBeInTheDocument()
   })
 
   it("prices the order line from the quantity and unit price", async () => {

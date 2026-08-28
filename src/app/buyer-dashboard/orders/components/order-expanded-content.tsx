@@ -320,6 +320,35 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                         })}
                       </div>
 
+                      {/* What the cancellation actually cost. The backend fills these only AFTER a
+                          cancellation (`calculateOrderCancellationShipmentFee` counts items with
+                          `cancelledWithShippingFee`, and the refund side skips anything the customer
+                          has not cancelled - OrderMapper:289-350), so they are null on a live order
+                          and appear once items are cancelled. Until now the values arrived and were
+                          never shown, leaving the buyer to discover the shipping deduction on their
+                          statement. */}
+                      {typeof group.cancellationShipmentFee === "number" ||
+                      typeof group.cancellationShipmentRefundFee === "number" ? (
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border-soft px-3 py-2 text-xs sm:px-4">
+                          {typeof group.cancellationShipmentFee === "number" ? (
+                            <span className="text-text-secondary">
+                              Shipping charged on cancellation:{" "}
+                              <span className="font-semibold text-text-primary">
+                                {formatCurrency(group.cancellationShipmentFee)}
+                              </span>
+                            </span>
+                          ) : null}
+                          {typeof group.cancellationShipmentRefundFee === "number" ? (
+                            <span className="text-text-secondary">
+                              Shipping refunded:{" "}
+                              <span className="font-semibold text-success">
+                                {formatCurrency(group.cancellationShipmentRefundFee)}
+                              </span>
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : null}
+
                       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border-soft bg-surface-muted/55 px-3 py-3 text-sm text-text-muted sm:px-4">
                         <span>Updated: {formatDateTime(group.orderItems[0]?.updatedDate)}</span>
                         {hasCancelableItems ? (

@@ -42,6 +42,20 @@ describe("buildPhotoPaths", () => {
     const product: ProductDetail = { ...baseProduct, coverPhotoPath: "/cover.png" }
     expect(buildPhotoPaths(product)).toEqual(["/cover.png"])
   })
+
+  // C axis: a malformed 200 body sending photoPhats as a truthy non-array (not iterable, e.g.
+  // an object) previously crashed `[...product.photoPhats]` and took down the whole SSR render.
+  it.each([
+    ["an object", { foo: "bar" }],
+    ["a number", 42],
+    // A string is iterable, so it never threw, but it must not be spread into one bogus
+    // "image path" per character either.
+    ["a string", "not-an-array"],
+  ])("falls back to no gallery paths when photoPhats is %s instead of an array", (_label, badPhotoPhats) => {
+    const product = { ...baseProduct, photoPhats: badPhotoPhats } as unknown as ProductDetail
+    expect(() => buildPhotoPaths(product)).not.toThrow()
+    expect(buildPhotoPaths(product)).toEqual([])
+  })
 })
 
 describe("buildThumbnailImages", () => {

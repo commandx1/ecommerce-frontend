@@ -4,6 +4,14 @@ import { installRadixPointerPolyfills } from "@/test/radix"
 import { render, screen } from "@/test/render"
 import TicketSubmissionForm from "./TicketSubmissionForm"
 
+// Radix `Select` in jsdom is genuinely slow: these cases run in ~450ms in isolation but blow past
+// the 5s default under the full suite's parallel worker load - an ~11x stretch, measured 27 Aug
+// 2026. Infra note #11 had been writing this off as "false flaky from other agents running tests",
+// but it reproduces with nothing else running: the suite's own workers are the load. The work is
+// real, so the budget matches it instead of the test being retried or deleted.
+// If a case here ever exceeds this, that is a genuine slowdown worth investigating.
+vi.setConfig({ testTimeout: 20_000 })
+
 installRadixPointerPolyfills()
 
 const mockToastWarning = vi.fn()
@@ -69,21 +77,9 @@ describe("TicketSubmissionForm", () => {
     expect(screen.getByLabelText("Detailed Description *")).toHaveValue("")
   })
 
-  /**
-   * BULGU (TEST-FINDINGS K6): `useTicketForm` never contacts the backend. The buyer is told
-   * "Your request has been received", but nothing was sent. Locking today's behaviour.
-   */
-  it("submits the ticket nowhere — no request is made (current behaviour)", async () => {
-    const user = userEvent.setup({ pointerEventsCheck: 0 })
-    const fetchSpy = vi.spyOn(globalThis, "fetch")
-    render(<TicketSubmissionForm />)
-
-    await fillTicket(user)
-    await user.click(screen.getByRole("button", { name: /Submit Ticket/ }))
-
-    expect(mockToastSuccess).toHaveBeenCalled()
-    expect(fetchSpy).not.toHaveBeenCalled()
-  })
+  // Deferred: no support-ticket backend endpoint exists yet (BACKEND-HANDOFF.md §2, K6).
+  // Backend implements the endpoint, then this verifies the ticket is actually POSTed.
+  it.todo("submitting a valid ticket POSTs it to the support-ticket endpoint")
 
   it("toggles the urgent callback request", async () => {
     const user = userEvent.setup()
@@ -95,12 +91,7 @@ describe("TicketSubmissionForm", () => {
     expect(checkbox).toBeChecked()
   })
 
-  // The rich-text toolbar above the description renders buttons with no handlers.
-  it("renders an inert formatting toolbar above the description (current behaviour)", () => {
-    render(<TicketSubmissionForm />)
-
-    const description = screen.getByLabelText("Detailed Description *")
-    const toolbar = description.closest("div")!.parentElement!
-    expect(toolbar.querySelectorAll("button").length).toBeGreaterThanOrEqual(4)
-  })
+  // Deferred: the rich-text toolbar is a dead control for now (product decision: "şimdilik
+  // boşverelim"). When wired up, this verifies each button actually formats the description.
+  it.todo("clicking a formatting toolbar button applies that formatting to the description")
 })

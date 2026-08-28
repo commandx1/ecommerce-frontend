@@ -8,7 +8,7 @@ import { type Address, addressAPI } from "@/lib/api/address"
 import type { ShippoRateOrder, UberRateOrder } from "@/lib/api/orders"
 import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
-import { useCheckoutStore } from "@/stores/checkoutStore"
+import { type ExcludedSellerLines, useCheckoutStore } from "@/stores/checkoutStore"
 
 interface SelectedRateInfo {
   type: "shippo" | "uber"
@@ -41,6 +41,7 @@ export function useShippingDetails(): UseShippingDetailsResult {
     updateShippingAddress,
     nextStep,
     setOrderPayload,
+    setExcludedFromOrder,
     setSelectedShippingEtaText,
     setSelectedShippingCost,
     setSelectedVendorShippingMethods,
@@ -61,7 +62,11 @@ export function useShippingDetails(): UseShippingDetailsResult {
         lastName: address.fullName.split(" ").slice(1).join(" ") || "",
         street: address.addressLine,
         city: address.city,
-        state: address.state,
+        // Address (backend AddressResponse) has no `state` field - this was already always
+        // `undefined` at runtime despite the old `Address.state: string` type promise; kept as
+        // "" here for the same no-value behavior now that the type says so honestly. Out of
+        // scope for this pass (cart/checkout); not otherwise touched.
+        state: "",
         zipCode: address.postalCode,
         phone: address.phoneNumber,
         company: address.title,
@@ -97,6 +102,7 @@ export function useShippingDetails(): UseShippingDetailsResult {
       if (!groups[sellerId]) {
         groups[sellerId] = {
           name: sellerName,
+          sellerId: item.userProduct.sellerId,
           items: [],
         }
       }
@@ -119,9 +125,13 @@ export function useShippingDetails(): UseShippingDetailsResult {
       const rateId = "objectId" in rate ? rate.objectId : rate.id
       const type: SelectedRateInfo["type"] = isUber ? "uber" : "shippo"
       const amount = isUber ? rate.fee / 100 : Number(rate.amount)
+      // Backend: a Shippo rate's `servicelevel` (and the `name` inside it) can be null for a
+      // real carrier rate — see the `ShipmentRate` type comment in `lib/api/shipment.ts`. Rates
+      // like that are intentionally still selectable (VendorShipmentRates keeps them rather than
+      // dropping a deliverable option), so this can't assume `servicelevel.name` is always there.
       const etaText = isUber
         ? `Same-day delivery - ${rate.duration} mins`
-        : `${rate.servicelevel.name} - ${rate.estimatedDays} business days`
+        : `${rate.servicelevel?.name ?? "Shipping"} - ${rate.estimatedDays} business days`
 
       setSelectedRates((prev) => {
         if (prev[vendorId]?.rateId === rateId && prev[vendorId]?.type === type && prev[vendorId]?.amount === amount) {
@@ -160,10 +170,20 @@ export function useShippingDetails(): UseShippingDetailsResult {
 
       const shippoRateOrders: ShippoRateOrder[] = []
       const uberRateOrders: UberRateOrder[] = []
+      // Sellers we could not ship for. The backend builds the order purely from the products
+      // carried inside the rate orders below (OrderCreationService:163-173), and once payment
+      // succeeds it soft-deletes the ENTIRE cart, not just the ordered lines
+      // (CartService.processCartAfterPaymentSuccess:189-204). So a line dropped here is lost
+      // twice: never ordered, and gone from the cart. Final Review names them before the buyer
+      // commits, instead of letting them disappear silently.
+      const excluded: ExcludedSellerLines[] = []
 
       Object.entries(sellerGroups).forEach(([sellerId, group]) => {
         const selection = selectedRates[sellerId]
-        if (!selection) return
+        if (!selection) {
+          excluded.push({ sellerName: group.name, itemNames: group.items.map((item) => item.name) })
+          return
+        }
 
         // The backend reads the recurrence off the order payload, not the cart,
         // and it looks at both shippo and uber lines.
@@ -173,10 +193,22 @@ export function useShippingDetails(): UseShippingDetailsResult {
           autoOrder: item.autoOrder,
         }))
 
+        // `userId` on the wire is `group.sellerId` (the cart line's raw seller id), never the
+        // `sellerId` grouping key above — that key falls back to the seller's display name (or
+        // "Standard Seller") when the cart line carries no seller id (see the `sellerGroups`
+        // memo). Sending that fallback text through as `userId` broke the whole order: backend
+        // types `ShippoRateOrder.userId`/`UberRateOrder.userId` as `UUID`, and Jackson rejects
+        // the *entire* request body if any one field fails to parse as its declared type — a
+        // non-UUID string here 400s the whole order, not just this vendor's line. Neither
+        // `OrderCreationService` nor any other backend code calls `getUserId()` on either DTO
+        // (the one call site is commented out — `OrderUberDeliveryService.java:242`), so the
+        // field is safe to omit entirely when there is no real seller id to send.
+        const userId = group.sellerId || undefined
+
         if (selection.type === "shippo") {
           shippoRateOrders.push({
             shippoRateId: selection.rateId,
-            userId: sellerId,
+            userId,
             products,
           })
           return
@@ -184,7 +216,7 @@ export function useShippingDetails(): UseShippingDetailsResult {
 
         uberRateOrders.push({
           uberRateId: selection.rateId,
-          userId: sellerId,
+          userId,
           products,
         })
       })
@@ -194,6 +226,7 @@ export function useShippingDetails(): UseShippingDetailsResult {
         return
       }
 
+      setExcludedFromOrder(excluded)
       setOrderPayload({
         addressId: selectedAddressId,
         shippoRateOrders,
@@ -201,7 +234,7 @@ export function useShippingDetails(): UseShippingDetailsResult {
       })
       nextStep()
     },
-    [nextStep, selectedAddressId, selectedRates, sellerGroups, setOrderPayload],
+    [nextStep, selectedAddressId, selectedRates, sellerGroups, setExcludedFromOrder, setOrderPayload],
   )
 
   const onAddAddress = useCallback(() => {

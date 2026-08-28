@@ -161,6 +161,26 @@ const keepOriginalIfUnchanged = (nextValue: number, originalValue: number | unde
 
 const VALID_FILTER_TYPES: FilterType[] = ["ALL", "TOTAL", "ACTIVE", "INACTIVE", "OUT_OF_STOCK", "LOW_STOCK"]
 
+// `Number.parseInt` truncates "1.5" down to 1 without complaint, so a vendor who types a
+// fractional stock count gets it silently rounded away. This parses the whole string and
+// only accepts it when it is actually a whole number (or empty, which callers reject too).
+const parseWholeNumber = (value: string): number | null => {
+  const trimmed = value.trim()
+  if (trimmed === "") return null
+  const parsed = Number(trimmed)
+  return Number.isInteger(parsed) ? parsed : null
+}
+
+// Backend rejects a discount outside 0-100 (`UserProductServiceImpl.update`: "Discount must be
+// between 0 and 100"). An empty or unparseable draft is left to the existing required-field
+// guard, not flagged here as an out-of-range value.
+const isDiscountOutOfRange = (value: string): boolean => {
+  const trimmed = value.trim()
+  if (trimmed === "") return false
+  const parsed = Number(trimmed)
+  return Number.isFinite(parsed) && (parsed < 0 || parsed > 100)
+}
+
 export default function ProductsPage() {
   const id = useId()
   const router = useRouter()
@@ -169,6 +189,9 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<ProductWithDetails[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isFetching, setIsFetching] = useState(false)
+  // Distinguishes "the request failed" from "the request succeeded with zero rows" so the
+  // vendor never mistakes a broken fetch for an actually-empty catalog.
+  const [fetchError, setFetchError] = useState(false)
   const hasLoadedOnce = useRef(false)
   const fetchProductsAbortRef = useRef<AbortController | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
@@ -236,6 +259,7 @@ export default function ProductsPage() {
       }
 
       let productsWithDetails: UserProduct[] = []
+      let hadError = false
 
       try {
         if (viewMode === "review") {
@@ -375,17 +399,20 @@ export default function ProductsPage() {
         setTotalPages(0)
         setTotalElements(0)
         productsWithDetails = []
+        hadError = true
       }
 
       if (isStale()) {
         return
       }
+      setFetchError(hadError)
       setProducts(productsWithDetails)
       hasLoadedOnce.current = true
     } catch (error) {
       if (isStale()) {
         return
       }
+      setFetchError(true)
       console.error("Error fetching products:", error)
     } finally {
       if (!isStale()) {
@@ -605,20 +632,33 @@ export default function ProductsPage() {
     const isEditing = editingProductId === product.id
     const isSaving = savingProductId === product.id
     const draftDiscount = editingDraft?.discount ?? ""
+    // Backend rejects any value outside 0-100 (`UserProductServiceImpl.update`), but nothing
+    // stopped the vendor from typing e.g. 150 here and only finding out after a round trip to
+    // the server. `min`/`max` on <input type="number"> are hints, not enforcement — the value
+    // still reaches onChange untouched.
+    const discountOutOfRangeError = isDiscountOutOfRange(draftDiscount)
 
     return (
       <div className="text-sm font-medium text-text-primary">
         {isEditing ? (
-          <input
-            type="number"
-            min={0}
-            max={100}
-            step="0.01"
-            value={draftDiscount}
-            onChange={(event) => setEditingDraft((prev) => (prev ? { ...prev, discount: event.target.value } : prev))}
-            className="h-9 w-24 rounded-lg border border-border-strong bg-surface px-3 text-sm font-medium text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
-            disabled={isSaving}
-          />
+          <div className="flex flex-col items-center gap-1">
+            <input
+              type="number"
+              min={0}
+              max={100}
+              step="0.01"
+              value={draftDiscount}
+              onChange={(event) => setEditingDraft((prev) => (prev ? { ...prev, discount: event.target.value } : prev))}
+              className={cn(
+                "h-9 w-24 rounded-lg border bg-surface px-3 text-sm font-medium text-text-primary focus:outline-none focus:ring-2",
+                discountOutOfRangeError
+                  ? "border-danger focus:border-transparent focus:ring-danger/40"
+                  : "border-border-strong focus:border-transparent focus:ring-brand/40",
+              )}
+              disabled={isSaving}
+            />
+            {discountOutOfRangeError && <span className="text-xs text-danger">Must be 0–100</span>}
+          </div>
         ) : (
           // `discount` is a percentage (0-100) on the backend, not an amount.
           `${Number((product.discount ?? 0).toFixed(2))}%`
@@ -633,19 +673,30 @@ export default function ProductsPage() {
     const isEditing = editingProductId === product.id
     const isSaving = savingProductId === product.id
     const draftStock = editingDraft?.stock ?? ""
+    // Non-empty but not a whole number (e.g. "1.5") — flag it instead of letting it get
+    // silently truncated to 1 on save.
+    const stockHasFractionError = draftStock.trim() !== "" && parseWholeNumber(draftStock) === null
 
     return isEditing ? (
-      <div className="flex items-center justify-center gap-2">
-        <input
-          type="number"
-          min={0}
-          step={1}
-          value={draftStock}
-          onChange={(event) => setEditingDraft((prev) => (prev ? { ...prev, stock: event.target.value } : prev))}
-          className="h-9 w-24 rounded-lg border border-border-strong bg-surface px-3 text-sm font-medium text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
-          disabled={isSaving}
-        />
-        <span className="text-xs text-text-muted">units</span>
+      <div className="flex flex-col items-center gap-1">
+        <div className="flex items-center justify-center gap-2">
+          <input
+            type="number"
+            min={0}
+            step={1}
+            value={draftStock}
+            onChange={(event) => setEditingDraft((prev) => (prev ? { ...prev, stock: event.target.value } : prev))}
+            className={cn(
+              "h-9 w-24 rounded-lg border bg-surface px-3 text-sm font-medium text-text-primary focus:outline-none focus:ring-2",
+              stockHasFractionError
+                ? "border-danger focus:border-transparent focus:ring-danger/40"
+                : "border-border-strong focus:border-transparent focus:ring-brand/40",
+            )}
+            disabled={isSaving}
+          />
+          <span className="text-xs text-text-muted">units</span>
+        </div>
+        {stockHasFractionError && <span className="text-xs text-danger">Whole numbers only</span>}
       </div>
     ) : (
       <div className="flex items-center justify-center">
@@ -728,7 +779,7 @@ export default function ProductsPage() {
 
     const nextPrice = Number.parseFloat(editingDraft.price)
     const nextDiscount = Number.parseFloat(editingDraft.discount)
-    const nextStock = Number.parseInt(editingDraft.stock, 10)
+    const nextStock = parseWholeNumber(editingDraft.stock)
     const nextActive = editingDraft.active === "active"
     const nextShipmentFee = Number.parseFloat(editingDraft.shipmentFee)
     const nextHeavyShippingSurcharge = Number.parseFloat(editingDraft.heavyShippingSurcharge)
@@ -738,7 +789,8 @@ export default function ProductsPage() {
       nextPrice < 0 ||
       !Number.isFinite(nextDiscount) ||
       nextDiscount < 0 ||
-      !Number.isInteger(nextStock) ||
+      nextDiscount > 100 ||
+      nextStock === null ||
       nextStock < 0 ||
       !Number.isFinite(nextShipmentFee) ||
       nextShipmentFee < 0 ||
@@ -1112,7 +1164,7 @@ export default function ProductsPage() {
         const draftHeavyShippingSurcharge = editingDraft?.heavyShippingSurcharge ?? ""
         const parsedDraftPrice = Number.parseFloat(draftPrice)
         const parsedDraftDiscount = Number.parseFloat(draftDiscount)
-        const parsedDraftStock = Number.parseInt(draftStock, 10)
+        const parsedDraftStock = parseWholeNumber(draftStock)
         const parsedDraftShipmentFee = Number.parseFloat(draftShipmentFee)
         const parsedDraftHeavyShippingSurcharge = Number.parseFloat(draftHeavyShippingSurcharge)
         const canSaveDraft =
@@ -1120,7 +1172,8 @@ export default function ProductsPage() {
           parsedDraftPrice >= 0 &&
           Number.isFinite(parsedDraftDiscount) &&
           parsedDraftDiscount >= 0 &&
-          Number.isInteger(parsedDraftStock) &&
+          parsedDraftDiscount <= 100 &&
+          parsedDraftStock !== null &&
           parsedDraftStock >= 0 &&
           Number.isFinite(parsedDraftShipmentFee) &&
           parsedDraftShipmentFee >= 0 &&
@@ -1325,15 +1378,17 @@ export default function ProductsPage() {
             )}
           </div>
 
-          <div className="mt-4 pt-4 border-t border-border-soft text-sm text-text-secondary">
-            <div className="text-sm text-text-secondary">
-              Showing{" "}
-              <span className="font-semibold text-brand">
-                {currentPage * pageSize + 1}-{Math.min((currentPage + 1) * pageSize, totalElements)}
-              </span>{" "}
-              of <span className="font-semibold text-brand">{totalElements}</span> products
+          {totalElements > 0 && (
+            <div className="mt-4 pt-4 border-t border-border-soft text-sm text-text-secondary">
+              <div className="text-sm text-text-secondary">
+                Showing{" "}
+                <span className="font-semibold text-brand">
+                  {currentPage * pageSize + 1}-{Math.min((currentPage + 1) * pageSize, totalElements)}
+                </span>{" "}
+                of <span className="font-semibold text-brand">{totalElements}</span> products
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Bulk actions — visible only while rows are selected */}
           {viewMode === "products" && selectedProductIds.length > 0 && (
@@ -1368,23 +1423,32 @@ export default function ProductsPage() {
             isFetching && !editingProductId && "pointer-events-none",
           )}
         >
-          <DataTable
-            columns={productColumns}
-            data={products}
-            getRowClassName={(row) =>
-              cn(
-                "border-l-4 border-l-transparent transition-colors hover:bg-surface-muted/80",
-                selectedProductIds.includes(row.original.id) && "border-l-brand bg-brand/8 hover:bg-brand/12",
-                editingProductId === row.original.id && "cursor-default hover:bg-transparent",
-              )
-            }
-            getRowId={(product) => product.id}
-            onRowClick={handleRowClick}
-            isLoading={isLoading}
-            loadingText="Loading products..."
-            minTableWidthClassName="min-w-[1700px]"
-            noRowsText="No products found. Create your first product!"
-          />
+          {fetchError && !isLoading ? (
+            <div className="flex flex-col items-center justify-center gap-3 px-6 py-20 text-center">
+              <p className="text-sm font-medium text-danger">Failed to load products. Please try again.</p>
+              <Button type="button" variant="outline" onClick={() => void fetchProducts()} className="rounded-lg px-4">
+                Retry
+              </Button>
+            </div>
+          ) : (
+            <DataTable
+              columns={productColumns}
+              data={products}
+              getRowClassName={(row) =>
+                cn(
+                  "border-l-4 border-l-transparent transition-colors hover:bg-surface-muted/80",
+                  selectedProductIds.includes(row.original.id) && "border-l-brand bg-brand/8 hover:bg-brand/12",
+                  editingProductId === row.original.id && "cursor-default hover:bg-transparent",
+                )
+              }
+              getRowId={(product) => product.id}
+              onRowClick={handleRowClick}
+              isLoading={isLoading}
+              loadingText="Loading products..."
+              minTableWidthClassName="min-w-[1700px]"
+              noRowsText="No products found. Create your first product!"
+            />
+          )}
         </div>
 
         {/* Pagination */}

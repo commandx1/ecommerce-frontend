@@ -6,8 +6,39 @@ import type { BuyerOrder } from "@/lib/api/buyer-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useBuyerOrdersTableActions, useBuyerOrdersTableSelector } from "../context/buyer-orders-context"
 import { buildBuyerOrderViewModel, getOrderStatusBadgeClasses, getOrderStatusLabel } from "../lib/order-view-utils"
+import type { BuyerOrderViewModel } from "../types"
 import AutoOrderBadge from "./auto-order-badge"
 import OrderExpandedContent from "./order-expanded-content"
+
+// `buildBuyerOrderViewModel` calls `.toUpperCase()` on `order.orderStatus` and on each item's
+// `status` without a type guard. Those fields are non-nullable in the `BuyerOrder`/`BuyerOrderItem`
+// TypeScript types, but nothing enforces that at runtime - a corrupted 200 body (same failure class
+// as TEST-FINDINGS.md #26) can still send `null`/missing `orderStatus`. That threw a `TypeError`
+// here and took down every card in the list, not just the malformed one. Fall back to a minimal,
+// clearly-a-fallback summary instead of crashing the page.
+function buildFallbackSummary(order: BuyerOrder): BuyerOrderViewModel {
+  const netTotal = typeof order.totalPrice === "number" && Number.isFinite(order.totalPrice) ? order.totalPrice : 0
+  return {
+    customerLabel: "Customer",
+    itemTotal: 0,
+    lineItemCount: 0,
+    money: { netTotal, tax: 0 },
+    orderDate: "-",
+    orderItems: [],
+    orderTime: "-",
+    payment: { detail: "", title: "-" },
+    paymentStatus: "unknown",
+    sellerCount: 0,
+    sellerGroups: [],
+    sellerSummary: { moreCount: 0, primarySeller: "Unknown Seller" },
+    shippingAddress: { line: "-", title: "-" },
+    shippingTotal: 0,
+    totalAmountFromItemPrices: 0,
+    totalQuantity: 0,
+    trackingCount: 0,
+    uiStatus: "processing",
+  }
+}
 
 function SortButton({
   label,
@@ -76,7 +107,15 @@ export default function OrdersMobileList() {
 
   const { handleSort, handleExpandedChange } = useBuyerOrdersTableActions()
 
-  const getSummary = (order: BuyerOrder) => summariesByOrderId.get(order.orderId) ?? buildBuyerOrderViewModel(order)
+  const getSummary = (order: BuyerOrder) => {
+    const cached = summariesByOrderId.get(order.orderId)
+    if (cached) return cached
+    try {
+      return buildBuyerOrderViewModel(order)
+    } catch {
+      return buildFallbackSummary(order)
+    }
+  }
 
   if (isLoading) {
     return (

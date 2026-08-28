@@ -1,6 +1,6 @@
 import { Eye, EyeOff } from "lucide-react"
 import type { ComponentProps } from "react"
-import { useState } from "react"
+import { useId, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { textLikeControlClassName } from "./controlStyles"
@@ -25,15 +25,25 @@ export const PasswordField = ({
   ...props
 }: PasswordFieldProps) => {
   const [showPassword, setShowPassword] = useState(false)
+  const uid = useId()
+  const errorId = `${uid}-error`
   const ariaInvalid = Boolean(error) || props["aria-invalid"]
 
   return (
-    <FormField label={label} htmlFor={id} required={required} error={error} className={containerClassName}>
+    <FormField
+      label={label}
+      htmlFor={id}
+      required={required}
+      error={error}
+      errorId={errorId}
+      className={containerClassName}
+    >
       <div className="relative">
         <Input
           id={id}
           type={showPassword ? "text" : "password"}
           aria-invalid={ariaInvalid}
+          aria-describedby={error ? errorId : undefined}
           className={cn(baseInputClassName, error ? "border-danger" : "", inputClassName)}
           {...props}
         />

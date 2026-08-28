@@ -8,6 +8,15 @@ import { makeAccountUser, makeProduct } from "@/test/factories"
 import { render, screen, waitFor } from "@/test/render"
 import CreateProductPage from "./page"
 
+// This file drives the full 17-field, three-tab create-product form through userEvent, so its
+// slowest cases legitimately take ~1.8s in isolation. Under the full suite's parallel worker load
+// that stretches past the 5s default and the whole file fails on timeouts — nine of them in the
+// gate run on 27 Aug 2026, with zero assertion failures. The work is real, so the budget is
+// raised to match it rather than the tests being retried or trimmed. Same reasoning as the
+// Playwright `workers=3` decision: match capacity, do not mask contention.
+// If a test here ever exceeds this, that is a genuine slowdown worth investigating.
+vi.setConfig({ testTimeout: 20_000 })
+
 const toastSpies = vi.hoisted(() => ({
   success: vi.fn(),
   error: vi.fn(),
@@ -297,6 +306,49 @@ describe("CreateProductPage — submitting a new product", () => {
     const payload = readReviewPayload(requestJson)
     expect(payload?.json).toMatchObject({ coverPhotoPath: "https://cdn.example/cover.png" })
     expect(payload?.coverPhoto).toBeNull()
+  })
+
+  it("sends every field ProductServiceImpl.validate() requires, with the backend's exact key names and types", async () => {
+    // A axis: cross-checked field-by-field against ecommerce-api's ProductVendorRequestDto +
+    // ProductServiceImpl.validate() (backend source, not assumed). coverPhotoPath is intentionally
+    // absent here - it's only required when no file part is uploaded (resolveCoverPhoto falls back
+    // to it), and this test uploads a real file, covered by the "attaches an uploaded cover photo"
+    // test above.
+    const user = userEvent.setup()
+    const requestJson = spyOnRequestJson()
+
+    await openBlankForm(user)
+    await fillRequiredFields(user)
+    await user.click(screen.getByRole("button", { name: "Submit" }))
+
+    await waitFor(() => expect(toastSpies.success).toHaveBeenCalled())
+    const json = readReviewPayload(requestJson)?.json ?? {}
+
+    expect(json).toMatchObject({
+      name: "Composite Kit",
+      description: "A great dental product",
+      manufacturerCode: "MNF-1",
+      manufacturer: "MARK3",
+      brand: "Acme Dental",
+      manufacturerSiteProductPage: "https://example.com/products/item",
+      dentalLicenseRequired: "No",
+      reorderId: "RO-1001",
+      referanceNumber: "REF-2024-01",
+      weight: 1.5,
+      skuCode: "SKU-1",
+      price: 42,
+      stock: 7,
+      active: true,
+      shipmentFee: 5,
+      heavyShippingSurcharge: 3,
+      exportPackaging: false,
+      fulfillmentPolicy: "Ships within 2 business days",
+    })
+    expect(typeof json.price).toBe("number")
+    expect(typeof json.stock).toBe("number")
+    expect(Number.isInteger(json.stock)).toBe(true)
+    expect(typeof json.active).toBe("boolean")
+    expect(typeof json.exportPackaging).toBe("boolean")
   })
 
   it("creates only a vendor listing when an existing catalogue product is selected", async () => {

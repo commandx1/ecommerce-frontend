@@ -85,11 +85,23 @@ describe("Navbar", () => {
     render(<Navbar />, { route: "/" })
 
     // The same links are rendered twice: once in the desktop bar and once in the mobile drawer.
-    for (const link of screen.getAllByRole("link", { name: "Top Deals" })) {
-      expect(link).toHaveAttribute("href", "/top-deals")
+    for (const link of screen.getAllByRole("link", { name: "Vendors" })) {
+      expect(link).toHaveAttribute("href", "/vendors")
     }
-    expect(screen.getAllByRole("link", { name: "Vendors" })[0]).toHaveAttribute("href", "/vendors")
   })
+
+  // Four of the five entries here (Top Deals, Equipment, Lab Services, Resources) pointed at
+  // routes that do not exist, so most of the site's main navigation 404'd on click. They were
+  // removed rather than repointed; each is to come back WITH its page. `internal-links.test.ts`
+  // guards the whole codebase against the class, this guards the navigation itself.
+  it.each(["Top Deals", "Equipment", "Lab Services", "Resources"])(
+    "does not offer %s, which has no page behind it",
+    (label) => {
+      render(<Navbar />, { route: "/" })
+
+      expect(screen.queryByRole("link", { name: label })).not.toBeInTheDocument()
+    },
+  )
 
   it("toggles the mobile menu and reports its state", async () => {
     const user = userEvent.setup()

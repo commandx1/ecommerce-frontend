@@ -55,7 +55,7 @@ describe("useOrderSummary — FINDING: backend currency is carried but never use
     // regardless of what the backend said the currency actually was — so the buyer would see
     // "$9.99" for what the backend just told us is €9.99.
     const formatCurrency = (await import("@/lib/helpers/formatCurrency")).default
-    expect(formatCurrency(result.current.tax)).toBe("$9.99")
+    expect(formatCurrency(result.current.tax ?? 0)).toBe("$9.99")
   })
 
   it("TaxEstimate['currency'] is declared on the API type but has no consumer anywhere in the checkout/cart UI", async () => {
@@ -84,9 +84,9 @@ describe("useOrderSummary — FINDING/regression-lock: out-of-order tax response
     let requestIndex = 0
     server.use(
       http.post("*/backend-api/cart/tax-estimate", async ({ request }) => {
-        const body = (await request.json()) as { shippingAmount: string }
+        const body = (await request.json()) as { shippingAmount: number }
         requestIndex += 1
-        if (body.shippingAmount === "10") {
+        if (body.shippingAmount === 10) {
           // Slow first request — resolves well after the second one.
           await delay(150)
           return HttpResponse.json(makeTaxEstimate({ taxAmount: 1.11 }))

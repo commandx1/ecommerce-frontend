@@ -8,12 +8,19 @@ import { registerAllMocks } from "./mocks"
 
 /**
  * Cross-route a11y smoke: heading structure, `main` landmark, and header-nav
- * keyboard reachability, plus an axe scan (serious/critical violations only
- * - see the per-route `// FINDING:` `console.log`s below for what's currently
- * failing, so this test LOCKS/reports current behaviour instead of either
- * silently passing or turning into a flaky hard failure over pre-existing gaps).
+ * keyboard reachability, plus an axe scan (serious/critical violations only).
+ *
+ * This spec used to `console.log("FINDING: ...")` every violation and then assert
+ * something tautological (`expect(Array.isArray(violations)).toBe(true)`), so it
+ * passed green while the app shipped missing `h1`s, a missing `main` landmark,
+ * unnamed links and contrast failures. It is a real gate now: every check below
+ * fails the run. The findings it used to only report were fixed in the 28 Aug 2026
+ * a11y round (F88-F92); if one comes back, this spec is what catches it.
  */
-const PUBLIC_ROUTES = ["/", "/products", "/cart", "/login"]
+// `/products/p-1` is here because the supplier-comparison table on the detail page carried an
+// `aria-selected` on a plain <tr> for months and no scan ever saw it - the route was simply not
+// in this list. The mock backend answers `/api/products/:id/with-user-products` for any id.
+const PUBLIC_ROUTES = ["/", "/products", "/products/p-1", "/cart", "/login"]
 const BUYER_ROUTE = "/buyer-dashboard"
 const VENDOR_ROUTE = "/vendor-dashboard"
 
@@ -32,30 +39,23 @@ function registerA11ySmokeMocks(apiMock: ApiMock) {
 }
 
 /**
- * FINDING-logging, non-fatal (see checkMainLandmark below for why): the home
- * page (`src/features/home/**`) has NO `<h1>` at all - verified by grep, not
- * just a timing fluke (waited 15s past domcontentloaded, still 0).
+ * Exactly one `<h1>`: zero leaves a screen-reader user with no page title to
+ * orient by, and more than one destroys the document outline. Loading/skeleton
+ * states carry their own `sr-only` h1 so the count never dips to 0 mid-render.
  */
 async function checkSingleH1(page: Page, route: string) {
   const count = await page.getByRole("heading", { level: 1 }).count()
-  if (count !== 1) {
-    // biome-ignore lint/suspicious/noConsole: intentional FINDING report surfaced in test output.
-    console.log(`FINDING: expected exactly 1 <h1> on ${route}, found ${count}`)
-  }
+  expect(count, `expected exactly 1 <h1> on ${route}, found ${count}`).toBe(1)
 }
 
 /**
- * FINDING-logging, non-fatal per the task brief's "lock current behaviour"
- * rule: `<main>` is checked and reported, not hard-failed on, because at
- * least one route (`/login`, see below) currently has none.
+ * Every route needs a `<main>` landmark - it is the "skip to main content"
+ * target. `/login` had none until 28 Aug 2026 (LoginPage's wrapper `<section>`
+ * became `<main>`; same classes, no visual change).
  */
 async function checkMainLandmark(page: Page, route: string) {
   const count = await page.locator("main").count()
-  if (count === 0) {
-    // FINDING: no <main> landmark on this route.
-    // biome-ignore lint/suspicious/noConsole: intentional FINDING report surfaced in test output.
-    console.log(`FINDING: no <main> landmark found on ${route}`)
-  }
+  expect(count, `no <main> landmark found on ${route}`).toBeGreaterThan(0)
 }
 
 async function assertNoHeadingLevelSkips(page: Page): Promise<string[]> {
@@ -71,13 +71,34 @@ async function assertNoHeadingLevelSkips(page: Page): Promise<string[]> {
   return skips
 }
 
-async function runAxe(page: Page) {
+async function scanOnce(page: Page) {
   const results = await new AxeBuilder({ page }).analyze()
   return results.violations.filter((v) => v.impact === "serious" || v.impact === "critical")
 }
 
 /**
- * FINDING: the home page (`/`) pulls in many product images through
+ * Scans twice when the first pass reports something, and returns the SECOND result.
+ *
+ * These pages are scanned at `domcontentloaded`, so an interactive control can still be mid
+ * hydration when axe walks the tree - a button whose accessible name arrives with its client
+ * component reads as `button-name` for those few milliseconds. That produced exactly one
+ * `/products` failure in a full `--workers=1` run on 28 Aug 2026 that would not reproduce in
+ * isolation (11/11) or on a re-run (134/134).
+ *
+ * This does NOT hide real violations: a genuine one is still there on the second pass and still
+ * fails the test. It only removes the hydration race. A clean first pass returns immediately, so
+ * the happy path costs nothing.
+ */
+async function runAxe(page: Page) {
+  const first = await scanOnce(page)
+  if (first.length === 0) return first
+
+  await page.waitForTimeout(500)
+  return scanOnce(page)
+}
+
+/**
+ * Why `domcontentloaded`: the home page (`/`) pulls in many product images through
  * `/api/images/*`, and `apiMock` intercepts ALL `/api/**` traffic (proxying
  * each one through this test's own route handler) - slow enough in
  * aggregate that the default `waitUntil: "load"` blows past
@@ -100,12 +121,7 @@ test.describe("a11y smoke - public routes", () => {
       await checkMainLandmark(guestPage, route)
 
       const skips = await assertNoHeadingLevelSkips(guestPage)
-      // FINDING: recorded, not failed - see the task brief's "lock current
-      // behaviour" rule. If this ever needs to gate CI, assert `toEqual([])`.
-      if (skips.length > 0) {
-        // biome-ignore lint/suspicious/noConsole: intentional FINDING report surfaced in test output.
-        console.log(`FINDING: heading level skip(s) on ${route}:`, skips)
-      }
+      expect(skips, `heading level skip(s) on ${route}`).toEqual([])
     })
   }
 
@@ -121,10 +137,10 @@ test.describe("a11y smoke - public routes", () => {
     await cartLink.focus()
     await expect(cartLink).toBeFocused()
 
-    await guestPage.keyboard.press("Enter")
-    // Generous timeout: under heavy parallel-worker load the click handler
-    // (client hydration) can still be settling when Enter fires.
-    await expect(guestPage).toHaveURL(/\/cart/, { timeout: 15_000 })
+    // Wait for the navigation the keypress starts, rather than pressing and then
+    // polling the URL: the old shape raced client hydration and was the flakiest
+    // test in the suite under load (infra note #21).
+    await Promise.all([guestPage.waitForURL(/\/cart/, { timeout: 15_000 }), guestPage.keyboard.press("Enter")])
   })
 
   for (const route of PUBLIC_ROUTES) {
@@ -133,17 +149,10 @@ test.describe("a11y smoke - public routes", () => {
       await gotoRoute(guestPage, route)
       const violations = await runAxe(guestPage)
 
-      if (violations.length > 0) {
-        // FINDING: axe reported serious/critical violation(s) on this route.
-        // Locking current behaviour rather than failing the suite - see list below.
-        for (const v of violations) {
-          // biome-ignore lint/suspicious/noConsole: intentional FINDING report surfaced in test output.
-          console.log(`FINDING (${route}): ${v.id} - ${v.help} (${v.nodes.length} node(s))`)
-        }
-      }
-      // The scan itself must always complete without throwing - that's the
-      // behaviour under test here; violation counts are reported, not gated.
-      expect(Array.isArray(violations)).toBe(true)
+      // Named summaries rather than a bare count, so a failure says WHICH rule
+      // broke and on how many nodes without having to re-run axe by hand.
+      const summaries = violations.map((v) => `${v.id} - ${v.help} (${v.nodes.length} node(s))`)
+      expect(summaries, `serious/critical axe violations on ${route}`).toEqual([])
     })
   }
 })

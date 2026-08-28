@@ -34,7 +34,7 @@ describe("POST /api/product-questions", () => {
     expect(body).toEqual({ productId: "p-1", content: "Is it latex free?" })
   })
 
-  it("omits the Authorization header entirely when the caller has no session", async () => {
+  it("answers 401 without calling the backend when unauthenticated", async () => {
     const captured = createCapture()
     server.use(
       http.post(UPSTREAM, ({ request }) => {
@@ -45,10 +45,23 @@ describe("POST /api/product-questions", () => {
 
     const response = await POST(jsonRequest("/api/product-questions", { productId: "p-1", content: "x" }))
 
-    // Pinned, not endorsed: the BFF does not gate anonymous question posting.
-    expect(captured.count).toBe(1)
-    expect(captured.authorization).toBeNull()
-    expect(response.status).toBe(200)
+    expect(response.status).toBe(401)
+    expect(captured.count).toBe(0)
+  })
+
+  it("checks auth BEFORE reading the body, so an anonymous malformed payload is still a 401", async () => {
+    const captured = createCapture()
+    server.use(
+      http.post(UPSTREAM, ({ request }) => {
+        record(captured, request)
+        return HttpResponse.json(question)
+      }),
+    )
+
+    const response = await POST(routeRequest("/api/product-questions", { method: "POST", body: "not-json" }))
+
+    expect(response.status).toBe(401)
+    expect(captured.count).toBe(0)
   })
 
   it("does not read the auth-storage cookie, unlike the GET route next to it", async () => {
@@ -113,7 +126,9 @@ describe("POST /api/product-questions", () => {
   })
 
   it("answers 500 without a stack trace when the request body is not JSON", async () => {
-    const response = await POST(routeRequest("/api/product-questions", { method: "POST", body: "not-json" }))
+    const response = await POST(
+      routeRequest("/api/product-questions", { method: "POST", body: "not-json", authorization: AUTH }),
+    )
 
     expect(response.status).toBe(500)
     await expect(response.json()).resolves.toEqual({ error: "Internal server error" })

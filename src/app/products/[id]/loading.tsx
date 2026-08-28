@@ -1,6 +1,13 @@
 export default function ProductDetailLoading() {
   return (
     <div>
+      {/* sr-only: this skeleton is what an a11y scan / screen reader can land on while the real
+          page (ProductHeroDetails' `<h1>{product.title}</h1>`) is still streaming in. The product
+          name isn't known here (no id-specific fetch in a route-level loading.tsx), so this uses
+          a generic "Loading" title rather than guessing - deliberately different text from the
+          real h1 so a test asserting the loaded product's exact title never binds to this
+          temporary node instead. Same pattern as app/products/loading.tsx (F88). */}
+      <h1 className="sr-only">Loading Product Details</h1>
       {/* Top progress bar */}
       <div className="h-1 w-full overflow-hidden bg-border-soft">
         <div className="loading-progress-bar h-full rounded-r-full bg-steel-blue" />
@@ -25,7 +32,14 @@ export default function ProductDetailLoading() {
       <div className="bg-steel-blue py-3">
         <div className="mx-auto flex max-w-7xl items-center justify-center gap-3 px-4 sm:px-6 lg:px-8">
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-          <span className="text-sm font-medium text-white">Fetching product details...</span>
+          {/* `<h2>`, not `<span>`: the root layout's persistent `<Footer>` has its own `<h3>`s
+              ("Products"/"Services"/"Support") that render regardless of this skeleton, so with no
+              heading between this file's sr-only h1 and that footer, mobile-chrome's a11y scan
+              (which lands on this skeleton, not the resolved page) saw a straight h1 -> h3 jump.
+              Same fix as F88's /products/loading.tsx: promote the skeleton's own status text to
+              h2 to bridge the gap. Tailwind's heading reset means the tag swap is visual-output-
+              neutral - same classes, same flex-item behaviour. */}
+          <h2 className="text-sm font-medium text-white">Fetching product details...</h2>
           <div className="ml-1 flex gap-1">
             <div className="dot-bounce-1 h-1.5 w-1.5 rounded-full bg-pale-lime" />
             <div className="dot-bounce-2 h-1.5 w-1.5 rounded-full bg-pale-lime" />

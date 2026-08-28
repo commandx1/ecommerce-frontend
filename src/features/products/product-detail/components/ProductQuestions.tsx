@@ -24,8 +24,10 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
   const searchParams = useSearchParams()
   const selectedSupplierUserProductId = resolveSelectedUserProductId(searchParams.get("vendorId"), userProducts)
 
-  // Extract questions from response
-  const allQuestions: Question[] = initialQuestions?.content || []
+  // Extract questions from response. Array.isArray, not `||`: a malformed 200 body can send
+  // `content` as a truthy non-array (object, string), which `||` lets through and the
+  // .filter below crashes on.
+  const allQuestions: Question[] = Array.isArray(initialQuestions?.content) ? initialQuestions.content : []
 
   // Filter questions by selected supplier
   const questions = selectedSupplierUserProductId
@@ -69,7 +71,7 @@ export default function ProductQuestions({ productId, initialQuestions, userProd
                     </div>
                   </div>
                 </div>
-                {qa.answers && qa.answers.length > 0 ? (
+                {Array.isArray(qa.answers) && qa.answers.length > 0 ? (
                   <div className="space-y-4">
                     {qa.answers.map((answer) => (
                       <div key={answer.id} className="rounded-[1.35rem] border border-border-soft bg-surface p-6">

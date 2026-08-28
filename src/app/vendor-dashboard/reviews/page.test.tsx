@@ -114,6 +114,21 @@ describe("VendorReviewsPage", () => {
     expect(screen.getAllByText("0.0").length).toBeGreaterThan(0)
   })
 
+  // A broken 200 body must not white-screen the page - same class of bug as F77 (vendor orders)
+  // / F83 (brand filter): an unguarded `.filter`/`.length`/`.map` on a non-array field.
+  it.each([
+    ["reviews is missing entirely", { ...dashboard(), reviews: undefined }],
+    ["reviews is null", { ...dashboard(), reviews: null }],
+    ["reviews is a non-array object", { ...dashboard(), reviews: { 0: review() } }],
+  ])("shows the empty state instead of crashing when %s", async (_label, body) => {
+    // biome-ignore lint/suspicious/noExplicitAny: intentionally hostile, non-conforming body
+    serveDashboard(body as any)
+
+    render(<VendorReviewsPage />)
+
+    expect(await screen.findByText("No reviews yet for your products.")).toBeInTheDocument()
+  })
+
   it("does not call the API when the vendor is not signed in", async () => {
     useAuthStore.getState().clearAuth()
     const requested = vi.fn()

@@ -19,11 +19,15 @@ export interface ApiSavedCard {
   openToAutoPayment: boolean
   /** The buyer's single auto order card. */
   autoOrderCard: boolean
+  /** Intentionally unused: the wallet UI has nowhere it shows when a card was added. */
   createdDate: string
 }
 
 interface SavedCardListResponse {
   cards: ApiSavedCard[]
+  // Intentionally unused: the UI derives the count it displays from `cards.length` (always
+  // consistent with the list it just received), so there is nothing this duplicate server count
+  // would add.
   total: number
 }
 
@@ -51,6 +55,17 @@ interface UpdateNicknamePayload {
 
 // ── Mapping ──────────────────────────────────────────────────────────────────
 
+/**
+ * `SavedCardResponse` fields are typed as non-null `String`/`Integer` on the backend, but nothing
+ * stops a malformed response (a bug, a bad migration, a proxy mangling the body) from sending
+ * `null`/missing values on the wire, which JSON has no way to rule out at the type level. Every
+ * field read here is defended so one bad card degrades gracefully (an empty label, a blank
+ * expiry) instead of throwing inside `.map()` and losing every OTHER card in the wallet too.
+ */
+function safeString(value: unknown): string {
+  return typeof value === "string" ? value : ""
+}
+
 function brandToType(brand: string): PaymentMethodType {
   const lower = brand.toLowerCase()
   if (lower === "visa") return "visa"
@@ -60,15 +75,19 @@ function brandToType(brand: string): PaymentMethodType {
 }
 
 export function mapApiCard(card: ApiSavedCard): SavedPaymentMethod {
+  const brand = safeString(card.brand)
   return {
-    id: card.id,
-    type: brandToType(card.brand),
-    brandLabel: card.brand.charAt(0).toUpperCase() + card.brand.slice(1),
-    nickname: card.name,
-    last4: card.last4,
+    id: safeString(card.id),
+    type: brandToType(brand),
+    brandLabel: brand ? brand.charAt(0).toUpperCase() + brand.slice(1) : "",
+    nickname: safeString(card.name),
+    last4: safeString(card.last4),
     cardholder: "",
-    expiryMonth: String(card.expMonth).padStart(2, "0"),
-    expiryYear: String(card.expYear),
+    // A broken/missing expiry renders as a blank half of "MM/YYYY" rather than the literal
+    // strings "null" or "undefined" that `String(card.expMonth)` would otherwise produce.
+    expiryMonth:
+      typeof card.expMonth === "number" && Number.isFinite(card.expMonth) ? String(card.expMonth).padStart(2, "0") : "",
+    expiryYear: typeof card.expYear === "number" && Number.isFinite(card.expYear) ? String(card.expYear) : "",
     billingAddress: "",
     status: card.isDefault ? "default" : "active",
     stripePaymentMethodId: card.stripeCardId,
@@ -82,7 +101,11 @@ export function mapApiCard(card: ApiSavedCard): SavedPaymentMethod {
 class PaymentMethodsAPI {
   async getSavedCards(): Promise<SavedPaymentMethod[]> {
     const response = await apiClient.get<SavedCardListResponse>("/cards")
-    return response.data.cards.map(mapApiCard)
+    // A missing/null/non-array `cards` field (a broken 200 body) would otherwise throw inside
+    // `.map()` and take down the whole wallet page behind a generic "failed to load" toast — see
+    // TEST-FINDINGS.md F77/F83 for the same pattern in orders and product listing.
+    const cards = Array.isArray(response.data?.cards) ? response.data.cards : []
+    return cards.map(mapApiCard)
   }
 
   /**

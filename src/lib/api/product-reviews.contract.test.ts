@@ -117,10 +117,15 @@ describe("fetchReviewsByProduct contract", () => {
     expect(response.content).toEqual([])
   })
 
-  it("rejects on 404 when the product has no reviews endpoint", async () => {
+  // Backend: CustomerReviewService.getReviewsByProduct (line ~91-92) throws
+  // `new NotFoundException("Product not found")`. product/exception/NotFoundException extends
+  // RuntimeException directly - it is not registered in GlobalExceptionHandler.java at all (only
+  // ResourceNotFoundException maps to 404), so it falls through to the trailing
+  // @ExceptionHandler(RuntimeException.class) catch-all - 400, not 404.
+  it("rejects on 400 when the product doesn't exist (not 404)", async () => {
     server.use(
       http.get("*/api/reviews/product/:productId", () =>
-        HttpResponse.json({ message: "Product not found" }, { status: 404 }),
+        HttpResponse.json({ message: "Product not found" }, { status: 400 }),
       ),
     )
 
@@ -155,17 +160,34 @@ describe("createReview contract", () => {
     expect(capturedCreateHeaders?.get("authorization")).toBe("Bearer token-1")
   })
 
-  it("omits the Authorization header when accessToken is null", async () => {
-    await createReview({
+  // BFF gate (F40): POST /api/reviews (src/app/api/reviews/route.ts, line ~7-9) returns 401
+  // immediately when the Authorization header is missing, without ever calling the upstream
+  // backend. `createReview` sends no header at all when accessToken is null, so this path is
+  // real, not hypothetical.
+  it("rejects with 401 (no upstream call) when accessToken is null", async () => {
+    let upstreamCalled = false
+    server.use(
+      http.post("*/api/reviews", ({ request }) => {
+        if (!request.headers.get("authorization")) {
+          return HttpResponse.json({ message: "Unauthorized" }, { status: 401 })
+        }
+        upstreamCalled = true
+        return new HttpResponse(null, { status: 200 })
+      }),
+    )
+
+    const error = await createReview({
       accessToken: null,
       productId: "p-1",
       userProductId: "up-1",
       star: 3,
       title: "OK",
       comment: "Fine",
-    })
+    }).catch((e) => e)
 
-    expect(capturedCreateHeaders?.get("authorization")).toBeNull()
+    expect(error).toBeInstanceOf(ApiRequestError)
+    expect((error as ApiRequestError).status).toBe(401)
+    expect(upstreamCalled).toBe(false)
   })
 
   it("surfaces authHandled on a 401 response", async () => {
@@ -227,12 +249,17 @@ describe("updateReview contract", () => {
     expect((error as ApiRequestError).message).toBe("Not your review")
   })
 
-  it("rejects on 404 when the review no longer exists", async () => {
-    server.use(http.put("*/api/reviews/:id", () => HttpResponse.json({ message: "Review not found" }, { status: 404 })))
+  // Backend: CustomerReviewService.update (line ~126-127) throws
+  // `new NotFoundException("CustomerReview not found")` - same unmapped NotFoundException as
+  // above, so it's 400 too, not 404.
+  it("rejects on 400 when the review no longer exists (not 404)", async () => {
+    server.use(
+      http.put("*/api/reviews/:id", () => HttpResponse.json({ message: "CustomerReview not found" }, { status: 400 })),
+    )
 
     await expect(
       updateReview({ accessToken: "t", reviewId: "gone", star: 1, title: "t", comment: "c" }),
-    ).rejects.toThrow("Review not found")
+    ).rejects.toThrow("CustomerReview not found")
   })
 })
 

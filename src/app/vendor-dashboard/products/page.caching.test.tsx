@@ -82,8 +82,7 @@ describe("Vendor ProductsPage — cached lookups", () => {
     await waitFor(() => expect(statsRequests).toBe(2))
   })
 
-  it("reuses the cached product statistics across mounts", async () =>
-  {
+  it("reuses the cached product statistics across mounts", async () => {
     let statsRequests = 0
     server.use(
       http.get("*/api/user-products/stats", () => {
@@ -107,6 +106,5 @@ describe("Vendor ProductsPage — cached lookups", () => {
     render(<ProductsPage />, { queryClient })
     await screen.findByText("Product Management")
     expect(statsRequests).toBe(1)
-  }
-  )
+  })
 })

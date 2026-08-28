@@ -10,7 +10,7 @@ import {
   Title,
   Tooltip,
 } from "chart.js"
-import { useEffect, useId, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { Line } from "react-chartjs-2"
 import { Button } from "@/components/ui/button"
 import { vendorDashboardAPI } from "@/lib/api/vendor-dashboard"
@@ -30,41 +30,47 @@ const RevenueChart = () => {
   const [labels, setLabels] = useState<string[]>([])
   const [values, setValues] = useState<number[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(false)
   const abortControllerRef = useRef<AbortController | null>(null)
 
-  useEffect(() => {
-    const fetchRevenue = async () => {
-      if (!isAuthenticated) return
+  const fetchRevenue = useCallback(async () => {
+    if (!isAuthenticated) return
 
-      abortControllerRef.current?.abort()
-      const controller = new AbortController()
-      abortControllerRef.current = controller
+    abortControllerRef.current?.abort()
+    const controller = new AbortController()
+    abortControllerRef.current = controller
 
-      try {
-        setIsLoading(true)
-        const response = await vendorDashboardAPI.getPeriodicRevenue(
-          range === "all" ? undefined : { months: range },
-          controller.signal,
-        )
-        setLabels(response.periods.map((period) => period.period))
-        setValues(response.periods.map((period) => period.totalRevenue))
-      } catch {
-        if (controller.signal.aborted) return
-        setLabels([])
-        setValues([])
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsLoading(false)
-        }
+    try {
+      setIsLoading(true)
+      setFetchError(false)
+      const response = await vendorDashboardAPI.getPeriodicRevenue(
+        range === "all" ? undefined : { months: range },
+        controller.signal,
+      )
+      // Guard against a malformed 200 body — `periods` missing, null, or not an array would
+      // otherwise throw on `.map` and blank the whole dashboard (infra note #26).
+      const periods = Array.isArray(response.periods) ? response.periods : []
+      setLabels(periods.map((period) => period.period))
+      setValues(periods.map((period) => period.totalRevenue))
+    } catch {
+      if (controller.signal.aborted) return
+      setLabels([])
+      setValues([])
+      setFetchError(true)
+    } finally {
+      if (!controller.signal.aborted) {
+        setIsLoading(false)
       }
     }
+  }, [isAuthenticated, range])
 
+  useEffect(() => {
     void fetchRevenue()
 
     return () => {
       abortControllerRef.current?.abort()
     }
-  }, [isAuthenticated, range])
+  }, [fetchRevenue])
 
   const data = {
     labels,
@@ -168,6 +174,13 @@ const RevenueChart = () => {
         <div className="h-80">
           {isLoading ? (
             <div className="h-full w-full animate-pulse rounded-xl bg-surface-muted" />
+          ) : fetchError ? (
+            <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+              <p className="text-sm font-medium text-danger">Couldn't load revenue. Please try again.</p>
+              <Button type="button" variant="outline" onClick={() => void fetchRevenue()} className="rounded-lg px-4">
+                Retry
+              </Button>
+            </div>
           ) : (
             <Line data={data} options={options} />
           )}

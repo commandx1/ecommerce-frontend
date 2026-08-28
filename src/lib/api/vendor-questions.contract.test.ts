@@ -192,16 +192,23 @@ describe("vendorQuestionsAPI.createAnswer contract", () => {
     expect(response.answer).toBe("Yes, fully latex-free.")
   })
 
-  it("rejects with a 409 when the question was already answered", async () => {
+  // Backend: ProductAnswerServiceImpl.create (line ~29-51) has NO "already answered" duplicate
+  // check at all - a seller can post multiple answers to the same question without conflict.
+  // There is no 409 path in this method. The one realistic non-2xx path (besides 404s for a
+  // missing question/user) is `throw new AccessDeniedException("Only the seller of the product
+  // can answer")` when the caller isn't the listing's seller - and that unmapped
+  // product.exception.AccessDeniedException falls to the RuntimeException catch-all - 400, not
+  // 403/409.
+  it("rejects on 400 when the caller isn't the seller of the related product", async () => {
     server.use(
       http.post("*/backend-api/product-answers", () =>
-        HttpResponse.json({ message: "Question already has an answer" }, { status: 409 }),
+        HttpResponse.json({ message: "Only the seller of the product can answer" }, { status: 400 }),
       ),
     )
 
     await expect(
-      vendorQuestionsAPI.createAnswer({ productQuestionId: "question-1", answer: "Duplicate" }),
-    ).rejects.toThrow(/409/)
+      vendorQuestionsAPI.createAnswer({ productQuestionId: "question-1", answer: "Not mine" }),
+    ).rejects.toThrow(/400/)
   })
 
   it("rejects with a 400 for an empty answer body", async () => {
@@ -227,15 +234,21 @@ describe("vendorQuestionsAPI.updateAnswer contract", () => {
     expect(response.answer).toBe("Updated: yes, fully latex-free.")
   })
 
-  it("rejects with a 403 when updating another vendor's answer", async () => {
+  // Backend: ProductAnswerServiceImpl.update (line ~54-67) throws
+  // `new AccessDeniedException("Only the answer author can update the answer")` when the caller
+  // isn't the answer's author. product.exception.AccessDeniedException extends RuntimeException
+  // directly and isn't registered in GlobalExceptionHandler.java, so it falls to the trailing
+  // @ExceptionHandler(RuntimeException.class) catch-all - 400, not 403.
+  it("rejects with a 400 when updating another vendor's answer (not 403)", async () => {
     server.use(
-      http.put("*/backend-api/product-answers/:id", () => HttpResponse.json({ message: "Forbidden" }, { status: 403 })),
+      http.put("*/backend-api/product-answers/:id", () =>
+        HttpResponse.json({ message: "Only the answer author can update the answer" }, { status: 400 }),
+      ),
     )
 
     const error = await vendorQuestionsAPI.updateAnswer("someone-elses-answer", { answer: "x" }).catch((e) => e)
 
-    expect(error.response?.status).toBe(403)
-    expect(error.authHandled).toBeFalsy()
+    expect(error.response?.status).toBe(400)
   })
 })
 

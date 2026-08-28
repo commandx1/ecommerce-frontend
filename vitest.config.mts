@@ -17,17 +17,20 @@ export default defineConfig({
       //   Phase 4 (hook layer):              18.83 stmts / 73.21 branch / 52.64 funcs
       //   Phase 5+6+7 (components + BFF):    69.18 stmts / 83.09 branch / 76.91 funcs
       //   Phase 6b (vendor products+questions): 75.26 stmts / 83.04 branch / 76.83 funcs
+      //   Regression + Batch 5 (27 Aug 2026): 76.16 stmts / 83.85 branch / 77.90 funcs
       // Phases 5-7 ran in parallel and landed together; the jump is the storefront, dashboard
       // and route-handler layers arriving at once. Phase 6b closed the two vendor pages worth
       // testing. Branch/function percentages dipped a hair because vendor/products/page.tsx
       // (1564 lines) added more branches to the denominator than its 58 tests cover.
       // Deliberately untested: vendor/promotions/page.tsx renders a hardcoded array with no
       // client-side logic to pin — see TEST-FINDINGS.md, B11.
+      // Ratchet: kept ~2 points under the measured figures so a real coverage loss breaks the gate
+      // while normal churn does not. Measured 28 Aug 2026: 78.86 stmts / 86.83 branches / 82.72 fns.
       thresholds: {
-        statements: 73,
-        branches: 81,
-        functions: 74,
-        lines: 73,
+        statements: 76,
+        branches: 84,
+        functions: 80,
+        lines: 76,
       },
       provider: "v8",
       reporter: ["text", "lcov", "html"],

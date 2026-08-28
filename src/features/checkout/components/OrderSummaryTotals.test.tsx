@@ -62,4 +62,26 @@ describe("OrderSummaryTotals", () => {
     expect(screen.queryByText("$98.76")).not.toBeInTheDocument()
     expect(container.querySelector(".animate-spin")).toBeInTheDocument()
   })
+
+  // Regression: an unestimated tax (no address yet, or the estimate call failed) used to render
+  // as "$0.00", which understated the real charge the backend collects at payment time.
+  it("shows 'Calculated at checkout' instead of $0.00 when tax could not be estimated", () => {
+    renderTotals({ tax: null, total: 1234.5 })
+
+    expect(screen.getByText("Calculated at checkout")).toBeInTheDocument()
+    expect(screen.queryByText("$0.00")).not.toBeInTheDocument()
+    expect(screen.getByText("Excludes tax — calculated at checkout.")).toBeInTheDocument()
+  })
+
+  it("does not show the excludes-tax note while a real tax figure is shown", () => {
+    renderTotals({ tax: 98.76 })
+
+    expect(screen.queryByText(/Excludes tax/)).not.toBeInTheDocument()
+  })
+
+  it("does not show the excludes-tax note while tax is still loading", () => {
+    renderTotals({ isTaxLoading: true, tax: null })
+
+    expect(screen.queryByText(/Excludes tax/)).not.toBeInTheDocument()
+  })
 })

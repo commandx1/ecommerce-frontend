@@ -132,13 +132,32 @@ describe("SupplierComparison", () => {
     expect(onSelectSupplier).toHaveBeenCalledTimes(1)
   })
 
-  // BULGU: the row is a clickable `<tr>` with an `onClick` but no role, tabindex or key handler —
-  // keyboard and screen-reader users can only reach the offer through the Select button.
-  it("exposes the clickable row with no interactive role (current behaviour)", () => {
-    render(<SupplierComparison suppliers={[makeSupplier()]} onSelectSupplier={vi.fn()} />)
+  it("lets a keyboard user reach the row and select the supplier with Enter", async () => {
+    const user = userEvent.setup()
+    const onSelectSupplier = vi.fn()
+    render(<SupplierComparison suppliers={[makeSupplier()]} onSelectSupplier={onSelectSupplier} />)
 
     const row = rowFor("Acme Dental")
-    expect(row).not.toHaveAttribute("tabindex")
-    expect(row.getAttribute("role")).toBeNull()
+    expect(row).toHaveAttribute("tabindex", "0")
+
+    row.focus()
+    expect(row).toHaveFocus()
+
+    await user.keyboard("{Enter}")
+
+    expect(onSelectSupplier).toHaveBeenCalledWith(expect.objectContaining({ userProductId: "up-1" }))
+  })
+
+  it("also selects the supplier with the Space key", async () => {
+    const user = userEvent.setup()
+    const onSelectSupplier = vi.fn()
+    render(<SupplierComparison suppliers={[makeSupplier()]} onSelectSupplier={onSelectSupplier} />)
+
+    const row = rowFor("Acme Dental")
+    row.focus()
+
+    await user.keyboard(" ")
+
+    expect(onSelectSupplier).toHaveBeenCalledTimes(1)
   })
 })

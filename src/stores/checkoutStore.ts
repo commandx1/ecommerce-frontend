@@ -24,11 +24,27 @@ export interface VendorShippingSelection {
   amount?: number
 }
 
+/** A seller whose lines could not be shipped, and the item names the buyer will lose. */
+export interface ExcludedSellerLines {
+  sellerName: string
+  itemNames: string[]
+}
+
 interface CheckoutStore {
   currentStep: CheckoutStep
   shippingAddress: ShippingAddress
   paymentMethod: PaymentMethod
   orderPayload: PlaceOrderPayload | null
+  /**
+   * Cart lines that will NOT be ordered because no shipping rate could be selected for their
+   * seller (rate lookup failed, or the carrier returned nothing). The backend only creates order
+   * items for the products carried inside `shippoRateOrders`/`uberRateOrders`
+   * (OrderCreationService:163-173), and once payment succeeds it soft-deletes the WHOLE cart
+   * (CartService.processCartAfterPaymentSuccess:189-204) - not just what was ordered. So these
+   * lines vanish twice over: never ordered, and gone from the cart afterwards. Final Review has
+   * to say so before the buyer commits.
+   */
+  excludedFromOrder: ExcludedSellerLines[]
   orderResult: PlaceOrderResponse | null
   poNumber: string
   department: string
@@ -85,6 +101,7 @@ interface CheckoutStore {
   ) => void
   setSelectedShippingCost: (cost: number) => void
   setOrderPayload: (payload: PlaceOrderPayload) => void
+  setExcludedFromOrder: (excluded: ExcludedSellerLines[]) => void
   setOrderResult: (result: PlaceOrderResponse) => void
   reset: () => void
 }
@@ -123,6 +140,7 @@ const initialState = {
   shippingAddress: initialShippingAddress,
   paymentMethod: initialPaymentMethod,
   orderPayload: null as PlaceOrderPayload | null,
+  excludedFromOrder: [] as ExcludedSellerLines[],
   orderResult: null as PlaceOrderResponse | null,
   poNumber: "",
   department: "",
@@ -186,6 +204,7 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
     })),
   setSelectedShippingCost: (cost) => set({ selectedShippingCost: cost }),
   setOrderPayload: (payload) => set({ orderPayload: payload }),
+  setExcludedFromOrder: (excluded) => set({ excludedFromOrder: excluded }),
   setOrderResult: (result) => set({ orderResult: result }),
   reset: () => set({ ...initialState }),
 }))

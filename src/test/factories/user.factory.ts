@@ -50,7 +50,6 @@ export function makeAddress(overrides: Partial<Address> = {}): Address {
     fullName: "Serhat Belen",
     phoneNumber: "+15551234567",
     country: "US",
-    state: "NY",
     city: "New York",
     district: "Kadikoy",
     postalCode: "10016",

@@ -157,10 +157,15 @@ describe("fetchProductDetailPageData contract", () => {
     expect(result.questions).toBeNull()
   })
 
-  it("throws a friendly 'not found' message on a 404 product response", async () => {
+  // Backend: ProductServiceImpl.getProductWithUserProducts (line ~758-771) throws
+  // ProductNotFoundException, which extends RuntimeException directly - not
+  // ResourceNotFoundException. GlobalExceptionHandler's trailing
+  // @ExceptionHandler(RuntimeException.class) catch-all maps it to 400, so the real "missing
+  // product" response is 400 with a "Product not found. ID: ..." message, never 404.
+  it("throws a friendly 'not found' message on the real 400 product-not-found response (not 404)", async () => {
     server.use(
       http.get("*/api/products/:id/with-user-products", () =>
-        HttpResponse.json({ message: "not found" }, { status: 404 }),
+        HttpResponse.json({ message: "Product not found. ID: missing" }, { status: 400 }),
       ),
     )
 
@@ -169,22 +174,34 @@ describe("fetchProductDetailPageData contract", () => {
     )
   })
 
-  it("throws a friendly permission message on a 403 product response", async () => {
+  // A generic 400 (not the "product not found" shape above) still surfaces the raw backend
+  // message rather than the friendly "not found" copy - only the specific not-found message
+  // pattern above is special-cased.
+  it("surfaces the raw backend message on a generic 400 that isn't the not-found shape", async () => {
     server.use(
       http.get("*/api/products/:id/with-user-products", () =>
-        HttpResponse.json({ message: "forbidden" }, { status: 403 }),
+        HttpResponse.json({ message: "Some other validation error" }, { status: 400 }),
       ),
     )
 
-    await expect(fetchProductDetailPageData("p-1")).rejects.toThrow(
-      "You don't have permission to view this product. Please log in and try again.",
-    )
+    await expect(fetchProductDetailPageData("p-1")).rejects.toThrow("Some other validation error")
   })
 
-  it("throws a friendly auth message on a 401 product response", async () => {
+  // GET /api/products/{id}/with-user-products never throws ForbiddenException - authentication is
+  // fully optional on this endpoint (ProductServiceImpl.getProductWithUserProducts falls back to
+  // an unauthenticated response instead of rejecting; see the "🔽 JWT YOK" branch at line ~789).
+  // A 403 from this endpoint is not producible by the real backend/frontend flow, so no test
+  // pins that fictional response shape.
+
+  // Backend: JwtAuthenticationFilter.doFilterInternal (line ~66-73) returns 401 with
+  // {"error":"UserNotFound","message":"User does not exist anymore."} when the JWT's user has
+  // been deleted from the DB - this is the one real 401 path reachable on this optional-auth
+  // endpoint (an invalid-but-parseable token otherwise just falls back to unauthenticated access,
+  // not 401).
+  it("throws a friendly auth message on a 401 product response (deleted-user JWT)", async () => {
     server.use(
       http.get("*/api/products/:id/with-user-products", () =>
-        HttpResponse.json({ message: "unauthorized" }, { status: 401 }),
+        HttpResponse.json({ error: "UserNotFound", message: "User does not exist anymore." }, { status: 401 }),
       ),
     )
 

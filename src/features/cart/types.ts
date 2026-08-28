@@ -6,7 +6,9 @@ export interface CartTotals {
   shipmentFee: number
   heavyShipmentFee: number
   totalShipmentFee: number
-  tax: number
+  // null = not yet estimated (no address/items) or the estimate call failed — distinct from a
+  // real $0 estimate the backend returned.
+  tax: number | null
   total: number
 }
 

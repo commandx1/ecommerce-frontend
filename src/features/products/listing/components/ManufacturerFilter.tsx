@@ -31,7 +31,7 @@ const ManufacturerFilter = ({ manufacturers }: ManufacturerFilterProps) => {
   return (
     <div className="border-b border-border-soft p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-text-primary">Manufacturer</h3>
+        <h2 className="text-lg font-semibold text-text-primary">Manufacturer</h2>
         {currentManufacturers.length > 0 && (
           <button
             type="button"

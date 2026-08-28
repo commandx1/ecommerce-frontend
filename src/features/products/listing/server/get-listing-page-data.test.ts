@@ -181,6 +181,24 @@ describe("getListingPageData — empty results", () => {
     // A catalogue with nothing in it still reports one page, so the pager renders "1 of 1".
     expect(data.totalPages).toBe(1)
   })
+
+  // `content || []` only catches null/undefined. A malformed 200 carrying a wrong-typed truthy
+  // value passes straight through it and reaches .map() in the grid, which takes the whole
+  // listing page down to an error boundary (infra note #26 - the same root pattern found in
+  // twelve other modules this week).
+  it.each([
+    ["an object", { nope: true }],
+    ["a string", "not-a-page"],
+    ["a number", 7],
+    ["null", null],
+  ])("renders an empty grid instead of crashing when content is %s", async (_label, content) => {
+    stubAll()
+    server.use(http.get(PRODUCTS, () => HttpResponse.json({ content, totalElements: 3, totalPages: 1 })))
+
+    const data = await getListingPageData(params())
+
+    expect(data.products).toEqual([])
+  })
 })
 
 describe("getListingPageData — partial failure", () => {

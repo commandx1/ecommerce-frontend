@@ -7,7 +7,9 @@ export default function LoginPage() {
     <div className="min-h-screen bg-canvas font-sans">
       <LoginHeader />
 
-      <section className="py-12">
+      {/* <main>, not <section>: this route had no main landmark at all, so a screen-reader user
+          had no "skip to main content" target. Same element, same classes - purely semantic. */}
+      <main className="py-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="overflow-hidden rounded-3xl border border-border-soft bg-surface-elevated shadow-panel">
             <div className="grid grid-cols-1 lg:grid-cols-2">
@@ -16,7 +18,7 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-      </section>
+      </main>
     </div>
   )
 }

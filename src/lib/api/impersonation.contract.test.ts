@@ -31,7 +31,15 @@ describe("refreshTokenForImpersonation contract", () => {
     expect(response.roleName).toBe("VENDOR")
   })
 
-  it("tolerates a response that omits refreshToken and roleName", async () => {
+  // NOTE: this endpoint is the Next.js BFF at src/app/api/auth/refresh-token/route.ts, not the
+  // ecommerce-api backend directly - it always builds `refreshToken: refreshToken ||
+  // refreshTokenValue`, so its own body can never literally omit `refreshToken` (it falls back
+  // to the token the caller sent). `roleName`, however, only exists if the backend's
+  // `UserResponse` includes it, so that part is a real, reachable case. This test covers
+  // refreshTokenForImpersonation's own tolerance for a response shape that a *different* caller
+  // of this same client function could still send it (e.g. a stale/misbehaving proxy), not a
+  // shape the current route.ts produces.
+  it("tolerates a response that omits roleName, and does not crash if refreshToken were absent", async () => {
     server.use(http.post("*/api/auth/refresh-token", () => HttpResponse.json({ accessToken: "new-access-token" })))
 
     const response = await refreshTokenForImpersonation("refresh-1")

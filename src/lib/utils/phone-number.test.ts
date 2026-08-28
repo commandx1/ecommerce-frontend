@@ -18,15 +18,26 @@ describe("normalizePhoneNumber", () => {
     expect(normalizePhoneNumber("abc-def")).toBe("")
   })
 
-  // Edge case: an 11+ digit input is silently truncated to 10 digits rather than
-  // rejected. This masks user input errors (e.g. an accidental leading "1" country
-  // code, or a typo) instead of surfacing them. Locking in current behavior.
-  it("silently truncates 11+ digit input down to 10 digits", () => {
-    expect(normalizePhoneNumber("11234567890")).toBe("1123456789")
+  // A pasted number with a leading NANP country code ("1") is recognized and stripped,
+  // recovering the real 10-digit number instead of truncating off its last digit.
+  it("strips a leading country code '1' from an 11-digit input", () => {
+    expect(normalizePhoneNumber("11234567890")).toBe("1234567890")
   })
 
-  it("silently truncates a long non-phone digit string down to 10 digits", () => {
-    expect(normalizePhoneNumber("123456789012345")).toBe("1234567890")
+  it("strips a leading country code '1' from a pasted +1-prefixed number", () => {
+    expect(normalizePhoneNumber("+1 415 555 0123")).toBe("4155550123")
+  })
+
+  // An 11-digit input that does NOT start with "1" isn't a recognizable NANP country
+  // code, so nothing is stripped — the digits are preserved rather than silently
+  // truncated, letting downstream validation (e.g. the registration form's 10-digit
+  // regex) reject it instead of silently accepting a corrupted number.
+  it("does not strip or truncate an 11-digit input not starting with '1'", () => {
+    expect(normalizePhoneNumber("44207946000")).toBe("44207946000")
+  })
+
+  it("does not truncate a long non-phone digit string; preserves all digits", () => {
+    expect(normalizePhoneNumber("123456789012345")).toBe("123456789012345")
   })
 })
 
@@ -59,10 +70,21 @@ describe("formatPhoneNumber", () => {
     expect(formatPhoneNumber("1234567")).toBe("(123) 456-7")
   })
 
-  // Edge case: 11+ digit input is silently truncated to 10 digits before formatting,
-  // masking the extra digits instead of flagging them as invalid.
-  it("silently truncates 11+ digit input to 10 digits before formatting", () => {
-    expect(formatPhoneNumber("11234567890")).toBe("(112) 345-6789")
+  // A pasted country-code-prefixed number formats to the correct 10-digit number,
+  // instead of silently truncating to the wrong last-10-digits.
+  it("strips a recognized country code before formatting an 11-digit input", () => {
+    expect(formatPhoneNumber("11234567890")).toBe("(123) 456-7890")
+  })
+
+  it("strips a recognized country code before formatting a pasted +1 number", () => {
+    expect(formatPhoneNumber("+1 415 555 0123")).toBe("(415) 555-0123")
+  })
+
+  // Unrecognized overflow (not a NANP country code) is preserved rather than truncated,
+  // so no digits are silently dropped even though the grouped format is no longer
+  // meaningful past 10 digits.
+  it("does not drop digits when formatting an unrecognized 11-digit input", () => {
+    expect(formatPhoneNumber("44207946000")).toBe("(442) 079-46000")
   })
 
   it("strips non-digit characters before formatting", () => {

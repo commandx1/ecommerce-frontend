@@ -122,7 +122,8 @@ export default function SuppliersDirectorySection() {
       signal: controller.signal,
     })
       .then((result) => {
-        setVendors(result.vendors ?? [])
+        // Array.isArray, not `?? []` - see infra note #26.
+        setVendors(Array.isArray(result.vendors) ? result.vendors : [])
         setTotalCount(result.totalCount ?? 0)
         setTotalPages(result.totalPages ?? 1)
       })

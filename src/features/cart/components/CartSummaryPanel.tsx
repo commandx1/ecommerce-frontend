@@ -12,6 +12,7 @@ interface CartSummaryPanelProps {
   hasBlockingItems: boolean
   isCheckoutDisabled: boolean
   isLicenseBlocked: boolean
+  licenseCheckFailed: boolean
   isTaxLoading: boolean
   itemsCount: number
   onCheckout: () => void
@@ -30,11 +31,16 @@ export default function CartSummaryPanel({
   hasBlockingItems,
   isCheckoutDisabled,
   isLicenseBlocked,
+  licenseCheckFailed,
   isTaxLoading,
   itemsCount,
   onCheckout,
   totals,
 }: CartSummaryPanelProps) {
+  // null = tax could not be estimated yet (no address, or the estimate call failed) — render as
+  // "calculated at checkout", not $0.00.
+  const taxValue = totals.tax === null ? "Calculated at checkout" : formatCurrency(totals.tax)
+
   const summaryRows: SummaryRow[] = [
     { label: `Subtotal (${itemsCount} items)`, value: formatCurrency(totals.subtotal) },
     { label: "Shipment fee", value: totals.shipmentFee === 0 ? "Free" : formatCurrency(totals.shipmentFee) },
@@ -46,7 +52,7 @@ export default function CartSummaryPanel({
       label: "Total shipment fee",
       value: totals.totalShipmentFee === 0 ? "Free" : formatCurrency(totals.totalShipmentFee),
     },
-    { label: "Estimated Tax", value: formatCurrency(totals.tax), isLoading: isTaxLoading },
+    { label: "Estimated Tax", value: taxValue, isLoading: isTaxLoading },
   ]
 
   return (
@@ -68,6 +74,9 @@ export default function CartSummaryPanel({
             <span className="text-lg font-bold text-text-primary">Total</span>
             <span className="text-lg font-bold text-brand">{formatCurrency(totals.total)}</span>
           </div>
+          {!isTaxLoading && totals.tax === null ? (
+            <p className="mt-1 text-right text-xs text-text-secondary">Excludes tax — calculated at checkout.</p>
+          ) : null}
         </div>
       </div>
       {autoOrderItemsCount > 0 ? (
@@ -90,19 +99,31 @@ export default function CartSummaryPanel({
         />
       ) : null}
       {isLicenseBlocked ? (
-        <NotificationCard
-          tone="warning"
-          title="Dental license required"
-          description="One or more items in your cart require a valid, approved dental license. Add or wait for approval of your license to continue."
-          className="mb-4 rounded-lg px-3 py-2"
-        >
-          <Link
-            href="/buyer-dashboard/settings"
-            className="mt-1 inline-block text-sm font-semibold text-brand underline underline-offset-2 hover:text-brand-strong"
+        licenseCheckFailed ? (
+          // The licence service itself failed, so we do not know whether this buyer has one.
+          // Checkout stays blocked (fail-closed), but pointing an already-licensed buyer at the
+          // settings page would send them somewhere that looks correct and explains nothing.
+          <NotificationCard
+            tone="warning"
+            title="Couldn't verify your dental license"
+            description="One or more items in your cart require an approved dental license, and we couldn't check yours just now. Please try again in a moment."
+            className="mb-4 rounded-lg px-3 py-2"
+          />
+        ) : (
+          <NotificationCard
+            tone="warning"
+            title="Dental license required"
+            description="One or more items in your cart require a valid, approved dental license. Add or wait for approval of your license to continue."
+            className="mb-4 rounded-lg px-3 py-2"
           >
-            Add your license
-          </Link>
-        </NotificationCard>
+            <Link
+              href="/buyer-dashboard/settings"
+              className="mt-1 inline-block text-sm font-semibold text-brand underline underline-offset-2 hover:text-brand-strong"
+            >
+              Add your license
+            </Link>
+          </NotificationCard>
+        )
       ) : null}
       <ActionButton
         type="button"

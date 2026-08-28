@@ -50,10 +50,16 @@ function buildShippingRatesCacheKey(args: {
 function readShippingRatesFromCache(cacheKey: string): ShippingRatesCacheValue["data"] | null {
   if (typeof window === "undefined") return null
 
-  const rawValue = window.localStorage.getItem(cacheKey)
-  if (!rawValue) return null
-
+  // Bug found while testing this file: `getItem`/`JSON.parse`/`removeItem` used to run partly
+  // outside this try block. Storage access can throw for reasons that have nothing to do with the
+  // network (Safari private browsing, a sandboxed checkout iframe, a full quota) — when it did, the
+  // exception propagated up into `fetchRates`'s catch and the user saw "Failed to fetch shipping
+  // rates" with no rates and no retry, even though a normal network fetch would have worked fine.
+  // A storage failure must degrade to "treat as a cache miss", not to a hard error.
   try {
+    const rawValue = window.localStorage.getItem(cacheKey)
+    if (!rawValue) return null
+
     const parsed = JSON.parse(rawValue) as ShippingRatesCacheValue
     if (!parsed?.fetchedAt || !parsed.data) {
       window.localStorage.removeItem(cacheKey)
@@ -67,7 +73,11 @@ function readShippingRatesFromCache(cacheKey: string): ShippingRatesCacheValue["
 
     return parsed.data
   } catch {
-    window.localStorage.removeItem(cacheKey)
+    try {
+      window.localStorage.removeItem(cacheKey)
+    } catch {
+      // Storage is unusable altogether — nothing left to clean up.
+    }
     return null
   }
 }
@@ -75,22 +85,53 @@ function readShippingRatesFromCache(cacheKey: string): ShippingRatesCacheValue["
 function writeShippingRatesToCache(cacheKey: string, data: ShippingRatesCacheValue["data"]) {
   if (typeof window === "undefined") return
 
-  const payload: ShippingRatesCacheValue = {
-    fetchedAt: Date.now(),
-    data,
+  // Same class of bug as the read path above, but worse: this runs AFTER a successful network
+  // fetch. An uncaught `setItem` throw (quota exceeded, private mode, blocked storage) discarded
+  // rates the user already has and showed a network-style error for a caching failure. Caching is
+  // strictly best-effort — losing it must never lose the rates themselves.
+  try {
+    const payload: ShippingRatesCacheValue = {
+      fetchedAt: Date.now(),
+      data,
+    }
+    window.localStorage.setItem(cacheKey, JSON.stringify(payload))
+  } catch {
+    // Best-effort cache write; `applyRatesData` still runs with the freshly fetched data.
   }
-  window.localStorage.setItem(cacheKey, JSON.stringify(payload))
 }
 
 function formatShippingAmount(amount: number): string {
   return amount === 0 ? "Free" : formatCurrency(amount)
 }
 
+// `rate.amount` is a raw string off the wire (backend: `ShipmentRateResponse.amount`, sourced from
+// Shippo). It can be non-numeric, and for adversarial/malformed data, negative. A negative amount
+// is numerically "cheapest", so left unguarded it would win auto-selection and render as a
+// nonsensical negative price with a fabricated "Great deal" discount badge (`defaultShipmentFee -
+// methodAmount` where methodAmount < 0). Treat it the same as non-numeric: unusable for sorting or
+// display, falling through to the existing NaN-safe fallbacks.
+function parseRateAmount(rate: ShipmentRate): number {
+  const parsed = Number(rate.amount)
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : Number.NaN
+}
+
 function getEffectiveRateAmount(rate: ShipmentRate, defaultShipmentFee: number | null): number {
-  const methodAmount = Number(rate.amount)
+  const methodAmount = parseRateAmount(rate)
   if (!Number.isFinite(methodAmount)) return Number.POSITIVE_INFINITY
   if (defaultShipmentFee !== null && defaultShipmentFee < methodAmount) return defaultShipmentFee
   return methodAmount
+}
+
+// Backend: `rate.servicelevel` and every string field inside it can be null for a real Shippo
+// carrier rate (see the `ShipmentRate` type comment in `lib/api/shipment.ts`) — this used to be
+// `rate.servicelevel.name.includes(...)` with no guard, so a single rate with no service level
+// metadata threw and blanked the whole vendor's shipping section (matches F77/F83's pattern: an
+// unguarded read of a field the backend can legitimately omit). Unable to classify (no name) is
+// treated as "keep the rate" rather than silently dropping a deliverable option.
+function isExcludedServiceLevel(rate: ShipmentRate): boolean {
+  const name = rate.servicelevel?.name
+  if (typeof name !== "string") return false
+  return name.includes("Air") || name.includes("Ground")
 }
 
 function getUberQuoteAmount(quote: UberQuote): number {
@@ -148,9 +189,7 @@ export default function VendorShipmentRates({
       uberQuote: UberQuote | null
       defaultShipmentFee: number | null
     }) => {
-      const filteredRates = data.shippoRates.filter(
-        (rate) => !rate.servicelevel.name.includes("Air") && !rate.servicelevel.name.includes("Ground"),
-      )
+      const filteredRates = data.shippoRates.filter((rate) => !isExcludedServiceLevel(rate))
 
       setRates(filteredRates)
       setUberQuote(data.uberQuote)
@@ -216,9 +255,7 @@ export default function VendorShipmentRates({
 
         if (!isMounted) return
 
-        const filteredRates = response.shippoRates.filter(
-          (rate) => !rate.servicelevel.name.includes("Air") && !rate.servicelevel.name.includes("Ground"),
-        )
+        const filteredRates = response.shippoRates.filter((rate) => !isExcludedServiceLevel(rate))
         const responseDefaultShipmentFee =
           typeof response.defaultShipmentFee === "number" && Number.isFinite(response.defaultShipmentFee)
             ? response.defaultShipmentFee
@@ -258,12 +295,19 @@ export default function VendorShipmentRates({
     [rates, defaultShipmentFee],
   )
   const sortedShipmentOptions = useMemo(() => {
-    const shippoOptions = sortedRates.map((rate) => ({
-      type: "shippo" as const,
-      id: rate.objectId,
-      amount: getEffectiveRateAmount(rate, defaultShipmentFee),
-      rate,
-    }))
+    // A rate whose amount is unusable (non-numeric or negative) is DROPPED, not merely sorted
+    // last. Keeping it looked safe because `getEffectiveRateAmount` returns Infinity, but the
+    // row still rendered - and `formatCurrency` floors a non-finite value to 0, so the buyer saw
+    // "$0.00" (free shipping) and could select it, after which `onRateSelect` fed the raw
+    // negative `rate.amount` into the order total. A price we cannot trust must not be offered.
+    const shippoOptions = sortedRates
+      .map((rate) => ({
+        type: "shippo" as const,
+        id: rate.objectId,
+        amount: getEffectiveRateAmount(rate, defaultShipmentFee),
+        rate,
+      }))
+      .filter((option) => Number.isFinite(option.amount))
     const uberOptions = uberQuote
       ? [
           {
@@ -340,7 +384,7 @@ export default function VendorShipmentRates({
             }
 
             const rate = option.rate
-            const methodAmount = Number(rate.amount)
+            const methodAmount = parseRateAmount(rate)
             const effectiveAmount =
               defaultShipmentFee !== null && Number.isFinite(methodAmount) && defaultShipmentFee < methodAmount
                 ? defaultShipmentFee
@@ -372,7 +416,9 @@ export default function VendorShipmentRates({
                 <div className="flex flex-1 items-center">
                   <div className="mr-3 min-w-0 flex-1">
                     <div className="flex items-center justify-between">
-                      <span className="truncate font-bold text-text-primary">{rate.servicelevel.name}</span>
+                      <span className="truncate font-bold text-text-primary">
+                        {rate.servicelevel?.name ?? "Shipping option"}
+                      </span>
                       <div className="ml-2 text-right">
                         <div className="font-bold text-brand">{formatShippingAmount(effectiveAmount)}</div>
                       </div>

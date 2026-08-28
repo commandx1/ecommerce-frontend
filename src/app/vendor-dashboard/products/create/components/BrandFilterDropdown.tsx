@@ -34,11 +34,16 @@ export default function BrandFilterDropdown({
   const [hasMore, setHasMore] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
+  // Remembers the params of the most recent fetch attempt (including failed ones) so the
+  // "Try again" button can retry the exact request that failed, whether it was the initial
+  // page or an infinite-scroll "load more".
+  const lastFetchRef = useRef<{ term: string; page: number; append: boolean } | null>(null)
   const debouncedQuery = useDebounce(query, 400)
 
   useEffect(() => {
@@ -65,6 +70,7 @@ export default function BrandFilterDropdown({
       abortControllerRef.current?.abort()
       const controller = new AbortController()
       abortControllerRef.current = controller
+      lastFetchRef.current = { term: searchTerm, page: targetPage, append: !!options.append }
 
       if (options.append) {
         setIsLoadingMore(true)
@@ -79,13 +85,23 @@ export default function BrandFilterDropdown({
           controller.signal,
         )
 
-        setBrands((prev) => (options.append ? [...prev, ...response.content] : response.content))
-        setPage(response.number)
-        setHasMore(!response.last)
+        // A malformed 200 (missing/null/non-array `content`) must not reach setState as-is -
+        // rendering later does an unconditional `.length`/`.map` over `brands`, which would throw
+        // and blank the whole page for every vendor, not just show "no brands". Same defensive
+        // normalization for `number`/`last`, which unconditionally drive the next page fetch.
+        const content = Array.isArray(response.content) ? response.content : []
+        setBrands((prev) => (options.append ? [...prev, ...content] : content))
+        setPage(typeof response.number === "number" ? response.number : targetPage)
+        setHasMore(response.last === false)
+        setError(null)
       } catch {
         if (controller.signal.aborted) return
         if (!options.append) setBrands([])
         setHasMore(false)
+        // A failed request must never look like "no brands exist" - the brand field below is
+        // required, so a vendor who can't tell an outage from an empty catalog gets stuck
+        // unable to create a product at all, with no idea why. Surface it and let them retry.
+        setError("We couldn't load brands. Please try again.")
       } finally {
         // Never `return` from `finally` — it would silently swallow returns/throws from try/catch.
         if (!controller.signal.aborted) {
@@ -122,6 +138,15 @@ export default function BrandFilterDropdown({
   const handleSelect = (brand: string | null) => {
     onChange(brand)
     setIsOpen(false)
+  }
+
+  const handleRetry = () => {
+    const last = lastFetchRef.current
+    if (last) {
+      fetchBrands(last.term, last.page, { append: last.append })
+    } else {
+      fetchBrands(debouncedQuery.trim(), 0)
+    }
   }
 
   return (
@@ -197,6 +222,17 @@ export default function BrandFilterDropdown({
               <div className="flex items-center justify-center py-6">
                 <Loader2 className="w-5 h-5 text-text-muted animate-spin" />
               </div>
+            ) : error && brands.length === 0 ? (
+              <div role="alert" className="px-3 py-4 text-center">
+                <p className="text-sm text-red-500">{error}</p>
+                <button
+                  type="button"
+                  onClick={handleRetry}
+                  className="mt-2 text-sm font-medium text-brand hover:underline"
+                >
+                  Try again
+                </button>
+              </div>
             ) : brands.length === 0 ? (
               <p className="px-3 py-4 text-sm text-text-muted text-center">No brands found</p>
             ) : (
@@ -218,6 +254,19 @@ export default function BrandFilterDropdown({
             {isLoadingMore && (
               <div className="flex items-center justify-center py-3">
                 <Loader2 className="w-4 h-4 text-text-muted animate-spin" />
+              </div>
+            )}
+
+            {!isLoading && !isLoadingMore && error && brands.length > 0 && (
+              <div role="alert" className="px-3 py-3 text-center border-t border-border-soft">
+                <p className="text-sm text-red-500">{error}</p>
+                <button
+                  type="button"
+                  onClick={handleRetry}
+                  className="mt-1 text-sm font-medium text-brand hover:underline"
+                >
+                  Try again
+                </button>
               </div>
             )}
           </div>

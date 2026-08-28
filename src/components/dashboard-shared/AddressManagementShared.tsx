@@ -16,7 +16,7 @@ import { useAuthStore } from "@/stores/authStore"
 
 /** Register-time address parts that the summary line above doesn't always spell out. */
 const formatAddressDetails = (address: Address) =>
-  [address.district, address.city, address.state, address.postalCode, address.country]
+  [address.district, address.city, address.postalCode, address.country]
     .map((part) => part?.trim())
     .filter((part, index, parts) => Boolean(part) && parts.indexOf(part) === index)
     .join(" · ")
@@ -128,7 +128,11 @@ export default function AddressManagementShared({ embedded = false }: AddressMan
     setCurrentAddress((prev) => ({
       ...prev,
       country: parsedAddress.country,
-      state: parsedAddress.state,
+      // Address (backend AddressResponse/Create/UpdateRequest) has no `state` column - the
+      // state abbreviation is folded into `city` instead, same as before. Do not add a `state`
+      // key to `currentAddress`: it would be forwarded verbatim to createAddress/updateAddress,
+      // silently dropped by the backend, and the buyer would believe a value was saved that
+      // never was (see the comment on the `Address` type in @/lib/api/address).
       city: parsedAddress.state, // Only state abbreviation (e.g. CA)
       district: parsedAddress.city, // Move city name to district (e.g. Los Angeles)
       postalCode: parsedAddress.postalCode,
@@ -154,7 +158,9 @@ export default function AddressManagementShared({ embedded = false }: AddressMan
     currentAddress.formattedAddress
       ? {
           country: currentAddress.country,
-          state: currentAddress.state || "",
+          // Address has no `state` field (folded into `city`, see handleAddressSelect); this
+          // union only exists to satisfy AddressAutocomplete's ParsedAddress-shaped prop.
+          state: "",
           city: currentAddress.district || "", // In current logic, district stores city name
           district: "", // We don't strictly need this for autocomplete
           postalCode: currentAddress.postalCode,

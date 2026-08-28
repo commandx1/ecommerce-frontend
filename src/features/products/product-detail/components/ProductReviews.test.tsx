@@ -108,6 +108,22 @@ describe("ProductReviews", () => {
     expect(screen.getByText(/Based on 1 reviews for Acme Dental/)).toBeInTheDocument()
   })
 
+  // A11y: Radix only fills the trigger's visible text with the selected option client-side, so
+  // before hydration settles the button has no accessible name at all (axe `button-name` on
+  // /products/p-1, same root cause as F112's SortSelect). The `aria-label` is static so the name
+  // is there from first render, independent of `activeFilter`.
+  it("names the vendor filter for assistive tech", () => {
+    render(
+      <ProductReviews
+        productId="p-1"
+        initialReviews={makeReviewsResponse([makeReview()])}
+        userProducts={userProducts}
+      />,
+    )
+
+    expect(screen.getByRole("combobox", { name: "Filter reviews by vendor" })).toBeInTheDocument()
+  })
+
   it("offers no vendor filter for a single-vendor product", () => {
     render(
       <ProductReviews
@@ -278,5 +294,40 @@ describe("ProductReviews", () => {
     )
 
     expect(screen.getByRole("button", { name: "Load More Reviews" })).toBeInTheDocument()
+  })
+
+  // C axis: a malformed 200 body sending `content` as something other than an array must not
+  // white-screen the page. F77/F83/F99/F101/F104 are the same class of bug in five other modules.
+  describe("survives a malformed content field (C axis)", () => {
+    it.each([
+      ["missing entirely", undefined],
+      ["null", null],
+      ["an object instead of an array", { foo: "bar" }],
+      ["a string instead of an array", "not-an-array"],
+      ["a number instead of an array", 42],
+    ])("shows the empty state instead of crashing when content is %s", (_label, badContent) => {
+      const reviews = { ...makeReviewsResponse([]), content: badContent } as unknown as ReviewsResponse
+
+      expect(() =>
+        render(<ProductReviews productId="p-1" initialReviews={reviews} userProducts={userProducts} />),
+      ).not.toThrow()
+
+      expect(screen.getByText("No reviews yet. Be the first to review this product!")).toBeInTheDocument()
+    })
+  })
+
+  it.each([
+    ["missing", undefined],
+    ["null", null],
+    ["an empty string", ""],
+  ])("falls back to a placeholder avatar initial when username is %s", (_label, badUsername) => {
+    const review = { ...makeReview(), username: badUsername } as unknown as Review
+    expect(() =>
+      render(
+        <ProductReviews productId="p-1" initialReviews={makeReviewsResponse([review])} userProducts={userProducts} />,
+      ),
+    ).not.toThrow()
+
+    expect(screen.getByText("?")).toBeInTheDocument()
   })
 })

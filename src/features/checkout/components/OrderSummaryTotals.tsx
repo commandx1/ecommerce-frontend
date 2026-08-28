@@ -8,7 +8,9 @@ interface OrderSummaryTotalsProps {
   heavyShipmentFee: number
   totalShipmentFee: number
   subtotal: number
-  tax: number
+  // null = tax could not be estimated yet (no address, or the estimate call failed) — render as
+  // "calculated at checkout", not $0.00.
+  tax: number | null
   total: number
   volumeDiscount: number
 }
@@ -58,6 +60,8 @@ export default function OrderSummaryTotals({
         <span className="text-text-secondary">Estimated Tax</span>
         {isTaxLoading ? (
           <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
+        ) : tax === null ? (
+          <span className="text-sm italic text-text-secondary">Calculated at checkout</span>
         ) : (
           <span className="font-medium text-text-primary">{formatCurrency(tax)}</span>
         )}
@@ -67,6 +71,9 @@ export default function OrderSummaryTotals({
           <span className="text-lg font-bold text-text-primary">Total</span>
           <span className="text-lg font-bold text-brand">{formatCurrency(total)}</span>
         </div>
+        {!isTaxLoading && tax === null ? (
+          <p className="mt-1 text-right text-xs text-text-secondary">Excludes tax — calculated at checkout.</p>
+        ) : null}
       </div>
     </div>
   )

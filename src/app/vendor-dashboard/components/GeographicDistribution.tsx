@@ -1,7 +1,6 @@
 "use client"
 
-import { Expand } from "lucide-react"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { type VendorGeographicDistributionResponse, vendorDashboardAPI } from "@/lib/api/vendor-dashboard"
 import { useAuthStore } from "@/stores/authStore"
@@ -30,44 +29,49 @@ const GeographicDistribution = () => {
   const [range, setRange] = useState<RangeOption>(30)
   const [distribution, setDistribution] = useState<VendorGeographicDistributionResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(false)
   const abortControllerRef = useRef<AbortController | null>(null)
 
-  useEffect(() => {
-    const fetchDistribution = async () => {
-      if (!isAuthenticated) return
+  const fetchDistribution = useCallback(async () => {
+    if (!isAuthenticated) return
 
-      abortControllerRef.current?.abort()
-      const controller = new AbortController()
-      abortControllerRef.current = controller
+    abortControllerRef.current?.abort()
+    const controller = new AbortController()
+    abortControllerRef.current = controller
 
-      try {
-        setIsLoading(true)
-        const response = await vendorDashboardAPI.getGeographicDistribution(
-          range === "all" ? undefined : range,
-          controller.signal,
-        )
-        setDistribution(response)
-      } catch {
-        if (controller.signal.aborted) return
-        setDistribution(null)
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsLoading(false)
-        }
+    try {
+      setIsLoading(true)
+      setFetchError(false)
+      const response = await vendorDashboardAPI.getGeographicDistribution(
+        range === "all" ? undefined : range,
+        controller.signal,
+      )
+      setDistribution(response)
+    } catch {
+      if (controller.signal.aborted) return
+      setDistribution(null)
+      setFetchError(true)
+    } finally {
+      if (!controller.signal.aborted) {
+        setIsLoading(false)
       }
     }
+  }, [isAuthenticated, range])
 
+  useEffect(() => {
     void fetchDistribution()
 
     return () => {
       abortControllerRef.current?.abort()
     }
-  }, [isAuthenticated, range])
+  }, [fetchDistribution])
 
   const growthMarkets = useMemo(() => {
-    if (!distribution) return []
+    // `cities` missing, null, or not an array on an otherwise-valid `distribution` (malformed
+    // 200 body) would otherwise throw on `.filter` and blank the whole dashboard (infra note #26).
+    const cities = Array.isArray(distribution?.cities) ? distribution.cities : []
 
-    return distribution.cities
+    return cities
       .filter((city) => city.countChangePercentage !== null)
       .sort((a, b) => (b.countChangePercentage ?? 0) - (a.countChangePercentage ?? 0))
       .slice(0, 3)
@@ -95,10 +99,17 @@ const GeographicDistribution = () => {
             <div key={placeholder} className="h-6 animate-pulse rounded-full bg-surface-muted" />
           ))}
         </div>
+      ) : fetchError ? (
+        <div className="flex flex-col items-center justify-center gap-3 px-6 py-10 text-center">
+          <p className="text-sm font-medium text-danger">Couldn't load geographic distribution. Please try again.</p>
+          <Button type="button" variant="outline" onClick={() => void fetchDistribution()} className="rounded-lg px-4">
+            Retry
+          </Button>
+        </div>
       ) : (
         <>
           <div className="space-y-4">
-            {(distribution?.cities ?? []).map((city, index) => {
+            {(Array.isArray(distribution?.cities) ? distribution.cities : []).map((city, index) => {
               const color = COLOR_PALETTE[index % COLOR_PALETTE.length]
 
               return (

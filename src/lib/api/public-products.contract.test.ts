@@ -6,7 +6,6 @@ import {
   getProductAttributeOptions,
   getProductBrandOptions,
   getProductCategoryOptions,
-  getProductCompanyOptions,
   getProductManufacturerOptions,
   getProductVendorOptions,
   getPublicProducts,
@@ -33,9 +32,6 @@ beforeEach(() => {
     http.get("*/api/products/brands", () => HttpResponse.json([{ name: "MARK3", count: 24 }])),
     http.get("*/api/products/manufacturers", () => HttpResponse.json([{ name: "MARK3", count: 24 }])),
     http.get("*/api/products/vendors", () => HttpResponse.json([{ id: "vendor-1", name: "Acme Dental", count: 12 }])),
-    http.get("*/api/products/companies", () =>
-      HttpResponse.json([{ id: "company-1", name: "Acme Dental Supplies", count: 12 }]),
-    ),
     http.get("*/api/products/categories", () => HttpResponse.json([{ name: "Consumables", count: 45 }])),
     http.get("*/api/products/attributes", () =>
       HttpResponse.json([{ attributeName: "Color", values: [{ value: "Yellow", count: 10 }] }]),
@@ -158,11 +154,6 @@ describe("filter option endpoints contract", () => {
     expect(options).toEqual([{ id: "vendor-1", name: "Acme Dental", count: 12 }])
   })
 
-  it("getProductCompanyOptions returns typed CompanyOption[]", async () => {
-    const options = await getProductCompanyOptions()
-    expect(options).toEqual([{ id: "company-1", name: "Acme Dental Supplies", count: 12 }])
-  })
-
   it("getProductCategoryOptions returns typed FilterOption[]", async () => {
     const options = await getProductCategoryOptions()
     expect(options).toEqual([{ name: "Consumables", count: 45 }])
@@ -178,7 +169,6 @@ describe("filter option endpoints contract", () => {
       http.get("*/api/products/brands", () => HttpResponse.json([])),
       http.get("*/api/products/manufacturers", () => HttpResponse.json([])),
       http.get("*/api/products/vendors", () => HttpResponse.json([])),
-      http.get("*/api/products/companies", () => HttpResponse.json([])),
       http.get("*/api/products/categories", () => HttpResponse.json([])),
       http.get("*/api/products/attributes", () => HttpResponse.json([])),
     )
@@ -186,7 +176,6 @@ describe("filter option endpoints contract", () => {
     await expect(getProductBrandOptions()).resolves.toEqual([])
     await expect(getProductManufacturerOptions()).resolves.toEqual([])
     await expect(getProductVendorOptions()).resolves.toEqual([])
-    await expect(getProductCompanyOptions()).resolves.toEqual([])
     await expect(getProductCategoryOptions()).resolves.toEqual([])
     await expect(getProductAttributeOptions()).resolves.toEqual([])
   })
@@ -196,7 +185,6 @@ describe("filter option endpoints contract", () => {
       http.get("*/api/products/brands", () => new HttpResponse(null, { status: 500 })),
       http.get("*/api/products/manufacturers", () => new HttpResponse(null, { status: 500 })),
       http.get("*/api/products/vendors", () => new HttpResponse(null, { status: 500 })),
-      http.get("*/api/products/companies", () => new HttpResponse(null, { status: 500 })),
       http.get("*/api/products/categories", () => new HttpResponse(null, { status: 500 })),
       http.get("*/api/products/attributes", () => new HttpResponse(null, { status: 500 })),
     )
@@ -204,7 +192,6 @@ describe("filter option endpoints contract", () => {
     await expect(getProductBrandOptions()).resolves.toEqual([])
     await expect(getProductManufacturerOptions()).resolves.toEqual([])
     await expect(getProductVendorOptions()).resolves.toEqual([])
-    await expect(getProductCompanyOptions()).resolves.toEqual([])
     await expect(getProductCategoryOptions()).resolves.toEqual([])
     await expect(getProductAttributeOptions()).resolves.toEqual([])
   })

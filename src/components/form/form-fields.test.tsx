@@ -47,17 +47,15 @@ describe("FormField", () => {
     expect(screen.getByText("Email is required")).toBeInTheDocument()
   })
 
-  /**
-   * BULGU: the error paragraph carries no id and the control gets no `aria-describedby`, so a
-   * screen reader announces the field as invalid without ever reading why. Locking today's
-   * behaviour so a future fix is a deliberate change.
-   */
-  it("does not wire the error to the control via aria-describedby (current behaviour)", () => {
+  it("wires the error to the control via aria-describedby so screen readers announce why it is invalid", () => {
     render(<TextField id="email" label="Email" error="Email is required" />)
 
     const input = screen.getByLabelText("Email")
+    const errorMessage = screen.getByText("Email is required")
+
     expect(input).toHaveAttribute("aria-invalid", "true")
-    expect(input).not.toHaveAttribute("aria-describedby")
+    expect(input).toHaveAttribute("aria-describedby")
+    expect(errorMessage).toHaveAttribute("id", input.getAttribute("aria-describedby"))
   })
 })
 

@@ -1,8 +1,9 @@
 import { QueryClient } from "@tanstack/react-query"
 import userEvent from "@testing-library/user-event"
 import { HttpResponse, http } from "msw"
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { DocumentProductsResponse } from "@/lib/api/vendor-documents"
+import { vendorDocumentsAPI } from "@/lib/api/vendor-documents"
 import { server } from "@/mocks/server"
 import { render, screen, waitFor, within } from "@/test/render"
 import { signInVendor } from "@/test/vendor-products-page-harness"
@@ -65,6 +66,7 @@ function serveDocumentProducts(body: DocumentProductsResponse) {
 const tableRows = () => screen.getAllByRole("row").slice(1) // drop the header row
 
 beforeEach(() => {
+  vi.restoreAllMocks()
   signInVendor()
 })
 
@@ -228,5 +230,185 @@ describe("DocumentProductsPanel", () => {
 
     expect(await screen.findByText("Sheet not found")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument()
+  })
+
+  it("refetches when Try again is clicked", async () => {
+    let attempts = 0
+    server.use(
+      http.get("*/backend-api/user-products/documents/:documentId/products", () => {
+        attempts += 1
+        return attempts === 1
+          ? HttpResponse.json({ message: "Sheet not found" }, { status: 500 })
+          : HttpResponse.json(mixed)
+      }),
+    )
+    const user = userEvent.setup()
+    render(<DocumentProductsPanel documentId={DOCUMENT_ID} />)
+
+    await user.click(await screen.findByRole("button", { name: "Try again" }))
+
+    expect(await screen.findByRole("button", { name: "1 Imported" })).toBeInTheDocument()
+  })
+
+  // React Query's `error` is `unknown` - a thrown non-Error value must still degrade to the
+  // generic fallback message rather than crash the component.
+  it("falls back to a generic message when a non-Error value is thrown", async () => {
+    vi.spyOn(vendorDocumentsAPI, "getDocumentProducts").mockRejectedValue("boom")
+    render(<DocumentProductsPanel documentId={DOCUMENT_ID} />)
+
+    expect(await screen.findByText("Couldn't load imported products")).toBeInTheDocument()
+    expect(screen.getByText("Failed to load imported products")).toBeInTheDocument()
+  })
+
+  it("shows 'No cell values for this row' when a failed row's cells are all blank", async () => {
+    const user = userEvent.setup()
+    serveDocumentProducts({
+      documentId: DOCUMENT_ID,
+      products: [],
+      wrongRows: [{ Status: "   ", Note: "" }],
+    })
+    render(<DocumentProductsPanel documentId={DOCUMENT_ID} />)
+
+    await waitFor(() => expect(tableRows()).toHaveLength(1))
+    await user.click(tableRows()[0])
+
+    expect(await screen.findByText("No cell values for this row.")).toBeInTheDocument()
+  })
+
+  // `humanizeColumn` falls back to returning the raw key when stripping separators leaves no
+  // words at all (a header made only of underscores/dashes) - an edge case a file-driven
+  // template can produce even though no real header would sanely be named this way.
+  it("falls back to the raw key for a column header with no alphanumeric words", async () => {
+    const user = userEvent.setup()
+    serveDocumentProducts({
+      documentId: DOCUMENT_ID,
+      products: [],
+      wrongRows: [{ Status: "x", ___: "value" }],
+    })
+    render(<DocumentProductsPanel documentId={DOCUMENT_ID} />)
+
+    await waitFor(() => expect(tableRows()).toHaveLength(1))
+    await user.click(tableRows()[0])
+
+    expect(await screen.findByText("___")).toBeInTheDocument()
+  })
+
+  it("shows a non-numeric money-column value untouched instead of coercing it", async () => {
+    const user = userEvent.setup()
+    serveDocumentProducts({
+      documentId: DOCUMENT_ID,
+      products: [],
+      wrongRows: [{ Status: "x", Price: "N/A" }],
+    })
+    render(<DocumentProductsPanel documentId={DOCUMENT_ID} />)
+
+    await waitFor(() => expect(tableRows()).toHaveLength(1))
+    await user.click(tableRows()[0])
+
+    expect(await screen.findByText("N/A")).toBeInTheDocument()
+  })
+
+  it("tolerates a currency-symbol price by stripping it before parsing", async () => {
+    serveDocumentProducts({
+      documentId: DOCUMENT_ID,
+      products: [],
+      wrongRows: [
+        { Status: "x", Product_Name: "Odd Item", Vendor_Product_Code: "SKU-9", Price: "$43.40", Stock: "not-a-number" },
+      ],
+    })
+    render(<DocumentProductsPanel documentId={DOCUMENT_ID} />)
+
+    const row = within((await screen.findByText("SKU-9")).closest("tr") as HTMLElement)
+    // Price parsed after stripping the "$".
+    expect(row.getByText("$43.40")).toBeInTheDocument()
+    // A non-numeric stock cell renders as a dash rather than a coerced value.
+    expect(row.getByText("—")).toBeInTheDocument()
+  })
+
+  it("matches a row's failure reason back by its Row number", async () => {
+    serveDocumentProducts({
+      documentId: DOCUMENT_ID,
+      products: [],
+      wrongRows: [
+        { Row: "5", Vendor_Product_Code: "SKU-A" },
+        { Row: "9", Vendor_Product_Code: "SKU-B" },
+      ],
+    })
+    render(
+      <DocumentProductsPanel
+        documentId={DOCUMENT_ID}
+        rowIssues={["Row 9: Price is not numeric", "Row 5: Missing SKU"]}
+      />,
+    )
+
+    const rowA = within((await screen.findByText("SKU-A")).closest("tr") as HTMLElement)
+    expect(rowA.getByText("Missing SKU")).toBeInTheDocument()
+    const rowB = within(screen.getByText("SKU-B").closest("tr") as HTMLElement)
+    expect(rowB.getByText("Price is not numeric")).toBeInTheDocument()
+  })
+
+  // When no row carries a parseable "Row N:" number, reasons fall back to positional pairing -
+  // but only when the two lists are the exact same length, since otherwise there is no safe way
+  // to know which reason belongs to which row.
+  it("falls back to positional pairing when a row has no parseable row number and the lists line up", async () => {
+    // Neither wrong row carries a "row"/"row number"/"satır" cell, so `rowNumber` is NaN for
+    // both - the parsed `rowIssues` (which DO carry row numbers) can only be matched by
+    // position, and only because there are exactly as many reasons as wrong rows.
+    serveDocumentProducts({
+      documentId: DOCUMENT_ID,
+      products: [],
+      wrongRows: [
+        { Status: "x", Vendor_Product_Code: "SKU-A" },
+        { Status: "x", Vendor_Product_Code: "SKU-B" },
+      ],
+    })
+    render(
+      <DocumentProductsPanel documentId={DOCUMENT_ID} rowIssues={["Row 2: first reason", "Row 5: second reason"]} />,
+    )
+
+    const rowA = within((await screen.findByText("SKU-A")).closest("tr") as HTMLElement)
+    expect(rowA.getByText("first reason")).toBeInTheDocument()
+  })
+
+  it("shows no reason when the row-issue count does not match the wrong-row count", async () => {
+    serveDocumentProducts({
+      documentId: DOCUMENT_ID,
+      products: [],
+      wrongRows: [{ Status: "x", Vendor_Product_Code: "SKU-A" }],
+    })
+    render(<DocumentProductsPanel documentId={DOCUMENT_ID} rowIssues={["Row 2: reason one", "Row 5: reason two"]} />)
+
+    await waitFor(() => expect(tableRows()).toHaveLength(1))
+    // No reason column when nothing could be matched to this single row.
+    expect(screen.queryByText(/reason (one|two)/)).not.toBeInTheDocument()
+  })
+
+  it("collapses an expanded failed row back down on a second click", async () => {
+    const user = userEvent.setup()
+    serveDocumentProducts(mixed)
+    render(<DocumentProductsPanel documentId={DOCUMENT_ID} />)
+
+    await user.click(await screen.findByRole("button", { name: "1 Failed" }))
+    const cell = await screen.findByText("104-160003")
+    await user.click(cell)
+    expect(await screen.findByText("Fulfillment Policy")).toBeInTheDocument()
+
+    await user.click(cell)
+    await waitFor(() => expect(screen.queryByText("Fulfillment Policy")).not.toBeInTheDocument())
+  })
+
+  it("does not expand a row with no raw cell data (an imported/skipped product row)", async () => {
+    const user = userEvent.setup()
+    serveDocumentProducts(mixed)
+    render(<DocumentProductsPanel documentId={DOCUMENT_ID} />)
+
+    await user.click(await screen.findByRole("button", { name: "3 All" }))
+    await waitFor(() => expect(tableRows()).toHaveLength(3))
+
+    const productRow = screen.getByText("Composite Resin Kit").closest("tr") as HTMLElement
+    await user.click(productRow)
+
+    // Nothing renders as expanded content for a product row - clicking it is a no-op.
+    expect(screen.queryByText("No cell values for this row.")).not.toBeInTheDocument()
   })
 })

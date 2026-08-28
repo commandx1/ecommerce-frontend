@@ -1,18 +1,6 @@
 "use client"
 
-import {
-  Box,
-  Megaphone,
-  MessageSquare,
-  Plus,
-  ShoppingBag,
-  Star,
-  Tag,
-  TrendingUp,
-  User,
-  Users,
-  Warehouse,
-} from "lucide-react"
+import { Box, Megaphone, MessageSquare, Plus, ShoppingBag, Star, Tag, TrendingUp, User, Users } from "lucide-react"
 import { useMemo } from "react"
 import CommonDashboardSidebar, {
   type DashboardSidebarGroup,
@@ -37,7 +25,7 @@ const VENDOR_NAV_GROUPS: DashboardSidebarGroup[] = [
         icon: Box,
         matchMode: "startsWith",
       },
-      { href: "/vendor-dashboard/inventory", label: "Inventory", icon: Warehouse, matchMode: "startsWith" },
+      // "Inventory" pointed at /vendor-dashboard/inventory, which has no page - re-add it with the page.
       { href: "/vendor-dashboard/promotions", label: "Promotions", icon: Megaphone, matchMode: "startsWith" },
       {
         href: "/vendor-dashboard/reviews",

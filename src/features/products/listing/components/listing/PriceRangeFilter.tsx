@@ -69,7 +69,7 @@ const PriceRangeFilter = () => {
   return (
     <div className="p-6 border-b border-border-soft">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-text-primary">Price Range</h3>
+        <h2 className="text-lg font-semibold text-text-primary">Price Range</h2>
         {hasPrice && (
           <button
             type="button"

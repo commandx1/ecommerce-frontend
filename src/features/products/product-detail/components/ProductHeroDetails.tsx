@@ -25,7 +25,12 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
           <span className="rounded-full border border-border-soft bg-surface px-3 py-1 text-sm font-medium text-brand">
             {product.category}
           </span>
-          <span className="rounded-full bg-warning/20 px-3 py-1 text-sm font-medium text-warning">Best Seller</span>
+          {/* `text-warning-strong`, not `text-warning`: text-on-its-own-tint needs a darker
+              foreground to clear WCAG AA (axe `color-contrast` measured 2.04:1 here) - see the
+              `--warning-strong` comment in globals.css for the measurement. */}
+          <span className="rounded-full bg-warning/20 px-3 py-1 text-sm font-medium text-warning-strong">
+            Best Seller
+          </span>
         </div>
         <h1 className="mb-4 text-3xl font-semibold text-text-primary sm:text-4xl md:text-5xl">{product.title}</h1>
         <p className="text-base leading-7 text-text-secondary sm:text-lg sm:leading-8">{product.description}</p>

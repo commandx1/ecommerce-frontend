@@ -115,7 +115,7 @@ const ActiveFilters = ({ vendors }: ActiveFiltersProps) => {
 
   return (
     <div className="p-6 border-b border-border-soft">
-      <h3 className="text-sm font-semibold text-text-primary mb-4">Active Filters</h3>
+      <h2 className="text-sm font-semibold text-text-primary mb-4">Active Filters</h2>
       <div className="space-y-4">
         {groups.map((group) => (
           <div key={group.label}>

@@ -14,7 +14,6 @@ import {
   Scan,
   Store,
   Syringe,
-  Tag,
   UserCircle,
 } from "lucide-react"
 import Image from "next/image"
@@ -51,7 +50,8 @@ export default function NotFound() {
                   Back to Home
                 </Link>
                 <Link
-                  href="/contact"
+                  // /contact is not a route; the contact form lives on the help centre page.
+                  href="/help-center"
                   className="flex items-center rounded-full border border-border-strong bg-surface-elevated px-8 py-4 font-semibold text-brand transition-colors hover:border-brand/40 hover:bg-accent"
                 >
                   <Headset className="w-4 h-4 mr-2" />
@@ -108,13 +108,8 @@ export default function NotFound() {
                 link: "/vendors",
                 btnText: "Browse Vendors",
               },
-              {
-                icon: Tag,
-                title: "Top Deals",
-                desc: "Explore current promotions and discounts",
-                link: "/top-deals",
-                btnText: "View Deals",
-              },
+              // "Top Deals" pointed at /top-deals, which has no page - sending a user who already
+              // hit a 404 to a second one. Re-add it with the page.
               {
                 icon: UserCircle,
                 title: "My Account",
@@ -269,7 +264,11 @@ export default function NotFound() {
             ))}
           </div>
           <div className="text-center mt-8">
-            <Link href="/faq" className="flex items-center justify-center font-semibold text-brand hover:underline">
+            {/* /faq is not a route; FAQSection is part of the help centre page. */}
+            <Link
+              href="/help-center"
+              className="flex items-center justify-center font-semibold text-brand hover:underline"
+            >
               View All FAQs <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
           </div>

@@ -7,7 +7,7 @@ const BUYER_NAV_ITEMS: DashboardHeaderNavItem[] = [
   { href: "/buyer-dashboard/orders", label: "Orders" },
   { href: "/buyer-dashboard/vendors", label: "Vendors" },
   { href: "/buyer-dashboard/invoices", label: "Invoices" },
-  { href: "/buyer-dashboard/reports", label: "Reports" },
+  // "Reports" pointed at /buyer-dashboard/reports, which has no page - re-add it with the page.
 ]
 
 export default function BuyerHeader() {

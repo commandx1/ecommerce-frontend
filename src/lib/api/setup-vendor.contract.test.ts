@@ -52,12 +52,18 @@ describe("refreshTokenForVendorSetup contract", () => {
     expect(error.authHandled).toBe(true)
   })
 
-  it("rejects with a 404 when the setup session no longer exists", async () => {
+  it("rejects with a 403 when the setup session's refresh token is gone/expired/revoked", async () => {
+    // AuthController.refreshToken -> AuthService.refreshTokenFromCookie /
+    // RefreshTokenService.verifyExpiration (ecommerce-api auth/service/*.java) only ever throw
+    // TokenRefreshException for a not-found, expired, or revoked refresh token - mapped to 403 in
+    // GlobalExceptionHandler. There is no path in this endpoint that returns 404.
     server.use(
-      http.post("*/api/auth/refresh-token", () => HttpResponse.json({ message: "Not found" }, { status: 404 })),
+      http.post("*/api/auth/refresh-token", () =>
+        HttpResponse.json({ message: "Refresh token is not in database!" }, { status: 403 }),
+      ),
     )
 
-    await expect(refreshTokenForVendorSetup("refresh-1")).rejects.toMatchObject({ status: 404 })
+    await expect(refreshTokenForVendorSetup("refresh-1")).rejects.toMatchObject({ status: 403 })
   })
 
   it("rejects with a 500 server error", async () => {

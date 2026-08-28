@@ -117,7 +117,7 @@ describe("AddressAutocomplete", () => {
     expect(screen.getByText("Address is required")).toBeInTheDocument()
   })
 
-  it("keeps the field usable when the lookup fails", async () => {
+  it("keeps the field usable and tells the buyer the lookup failed", async () => {
     const user = userEvent.setup()
     vi.spyOn(console, "error").mockImplementation(() => {})
     server.use(http.get("*/api/google-maps/autocomplete", () => new HttpResponse(null, { status: 500 })))
@@ -127,18 +127,55 @@ describe("AddressAutocomplete", () => {
 
     await waitFor(() => expect(field()).toHaveValue("201 Madison"))
     expect(screen.queryByText(/Madison Ave, New York/)).not.toBeInTheDocument()
+    expect(await screen.findByRole("alert")).toHaveTextContent(/couldn't search for addresses/i)
   })
 
-  // BULGU: each suggestion is an <li> with an onClick but no button role, tabindex or key
-  // handler — the list cannot be used with a keyboard at all.
-  it("renders suggestions as non-interactive list items (current behaviour)", async () => {
+  it("clears the search error once a retry succeeds", async () => {
     const user = userEvent.setup()
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    server.use(
+      http.get("*/api/google-maps/autocomplete", () => new HttpResponse(null, { status: 500 }), { once: true }),
+    )
     render(<AddressAutocomplete onSelect={vi.fn()} selectedAddress={null} />)
 
     await user.type(field(), "201 Madison")
-    const suggestion = (await screen.findByText("201 Madison Ave, New York, NY, USA")).closest("li")!
+    expect(await screen.findByRole("alert")).toBeInTheDocument()
 
-    expect(suggestion).not.toHaveAttribute("tabindex")
-    expect(screen.queryByRole("option")).not.toBeInTheDocument()
+    await user.type(field(), " Ave")
+
+    await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument())
+    expect(await screen.findByText("201 Madison Ave, New York, NY, USA")).toBeInTheDocument()
+  })
+
+  it("tells the buyer when fetching a selected place's details fails", async () => {
+    const user = userEvent.setup()
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    server.use(http.get("*/api/google-maps/place-details", () => new HttpResponse(null, { status: 500 })))
+    const onSelect = vi.fn()
+    render(<AddressAutocomplete onSelect={onSelect} selectedAddress={null} />)
+
+    await user.type(field(), "201 Madison")
+    await user.click(await screen.findByText("201 Madison Ave, New York, NY, USA"))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/couldn't load that address/i)
+    expect(onSelect).not.toHaveBeenCalled()
+  })
+
+  it("lets a keyboard user tab to a suggestion and select it with Enter", async () => {
+    const user = userEvent.setup()
+    const onSelect = vi.fn()
+    render(<AddressAutocomplete onSelect={onSelect} selectedAddress={null} />)
+
+    await user.type(field(), "201 Madison")
+    await screen.findByText("201 Madison Ave, New York, NY, USA")
+
+    expect(screen.getAllByRole("option")).toHaveLength(2)
+
+    await user.tab()
+    expect(screen.getByRole("option", { name: "201 Madison Ave, New York, NY, USA" })).toHaveFocus()
+
+    await user.keyboard("{Enter}")
+
+    await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1))
   })
 })

@@ -13,6 +13,7 @@ const PAYMENT_METHOD_OPTIONS: PaymentMethodOption[] = [{ type: "card", title: "C
 interface UseBillingInformationResult {
   cardName: string
   isLoadingCards: boolean
+  isSubmitting: boolean
   paymentType: "card" | "net30" | "wire" | "financing"
   paymentOptions: PaymentMethodOption[]
   saveCard: boolean
@@ -52,6 +53,7 @@ export function useBillingInformation(): UseBillingInformationResult {
   const { hasAutoOrderItems } = useCheckoutAutoOrder()
   const [savedCards, setSavedCards] = useState<SavedCard[]>([])
   const [isLoadingCards, setIsLoadingCards] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (paymentMethod.type !== "card") return
@@ -63,7 +65,9 @@ export function useBillingInformation(): UseBillingInformationResult {
       .getSavedCards()
       .then((response) => {
         if (!isMounted) return
-        setSavedCards(response.cards || [])
+        // Array.isArray, not `|| []`: a malformed 200 with a non-array `cards` would reach
+        // .map() in the saved-card picker and blank the payment step (infra note #26).
+        setSavedCards(Array.isArray(response.cards) ? response.cards : [])
       })
       .catch((error: unknown) => {
         if (!isMounted) return
@@ -131,10 +135,26 @@ export function useBillingInformation(): UseBillingInformationResult {
           setSaveCard(true)
         }
 
-        const createdPaymentMethod = await stripe.createPaymentMethod({
-          type: "card",
-          card: cardNumberElement,
-        })
+        let createdPaymentMethod: Awaited<ReturnType<typeof stripe.createPaymentMethod>>
+        setIsSubmitting(true)
+        try {
+          createdPaymentMethod = await stripe.createPaymentMethod({
+            type: "card",
+            card: cardNumberElement,
+          })
+        } catch (error: unknown) {
+          // A rejected promise here means the request to Stripe itself never completed (e.g. no
+          // network), not a declined/invalid card - Stripe resolves for those instead of
+          // throwing. Session expiry is handled centrally by the axios interceptor, which marks
+          // the error `authHandled` after logging out and redirecting; a second toast on top of
+          // that redirect would be redundant.
+          if (!(error as { authHandled?: boolean } | null)?.authHandled) {
+            showToast.error("We couldn't reach Stripe. Please check your connection and try again.")
+          }
+          return
+        } finally {
+          setIsSubmitting(false)
+        }
 
         if (createdPaymentMethod.error || !createdPaymentMethod.paymentMethod?.id) {
           showToast.error(createdPaymentMethod.error?.message || "Card details are invalid.")
@@ -180,6 +200,7 @@ export function useBillingInformation(): UseBillingInformationResult {
   return {
     cardName,
     isLoadingCards,
+    isSubmitting,
     paymentType: paymentMethod.type,
     paymentOptions,
     saveCard,

@@ -22,10 +22,10 @@ const orderPayload = (overrides: Partial<PlaceOrderPayload> = {}): PlaceOrderPay
 
 /** Registers the tax handler and returns the bodies it received, so refetches stay observable. */
 const captureTaxRequests = (taxAmount = 8.5) => {
-  const bodies: { addressId: string; shippingAmount: string }[] = []
+  const bodies: { addressId: string; shippingAmount: number }[] = []
   server.use(
     http.post("*/backend-api/cart/tax-estimate", async ({ request }) => {
-      bodies.push((await request.json()) as { addressId: string; shippingAmount: string })
+      bodies.push((await request.json()) as { addressId: string; shippingAmount: number })
       return HttpResponse.json(makeTaxEstimate({ taxAmount }))
     }),
   )
@@ -112,14 +112,14 @@ describe("useOrderSummary", () => {
     expect(result.current.totalShipmentFee).toBe(0)
   })
 
-  it("keeps tax at zero and never calls the backend without an address", async () => {
+  it("leaves tax unestimated (null) and never calls the backend without an address", async () => {
     const bodies = captureTaxRequests()
     useCartStore.setState({ items: [makeCartItem()] })
 
     const { result } = renderHook(() => useOrderSummary())
 
     await waitFor(() => expect(result.current.isTaxLoading).toBe(false))
-    expect(result.current.tax).toBe(0)
+    expect(result.current.tax).toBeNull()
     expect(bodies).toHaveLength(0)
   })
 
@@ -131,7 +131,7 @@ describe("useOrderSummary", () => {
 
     await waitFor(() => expect(result.current.isTaxLoading).toBe(false))
     expect(bodies).toHaveLength(0)
-    expect(result.current.tax).toBe(0)
+    expect(result.current.tax).toBeNull()
   })
 
   it("estimates tax from the address and the selected shipping cost", async () => {
@@ -142,7 +142,8 @@ describe("useOrderSummary", () => {
     const { result } = renderHook(() => useOrderSummary())
 
     await waitFor(() => expect(result.current.tax).toBe(12.34))
-    expect(bodies).toEqual([{ addressId: "address-1", shippingAmount: "15" }])
+    // Backend: CartTaxEstimateRequest.shippingAmount is a Double, not a string.
+    expect(bodies).toEqual([{ addressId: "address-1", shippingAmount: 15 }])
     // total = subtotal - volume discount + shipping + tax
     expect(result.current.total).toBeCloseTo(100 - 0 + 15 + 12.34, 5)
   })
@@ -161,10 +162,34 @@ describe("useOrderSummary", () => {
     rerender()
 
     await waitFor(() => expect(bodies).toHaveLength(2))
-    expect(bodies[1]).toEqual({ addressId: "address-1", shippingAmount: "25" })
+    expect(bodies[1]).toEqual({ addressId: "address-1", shippingAmount: 25 })
   })
 
-  it("falls back to zero tax when the estimate call fails", async () => {
+  // A malformed 200 can carry `taxAmount` as a non-number. Storing it would skip the
+  // "Calculated at checkout" fallback and string-concatenate into the total, which
+  // formatCurrency then floors to $0.00 - the buyer reads a wrong number either way.
+  it.each([
+    ["a string", "5"],
+    ["null", null],
+    ["an object", {}],
+  ])("treats a non-numeric taxAmount (%s) as unestimated, not as a value", async (_label, taxAmount) => {
+    useCartStore.setState({ items: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 100 }) })] })
+    useCheckoutStore.setState({ orderPayload: orderPayload(), selectedShippingCost: 15 })
+    server.use(
+      http.post("*/backend-api/cart/tax-estimate", () =>
+        HttpResponse.json({ subtotal: 100, shippingAmount: 15, taxAmount, totalAmount: 115, currency: "usd" }),
+      ),
+    )
+
+    const { result } = renderHook(() => useOrderSummary())
+
+    await waitFor(() => expect(result.current.isTaxLoading).toBe(false))
+    expect(result.current.tax).toBeNull()
+    // The total stays a real number rather than a concatenated string.
+    expect(result.current.total).toBeCloseTo(100 + 15, 5)
+  })
+
+  it("leaves tax unestimated (null), not zero, when the estimate call fails", async () => {
     server.use(http.post("*/backend-api/cart/tax-estimate", () => new HttpResponse(null, { status: 500 })))
     useCartStore.setState({ items: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 100 }) })] })
     useCheckoutStore.setState({ orderPayload: orderPayload(), selectedShippingCost: 5 })
@@ -172,7 +197,9 @@ describe("useOrderSummary", () => {
     const { result } = renderHook(() => useOrderSummary())
 
     await waitFor(() => expect(result.current.isTaxLoading).toBe(false))
-    expect(result.current.tax).toBe(0)
+    // Not 0 — a real $0 estimate and "we couldn't estimate it" must stay distinguishable so the
+    // UI can show "calculated at checkout" instead of a misleading $0.00 tax line.
+    expect(result.current.tax).toBeNull()
     // The buyer is still shown a total, just an untaxed one — the charge itself is computed
     // server side, so this is a display-only optimism.
     expect(result.current.total).toBe(105)

@@ -236,6 +236,15 @@ export default function VendorOrderExpandedContent({
                             )}
                           </Button>
                           {/*
+                          DELIBERATELY DISABLED - do not re-enable without a product decision.
+                          Rejecting a return is a closed product rule: a vendor may only approve.
+                          The rest of the flow (openRejectReturnModal, handleRejectReturn, the
+                          reason modal, the onRejectReturn prop) is still wired in page.tsx and is
+                          kept so the feature can be switched back on cheaply. `orders/page.tsx`
+                          function coverage sits at ~83% because of exactly these unreachable
+                          functions - that is expected, not a gap to close.
+                          Guarded by: "does not offer a way to reject a return" in page.test.tsx.
+
                           <Button
                             type="button"
                             variant="unstyled"

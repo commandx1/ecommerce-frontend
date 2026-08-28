@@ -88,6 +88,43 @@ describe("AccountSettingsShared", () => {
     expect(useAuthStore.getState().user?.name).toBe("Serhat Updated")
   })
 
+  it("never sends `email` to PUT /users/me, even though it is displayed in the form", async () => {
+    // UserUpdateRequest.java (ecommerce-api auth/dto) has no `email` field and the backend has no
+    // @JsonIgnoreProperties(ignoreUnknown = true) for it, so an `email` key in this body throws
+    // Jackson's UnrecognizedPropertyException, which the GlobalExceptionHandler RuntimeException
+    // catch-all turns into a 400 for the *entire* save (including name/surname/phone changes).
+    // Revert-proof: putting `email: formData.email` back into the updateMe(...) call in
+    // AccountSettingsShared.tsx's updateProfile makes this assertion fail (payload gains an
+    // `email` key) - measured locally before writing this test.
+    const user = userEvent.setup()
+    signIn({ name: "Serhat", email: "serhat@example.com" })
+
+    let payload: Record<string, unknown> | null = null
+    server.use(
+      http.put("*/backend-api/users/me", async ({ request }) => {
+        payload = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(makeAccountUser({ name: "Serhat Updated", roleName: "BUYER" }))
+      }),
+    )
+
+    renderSettings()
+
+    const firstName = screen.getByLabelText("First Name")
+    await user.clear(firstName)
+    await user.type(firstName, "Serhat Updated")
+    await user.click(screen.getByRole("button", { name: /Save Changes/ }))
+
+    await waitFor(() => expect(toastSpies.success).toHaveBeenCalledWith("Profile updated successfully!"))
+    expect(payload).not.toHaveProperty("email")
+  })
+
+  it("renders the email field as read-only since this form cannot persist email changes", () => {
+    signIn({ email: "serhat@example.com" })
+    renderSettings()
+
+    expect(screen.getByLabelText("Email Address")).toBeDisabled()
+  })
+
   it("reports a failed profile save without clearing the form", async () => {
     const user = userEvent.setup()
     signIn({ name: "Serhat" })

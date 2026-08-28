@@ -34,13 +34,22 @@ describe("NotificationCard", () => {
     expect(screen.getByTestId("custom-icon")).toBeInTheDocument()
   })
 
-  // BULGU: notification cards are plain <div>s — no role="alert"/"status", so nothing is
-  // announced when one appears in response to a user action.
-  it("exposes no live-region role for any tone (current behaviour)", () => {
-    render(<NotificationCard tone="error" title="Something failed" description="Try again." />)
+  it("announces error and warning tones assertively via role=alert", () => {
+    const { unmount } = render(<NotificationCard tone="error" title="Something failed" description="Try again." />)
+    expect(screen.getByRole("alert")).toHaveTextContent("Something failed")
+    unmount()
 
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
-    expect(screen.queryByRole("status")).not.toBeInTheDocument()
+    render(<NotificationCard tone="warning" title="Heads up" description="Check this." />)
+    expect(screen.getByRole("alert")).toHaveTextContent("Heads up")
+  })
+
+  it("announces info and success tones politely via role=status", () => {
+    const { unmount } = render(<NotificationCard tone="info" title="FYI" description="Nothing urgent." />)
+    expect(screen.getByRole("status")).toHaveTextContent("FYI")
+    unmount()
+
+    render(<NotificationCard tone="success" title="Saved" description="Your changes are live." />)
+    expect(screen.getByRole("status")).toHaveTextContent("Saved")
   })
 })
 
@@ -59,6 +68,15 @@ describe("EmptyStateCard", () => {
 
     expect(screen.getByRole("heading", { name: "Your Cart is Empty" })).toBeInTheDocument()
     expect(screen.getByText("Add some products.")).toBeInTheDocument()
+  })
+
+  // The card sits inside pages that already own an h1 (cart, auto-orders); rendering its own h1
+  // gave those pages two top-level headings and broke the outline for screen-reader users.
+  it("titles itself at h2 so it cannot compete with the page's own h1", () => {
+    render(<EmptyStateCard title="Your Cart is Empty" description="Add some products." />)
+
+    expect(screen.getByRole("heading", { name: "Your Cart is Empty", level: 2 })).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument()
   })
 
   it("renders the action only when both a label and a handler are given", () => {
@@ -97,6 +115,17 @@ describe("ConfirmationModal", () => {
     renderModal({ isOpen: false })
 
     expect(screen.queryByText("All items will be removed.")).not.toBeInTheDocument()
+  })
+
+  // The dismiss control is an icon-only button; without an accessible name a screen-reader user
+  // hears only "button" and has no way to know it closes the dialog.
+  it("gives the icon-only dismiss control an accessible name that closes the dialog", async () => {
+    const user = userEvent.setup()
+    const handlers = renderModal()
+
+    await user.click(screen.getByRole("button", { name: "Close" }))
+
+    expect(handlers.onClose).toHaveBeenCalledTimes(1)
   })
 
   it("confirms and cancels through the two footer actions", async () => {

@@ -56,13 +56,23 @@ describe("updateMe contract", () => {
     const payload: UpdateMePayload = {
       name: "Serhat",
       surname: "Belen",
-      email: "new@example.com",
       phoneNumber: "+15559998888",
       twoFactorEnabled: true,
     }
     await updateMe("token-1", payload)
 
     expect(capturedPutBody).toEqual(payload)
+  })
+
+  it("has no `email` field on UpdateMePayload, matching UserUpdateRequest.java", () => {
+    // ecommerce-api auth/dto/UserUpdateRequest.java only declares name, surname, phoneNumber,
+    // twoFactorEnabled. It has no @JsonIgnoreProperties(ignoreUnknown = true), so an `email` key
+    // in the PUT /users/me body throws Jackson UnrecognizedPropertyException, which the
+    // GlobalExceptionHandler RuntimeException catch-all turns into a 400 for the whole request.
+    // This is a compile-time guard: if `email` is ever re-added to UpdateMePayload, this line
+    // stops compiling because the object literal would have an excess property.
+    const payload: UpdateMePayload = { name: "Serhat", surname: "Belen" }
+    expect(payload).not.toHaveProperty("email")
   })
 
   it("rejects with a 400 validation error", async () => {

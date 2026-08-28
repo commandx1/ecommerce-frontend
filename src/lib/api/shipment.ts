@@ -14,16 +14,20 @@ export interface ShipmentRate {
   amountLocal: string
   currencyLocal: string
   arrivesBy: string | null
-  durationTerms: string
-  estimatedDays: number
+  durationTerms: string | null
+  estimatedDays: number | null
   attributes: string[]
+  // Backend: ShipmentService.mapToRateResponse (ecommerce-api) only builds this object when
+  // Shippo's own `rate.servicelevel()` is present, and even then every field inside it is
+  // `.orElse(null)` off the Shippo SDK's Optional wrappers — so both the whole object and each
+  // field within it can genuinely be null for a real carrier rate, not just in theory.
   servicelevel: {
-    name: string
-    token: string
-    terms: string
-    extendedToken: string
+    name: string | null
+    token: string | null
+    terms: string | null
+    extendedToken: string | null
     parentServicelevel: string | null
-  }
+  } | null
   test: boolean
 }
 

@@ -109,9 +109,9 @@ export function useBuyerOrdersPage() {
           ORDER_STATUS_TAB_TO_FILTER_TYPE[selectedTab],
           controller.signal,
         )
-        setOrders(response.orders)
-        setTotalPages(response.totalPages)
-        setTotalElements(response.totalElements)
+        setOrders(Array.isArray(response.orders) ? response.orders : [])
+        setTotalPages(typeof response.totalPages === "number" ? response.totalPages : 0)
+        setTotalElements(typeof response.totalElements === "number" ? response.totalElements : 0)
       } catch (error: unknown) {
         if (controller.signal.aborted) return
         if (!isAuthHandledError(error)) {
@@ -189,6 +189,9 @@ export function useBuyerOrdersPage() {
 
       try {
         const response = await buyerOrdersAPI.cancelDuringDeliveryByCustomer({ orderItemIds })
+        const cancelledOrderItemIds = new Set(
+          Array.isArray(response.cancelledOrderItemIds) ? response.cancelledOrderItemIds : [],
+        )
         setOrders((prev) =>
           prev.map((order) => ({
             ...order,
@@ -197,7 +200,7 @@ export function useBuyerOrdersPage() {
                   ...group,
                   orderItems: Array.isArray(group.orderItems)
                     ? group.orderItems.map((orderItem) =>
-                        response.cancelledOrderItemIds.includes(orderItem.id)
+                        cancelledOrderItemIds.has(orderItem.id)
                           ? { ...orderItem, status: OrderItemStatus.CANCEL_REQUESTED }
                           : orderItem,
                       )
@@ -206,7 +209,7 @@ export function useBuyerOrdersPage() {
               : order.sellerGroups,
             orderItems: Array.isArray(order.orderItems)
               ? order.orderItems.map((orderItem) =>
-                  response.cancelledOrderItemIds.includes(orderItem.id)
+                  cancelledOrderItemIds.has(orderItem.id)
                     ? { ...orderItem, status: OrderItemStatus.CANCEL_REQUESTED }
                     : orderItem,
                 )
@@ -360,7 +363,10 @@ export function useBuyerOrdersPage() {
         const refundedItemIds = new Set(payload.items.map((item) => item.orderItemId))
         const refundReasonByOrderItemId = new Map(payload.items.map((item) => [item.orderItemId, item.returnReason]))
         const submittedAt = new Date().toISOString()
-        const linksByItemId = new Map((response.itemLinks ?? []).map((link) => [link.orderItemId, link]))
+        // Array.isArray, not `?? []` - see infra note #26.
+        const linksByItemId = new Map(
+          (Array.isArray(response.itemLinks) ? response.itemLinks : []).map((link) => [link.orderItemId, link]),
+        )
 
         setOrders((prev) =>
           prev.map((order) => {

@@ -31,7 +31,6 @@ const makeOrderSummary = (
   warranty: "$0.00",
   shipping: "$0.00",
   subtotal: "$0.00",
-  tax: "$0.00",
   total: "$0.00",
   ...overrides,
 })
@@ -543,7 +542,7 @@ describe("usePurchaseCalculator", () => {
   })
 
   describe("totals", () => {
-    it("computes productTotal, subtotal, tax and total from the resolved unit price", () => {
+    it("computes productTotal, subtotal and total from the resolved unit price", () => {
       const { result } = renderCalculator({
         warrantyOptions: [makeWarranty({ id: 1, value: "standard", price: "$50.00", selected: true })],
         selectedSupplierShippingFee: "$10.00",
@@ -556,17 +555,18 @@ describe("usePurchaseCalculator", () => {
       expect(result.current.productTotal).toBe(200)
       expect(result.current.subtotal).toBe(250)
       expect(result.current.shippingPrice).toBe(20)
-      expect(result.current.tax).toBe(25)
-      expect(result.current.total).toBe(295)
+      expect(result.current.total).toBe(270)
     })
 
-    // Shipping is deliberately outside the taxable base: tax is 10% of subtotal only.
-    it("does not tax the shipping fee", () => {
+    // Sales tax is address-based and the backend recalculates it with Stripe Tax at order
+    // creation, so this screen cannot know it and must not invent one. The total it shows is
+    // subtotal + shipping, nothing else.
+    it("adds no tax of its own to the total", () => {
       const { result } = renderCalculator({ selectedSupplierShippingFee: "$1000.00" })
 
       expect(result.current.subtotal).toBe(100)
-      expect(result.current.tax).toBe(10)
-      expect(result.current.total).toBe(100 + 1000 + 10)
+      expect(result.current.total).toBe(1100)
+      expect(result.current).not.toHaveProperty("tax")
     })
 
     it("prefers the order summary shipping when no supplier shipping fee is given", () => {
@@ -599,10 +599,10 @@ describe("usePurchaseCalculator", () => {
       expect(result.current.shippingPrice).toBe(10)
     })
 
-    // FLOATING-POINT LEAK (locked in, not fixed): `subtotal * 0.1` is raw IEEE-754 arithmetic and
-    // no rounding happens anywhere in the hook, so tax/total can carry a binary-float tail. Any
-    // consumer rendering these values must format them; printing them raw shows "569.7000000000001".
-    it("returns an unrounded IEEE-754 total", () => {
+    // FLOATING-POINT LEAK (locked in, not fixed): the hook does raw IEEE-754 arithmetic and never
+    // rounds, so subtotal/total can carry a binary-float tail. Any consumer rendering these values
+    // must format them; printing them raw shows "8641.920000000001".
+    it("returns an unrounded IEEE-754 subtotal", () => {
       const { result } = renderCalculator({
         bulkPricing: [makeTier({ id: 1, range: "1-9", price: "$1,234.56" })],
       })
@@ -612,10 +612,6 @@ describe("usePurchaseCalculator", () => {
       })
 
       expect(result.current.subtotal).toBe(8641.92)
-      expect(result.current.tax).toBe(864.192)
-      // 8641.92 + 864.192 does not land on 9506.112 in binary floating point.
-      expect(result.current.total).toBe(9506.112000000001)
-      expect(result.current.total).not.toBe(9506.112)
     })
 
     it("returns an unrounded IEEE-754 product total", () => {
@@ -646,7 +642,6 @@ describe("usePurchaseCalculator", () => {
 
       expect(result.current.unitPrice).toBe(0)
       expect(result.current.subtotal).toBe(0)
-      expect(result.current.tax).toBe(0)
       expect(result.current.total).toBe(0)
     })
   })

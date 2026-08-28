@@ -10,13 +10,19 @@ export interface OrderProduct {
 
 export interface ShippoRateOrder {
   shippoRateId: string
-  userId: string
+  // Backend: `ShippoRateOrder.userId` (order/dto/ShippoRateOrder.java) is typed `UUID` but no
+  // backend code ever reads it (`getUserId()` has no live call site — the one reference is
+  // commented out in `OrderUberDeliveryService.java:242`). It is decorative on the wire, so
+  // callers omit it rather than risk a non-UUID value 400ing the whole order — Jackson fails to
+  // deserialize the entire request body if this one field cannot parse as a UUID.
+  userId?: string
   products: OrderProduct[]
 }
 
 export interface UberRateOrder {
   uberRateId: string
-  userId: string
+  /** See `ShippoRateOrder.userId` — same unread, decorative field. */
+  userId?: string
   products: OrderProduct[]
 }
 

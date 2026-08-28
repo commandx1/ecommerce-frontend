@@ -1,4 +1,4 @@
-import { type ChangeEvent, Children, type ComponentProps, isValidElement } from "react"
+import { type ChangeEvent, Children, type ComponentProps, isValidElement, useId } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { textLikeControlClassName } from "./controlStyles"
@@ -39,6 +39,9 @@ export const SelectField = ({
     return [{ value: optionValue, label: optionLabel, disabled: optionDisabled }]
   })
 
+  const uid = useId()
+  const errorId = `${uid}-error`
+
   const placeholderOption = normalizedOptions.find((option) => option.value === "")
   const options = normalizedOptions.filter((option) => option.value !== "")
   const fallbackPlaceholder = typeof placeholderOption?.label === "string" ? placeholderOption.label : "Select option"
@@ -62,7 +65,14 @@ export const SelectField = ({
   }
 
   return (
-    <FormField label={label} htmlFor={id} required={required} error={error} className={containerClassName}>
+    <FormField
+      label={label}
+      htmlFor={id}
+      required={required}
+      error={error}
+      errorId={errorId}
+      className={containerClassName}
+    >
       <Select
         name={name}
         value={currentValue}
@@ -71,7 +81,12 @@ export const SelectField = ({
         disabled={disabled}
         required={required}
       >
-        <SelectTrigger id={id} className={cn(baseSelectClassName, error ? "border-danger" : "", selectClassName)}>
+        <SelectTrigger
+          id={id}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
+          className={cn(baseSelectClassName, error ? "border-danger" : "", selectClassName)}
+        >
           <SelectValue placeholder={fallbackPlaceholder} />
         </SelectTrigger>
         <SelectContent>

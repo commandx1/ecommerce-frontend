@@ -167,6 +167,13 @@ describe("AddressManagementShared", () => {
       city: "CA",
       district: "Los Angeles",
     })
+    // AddressCreateRequest (ecommerce-api auth/dto/AddressCreateRequest.java) has no `state`
+    // field and no @JsonIgnoreProperties(ignoreUnknown = true), so a `state` key here would
+    // throw Jackson UnrecognizedPropertyException and 400 the whole create. Revert-proof:
+    // re-adding `state: parsedAddress.state` to handleAddressSelect's setCurrentAddress call in
+    // AddressManagementShared.tsx makes this assertion fail - measured locally before writing
+    // this test.
+    expect(payload).not.toHaveProperty("state")
   })
 
   it("will not submit an address whose zip code Places did not return", async () => {
@@ -251,7 +258,7 @@ describe("AddressManagementShared", () => {
     await waitFor(() => expect(toastSpies.error).toHaveBeenCalledWith("An error occurred while loading addresses"))
   })
 
-  it("leaves Save blocked when Google Places itself fails", async () => {
+  it("tells the buyer Google Places failed and lets them retry instead of getting stuck", async () => {
     const user = userEvent.setup()
     serveAddresses()
     placesMocks.searchPlaces.mockRejectedValue(new Error("Places is down"))
@@ -261,11 +268,19 @@ describe("AddressManagementShared", () => {
     await user.click(await screen.findByRole("button", { name: /Add New Address/ }))
     await user.type(screen.getByLabelText("Search Address *"), "1600 Amphi")
 
-    // BUG (locked, not fixed): there is no manual-entry fallback and no visible error —
-    // a Places outage silently makes the address form unusable.
-    await waitFor(() => expect(placesMocks.searchPlaces).toHaveBeenCalled())
+    // The buyer sees why the form is stuck instead of a silent, unexplained dead end.
+    expect(await screen.findByRole("alert")).toHaveTextContent(/couldn't search for addresses/i)
     expect(screen.getByRole("button", { name: /Save/ })).toBeDisabled()
-    expect(screen.queryByText(/Places is down/)).not.toBeInTheDocument()
+
+    // Once Places recovers, retrying (typing again) works and unblocks Save.
+    placesMocks.searchPlaces.mockResolvedValue([
+      { place_id: parsedAddress.placeId, description: parsedAddress.formattedAddress },
+    ])
+    await user.type(screen.getByLabelText("Search Address *"), "theatre")
+    await user.click(await screen.findByText(parsedAddress.formattedAddress, { selector: "div" }))
+
+    await waitFor(() => expect(screen.getByRole("button", { name: /Save/ })).toBeEnabled())
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
   })
 
   it("renders a compact card when embedded in another settings page", async () => {

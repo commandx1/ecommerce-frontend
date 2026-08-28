@@ -18,8 +18,29 @@ function registerCreateProductMocks(apiMock: ApiMock) {
   apiMock.on("GET", "/api/products/active", () => ({
     body: { content: [makeActiveProductSearchItem()], totalElements: 1, totalPages: 1 },
   }))
+  // Details tab's Brand field (`BrandFilterDropdown`) fetches this on open - not registered by
+  // products.mocks.ts (handler-literal response, no exported factory - see that file's header
+  // comment, same reasoning as `/api/products/active` above).
+  apiMock.on("GET", "/api/products/brands/search", () => ({
+    body: {
+      content: ["Acme Dental"],
+      totalElements: 1,
+      totalPages: 1,
+      number: 0,
+      size: 20,
+      numberOfElements: 1,
+      first: true,
+      last: true,
+      empty: false,
+    },
+  }))
   registerAllMocks(apiMock)
 }
+
+const PNG_BUFFER = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+  "base64",
+)
 
 test.describe("vendor products list", () => {
   test("shows the vendor's products", async ({ vendorPage, apiMock }) => {
@@ -80,15 +101,11 @@ test.describe("vendor products list", () => {
 
     const create = new VendorCreateProductPage(vendorPage)
     await create.openBlankForm()
-    await create.fillRequiredFields("Composite Kit", "42", "7")
-    await create.skuInput.fill("SKU-1")
+    // Basic and Details must each pass validation before "Next" unlocks the following tab -
+    // the form is now gated tab-by-tab (see this spec's header comment / task brief).
+    await create.fillAllRequiredFieldsAndReachMedia()
 
-    await create.mediaTabButton.click()
-    const png = Buffer.from(
-      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
-      "base64",
-    )
-    await create.coverPhotoInput.setInputFiles({ name: "cover.png", mimeType: "image/png", buffer: png })
+    await create.coverPhotoInput.setInputFiles({ name: "cover.png", mimeType: "image/png", buffer: PNG_BUFFER })
 
     const reviewRequest = vendorPage.waitForRequest(
       (req) => req.method() === "POST" && req.url().includes("/api/products/review"),
@@ -121,12 +138,19 @@ test.describe("vendor products list", () => {
     const create = new VendorCreateProductPage(vendorPage)
     await create.openBlankForm()
 
-    await create.submitButton.click()
+    // Empty submission now means clicking "Next" while the (first) Basic tab is empty - the
+    // header submit button is gone, and there's no way to reach Media (where the old submit
+    // button lived) without first clearing Basic's own validation errors.
+    await create.nextButton.click()
     await expect(vendorPage.getByText("Product name is required")).toBeVisible()
     await expect(vendorPage.getByText("Price is required")).toBeVisible()
     await expect(vendorPage.getByText("Stock is required")).toBeVisible()
 
-    await create.fillRequiredFields("Composite Kit", "42", "7")
+    // Correct the form: fill every required field across all three tabs (Basic's other
+    // required fields, all of Details, and Media's required cover photo) so the corrected
+    // submission genuinely reaches the review endpoint instead of failing later validation.
+    await create.fillAllRequiredFieldsAndReachMedia()
+    await create.coverPhotoInput.setInputFiles({ name: "cover.png", mimeType: "image/png", buffer: PNG_BUFFER })
 
     const reviewRequest = vendorPage.waitForRequest(
       (req) => req.method() === "POST" && req.url().includes("/api/products/review"),

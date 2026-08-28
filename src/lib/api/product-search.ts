@@ -61,7 +61,10 @@ export async function searchPublicProducts(query: string, page = 0, size = 20): 
       },
       fallbackMessage: "Failed to fetch products",
     })
-    return data.content || []
+    // Array.isArray, not `|| []`: `||` only catches null/undefined and lets a wrong-typed
+    // truthy body through to `.length`/`.map()` in the search dropdown, which renders on every
+    // page (infra note #26).
+    return Array.isArray(data.content) ? data.content : []
   } catch {
     return []
   }

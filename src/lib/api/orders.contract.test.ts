@@ -188,27 +188,33 @@ describe("ordersAPI.placeOrder contract", () => {
     expect("autoOrder" in (products?.[0] ?? {})).toBe(true)
   })
 
-  it("accepts an order with no shipping selections at all", async () => {
+  it("rejects an order with no shipping selections at all, matching what the real caller always sends", async () => {
+    // The only real caller (useFinalReview.ts:138) always sends `cartId: cartId || ""`, and the
+    // backend requires at least one product line: CreateOrderRequest.java:15 (`@NotNull cartId`)
+    // and OrderCreationService.java:176 (`throw new OrderCreationException("At least one product
+    // is required to create an order")` -> OrderExceptionHandler.java maps OrderCreationException
+    // to 400). A request with no shippoRateOrders/uberRateOrders at all can never succeed.
     server.use(
-      http.post("*/backend-api/orders", async ({ request }) => {
-        capturedPlaceOrderBody = (await request.json()) as Record<string, unknown>
-        return HttpResponse.json({ ...placedOrder, orderItems: [], clientSecret: undefined, totalPrice: 0 })
-      }),
+      http.post("*/backend-api/orders", () =>
+        HttpResponse.json({ message: "At least one product is required to create an order" }, { status: 400 }),
+      ),
     )
 
-    const response = await ordersAPI.placeOrder({ addressId: "addr-1", shippoRateOrders: [], uberRateOrders: [] })
-
-    expect(capturedPlaceOrderBody).toEqual({ addressId: "addr-1", shippoRateOrders: [], uberRateOrders: [] })
-    expect(response.orderItems).toEqual([])
-    expect(response.clientSecret).toBeUndefined()
+    await expect(
+      ordersAPI.placeOrder({ addressId: "addr-1", cartId: "", shippoRateOrders: [], uberRateOrders: [] }),
+    ).rejects.toMatchObject({ response: { status: 400 } })
   })
 
   it.each([
-    [400, "Cart is empty"],
-    [403, "Your account is not approved for ordering"],
-    [404, "Address not found"],
-    [409, "A product in your cart is out of stock"],
-    [500, "Internal server error"],
+    // OrderCreationService.java:160-161 -> OrderCreationException -> OrderExceptionHandler.java
+    // maps OrderCreationException to 400 (there is no 404 mapping for order creation).
+    [400, "Address not found: addr-1"],
+    // OrderCreationService.java:176 -> OrderCreationException -> 400.
+    [400, "At least one product is required to create an order"],
+    // OrderCreationService.java:681 -> LicenseRequiredException -> OrderExceptionHandler.java
+    // maps LicenseRequiredException to 403. There is no 404/409/500 mapping anywhere in the
+    // order package's exception handler for order creation.
+    [403, "Bu siparişteki bir veya daha fazla ürün geçerli bir lisans gerektiriyor."],
   ])("rejects on %i", async (status, message) => {
     server.use(http.post("*/backend-api/orders", () => HttpResponse.json({ message }, { status })))
 

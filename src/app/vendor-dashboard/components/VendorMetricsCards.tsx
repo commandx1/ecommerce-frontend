@@ -1,7 +1,7 @@
 "use client"
 
 import { DollarSign, type LucideIcon, ShoppingBag, Star } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { vendorDashboardAPI } from "@/lib/api/vendor-dashboard"
 import formatCurrency from "@/lib/helpers/formatCurrency"
@@ -35,78 +35,87 @@ const RANGE_OPTIONS: { label: string; value: RangeOption }[] = [
   { label: "90D", value: 90 },
 ]
 
+/** A malformed 200 body can send `null`/a non-number for a count field — falling through to
+ * `String(null)` would literally print "null" to the vendor, so this floors to 0 instead. */
+const formatCount = (value: number): string => (Number.isFinite(value) ? String(value) : "0")
+
 const VendorMetricsCards = () => {
   const { isAuthenticated } = useAuthStore()
   const [range, setRange] = useState<RangeOption>(30)
   const [metrics, setMetrics] = useState<MetricCard[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(false)
   const abortControllerRef = useRef<AbortController | null>(null)
 
-  useEffect(() => {
-    const fetchMetrics = async () => {
-      if (!isAuthenticated) return
+  const fetchMetrics = useCallback(async () => {
+    if (!isAuthenticated) return
 
-      abortControllerRef.current?.abort()
-      const controller = new AbortController()
-      abortControllerRef.current = controller
+    abortControllerRef.current?.abort()
+    const controller = new AbortController()
+    abortControllerRef.current = controller
 
-      try {
-        setIsLoading(true)
-        const [revenueSummary, reviewSummary] = await Promise.all([
-          vendorDashboardAPI.getRevenueSummary(range, controller.signal),
-          vendorDashboardAPI.getReviewSummary(controller.signal),
-        ])
+    try {
+      setIsLoading(true)
+      setFetchError(false)
+      const [revenueSummary, reviewSummary] = await Promise.all([
+        vendorDashboardAPI.getRevenueSummary(range, controller.signal),
+        vendorDashboardAPI.getReviewSummary(controller.signal),
+      ])
 
-        const nextMetrics: MetricCard[] = [
-          {
-            id: "revenue",
-            title: "Total Revenue",
-            value: formatCurrency(revenueSummary.totalRevenue),
-            description: `Last ${range} days`,
-            footer: `${formatCurrency(revenueSummary.totalApprovedVendorPayment)} approved payout (${revenueSummary.approvedVendorPaymentCount})`,
-            icon: DollarSign,
-            iconColor: "green",
-          },
-          {
-            id: "orders",
-            title: "Orders",
-            value: String(revenueSummary.orderItemCount),
-            description: `Last ${range} days`,
-            icon: ShoppingBag,
-            iconColor: "blue",
-          },
-          {
-            id: "rating",
-            title: "Rating",
-            value: reviewSummary.currentReviewCount > 0 ? reviewSummary.currentAverageRating.toFixed(1) : "—",
-            description: "Average rating",
-            change:
-              reviewSummary.ratingChangePercentage !== null
-                ? `${reviewSummary.ratingChangePercentage > 0 ? "+" : ""}${reviewSummary.ratingChangePercentage}%`
-                : undefined,
-            changeType: (reviewSummary.ratingChangePercentage ?? 0) >= 0 ? "positive" : "negative",
-            icon: Star,
-            iconColor: "orange",
-          },
-        ]
+      const nextMetrics: MetricCard[] = [
+        {
+          id: "revenue",
+          title: "Total Revenue",
+          value: formatCurrency(revenueSummary.totalRevenue),
+          description: `Last ${range} days`,
+          footer: `${formatCurrency(revenueSummary.totalApprovedVendorPayment)} approved payout (${formatCount(revenueSummary.approvedVendorPaymentCount)})`,
+          icon: DollarSign,
+          iconColor: "green",
+        },
+        {
+          id: "orders",
+          title: "Orders",
+          value: formatCount(revenueSummary.orderItemCount),
+          description: `Last ${range} days`,
+          icon: ShoppingBag,
+          iconColor: "blue",
+        },
+        {
+          id: "rating",
+          title: "Rating",
+          value:
+            reviewSummary.currentReviewCount > 0 && Number.isFinite(reviewSummary.currentAverageRating)
+              ? reviewSummary.currentAverageRating.toFixed(1)
+              : "—",
+          description: "Average rating",
+          change: Number.isFinite(reviewSummary.ratingChangePercentage)
+            ? `${(reviewSummary.ratingChangePercentage as number) > 0 ? "+" : ""}${reviewSummary.ratingChangePercentage}%`
+            : undefined,
+          changeType: (reviewSummary.ratingChangePercentage ?? 0) >= 0 ? "positive" : "negative",
+          icon: Star,
+          iconColor: "orange",
+        },
+      ]
 
-        setMetrics(nextMetrics)
-      } catch {
-        if (controller.signal.aborted) return
-        setMetrics([])
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsLoading(false)
-        }
+      setMetrics(nextMetrics)
+    } catch {
+      if (controller.signal.aborted) return
+      setMetrics([])
+      setFetchError(true)
+    } finally {
+      if (!controller.signal.aborted) {
+        setIsLoading(false)
       }
     }
+  }, [isAuthenticated, range])
 
+  useEffect(() => {
     void fetchMetrics()
 
     return () => {
       abortControllerRef.current?.abort()
     }
-  }, [isAuthenticated, range])
+  }, [fetchMetrics])
 
   const rangeSelector = (
     <div className="mb-4 flex items-center justify-end gap-2">
@@ -136,6 +145,20 @@ const VendorMetricsCards = () => {
               className="mb-6 h-40 animate-pulse rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
             />
           ))}
+        </div>
+      </>
+    )
+  }
+
+  if (fetchError) {
+    return (
+      <>
+        {rangeSelector}
+        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-border-soft bg-surface-elevated px-6 py-16 text-center shadow-soft">
+          <p className="text-sm font-medium text-danger">Couldn't load your metrics. Please try again.</p>
+          <Button type="button" variant="outline" onClick={() => void fetchMetrics()} className="rounded-lg px-4">
+            Retry
+          </Button>
         </div>
       </>
     )

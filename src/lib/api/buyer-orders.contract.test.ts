@@ -272,9 +272,14 @@ describe("buyerOrdersAPI error paths", () => {
   })
 
   it.each([
+    // OrderCancellationService.java:372/396/418 all throw OrderCancellationException, which
+    // OrderExceptionHandler.java maps to 400 — there is no 404 or 409 mapping in the order
+    // package's exception handler, so "not found" and "already delivered" are both 400 on the wire.
     [400, "No cancellable items in the request"],
-    [404, "Order item not found"],
-    [409, "Item has already been delivered"],
+    [400, "Order item not found: item-1"],
+    // OrderCancellationService.java:402 throws OrderAccessDeniedException for a cross-account
+    // request -> OrderExceptionHandler.java maps it to 403.
+    [403, "Order item does not belong to the current user"],
   ])("rejects a cancellation on %i", async (status, message) => {
     server.use(
       http.post("*/backend-api/orders/cancelDuringDeliveryByCustomer", () =>
@@ -287,14 +292,17 @@ describe("buyerOrdersAPI error paths", () => {
     })
   })
 
-  it("reports a partial cancellation without rejecting", async () => {
+  // Also NOT partial: OrderCancellationService hardcodes `.failureCount(0)` at both build sites
+  // (service/OrderCancellationService.java:224 and :349) and throws on any item it cannot cancel.
+  // A "1 succeeded / 1 failed" cancellation cannot occur either - see BACKEND-HANDOFF.md §13.
+  it("reports every requested item as cancelled, because the backend cancels all or throws", async () => {
     server.use(
       http.post("*/backend-api/orders/cancelDuringDeliveryByCustomer", () =>
         HttpResponse.json(
           makeCancelDuringDeliveryByCustomerResponse({
-            successCount: 1,
-            failureCount: 1,
-            cancelledOrderItemIds: ["item-1"],
+            successCount: 2,
+            failureCount: 0,
+            cancelledOrderItemIds: ["item-1", "item-2"],
           }),
         ),
       ),
@@ -302,9 +310,9 @@ describe("buyerOrdersAPI error paths", () => {
 
     const response = await buyerOrdersAPI.cancelDuringDeliveryByCustomer({ orderItemIds: ["item-1", "item-2"] })
 
-    expect(response.successCount).toBe(1)
-    expect(response.failureCount).toBe(1)
-    expect(response.cancelledOrderItemIds).toEqual(["item-1"])
+    expect(response.successCount).toBe(2)
+    expect(response.failureCount).toBe(0)
+    expect(response.cancelledOrderItemIds).toEqual(["item-1", "item-2"])
   })
 
   it("sends an empty cancellation list verbatim", async () => {
@@ -337,31 +345,64 @@ describe("buyerOrdersAPI error paths", () => {
     expect(response.itemLinks?.[0]?.returnTrackingLinks[0]?.trackingUrl).toBe("https://track.example.com/r1")
   })
 
-  it("returns a refund response with neither message nor links", async () => {
-    let emptyRefundPayload: RefundOrderPayload | null = null
+  it("rejects an empty items list, matching the backend's @NotEmpty constraint", async () => {
+    // RefundOrderRequest.java:11 `@NotEmpty(message = "items list cannot be empty") List<...> items`
+    // -- an empty items array can never reach OrderRefundService; Spring's bean validation rejects
+    // it with a 400 before the controller method runs. "Refund with empty items succeeds" is not a
+    // reachable scenario from the real UI (use-buyer-orders-page.ts only calls refundOrder with a
+    // non-empty selection).
     server.use(
-      http.post("*/backend-api/orders/refundOrder", async ({ request }) => {
-        emptyRefundPayload = (await request.json()) as RefundOrderPayload
-        return HttpResponse.json({})
-      }),
+      http.post("*/backend-api/orders/refundOrder", () =>
+        HttpResponse.json({ items: "items list cannot be empty" }, { status: 400 }),
+      ),
     )
 
-    const response = await buyerOrdersAPI.refundOrder({ items: [] })
+    await expect(buyerOrdersAPI.refundOrder({ items: [] })).rejects.toMatchObject({ response: { status: 400 } })
+  })
 
-    expect(response.message).toBeUndefined()
-    expect(response.itemLinks).toBeUndefined()
-    expect(emptyRefundPayload).toEqual({ items: [] })
+  // NOT partial: `OrderRefundService.refundOrder` (service/OrderRefundService.java:131-375) has a
+  // single `return` and throws OrderCancellationException (-> 400) on ANY item problem instead of
+  // skipping it. That one return hardcodes `.failureCount(0)` and sets
+  // `.successCount(orderItemIds.size())` - the REQUESTED count, not a succeeded count.
+  // So a "1 succeeded / 1 failed" response cannot occur. Asserting the real all-or-nothing shape.
+  it("reports every requested item as refunded, because the backend refunds all or throws", async () => {
+    server.use(
+      http.post("*/backend-api/orders/refundOrder", () =>
+        HttpResponse.json({
+          message: "Refund shipment created",
+          successCount: 2,
+          failureCount: 0,
+          transactionId: "txn_123",
+          shippingPrice: 4.5,
+          orderItemIds: ["item-1", "item-2"],
+        }),
+      ),
+    )
+
+    const response = await buyerOrdersAPI.refundOrder({
+      items: [
+        { orderItemId: "item-1", quantity: 1, returnReason: "Damaged" },
+        { orderItemId: "item-2", quantity: 1, returnReason: "Damaged" },
+      ],
+    })
+
+    expect(response.successCount).toBe(2)
+    expect(response.failureCount).toBe(0)
+    expect(response.orderItemIds).toEqual(["item-1", "item-2"])
   })
 
   it("rejects a refund that the backend refuses", async () => {
+    // OrderRefundService.java refund validation failures (e.g. quantity exceeds order item
+    // quantity, item outside the return window) all throw OrderCancellationException, which
+    // OrderExceptionHandler.java maps to 400 -- there is no 409 mapping for refundOrder.
     server.use(
       http.post("*/backend-api/orders/refundOrder", () =>
-        HttpResponse.json({ message: "The return window has closed" }, { status: 409 }),
+        HttpResponse.json({ message: "Quantity exceeds order item quantity" }, { status: 400 }),
       ),
     )
 
     await expect(
       buyerOrdersAPI.refundOrder({ items: [{ orderItemId: "item-1", quantity: 1, returnReason: "Late" }] }),
-    ).rejects.toMatchObject({ response: { status: 409 } })
+    ).rejects.toMatchObject({ response: { status: 400 } })
   })
 })

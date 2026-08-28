@@ -104,12 +104,45 @@ describe("mapApiCard normalisation", () => {
     expect(mapped.autoOrderCard).toBe(false)
   })
 
-  it("passes a missing last4 through untouched rather than substituting a placeholder", () => {
+  it("falls back to an empty string instead of literally rendering 'undefined' when last4 is missing", () => {
+    // `PaymentMethodCard` renders this as `•••• ${last4}`, so an unguarded `undefined` would show
+    // the buyer "•••• undefined" for a real, otherwise-valid card.
     const withoutLast4 = { ...makeApiSavedCard(), last4: undefined }
 
-    // Pinned as-is: `last4` is typed as a string but is not defended, so the UI receives
-    // `undefined` when the backend omits it.
-    expect(mapApiCard(withoutLast4 as unknown as ApiSavedCard).last4).toBeUndefined()
+    expect(mapApiCard(withoutLast4 as unknown as ApiSavedCard).last4).toBe("")
+  })
+
+  it.each([
+    ["null brand does not throw and maps to the bank fallback", null],
+    ["undefined brand does not throw and maps to the bank fallback", undefined],
+    ["a numeric brand does not throw and maps to the bank fallback", 12345],
+  ])("%s", (_label, brand) => {
+    const card = { ...makeApiSavedCard(), brand } as unknown as ApiSavedCard
+
+    expect(() => mapApiCard(card)).not.toThrow()
+    const mapped = mapApiCard(card)
+    expect(mapped.type).toBe("bank")
+    expect(mapped.brandLabel).toBe("")
+  })
+
+  it("blanks the expiry instead of rendering the literal string 'null' or 'undefined'", () => {
+    // `PaymentMethodCard` renders `${expiryMonth}/${expiryYear}` directly - `String(null)` would
+    // otherwise show the buyer "Expiry: null/2028".
+    expect(mapApiCard({ ...makeApiSavedCard(), expMonth: null } as unknown as ApiSavedCard).expiryMonth).toBe("")
+    expect(mapApiCard({ ...makeApiSavedCard(), expMonth: undefined } as unknown as ApiSavedCard).expiryMonth).toBe("")
+    expect(mapApiCard({ ...makeApiSavedCard(), expYear: null } as unknown as ApiSavedCard).expiryYear).toBe("")
+    expect(mapApiCard({ ...makeApiSavedCard(), expYear: undefined } as unknown as ApiSavedCard).expiryYear).toBe("")
+    expect(mapApiCard({ ...makeApiSavedCard(), expMonth: Number.NaN } as unknown as ApiSavedCard).expiryMonth).toBe("")
+  })
+
+  it("does not crash sorting the wallet by nickname when the backend omits name", () => {
+    // BuyerPaymentMethodsPage sorts with `a.nickname.localeCompare(b.nickname)` - a raw
+    // `undefined`/`null` nickname would throw there and blank the whole list, not just this card.
+    const withoutName = { ...makeApiSavedCard(), name: undefined } as unknown as ApiSavedCard
+
+    const mapped = mapApiCard(withoutName)
+    expect(mapped.nickname).toBe("")
+    expect(() => mapped.nickname.localeCompare("Other Card")).not.toThrow()
   })
 })
 
@@ -140,6 +173,41 @@ describe("paymentMethodsAPI.getSavedCards contract", () => {
     server.use(http.get("*/backend-api/cards", () => HttpResponse.json({ cards: [], total: 0 })))
 
     await expect(paymentMethodsAPI.getSavedCards()).resolves.toEqual([])
+  })
+
+  // C axis: a broken 200 body (missing/null/non-array `cards`) must degrade to an empty wallet
+  // instead of throwing inside `.map()` and losing the whole page behind a generic error toast -
+  // the same class of bug fixed in vendor orders (F77) and product listing (F83).
+  it.each([
+    ["cards field missing entirely", { total: 0 }],
+    ["cards is null", { cards: null, total: 0 }],
+    ["cards is a single object instead of an array", { cards: { id: "card-1" }, total: 1 }],
+    ["cards is a string", { cards: "oops", total: 0 }],
+  ])("tolerates a broken wallet body: %s", async (_label, body) => {
+    server.use(http.get("*/backend-api/cards", () => HttpResponse.json(body)))
+
+    await expect(paymentMethodsAPI.getSavedCards()).resolves.toEqual([])
+  })
+
+  it("does not lose every other card when one card in the list is malformed", async () => {
+    server.use(
+      http.get("*/backend-api/cards", () =>
+        HttpResponse.json({
+          cards: [
+            makeApiSavedCard({ id: "card-1", isDefault: true }),
+            { ...makeApiSavedCard({ id: "card-2" }), brand: null, expMonth: null },
+          ],
+          total: 2,
+        }),
+      ),
+    )
+
+    const cards = await paymentMethodsAPI.getSavedCards()
+
+    expect(cards).toHaveLength(2)
+    expect(cards[0]?.id).toBe("card-1")
+    expect(cards[1]?.id).toBe("card-2")
+    expect(cards[1]?.type).toBe("bank")
   })
 
   it("rejects when the wallet cannot be read", async () => {
@@ -203,12 +271,13 @@ describe("paymentMethodsAPI SetupIntent flow", () => {
     expect(saved.status).toBe("default")
   })
 
-  it("rejects with 409 when autoOrderCard is sent without an off-session mandate", async () => {
-    server.use(
-      http.post("*/backend-api/cards", () =>
-        HttpResponse.json({ message: "autoOrderCard requires openToAutoPayment" }, { status: 409 }),
-      ),
-    )
+  it("rejects with a bodyless 409 when autoOrderCard is sent without an off-session mandate", async () => {
+    // CardManagementController.saveCard: `catch (IllegalArgumentException e) { return
+    // ResponseEntity.status(HttpStatus.CONFLICT).build(); }` -- `.build()` sends no response body,
+    // unlike every other error path in this file. The UI (BuyerPaymentMethodsPage.tsx:164) only
+    // ever branches on `status === 409` and never reads `error.response.data.message`, so this is
+    // safe in practice, but the test must not assert a message body that never arrives on the wire.
+    server.use(http.post("*/backend-api/cards", () => new HttpResponse(null, { status: 409 })))
 
     await expect(
       paymentMethodsAPI.saveCard({
@@ -218,9 +287,7 @@ describe("paymentMethodsAPI SetupIntent flow", () => {
         openToAutoPayment: false,
         autoOrderCard: true,
       }),
-    ).rejects.toMatchObject({
-      response: { status: 409, data: { message: "autoOrderCard requires openToAutoPayment" } },
-    })
+    ).rejects.toMatchObject({ response: { status: 409 } })
   })
 
   it("rejects with 400 when Stripe refuses the payment method", async () => {
@@ -260,14 +327,16 @@ describe("paymentMethodsAPI card mutations", () => {
     expect(capturedBody).toBeNull()
   })
 
-  it("rejects deleting the auto order card with 409", async () => {
-    server.use(
-      http.delete("*/backend-api/cards/:cardId", () =>
-        HttpResponse.json({ message: "This card covers active auto orders" }, { status: 409 }),
-      ),
-    )
+  it("succeeds deleting the auto order card with no body, even though it pauses every standing auto order", async () => {
+    // CardManagementController.deleteCard only catches EntityNotFoundException (404) and
+    // SecurityException (403); every other case falls through to `ResponseEntity.noContent()`.
+    // CardManagementService.deleteCard.java:148-190 never throws for "this is the auto order
+    // card" -- it deletes unconditionally and, when the deleted card was the auto order card,
+    // calls `autoOrderRepository.deactivateAllByUserId(userId)` (line ~173-176) as a side effect.
+    // There is no 409 path for this endpoint.
+    server.use(http.delete("*/backend-api/cards/:cardId", () => new HttpResponse(null, { status: 204 })))
 
-    await expect(paymentMethodsAPI.deleteCard("card-1")).rejects.toMatchObject({ response: { status: 409 } })
+    await expect(paymentMethodsAPI.deleteCard("card-1")).resolves.toBeUndefined()
   })
 
   it("rejects deleting an unknown card with 404", async () => {

@@ -21,6 +21,7 @@ function BillingInformationContent() {
   const {
     cardName,
     isLoadingCards,
+    isSubmitting,
     paymentOptions,
     paymentType,
     saveCard,
@@ -68,7 +69,7 @@ function BillingInformationContent() {
 
         <BillingAgreementsSection termsAgreed={termsAgreed} setTermsAgreed={setTermsAgreed} />
 
-        <BillingNavigation termsAgreed={termsAgreed} onBack={previousStep} />
+        <BillingNavigation termsAgreed={termsAgreed} isSubmitting={isSubmitting} onBack={previousStep} />
       </form>
     </SurfaceCard>
   )

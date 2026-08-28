@@ -39,7 +39,6 @@ interface OrderSummary {
   warranty: string
   shipping: string
   subtotal: string
-  tax: string
   total: string
 }
 
@@ -88,7 +87,6 @@ const PurchaseOptions = ({
     shippingPrice,
     productTotal,
     subtotal,
-    tax,
     total,
   } = usePurchaseCalculator({
     bulkPricing,
@@ -170,7 +168,6 @@ const PurchaseOptions = ({
                 heavyShippingFeePrice={heavyShippingFeePrice}
                 shippingPrice={shippingPrice}
                 subtotal={subtotal}
-                tax={tax}
                 total={total}
               />
               <PurchaseActions onAddToCart={handleAddToCart} isAddingToCart={isAddingToCart} stockCount={stockCount} />

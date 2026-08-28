@@ -95,6 +95,27 @@ describe("CartPage", () => {
     expect(screen.getByText("$250.00")).toBeInTheDocument()
   })
 
+  // Regression guard for the a11y-smoke FINDING "heading level skip(s) on
+  // /cart: [ 'h2 -> h4 at position 2' ]": the per-seller "Shipping from"
+  // heading sits directly under the h2 "Cart Items (N)" heading, so it must
+  // be an h3, not an h4 (which skipped a level and outranked the h3 item
+  // titles nested inside it).
+  it("keeps the per-seller heading one level below Cart Items, with no level skip", async () => {
+    cartResponse = makeCart({
+      cartItems: [
+        makeCartItem({
+          id: "ci-1",
+          userProduct: makeCartUserProduct({ userProductId: "up-1", sellerName: "Acme Dental" }),
+        }),
+      ],
+    })
+    render(<CartPage />)
+    await waitForCartReady()
+
+    expect(screen.getByRole("heading", { level: 3, name: /Shipping from:\s*Acme Dental/ })).toBeInTheDocument()
+    expect(screen.queryAllByRole("heading", { level: 4 })).toHaveLength(0)
+  })
+
   it("falls back to a generic seller label when the line carries no seller", async () => {
     cartResponse = makeCart({
       cartItems: [makeCartItem({ userProduct: makeCartUserProduct({ sellerId: "", sellerName: "" }) })],

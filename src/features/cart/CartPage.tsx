@@ -24,6 +24,7 @@ export default function CartPage() {
       hasBlockingItems={cartPage.hasBlockingItems}
       isClearConfirmOpen={cartPage.isClearConfirmOpen}
       isLicenseBlocked={cartPage.isLicenseBlocked}
+      licenseCheckFailed={cartPage.licenseCheckFailed}
       isTaxLoading={cartPage.isTaxLoading}
       items={cartPage.items}
       sellerGroups={cartPage.sellerGroups}

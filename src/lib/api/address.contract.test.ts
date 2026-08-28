@@ -52,6 +52,11 @@ describe("addressAPI.getAddresses contract", () => {
     expect(typeof addresses[0]?.latitude).toBe("number")
   })
 
+  // NOTE: AddressController.getMyAddresses (AddressController.java) always returns
+  // `List<AddressResponse>` - the real backend never sends a bare object or an `{ items }`
+  // envelope for GET /api/address. The next two cases are deliberate defensive-coding coverage
+  // for addressAPI.getAddresses's own normalization branches (adversarial/malformed-shape
+  // tolerance), not a claim that the backend produces these shapes.
   it("normalizes a bare object response into a single-item array", async () => {
     server.use(http.get("*/backend-api/address", () => HttpResponse.json(defaultAddress)))
     await addressAPI.deleteAddress("__cache-reset__")
@@ -104,12 +109,16 @@ describe("addressAPI.getAddress contract", () => {
     expect(address).toEqual(secondaryAddress)
   })
 
-  it("rejects with a 404 for an unknown id", async () => {
+  it("rejects with a 400 for an unknown id", async () => {
+    // AddressService.getOne (ecommerce-api auth/service/AddressService.java) throws a plain
+    // `new RuntimeException("Address not found")` when findByIdAndUserId misses - there is no
+    // ResourceNotFoundException here, so GlobalExceptionHandler's RuntimeException catch-all
+    // answers 400, not 404.
     server.use(
-      http.get("*/backend-api/address/:id", () => HttpResponse.json({ message: "Not found" }, { status: 404 })),
+      http.get("*/backend-api/address/:id", () => HttpResponse.json({ message: "Address not found" }, { status: 400 })),
     )
 
-    await expect(addressAPI.getAddress("missing")).rejects.toThrow(/404/)
+    await expect(addressAPI.getAddress("missing")).rejects.toThrow(/400/)
   })
 })
 
@@ -120,7 +129,6 @@ describe("addressAPI.createAddress contract", () => {
       fullName: "Serhat Belen",
       phoneNumber: "+15551234567",
       country: "US",
-      state: "NY",
       city: "New York",
       district: "Kadikoy",
       postalCode: "10016",
@@ -166,14 +174,28 @@ describe("addressAPI.updateAddress contract", () => {
     expect(address.defaultAddress).toBe(true)
   })
 
-  it("rejects with a 409 when marking default conflicts with an in-progress order using the address", async () => {
+  it("rejects with a 400 when the new title collides with another of the caller's addresses", async () => {
+    // AddressService.update (AddressService.java) has no order-usage check at all - PUT
+    // /address/{id} never looks at orders. The only update-time conflict it can throw is a title
+    // collision: `if (!address.getTitle().equals(request.getTitle())) { if
+    // (addressRepository.existsByUserIdAndTitle(...)) throw new RuntimeException("You already
+    // have an address with this title.") }`, which the RuntimeException catch-all turns into 400.
     server.use(
       http.put("*/backend-api/address/:id", () =>
-        HttpResponse.json({ message: "Address is in use by an active order" }, { status: 409 }),
+        HttpResponse.json({ message: "You already have an address with this title." }, { status: 400 }),
       ),
     )
 
-    await expect(addressAPI.updateAddress("address-1", { defaultAddress: true })).rejects.toThrow(/409/)
+    await expect(addressAPI.updateAddress("address-1", { title: "Clinic" })).rejects.toThrow(/400/)
+  })
+
+  it("rejects with a 400 when the address id does not belong to the caller", async () => {
+    // Same "Address not found" RuntimeException -> 400 as getOne/delete; PUT is not exempt.
+    server.use(
+      http.put("*/backend-api/address/:id", () => HttpResponse.json({ message: "Address not found" }, { status: 400 })),
+    )
+
+    await expect(addressAPI.updateAddress("someone-elses-address", { defaultAddress: true })).rejects.toThrow(/400/)
   })
 })
 
@@ -184,23 +206,17 @@ describe("addressAPI.deleteAddress contract", () => {
     expect(capturedDeleteUrl).toContain("/address/address-2")
   })
 
-  it("rejects with a 409 when deleting an address currently in use by an order", async () => {
+  it("rejects with a 400 when the address was already deleted", async () => {
+    // AddressService.delete looks up findByIdAndUserId and throws a plain
+    // `new RuntimeException("Address not found")` on a miss (there is no order-usage guard on
+    // delete at all - it deletes unconditionally once found). GlobalExceptionHandler's
+    // RuntimeException catch-all turns that into 400, not 404.
     server.use(
       http.delete("*/backend-api/address/:id", () =>
-        HttpResponse.json({ message: "Address is in use by an active order" }, { status: 409 }),
+        HttpResponse.json({ message: "Address not found" }, { status: 400 }),
       ),
     )
 
-    const error = await addressAPI.deleteAddress("address-1").catch((e) => e)
-
-    expect(error.response?.status).toBe(409)
-  })
-
-  it("rejects with a 404 when the address was already deleted", async () => {
-    server.use(
-      http.delete("*/backend-api/address/:id", () => HttpResponse.json({ message: "Not found" }, { status: 404 })),
-    )
-
-    await expect(addressAPI.deleteAddress("already-gone")).rejects.toThrow(/404/)
+    await expect(addressAPI.deleteAddress("already-gone")).rejects.toThrow(/400/)
   })
 })

@@ -8,6 +8,15 @@ import { makeAccountUser, makeProduct, makeVendorUserProduct } from "@/test/fact
 import { render, screen, waitFor } from "@/test/render"
 import CreateProductPage from "./page"
 
+// This file drives the full 17-field, three-tab create-product form through userEvent, so its
+// slowest cases legitimately take ~1.8s in isolation. Under the full suite's parallel worker load
+// that stretches past the 5s default and the whole file fails on timeouts — nine of them in the
+// gate run on 27 Aug 2026, with zero assertion failures. The work is real, so the budget is
+// raised to match it rather than the tests being retried or trimmed. Same reasoning as the
+// Playwright `workers=3` decision: match capacity, do not mask contention.
+// If a test here ever exceeds this, that is a genuine slowdown worth investigating.
+vi.setConfig({ testTimeout: 20_000 })
+
 const toastSpies = vi.hoisted(() => ({
   success: vi.fn(),
   error: vi.fn(),

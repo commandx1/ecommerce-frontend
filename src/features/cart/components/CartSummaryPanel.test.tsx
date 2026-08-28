@@ -23,6 +23,7 @@ const renderPanel = (overrides: Partial<PanelProps> = {}) => {
     hasBlockingItems: false,
     isCheckoutDisabled: false,
     isLicenseBlocked: false,
+    licenseCheckFailed: false,
     isTaxLoading: false,
     itemsCount: 2,
     onCheckout: vi.fn(),
@@ -63,6 +64,22 @@ describe("CartSummaryPanel", () => {
     expect(screen.queryByText("$8.50")).not.toBeInTheDocument()
   })
 
+  // Regression: an unestimated tax (no address yet, or the estimate call failed) used to render
+  // as "$0.00", which understated the real charge the backend collects at payment time.
+  it("shows 'Calculated at checkout' instead of $0.00 when tax could not be estimated", () => {
+    renderPanel({ totals: makeTotals({ tax: null, total: 122 }) })
+
+    expect(screen.getByText("Calculated at checkout")).toBeInTheDocument()
+    expect(screen.queryByText("$0.00")).not.toBeInTheDocument()
+    expect(screen.getByText("Excludes tax — calculated at checkout.")).toBeInTheDocument()
+  })
+
+  it("does not show the excludes-tax note while a real tax figure is shown", () => {
+    renderPanel()
+
+    expect(screen.queryByText(/Excludes tax/)).not.toBeInTheDocument()
+  })
+
   it("disables checkout and explains that unavailable items block it", () => {
     renderPanel({ hasBlockingItems: true, blockingItemsCount: 2, isCheckoutDisabled: true })
 
@@ -77,14 +94,16 @@ describe("CartSummaryPanel", () => {
     expect(screen.getByText("Remove 1 unavailable item to continue.")).toBeInTheDocument()
   })
 
-  // BULGU: neither the blocking nor the licence notice carries `role="alert"`/`aria-live`, so a
-  // screen-reader user gets no announcement when checkout becomes unavailable. Locking today's
-  // behaviour: the copy is present in the DOM but exposes no alert role.
-  it("renders the blocking notice as plain text with no alert role (current behaviour)", () => {
+  it("announces the blocking and licence notices so a screen-reader user hears why checkout is unavailable", () => {
     renderPanel({ hasBlockingItems: true, blockingItemsCount: 1, isLicenseBlocked: true })
 
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
-    expect(screen.queryByRole("status")).not.toBeInTheDocument()
+    const alerts = screen.getAllByRole("alert")
+    expect(alerts.map((el) => el.textContent)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("Checkout is blocked"),
+        expect.stringContaining("Dental license required"),
+      ]),
+    )
   })
 
   it("shows a distinct licence message with a link to add one", () => {
@@ -94,6 +113,18 @@ describe("CartSummaryPanel", () => {
     expect(screen.getByText(/require a valid, approved dental license/i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /Add your license/i })).toHaveAttribute("href", "/buyer-dashboard/settings")
     expect(screen.queryByText("Checkout is blocked")).not.toBeInTheDocument()
+  })
+
+  // Y3: the gate is fail-closed, so a licence-service outage also sets `isLicenseBlocked`. Telling a
+  // buyer whose licence IS approved to "add your license" points them at a settings page that looks
+  // correct and explains nothing - so the unverified case gets its own copy and no settings link.
+  it("says the licence could not be verified, without a settings link, when the check itself failed", () => {
+    renderPanel({ isLicenseBlocked: true, licenseCheckFailed: true })
+
+    expect(screen.getByText("Couldn't verify your dental license")).toBeInTheDocument()
+    expect(screen.getByText(/couldn't check yours just now/i)).toBeInTheDocument()
+    expect(screen.queryByText("Dental license required")).not.toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: /Add your license/i })).not.toBeInTheDocument()
   })
 
   // The licence gate is advisory in this component: the button stays clickable and `useCartPage`

@@ -20,7 +20,6 @@ const makeOrderSummary = (productPrice: string): CalculatorProps["orderSummary"]
   warranty: "$0.00",
   shipping: "$0.00",
   subtotal: "$0.00",
-  tax: "$0.00",
   total: "$0.00",
 })
 

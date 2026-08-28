@@ -1,4 +1,5 @@
 import type { ComponentProps } from "react"
+import { useId } from "react"
 
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
@@ -23,10 +24,22 @@ export const TextAreaField = ({
   required,
   ...props
 }: TextAreaFieldProps) => {
+  const uid = useId()
+  const errorId = `${uid}-error`
+
   return (
-    <FormField label={label} htmlFor={id} required={required} error={error} className={containerClassName}>
+    <FormField
+      label={label}
+      htmlFor={id}
+      required={required}
+      error={error}
+      errorId={errorId}
+      className={containerClassName}
+    >
       <Textarea
         id={id}
+        aria-invalid={error ? true : props["aria-invalid"]}
+        aria-describedby={error ? errorId : undefined}
         className={cn(
           baseTextAreaClassName,
           error && "border-danger focus-visible:border-danger focus-visible:ring-danger/20",

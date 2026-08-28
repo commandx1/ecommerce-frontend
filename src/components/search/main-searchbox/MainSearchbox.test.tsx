@@ -158,17 +158,7 @@ describe("MainSearchbox", () => {
     await waitFor(() => expect(queries).toEqual(["t"]))
   })
 
-  // BULGU: the magnifier button next to the field has no handler — pressing "Search" does
-  // nothing, results only ever come from the debounce.
-  it("renders an inert search button (current behaviour)", async () => {
-    const user = userEvent.setup()
-    installSearchHandler()
-    render(<MainSearchbox />)
-
-    await user.type(searchBox(), "tips")
-    await screen.findByText("Intra Oral Mixing Tips")
-    await user.click(screen.getByRole("button", { name: "Search products" }))
-
-    expect(queries).toEqual(["tips"])
-  })
+  // Deferred: the magnifier button is a dead control for now (product decision: "şimdilik
+  // boşverelim"). When wired up, this verifies clicking it triggers a search immediately.
+  it.todo("clicking the search button triggers a search with the current query")
 })

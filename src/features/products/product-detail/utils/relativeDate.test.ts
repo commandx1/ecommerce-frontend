@@ -63,11 +63,14 @@ describe("formatRelativeDate", () => {
     expect(formatRelativeDate(oneDayAhead)).toBe("-1 days ago")
   })
 
-  // Fragile fallback: an unparseable date string does not throw (Date silently
-  // produces an Invalid Date), so the try/catch never triggers. All numeric
-  // comparisons against NaN are false, so execution falls through to the final
-  // "years ago" branch, rendering the literal string "NaN years ago".
-  it("does not hit the catch block for an invalid date string; instead renders NaN years ago", () => {
-    expect(formatRelativeDate("not-a-date")).toBe("NaN years ago")
+  // C axis: `createdDate` can arrive malformed (hostile 200 body) or the field can be missing
+  // for a legacy row. `Date` never throws on a bad string, so this is checked explicitly via
+  // `Number.isNaN(date.getTime())` rather than relying on the try/catch.
+  it.each([
+    ["an unparseable string", "not-a-date"],
+    ["an empty string", ""],
+    ["undefined", undefined],
+  ])("renders a safe fallback, not NaN years ago, when createdDate is %s", (_label, badDate) => {
+    expect(formatRelativeDate(badDate as unknown as string)).toBe("Recently")
   })
 })

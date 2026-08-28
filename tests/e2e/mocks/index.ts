@@ -7,6 +7,8 @@ import { registerPaymentsMocks } from "./payments.mocks"
 import { registerProductsMocks } from "./products.mocks"
 import { registerShipmentMocks } from "./shipment.mocks"
 import { registerVendorMocks } from "./vendor.mocks"
+import { registerVendorQuestionsMocks } from "./vendor-questions.mocks"
+import { registerVendorReviewsMocks } from "./vendor-reviews.mocks"
 
 /**
  * Faz 8.1 - registers every apiMock route that can be safely derived from an
@@ -30,4 +32,6 @@ export function registerAllMocks(apiMock: ApiMock) {
   registerProductsMocks(apiMock)
   registerShipmentMocks(apiMock)
   registerVendorMocks(apiMock)
+  registerVendorQuestionsMocks(apiMock)
+  registerVendorReviewsMocks(apiMock)
 }
