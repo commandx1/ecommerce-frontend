@@ -9,7 +9,6 @@ interface OrderSummaryCardProps {
   quantity: number
   unitPrice: number
   productTotal: number
-  warrantyPrice?: number
   shippingFeePrice: number
   heavyShippingFeePrice: number
   shippingPrice: number
@@ -22,7 +21,6 @@ const OrderSummaryCard = ({
   quantity,
   unitPrice,
   productTotal,
-  //warrantyPrice,
   shippingFeePrice,
   heavyShippingFeePrice,
   shippingPrice,
@@ -46,10 +44,6 @@ const OrderSummaryCard = ({
             <span className="font-bold text-brand">{formatCurrency(productTotal)}</span>
           </div>
         </div>
-        {/* <div className="flex justify-between">
-          <span className="text-text-secondary">Extended Warranty</span>
-          <span className="font-semibold">{formatCurrency(warrantyPrice)}</span>
-        </div> */}
         <div className="space-y-1.5 rounded-2xl bg-surface-muted/60 px-3 py-2.5">
           <div className="flex justify-between text-sm">
             <span className="text-text-secondary">Shipping</span>

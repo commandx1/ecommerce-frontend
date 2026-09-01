@@ -9,6 +9,48 @@ import {
   makeVendorUserProduct,
 } from "@/test/factories/product.factory"
 
+// Reconstructed from the live MARK3 (1dc4e27b-c5ad-4959-909b-fc69a8800b1b) `Packaging` group:
+// 4 rows sharing 2 values, each with its own name - the backend doesn't dedupe rows that share
+// a value across different products (ambiguous variants). Exported so a test can opt into it
+// with `server.use(http.post(..., () => HttpResponse.json(mark3VariantAttributesResponse)))`.
+export const mark3VariantAttributesResponse = {
+  attributes: [
+    {
+      attribute: "Packaging",
+      values: [
+        {
+          value: "Package of 200 tips",
+          selected: false,
+          option: true,
+          available: true,
+          name: "MARK3 Mixing Tips 200/Pk. Disposable White Tips",
+        },
+        {
+          value: "Package of 1500 syringe tips",
+          selected: true,
+          option: true,
+          available: true,
+          name: "MARK3 Mixing Tips 1500/Pk. Disposable White Tips",
+        },
+        {
+          value: "Package of 1500 syringe tips",
+          selected: false,
+          option: false,
+          available: true,
+          name: "MARK3 Mixing Tips 1500/Pk. Disposable Multicolored Tips",
+        },
+        {
+          value: "Package of 200 tips",
+          selected: false,
+          option: false,
+          available: true,
+          name: "MARK3 Mixing Tips 200/Pk. Disposable Multicolored Tips",
+        },
+      ],
+    },
+  ],
+}
+
 export const productsHandlers = [
   // ==================== Product search / listing (Next.js API proxy) ====================
   http.get("*/api/products/my-products", () => HttpResponse.json(makeMyProductsPageResponse())),
@@ -58,6 +100,20 @@ export const productsHandlers = [
   ),
 
   http.get("*/api/products/public", () => HttpResponse.json(makePublicProductsResponse())),
+
+  // ==================== Variant attribute selector (hero) ====================
+  // Every real backend failure here - including "this product simply has no variants" - is a
+  // 400 (RuntimeException catch-all, no dedicated not-found status). Defaulting to 400 keeps
+  // every unrelated product-detail test's hero free of surprise variant chips; a test that wants
+  // the ambiguous MARK3 case overrides with `mark3VariantAttributesResponse` above.
+  http.post("*/backend-api/products/variant-attributes", () =>
+    HttpResponse.json({ message: "No variant of this product is currently available for sale." }, { status: 400 }),
+  ),
+
+  http.post("*/backend-api/products/variant-attributes/match", async ({ request }) => {
+    const body = (await request.json()) as { productId?: string }
+    return HttpResponse.json({ product: { id: body.productId ?? "matched-product" }, userProducts: [] })
+  }),
 
   // ==================== Product review flow (vendor) ====================
   http.post("*/api/products/review", () => HttpResponse.json(makeProduct())),

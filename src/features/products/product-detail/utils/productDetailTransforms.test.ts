@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest"
 import type { ProductDetail, UserProduct } from "../types"
 import {
-  buildDescription,
-  buildFeatures,
   buildPhotoPaths,
+  buildSpecifications,
   buildSuppliers,
   buildThumbnailImages,
   resolveBestPriceVendorUserProductId,
+  resolveDentalLicenseRequired,
   resolveMainImage,
+  resolveSdsUrl,
 } from "./productDetailTransforms"
 
 const baseProduct: ProductDetail = {
@@ -86,80 +87,89 @@ describe("resolveMainImage", () => {
   })
 })
 
-describe("buildFeatures", () => {
-  it("builds bullet points from brand, manufacturerCode, packaging, type, and size", () => {
+describe("buildSpecifications", () => {
+  it("keeps the backend order of attribute rows", () => {
     const product: ProductDetail = {
       ...baseProduct,
-      brand: "MARK3",
-      manufacturerCode: "MK-1001",
-      packaging: "Box of 100",
-      type: "Mixing Tip",
-      size: "Large",
+      attributes: [
+        { attributeName: "Packaging", attributeValue: "8.5 gram syringe" },
+        { attributeName: "Type", attributeValue: "Adhesive resin cement" },
+      ],
     }
-    expect(buildFeatures(product)).toEqual([
-      "Brand: MARK3",
-      "Manufacturer Code: MK-1001",
-      "Box of 100",
-      "Mixing Tip",
-      "Size: Large",
+    expect(buildSpecifications(product)).toEqual([
+      { label: "Packaging", value: "8.5 gram syringe" },
+      { label: "Type", value: "Adhesive resin cement" },
     ])
   })
 
-  it("includes only the fields that are present", () => {
-    const product: ProductDetail = { ...baseProduct, brand: "MARK3" }
-    expect(buildFeatures(product)).toEqual(["Brand: MARK3"])
+  it("drops rows with a null or empty attributeValue", () => {
+    const product: ProductDetail = {
+      ...baseProduct,
+      attributes: [
+        { attributeName: "Packaging", attributeValue: null },
+        { attributeName: "Type", attributeValue: "" },
+        { attributeName: "Color", attributeValue: "Shade A2" },
+      ],
+    }
+    expect(buildSpecifications(product)).toEqual([{ label: "Color", value: "Shade A2" }])
   })
 
-  it("falls back to generic marketing bullets when no descriptive fields are present", () => {
-    expect(buildFeatures(baseProduct)).toEqual([
-      "Professional Grade",
-      "Quality Assured",
-      "Fast Delivery",
-      "Verified Supplier",
-    ])
+  it("drops rows with an empty attributeName", () => {
+    const product: ProductDetail = {
+      ...baseProduct,
+      attributes: [{ attributeName: "  ", attributeValue: "Some value" }],
+    }
+    expect(buildSpecifications(product)).toEqual([])
+  })
+
+  it("returns an empty array when there are no attributes", () => {
+    expect(buildSpecifications(baseProduct)).toEqual([])
+  })
+
+  // C axis: a malformed 200 body sending `attributes` as a truthy non-array must not crash the
+  // page render - same class as buildPhotoPaths' photoPhats guard above.
+  it.each([
+    ["an object", { foo: "bar" }],
+    ["a string", "not-an-array"],
+    ["a number", 42],
+  ])("returns an empty array without throwing when attributes is %s instead of an array", (_label, badAttributes) => {
+    const product = { ...baseProduct, attributes: badAttributes } as unknown as ProductDetail
+    expect(() => buildSpecifications(product)).not.toThrow()
+    expect(buildSpecifications(product)).toEqual([])
   })
 })
 
-describe("buildDescription", () => {
-  it("collects aboutProduct and description as paragraphs, in that order", () => {
-    const product: ProductDetail = { ...baseProduct, aboutProduct: "About text", description: "Full description" }
-    const result = buildDescription(product, ["feature-1"])
-    expect(result.paragraphs).toEqual(["About text", "Full description"])
-    expect(result.benefits).toEqual(["feature-1"])
+describe("resolveSdsUrl", () => {
+  it("returns an https:// SDS link as-is", () => {
+    const product: ProductDetail = { ...baseProduct, sds: "https://example.com/sds.pdf" }
+    expect(resolveSdsUrl(product)).toBe("https://example.com/sds.pdf")
   })
 
-  it("omits missing paragraph fields instead of inserting empty strings", () => {
-    const product: ProductDetail = { ...baseProduct, description: "Only description" }
-    expect(buildDescription(product, []).paragraphs).toEqual(["Only description"])
+  it("returns an http:// SDS link as-is", () => {
+    const product: ProductDetail = { ...baseProduct, sds: "http://example.com/sds.pdf" }
+    expect(resolveSdsUrl(product)).toBe("http://example.com/sds.pdf")
   })
 
-  it("always includes the fixed included-items list", () => {
-    const result = buildDescription(baseProduct, [])
-    expect(result.included).toEqual([
-      { icon: "box", text: "Protective carrying case" },
-      { icon: "book", text: "Quick-start guide" },
-      { icon: "tools", text: "Calibration tools" },
-      { icon: "shield-check", text: "Warranty registration card" },
-    ])
+  it("returns null when sds is missing", () => {
+    expect(resolveSdsUrl(baseProduct)).toBeNull()
   })
 
-  it("prefers the product description for the installation note when present", () => {
-    const product: ProductDetail = { ...baseProduct, description: "Full description", aboutProduct: "About text" }
-    expect(buildDescription(product, []).installationNote).toEqual({
-      title: "Installation Note",
-      text: "Full description",
-    })
+  it("returns null when sds is an empty string", () => {
+    expect(resolveSdsUrl({ ...baseProduct, sds: "" })).toBeNull()
   })
 
-  it("falls back to aboutProduct for the installation note when description is missing", () => {
-    const product: ProductDetail = { ...baseProduct, aboutProduct: "About text" }
-    expect(buildDescription(product, []).installationNote.text).toBe("About text")
+  it("returns null when sds is not a URL", () => {
+    expect(resolveSdsUrl({ ...baseProduct, sds: "SDS-001" })).toBeNull()
+  })
+})
+
+describe("resolveDentalLicenseRequired", () => {
+  it.each(["true", "True", "TRUE", "yes", "1"])("treats %s as license required", (value) => {
+    expect(resolveDentalLicenseRequired(value)).toBe(true)
   })
 
-  it("falls back to a generic installation note when both fields are missing", () => {
-    expect(buildDescription(baseProduct, []).installationNote.text).toBe(
-      "Installation should be performed by trained dental professionals.",
-    )
+  it.each(["false", "", null, undefined])("treats %s as license not required", (value) => {
+    expect(resolveDentalLicenseRequired(value)).toBe(false)
   })
 })
 

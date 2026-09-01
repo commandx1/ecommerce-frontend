@@ -1,12 +1,17 @@
-import type { ProductDetailPageData, ReviewsResponse } from "@/features/products/product-detail/types"
+import type {
+  ProductDetailPageData,
+  ReviewsResponse,
+  SpecificationItem,
+} from "@/features/products/product-detail/types"
 import {
-  buildDescription,
-  buildFeatures,
   buildPhotoPaths,
+  buildSpecifications,
   buildSuppliers,
   buildThumbnailImages,
   resolveBestPriceVendorUserProductId,
+  resolveDentalLicenseRequired,
   resolveMainImage,
+  resolveSdsUrl,
 } from "@/features/products/product-detail/utils/productDetailTransforms"
 
 export interface ProductDetailPageViewModel {
@@ -16,6 +21,7 @@ export interface ProductDetailPageViewModel {
   productPrice: number
   productCategory: string
   productHero: {
+    productId: string
     price: number
     title: string
     bestPriceVendor: string
@@ -26,13 +32,13 @@ export interface ProductDetailPageViewModel {
     sku: string
     brand?: string
     manufacturerCode?: string
-    features: string[]
     mainImage: string
     thumbnailImages: string[]
     badge: string
     dentalLicenseRequired: boolean
   }
-  description: ReturnType<typeof buildDescription>
+  specifications: SpecificationItem[]
+  sdsUrl: string | null
   suppliers: ReturnType<typeof buildSuppliers>
   bestPriceVendorUserProductId: string | null
   reviews: ReviewsResponse | null
@@ -61,8 +67,8 @@ export function buildProductDetailViewModel(
 
   const photoPaths = buildPhotoPaths(product)
   const mainImage = resolveMainImage(product, photoPaths)
-  const features = buildFeatures(product)
-  const description = buildDescription(product, features)
+  const specifications = buildSpecifications(product)
+  const sdsUrl = resolveSdsUrl(product)
   const bestPriceVendorUserProductId = resolveBestPriceVendorUserProductId(product, userProducts)
   const suppliers = buildSuppliers(userProducts, bestPriceVendorUserProductId)
   const thumbnailImages = buildThumbnailImages(photoPaths)
@@ -74,6 +80,7 @@ export function buildProductDetailViewModel(
     productPrice: product.price || 0,
     productCategory: product.primaryMarket || "Products",
     productHero: {
+      productId: product.id,
       price: product.price || 0,
       title: product.name,
       bestPriceVendor: product.bestPriceVendor || "",
@@ -84,13 +91,13 @@ export function buildProductDetailViewModel(
       sku: product.id.substring(0, 8).toUpperCase(),
       brand: product.brand,
       manufacturerCode: product.manufacturerCode,
-      features,
       mainImage,
       thumbnailImages,
       badge: "Available",
-      dentalLicenseRequired: product.dentalLicenseRequired === "Yes",
+      dentalLicenseRequired: resolveDentalLicenseRequired(product.dentalLicenseRequired),
     },
-    description,
+    specifications,
+    sdsUrl,
     suppliers,
     bestPriceVendorUserProductId,
     reviews,

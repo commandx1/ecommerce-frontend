@@ -1,11 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { installRadixPointerPolyfills } from "@/test/radix"
-import { render, screen } from "@/test/render"
+import { render, screen, waitFor } from "@/test/render"
 import { buildProductDetailViewModel } from "../server/build-product-detail-view-model"
 import type { ProductDetailPageData } from "../types"
 import ProductDetailPageView from "./ProductDetailPageView"
 
 installRadixPointerPolyfills()
+
+const mockToastError = vi.fn()
+
+// The default MSW handler for `/products/variant-attributes` (src/mocks/handlers/products.handlers.ts)
+// answers 400 - every real product in these fixtures has no variant group - so this suite mostly
+// just needs to confirm that failure stays silent instead of surfacing a toast.
+vi.mock("@/components/ui/Toast", () => ({
+  showToast: {
+    error: (...args: unknown[]) => mockToastError(...args),
+    success: vi.fn(),
+    warning: vi.fn(),
+    info: vi.fn(),
+  },
+}))
 
 const pageData: ProductDetailPageData = {
   productData: {
@@ -18,6 +32,7 @@ const pageData: ProductDetailPageData = {
       bestPriceVendorUserProductId: "up-1",
       overallStar: 4.5,
       reviewCount: 12,
+      attributes: [{ attributeName: "Packaging", attributeValue: "8.5 gram syringe" }],
     },
     userProducts: [
       { id: "up-1", vendor: "Acme Dental", price: 56, stock: 40, shipmentFee: 5 },
@@ -29,9 +44,38 @@ const pageData: ProductDetailPageData = {
 
 const viewModel = buildProductDetailViewModel("abcdef1234567890", pageData, null)
 
+const pageDataWithoutAttributes: ProductDetailPageData = {
+  productData: {
+    ...pageData.productData,
+    product: { ...pageData.productData.product, attributes: undefined },
+  },
+  questions: null,
+}
+
+const viewModelWithoutAttributes = buildProductDetailViewModel("abcdef1234567890", pageDataWithoutAttributes, null)
+
 describe("ProductDetailPageView", () => {
   beforeEach(() => {
     vi.restoreAllMocks()
+    mockToastError.mockClear()
+  })
+
+  // Every backend failure on the variant-attributes endpoint is HTTP 400, including "this
+  // product has no variants" - the hero must stay silent (no chip block, no toast) rather than
+  // showing an error for what is, for most products, entirely normal.
+  it("renders no variant selector and no toast for a product with no variant group", async () => {
+    const { container } = render(<ProductDetailPageView viewModel={viewModel} />, {
+      route: "/products/abcdef1234567890",
+    })
+
+    // The variant selector's "Selected pricing" is still there (unrelated block); `[aria-busy]`
+    // only ever exists inside VariantAttributeSelector's ready-state wrapper, so its absence
+    // means the selector rendered nothing at all - not just an empty group list.
+    expect(screen.getByText("Selected pricing")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(container.querySelector("[aria-busy]")).not.toBeInTheDocument()
+    })
+    expect(mockToastError).not.toHaveBeenCalled()
   })
 
   // A11y: this route had zero <h1> and no <main> landmark when scanned (axe on /products/p-1:
@@ -49,13 +93,34 @@ describe("ProductDetailPageView", () => {
     expect(mains[0]).toContainElement(h1s[0])
   })
 
-  it("stacks the hero, purchase, community and recommendation sections", () => {
+  it("stacks the hero, specifications, purchase, community and recommendation sections", () => {
     render(<ProductDetailPageView viewModel={viewModel} />, { route: "/products/abcdef1234567890" })
 
-    expect(screen.getByRole("heading", { name: "Purchase Options" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Compare Suppliers & Pricing" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Specifications" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Purchase Options" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Product Reviews" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Questions & Answers" })).toBeInTheDocument()
+  })
+
+  // Specs belong above the supplier table: a buyer decides "is this the right product?" before
+  // "which vendor?". The section sits inside the hero's client boundary, so this order is easy to
+  // break by moving the slot.
+  it("places the Specifications section above the supplier comparison", () => {
+    render(<ProductDetailPageView viewModel={viewModel} />, { route: "/products/abcdef1234567890" })
+
+    const specs = screen.getByRole("heading", { name: "Specifications" })
+    const suppliers = screen.getByRole("heading", { name: "Compare Suppliers & Pricing" })
+
+    expect(specs.compareDocumentPosition(suppliers) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it("does not render the Specifications heading when the product has no attributes", () => {
+    render(<ProductDetailPageView viewModel={viewModelWithoutAttributes} />, {
+      route: "/products/abcdef1234567890",
+    })
+
+    expect(screen.queryByRole("heading", { name: "Specifications" })).not.toBeInTheDocument()
   })
 
   it("lists every supplier the product has", () => {

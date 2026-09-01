@@ -29,7 +29,6 @@ const makeSupplier = (overrides: Partial<SupplierViewModel> = {}): SupplierViewM
   stockColor: "green",
   stockCount: 40,
   shipping: "$5.00",
-  shippingNote: "Standard",
   shippingFee: "$5.00",
   heavyShippingFee: "$0.00",
   rating: 4.5,
@@ -46,7 +45,6 @@ const bulkPricing = [
 const orderSummary = {
   product: "Intra Oral Mixing Tips",
   productPrice: "$56.00",
-  warranty: "$0.00",
   shipping: "$5.00",
   subtotal: "$56.00",
   total: "$65.62",
@@ -58,7 +56,6 @@ const renderPurchase = (overrides: Partial<Props> = {}, searchParams = "") =>
   render(
     <PurchaseOptions
       bulkPricing={bulkPricing}
-      warrantyOptions={[]}
       orderSummary={orderSummary}
       suppliers={[makeSupplier()]}
       bestPriceVendorUserProductId="up-1"

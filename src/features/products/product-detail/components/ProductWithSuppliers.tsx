@@ -9,12 +9,17 @@ interface ProductWithSuppliersProps {
   product: ProductHeroViewModel
   suppliers: SupplierViewModel[]
   bestPriceVendorUserProductId?: string | null
+  // A slot, not a `specifications` prop: the specs section is a Server Component and the supplier
+  // table it sits above lives inside this client boundary. Passing it as a rendered node keeps it
+  // off the client bundle.
+  specificationsSlot?: React.ReactNode
 }
 
 export default function ProductWithSuppliers({
   product,
   suppliers,
   bestPriceVendorUserProductId,
+  specificationsSlot,
 }: ProductWithSuppliersProps) {
   const { selectedSupplier, setSelectedSupplier, selectedPrice } = useSupplierSelection(
     suppliers,
@@ -31,6 +36,7 @@ export default function ProductWithSuppliers({
         }}
         selectedSupplier={selectedSupplier}
       />
+      {specificationsSlot}
       <SupplierComparison
         suppliers={suppliers}
         bestPriceVendorUserProductId={bestPriceVendorUserProductId}

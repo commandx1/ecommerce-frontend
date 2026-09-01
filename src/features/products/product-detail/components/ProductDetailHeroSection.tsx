@@ -1,6 +1,7 @@
 import Breadcrumb from "@/features/products/product-detail/components/Breadcrumb"
 import ProductWithSuppliers from "@/features/products/product-detail/components/ProductWithSuppliers"
 import type { ProductDetailPageViewModel } from "../server/build-product-detail-view-model"
+import ProductDetailSpecificationsSection from "./ProductDetailSpecificationsSection"
 
 interface ProductDetailHeroSectionProps {
   viewModel: ProductDetailPageViewModel
@@ -19,6 +20,7 @@ export default function ProductDetailHeroSection({ viewModel }: ProductDetailHer
         product={viewModel.productHero}
         suppliers={viewModel.suppliers}
         bestPriceVendorUserProductId={viewModel.bestPriceVendorUserProductId}
+        specificationsSlot={<ProductDetailSpecificationsSection viewModel={viewModel} />}
       />
     </>
   )

@@ -17,7 +17,6 @@ const makeSupplier = (overrides: Partial<SupplierViewModel> = {}): SupplierViewM
   stockColor: "green",
   stockCount: 10,
   shipping: "Free shipping",
-  shippingNote: "",
   shippingFee: "$0.00",
   heavyShippingFee: "$0.00",
   rating: 4.5,

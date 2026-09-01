@@ -14,8 +14,6 @@ import OrderSummaryCard from "./purchase/OrderSummaryCard"
 import PurchaseActions from "./purchase/PurchaseActions"
 import QuantitySelector from "./purchase/QuantitySelector"
 
-// import WarrantyOptions from "./purchase/WarrantyOptions"
-
 interface BulkPricing {
   id: number
   range: string
@@ -24,19 +22,9 @@ interface BulkPricing {
   selected: boolean
 }
 
-interface WarrantyOption {
-  id: number
-  value: string
-  title: string
-  description: string
-  price: string
-  selected: boolean
-}
-
 interface OrderSummary {
   product: string
   productPrice: string
-  warranty: string
   shipping: string
   subtotal: string
   total: string
@@ -44,7 +32,6 @@ interface OrderSummary {
 
 interface PurchaseOptionsProps {
   bulkPricing: BulkPricing[]
-  warrantyOptions: WarrantyOption[]
   orderSummary: OrderSummary
   suppliers: SupplierViewModel[]
   bestPriceVendorUserProductId?: string | null
@@ -52,7 +39,6 @@ interface PurchaseOptionsProps {
 
 const PurchaseOptions = ({
   bulkPricing,
-  warrantyOptions,
   orderSummary,
   suppliers,
   bestPriceVendorUserProductId,
@@ -77,11 +63,8 @@ const PurchaseOptions = ({
   const {
     quantity,
     setQuantity,
-    // selectedWarranty,
-    // setSelectedWarranty,
     activeTier,
     unitPrice,
-    warrantyPrice,
     shippingFeePrice,
     heavyShippingFeePrice,
     shippingPrice,
@@ -90,7 +73,6 @@ const PurchaseOptions = ({
     total,
   } = usePurchaseCalculator({
     bulkPricing,
-    warrantyOptions,
     orderSummary,
     selectedSupplierPrice: selectedSupplier?.price,
     selectedSupplierShippingFee: selectedSupplier?.shippingFee,
@@ -148,12 +130,6 @@ const PurchaseOptions = ({
                 />
 
                 <BulkPricingGrid options={bulkPricing} activeOptionId={activeTier?.id} />
-
-                {/* <WarrantyOptions
-                  options={warrantyOptions}
-                  selectedValue={selectedWarranty}
-                  onChange={setSelectedWarranty}
-                /> */}
               </div>
             </div>
 
@@ -163,7 +139,6 @@ const PurchaseOptions = ({
                 quantity={quantity}
                 unitPrice={unitPrice}
                 productTotal={productTotal}
-                warrantyPrice={warrantyPrice}
                 shippingFeePrice={shippingFeePrice}
                 heavyShippingFeePrice={heavyShippingFeePrice}
                 shippingPrice={shippingPrice}

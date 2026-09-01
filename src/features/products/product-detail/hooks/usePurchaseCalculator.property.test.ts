@@ -17,7 +17,6 @@ type BulkTier = CalculatorProps["bulkPricing"][number]
 const makeOrderSummary = (productPrice: string): CalculatorProps["orderSummary"] => ({
   product: "Test product",
   productPrice,
-  warranty: "$0.00",
   shipping: "$0.00",
   subtotal: "$0.00",
   total: "$0.00",
@@ -27,7 +26,6 @@ const unitPriceFor = (productPrice: string) => {
   const { result } = renderHook(() =>
     usePurchaseCalculator({
       bulkPricing: [],
-      warrantyOptions: [],
       orderSummary: makeOrderSummary(productPrice),
       stockCount: 1000,
     }),
@@ -163,7 +161,6 @@ describe("tier resolution property: unit price is monotonically non-increasing a
           const { result: resultLow } = renderHook((props: CalculatorProps) => usePurchaseCalculator(props), {
             initialProps: {
               bulkPricing: tiers,
-              warrantyOptions: [],
               orderSummary: makeOrderSummary("$0.00"),
               stockCount: 1_000_000,
             },
@@ -171,7 +168,6 @@ describe("tier resolution property: unit price is monotonically non-increasing a
           const { result: resultHigh } = renderHook((props: CalculatorProps) => usePurchaseCalculator(props), {
             initialProps: {
               bulkPricing: tiers,
-              warrantyOptions: [],
               orderSummary: makeOrderSummary("$0.00"),
               stockCount: 1_000_000,
             },
@@ -200,7 +196,6 @@ describe("tier resolution property: every quantity in range resolves to a define
         const { result } = renderHook((props: CalculatorProps) => usePurchaseCalculator(props), {
           initialProps: {
             bulkPricing: tiers,
-            warrantyOptions: [],
             orderSummary: makeOrderSummary("$0.00"),
             stockCount: 1_000_000,
           },
@@ -221,7 +216,6 @@ describe("tier resolution property: safe on empty and single-tier ladders", () =
     const { result } = renderHook(() =>
       usePurchaseCalculator({
         bulkPricing: [],
-        warrantyOptions: [],
         orderSummary: makeOrderSummary("$0.00"),
         stockCount: 100,
       }),
@@ -236,7 +230,6 @@ describe("tier resolution property: safe on empty and single-tier ladders", () =
         const { result } = renderHook(() =>
           usePurchaseCalculator({
             bulkPricing: [{ id: 1, range: "50+", price: `$${price.toFixed(2)}`, note: "", selected: false }],
-            warrantyOptions: [],
             orderSummary: makeOrderSummary("$0.00"),
             stockCount: 1_000_000,
           }),

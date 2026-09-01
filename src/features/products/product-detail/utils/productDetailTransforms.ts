@@ -1,6 +1,6 @@
 import { getFullImageUrl } from "@/lib/api/products"
 import formatCurrency from "@/lib/helpers/formatCurrency"
-import type { ProductDescriptionContent, ProductDetail, SupplierViewModel, UserProduct } from "../types"
+import type { ProductDetail, SpecificationItem, SupplierViewModel, UserProduct } from "../types"
 
 const FALLBACK_IMAGE = "/dentypro-product-placeholder.png"
 
@@ -23,37 +23,27 @@ export const resolveMainImage = (product: ProductDetail, photoPaths: string[]) =
   return mainImagePath ? getFullImageUrl(mainImagePath) : FALLBACK_IMAGE
 }
 
-export const buildFeatures = (product: ProductDetail) => {
-  const features: string[] = []
-  if (product.brand) features.push(`Brand: ${product.brand}`)
-  if (product.manufacturerCode) features.push(`Manufacturer Code: ${product.manufacturerCode}`)
-  if (product.packaging) features.push(product.packaging)
-  if (product.type) features.push(product.type)
-  if (product.size) features.push(`Size: ${product.size}`)
-  if (features.length === 0) {
-    features.push("Professional Grade", "Quality Assured", "Fast Delivery", "Verified Supplier")
-  }
-  return features
+// Array.isArray, not a truthy check: a malformed 200 body can send `attributes` as a truthy
+// non-array (object, string, number), which `||` lets through and the .reduce below crashes on.
+export const buildSpecifications = (product: ProductDetail): SpecificationItem[] => {
+  if (!Array.isArray(product.attributes)) return []
+
+  return product.attributes.reduce<SpecificationItem[]>((items, attribute) => {
+    const label = attribute?.attributeName?.trim()
+    const value = attribute?.attributeValue?.trim()
+    if (label && value) items.push({ label, value })
+    return items
+  }, [])
 }
 
-export const buildDescription = (product: ProductDetail, features: string[]): ProductDescriptionContent => {
-  const defaultInstallationNote =
-    product.description || product.aboutProduct || "Installation should be performed by trained dental professionals."
+export const resolveSdsUrl = (product: ProductDetail): string | null => {
+  const sds = product.sds?.trim()
+  return sds && /^https?:\/\//.test(sds) ? sds : null
+}
 
-  return {
-    paragraphs: [product.aboutProduct, product.description].filter((p): p is string => Boolean(p)),
-    benefits: features,
-    included: [
-      { icon: "box", text: "Protective carrying case" },
-      { icon: "book", text: "Quick-start guide" },
-      { icon: "tools", text: "Calibration tools" },
-      { icon: "shield-check", text: "Warranty registration card" },
-    ],
-    installationNote: {
-      title: "Installation Note",
-      text: defaultInstallationNote,
-    },
-  }
+export const resolveDentalLicenseRequired = (value?: string | null): boolean => {
+  if (!value) return false
+  return ["true", "yes", "1"].includes(value.trim().toLowerCase())
 }
 
 export const resolveBestPriceVendorUserProductId = (product: ProductDetail, userProducts: UserProduct[]) => {
@@ -90,7 +80,6 @@ export const buildSuppliers = (userProducts: UserProduct[], bestPriceVendorUserP
         stockColor: up.stock > 0 ? "green" : "gray",
         stockCount: up.stock || 0,
         shipping: shippingTotal <= 0 ? "Free" : formatCurrency(shippingTotal),
-        shippingNote: "Standard shipping",
         shippingFee: shipmentFee <= 0 ? "Free" : formatCurrency(shipmentFee),
         heavyShippingFee: heavyShippingSurcharge <= 0 ? "Free" : formatCurrency(heavyShippingSurcharge),
         distance: up.vendorDistance,

@@ -88,16 +88,41 @@ describe("buildProductDetailViewModel", () => {
     expect(vm.productHero.thumbnailImages).toEqual(["/api/images/uploads/cover.png", "/api/images/uploads/a.png"])
   })
 
-  it("marks dentalLicenseRequired true only for the exact string Yes", () => {
-    const data = makeData({ dentalLicenseRequired: "Yes" })
+  // Regression: this used to compare against the exact string "Yes" and missed the backend's
+  // actual "true" value, silently hiding the license notice for every gated product.
+  it("marks dentalLicenseRequired true for the string true", () => {
+    const data = makeData({ dentalLicenseRequired: "true" })
+    const vm = buildProductDetailViewModel("abcdef1234567890", data, null)
+    expect(vm.productHero.dentalLicenseRequired).toBe(true)
+  })
+
+  it("marks dentalLicenseRequired true case-insensitively for yes/1", () => {
+    const data = makeData({ dentalLicenseRequired: "YES" })
     const vm = buildProductDetailViewModel("abcdef1234567890", data, null)
     expect(vm.productHero.dentalLicenseRequired).toBe(true)
   })
 
   it("marks dentalLicenseRequired false for any other value", () => {
-    const data = makeData({ dentalLicenseRequired: "yes" })
+    const data = makeData({ dentalLicenseRequired: "no" })
     const vm = buildProductDetailViewModel("abcdef1234567890", data, null)
     expect(vm.productHero.dentalLicenseRequired).toBe(false)
+  })
+
+  it("derives specifications and sdsUrl from the product's attributes and sds fields", () => {
+    const data = makeData({
+      attributes: [{ attributeName: "Packaging", attributeValue: "8.5 gram syringe" }],
+      sds: "https://example.com/sds.pdf",
+    })
+    const vm = buildProductDetailViewModel("abcdef1234567890", data, null)
+    expect(vm.specifications).toEqual([{ label: "Packaging", value: "8.5 gram syringe" }])
+    expect(vm.sdsUrl).toBe("https://example.com/sds.pdf")
+  })
+
+  it("defaults specifications to [] and sdsUrl to null when attributes are absent", () => {
+    const data = makeData()
+    const vm = buildProductDetailViewModel("abcdef1234567890", data, null)
+    expect(vm.specifications).toEqual([])
+    expect(vm.sdsUrl).toBeNull()
   })
 
   it("always sets the hero badge to Available", () => {

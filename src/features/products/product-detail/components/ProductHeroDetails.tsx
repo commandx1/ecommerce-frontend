@@ -1,10 +1,11 @@
-import { Check, ShieldCheck } from "lucide-react"
+import { ShieldCheck } from "lucide-react"
 import Link from "next/link"
 import NoticeBanner from "@/components/feedback/NoticeBanner"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import type { ProductHeroViewModel, SupplierViewModel } from "../types"
 import { getStockColorClass } from "../utils/stockStyles"
 import StarRating from "./StarRating"
+import VariantAttributeSelector from "./variant/VariantAttributeSelector"
 
 interface ProductHeroDetailsProps {
   product: ProductHeroViewModel
@@ -60,6 +61,8 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
           </>
         ) : null}
       </div>
+
+      <VariantAttributeSelector productId={product.productId} />
 
       <div className="rounded-3xl border border-border-soft bg-surface p-5">
         <div className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-text-muted">Selected pricing</div>
@@ -133,20 +136,6 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
           </div>
         )
       )}
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {product.features.map((feature) => (
-          <div
-            key={feature}
-            className="flex items-center gap-3 rounded-[1.15rem] border border-border-soft bg-surface px-3 py-3"
-          >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-success/15">
-              <Check className="h-4 w-4 text-success" />
-            </div>
-            <span className="text-text-secondary">{feature}</span>
-          </div>
-        ))}
-      </div>
 
       {product.dentalLicenseRequired ? (
         <NoticeBanner

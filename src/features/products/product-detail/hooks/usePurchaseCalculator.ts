@@ -8,19 +8,9 @@ interface BulkPricingOption {
   selected: boolean
 }
 
-interface WarrantyOption {
-  id: number
-  value: string
-  title: string
-  description: string
-  price: string
-  selected: boolean
-}
-
 interface OrderSummary {
   product: string
   productPrice: string
-  warranty: string
   shipping: string
   subtotal: string
   total: string
@@ -28,7 +18,6 @@ interface OrderSummary {
 
 interface PurchaseCalculatorInput {
   bulkPricing: BulkPricingOption[]
-  warrantyOptions: WarrantyOption[]
   orderSummary: OrderSummary
   selectedSupplierPrice?: string
   selectedSupplierShippingFee?: string
@@ -65,19 +54,13 @@ const resolveBulkPricing = (bulkPricing: BulkPricingOption[], quantity: number) 
 
 export const usePurchaseCalculator = ({
   bulkPricing,
-  warrantyOptions,
   orderSummary,
   selectedSupplierPrice,
   selectedSupplierShippingFee,
   selectedSupplierHeavyShippingFee,
   stockCount,
 }: PurchaseCalculatorInput) => {
-  const defaultWarranty = useMemo(() => {
-    return warrantyOptions.find((w) => w.selected)?.value || warrantyOptions[0]?.value || "standard"
-  }, [warrantyOptions])
-
   const [quantity, setQuantity] = useState(1)
-  const [selectedWarranty, setSelectedWarranty] = useState(defaultWarranty)
 
   useEffect(() => {
     if (quantity > stockCount) {
@@ -85,21 +68,12 @@ export const usePurchaseCalculator = ({
     }
   }, [stockCount, quantity])
 
-  useEffect(() => {
-    setSelectedWarranty(defaultWarranty)
-  }, [defaultWarranty])
-
   const activeTier = useMemo(() => resolveBulkPricing(bulkPricing, quantity), [bulkPricing, quantity])
   const unitPrice = useMemo(() => {
     if (activeTier) return parsePrice(activeTier.price)
     if (selectedSupplierPrice) return parsePrice(selectedSupplierPrice)
     return parsePrice(orderSummary.productPrice)
   }, [activeTier, orderSummary.productPrice, selectedSupplierPrice])
-
-  const warrantyPrice = useMemo(() => {
-    const selected = warrantyOptions.find((w) => w.value === selectedWarranty)
-    return parsePrice(selected?.price || orderSummary.warranty)
-  }, [orderSummary.warranty, selectedWarranty, warrantyOptions])
 
   const shippingFeeUnitPrice = selectedSupplierShippingFee
     ? parsePrice(selectedSupplierShippingFee)
@@ -109,7 +83,7 @@ export const usePurchaseCalculator = ({
   const heavyShippingFeePrice = heavyShippingFeeUnitPrice * quantity
   const shippingPrice = shippingFeePrice + heavyShippingFeePrice
   const productTotal = unitPrice * quantity
-  const subtotal = productTotal + warrantyPrice
+  const subtotal = productTotal
   // No tax is estimated here. Sales tax is address-based and the backend recalculates it with
   // Stripe Tax at order creation (OrderCreationService.computeTaxes), so this screen - which has
   // no address yet - cannot know it. It used to show a flat 10% of the subtotal, which is not any
@@ -119,11 +93,8 @@ export const usePurchaseCalculator = ({
   return {
     quantity,
     setQuantity,
-    selectedWarranty,
-    setSelectedWarranty,
     activeTier,
     unitPrice,
-    warrantyPrice,
     shippingFeePrice,
     heavyShippingFeePrice,
     shippingPrice,

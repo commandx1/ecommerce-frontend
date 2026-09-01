@@ -4,21 +4,10 @@ import { usePurchaseCalculator } from "./usePurchaseCalculator"
 
 type CalculatorProps = Parameters<typeof usePurchaseCalculator>[0]
 type BulkTier = CalculatorProps["bulkPricing"][number]
-type WarrantyOption = CalculatorProps["warrantyOptions"][number]
 
 const makeTier = (overrides: Partial<BulkTier> & Pick<BulkTier, "range" | "price">): BulkTier => ({
   id: 1,
   note: "",
-  selected: false,
-  ...overrides,
-})
-
-const makeWarranty = (
-  overrides: Partial<WarrantyOption> & Pick<WarrantyOption, "value" | "price">,
-): WarrantyOption => ({
-  id: 1,
-  title: "",
-  description: "",
   selected: false,
   ...overrides,
 })
@@ -28,7 +17,6 @@ const makeOrderSummary = (
 ): CalculatorProps["orderSummary"] => ({
   product: "Test product",
   productPrice: "$0.00",
-  warranty: "$0.00",
   shipping: "$0.00",
   subtotal: "$0.00",
   total: "$0.00",
@@ -44,7 +32,6 @@ const threeTiers = (): BulkTier[] => [
 
 const makeProps = (overrides: Partial<CalculatorProps> = {}): CalculatorProps => ({
   bulkPricing: threeTiers(),
-  warrantyOptions: [makeWarranty({ id: 1, value: "standard", price: "Free", selected: true })],
   orderSummary: makeOrderSummary(),
   stockCount: 1000,
   ...overrides,
@@ -365,13 +352,6 @@ describe("usePurchaseCalculator", () => {
 
       expect(result.current.unitPrice).toBe(0)
     })
-
-    // "Free" is what the real warranty data ships for the included tier; it must not become NaN.
-    it('treats a non-numeric warranty price such as "Free" as zero', () => {
-      const { result } = renderCalculator()
-
-      expect(result.current.warrantyPrice).toBe(0)
-    })
   })
 
   describe("stock clamping", () => {
@@ -456,95 +436,10 @@ describe("usePurchaseCalculator", () => {
     })
   })
 
-  describe("warranty selection", () => {
-    const warranties = (): WarrantyOption[] => [
-      makeWarranty({ id: 1, value: "standard", price: "Free", selected: true }),
-      makeWarranty({ id: 2, value: "extended", price: "+$299.00" }),
-    ]
-
-    it("starts on the option flagged as selected", () => {
-      const { result } = renderCalculator({ warrantyOptions: warranties() })
-
-      expect(result.current.selectedWarranty).toBe("standard")
-    })
-
-    it('falls back to the first option, then to "standard", when nothing is flagged', () => {
-      const withoutFlag = renderCalculator({
-        warrantyOptions: [makeWarranty({ id: 2, value: "extended", price: "+$299.00" })],
-      })
-      expect(withoutFlag.result.current.selectedWarranty).toBe("extended")
-
-      const withoutOptions = renderCalculator({ warrantyOptions: [] })
-      expect(withoutOptions.result.current.selectedWarranty).toBe("standard")
-    })
-
-    it("adds the chosen warranty price to the subtotal", () => {
-      const { result } = renderCalculator({ warrantyOptions: warranties() })
-
-      act(() => {
-        result.current.setSelectedWarranty("extended")
-      })
-
-      expect(result.current.warrantyPrice).toBe(299)
-      expect(result.current.subtotal).toBe(100 + 299)
-    })
-
-    // REGRESSION GUARD: the reset effect keys off the resolved default *value*, so re-rendering
-    // with a brand-new array of the same content must NOT stomp the user's pick.
-    it("keeps the user's pick when warrantyOptions is a new array with the same default", () => {
-      const { result, rerender } = renderCalculator({ warrantyOptions: warranties() })
-
-      act(() => {
-        result.current.setSelectedWarranty("extended")
-      })
-      expect(result.current.selectedWarranty).toBe("extended")
-
-      rerender(makeProps({ warrantyOptions: warranties() }))
-
-      expect(result.current.selectedWarranty).toBe("extended")
-    })
-
-    // SUSPECTED UX BUG (locked in, not fixed): as soon as the resolved default changes - e.g. the
-    // parent re-derives options with a different `selected` flag - the user's explicit choice is
-    // silently overwritten by the new default.
-    it("overwrites the user's pick when the resolved default warranty changes", () => {
-      const { result, rerender } = renderCalculator({ warrantyOptions: warranties() })
-
-      act(() => {
-        result.current.setSelectedWarranty("extended")
-      })
-
-      rerender(
-        makeProps({
-          warrantyOptions: [
-            makeWarranty({ id: 1, value: "standard", price: "Free" }),
-            makeWarranty({ id: 2, value: "premium", price: "+$499.00", selected: true }),
-          ],
-        }),
-      )
-
-      expect(result.current.selectedWarranty).toBe("premium")
-      expect(result.current.warrantyPrice).toBe(499)
-    })
-
-    it("falls back to the order summary warranty when the selected value matches no option", () => {
-      const { result } = renderCalculator({
-        warrantyOptions: warranties(),
-        orderSummary: makeOrderSummary({ warranty: "$25.00" }),
-      })
-
-      act(() => {
-        result.current.setSelectedWarranty("does-not-exist")
-      })
-
-      expect(result.current.warrantyPrice).toBe(25)
-    })
-  })
-
   describe("totals", () => {
     it("computes productTotal, subtotal and total from the resolved unit price", () => {
       const { result } = renderCalculator({
-        warrantyOptions: [makeWarranty({ id: 1, value: "standard", price: "$50.00", selected: true })],
+        bulkPricing: [makeTier({ id: 1, range: "1-9", price: "$50.00" })],
         selectedSupplierShippingFee: "$10.00",
       })
 
@@ -552,10 +447,10 @@ describe("usePurchaseCalculator", () => {
         result.current.setQuantity(2)
       })
 
-      expect(result.current.productTotal).toBe(200)
-      expect(result.current.subtotal).toBe(250)
+      expect(result.current.productTotal).toBe(100)
+      expect(result.current.subtotal).toBe(100)
       expect(result.current.shippingPrice).toBe(20)
-      expect(result.current.total).toBe(270)
+      expect(result.current.total).toBe(120)
     })
 
     // Sales tax is address-based and the backend recalculates it with Stripe Tax at order
@@ -627,18 +522,8 @@ describe("usePurchaseCalculator", () => {
       expect(result.current.productTotal).not.toBe(299.97)
     })
 
-    it("accumulates a float tail on the product total too", () => {
-      const { result } = renderCalculator({
-        bulkPricing: [makeTier({ id: 1, range: "1-9", price: "$0.10" })],
-        warrantyOptions: [makeWarranty({ id: 1, value: "standard", price: "$0.20", selected: true })],
-      })
-
-      expect(result.current.subtotal).toBe(0.30000000000000004)
-      expect(result.current.subtotal).not.toBe(0.3)
-    })
-
     it("keeps everything at zero for an empty configuration", () => {
-      const { result } = renderCalculator({ bulkPricing: [], warrantyOptions: [] })
+      const { result } = renderCalculator({ bulkPricing: [] })
 
       expect(result.current.unitPrice).toBe(0)
       expect(result.current.subtotal).toBe(0)

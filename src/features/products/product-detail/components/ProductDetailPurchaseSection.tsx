@@ -34,28 +34,9 @@ export default function ProductDetailPurchaseSection({ viewModel }: ProductDetai
           selected: false,
         },
       ]}
-      warrantyOptions={[
-        {
-          id: 1,
-          value: "standard",
-          title: "Standard Warranty (2 Years)",
-          description: "Included - No additional cost",
-          price: "Free",
-          selected: true,
-        },
-        {
-          id: 2,
-          value: "extended",
-          title: "Extended Warranty (4 Years)",
-          description: "Includes priority support and replacement",
-          price: "+$299",
-          selected: false,
-        },
-      ]}
       orderSummary={{
         product: viewModel.productName,
         productPrice: String(unitPrice),
-        warranty: "0",
         shipping: "0",
         subtotal: String(unitPrice),
         total: String(unitPrice),

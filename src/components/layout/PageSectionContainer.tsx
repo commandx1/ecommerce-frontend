@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils"
 
 interface PageSectionContainerProps {
   as?: "div" | "section" | "main"
+  id?: string
   className?: string
   containerClassName?: string
   children: React.ReactNode
@@ -9,6 +10,7 @@ interface PageSectionContainerProps {
 
 export default function PageSectionContainer({
   as = "section",
+  id,
   className,
   containerClassName,
   children,
@@ -17,7 +19,7 @@ export default function PageSectionContainer({
   const isHero = className?.includes("hero-cinematic")
 
   return (
-    <Component className={className}>
+    <Component id={id} className={className}>
       <div className={cn("mx-auto px-4 sm:px-6 lg:px-8 xl:px-10", isHero ? "" : "app-container", containerClassName)}>
         {children}
       </div>

@@ -191,20 +191,11 @@ export default function ProductDetailLoading() {
             </div>
             <div>
               <div className="skeleton-mint mb-6 h-9 w-72 rounded-xl" />
-              <div className="space-y-5">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="rounded-2xl bg-surface p-6">
-                    <div className="flex items-start gap-4">
-                      <div className="skeleton-white h-16 w-16 shrink-0 rounded-xl" />
-                      <div className="flex-1 space-y-2">
-                        <div className="skeleton-white h-6 w-36 rounded-lg" />
-                        <div className="skeleton-white h-4 w-full rounded-full" />
-                        <div className="skeleton-white h-4 w-4/5 rounded-full" />
-                        <div className="skeleton-white mt-1 h-7 w-32 rounded-full" />
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="rounded-2xl bg-surface p-6">
+                <div className="flex items-center gap-3">
+                  <div className="skeleton-white h-5 w-5 shrink-0 rounded-full" />
+                  <div className="skeleton-white h-4 w-48 rounded-full" />
+                </div>
               </div>
             </div>
           </div>

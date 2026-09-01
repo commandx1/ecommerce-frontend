@@ -5,10 +5,6 @@ export interface ProductDetail {
   oldPrice?: number
   discount?: number
   brand?: string
-  packaging?: string
-  type?: string
-  size?: string
-  scent?: string
   manufacturerCode?: string
   primaryMarket?: string
   barcode?: string | number
@@ -22,6 +18,19 @@ export interface ProductDetail {
   overallStar?: number
   reviewCount?: number
   dentalLicenseRequired?: string | null
+  attributes?: ProductAttribute[]
+  sds?: string | null
+}
+
+export interface ProductAttribute {
+  attributeName: string
+  /** Backend nullable (`product_attributes.attribute_value` has no NOT NULL constraint). */
+  attributeValue?: string | null
+}
+
+export interface SpecificationItem {
+  label: string
+  value: string
 }
 
 export interface UserProduct {
@@ -143,7 +152,6 @@ export interface SupplierViewModel {
   stockColor: "green" | "gray"
   stockCount: number
   shipping: string
-  shippingNote: string
   shippingFee: string
   heavyShippingFee: string
   distance?: string
@@ -153,6 +161,7 @@ export interface SupplierViewModel {
 }
 
 export interface ProductHeroViewModel {
+  productId: string
   title: string
   description: string
   category: string
@@ -163,19 +172,37 @@ export interface ProductHeroViewModel {
   sku: string
   brand?: string
   manufacturerCode?: string
-  features: string[]
   mainImage: string
   thumbnailImages: string[]
   badge?: string
   dentalLicenseRequired: boolean
 }
 
-export interface ProductDescriptionContent {
-  paragraphs: string[]
-  benefits: string[]
-  included: Array<{ icon: string; text: string }>
-  installationNote: {
-    title: string
-    text: string
-  }
+/** Backend: VariantAttributeValueOptionDto. selected/option/available are primitive boolean, never null. */
+export interface VariantAttributeValue {
+  value: string
+  selected: boolean
+  option: boolean
+  available: boolean
+  name?: string | null
+}
+
+export interface VariantAttributeGroup {
+  attribute: string
+  values: VariantAttributeValue[]
+}
+
+export interface VariantAttributesResponse {
+  attributes: VariantAttributeGroup[]
+}
+
+/** Same `value` can arrive as several backend rows (ambiguous products aren't deduped server-side) -
+ *  this is that value's rows folded into one chip. */
+export interface VariantChoice {
+  value: string
+  selected: boolean
+  option: boolean
+  available: boolean
+  /** Distinguishing product names for this value; empty means the chip can select on its own. */
+  names: string[]
 }
