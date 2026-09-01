@@ -84,6 +84,22 @@ const initialFormData: RegisterPayload = {
   },
 }
 
+// The backend deserializes both /users/register and /users/register/vendor/invite into the same
+// AddressCreateRequest, which has no `state` field. The dentist flow has always compensated by
+// sending the selected state in `city`; the vendor invite flow sent the raw locality instead, so
+// the very same picked address ended up stored differently depending on which endpoint created it.
+// Both flows now build the address here.
+const buildAddressPayload = (formData: RegisterPayload): RegisterPayload["address"] => {
+  const fullName = `${formData.name} ${formData.surname}`.trim()
+
+  return {
+    ...formData.address,
+    city: formData.address.state,
+    fullName: fullName || formData.address.fullName,
+    phoneNumber: normalizePhoneNumber(formData.phoneNumber),
+  }
+}
+
 type ErrorMap = Record<string, string>
 
 const capitalizeWords = (input: string) =>
@@ -272,18 +288,13 @@ export const useRegisterForm = (options?: {
     try {
       if (isTokenFlow) {
         if (inviteRole === "OWNER") {
-          const fullName = `${formData.name} ${formData.surname}`.trim()
           await authAPI.completeVendorInviteRegister({
             token: options?.initialToken ?? "",
             name: formData.name,
             surname: formData.surname,
             phoneNumber: normalizePhoneNumber(formData.phoneNumber),
             password: formData.password,
-            address: {
-              ...formData.address,
-              fullName: fullName || formData.address.fullName,
-              phoneNumber: normalizePhoneNumber(formData.phoneNumber),
-            },
+            address: buildAddressPayload(formData),
             // Company info is only collected in the token+OWNER flow, where formData.company is always initialized.
             company: formData.company as CompanyPayload,
           })
@@ -301,16 +312,11 @@ export const useRegisterForm = (options?: {
         return
       }
 
-      const fullName = `${formData.name} ${formData.surname}`.trim()
       const { company: _company, ...registerFields } = formData
 
       await authAPI.register({
         ...registerFields,
-        address: {
-          ...formData.address,
-          city: formData.address.state,
-          fullName: fullName || formData.address.fullName,
-        },
+        address: buildAddressPayload(formData),
       })
       if (typeof window !== "undefined") {
         sessionStorage.setItem(
