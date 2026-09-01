@@ -7,6 +7,7 @@ import AuthHydration from "@/components/auth/AuthHydration"
 import ConditionalFooter from "@/components/layout/ConditionalFooter"
 import ConditionalNavbar from "@/components/layout/ConditionalNavbar"
 import QueryProvider from "@/components/providers/QueryProvider"
+import { StripeConfigProvider } from "@/components/providers/StripeConfigProvider"
 import ThemeProvider from "@/components/theme/ThemeProvider"
 
 const manrope = Manrope({
@@ -49,17 +50,21 @@ export default async function RootLayout({
     }
   }
 
+  const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? ""
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${manrope.variable} ${sora.variable} font-sans antialiased`} suppressHydrationWarning>
         <ThemeProvider>
-          <QueryProvider>
-            <AuthHydration />
-            <ConditionalNavbar initialAuthState={initialState} />
-            {children}
-            <ConditionalFooter />
-            <Toaster position="top-right" richColors />
-          </QueryProvider>
+          <StripeConfigProvider publishableKey={stripePublishableKey}>
+            <QueryProvider>
+              <AuthHydration />
+              <ConditionalNavbar initialAuthState={initialState} />
+              {children}
+              <ConditionalFooter />
+              <Toaster position="top-right" richColors />
+            </QueryProvider>
+          </StripeConfigProvider>
         </ThemeProvider>
       </body>
     </html>

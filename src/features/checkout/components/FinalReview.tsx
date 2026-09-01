@@ -1,7 +1,6 @@
 "use client"
 
 import { Elements } from "@stripe/react-stripe-js"
-import { loadStripe } from "@stripe/stripe-js"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import FinalReviewAddressCards from "@/features/checkout/components/FinalReviewAddressCards"
 import FinalReviewAutoOrderSummary from "@/features/checkout/components/FinalReviewAutoOrderSummary"
@@ -12,10 +11,8 @@ import FinalReviewReadyNotice from "@/features/checkout/components/FinalReviewRe
 import FinalReviewUnavailable from "@/features/checkout/components/FinalReviewUnavailable"
 import { useCheckoutAutoOrder } from "@/features/checkout/hooks/useCheckoutAutoOrder"
 import { useFinalReview } from "@/features/checkout/hooks/useFinalReview"
+import { useStripePromise } from "@/hooks/useStripePromise"
 import { useCheckoutStore } from "@/stores/checkoutStore"
-
-const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ""
-const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null
 
 function FinalReviewContent() {
   const { shippingAddress, previousStep, excludedFromOrder } = useCheckoutStore()
@@ -54,6 +51,8 @@ function FinalReviewContent() {
 }
 
 export default function FinalReview() {
+  const stripePromise = useStripePromise()
+
   if (!stripePromise) {
     return <FinalReviewUnavailable />
   }

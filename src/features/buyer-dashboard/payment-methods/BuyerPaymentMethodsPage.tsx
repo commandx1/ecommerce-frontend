@@ -1,7 +1,6 @@
 "use client"
 
 import { CardNumberElement, Elements, useElements, useStripe } from "@stripe/react-stripe-js"
-import { loadStripe } from "@stripe/stripe-js"
 import { CheckCircle2, CreditCard, Loader2, Plus, Repeat } from "lucide-react"
 import Link from "next/link"
 import { useTheme } from "next-themes"
@@ -14,13 +13,11 @@ import Modal from "@/components/ui/Modal"
 import { showToast } from "@/components/ui/Toast"
 import { paymentMethodsAPI } from "@/lib/api/payment-methods"
 import { cn } from "@/lib/utils"
+import { useStripePromise } from "@/hooks/useStripePromise"
 import AddCardModal from "./components/AddCardModal"
 import FormField from "./components/FormField"
 import PaymentMethodCard from "./components/PaymentMethodCard"
 import type { SavedPaymentMethod } from "./paymentMethodsData"
-
-const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? ""
-const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null
 
 // ── Modal state types ────────────────────────────────────────────────────────
 
@@ -510,6 +507,8 @@ function PaymentMethodsContent() {
 // ── Outer wrapper — provides Stripe context ───────────────────────────────────
 
 export default function BuyerPaymentMethodsPage() {
+  const stripePromise = useStripePromise()
+
   if (!stripePromise) {
     return (
       <div className="rounded-[1.25rem] border border-border-soft bg-surface-elevated p-8 text-center text-sm text-text-secondary shadow-soft">
