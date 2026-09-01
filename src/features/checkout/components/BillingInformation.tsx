@@ -1,7 +1,6 @@
 "use client"
 
 import { Elements } from "@stripe/react-stripe-js"
-import { loadStripe } from "@stripe/stripe-js"
 import NoticeBanner from "@/components/feedback/NoticeBanner"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import BillingAgreementsSection from "@/features/checkout/components/BillingAgreementsSection"
@@ -10,10 +9,8 @@ import BillingNavigation from "@/features/checkout/components/BillingNavigation"
 import FinalReviewPaymentSection from "@/features/checkout/components/FinalReviewPaymentSection"
 import PaymentMethodSection from "@/features/checkout/components/PaymentMethodSection"
 import { useBillingInformation } from "@/features/checkout/hooks/useBillingInformation"
+import { useStripePromise } from "@/hooks/useStripePromise"
 import { useCheckoutStore } from "@/stores/checkoutStore"
-
-const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ""
-const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null
 
 function BillingInformationContent() {
   const { paymentMethod, termsAgreed, updatePaymentMethod, setTermsAgreed, previousStep } = useCheckoutStore()
@@ -76,6 +73,8 @@ function BillingInformationContent() {
 }
 
 export default function BillingInformation() {
+  const stripePromise = useStripePromise()
+
   if (!stripePromise) {
     return (
       <SurfaceCard variant="editorial" className="mb-8 p-8">
