@@ -347,7 +347,7 @@ function PaymentMethodsContent() {
               digits and expiry.
             </p>
           </div>
-          <Button type="button" onClick={openAddModal} disabled={!stripePromise}>
+          <Button type="button" onClick={openAddModal} disabled={!stripe}>
             <Plus className="h-4 w-4" />
             Add New Card
           </Button>
