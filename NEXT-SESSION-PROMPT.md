@@ -30,16 +30,17 @@ npm run lint && npm run typecheck && npm run test:coverage && npx playwright tes
 
 1. **🚧 B listesi (bitmemiş özellikler, B1-B16)** — sıradaki asıl iş. Çoğu **ürün kararı** bekliyor, tek tek sorulmalı. En büyükleri: **B12** (buyer dashboard'ın tamamı sabit JSON — ölçüldü: 13 bileşenin 12'si sıfır interaktivite, backend'de karşılık YOK, `OrderDashboardController`'ın 6 ucu da `/vendor/...`), **B13** (vendor analytics — ama 6 bileşeni GERÇEK API kullanıyor, yalnız 3'ü mock: `CustomerAnalyticsChart`, `MarketingPerformance`, `VendorNotifications`; bunlara backend'de uç var mı ölç), **B15** (vendor müşteriler, 430 satır mock), **B16** (vendor fatura ekranı hiç yok), **B7** (alıcı faturaları mock).
 2. **Mutation testing'i genişlet** — `stryker.ui.config.json` kuruldu ve 6 dosyayı kapsıyor. Kalan kritik UI için aynı yöntem: önce koş, hayatta kalanı OKU, sonra test yaz (bkz. not #30 — eşdeğer mutant tuzağı).
-3. **KAPANDI, yeniden tarama YOK:** 🛡️ dayanıklılık turu (F96-F110 — checkout, alıcı siparişler+auto-orders, ödeme/fatura, vendor'ın kalan sayfaları, ürün detay, üç kabuk) · ♿ a11y A1-A7 (F88-F95, `a11y-smoke.spec.ts` gerçek kapı, 22/22) · üç eksen borcu · contract denetimi (A+B+C, 30 dosya).
+3. **⚠️ Teammate commit'i sonrası ilk iş dört kapı** — 1 Eyl'de giren varyant + Stripe commit'leri kapı koşulmadan girmişti (e2e 5 kırmızı, lint 1 hata; F135/F136). Yeni commit görünce önce `git log --since` ve dört kapı, sonra iş.
+4. **KAPANDI, yeniden tarama YOK:** 🛡️ dayanıklılık turu (F96-F110 — checkout, alıcı siparişler+auto-orders, ödeme/fatura, vendor'ın kalan sayfaları, ürün detay, üç kabuk) · ♿ a11y A1-A7 (F88-F95, `a11y-smoke.spec.ts` gerçek kapı, 22/22) · üç eksen borcu · contract denetimi (A+B+C, 30 dosya).
    **Kabuklar elendi, gerekçeli:** `SuppliersPage`/`HelpCenterPage`/`LegalPage` üçünde de dallanma/transform yok (yalnız alt bileşen sıralıyorlar, onlar zaten testli) — `/shipping-information` ve `promotions` ile aynı gerekçe.
 
-## Durum (28 Ağu 2026 gün sonu — dört kapı yeşil, lead koştu)
+## Durum (3 Eyl 2026 gün sonu — dört kapı yeşil, lead koştu)
 
-`3919 test / 254 dosya / 12 todo` · coverage **`84.35` satır** / `89.02` dal / `84.80` fonksiyon · **ratchet 76/84/80/76** · e2e **`178/178`** (a11y kapısı dahil 26/26, `/products/[id]` de taranıyor) · düzeltmeler `F1-F132`
+`4003 test / 264 dosya / 12 todo` · coverage **`85.12` satır** / `89.15` dal / `85.30` fonksiyon · **ratchet 76/84/80/76** · e2e **`178/178`** (a11y kapısı dahil 26/26, `/products/[id]` de taranıyor) · düzeltmeler `F1-F136`
 
 ⚠️ **Altyapı notu #35-36'yı OKU:** bağımsız review (`/code-review high`) 7 bulgunun 6'sını gerçek çıkardı ve **lead'in kendi "kök neden düzeltmesinin" eksik olduğunu** gösterdi (F127). Ayrıca bir testin yeşil olması bir şey doğruladığı anlamına gelmiyor — geri-alma ölçümü yapılmadan yazılan test, yazılmamış sayılır (F129).
 
-**API kapsamı ölçüldü (F123):** 127 dosya `@/lib/api/*` çağırıyor · 19'u bilinçli kapsam dışı (auth) · kalan 108'in **hepsi** artık test kapsamında. Ölçüm `coverage/lcov.info`'dan **tam yollu** yapılmalı (not #34).
+**API kapsamı ölçüldü (F123, 3 Eyl'de F133 ile yeniden):** 92 dosya `@/lib/api/*`'yi değer olarak import ediyor · auth bilinçli kapsam dışı · **hepsi** test kapsamında. Ölçüm `coverage/lcov.info`'dan **tam yollu** yapılmalı (not #34) ve **lcov'un tarihinden sonra değişen dosyalar ayrıca taranmalı** (not #37 — 3 Eyl'de teammate'in 1 Eyl commit'leri ölçüm dışıydı, e2e'yi kırmıştı).
 
 ⚠️ **Altyapı notu #31:** coverage sayfa seviyesinde yeşil, bileşen seviyesinde SIFIR olabilir — `page.test.tsx`'in mock'ladığı her bileşen ayrı bir boşluktur. Bir alanı "kapsandı" saymadan önce tabloyu **dosya dosya** oku.
 

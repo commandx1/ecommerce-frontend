@@ -116,4 +116,82 @@ describe("useVariantAttributes", () => {
     )
     expect(getRouterMock().push).not.toHaveBeenCalled()
   })
+
+  // C: hostile 200 bodies from /variant-attributes. sortVariantGroups/toVariantChoices
+  // (variantAttributeTransforms.ts) already guard every one of these with Array.isArray checks -
+  // the hook must never throw and must settle on a real status, not hang in "loading".
+  describe("hostile 200 bodies from the attributes fetch", () => {
+    it.each([
+      ["attributes: null", { attributes: null }],
+      ["attributes: {} (not an array)", { attributes: {} }],
+      ["a group whose values is null", { attributes: [{ attribute: "Size", values: null }] }],
+    ])("resolves to status 'empty' without throwing when %s", async (_label, body) => {
+      server.use(http.post("*/backend-api/products/variant-attributes", () => HttpResponse.json(body)))
+
+      const { result } = renderHook(() => useVariantAttributes("p-1"))
+
+      await waitFor(() => expect(result.current.status).toBe("empty"))
+      expect(result.current.groups).toEqual([])
+      expect(mockToastError).not.toHaveBeenCalled()
+    })
+
+    it("keeps only the valid rows (drops value: null and value: 42) and still reaches 'ready'", async () => {
+      server.use(
+        http.post("*/backend-api/products/variant-attributes", () =>
+          HttpResponse.json({
+            attributes: [
+              {
+                attribute: "Size",
+                values: [
+                  { value: null, selected: false, option: true, available: true, name: null },
+                  { value: 42, selected: false, option: true, available: true, name: null },
+                  { value: "Large", selected: false, option: true, available: true, name: null },
+                ],
+              },
+            ],
+          }),
+        ),
+      )
+
+      const { result } = renderHook(() => useVariantAttributes("p-1"))
+
+      await waitFor(() => expect(result.current.status).toBe("ready"))
+      expect(result.current.groups).toEqual([
+        { attribute: "Size", choices: [expect.objectContaining({ value: "Large" })] },
+      ])
+    })
+  })
+
+  // C: hostile 200 bodies from /variant-attributes/match. The hook reads `result.product.id`
+  // (useVariantAttributes.ts) - neither shape below has a usable `product.id`, so that read
+  // throws a TypeError; it must land in the same catch block as a real backend failure (toast,
+  // pendingValue cleared, no navigation), not escape as an unhandled rejection.
+  describe("hostile 200 bodies from the match request", () => {
+    it.each([
+      ["an empty object", {}],
+      ["product: null", { product: null }],
+    ])(
+      "toasts an error, clears pendingValue, and does not navigate when the match response is %s",
+      async (_label, body) => {
+        server.use(
+          http.post("*/backend-api/products/variant-attributes", () => HttpResponse.json({ attributes: [] })),
+          http.post("*/backend-api/products/variant-attributes/match", () => HttpResponse.json(body)),
+        )
+
+        const { result } = renderHook(() => useVariantAttributes("p-1"))
+        await waitFor(() => expect(result.current.status).toBe("empty"))
+
+        await act(async () => {
+          await result.current.select({ attribute: "Color", value: "Translucent" })
+        })
+
+        expect(mockToastError).toHaveBeenCalledTimes(1)
+        expect(mockToastError.mock.calls[0]?.[0]).toBe("Couldn't switch variant")
+        // The user must never see the engine's own wording ("Cannot read properties of ...").
+        expect(mockToastError.mock.calls[0]?.[1]).toBe("Please try again.")
+        expect(result.current.pendingValue).toBeNull()
+        expect(getRouterMock().push).not.toHaveBeenCalled()
+      },
+    )
+  })
 })

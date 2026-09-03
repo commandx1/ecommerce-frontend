@@ -11,9 +11,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Modal from "@/components/ui/Modal"
 import { showToast } from "@/components/ui/Toast"
+import { useStripePromise } from "@/hooks/useStripePromise"
 import { paymentMethodsAPI } from "@/lib/api/payment-methods"
 import { cn } from "@/lib/utils"
-import { useStripePromise } from "@/hooks/useStripePromise"
 import AddCardModal from "./components/AddCardModal"
 import FormField from "./components/FormField"
 import PaymentMethodCard from "./components/PaymentMethodCard"
@@ -347,7 +347,7 @@ function PaymentMethodsContent() {
               digits and expiry.
             </p>
           </div>
-          <Button type="button" onClick={openAddModal} disabled={!stripe}>
+          <Button type="button" onClick={openAddModal}>
             <Plus className="h-4 w-4" />
             Add New Card
           </Button>

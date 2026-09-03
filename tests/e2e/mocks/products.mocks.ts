@@ -86,6 +86,19 @@ export function registerProductsMocks(apiMock: ApiMock) {
     }
   })
 
+  // Variant picker on the product-detail hero (VariantAttributeSelector, 1 Sep 2026). Unlike the
+  // rest of this domain it goes straight to the backend (`client: "backend"` → `/backend-api/...`),
+  // not through a Next.js `/api` route. Mirrors src/mocks/handlers/products.handlers.ts: the real
+  // backend answers 400 for a product without a variant group and the hook then hides the block,
+  // so every product-detail spec keeps a chip-free hero unless it registers its own route first.
+  apiMock.on("POST", "/backend-api/products/variant-attributes", () => ({
+    status: 400,
+    body: { message: "No variant of this product is currently available for sale." },
+  }))
+  apiMock.on("POST", "/backend-api/products/variant-attributes/match", () => ({
+    body: { product: { id: "matched-product" }, userProducts: [] },
+  }))
+
   apiMock.on("POST", "/api/products/review", () => ({ body: makeProduct() }))
   apiMock.on("PUT", "/api/products/review/:id", ({ params }) => ({ body: makeProduct({ id: params.id }) }))
 

@@ -68,7 +68,13 @@ export function useVariantAttributes(productId: string) {
           chosenAttributeValue: value,
           productName,
         })
-        router.push(`/products/${result.product.id}`)
+        // A 200 with a body that is not ProductWithUserProductsDto would otherwise surface a raw
+        // TypeError ("Cannot read properties of undefined") in the toast - give the user a real message.
+        const nextProductId = result?.product?.id
+        if (typeof nextProductId !== "string" || nextProductId.length === 0) {
+          throw new Error("Please try again.")
+        }
+        router.push(`/products/${nextProductId}`)
       } catch (error) {
         // Unlike the initial fetch, this failure follows a deliberate click - the user needs to
         // know it didn't work, so (unlike fetchVariantAttributes above) this one does toast.
