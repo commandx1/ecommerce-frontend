@@ -1,5 +1,5 @@
 import type { APIProduct } from "@/features/products/listing/components/ProductListingClient"
-import type { AttributeGroup, FilterOption, PublicProductsResponse, VendorOption } from "@/lib/api/public-products"
+import type { AttributeGroup, FilterOption, VendorOption } from "@/lib/api/public-products"
 import {
   getProductAttributeOptions,
   getProductBrandOptions,
@@ -21,6 +21,17 @@ export interface ListingPageData {
   attributeGroups: AttributeGroup[]
 }
 
+/**
+ * Fans out six server-side fetches in a single `Promise.all`. The product-list call
+ * (`getPublicProducts`) is NOT caught here: if it rejects, the rejection propagates out of this
+ * function and up to `src/app/products/page.tsx`, whose `try/catch` renders
+ * `<ProductListingErrorState />` — a failed product list must be shown to the user, not hidden
+ * behind an empty grid (product decision, 3 Sep 2026).
+ *
+ * The five filter-facet fetchers (brands, manufacturers, categories, vendors, attributes) keep
+ * their existing graceful degradation — each already catches internally and resolves to `[]` on
+ * failure, so a facet outage never takes down the whole page.
+ */
 export async function getListingPageData({
   apiPage,
   pageSize,
@@ -49,7 +60,7 @@ export async function getListingPageData({
       inStock,
       sort,
       attributes,
-    }).catch((): PublicProductsResponse<APIProduct> => ({ content: [], totalElements: 0, totalPages: 1 })),
+    }),
     getProductBrandOptions(),
     getProductManufacturerOptions(),
     getProductCategoryOptions(),

@@ -1,29 +1,22 @@
 import { HttpResponse, http } from "msw"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
+import type { ListingSearchParams } from "@/features/products/listing/server/parse-listing-search-params"
 import { server } from "@/mocks/server"
 import { render, screen } from "@/test/render"
 import { BACKEND, createCapture, record } from "@/test/route-harness"
 
 /**
- * `getListingPageData` fans out six backend calls and every one of them already degrades to an
- * empty/fallback value on failure (see `get-listing-page-data.ts` and its own test file) — a
- * 500 or a network error on `/api/products/public` therefore never reaches this page's `catch`,
- * it just renders an empty grid. The page's `try/catch` is still a real backstop for whatever
- * *does* throw (a genuinely unexpected error), so it's exercised here the same way the sibling
- * `products/[id]/page.test.tsx` exercises its own page-level catch: by making the fetch reject.
+ * `getListingPageData` no longer swallows a failure of the product-list call — a 500 or network
+ * error on `/api/products/public` rejects `getListingPageData`, and the page's `try/catch` renders
+ * `<ProductListingErrorState />` instead of a silently empty grid (product decision, 3 Sep 2026).
+ * The five filter-facet fetchers still degrade gracefully, so a facet outage alone must not
+ * trigger the error screen — that boundary is exercised below too.
  */
-vi.mock("@/features/products/listing/server/get-listing-page-data", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/features/products/listing/server/get-listing-page-data")>()
-  return { ...actual, getListingPageData: vi.fn(actual.getListingPageData) }
-})
 
-import { getListingPageData } from "@/features/products/listing/server/get-listing-page-data"
-import type { ListingSearchParams } from "@/features/products/listing/server/parse-listing-search-params"
-
-// Imported after the mock above so it picks up the mocked module.
 const { default: ProductListingPage } = await import("./page")
 
 const PRODUCTS = `${BACKEND}/api/products/public`
+const BRANDS = `${BACKEND}/api/products/brands`
 
 const makeProps = (searchParams: ListingSearchParams = {}) => ({
   searchParams: Promise.resolve(searchParams),
@@ -53,10 +46,6 @@ const listingProduct = {
 }
 
 describe("ProductListingPage", () => {
-  beforeEach(() => {
-    vi.mocked(getListingPageData).mockClear()
-  })
-
   it("renders the listing view with the backend's products and filter facets", async () => {
     server.use(
       http.get(PRODUCTS, () => HttpResponse.json({ content: [listingProduct], totalElements: 1, totalPages: 1 })),
@@ -73,16 +62,39 @@ describe("ProductListingPage", () => {
     expect(screen.getAllByText("Consumables").length).toBeGreaterThan(0) // categories
   })
 
-  it("shows a friendly error screen, not a crash, when the page's data fetch throws", async () => {
-    vi.mocked(getListingPageData).mockRejectedValueOnce(new Error("Something exploded upstream"))
+  it("shows a friendly error screen, not a crash, when the product list fails to load", async () => {
+    server.use(http.get(PRODUCTS, () => new HttpResponse(null, { status: 500 })))
 
     const element = await ProductListingPage(makeProps())
     render(element, { route: "/products" })
 
-    expect(screen.getByRole("heading", { name: "Something went wrong" })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: "Something went wrong" })).toBeInTheDocument()
     expect(screen.getByText("We couldn't load the products. Please try again later.")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Retry" })).toHaveAttribute("href", "/products")
     expect(screen.queryByText("Intra Oral Mixing Tips")).not.toBeInTheDocument()
+  })
+
+  it("shows the error screen when the backend is unreachable for the product list", async () => {
+    server.use(http.get(PRODUCTS, () => HttpResponse.error()))
+
+    const element = await ProductListingPage(makeProps())
+    render(element, { route: "/products" })
+
+    expect(await screen.findByRole("heading", { name: "Something went wrong" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Retry" })).toHaveAttribute("href", "/products")
+  })
+
+  it("renders the listing, not the error screen, when only a filter facet fails", async () => {
+    server.use(
+      http.get(PRODUCTS, () => HttpResponse.json({ content: [listingProduct], totalElements: 1, totalPages: 1 })),
+      http.get(BRANDS, () => new HttpResponse(null, { status: 500 })),
+    )
+
+    const element = await ProductListingPage(makeProps())
+    render(element, { route: "/products" })
+
+    expect(await screen.findByText("Intra Oral Mixing Tips")).toBeInTheDocument()
+    expect(screen.queryByText("Something went wrong")).not.toBeInTheDocument()
   })
 
   it("forwards the page and sort search params to the backend request", async () => {

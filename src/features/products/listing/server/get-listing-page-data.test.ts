@@ -6,12 +6,12 @@ import { getListingPageData } from "./get-listing-page-data"
 import type { ParsedListingSearchParams } from "./parse-listing-search-params"
 
 /**
- * The listing page fans out six server-side fetches in a single `Promise.all`. All six now
- * degrade the same way: `getPublicProducts` catches internally (mirroring the five filter-option
- * fetchers) and resolves to an empty page (`content: [], totalElements: 0, totalPages: 1`) instead
- * of letting its error escape and rejecting the whole `Promise.all`. That keeps a backend hiccup on
- * `/api/products/public` from taking the listing page down to an error boundary — it renders the
- * page's existing empty state instead.
+ * The listing page fans out six server-side fetches in a single `Promise.all`. The five filter
+ * facets (brands, manufacturers, categories, vendors, attributes) degrade gracefully — each
+ * fetcher catches internally and resolves to `[]` on failure, so a facet outage never takes down
+ * the whole page. The product-list call (`getPublicProducts`) is different: it is NOT caught here,
+ * so a failure rejects the whole `Promise.all` and propagates up to the page, which shows the
+ * user an error screen instead of a silently empty grid (product decision, 3 Sep 2026).
  */
 
 const PRODUCTS = `${BACKEND}/api/products/public`
@@ -241,30 +241,17 @@ describe("getListingPageData — partial failure", () => {
     ])
   })
 
-  it.each([500, 404, 401])(
-    "degrades to an empty product page — instead of rejecting — when the product query fails with %i",
-    async (status) => {
-      stubAll()
-      server.use(http.get(PRODUCTS, () => HttpResponse.json({ message: "boom" }, { status })))
+  it.each([500, 404, 401])("rejects when the product query fails with %i", async (status) => {
+    stubAll()
+    server.use(http.get(PRODUCTS, () => HttpResponse.json({ message: "boom" }, { status })))
 
-      const data = await getListingPageData(params())
+    await expect(getListingPageData(params())).rejects.toThrow()
+  })
 
-      expect(data.products).toEqual([])
-      expect(data.totalElements).toBe(0)
-      expect(data.totalPages).toBe(1)
-      // The facets are unaffected — this is the "partial render" half of the contract.
-      expect(data.brands).toEqual([{ name: "MARK3", count: 2 }])
-    },
-  )
-
-  it("degrades to an empty product page when the backend is unreachable", async () => {
+  it("rejects when the backend is unreachable for the product query", async () => {
     stubAll()
     server.use(http.get(PRODUCTS, () => HttpResponse.error()))
 
-    const data = await getListingPageData(params())
-
-    expect(data.products).toEqual([])
-    expect(data.totalElements).toBe(0)
-    expect(data.totalPages).toBe(1)
+    await expect(getListingPageData(params())).rejects.toThrow()
   })
 })
