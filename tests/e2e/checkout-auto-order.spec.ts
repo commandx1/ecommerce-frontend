@@ -170,7 +170,7 @@ test.describe("checkout auto-order consent and registration", () => {
     await checkout.continueToReviewButton.click()
 
     await expect(checkout.finalReviewHeading).toBeVisible()
-    await expect(buyerPage.getByText(/repeat item|auto.?order/i).first()).toBeVisible()
+    await expect(buyerPage.getByText(/auto.?order/i).first()).toBeVisible()
 
     const placeOrderRequest = buyerPage.waitForRequest(
       (request) => request.method() === "POST" && request.url().endsWith("/backend-api/orders"),

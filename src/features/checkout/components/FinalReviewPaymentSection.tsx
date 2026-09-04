@@ -131,7 +131,7 @@ export default function FinalReviewPaymentSection({
             <div className="flex items-start gap-2 rounded-lg border border-brand/25 bg-brand/5 px-3 py-2">
               <Repeat className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
               <p className="text-xs text-text-secondary">
-                <span className="font-semibold text-text-primary">This order includes repeat items.</span> The card you
+                <span className="font-semibold text-text-primary">This order includes auto order items.</span> The card you
                 use here becomes your auto order card and will be charged automatically for future deliveries.
               </p>
             </div>
@@ -248,7 +248,7 @@ export default function FinalReviewPaymentSection({
                       className="mt-0.5 h-4 w-4 rounded border-border-strong text-brand focus:ring-brand"
                     />
                     <span>
-                      Allow this card to be charged automatically for my repeat orders, even when I'm not on the site.
+                      Allow this card to be charged automatically for my auto orders, even when I'm not on the site.
                       <span className="mt-1 block text-xs text-text-secondary">
                         Required to place this order. You can withdraw it anytime from Payment Methods.
                       </span>
@@ -271,7 +271,7 @@ export default function FinalReviewPaymentSection({
                       Save this card for future purchases.
                       {hasAutoOrderItems ? (
                         <span className="mt-1 block text-xs text-text-secondary">
-                          Required for repeat items — we need a saved card to charge for future deliveries.
+                          Required for auto order items — we need a saved card to charge for future deliveries.
                         </span>
                       ) : null}
                     </span>
@@ -295,7 +295,7 @@ export default function FinalReviewPaymentSection({
 
                   {hasAutoOrderItems ? (
                     <p className="rounded-lg border border-border-soft bg-surface-elevated px-3 py-2 text-xs text-text-secondary">
-                      By placing this order you allow us to charge this card automatically for your repeat items. It
+                      By placing this order you allow us to charge this card automatically for your auto order items. It
                       becomes your auto order card and replaces any card you had chosen before.
                     </p>
                   ) : saveCard ? (
@@ -309,7 +309,7 @@ export default function FinalReviewPaymentSection({
                       <span>
                         Also allow this card for automatic orders.
                         <span className="mt-1 block text-xs text-text-secondary">
-                          Makes it your auto order card, so future repeat items can be charged without you being here.
+                          Makes it your auto order card, so future auto order items can be charged without you being here.
                         </span>
                       </span>
                     </label>

@@ -35,7 +35,7 @@ export default function ShippingDetails() {
       {showAutoOrderAddressNotice ? (
         <NoticeBanner
           tone="warning"
-          title="Repeat deliveries use your primary address"
+          title="Auto order deliveries use your primary address"
           description="This order ships where you chose above, but future automatic re-orders always go to your primary address. Set this one as primary if that's where you want them."
         />
       ) : null}

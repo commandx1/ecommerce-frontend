@@ -133,7 +133,7 @@ describe("FinalReviewPaymentSection", () => {
     it("shows the repeat-items notice when the cart has auto order items", () => {
       renderSection({ hasAutoOrderItems: true })
 
-      expect(screen.getByText(/This order includes repeat items/)).toBeInTheDocument()
+      expect(screen.getByText(/This order includes auto order items/)).toBeInTheDocument()
     })
 
     it("asks for auto-order consent on a saved card that is not already open to auto payment", () => {

@@ -118,7 +118,7 @@ export default function AddCardModal({
               disabled={isSaving}
             />
             <span>
-              Allow automatic payments for repeat orders
+              Allow automatic payments for auto orders
               <span className="mt-1 block text-xs text-text-secondary">
                 Authorises your bank to let us charge this card while you're away. Required for auto orders — you can
                 withdraw it anytime by removing the card.
@@ -145,7 +145,7 @@ export default function AddCardModal({
               <span className="mt-1 block text-xs text-text-secondary">
                 {hasExistingAutoOrderCard
                   ? "You can only have one auto order card — this replaces the one you use today."
-                  : "Future repeat orders will be charged to this card."}
+                  : "Future auto orders will be charged to this card."}
               </span>
             </span>
           </label>

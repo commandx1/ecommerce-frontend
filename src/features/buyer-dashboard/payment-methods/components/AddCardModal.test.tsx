@@ -65,7 +65,7 @@ describe("AddCardModal", () => {
     const user = userEvent.setup()
     const handlers = renderModal({ allowAutoPayments: true, useForAutoOrders: true })
 
-    await user.click(screen.getByLabelText(/Allow automatic payments for repeat orders/))
+    await user.click(screen.getByLabelText(/Allow automatic payments for auto orders/))
 
     expect(handlers.onAllowAutoPaymentsChange).toHaveBeenCalledWith(false)
     expect(handlers.onUseForAutoOrdersChange).toHaveBeenCalledWith(false)
@@ -75,7 +75,7 @@ describe("AddCardModal", () => {
     const user = userEvent.setup()
     const handlers = renderModal({ allowAutoPayments: false, useForAutoOrders: false })
 
-    await user.click(screen.getByLabelText(/Allow automatic payments for repeat orders/))
+    await user.click(screen.getByLabelText(/Allow automatic payments for auto orders/))
 
     expect(handlers.onAllowAutoPaymentsChange).toHaveBeenCalledWith(true)
     expect(handlers.onUseForAutoOrdersChange).not.toHaveBeenCalled()
@@ -96,7 +96,7 @@ describe("AddCardModal", () => {
   it("promises future repeats on this card when there is no auto order card yet", () => {
     renderModal({ hasExistingAutoOrderCard: false })
 
-    expect(screen.getByText("Future repeat orders will be charged to this card.")).toBeInTheDocument()
+    expect(screen.getByText("Future auto orders will be charged to this card.")).toBeInTheDocument()
   })
 
   it("disables every control while the card is being saved", () => {

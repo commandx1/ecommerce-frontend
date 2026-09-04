@@ -15,7 +15,7 @@ export default function FinalReviewAutoOrderSummary({ autoOrderLines }: FinalRev
     <div className="rounded-xl border border-brand/25 bg-brand/5 p-6">
       <div className="mb-3 flex items-center gap-2">
         <Repeat className="h-5 w-5 text-brand" />
-        <h3 className="text-lg font-semibold text-text-primary">Repeat orders</h3>
+        <h3 className="text-lg font-semibold text-text-primary">Auto orders</h3>
       </div>
 
       <ul className="space-y-2">
@@ -31,7 +31,7 @@ export default function FinalReviewAutoOrderSummary({ autoOrderLines }: FinalRev
       </ul>
 
       <p className="mt-3 text-xs text-text-secondary">
-        The first delivery is this order. Repeats start counting from the day this payment goes through, and you can
+        The first delivery is this order. Auto orders start counting from the day this payment goes through, and you can
         change or cancel them anytime in{" "}
         <Link
           href="/buyer-dashboard/auto-orders"

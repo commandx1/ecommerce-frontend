@@ -16,7 +16,7 @@ describe("FinalReviewAutoOrderSummary", () => {
   it("renders nothing when the order has no recurring lines", () => {
     render(<FinalReviewAutoOrderSummary autoOrderLines={[]} />)
 
-    expect(screen.queryByRole("heading", { name: "Repeat orders" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "Auto orders" })).not.toBeInTheDocument()
   })
 
   it("lists each recurring line with its quantity and cadence", () => {
@@ -29,7 +29,7 @@ describe("FinalReviewAutoOrderSummary", () => {
       />,
     )
 
-    expect(screen.getByRole("heading", { name: "Repeat orders" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Auto orders" })).toBeInTheDocument()
     expect(screen.getByText("Mixing Tips").textContent).toContain("× 2")
     expect(screen.getByText("Gloves").textContent).toContain("× 5")
     expect(screen.getByText("Every 30 days")).toBeInTheDocument()
@@ -39,7 +39,7 @@ describe("FinalReviewAutoOrderSummary", () => {
   it("tells the buyer the countdown starts at payment and where to manage it", () => {
     render(<FinalReviewAutoOrderSummary autoOrderLines={[line()]} />)
 
-    expect(screen.getByText(/Repeats start counting from the day this payment goes through/)).toBeInTheDocument()
+    expect(screen.getByText(/Auto orders start counting from the day this payment goes through/)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Auto Orders" })).toHaveAttribute("href", "/buyer-dashboard/auto-orders")
   })
 })

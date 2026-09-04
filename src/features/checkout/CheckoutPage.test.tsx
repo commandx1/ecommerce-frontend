@@ -152,10 +152,10 @@ describe("CheckoutPage", () => {
     render(<CheckoutPage />)
 
     await screen.findAllByRole("heading", { name: "Clinic" })
-    expect(screen.queryByText("Repeat deliveries use your primary address")).not.toBeInTheDocument()
+    expect(screen.queryByText("Auto order deliveries use your primary address")).not.toBeInTheDocument()
 
     await user.click(screen.getAllByRole("radio")[0] as HTMLElement)
 
-    expect(await screen.findByText("Repeat deliveries use your primary address")).toBeInTheDocument()
+    expect(await screen.findByText("Auto order deliveries use your primary address")).toBeInTheDocument()
   })
 })

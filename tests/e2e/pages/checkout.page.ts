@@ -36,7 +36,7 @@ export class CheckoutPage extends BasePage {
   }
 
   get autoOrderAddressNotice(): Locator {
-    return this.page.getByText("Repeat deliveries use your primary address")
+    return this.page.getByText("Auto order deliveries use your primary address")
   }
 
   /** A shipping rate radio for a given seller's section - scoped by the rate/service label text. */
@@ -64,7 +64,7 @@ export class CheckoutPage extends BasePage {
   }
 
   get autoOrderCardConsentCheckbox(): Locator {
-    return this.page.getByLabel(/Allow this card to be charged automatically for my repeat orders/)
+    return this.page.getByLabel(/Allow this card to be charged automatically for my auto orders/)
   }
 
   get saveNewCardCheckbox(): Locator {

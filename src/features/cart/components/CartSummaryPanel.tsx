@@ -84,7 +84,7 @@ export default function CartSummaryPanel({
           <Repeat className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
           <p className="text-xs text-text-secondary">
             <span className="font-semibold text-text-primary">
-              {autoOrderItemsCount} item{autoOrderItemsCount > 1 ? "s" : ""} set to repeat.
+              {autoOrderItemsCount} item{autoOrderItemsCount > 1 ? "s" : ""} set to auto order.
             </span>{" "}
             You'll confirm automatic payments at checkout, and you can pause or cancel anytime.
           </p>

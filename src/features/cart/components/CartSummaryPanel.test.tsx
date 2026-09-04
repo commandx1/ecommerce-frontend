@@ -141,19 +141,19 @@ describe("CartSummaryPanel", () => {
   it("announces how many lines are set to repeat", () => {
     renderPanel({ autoOrderItemsCount: 3 })
 
-    expect(screen.getByText("3 items set to repeat.")).toBeInTheDocument()
+    expect(screen.getByText("3 items set to auto order.")).toBeInTheDocument()
   })
 
   it("singularises the repeating-items note", () => {
     renderPanel({ autoOrderItemsCount: 1 })
 
-    expect(screen.getByText("1 item set to repeat.")).toBeInTheDocument()
+    expect(screen.getByText("1 item set to auto order.")).toBeInTheDocument()
   })
 
   it("says nothing about repeats when no line has a schedule", () => {
     renderPanel({ autoOrderItemsCount: 0 })
 
-    expect(screen.queryByText(/set to repeat/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/set to auto order/i)).not.toBeInTheDocument()
   })
 
   it("does not fire checkout while the button is disabled", async () => {

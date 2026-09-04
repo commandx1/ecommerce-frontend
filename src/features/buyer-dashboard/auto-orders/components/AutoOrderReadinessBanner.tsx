@@ -37,7 +37,7 @@ export default function AutoOrderReadinessBanner({ readiness }: AutoOrderReadine
             >
               Set a primary address
             </Link>{" "}
-            — repeat deliveries always ship there.
+            — auto order deliveries always ship there.
           </li>
         ) : null}
       </ul>

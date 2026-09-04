@@ -109,7 +109,7 @@ export function useBillingInformation(): UseBillingInformationResult {
           if (hasAutoOrderItems && !selectedCard?.openToAutoPayment && !autoOrderConsent) {
             showToast.error(
               "Automatic payments not allowed yet",
-              "Allow this card to be charged automatically, or remove the repeat items from your cart.",
+              "Allow this card to be charged automatically, or remove the auto order items from your cart.",
             )
             return
           }

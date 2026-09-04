@@ -209,7 +209,7 @@ function PaymentMethodsContent() {
       try {
         await paymentMethodsAPI.setAutoOrderCard(method.id, true)
         await refreshMethods()
-        showToast.success("Auto order card updated", `${method.brandLabel} •••• ${method.last4} will pay for repeats.`)
+        showToast.success("Auto order card updated", `${method.brandLabel} •••• ${method.last4} will pay for auto orders.`)
       } catch (err: unknown) {
         const status = (err as { response?: { status?: number } })?.response?.status
         if (status === 409) {
@@ -379,7 +379,7 @@ function PaymentMethodsContent() {
                   Manage auto orders
                 </Link>
               ) : (
-                "Pick a card to run repeat orders"
+                "Pick a card to run auto orders"
               )
             }
           />

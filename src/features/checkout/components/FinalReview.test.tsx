@@ -241,7 +241,7 @@ describe("FinalReview", () => {
 
     render(<FinalReview />)
 
-    expect(screen.getByRole("heading", { name: "Repeat orders" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Auto orders" })).toBeInTheDocument()
     expect(screen.getByText("Every 30 days")).toBeInTheDocument()
   })
 

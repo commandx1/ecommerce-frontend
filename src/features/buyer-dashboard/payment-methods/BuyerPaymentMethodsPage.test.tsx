@@ -94,7 +94,7 @@ describe("BuyerPaymentMethodsPage", () => {
 
     const autoOrderTile = (await screen.findByText("Auto Order Card")).closest("article") as HTMLElement
     expect(within(autoOrderTile).getByText("Not set")).toBeInTheDocument()
-    expect(within(autoOrderTile).getByText("Pick a card to run repeat orders")).toBeInTheDocument()
+    expect(within(autoOrderTile).getByText("Pick a card to run auto orders")).toBeInTheDocument()
   })
 
   it("promotes another card to default and demotes the previous one", async () => {
@@ -292,7 +292,7 @@ describe("BuyerPaymentMethodsPage", () => {
 
     await user.click(await screen.findByRole("button", { name: "Add New Card" }))
     await user.type(await screen.findByPlaceholderText("e.g. Main Clinic Card"), "On session")
-    await user.click(screen.getByLabelText(/Allow automatic payments for repeat orders/))
+    await user.click(screen.getByLabelText(/Allow automatic payments for auto orders/))
     await user.click(screen.getByRole("button", { name: "Save Card" }))
 
     await waitFor(() => expect(setupIntentPath).toBe("false"))

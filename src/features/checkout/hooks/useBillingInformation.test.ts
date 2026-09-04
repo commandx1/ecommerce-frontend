@@ -354,7 +354,7 @@ describe("useBillingInformation — saved card", () => {
 
     expect(errorToast).toHaveBeenCalledWith(
       "Automatic payments not allowed yet",
-      "Allow this card to be charged automatically, or remove the repeat items from your cart.",
+      "Allow this card to be charged automatically, or remove the auto order items from your cart.",
     )
     expect(useCheckoutStore.getState().paymentMethodId).toBe("")
     expect(useCheckoutStore.getState().currentStep).toBe(1)
