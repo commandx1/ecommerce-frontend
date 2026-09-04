@@ -17,8 +17,6 @@ const makeSearchProduct = (overrides: Partial<SearchProduct> = {}): SearchProduc
   coverPhotoPath: null,
   secureCode: "SC-1",
   manufacturerCode: "MC-1",
-  reorderId: null,
-  referanceNumber: null,
   userId: "user-1",
   price: 28.35,
   oldPrice: 32.22,

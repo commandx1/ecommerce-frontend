@@ -87,8 +87,6 @@ const fillDetailsTab = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.type(screen.getByLabelText("Manufacturer *"), "MARK3")
   await user.type(screen.getByLabelText("Brand"), "Acme Dental")
   await user.type(screen.getByLabelText("Manufacturer Site Product Page *"), "https://example.com/products/item")
-  await user.type(screen.getByLabelText("Reorder ID *"), "RO-1001")
-  await user.type(screen.getByLabelText("Reference Number *"), "REF-2024-01")
   await user.type(screen.getByLabelText("Weight *"), "1.5")
 }
 
@@ -149,7 +147,7 @@ describe("CreateProductPage — form validation", () => {
     await user.click(tabButton("Media"))
     // Blocked: still on Details, and its error badge now shows.
     expect(screen.getByLabelText("Detailed Description *")).toBeInTheDocument()
-    expect(await screen.findByTitle("8 errors")).toBeInTheDocument()
+    expect(await screen.findByTitle("6 errors")).toBeInTheDocument()
   })
 
   it("allows backward navigation away from Details even while it has errors", async () => {

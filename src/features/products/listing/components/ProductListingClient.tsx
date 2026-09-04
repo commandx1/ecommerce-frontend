@@ -20,8 +20,6 @@ export interface APIProduct {
   barcode: string
   coverPhotoPath: string
   manufacturerCode: string
-  reorderId: string
-  referanceNumber: string
   overallStar: number
   reviewCount: number
   vendorsCount: number

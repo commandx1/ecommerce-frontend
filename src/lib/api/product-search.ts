@@ -7,8 +7,6 @@ export interface SearchProduct {
   coverPhotoPath: string | null
   secureCode: string
   manufacturerCode: string
-  reorderId: string | null
-  referanceNumber: string | null
   userId: string
   price: number
   oldPrice: number

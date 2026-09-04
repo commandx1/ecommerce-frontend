@@ -134,8 +134,6 @@ describe("ProductDetailsModal — rendering specs for each product source", () =
       type: "Kit",
       sds: "SDS-1",
       dentalLicenseRequired: "Yes",
-      reorderId: "RO-1",
-      referanceNumber: "REF-1",
       height: 5,
       length: 10,
       width: 7,

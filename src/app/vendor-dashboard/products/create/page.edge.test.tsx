@@ -90,8 +90,6 @@ const fillDetailsTab = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.type(screen.getByLabelText("Manufacturer *"), "MARK3")
   await user.type(screen.getByLabelText("Brand"), "Acme Dental")
   await user.type(screen.getByLabelText("Manufacturer Site Product Page *"), "https://example.com/products/item")
-  await user.type(screen.getByLabelText("Reorder ID *"), "RO-1001")
-  await user.type(screen.getByLabelText("Reference Number *"), "REF-2024-01")
   await user.type(screen.getByLabelText("Weight *"), "1.5")
 }
 
@@ -597,8 +595,6 @@ describe("CreateProductPage — review-edit mode (loadProductForReviewEdit)", ()
             brand: "MARK3",
             manufacturerSiteProductPage: "https://example.com/p",
             dentalLicenseRequired: "No",
-            reorderId: "RO-1",
-            referanceNumber: "REF-1",
             coverPhotoPath: "/uploads/existing.png",
             weight: 1,
           }),
@@ -653,8 +649,6 @@ describe("CreateProductPage — review-edit mode (loadProductForReviewEdit)", ()
             brand: "MARK3",
             manufacturerSiteProductPage: "https://example.com/p",
             dentalLicenseRequired: "No",
-            reorderId: "RO-1",
-            referanceNumber: "REF-1",
             coverPhotoPath: "/uploads/existing.png",
             weight: 1,
           }),
@@ -697,8 +691,6 @@ describe("CreateProductPage — review-edit mode (loadProductForReviewEdit)", ()
       brand: "MARK3",
       manufacturerSiteProductPage: "https://example.com/p",
       dentalLicenseRequired: "No",
-      reorderId: "RO-1",
-      referanceNumber: "REF-1",
       weight: 1,
       skuCode: "SKU-9",
       price: 10,
@@ -1034,8 +1026,6 @@ describe("CreateProductPage — removing an existing photo in review-edit mode",
             brand: "MARK3",
             manufacturerSiteProductPage: "https://example.com/p",
             dentalLicenseRequired: "No",
-            reorderId: "RO-1",
-            referanceNumber: "REF-1",
             coverPhotoPath: "/uploads/existing-cover.png",
             photoPhats: ["/uploads/existing-1.png", "/uploads/existing-2.png"],
             weight: 1,
@@ -1295,8 +1285,6 @@ describe("CreateProductPage — replacing and removing cover photos", () => {
             brand: "MARK3",
             manufacturerSiteProductPage: "https://example.com/p",
             dentalLicenseRequired: "No",
-            reorderId: "RO-1",
-            referanceNumber: "REF-1",
             coverPhotoPath: "/uploads/existing-cover.png",
             photoPhats: [],
             weight: 1,

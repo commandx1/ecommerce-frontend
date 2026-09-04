@@ -81,8 +81,6 @@ const TAB_FIELDS = {
     "categoryLevel5",
     "manufacturerSiteProductPage",
     "dentalLicenseRequired",
-    "reorderId",
-    "referanceNumber",
     "height",
     "length",
     "width",
@@ -121,8 +119,6 @@ interface FormData {
   categoryLevel5: string
   manufacturerSiteProductPage: string
   dentalLicenseRequired: string
-  reorderId: string
-  referanceNumber: string
   height: string
   length: string
   width: string
@@ -163,8 +159,6 @@ const initialFormData: FormData = {
   categoryLevel5: "",
   manufacturerSiteProductPage: "",
   dentalLicenseRequired: "No",
-  reorderId: "",
-  referanceNumber: "",
   height: "",
   length: "",
   width: "",
@@ -447,8 +441,6 @@ function CreateProductPageContent() {
         categoryLevel5: product.categoryLevel5 || "",
         manufacturerSiteProductPage: product.manufacturerSiteProductPage || "",
         dentalLicenseRequired: product.dentalLicenseRequired || "No",
-        reorderId: product.reorderId || "",
-        referanceNumber: product.referanceNumber || "",
         height: product.height != null ? String(product.height) : "",
         length: product.length != null ? String(product.length) : "",
         width: product.width != null ? String(product.width) : "",
@@ -907,14 +899,6 @@ function CreateProductPageContent() {
       }
     }
 
-    if (has("reorderId") && !formData.reorderId.trim()) {
-      newErrors.reorderId = "Reorder ID is required"
-    }
-
-    if (has("referanceNumber") && !formData.referanceNumber.trim()) {
-      newErrors.referanceNumber = "Reference number is required"
-    }
-
     if (has("weight")) {
       if (!formData.weight.trim()) {
         newErrors.weight = "Weight is required"
@@ -1061,8 +1045,6 @@ function CreateProductPageContent() {
         categoryLevel5: toOptionalString(formData.categoryLevel5),
         manufacturerSiteProductPage: toOptionalString(formData.manufacturerSiteProductPage),
         dentalLicenseRequired: toOptionalString(formData.dentalLicenseRequired),
-        reorderId: toOptionalString(formData.reorderId),
-        referanceNumber: toOptionalString(formData.referanceNumber),
         height: toOptionalNumber(formData.height),
         length: toOptionalNumber(formData.length),
         width: toOptionalNumber(formData.width),
@@ -1896,42 +1878,6 @@ function CreateProductPageContent() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                      <label htmlFor="reorderId" className="block text-sm font-medium text-text-primary mb-2">
-                        Reorder ID *
-                      </label>
-                      <input
-                        id="reorderId"
-                        type="text"
-                        name="reorderId"
-                        value={formData.reorderId}
-                        onChange={handleInputChange}
-                        disabled={isProductSelected}
-                        className={`w-full px-4 py-3 border ${errors.reorderId ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
-                        placeholder="e.g., RO-1001"
-                      />
-                      {errors.reorderId && <p className="text-destructive text-sm mt-1">{errors.reorderId}</p>}
-                    </div>
-
-                    <div>
-                      <label htmlFor="referanceNumber" className="block text-sm font-medium text-text-primary mb-2">
-                        Reference Number *
-                      </label>
-                      <input
-                        id="referanceNumber"
-                        type="text"
-                        name="referanceNumber"
-                        value={formData.referanceNumber}
-                        onChange={handleInputChange}
-                        disabled={isProductSelected}
-                        className={`w-full px-4 py-3 border ${errors.referanceNumber ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
-                        placeholder="e.g., REF-2024-01"
-                      />
-                      {errors.referanceNumber && (
-                        <p className="text-destructive text-sm mt-1">{errors.referanceNumber}</p>
-                      )}
-                    </div>
-
                     <div>
                       <label
                         htmlFor="exampleVariationsProductId"

@@ -115,8 +115,6 @@ const fillDetailsTab = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.type(screen.getByLabelText("Manufacturer *"), "MARK3")
   await user.type(screen.getByLabelText("Brand"), "Acme Dental")
   await user.type(screen.getByLabelText("Manufacturer Site Product Page *"), "https://example.com/products/item")
-  await user.type(screen.getByLabelText("Reorder ID *"), "RO-1001")
-  await user.type(screen.getByLabelText("Reference Number *"), "REF-2024-01")
   await user.type(screen.getByLabelText("Weight *"), "1.5")
 }
 
@@ -332,8 +330,6 @@ describe("CreateProductPage — submitting a new product", () => {
       brand: "Acme Dental",
       manufacturerSiteProductPage: "https://example.com/products/item",
       dentalLicenseRequired: "No",
-      reorderId: "RO-1001",
-      referanceNumber: "REF-2024-01",
       weight: 1.5,
       skuCode: "SKU-1",
       price: 42,

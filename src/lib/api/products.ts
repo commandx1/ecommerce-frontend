@@ -78,8 +78,6 @@ export interface Product {
   categoryLevel5?: string
   manufacturerSiteProductPage?: string
   dentalLicenseRequired?: string
-  reorderId?: string
-  referanceNumber?: string
   height?: number
   length?: number
   width?: number
@@ -116,8 +114,6 @@ export interface ProductVendorRequestData {
   categoryLevel5?: string
   manufacturerSiteProductPage?: string
   dentalLicenseRequired?: string
-  reorderId?: string
-  referanceNumber?: string
   height?: number
   length?: number
   width?: number

@@ -33,8 +33,6 @@ const listingProduct = {
   barcode: "123456789012",
   coverPhotoPath: "/uploads/tips.png",
   manufacturerCode: "M-1",
-  reorderId: "R-1",
-  referanceNumber: "REF-1",
   overallStar: 4.5,
   reviewCount: 12,
   vendorsCount: 3,

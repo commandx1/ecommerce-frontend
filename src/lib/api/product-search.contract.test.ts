@@ -11,8 +11,6 @@ function makeSearchProduct(overrides: Partial<SearchProduct> = {}): SearchProduc
     coverPhotoPath: "/uploads/tips.png",
     secureCode: "SC-1",
     manufacturerCode: "MK-1001",
-    reorderId: null,
-    referanceNumber: null,
     userId: "vendor-1",
     price: 56,
     oldPrice: 70,
