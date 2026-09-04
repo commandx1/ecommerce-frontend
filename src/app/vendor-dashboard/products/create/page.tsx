@@ -206,6 +206,26 @@ const barcodeFormatOptions = [
   { value: "QR_CODE", label: "QR Code" },
 ]
 
+const fulfillmentPolicyDays = [1, 2, 3, 4, 5] as const
+type FulfillmentPolicyDay = (typeof fulfillmentPolicyDays)[number]
+
+/** Reads the day count back out of a policy string; null when it is empty or out of the 1-5 range. */
+function parseFulfillmentPolicyDays(value: string | undefined): FulfillmentPolicyDay | null {
+  const dayMatch = value?.match(/\b([1-5])\b/)
+  return dayMatch ? (Number(dayMatch[1]) as FulfillmentPolicyDay) : null
+}
+
+// "days" is also the unit shown next to the dropdown before anything is picked.
+const getFulfillmentPolicyDayUnit = (days: number | null) => (days === 1 ? "day" : "days")
+
+const getFulfillmentPolicyValue = (days: FulfillmentPolicyDay) =>
+  `Ships within ${days} ${getFulfillmentPolicyDayUnit(days)}`
+
+function normalizeFulfillmentPolicy(value: string | undefined): string {
+  const days = parseFulfillmentPolicyDays(value)
+  return days ? getFulfillmentPolicyValue(days) : ""
+}
+
 function CreateProductPageContent() {
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -451,7 +471,7 @@ function CreateProductPageContent() {
         shipmentFee: userProduct.shipmentFee != null ? String(userProduct.shipmentFee) : "",
         heavyShippingSurcharge:
           userProduct.heavyShippingSurcharge != null ? String(userProduct.heavyShippingSurcharge) : "",
-        fulfillmentPolicy: userProduct.fulfillmentPolicy || "",
+        fulfillmentPolicy: normalizeFulfillmentPolicy(userProduct.fulfillmentPolicy),
       })
 
       const coverPhoto = product.coverPhotoPath ? getFullImageUrl(product.coverPhotoPath) : null
@@ -617,6 +637,19 @@ function CreateProductPageContent() {
 
     // Clear error when user starts typing
     clearError(name)
+  }
+
+  const blockInvalidNumberKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (["e", "E", "+", "-"].includes(e.key)) {
+      e.preventDefault()
+    }
+  }
+
+  const blockInvalidNumberPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pastedText = e.clipboardData.getData("text")
+    if (!/^\d*\.?\d*$/.test(pastedText)) {
+      e.preventDefault()
+    }
   }
 
   // Backend limits (ecommerce-api has NO multipart override, so Spring Boot 3.5.7 defaults apply):
@@ -1599,15 +1632,28 @@ function CreateProductPageContent() {
                           >
                             Fulfillment Policy *
                           </label>
-                          <input
-                            id="fulfillmentPolicy"
-                            type="text"
-                            name="fulfillmentPolicy"
-                            value={formData.fulfillmentPolicy}
-                            onChange={handleInputChange}
-                            className={`w-full px-4 py-3 border ${errors.fulfillmentPolicy ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
-                            placeholder="e.g., Ships within 2 business days"
-                          />
+                          <div
+                            className={`flex min-h-12 items-center gap-3 rounded-lg border px-4 py-3 text-sm ${errors.fulfillmentPolicy ? "border-destructive" : "border-border-soft"} bg-white`}
+                          >
+                            <span className="text-text-primary">Ships within</span>
+                            <select
+                              id="fulfillmentPolicy"
+                              name="fulfillmentPolicy"
+                              value={formData.fulfillmentPolicy}
+                              onChange={handleInputChange}
+                              className="h-8 rounded-md border border-border-soft bg-surface-elevated px-2 text-sm font-medium text-text-primary focus:outline-none focus:ring-2 focus:ring-ring/50"
+                            >
+                              <option value="">Select</option>
+                              {fulfillmentPolicyDays.map((days) => (
+                                <option key={days} value={getFulfillmentPolicyValue(days)}>
+                                  {days}
+                                </option>
+                              ))}
+                            </select>
+                            <span className="text-text-primary">
+                              {getFulfillmentPolicyDayUnit(parseFulfillmentPolicyDays(formData.fulfillmentPolicy))}
+                            </span>
+                          </div>
                           {errors.fulfillmentPolicy && (
                             <p className="text-destructive text-sm mt-1">{errors.fulfillmentPolicy}</p>
                           )}
@@ -1920,8 +1966,11 @@ function CreateProductPageContent() {
                             name={field}
                             value={formData[field]}
                             onChange={handleInputChange}
+                            onKeyDown={blockInvalidNumberKey}
+                            onPaste={blockInvalidNumberPaste}
                             min="0"
                             step="0.01"
+                            inputMode="decimal"
                             disabled={isProductSelected}
                             className={`w-full px-4 py-3 border ${errors[field] ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
                             placeholder="0.00"

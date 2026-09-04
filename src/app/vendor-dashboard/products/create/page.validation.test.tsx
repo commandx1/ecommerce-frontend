@@ -1,3 +1,4 @@
+import { createEvent, fireEvent } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -77,7 +78,7 @@ const fillBasicTab = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.type(screen.getByLabelText("Stock *"), "7")
   await user.type(screen.getByLabelText("Shipment Fee *"), "5")
   await user.type(screen.getByLabelText("Heavy Shipping Fee *"), "3")
-  await user.type(screen.getByLabelText("Fulfillment Policy *"), "Ships within 2 business days")
+  await user.selectOptions(screen.getByRole("combobox", { name: "Fulfillment Policy *" }), "Ships within 2 days")
 }
 
 /** Fills every required Details-tab field; leaves the form on the Details tab. */
@@ -179,7 +180,7 @@ describe("CreateProductPage — form validation", () => {
     await user.type(screen.getByLabelText("Stock *"), "7")
     await user.type(screen.getByLabelText("Shipment Fee *"), "5")
     await user.type(screen.getByLabelText("Heavy Shipping Fee *"), "3")
-    await user.type(screen.getByLabelText("Fulfillment Policy *"), "Ships within 2 business days")
+    await user.selectOptions(screen.getByRole("combobox", { name: "Fulfillment Policy *" }), "Ships within 2 days")
 
     // No appended "N errors" label left on the Basic tab header.
     expect(screen.getByRole("button", { name: "Basic Information" })).toBeInTheDocument()
@@ -195,7 +196,7 @@ describe("CreateProductPage — form validation", () => {
     await user.type(screen.getByLabelText("Stock *"), "5")
     await user.type(screen.getByLabelText("Shipment Fee *"), "5")
     await user.type(screen.getByLabelText("Heavy Shipping Fee *"), "3")
-    await user.type(screen.getByLabelText("Fulfillment Policy *"), "Ships within 2 business days")
+    await user.selectOptions(screen.getByRole("combobox", { name: "Fulfillment Policy *" }), "Ships within 2 days")
     await user.click(nextButton())
 
     // Basic tab passed validation (moved on to Details) — no error for price.
@@ -211,6 +212,50 @@ describe("CreateProductPage — form validation", () => {
     expect(screen.getByLabelText("Price *")).toHaveAttribute("min", "0")
 
     expect(screen.getByLabelText("Stock *")).toHaveAttribute("step", "1")
+  })
+
+  it("uses a day-count dropdown for fulfillment policy", async () => {
+    const user = userEvent.setup()
+    await openBlankForm(user)
+
+    const policy = screen.getByRole("combobox", { name: "Fulfillment Policy *" })
+    expect(policy).toHaveValue("")
+
+    await user.selectOptions(policy, "Ships within 3 days")
+
+    expect(policy).toHaveValue("Ships within 3 days")
+  })
+
+  it("singularizes the day unit once 1 is picked", async () => {
+    const user = userEvent.setup()
+    await openBlankForm(user)
+
+    const policy = screen.getByRole("combobox", { name: "Fulfillment Policy *" })
+    // Nothing picked yet - the row still reads the plural unit.
+    expect(screen.getByText("days")).toBeInTheDocument()
+
+    await user.selectOptions(policy, "Ships within 1 day")
+
+    expect(policy).toHaveValue("Ships within 1 day")
+    expect(screen.getByText("day")).toBeInTheDocument()
+    expect(screen.queryByText("days")).not.toBeInTheDocument()
+  })
+
+  it("blocks exponent, sign, and invalid decimal characters in dimension and weight fields", async () => {
+    const user = userEvent.setup()
+    await openBlankForm(user)
+    await fillBasicTab(user)
+    await user.click(nextButton())
+
+    for (const label of ["Height", "Length", "Width", "Weight *"]) {
+      const input = screen.getByLabelText(label)
+
+      for (const key of ["e", "E", "+", "-"]) {
+        const event = createEvent.keyDown(input, { key })
+        fireEvent(input, event)
+        expect(event.defaultPrevented).toBe(true)
+      }
+    }
   })
 
   it("rejects a non-numeric barcode", async () => {

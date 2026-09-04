@@ -105,7 +105,7 @@ const fillBasicTab = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.type(screen.getByLabelText("Stock *"), "7")
   await user.type(screen.getByLabelText("Shipment Fee *"), "5")
   await user.type(screen.getByLabelText("Heavy Shipping Fee *"), "3")
-  await user.type(screen.getByLabelText("Fulfillment Policy *"), "Ships within 2 business days")
+  await user.selectOptions(screen.getByRole("combobox", { name: "Fulfillment Policy *" }), "Ships within 2 days")
 }
 
 /** Fills every required Details-tab field; leaves the form on the Details tab. */
@@ -338,7 +338,7 @@ describe("CreateProductPage — submitting a new product", () => {
       shipmentFee: 5,
       heavyShippingSurcharge: 3,
       exportPackaging: false,
-      fulfillmentPolicy: "Ships within 2 business days",
+      fulfillmentPolicy: "Ships within 2 days",
     })
     expect(typeof json.price).toBe("number")
     expect(typeof json.stock).toBe("number")

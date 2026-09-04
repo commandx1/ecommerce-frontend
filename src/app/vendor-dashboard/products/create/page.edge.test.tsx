@@ -81,7 +81,7 @@ const fillBasicTab = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.type(screen.getByLabelText("Stock *"), "7")
   await user.type(screen.getByLabelText("Shipment Fee *"), "5")
   await user.type(screen.getByLabelText("Heavy Shipping Fee *"), "3")
-  await user.type(screen.getByLabelText("Fulfillment Policy *"), "Ships within 2 business days")
+  await user.selectOptions(screen.getByRole("combobox", { name: "Fulfillment Policy *" }), "Ships within 2 days")
 }
 
 const fillDetailsTab = async (user: ReturnType<typeof userEvent.setup>) => {
@@ -369,7 +369,7 @@ describe("CreateProductPage — numeric boundaries", () => {
     await user.type(screen.getByLabelText("Stock *"), "7.5")
     await user.type(screen.getByLabelText("Shipment Fee *"), "5")
     await user.type(screen.getByLabelText("Heavy Shipping Fee *"), "3")
-    await user.type(screen.getByLabelText("Fulfillment Policy *"), "Ships within 2 business days")
+    await user.selectOptions(screen.getByRole("combobox", { name: "Fulfillment Policy *" }), "Ships within 2 days")
     await user.click(nextButton())
 
     expect(await screen.findByText("Stock must be a whole number")).toBeInTheDocument()
@@ -419,7 +419,7 @@ describe("CreateProductPage — numeric boundaries", () => {
     await user.type(screen.getByLabelText("Stock *"), "-1")
     await user.type(screen.getByLabelText("Shipment Fee *"), "5")
     await user.type(screen.getByLabelText("Heavy Shipping Fee *"), "3")
-    await user.type(screen.getByLabelText("Fulfillment Policy *"), "Ships within 2 business days")
+    await user.selectOptions(screen.getByRole("combobox", { name: "Fulfillment Policy *" }), "Ships within 2 days")
     await user.click(nextButton())
 
     expect(await screen.findByText("Price must be a non-negative number")).toBeInTheDocument()
@@ -436,7 +436,7 @@ describe("CreateProductPage — numeric boundaries", () => {
     await user.type(screen.getByLabelText("Stock *"), "7")
     await user.type(screen.getByLabelText("Shipment Fee *"), "5")
     await user.type(screen.getByLabelText("Heavy Shipping Fee *"), "3")
-    await user.type(screen.getByLabelText("Fulfillment Policy *"), "Ships within 2 business days")
+    await user.selectOptions(screen.getByRole("combobox", { name: "Fulfillment Policy *" }), "Ships within 2 days")
     await user.click(nextButton())
 
     expect(await screen.findByLabelText("Detailed Description *")).toBeInTheDocument()
@@ -578,7 +578,7 @@ describe("CreateProductPage — review-edit mode (loadProductForReviewEdit)", ()
 
     await screen.findByLabelText(/Product Name/)
     expect(screen.getByLabelText(/Product Name/)).toHaveValue("Rejected Product")
-    expect(screen.getByLabelText("Fulfillment Policy *")).toHaveValue("Ships within 5 business days")
+    expect(screen.getByLabelText("Fulfillment Policy *")).toHaveValue("Ships within 5 days")
   })
 
   it("shows Resubmit for Review on the submit button once the Media tab is reached", async () => {
@@ -697,7 +697,7 @@ describe("CreateProductPage — review-edit mode (loadProductForReviewEdit)", ()
       stock: 5,
       shipmentFee: 1,
       heavyShippingSurcharge: 0,
-      fulfillmentPolicy: "Ships within 2 business days",
+      fulfillmentPolicy: "Ships within 2 days",
     })
     expect(typeof json.active).toBe("boolean")
     expect(typeof json.exportPackaging).toBe("boolean")
