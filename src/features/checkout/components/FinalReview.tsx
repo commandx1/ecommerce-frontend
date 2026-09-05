@@ -17,7 +17,7 @@ import { useCheckoutStore } from "@/stores/checkoutStore"
 function FinalReviewContent() {
   const { shippingAddress, previousStep, excludedFromOrder } = useCheckoutStore()
   const { isPlacingOrder, paymentMethodSummary, submitDisabled, onPlaceOrder } = useFinalReview()
-  const { autoOrderLines } = useCheckoutAutoOrder()
+  const { autoOrderLines, pendingUserProductIds, onPeriodChange, onCancelRecurrence } = useCheckoutAutoOrder()
 
   return (
     <SurfaceCard variant="editorial" className="mb-8 p-8">
@@ -33,7 +33,12 @@ function FinalReviewContent() {
       <div className="space-y-6 mb-8">
         <FinalReviewAddressCards shippingAddress={shippingAddress} />
         <FinalReviewPaymentSummary paymentMethodSummary={paymentMethodSummary} />
-        <FinalReviewAutoOrderSummary autoOrderLines={autoOrderLines} />
+        <FinalReviewAutoOrderSummary
+          autoOrderLines={autoOrderLines}
+          pendingUserProductIds={pendingUserProductIds}
+          onPeriodChange={onPeriodChange}
+          onCancelRecurrence={onCancelRecurrence}
+        />
       </div>
 
       <FinalReviewReadyNotice />

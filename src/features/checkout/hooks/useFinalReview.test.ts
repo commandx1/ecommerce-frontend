@@ -1,6 +1,7 @@
 import { act, renderHook } from "@testing-library/react"
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest"
 import { showToast } from "@/components/ui/Toast"
+import { useCheckoutAutoOrder } from "@/features/checkout/hooks/useCheckoutAutoOrder"
 import type { GetPaymentStatusResponse, PlaceOrderPayload, PlaceOrderResponse } from "@/lib/api/orders"
 import { ordersAPI } from "@/lib/api/orders"
 import { useCartStore } from "@/stores/cartStore"
@@ -878,5 +879,74 @@ describe("useFinalReview — payload", () => {
     // order must still take the success path off its untouched `false` initial value.
     expect(successToast).toHaveBeenCalledWith("Order placed successfully. Order ID: order-1")
     expect(errorToast).not.toHaveBeenCalled()
+  })
+})
+
+describe("useFinalReview — stale payload regression (Final Review schedule edits)", () => {
+  /**
+   * `orderPayload` is a snapshot frozen at the step 2→3 transition (`useShippingDetails`), and
+   * this hook builds the `placeOrder` body by spreading that snapshot — it never re-reads the
+   * cart. `useCheckoutAutoOrder`'s `onPeriodChange`/`onCancelRecurrence` exist specifically to
+   * patch the snapshot (`checkoutStore.setPayloadAutoOrder`) alongside the cart write, so a
+   * schedule change made on Final Review is not silently dropped from the request that actually
+   * creates the order. This proves the wiring end to end at the hook boundary: mutate through
+   * `useCheckoutAutoOrder`, then assert the NEW value is what reaches `ordersAPI.placeOrder`.
+   */
+  it("sends the new period to placeOrder after a Final Review schedule change, not the frozen one", async () => {
+    useCartStore.setState({ items: [autoOrderCartItem()], setItemAutoOrder: vi.fn().mockResolvedValue(undefined) })
+    useCheckoutStore.setState({
+      orderPayload: orderPayload({
+        shippoRateOrders: [
+          {
+            shippoRateId: "rate-1",
+            userId: "seller-1",
+            products: [{ userProductId: "up-auto", quantity: 1, autoOrder: "ONE_MONTH" }],
+          },
+        ],
+      }),
+    })
+
+    const { result } = renderHook(() => ({
+      autoOrder: useCheckoutAutoOrder(),
+      finalReview: useFinalReview(),
+    }))
+
+    await act(async () => {
+      await result.current.autoOrder.onPeriodChange("up-auto", "TWO_MONTHS")
+    })
+
+    await placeAndSettle(result.current.finalReview.onPlaceOrder)
+
+    expect(placeOrder.mock.calls[0][0].shippoRateOrders[0].products[0].autoOrder).toBe("TWO_MONTHS")
+  })
+
+  it("sends autoOrder: null to placeOrder after cancelling the repeat on Final Review", async () => {
+    useCartStore.setState({ items: [autoOrderCartItem()], setItemAutoOrder: vi.fn().mockResolvedValue(undefined) })
+    useCheckoutStore.setState({
+      orderPayload: orderPayload({
+        shippoRateOrders: [
+          {
+            shippoRateId: "rate-1",
+            userId: "seller-1",
+            products: [{ userProductId: "up-auto", quantity: 1, autoOrder: "ONE_MONTH" }],
+          },
+        ],
+      }),
+    })
+
+    const { result } = renderHook(() => ({
+      autoOrder: useCheckoutAutoOrder(),
+      finalReview: useFinalReview(),
+    }))
+
+    await act(async () => {
+      await result.current.autoOrder.onCancelRecurrence("up-auto")
+    })
+
+    await placeAndSettle(result.current.finalReview.onPlaceOrder)
+
+    expect(placeOrder.mock.calls[0][0].shippoRateOrders[0].products[0].autoOrder).toBeNull()
+    // Cancelling a repeat never removes the line or touches its quantity.
+    expect(placeOrder.mock.calls[0][0].shippoRateOrders[0].products[0].quantity).toBe(1)
   })
 })

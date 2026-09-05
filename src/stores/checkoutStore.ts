@@ -1,5 +1,6 @@
 import { create } from "zustand"
-import type { PlaceOrderPayload, PlaceOrderResponse } from "@/lib/api/orders"
+import type { PlaceOrderPayload, PlaceOrderResponse, ShippoRateOrder, UberRateOrder } from "@/lib/api/orders"
+import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
 
 export type CheckoutStep = 1 | 2 | 3 | 4 | 5
 
@@ -101,6 +102,15 @@ interface CheckoutStore {
   ) => void
   setSelectedShippingCost: (cost: number) => void
   setOrderPayload: (payload: PlaceOrderPayload) => void
+  /**
+   * Rewrites `autoOrder` for one product inside the frozen `orderPayload` snapshot. Exists
+   * because the payload is captured once at the step 2→3 transition (`useShippingDetails`) and
+   * `useFinalReview.onPlaceOrder` builds the request body by spreading that snapshot without ever
+   * re-reading the cart — a step-4 schedule change (Final Review's per-line controls) that only
+   * updated the cart store would show as "changed"/"cancelled" on screen while the backend still
+   * received the old schedule and created (or kept) the wrong subscription.
+   */
+  setPayloadAutoOrder: (userProductId: string, autoOrder: AutoOrderPeriod | null) => void
   setExcludedFromOrder: (excluded: ExcludedSellerLines[]) => void
   setOrderResult: (result: PlaceOrderResponse) => void
   reset: () => void
@@ -160,6 +170,27 @@ const initialState = {
   selectedShippingCost: 0,
 }
 
+/**
+ * Shared by `setPayloadAutoOrder` for both `shippoRateOrders` and `uberRateOrders` — same
+ * `products` shape on both. Only builds new object/array references for an order that actually
+ * contains the matching product, so orders untouched by this write keep their identity and don't
+ * cause needless re-renders downstream.
+ */
+function withPatchedAutoOrder<T extends { products: { userProductId: string; autoOrder?: AutoOrderPeriod | null }[] }>(
+  orders: T[],
+  userProductId: string,
+  autoOrder: AutoOrderPeriod | null,
+): T[] {
+  return orders.map((order) => {
+    const matchIndex = order.products.findIndex((product) => product.userProductId === userProductId)
+    if (matchIndex === -1) return order
+
+    const nextProducts = [...order.products]
+    nextProducts[matchIndex] = { ...nextProducts[matchIndex], autoOrder }
+    return { ...order, products: nextProducts }
+  })
+}
+
 const CARD_ONLY_FIELDS = {
   selectedSavedCardId: "",
   paymentMethodId: "",
@@ -204,6 +235,25 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
     })),
   setSelectedShippingCost: (cost) => set({ selectedShippingCost: cost }),
   setOrderPayload: (payload) => set({ orderPayload: payload }),
+  setPayloadAutoOrder: (userProductId, autoOrder) =>
+    set((state) => {
+      if (!state.orderPayload) return {}
+      return {
+        orderPayload: {
+          ...state.orderPayload,
+          shippoRateOrders: withPatchedAutoOrder<ShippoRateOrder>(
+            state.orderPayload.shippoRateOrders,
+            userProductId,
+            autoOrder,
+          ),
+          uberRateOrders: withPatchedAutoOrder<UberRateOrder>(
+            state.orderPayload.uberRateOrders,
+            userProductId,
+            autoOrder,
+          ),
+        },
+      }
+    }),
   setExcludedFromOrder: (excluded) => set({ excludedFromOrder: excluded }),
   setOrderResult: (result) => set({ orderResult: result }),
   reset: () => set({ ...initialState }),

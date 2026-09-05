@@ -249,6 +249,81 @@ describe("checkoutStore auto order consent flags", () => {
   })
 })
 
+describe("checkoutStore.setPayloadAutoOrder", () => {
+  it("no-ops when orderPayload is null", () => {
+    expect(store().orderPayload).toBeNull()
+
+    store().setPayloadAutoOrder("up-1", "ONE_MONTH")
+
+    expect(store().orderPayload).toBeNull()
+  })
+
+  it("rewrites autoOrder for the matching product across both shippoRateOrders and uberRateOrders, leaving others untouched", () => {
+    store().setOrderPayload({
+      addressId: "address-1",
+      shippoRateOrders: [
+        {
+          shippoRateId: "rate-1",
+          products: [
+            { userProductId: "up-1", quantity: 2, autoOrder: "TWO_WEEKS" },
+            { userProductId: "up-2", quantity: 1, autoOrder: null },
+          ],
+        },
+      ],
+      uberRateOrders: [
+        {
+          uberRateId: "uber-1",
+          products: [{ userProductId: "up-1", quantity: 2, autoOrder: "TWO_WEEKS" }],
+        },
+      ],
+    })
+
+    store().setPayloadAutoOrder("up-1", "TWO_MONTHS")
+
+    const { orderPayload } = store()
+    expect(orderPayload?.shippoRateOrders[0].products).toEqual([
+      { userProductId: "up-1", quantity: 2, autoOrder: "TWO_MONTHS" },
+      { userProductId: "up-2", quantity: 1, autoOrder: null },
+    ])
+    expect(orderPayload?.uberRateOrders[0].products).toEqual([
+      { userProductId: "up-1", quantity: 2, autoOrder: "TWO_MONTHS" },
+    ])
+  })
+
+  it("cancels a repeat by writing null, without touching quantity", () => {
+    store().setOrderPayload({
+      addressId: "address-1",
+      shippoRateOrders: [
+        { shippoRateId: "rate-1", products: [{ userProductId: "up-1", quantity: 3, autoOrder: "ONE_MONTH" }] },
+      ],
+      uberRateOrders: [],
+    })
+
+    store().setPayloadAutoOrder("up-1", null)
+
+    expect(store().orderPayload?.shippoRateOrders[0].products[0]).toEqual({
+      userProductId: "up-1",
+      quantity: 3,
+      autoOrder: null,
+    })
+  })
+
+  it("leaves an order with no matching product referentially unchanged", () => {
+    store().setOrderPayload({
+      addressId: "address-1",
+      shippoRateOrders: [
+        { shippoRateId: "rate-untouched", products: [{ userProductId: "up-other", quantity: 1, autoOrder: null }] },
+      ],
+      uberRateOrders: [],
+    })
+    const untouchedOrderBefore = store().orderPayload?.shippoRateOrders[0]
+
+    store().setPayloadAutoOrder("up-1", "ONE_MONTH")
+
+    expect(store().orderPayload?.shippoRateOrders[0]).toBe(untouchedOrderBefore)
+  })
+})
+
 describe("checkoutStore shipping selections", () => {
   it("replaces the whole record when a plain object is passed", () => {
     store().setSelectedVendorShippingMethods({

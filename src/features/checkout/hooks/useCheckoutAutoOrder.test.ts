@@ -1,11 +1,14 @@
-import { act, renderHook } from "@testing-library/react"
-import { beforeEach, describe, expect, it } from "vitest"
+import { act, renderHook, waitFor } from "@testing-library/react"
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import { showToast } from "@/components/ui/Toast"
 import { useCartStore } from "@/stores/cartStore"
+import { useCheckoutStore } from "@/stores/checkoutStore"
 import { makeCartItem, makeCartProductInfo, makeCartUserProduct } from "@/test/factories"
 import { useCheckoutAutoOrder } from "./useCheckoutAutoOrder"
 
 /**
- * The recurring lines are owned by the cart; checkout only reads them. The pure
+ * The recurring lines are owned by the cart; checkout reads them, and — since the per-line
+ * controls on Final Review landed — can also change or cancel a schedule. The pure
  * `savedCardNeedsAutoOrderConsent` helper exported from the same module is covered in
  * `saved-card-consent.test.ts` and deliberately not repeated here.
  */
@@ -20,7 +23,9 @@ const autoOrderItem = (userProductId: string, period: "TWO_WEEKS" | "ONE_MONTH" 
   })
 
 beforeEach(() => {
-  useCartStore.setState({ items: [], cartId: "cart-1" })
+  vi.restoreAllMocks()
+  useCartStore.setState({ items: [], cartId: "cart-1", setItemAutoOrder: vi.fn().mockResolvedValue(undefined) })
+  useCheckoutStore.getState().reset()
 })
 
 describe("useCheckoutAutoOrder", () => {
@@ -92,5 +97,92 @@ describe("useCheckoutAutoOrder", () => {
     rerender()
 
     expect(result.current.hasAutoOrderItems).toBe(false)
+  })
+})
+
+describe("useCheckoutAutoOrder — schedule mutations", () => {
+  it("changes a period by writing the cart first, then patching the frozen orderPayload snapshot", async () => {
+    useCartStore.setState({ items: [autoOrderItem("up-a", "ONE_MONTH")] })
+    useCheckoutStore.getState().setOrderPayload({
+      addressId: "address-1",
+      shippoRateOrders: [
+        { shippoRateId: "rate-1", products: [{ userProductId: "up-a", quantity: 1, autoOrder: "ONE_MONTH" }] },
+      ],
+      uberRateOrders: [],
+    })
+    const { result } = renderHook(() => useCheckoutAutoOrder())
+
+    await act(async () => {
+      await result.current.onPeriodChange("up-a", "TWO_MONTHS")
+    })
+
+    expect(useCartStore.getState().setItemAutoOrder).toHaveBeenCalledWith("up-a", "TWO_MONTHS")
+    expect(useCheckoutStore.getState().orderPayload?.shippoRateOrders[0].products[0].autoOrder).toBe("TWO_MONTHS")
+  })
+
+  it("cancels a repeat by writing null to both the cart and the frozen payload", async () => {
+    useCartStore.setState({ items: [autoOrderItem("up-a", "ONE_MONTH")] })
+    useCheckoutStore.getState().setOrderPayload({
+      addressId: "address-1",
+      shippoRateOrders: [
+        { shippoRateId: "rate-1", products: [{ userProductId: "up-a", quantity: 1, autoOrder: "ONE_MONTH" }] },
+      ],
+      uberRateOrders: [],
+    })
+    const { result } = renderHook(() => useCheckoutAutoOrder())
+
+    await act(async () => {
+      await result.current.onCancelRecurrence("up-a")
+    })
+
+    expect(useCartStore.getState().setItemAutoOrder).toHaveBeenCalledWith("up-a", null)
+    expect(useCheckoutStore.getState().orderPayload?.shippoRateOrders[0].products[0].autoOrder).toBeNull()
+  })
+
+  it("toasts and leaves the payload untouched when the cart write fails", async () => {
+    const failingSetItemAutoOrder = vi.fn().mockRejectedValue(new Error("network down"))
+    useCartStore.setState({ items: [autoOrderItem("up-a", "ONE_MONTH")], setItemAutoOrder: failingSetItemAutoOrder })
+    useCheckoutStore.getState().setOrderPayload({
+      addressId: "address-1",
+      shippoRateOrders: [
+        { shippoRateId: "rate-1", products: [{ userProductId: "up-a", quantity: 1, autoOrder: "ONE_MONTH" }] },
+      ],
+      uberRateOrders: [],
+    })
+    const errorToast = vi.spyOn(showToast, "error").mockImplementation(() => undefined)
+    const { result } = renderHook(() => useCheckoutAutoOrder())
+
+    await act(async () => {
+      await result.current.onCancelRecurrence("up-a")
+    })
+
+    expect(errorToast).toHaveBeenCalled()
+    expect(useCheckoutStore.getState().orderPayload?.shippoRateOrders[0].products[0].autoOrder).toBe("ONE_MONTH")
+  })
+
+  it("marks a row pending while its write is in flight and clears it afterwards", async () => {
+    let resolveWrite: () => void = () => {}
+    const pendingWrite = new Promise<void>((resolve) => {
+      resolveWrite = resolve
+    })
+    useCartStore.setState({
+      items: [autoOrderItem("up-a", "ONE_MONTH")],
+      setItemAutoOrder: vi.fn().mockReturnValue(pendingWrite),
+    })
+    const { result } = renderHook(() => useCheckoutAutoOrder())
+
+    let writePromise!: Promise<void>
+    act(() => {
+      writePromise = result.current.onPeriodChange("up-a", "TWO_MONTHS")
+    })
+
+    await waitFor(() => expect(result.current.pendingUserProductIds.has("up-a")).toBe(true))
+
+    resolveWrite()
+    await act(async () => {
+      await writePromise
+    })
+
+    expect(result.current.pendingUserProductIds.has("up-a")).toBe(false)
   })
 })
