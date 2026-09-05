@@ -42,6 +42,7 @@ interface Recorder {
   puts: QuantityWrite[]
   deleteItems: unknown[]
   cartDeletes: number
+  licenseGets: number
 }
 
 let recorder: Recorder
@@ -77,6 +78,7 @@ const installHandlers = () => {
       return new HttpResponse(null, { status: 200 })
     }),
     http.get("*/backend-api/licenses", () => {
+      recorder.licenseGets += 1
       if (licenseResponse.status >= 400) {
         return new HttpResponse(null, { status: licenseResponse.status })
       }
@@ -119,7 +121,7 @@ describe("useCartPage", () => {
   // Store setup lives in `beforeEach`: a file-local `afterEach` would run before the global
   // `cleanup()` and tear state down while the hook is still mounted.
   beforeEach(() => {
-    recorder = { cartGets: 0, puts: [], deleteItems: [], cartDeletes: 0 }
+    recorder = { cartGets: 0, puts: [], deleteItems: [], cartDeletes: 0, licenseGets: 0 }
     cartResponse = makeCart()
     licenseResponse = { status: 200, licenses: [makeLicense()] }
     putStatus = 200
@@ -420,7 +422,7 @@ describe("useCartPage", () => {
       expect(result.current.isLicenseBlocked).toBe(false)
     })
 
-    it("blocks checkout when the cart needs a license and none is approved", async () => {
+    it("blocks checkout when the cart needs a license and the only one on file was rejected", async () => {
       cartResponse = makeCart({ cartItems: [licensedItem()] })
       licenseResponse = { status: 200, licenses: [makeLicense({ approved: false })] }
       const { result } = await renderReadyCartPage()
@@ -428,13 +430,16 @@ describe("useCartPage", () => {
       await waitFor(() => {
         expect(result.current.isLicenseBlocked).toBe(true)
       })
+      expect(result.current.licenseStatus).toBe("rejected")
 
       act(() => {
         result.current.onCheckout()
       })
 
+      await waitFor(() => {
+        expect(mockToastWarning).toHaveBeenCalledWith("Your dental license wasn't approved", expect.any(String))
+      })
       expect(getRouterMock().push).not.toHaveBeenCalled()
-      expect(mockToastWarning).toHaveBeenCalledWith("Dental license required", expect.any(String))
     })
 
     it("blocks checkout when the only license is expired", async () => {
@@ -451,12 +456,17 @@ describe("useCartPage", () => {
       cartResponse = makeCart({ cartItems: [licensedItem()] })
       const { result } = await renderReadyCartPage()
 
+      await waitFor(() => {
+        expect(result.current.isLicenseBlocked).toBe(false)
+      })
+
       act(() => {
         result.current.onCheckout()
       })
 
-      expect(result.current.isLicenseBlocked).toBe(false)
-      expect(getRouterMock().push).toHaveBeenCalledWith("/checkout")
+      await waitFor(() => {
+        expect(getRouterMock().push).toHaveBeenCalledWith("/checkout")
+      })
       expect(useCheckoutStore.getState().currentStep).toBe(2)
     })
 
@@ -502,8 +512,107 @@ describe("useCartPage", () => {
         result.current.onCheckout()
       })
 
+      await waitFor(() => {
+        expect(mockToastWarning).toHaveBeenCalledWith("Couldn't verify your dental license", expect.any(String))
+      })
       expect(getRouterMock().push).not.toHaveBeenCalled()
-      expect(mockToastWarning).toHaveBeenCalledWith("Dental license required", expect.any(String))
+    })
+
+    // THE RACE FIX: a buyer who clicks "Proceed to Checkout" before the background licence fetch
+    // resolves must not slip through on the initial "not yet checked" render state. `onCheckout`
+    // awaits `ensureChecked()` — the SAME in-flight request the mount effect started — so the
+    // decision is always made from the settled result, never from a stale default.
+    it("does not navigate when checkout is clicked before the license check resolves, if the buyer turns out unlicensed", async () => {
+      cartResponse = makeCart({ cartItems: [licensedItem()] })
+      let releaseLicenseResponse: (() => void) | undefined
+      const licenseRequestGate = new Promise<void>((resolve) => {
+        releaseLicenseResponse = resolve
+      })
+      server.use(
+        http.get("*/backend-api/licenses", async () => {
+          await licenseRequestGate
+          return HttpResponse.json({ licenses: [makeLicense({ approved: false })], total: 1 })
+        }),
+      )
+
+      // Cart items load (fast, separate endpoint) before the licence check has any chance to
+      // settle — the licence request is still gated behind `licenseRequestGate`.
+      const { result } = await renderReadyCartPage()
+      expect(result.current.isLicenseBlocked).toBe(false)
+
+      // Click while the licence lookup is still pending: this is exactly the window the old
+      // `hasValidLicense === true` default used to leak a buyer through.
+      act(() => {
+        result.current.onCheckout()
+      })
+
+      // Must not have navigated yet — the click is awaiting the settled licence result.
+      expect(getRouterMock().push).not.toHaveBeenCalled()
+
+      // Now let the licence request resolve with "no valid licence".
+      await act(async () => {
+        releaseLicenseResponse?.()
+        await licenseRequestGate
+      })
+
+      await waitFor(() => {
+        expect(mockToastWarning).toHaveBeenCalledWith("Your dental license wasn't approved", expect.any(String))
+      })
+      expect(getRouterMock().push).not.toHaveBeenCalledWith("/checkout")
+    })
+
+    // REGRESSION: a failed licence lookup must be RETRIED on the next checkout click, not
+    // replayed from a cached rejected promise. `useDentalLicenseGate`'s `.catch` branch nulls
+    // out `requestRef` before returning, so every later `ensureChecked()` starts a FRESH
+    // `getLicenses()` request instead of resolving the same settled failure forever. Without that
+    // fix `recorder.licenseGets` would stay pinned at 1 forever (mount fetch only) and a buyer
+    // would be stuck behind the first, transient failure with no way to recover short of a full
+    // page reload — the final assertion group below is the one that would fail.
+    it("retries the licence lookup on the next checkout click after a failed lookup, instead of replaying the cached failure", async () => {
+      cartResponse = makeCart({ cartItems: [licensedItem()] })
+      licenseResponse = { status: 500, licenses: [] }
+      const { result } = await renderReadyCartPage()
+
+      await waitFor(() => {
+        expect(result.current.isLicenseBlocked).toBe(true)
+      })
+      expect(recorder.licenseGets).toBe(1)
+
+      // First click: the mount fetch already failed and nulled `requestRef`, so this click also
+      // retries (a fresh, second `getLicenses()` call) — which fails again since the service is
+      // still down. Either way it must warn and NOT navigate.
+      act(() => {
+        result.current.onCheckout()
+      })
+
+      await waitFor(() => {
+        expect(mockToastWarning).toHaveBeenCalledWith("Couldn't verify your dental license", expect.any(String))
+      })
+      expect(getRouterMock().push).not.toHaveBeenCalled()
+      expect(recorder.licenseGets).toBe(2)
+
+      mockToastWarning.mockClear()
+
+      // The licence service recovers: the next lookup would resolve with an approved, non-expired
+      // licence — but only if `ensureChecked()` actually issues a new request instead of awaiting
+      // the stale rejected promise from either failed attempt above.
+      licenseResponse = { status: 200, licenses: [makeLicense({ approved: true, expired: false })] }
+
+      // Second click: must issue a NEW `getLicenses()` call rather than replaying a cached
+      // failure. This is the exact behaviour the fix introduced.
+      act(() => {
+        result.current.onCheckout()
+      })
+
+      await waitFor(() => {
+        expect(getRouterMock().push).toHaveBeenCalledWith("/checkout")
+      })
+
+      // A third, independent request went out — proof the failed lookup keeps being retried
+      // rather than getting cached after the first failure.
+      expect(recorder.licenseGets).toBe(3)
+      expect(mockToastWarning).not.toHaveBeenCalled()
+      expect(useCheckoutStore.getState().currentStep).toBe(2)
     })
 
     // The failed lookup only matters for carts that actually require a licence.

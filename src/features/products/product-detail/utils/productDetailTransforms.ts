@@ -1,4 +1,5 @@
 import { getFullImageUrl } from "@/lib/api/products"
+import { isDentalLicenseRequiredValue } from "@/lib/helpers/dentalLicense"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import type { ProductDetail, SpecificationItem, SupplierViewModel, UserProduct } from "../types"
 
@@ -41,9 +42,10 @@ export const resolveSdsUrl = (product: ProductDetail): string | null => {
   return sds && /^https?:\/\//.test(sds) ? sds : null
 }
 
+// Delegates to the shared helper so the product-detail page and the cart gate read this field
+// the same way — a product shown as "license required" here must also be gated in the cart.
 export const resolveDentalLicenseRequired = (value?: string | null): boolean => {
-  if (!value) return false
-  return ["true", "yes", "1"].includes(value.trim().toLowerCase())
+  return isDentalLicenseRequiredValue(value)
 }
 
 export const resolveBestPriceVendorUserProductId = (product: ProductDetail, userProducts: UserProduct[]) => {

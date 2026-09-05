@@ -48,18 +48,21 @@ const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }:
               />
             </div>
           )}
-          <div>
-            <div className="flex items-center space-x-2">
-              <div className="font-semibold text-text-primary">{supplier.name}</div>
-              {isBestSeller && (
-                // `text-warning-strong`, not `text-warning`: text on its own tint needs a darker
-                // foreground for WCAG AA (axe `color-contrast` measured 1.93:1 here) - see the
-                // `--warning-strong` comment in globals.css.
-                <span className="whitespace-nowrap rounded-full bg-warning/14 px-2 py-0.5 text-xs font-semibold text-warning-strong">
-                  Best Seller
-                </span>
-              )}
-            </div>
+          {/* `relative` + an absolutely positioned badge: the Best Seller pill used to sit inline
+              next to the name, which widened the Supplier column and pushed the centred
+              logo/name block sideways on the one row that has it. Taking it out of flow pins
+              it under the name so badged and un-badged rows line up identically. */}
+          <div className="relative">
+            <div className="font-semibold text-text-primary">{supplier.name}</div>
+            {isBestSeller && (
+              // `text-warning-strong`, not `text-warning`: text on its own tint needs a darker
+              // foreground for WCAG AA (axe `color-contrast` measured 1.93:1 here) - see the
+              // `--warning-strong` comment in globals.css.
+              <span className="pointer-events-none absolute top-full left-0 mt-1.5 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-warning/14 px-2 py-0.5 text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-warning-strong ring-1 ring-warning/30 ring-inset">
+                <span aria-hidden="true">★</span>
+                <span>Best Seller</span>
+              </span>
+            )}
           </div>
         </div>
       </td>

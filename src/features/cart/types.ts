@@ -19,6 +19,8 @@ export interface CartSellerGroup {
 
 export interface CartItemCardProps {
   item: CartItem
+  requiresLicense: boolean
+  isLicenseBlocked: boolean
   onAutoOrderChange: (userProductId: string, period: AutoOrderPeriod | null) => Promise<void>
   onQuantityChange: (userProductId: string, currentQuantity: number, delta: number) => void
   onRemoveItem: (userProductId: string) => void

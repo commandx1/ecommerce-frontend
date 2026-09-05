@@ -4,13 +4,23 @@ import { makeCartItem, makeCartProductInfo, makeCartUserProduct } from "@/test/f
 import { render, screen } from "@/test/render"
 import CartItemCard from "./CartItemCard"
 
-const renderCard = (item = makeCartItem()) => {
+const renderCard = (
+  item = makeCartItem(),
+  overrides: { requiresLicense?: boolean; isLicenseBlocked?: boolean } = {},
+) => {
   const handlers = {
     onAutoOrderChange: vi.fn().mockResolvedValue(undefined),
     onQuantityChange: vi.fn(),
     onRemoveItem: vi.fn(),
   }
-  render(<CartItemCard item={item} {...handlers} />)
+  render(
+    <CartItemCard
+      item={item}
+      requiresLicense={overrides.requiresLicense ?? false}
+      isLicenseBlocked={overrides.isLicenseBlocked ?? false}
+      {...handlers}
+    />,
+  )
   return handlers
 }
 
@@ -126,5 +136,23 @@ describe("CartItemCard", () => {
 
     expect(screen.getByRole("checkbox", { name: /Auto-reorder this item/i })).toBeChecked()
     expect(screen.getByRole("combobox", { name: /Auto-reorder frequency/i })).toHaveTextContent("Every 15 days")
+  })
+
+  it("shows no license badge when the line does not require one", () => {
+    renderCard(makeCartItem(), { requiresLicense: false })
+
+    expect(screen.queryByText("License required")).not.toBeInTheDocument()
+  })
+
+  it("shows a muted license badge when the line requires one and checkout is not blocked", () => {
+    renderCard(makeCartItem(), { requiresLicense: true, isLicenseBlocked: false })
+
+    expect(screen.getByText("License required")).toBeInTheDocument()
+  })
+
+  it("shows the license badge even when checkout is blocked for the gate", () => {
+    renderCard(makeCartItem(), { requiresLicense: true, isLicenseBlocked: true })
+
+    expect(screen.getByText("License required")).toBeInTheDocument()
   })
 })

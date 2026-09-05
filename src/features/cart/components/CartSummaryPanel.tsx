@@ -4,6 +4,7 @@ import NotificationCard from "@/components/feedback/NotificationCard"
 import ActionButton from "@/components/ui/ActionButton"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import type { CartTotals } from "@/features/cart/types"
+import type { DentalLicenseStatus } from "@/lib/helpers/dentalLicense"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 
 interface CartSummaryPanelProps {
@@ -12,7 +13,10 @@ interface CartSummaryPanelProps {
   hasBlockingItems: boolean
   isCheckoutDisabled: boolean
   isLicenseBlocked: boolean
+  isLicenseChecking: boolean
   licenseCheckFailed: boolean
+  licenseStatus: DentalLicenseStatus | null
+  licenseRejectionReason: string | null
   isTaxLoading: boolean
   itemsCount: number
   onCheckout: () => void
@@ -31,7 +35,10 @@ export default function CartSummaryPanel({
   hasBlockingItems,
   isCheckoutDisabled,
   isLicenseBlocked,
+  isLicenseChecking,
   licenseCheckFailed,
+  licenseStatus,
+  licenseRejectionReason,
   isTaxLoading,
   itemsCount,
   onCheckout,
@@ -109,11 +116,58 @@ export default function CartSummaryPanel({
             description="One or more items in your cart require an approved dental license, and we couldn't check yours just now. Please try again in a moment."
             className="mb-4 rounded-lg px-3 py-2"
           />
+        ) : licenseStatus === "pending" ? (
+          <NotificationCard
+            tone="warning"
+            title="License awaiting approval"
+            description="One or more items in your cart require an approved dental license. Yours is under review — checkout unlocks as soon as it's approved."
+            className="mb-4 rounded-lg px-3 py-2"
+          >
+            <Link
+              href="/buyer-dashboard/settings"
+              className="mt-1 inline-block text-sm font-semibold text-brand underline underline-offset-2 hover:text-brand-strong"
+            >
+              View your license
+            </Link>
+          </NotificationCard>
+        ) : licenseStatus === "expired" ? (
+          <NotificationCard
+            tone="warning"
+            title="Your dental license expired"
+            description="One or more items in your cart require a valid dental license. Renew yours to continue."
+            className="mb-4 rounded-lg px-3 py-2"
+          >
+            <Link
+              href="/buyer-dashboard/settings"
+              className="mt-1 inline-block text-sm font-semibold text-brand underline underline-offset-2 hover:text-brand-strong"
+            >
+              Renew your license
+            </Link>
+          </NotificationCard>
+        ) : licenseStatus === "rejected" ? (
+          <NotificationCard
+            tone="warning"
+            title="Your dental license wasn't approved"
+            description="One or more items in your cart require an approved dental license."
+            className="mb-4 rounded-lg px-3 py-2"
+          >
+            {/* Admin-authored free text: rendered as plain text, never as HTML. */}
+            {licenseRejectionReason ? (
+              <p className="mt-1 text-sm text-text-secondary">Reason: {licenseRejectionReason}</p>
+            ) : null}
+            <Link
+              href="/buyer-dashboard/settings"
+              className="mt-1 inline-block text-sm font-semibold text-brand underline underline-offset-2 hover:text-brand-strong"
+            >
+              Update your license
+            </Link>
+          </NotificationCard>
         ) : (
+          // "missing" (no license on file at all).
           <NotificationCard
             tone="warning"
             title="Dental license required"
-            description="One or more items in your cart require a valid, approved dental license. Add or wait for approval of your license to continue."
+            description="One or more items in your cart require a valid, approved dental license."
             className="mb-4 rounded-lg px-3 py-2"
           >
             <Link
@@ -127,12 +181,19 @@ export default function CartSummaryPanel({
       ) : null}
       <ActionButton
         type="button"
-        disabled={isCheckoutDisabled}
+        disabled={isCheckoutDisabled || isLicenseChecking}
         onClick={onCheckout}
         fullWidth
         className="text-lg disabled:bg-surface-muted disabled:text-text-muted"
       >
-        Proceed to Checkout
+        {isLicenseChecking ? (
+          <span className="inline-flex items-center justify-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Checking license...
+          </span>
+        ) : (
+          "Proceed to Checkout"
+        )}
       </ActionButton>
     </SurfaceCard>
   )

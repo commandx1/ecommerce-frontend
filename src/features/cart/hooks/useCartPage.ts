@@ -1,22 +1,55 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import type { CartSellerGroup, CartTotals } from "@/features/cart/types"
 import { getBlockingCartItems } from "@/features/cart/utils/cart-alerts"
-import { cartRequiresDentalLicense, hasValidDentalLicense } from "@/features/cart/utils/license-check"
+import { cartRequiresDentalLicense } from "@/features/cart/utils/license-check"
 import { addressAPI } from "@/lib/api/address"
 import { cartAPI } from "@/lib/api/cart"
-import { licenseAPI } from "@/lib/api/licenses"
 import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
+import type { DentalLicenseStatus } from "@/lib/helpers/dentalLicense"
 import { useDebouncedPerKeyCallback } from "@/lib/hooks/useDebouncedPerKeyCallback"
+import { useDentalLicenseGate } from "@/lib/hooks/useDentalLicenseGate"
 import type { CartItem } from "@/stores/cartStore"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
 type CartViewState = "loading" | "empty" | "ready"
 const QUANTITY_DEBOUNCE_MS = 450
+
+// Toast copy for each resolved licence status, shown only at the moment a blocked buyer clicks
+// "Proceed to Checkout" — matches the titles/wording used in CartSummaryPanel's persistent
+// notice so the toast and the card never contradict each other.
+const LICENSE_BLOCK_TOAST_COPY: Record<"checkFailed" | DentalLicenseStatus, { title: string; description: string }> = {
+  checkFailed: {
+    title: "Couldn't verify your dental license",
+    description:
+      "One or more items in your cart require an approved dental license, and we couldn't check yours just now. Please try again in a moment.",
+  },
+  valid: {
+    title: "Dental license required",
+    description: "One or more items in your cart require a valid, approved dental license.",
+  },
+  missing: {
+    title: "Dental license required",
+    description: "One or more items in your cart require a valid, approved dental license.",
+  },
+  pending: {
+    title: "License awaiting approval",
+    description:
+      "One or more items in your cart require an approved dental license. Yours is under review — checkout unlocks as soon as it's approved.",
+  },
+  expired: {
+    title: "Your dental license expired",
+    description: "One or more items in your cart require a valid dental license. Renew yours to continue.",
+  },
+  rejected: {
+    title: "Your dental license wasn't approved",
+    description: "One or more items in your cart require an approved dental license.",
+  },
+}
 
 interface UseCartPageResult {
   cartId: string | null
@@ -26,6 +59,10 @@ interface UseCartPageResult {
   isClearConfirmOpen: boolean
   isLicenseBlocked: boolean
   licenseCheckFailed: boolean
+  licenseStatus: DentalLicenseStatus | null
+  licenseRejectionReason: string | null
+  licenseRequiredProductIds: Set<string>
+  isLicenseChecking: boolean
   isTaxLoading: boolean
   items: CartItem[]
   sellerGroups: Record<string, CartSellerGroup>
@@ -54,12 +91,13 @@ export function useCartPage(): UseCartPageResult {
   // panel can render "calculated at checkout" instead of a misleading $0.00.
   const [taxAmount, setTaxAmount] = useState<number | null>(null)
   const [isTaxLoading, setIsTaxLoading] = useState(false)
-  const [hasValidLicense, setHasValidLicense] = useState(true)
-  // Distinct from `hasValidLicense === false`: the gate stays fail-closed either way, but
-  // "we could not check" and "you have no approved licence" need different copy. Telling a
-  // buyer whose licence IS approved to "add your licence" sends them to a settings page that
-  // looks fine and leaves them stuck with no idea why checkout is blocked.
-  const [licenseCheckFailed, setLicenseCheckFailed] = useState(false)
+  const licenseGate = useDentalLicenseGate()
+  // Distinguishes the click-time await inside `onCheckout` (guards a double-click and drives the
+  // button spinner) from `licenseGate.isChecking`, which only covers the initial background fetch.
+  const [isLicenseChecking, setIsLicenseChecking] = useState(false)
+  // A ref mirror of `isLicenseChecking`: the state update from a click is not visible to a second
+  // click handled in the same synchronous burst, so the guard reads the ref instead of state.
+  const isLicenseCheckInFlightRef = useRef(false)
 
   const { schedule, cancel, cancelAll } = useDebouncedPerKeyCallback<string, number>({
     delayMs: QUANTITY_DEBOUNCE_MS,
@@ -137,22 +175,6 @@ export function useCartPage(): UseCartPageResult {
     }
 
     void fetchDefaultAddress()
-  }, [])
-
-  useEffect(() => {
-    const fetchLicenses = async () => {
-      try {
-        const licenses = await licenseAPI.getLicenses()
-        setHasValidLicense(hasValidDentalLicense(licenses))
-        setLicenseCheckFailed(false)
-      } catch (_error) {
-        // Stay fail-closed, but remember that this is an unverified state, not a known-missing one.
-        setHasValidLicense(false)
-        setLicenseCheckFailed(true)
-      }
-    }
-
-    void fetchLicenses()
   }, [])
 
   useEffect(() => {
@@ -237,9 +259,26 @@ export function useCartPage(): UseCartPageResult {
 
   const hasBlockingItems = blockingItemsCount > 0
 
+  const cartRequiresLicense = useMemo(() => {
+    return cartRequiresDentalLicense(itemsWithPendingQuantity)
+  }, [itemsWithPendingQuantity])
+
+  const licenseRequiredProductIds = useMemo(() => {
+    return new Set(
+      itemsWithPendingQuantity
+        .filter((item) => cartRequiresDentalLicense([item]))
+        .map((item) => item.userProduct.userProductId),
+    )
+  }, [itemsWithPendingQuantity])
+
+  // Render-time signal for the persistent cart banner only. Deliberately excludes
+  // `licenseGate.isChecking`'s in-flight window (a licensed buyer must not see a block flash
+  // before the background check settles) — the actual gate enforcement happens in `onCheckout`,
+  // which awaits the settled result directly instead of trusting this derived value.
   const isLicenseBlocked = useMemo(() => {
-    return cartRequiresDentalLicense(itemsWithPendingQuantity) && !hasValidLicense
-  }, [itemsWithPendingQuantity, hasValidLicense])
+    if (!cartRequiresLicense || licenseGate.isChecking) return false
+    return licenseGate.checkFailed || licenseGate.status !== "valid"
+  }, [cartRequiresLicense, licenseGate.isChecking, licenseGate.checkFailed, licenseGate.status])
 
   const viewState: CartViewState = useMemo(() => {
     if (isLoading && itemsWithPendingQuantity.length === 0) {
@@ -270,17 +309,39 @@ export function useCartPage(): UseCartPageResult {
       return
     }
 
-    if (isLicenseBlocked) {
-      showToast.warning(
-        "Dental license required",
-        "Add a valid, approved dental license in your account settings before checking out.",
-      )
+    if (cartRequiresLicense) {
+      // A second click while the first is still awaiting `ensureChecked` must not fire a second
+      // request or double-navigate; the ref (not state) catches a click inside the same tick.
+      if (isLicenseCheckInFlightRef.current) return
+      isLicenseCheckInFlightRef.current = true
+      setIsLicenseChecking(true)
+
+      void (async () => {
+        try {
+          // THE RACE FIX: await the actual settled licence result instead of reading
+          // `isLicenseBlocked`, which can still hold its initial "not blocked" default the
+          // instant a buyer clicks before the background licence fetch has resolved.
+          const { status: resolvedStatus, checkFailed: resolvedCheckFailed } = await licenseGate.ensureChecked()
+
+          if (resolvedCheckFailed || resolvedStatus !== "valid") {
+            const copy = LICENSE_BLOCK_TOAST_COPY[resolvedCheckFailed ? "checkFailed" : (resolvedStatus ?? "missing")]
+            showToast.warning(copy.title, copy.description)
+            return
+          }
+
+          setStep(2)
+          router.push("/checkout")
+        } finally {
+          isLicenseCheckInFlightRef.current = false
+          setIsLicenseChecking(false)
+        }
+      })()
       return
     }
 
     setStep(2)
     router.push("/checkout")
-  }, [itemsWithPendingQuantity, isLicenseBlocked, router, setStep])
+  }, [itemsWithPendingQuantity, cartRequiresLicense, licenseGate.ensureChecked, router, setStep])
 
   const onQuantityChange = useCallback(
     (userProductId: string, currentQuantity: number, delta: number) => {
@@ -357,7 +418,11 @@ export function useCartPage(): UseCartPageResult {
     hasBlockingItems,
     isClearConfirmOpen,
     isLicenseBlocked,
-    licenseCheckFailed,
+    licenseCheckFailed: licenseGate.checkFailed,
+    licenseStatus: licenseGate.status,
+    licenseRejectionReason: licenseGate.rejectionReason,
+    licenseRequiredProductIds,
+    isLicenseChecking,
     isTaxLoading,
     items: itemsWithPendingQuantity,
     sellerGroups,

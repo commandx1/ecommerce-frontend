@@ -10,7 +10,9 @@ import type { CartItem } from "@/stores/cartStore"
 interface CartItemsPanelProps {
   cartId: string | null
   isClearConfirmOpen: boolean
+  isLicenseBlocked: boolean
   items: CartItem[]
+  licenseRequiredProductIds: Set<string>
   sellerGroups: Record<string, CartSellerGroup>
   onAutoOrderChange: (userProductId: string, period: AutoOrderPeriod | null) => Promise<void>
   onCloseClearConfirm: () => void
@@ -23,7 +25,9 @@ interface CartItemsPanelProps {
 export default function CartItemsPanel({
   cartId,
   isClearConfirmOpen,
+  isLicenseBlocked,
   items,
+  licenseRequiredProductIds,
   sellerGroups,
   onAutoOrderChange,
   onCloseClearConfirm,
@@ -70,6 +74,8 @@ export default function CartItemsPanel({
                 <CartItemCard
                   key={item.id}
                   item={item}
+                  requiresLicense={licenseRequiredProductIds.has(item.userProduct.userProductId)}
+                  isLicenseBlocked={isLicenseBlocked}
                   onAutoOrderChange={onAutoOrderChange}
                   onQuantityChange={onQuantityChange}
                   onRemoveItem={onRemoveItem}

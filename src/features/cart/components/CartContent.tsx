@@ -4,6 +4,7 @@ import CartItemsPanel from "@/features/cart/components/CartItemsPanel"
 import CartSummaryPanel from "@/features/cart/components/CartSummaryPanel"
 import type { CartSellerGroup, CartTotals } from "@/features/cart/types"
 import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
+import type { DentalLicenseStatus } from "@/lib/helpers/dentalLicense"
 import type { CartItem } from "@/stores/cartStore"
 
 interface CartContentProps {
@@ -13,7 +14,11 @@ interface CartContentProps {
   hasBlockingItems: boolean
   isClearConfirmOpen: boolean
   isLicenseBlocked: boolean
+  isLicenseChecking: boolean
   licenseCheckFailed: boolean
+  licenseStatus: DentalLicenseStatus | null
+  licenseRejectionReason: string | null
+  licenseRequiredProductIds: Set<string>
   isTaxLoading: boolean
   items: CartItem[]
   sellerGroups: Record<string, CartSellerGroup>
@@ -34,7 +39,11 @@ export default function CartContent({
   hasBlockingItems,
   isClearConfirmOpen,
   isLicenseBlocked,
+  isLicenseChecking,
   licenseCheckFailed,
+  licenseStatus,
+  licenseRejectionReason,
+  licenseRequiredProductIds,
   isTaxLoading,
   items,
   sellerGroups,
@@ -55,7 +64,9 @@ export default function CartContent({
           <CartItemsPanel
             cartId={cartId}
             isClearConfirmOpen={isClearConfirmOpen}
+            isLicenseBlocked={isLicenseBlocked}
             items={items}
+            licenseRequiredProductIds={licenseRequiredProductIds}
             sellerGroups={sellerGroups}
             onAutoOrderChange={onAutoOrderChange}
             onCloseClearConfirm={onCloseClearConfirm}
@@ -72,7 +83,10 @@ export default function CartContent({
             hasBlockingItems={hasBlockingItems}
             isCheckoutDisabled={items.length === 0}
             isLicenseBlocked={isLicenseBlocked}
+            isLicenseChecking={isLicenseChecking}
             licenseCheckFailed={licenseCheckFailed}
+            licenseStatus={licenseStatus}
+            licenseRejectionReason={licenseRejectionReason}
             isTaxLoading={isTaxLoading}
             itemsCount={items.reduce((totalQuantity, item) => totalQuantity + item.quantity, 0)}
             onCheckout={onCheckout}

@@ -23,7 +23,10 @@ const renderPanel = (overrides: Partial<PanelProps> = {}) => {
     hasBlockingItems: false,
     isCheckoutDisabled: false,
     isLicenseBlocked: false,
+    isLicenseChecking: false,
     licenseCheckFailed: false,
+    licenseStatus: null,
+    licenseRejectionReason: null,
     isTaxLoading: false,
     itemsCount: 2,
     onCheckout: vi.fn(),
@@ -106,13 +109,60 @@ describe("CartSummaryPanel", () => {
     )
   })
 
-  it("shows a distinct licence message with a link to add one", () => {
-    renderPanel({ isLicenseBlocked: true })
+  it("shows a distinct licence message with a link to add one when no license is on file", () => {
+    renderPanel({ isLicenseBlocked: true, licenseStatus: "missing" })
 
     expect(screen.getByText("Dental license required")).toBeInTheDocument()
     expect(screen.getByText(/require a valid, approved dental license/i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /Add your license/i })).toHaveAttribute("href", "/buyer-dashboard/settings")
     expect(screen.queryByText("Checkout is blocked")).not.toBeInTheDocument()
+  })
+
+  it("shows the awaiting-approval message with a view link when the license is pending", () => {
+    renderPanel({ isLicenseBlocked: true, licenseStatus: "pending" })
+
+    expect(screen.getByText("License awaiting approval")).toBeInTheDocument()
+    expect(screen.getByText(/under review/i)).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: /View your license/i })).toHaveAttribute(
+      "href",
+      "/buyer-dashboard/settings",
+    )
+  })
+
+  it("shows the expired message with a renew link when the license has expired", () => {
+    renderPanel({ isLicenseBlocked: true, licenseStatus: "expired" })
+
+    expect(screen.getByText("Your dental license expired")).toBeInTheDocument()
+    expect(screen.getByText(/renew yours/i)).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: /Renew your license/i })).toHaveAttribute(
+      "href",
+      "/buyer-dashboard/settings",
+    )
+  })
+
+  it("shows the rejected message with an update link and no reason line when none is given", () => {
+    renderPanel({ isLicenseBlocked: true, licenseStatus: "rejected" })
+
+    expect(screen.getByText("Your dental license wasn't approved")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: /Update your license/i })).toHaveAttribute(
+      "href",
+      "/buyer-dashboard/settings",
+    )
+    expect(screen.queryByText(/^Reason:/)).not.toBeInTheDocument()
+  })
+
+  // The rejection reason is admin-authored free text. It must render as inert text (never as
+  // HTML) so a hostile string in that field cannot inject markup into the buyer's cart page.
+  it("renders the rejection reason as a plain text line, not as HTML", () => {
+    renderPanel({
+      isLicenseBlocked: true,
+      licenseStatus: "rejected",
+      licenseRejectionReason: "<b>Expired ID scan</b>",
+    })
+
+    const reasonLine = screen.getByText("Reason: <b>Expired ID scan</b>")
+    expect(reasonLine).toBeInTheDocument()
+    expect(reasonLine.querySelector("b")).toBeNull()
   })
 
   // Y3: the gate is fail-closed, so a licence-service outage also sets `isLicenseBlocked`. Telling a
@@ -131,11 +181,18 @@ describe("CartSummaryPanel", () => {
   // is what actually refuses the navigation.
   it("leaves the checkout button clickable when only the licence is missing", async () => {
     const user = userEvent.setup()
-    const props = renderPanel({ isLicenseBlocked: true })
+    const props = renderPanel({ isLicenseBlocked: true, licenseStatus: "missing" })
 
     expect(checkoutButton()).toBeEnabled()
     await user.click(checkoutButton())
     expect(props.onCheckout).toHaveBeenCalledTimes(1)
+  })
+
+  it("shows a spinner and disables the button while the click-time license check is in flight", () => {
+    renderPanel({ isLicenseChecking: true })
+
+    expect(screen.getByRole("button", { name: /Checking license/i })).toBeDisabled()
+    expect(screen.queryByText("Proceed to Checkout")).not.toBeInTheDocument()
   })
 
   it("announces how many lines are set to repeat", () => {

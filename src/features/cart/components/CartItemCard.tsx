@@ -1,4 +1,4 @@
-import { Trash2 } from "lucide-react"
+import { ShieldAlert, ShieldCheck, Trash2 } from "lucide-react"
 import Link from "next/link"
 import NotificationCard from "@/components/feedback/NotificationCard"
 import CartItemAutoOrder from "@/features/cart/components/CartItemAutoOrder"
@@ -9,7 +9,14 @@ import { getCartItemAlerts } from "@/features/cart/utils/cart-alerts"
 import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
 import { getFullImageUrl } from "@/lib/api/products"
 
-export default function CartItemCard({ item, onAutoOrderChange, onQuantityChange, onRemoveItem }: CartItemCardProps) {
+export default function CartItemCard({
+  item,
+  requiresLicense,
+  isLicenseBlocked,
+  onAutoOrderChange,
+  onQuantityChange,
+  onRemoveItem,
+}: CartItemCardProps) {
   const { userProduct, product, quantity } = item
   const productDetailHref = `/products/${product.id}?vendorId=${encodeURIComponent(userProduct.userProductId)}`
   const productImageSrc = getFullImageUrl(product.coverPhotoPath) || "/dentypro-product-placeholder.png"
@@ -40,6 +47,19 @@ export default function CartItemCard({ item, onAutoOrderChange, onQuantityChange
               {product.name}
             </h3>
           </Link>
+
+          {requiresLicense ? (
+            <span
+              className={
+                isLicenseBlocked
+                  ? "mt-1 inline-flex items-center gap-1 rounded-full border border-warning/25 bg-warning/10 px-2 py-0.5 text-xs font-medium text-text-primary animate-pulse"
+                  : "mt-1 inline-flex items-center gap-1 rounded-full border border-border-soft bg-surface-muted px-2 py-0.5 text-xs font-medium text-text-secondary"
+              }
+            >
+              {isLicenseBlocked ? <ShieldAlert className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />}
+              License required
+            </span>
+          ) : null}
 
           {hasAlerts ? (
             <div className="mt-2 space-y-2">

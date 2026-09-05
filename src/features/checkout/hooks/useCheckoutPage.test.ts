@@ -1,8 +1,10 @@
 import { act, renderHook, waitFor } from "@testing-library/react"
+import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { server } from "@/mocks/server"
 import { useCartStore } from "@/stores/cartStore"
 import { type CheckoutStep, useCheckoutStore } from "@/stores/checkoutStore"
-import { makeCartItem } from "@/test/factories"
+import { makeCartItem, makeCartProductInfo, makeCartUserProduct, makeLicense } from "@/test/factories"
 import { getRouterMock } from "@/test/mocks/next-navigation"
 import { useCheckoutPage } from "./useCheckoutPage"
 
@@ -106,5 +108,99 @@ describe("useCheckoutPage", () => {
     rerender()
 
     await waitFor(() => expect(getRouterMock().push).toHaveBeenCalledWith("/cart"))
+  })
+
+  describe("dental license guard (direct navigation)", () => {
+    const licensedItem = () =>
+      makeCartItem({
+        product: makeCartProductInfo({ dentalLicenseRequired: "Yes" }),
+        userProduct: makeCartUserProduct({ userProductId: "up-license" }),
+      })
+
+    it("bounces a buyer who navigates straight to checkout without a valid license", async () => {
+      server.use(
+        http.get("*/backend-api/licenses", () =>
+          HttpResponse.json({ licenses: [makeLicense({ approved: false })], total: 1 }),
+        ),
+      )
+      setStep(2)
+      useCartStore.setState({ items: [licensedItem()] })
+
+      renderHook(() => useCheckoutPage())
+
+      await waitFor(() => expect(getRouterMock().replace).toHaveBeenCalledWith("/cart"))
+    })
+
+    it("lets a buyer with an approved license stay on checkout", async () => {
+      server.use(
+        http.get("*/backend-api/licenses", () =>
+          HttpResponse.json({ licenses: [makeLicense({ approved: true, expired: false })], total: 1 }),
+        ),
+      )
+      setStep(2)
+      useCartStore.setState({ items: [licensedItem()] })
+
+      renderHook(() => useCheckoutPage())
+
+      // Give the license fetch a tick to settle before asserting nothing fired.
+      await waitFor(() => expect(useCartStore.getState().items).toHaveLength(1))
+      expect(getRouterMock().replace).not.toHaveBeenCalled()
+      expect(getRouterMock().push).not.toHaveBeenCalledWith("/cart")
+    })
+
+    // Never redirect on the pre-fetch default: the guard must wait for the SETTLED license
+    // result, exactly like the cart page's click-time gate does.
+    it("does not redirect while the license check is still in flight", async () => {
+      let releaseLicenseResponse: (() => void) | undefined
+      const gate = new Promise<void>((resolve) => {
+        releaseLicenseResponse = resolve
+      })
+      server.use(
+        http.get("*/backend-api/licenses", async () => {
+          await gate
+          return HttpResponse.json({ licenses: [makeLicense({ approved: false })], total: 1 })
+        }),
+      )
+      setStep(2)
+      useCartStore.setState({ items: [licensedItem()] })
+
+      renderHook(() => useCheckoutPage())
+
+      expect(getRouterMock().replace).not.toHaveBeenCalled()
+
+      await act(async () => {
+        releaseLicenseResponse?.()
+        await gate
+      })
+
+      await waitFor(() => expect(getRouterMock().replace).toHaveBeenCalledWith("/cart"))
+    })
+
+    it("never redirects on the confirmation step, even without a valid license", async () => {
+      server.use(
+        http.get("*/backend-api/licenses", () =>
+          HttpResponse.json({ licenses: [makeLicense({ approved: false })], total: 1 }),
+        ),
+      )
+      setStep(5)
+      useCartStore.setState({ items: [licensedItem()] })
+
+      renderHook(() => useCheckoutPage())
+
+      await waitFor(() => expect(fetchCart).toHaveBeenCalled())
+      expect(getRouterMock().replace).not.toHaveBeenCalled()
+      expect(getRouterMock().push).not.toHaveBeenCalledWith("/cart")
+    })
+
+    it("does not touch a cart that requires no license", async () => {
+      server.use(http.get("*/backend-api/licenses", () => new HttpResponse(null, { status: 500 })))
+      setStep(2)
+      useCartStore.setState({ items: [makeCartItem()] })
+
+      renderHook(() => useCheckoutPage())
+
+      await waitFor(() => expect(fetchCart).toHaveBeenCalled())
+      expect(getRouterMock().replace).not.toHaveBeenCalled()
+    })
   })
 })

@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo } from "react"
+import { cartRequiresDentalLicense } from "@/features/cart/utils/license-check"
+import { useDentalLicenseGate } from "@/lib/hooks/useDentalLicenseGate"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
@@ -17,6 +19,7 @@ export function useCheckoutPage(): UseCheckoutPageResult {
   const router = useRouter()
   const { items, fetchCart } = useCartStore()
   const { currentStep } = useCheckoutStore()
+  const licenseGate = useDentalLicenseGate()
 
   useEffect(() => {
     void fetchCart()
@@ -27,6 +30,20 @@ export function useCheckoutPage(): UseCheckoutPageResult {
       router.push("/cart")
     }
   }, [currentStep, items.length, router])
+
+  // Guards a buyer who types /checkout directly (or refreshes mid-flow), bypassing the cart
+  // page's click-time gate entirely. Mirrors the empty-cart guard above: never during the
+  // confirmation step, and never while the licence check is still in flight (isChecking) — the
+  // gate is fail-closed on the SETTLED result, not on the pre-fetch default. Uses `replace`
+  // (not `push`) so this guard redirect doesn't leave a checkout-then-cart entry in history.
+  useEffect(() => {
+    if (currentStep === 5) return
+    if (licenseGate.isChecking) return
+    if (!cartRequiresDentalLicense(items)) return
+    if (!licenseGate.checkFailed && licenseGate.status === "valid") return
+
+    router.replace("/cart")
+  }, [currentStep, items, licenseGate.isChecking, licenseGate.checkFailed, licenseGate.status, router])
 
   const view = useMemo<CheckoutView>(() => {
     if (currentStep === 2) return "shipping"
