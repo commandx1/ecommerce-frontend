@@ -9,8 +9,6 @@ import PaginationBar from "./listing/PaginationBar"
 import ProductFiltersPanel from "./listing/ProductFiltersPanel"
 import ProductGrid from "./listing/ProductGrid"
 import ProductListingBreadcrumb from "./listing/ProductListingBreadcrumb"
-import ProductListingHeader from "./listing/ProductListingHeader"
-import ProductListingToolbar from "./listing/ProductListingToolbar"
 import ResultsSummary from "./listing/ResultsSummary"
 
 export interface APIProduct {
@@ -106,8 +104,11 @@ const ProductListingClient = ({
           />
         </Suspense>
         <ProductListingBreadcrumb />
-        <ProductListingHeader totalElements={totalElements} />
-        <ProductListingToolbar pageSize={pageSize} />
+        {/* The listing hero was removed, but /products must still expose exactly one <h1>
+           (a11y-smoke: "expected exactly 1 <h1> on /products, found 0"). It is kept visually
+           hidden and worded like loading.tsx's skeleton heading so both states announce the
+           same page title. */}
+        <h1 className="sr-only">Dental Products</h1>
 
         <PageSectionContainer as="div" containerClassName="py-8 md:py-10">
           <div className="flex flex-col gap-8 lg:flex-row">

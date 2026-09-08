@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import { createContext, useCallback, useContext, useEffect, useTransition } from "react"
+import type { SortValue } from "../server/parse-listing-search-params"
 
 export interface FilterUpdates {
   brands?: string[]
@@ -14,6 +15,7 @@ export interface FilterUpdates {
   minRating?: number | null
   inStock?: boolean
   attributes?: string[]
+  sort?: SortValue
 }
 
 export interface FilterNavigationState {
@@ -30,6 +32,7 @@ export interface FilterNavigationState {
   currentMinRating: number | null
   currentInStock: boolean
   currentAttributes: string[]
+  currentSort: SortValue
 }
 
 export const FilterNavigationContext = createContext<FilterNavigationState | null>(null)
@@ -52,11 +55,11 @@ export function useFilterNavigationProvider(): FilterNavigationState {
 
       const size = searchParams.get("size")
       const view = searchParams.get("view")
-      const sort = searchParams.get("sort")
+      const sort = "sort" in updates ? updates.sort : searchParams.get("sort")
       params.set("page", "1")
       if (size) params.set("size", size)
       if (view) params.set("view", view)
-      if (sort) params.set("sort", sort)
+      if (sort && sort !== "best-match") params.set("sort", sort)
 
       const brands = "brands" in updates ? updates.brands : searchParams.getAll("brands")
       const manufacturers = "manufacturers" in updates ? updates.manufacturers : searchParams.getAll("manufacturers")
@@ -108,6 +111,7 @@ export function useFilterNavigationProvider(): FilterNavigationState {
     currentMinRating: rawMinRating ? Number(rawMinRating) : null,
     currentInStock: searchParams.get("inStock") !== "false",
     currentAttributes: searchParams.getAll("attributes"),
+    currentSort: (searchParams.get("sort") ?? "best-match") as SortValue,
   }
 }
 

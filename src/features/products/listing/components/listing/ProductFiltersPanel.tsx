@@ -11,6 +11,7 @@ import VendorFilter from "../VendorFilter"
 import ActiveFilters from "./ActiveFilters"
 import AvailabilityFilter from "./AvailabilityFilter"
 import PriceRangeFilter from "./PriceRangeFilter"
+import SortFilter from "./SortFilter"
 
 interface ProductFiltersPanelProps {
   brands: FilterOption[]
@@ -53,6 +54,7 @@ function FiltersPanelContent({
       style={{ opacity: isPending ? 0.5 : 1, pointerEvents: isPending ? "none" : undefined }}
     >
       <ActiveFilters vendors={vendors} />
+      <SortFilter />
       <CategoryFilter categories={categories} />
       <BrandFilter brands={brands} />
       <ManufacturerFilter manufacturers={manufacturers} />

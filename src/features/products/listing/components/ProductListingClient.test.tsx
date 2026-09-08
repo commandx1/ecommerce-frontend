@@ -103,8 +103,7 @@ describe("ProductListingClient", () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 })
     const { router } = renderListing({}, "page=3&brands=MARK3")
 
-    await user.click(screen.getByRole("combobox"))
-    await user.click(await screen.findByRole("option", { name: "Price: Low to High" }))
+    await user.click(screen.getAllByRole("radio", { name: "Price: Low to High" })[0])
 
     const [url] = router.push.mock.calls[0] as [string]
     const params = new URLSearchParams(url.split("?")[1])
@@ -117,21 +116,17 @@ describe("ProductListingClient", () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 })
     const { router } = renderListing({ sort: "price-asc" }, "sort=price-asc")
 
-    await user.click(screen.getByRole("combobox"))
-    await user.click(await screen.findByRole("option", { name: "Best Match" }))
+    await user.click(screen.getAllByRole("radio", { name: "Best Match" })[0])
 
     const [url] = router.push.mock.calls[0] as [string]
     expect(new URLSearchParams(url.split("?")[1]).has("sort")).toBe(false)
   })
 
-  it("changing the page size resets to page 1", async () => {
-    const user = userEvent.setup()
-    const { router } = renderListing({}, "page=4&size=20")
+  it("changing the page size resets to page 1", () => {
+    renderListing({}, "page=4&size=20")
 
-    await user.click(screen.getByRole("button", { name: "50" }))
-
-    const [url] = router.push.mock.calls[0] as [string]
-    const params = new URLSearchParams(url.split("?")[1])
+    const link = screen.getByRole("link", { name: "50" })
+    const params = new URLSearchParams(link.getAttribute("href")!.split("?")[1])
     expect(params.get("size")).toBe("50")
     expect(params.get("page")).toBe("1")
   })
