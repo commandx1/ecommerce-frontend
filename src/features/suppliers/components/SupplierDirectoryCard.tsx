@@ -1,6 +1,7 @@
 import { Heart, Mail, Star } from "lucide-react"
 import Link from "next/link"
 import { SpotlightCard } from "@/components/ui/spotlight-card"
+import SupplierAboutText from "@/features/suppliers/components/SupplierAboutText"
 import type { SupplierDirectoryItem } from "@/features/suppliers/suppliersPageData"
 import { cn } from "@/lib/utils"
 
@@ -14,8 +15,8 @@ export default function SupplierDirectoryCard({
   onToggleFavorite?: () => void
 }) {
   return (
-    <SpotlightCard className="rounded-[1.25rem] shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-panel">
-      <article className="overflow-hidden rounded-[1.25rem] bg-surface-elevated p-6">
+    <SpotlightCard className="h-full rounded-[1.25rem] shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-panel">
+      <article className="flex h-full flex-col overflow-hidden rounded-[1.25rem] bg-surface-elevated p-6">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <h3 className="text-xl font-semibold text-text-primary">{supplier.name}</h3>
@@ -47,9 +48,11 @@ export default function SupplierDirectoryCard({
           <span className="text-sm text-text-secondary">({numericFormatter.format(supplier.reviewCount)} ratings)</span>
         </div>
 
-        {supplier.about ? <p className="mb-5 text-sm leading-6 text-text-secondary">{supplier.about}</p> : null}
+        {supplier.about ? (
+          <SupplierAboutText text={supplier.about} className="mb-5 text-sm leading-6 text-text-secondary" />
+        ) : null}
 
-        <div className="flex items-center gap-3">
+        <div className="mt-auto flex items-center gap-3">
           <Link
             href={`/products?vendors=${supplier.id}`}
             className="flex-1 rounded-full bg-brand px-4 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-brand-strong"

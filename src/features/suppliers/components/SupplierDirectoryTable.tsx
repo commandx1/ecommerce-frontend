@@ -1,5 +1,6 @@
 import { Heart, Mail, Star } from "lucide-react"
 import Link from "next/link"
+import SupplierAboutText from "@/features/suppliers/components/SupplierAboutText"
 import type { SupplierDirectoryItem } from "@/features/suppliers/suppliersPageData"
 import { cn } from "@/lib/utils"
 
@@ -66,7 +67,10 @@ export default function SupplierDirectoryTable({ suppliers, onToggleFavorite }: 
                     <div>
                       <p className="font-semibold text-text-primary">{supplier.name}</p>
                       {supplier.about ? (
-                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-text-secondary">{supplier.about}</p>
+                        <SupplierAboutText
+                          text={supplier.about}
+                          className="mt-1 text-xs leading-5 text-text-secondary"
+                        />
                       ) : null}
                     </div>
                   </div>
