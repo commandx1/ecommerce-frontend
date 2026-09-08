@@ -4,6 +4,7 @@ import { LogOut, Menu, ShoppingCart, X } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useId } from "react"
+import MainSearchbox from "@/components/search/main-searchbox/MainSearchbox"
 import ThemeToggle from "@/components/theme/ThemeToggle"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
@@ -24,6 +25,7 @@ interface DashboardHeaderProps {
   accountFallbackName?: string
   accountMenuClassName?: string
   showCart?: boolean
+  showSearch?: boolean
 }
 
 export default function DashboardHeader({
@@ -31,6 +33,7 @@ export default function DashboardHeader({
   accountFallbackName = "Account",
   accountMenuClassName,
   showCart = false,
+  showSearch = false,
 }: DashboardHeaderProps) {
   const headerId = useId()
   const pathname = usePathname()
@@ -102,6 +105,12 @@ export default function DashboardHeader({
             ) : null}
           </div>
 
+          {showSearch ? (
+            <div className="mx-4 hidden min-w-0 flex-1 lg:mx-8 lg:block">
+              <MainSearchbox />
+            </div>
+          ) : null}
+
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             {showCart ? (
               <Link
@@ -133,6 +142,12 @@ export default function DashboardHeader({
             />
           </div>
         </div>
+
+        {showSearch ? (
+          <div className="pb-3 lg:hidden">
+            <MainSearchbox />
+          </div>
+        ) : null}
       </div>
     </header>
   )

@@ -85,6 +85,20 @@ describe("DashboardHeader", () => {
     expect(await screen.findByText("4")).toBeInTheDocument()
   })
 
+  it("hides the search box unless the header is configured to show it", () => {
+    signIn()
+    renderHeader()
+
+    expect(screen.queryByPlaceholderText("Search products, brands, or suppliers...")).not.toBeInTheDocument()
+  })
+
+  it("shows the search box when showSearch is enabled", () => {
+    signIn()
+    renderHeader({ showSearch: true })
+
+    expect(screen.getAllByPlaceholderText("Search products, brands, or suppliers...").length).toBeGreaterThan(0)
+  })
+
   it("toggles the mobile sidebar drawer", async () => {
     const user = userEvent.setup()
     signIn()

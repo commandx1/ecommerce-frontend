@@ -12,5 +12,5 @@ const BUYER_NAV_ITEMS: DashboardHeaderNavItem[] = [
 ]
 
 export default function BuyerHeader() {
-  return <DashboardHeader navItems={BUYER_NAV_ITEMS} accountFallbackName="Account" showCart />
+  return <DashboardHeader navItems={BUYER_NAV_ITEMS} accountFallbackName="Account" showCart showSearch />
 }
