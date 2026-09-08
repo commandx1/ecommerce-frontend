@@ -1,4 +1,4 @@
-import { Receipt, Truck, Weight } from "lucide-react"
+import { Truck, Weight } from "lucide-react"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 
 interface CartItemPriceProps {
@@ -49,7 +49,6 @@ export default function CartItemPrice({
 }: CartItemPriceProps) {
   const shipmentFeeTotal = shipmentFee * quantity
   const heavyShipmentFeeTotal = heavyShippingSurcharge * quantity
-  const totalShipmentFee = shipmentFeeTotal + heavyShipmentFeeTotal
   const formattedDiscount = Number.isInteger(discount) ? `${discount}` : discount.toFixed(1)
 
   return (
@@ -66,10 +65,7 @@ export default function CartItemPrice({
 
       <div className="mt-2 min-w-[9.75rem] space-y-1.5 rounded-xl border border-border-soft/70 bg-surface-muted/60 px-2.5 py-2">
         <FeeRow icon={Truck} label="Shipment" amount={shipmentFeeTotal} />
-        <FeeRow icon={Weight} label="Heavy fee" amount={heavyShipmentFeeTotal} />
-        <div className="border-t border-border-soft/70 pt-1.5">
-          <FeeRow icon={Receipt} label="Total" amount={totalShipmentFee} emphasis />
-        </div>
+        {heavyShipmentFeeTotal > 0 ? <FeeRow icon={Weight} label="Heavy fee" amount={heavyShipmentFeeTotal} /> : null}
       </div>
     </div>
   )

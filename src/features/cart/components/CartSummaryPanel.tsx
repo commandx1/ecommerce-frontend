@@ -51,14 +51,9 @@ export default function CartSummaryPanel({
   const summaryRows: SummaryRow[] = [
     { label: `Subtotal (${itemsCount} items)`, value: formatCurrency(totals.subtotal) },
     { label: "Shipment fee", value: totals.shipmentFee === 0 ? "Free" : formatCurrency(totals.shipmentFee) },
-    {
-      label: "Heavy shipment fee",
-      value: totals.heavyShipmentFee === 0 ? "Free" : formatCurrency(totals.heavyShipmentFee),
-    },
-    {
-      label: "Total shipment fee",
-      value: totals.totalShipmentFee === 0 ? "Free" : formatCurrency(totals.totalShipmentFee),
-    },
+    ...(totals.heavyShipmentFee > 0
+      ? [{ label: "Heavy shipment fee", value: formatCurrency(totals.heavyShipmentFee) }]
+      : []),
     { label: "Estimated Tax", value: taxValue, isLoading: isTaxLoading },
   ]
 

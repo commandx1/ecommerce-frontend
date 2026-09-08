@@ -92,9 +92,42 @@ describe("CartItemCard", () => {
 
     expect(screen.getByText("$15.00")).toBeInTheDocument() // shipment 5 x 3
     expect(screen.getByText("$60.00")).toBeInTheDocument() // heavy 20 x 3
-    expect(screen.getByText("$75.00")).toBeInTheDocument() // total shipping
     expect(screen.getByText("-50%")).toBeInTheDocument()
     expect(screen.getByText("$100.00")).toBeInTheDocument() // struck-through old price
+  })
+
+  it("never renders a Total fee row in the shipping fee box", () => {
+    renderCard(
+      makeCartItem({
+        quantity: 3,
+        userProduct: makeCartUserProduct({ shipmentFee: 5, heavyShippingSurcharge: 20 }),
+      }),
+    )
+
+    expect(screen.queryByText("Total")).not.toBeInTheDocument()
+  })
+
+  it("hides the heavy fee row when the heavy shipping surcharge is zero", () => {
+    renderCard(
+      makeCartItem({
+        quantity: 3,
+        userProduct: makeCartUserProduct({ shipmentFee: 5, heavyShippingSurcharge: 0 }),
+      }),
+    )
+
+    expect(screen.queryByText("Heavy fee")).not.toBeInTheDocument()
+  })
+
+  it("shows the heavy fee row, multiplied by quantity, when the heavy surcharge is greater than zero", () => {
+    renderCard(
+      makeCartItem({
+        quantity: 3,
+        userProduct: makeCartUserProduct({ shipmentFee: 5, heavyShippingSurcharge: 20 }),
+      }),
+    )
+
+    expect(screen.getByText("Heavy fee")).toBeInTheDocument()
+    expect(screen.getByText("$60.00")).toBeInTheDocument() // heavy 20 x 3
   })
 
   it("hides the discount badge and old price when there is no discount", () => {

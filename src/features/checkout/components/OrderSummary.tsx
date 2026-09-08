@@ -16,9 +16,9 @@ export default function OrderSummary() {
     items,
     selectedShippingEtaText,
     selectedVendorShippingMethods,
-    shipmentFee,
+    shipping,
+    hasSelectedShipping,
     heavyShipmentFee,
-    totalShipmentFee,
     shippingAddress,
     subtotal,
     tax,
@@ -55,9 +55,9 @@ export default function OrderSummary() {
         isTaxLoading={isTaxLoading}
         itemCount={items.reduce((totalQuantity, item) => totalQuantity + item.quantity, 0)}
         subtotal={subtotal}
-        shipmentFee={shipmentFee}
+        shipping={shipping}
+        hasSelectedShipping={hasSelectedShipping}
         heavyShipmentFee={heavyShipmentFee}
-        totalShipmentFee={totalShipmentFee}
         tax={tax}
         total={total}
         volumeDiscount={volumeDiscount}

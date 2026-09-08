@@ -56,8 +56,35 @@ describe("CartSummaryPanel", () => {
   it('labels a zero shipment fee as "Free" rather than $0.00', () => {
     renderPanel({ totals: makeTotals({ shipmentFee: 0, heavyShipmentFee: 0, totalShipmentFee: 0 }) })
 
-    expect(screen.getAllByText("Free")).toHaveLength(3)
+    expect(screen.getAllByText("Free")).toHaveLength(1)
     expect(screen.queryByText("$0.00")).not.toBeInTheDocument()
+  })
+
+  it("never shows a Total shipment fee row", () => {
+    renderPanel({ totals: makeTotals({ heavyShipmentFee: 0, totalShipmentFee: 0 }) })
+    expect(screen.queryByText("Total shipment fee")).not.toBeInTheDocument()
+
+    renderPanel({ totals: makeTotals({ heavyShipmentFee: 4, totalShipmentFee: 14 }) })
+    expect(screen.queryByText("Total shipment fee")).not.toBeInTheDocument()
+  })
+
+  it("hides the heavy shipment fee row when it is zero", () => {
+    renderPanel({ totals: makeTotals({ heavyShipmentFee: 0 }) })
+
+    expect(screen.queryByText("Heavy shipment fee")).not.toBeInTheDocument()
+  })
+
+  it("shows the heavy shipment fee row with its amount when it is greater than zero", () => {
+    renderPanel({ totals: makeTotals({ heavyShipmentFee: 4.25, total: 134.75 }) })
+
+    expect(screen.getByText("Heavy shipment fee")).toBeInTheDocument()
+    expect(screen.getByText("$4.25")).toBeInTheDocument()
+  })
+
+  it("renders the total unchanged from the totals prop regardless of the heavy fee", () => {
+    renderPanel({ totals: makeTotals({ heavyShipmentFee: 4.25, total: 999.99 }) })
+
+    expect(screen.getByText("$999.99")).toBeInTheDocument()
   })
 
   it("hides the tax figure behind a spinner while it is being estimated", () => {

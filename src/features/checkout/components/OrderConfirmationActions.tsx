@@ -1,4 +1,4 @@
-import { Home, Package } from "lucide-react"
+import { Package, Store } from "lucide-react"
 import Link from "next/link"
 import ActionButton from "@/components/ui/ActionButton"
 
@@ -16,7 +16,7 @@ export default function OrderConfirmationActions({ onContinueShopping }: OrderCo
         </Link>
       </ActionButton>
       <ActionButton type="button" onClick={onContinueShopping}>
-        <Home className="mr-2 w-5 h-5" />
+        <Store className="mr-2 w-5 h-5" />
         Continue Shopping
       </ActionButton>
     </div>

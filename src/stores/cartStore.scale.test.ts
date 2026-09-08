@@ -114,16 +114,13 @@ describe("useOrderSummary at 10,000 lines — totals and floating-point accumula
     const elapsedMs = performance.now() - start
 
     const expectedSubtotal = items.reduce((sum, item) => sum + item.userProduct.price * item.quantity, 0)
-    const expectedShipmentFee = items.reduce((sum, item) => sum + item.userProduct.shipmentFee * item.quantity, 0)
     const expectedHeavyFee = items.reduce(
       (sum, item) => sum + item.userProduct.heavyShippingSurcharge * item.quantity,
       0,
     )
 
     expect(result.current.subtotal).toBe(expectedSubtotal)
-    expect(result.current.shipmentFee).toBeCloseTo(expectedShipmentFee, 6)
     expect(result.current.heavyShipmentFee).toBeCloseTo(expectedHeavyFee, 6)
-    expect(result.current.totalShipmentFee).toBeCloseTo(expectedShipmentFee + expectedHeavyFee, 6)
     // Volume discount kicks in above $2000 — this cart clears it comfortably.
     expect(result.current.subtotal).toBeGreaterThan(2000)
     expect(result.current.volumeDiscount).toBeCloseTo(expectedSubtotal * 0.05, 6)

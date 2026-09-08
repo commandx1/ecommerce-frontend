@@ -6,7 +6,7 @@ import formatCurrency from "@/lib/helpers/formatCurrency"
 interface VendorShipmentRatesProps {
   sellerId: string
   sellerName: string
-  items: { userProductId: string; productId: string; name: string; quantity: number }[]
+  items: { userProductId: string; productId: string; name: string; quantity: number; shipmentFee: number }[]
   addressId: string
   cartId: string
   onSelect: (sellerId: string, rate: ShipmentRate | UberQuote) => void
@@ -287,6 +287,14 @@ export default function VendorShipmentRates({
     }
   }, [addressId, cartId, items, sellerId])
 
+  // The seller's plain product shipment fee (heavy surcharge EXCLUDED), used only as the "Great
+  // deal" badge's comparison base — see the badge computation below for why this must diverge
+  // from `defaultShipmentFee`.
+  const vendorShipmentFee = useMemo(
+    () => items.reduce((sum, item) => sum + (item.shipmentFee ?? 0) * item.quantity, 0),
+    [items],
+  )
+
   const sortedRates = useMemo(
     () =>
       [...rates].sort(
@@ -389,9 +397,15 @@ export default function VendorShipmentRates({
               defaultShipmentFee !== null && Number.isFinite(methodAmount) && defaultShipmentFee < methodAmount
                 ? defaultShipmentFee
                 : methodAmount
-            const isGreatDeal =
-              defaultShipmentFee !== null && Number.isFinite(methodAmount) && methodAmount < defaultShipmentFee
-            const discountAmount = isGreatDeal && defaultShipmentFee !== null ? defaultShipmentFee - methodAmount : 0
+            // Backend: `defaultShipmentFee` bundles the heavy shipping surcharge on top of the
+            // plain product shipment fee (ShipmentService.java:493-513) — it's a price ceiling
+            // used to cap what the buyer can be charged, not a discountable fee. Comparing the
+            // badge against it would credit the buyer for "saving" money on a surcharge that was
+            // never really being charged as a discount target, so the badge instead compares the
+            // carrier rate against `vendorShipmentFee` (heavy excluded) while the displayed price
+            // and cap above stay pinned to `defaultShipmentFee` for backend parity.
+            const isGreatDeal = Number.isFinite(methodAmount) && methodAmount < vendorShipmentFee
+            const discountAmount = isGreatDeal ? vendorShipmentFee - methodAmount : 0
             const selectableRate: ShipmentRate =
               Number.isFinite(effectiveAmount) && effectiveAmount >= 0
                 ? { ...rate, amount: effectiveAmount.toFixed(2) }

@@ -58,7 +58,7 @@ describe("OrderConfirmationItems", () => {
     it("renders the item status badge", () => {
       render(<OrderConfirmationItems orderResult={orderResult({ orderItems: [baseItem({ status: "DELIVERED" })] })} />)
 
-      expect(screen.getByText("DELIVERED")).toBeInTheDocument()
+      expect(screen.getAllByText("Delivered").length).toBeGreaterThan(0)
     })
 
     it("renders one card per order item, each keyed by its own id", () => {
@@ -181,7 +181,7 @@ describe("OrderConfirmationItems", () => {
     it("shows a broken/negative price through formatCurrency rather than a raw number or NaN", () => {
       render(<OrderConfirmationItems orderResult={orderResult({ orderItems: [baseItem({ price: Number.NaN })] })} />)
 
-      expect(screen.getByText("$0.00")).toBeInTheDocument()
+      expect(screen.getAllByText("$0.00").length).toBeGreaterThan(0)
     })
 
     it("renders duplicate item ids without crashing", () => {
@@ -214,6 +214,107 @@ describe("OrderConfirmationItems", () => {
 
       expect(screen.queryByText("Shipping Links")).not.toBeInTheDocument()
       expect(screen.queryByText("Tracking Links")).not.toBeInTheDocument()
+    })
+  })
+
+  describe("auto order badges and schedules", () => {
+    it("shows the Auto order badge and its named schedule", () => {
+      render(
+        <OrderConfirmationItems orderResult={orderResult()} autoOrderPeriods={{ "user-product-1": "ONE_MONTH" }} />,
+      )
+
+      expect(screen.getByText("Auto order")).toBeInTheDocument()
+      expect(screen.getByText("Every 30 days")).toBeInTheDocument()
+    })
+
+    it("shows a generic repeat message, never a raw null, when the schedule's period is unknown", () => {
+      const { container } = render(
+        <OrderConfirmationItems orderResult={orderResult()} autoOrderPeriods={{ "user-product-1": null }} />,
+      )
+
+      expect(screen.getByText("Auto order")).toBeInTheDocument()
+      expect(screen.getByText("Repeats automatically")).toBeInTheDocument()
+      expectNoRawNullText(container)
+    })
+
+    it("shows that the repeat schedule is still being set up when it is pending and unnamed", () => {
+      render(
+        <OrderConfirmationItems
+          orderResult={orderResult()}
+          autoOrderPeriods={{ "user-product-1": null }}
+          autoOrderPending
+        />,
+      )
+
+      expect(screen.getByText("Setting up your repeat order")).toBeInTheDocument()
+    })
+
+    it("names a known schedule even while the auto order poll is still pending", () => {
+      // The period is read off the payload that was sent, so waiting on the Stripe webhook poll
+      // would hide a fact this screen already knows.
+      render(
+        <OrderConfirmationItems
+          orderResult={orderResult()}
+          autoOrderPeriods={{ "user-product-1": "ONE_MONTH" }}
+          autoOrderPending
+        />,
+      )
+
+      expect(screen.getByText("Every 30 days")).toBeInTheDocument()
+      expect(screen.queryByText("Setting up your repeat order")).not.toBeInTheDocument()
+    })
+
+    it("does not show the Auto order badge for a one-off line", () => {
+      render(<OrderConfirmationItems orderResult={orderResult()} />)
+
+      expect(screen.queryByText("Auto order")).not.toBeInTheDocument()
+    })
+  })
+
+  describe("collapsible rows", () => {
+    it("renders each item as a details element, closed by default", () => {
+      const { container } = render(
+        <OrderConfirmationItems
+          orderResult={orderResult({
+            orderItems: [
+              baseItem({ id: "item-1", productName: "Composite Kit" }),
+              baseItem({ id: "item-2", productName: "Curing Light" }),
+            ],
+          })}
+        />,
+      )
+
+      const detailsElements = container.querySelectorAll("details")
+      expect(detailsElements).toHaveLength(2)
+      detailsElements.forEach((details) => {
+        expect(details).not.toHaveAttribute("open")
+      })
+    })
+
+    it("shows the row total as price times quantity", () => {
+      render(
+        <OrderConfirmationItems orderResult={orderResult({ orderItems: [baseItem({ price: 42.5, quantity: 2 })] })} />,
+      )
+
+      expect(screen.getAllByText("$85.00").length).toBeGreaterThan(0)
+    })
+
+    it("counts the items in the section header", () => {
+      const { rerender } = render(
+        <OrderConfirmationItems orderResult={orderResult({ orderItems: [baseItem({ id: "item-1" })] })} />,
+      )
+
+      expect(screen.getByText("1 item")).toBeInTheDocument()
+
+      rerender(
+        <OrderConfirmationItems
+          orderResult={orderResult({
+            orderItems: [baseItem({ id: "item-1" }), baseItem({ id: "item-2", productName: "Curing Light" })],
+          })}
+        />,
+      )
+
+      expect(screen.getByText("2 items")).toBeInTheDocument()
     })
   })
 })

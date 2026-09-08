@@ -96,7 +96,7 @@ function seedCache(
   window.localStorage.setItem(key, JSON.stringify({ fetchedAt, data }))
 }
 
-const items = [{ userProductId: "up-1", productId: "prod-1", name: "Widget", quantity: 2 }]
+const items = [{ userProductId: "up-1", productId: "prod-1", name: "Widget", quantity: 2, shipmentFee: 0 }]
 
 beforeEach(() => {
   vi.restoreAllMocks()
@@ -315,8 +315,8 @@ describe("VendorShipmentRates — cache key distinctness", () => {
     // userProductId and productId are deliberately NOT alphabetically aligned (up-a carries the
     // "later" productId) — if the sort ever fell through to the wrong tie-break field, this pair
     // would sort differently than a naive same-alignment fixture would reveal.
-    const itemA = { userProductId: "up-a", productId: "prod-z", name: "A", quantity: 1 }
-    const itemB = { userProductId: "up-b", productId: "prod-a", name: "B", quantity: 3 }
+    const itemA = { userProductId: "up-a", productId: "prod-z", name: "A", quantity: 1, shipmentFee: 0 }
+    const itemB = { userProductId: "up-b", productId: "prod-a", name: "B", quantity: 3, shipmentFee: 0 }
 
     getRates.mockResolvedValue({ shippoRates: [makeShippoRate()], uberQuote: null })
     const onSelect = vi.fn()
@@ -356,13 +356,13 @@ describe("VendorShipmentRates — cache key distinctness", () => {
   it.each([
     [
       "two lines for the same seller product listing with different productIds",
-      { userProductId: "up-shared", productId: "prod-a", name: "A", quantity: 1 },
-      { userProductId: "up-shared", productId: "prod-b", name: "B", quantity: 1 },
+      { userProductId: "up-shared", productId: "prod-a", name: "A", quantity: 1, shipmentFee: 0 },
+      { userProductId: "up-shared", productId: "prod-b", name: "B", quantity: 1, shipmentFee: 0 },
     ],
     [
       "two lines for the same seller product and catalog product, different quantities",
-      { userProductId: "up-shared", productId: "prod-same", name: "A", quantity: 5 },
-      { userProductId: "up-shared", productId: "prod-same", name: "B", quantity: 1 },
+      { userProductId: "up-shared", productId: "prod-same", name: "A", quantity: 5, shipmentFee: 0 },
+      { userProductId: "up-shared", productId: "prod-same", name: "B", quantity: 1, shipmentFee: 0 },
     ],
   ])("stays reorder-stable even when %s (userProductId tie-break)", async (_label, itemA, itemB) => {
     const { addressId, cartId, sellerId } = uniqueIds()
@@ -542,8 +542,8 @@ describe("VendorShipmentRates — outgoing request payload (A axis)", () => {
   it("sends the exact addressId/userId/cartId/parcels payload the backend expects", async () => {
     const { addressId, cartId, sellerId } = uniqueIds()
     const twoItems = [
-      { userProductId: "up-1", productId: "prod-1", name: "Widget", quantity: 2 },
-      { userProductId: "up-2", productId: "prod-2", name: "Gadget", quantity: 7 },
+      { userProductId: "up-1", productId: "prod-1", name: "Widget", quantity: 2, shipmentFee: 0 },
+      { userProductId: "up-2", productId: "prod-2", name: "Gadget", quantity: 7, shipmentFee: 0 },
     ]
     getRates.mockResolvedValue({ shippoRates: [makeShippoRate()], uberQuote: null })
     const onSelect = vi.fn()
@@ -680,8 +680,10 @@ describe("VendorShipmentRates — rate selection and pricing", () => {
     await waitFor(() => expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ amount: "25.00" })))
   })
 
-  it("shows a Great deal badge with the correct discount when the carrier rate undercuts the flat fee", async () => {
+  it("shows a Great deal badge with the correct discount when the carrier rate undercuts the plain shipment fee", async () => {
     const { addressId, cartId, sellerId } = uniqueIds()
+    // quantity 1 * shipmentFee 25 => vendorShipmentFee 25 (heavy excluded; there is none here).
+    const itemsWithFee = [{ userProductId: "up-1", productId: "prod-1", name: "Widget", quantity: 1, shipmentFee: 25 }]
     getRates.mockResolvedValue({
       shippoRates: [makeShippoRate({ objectId: "cheap-carrier", amount: "10.00" })],
       uberQuote: null,
@@ -693,7 +695,7 @@ describe("VendorShipmentRates — rate selection and pricing", () => {
       <VendorShipmentRates
         sellerId={sellerId}
         sellerName="Acme Dental"
-        items={items}
+        items={itemsWithFee}
         addressId={addressId}
         cartId={cartId}
         onSelect={onSelect}
@@ -705,21 +707,26 @@ describe("VendorShipmentRates — rate selection and pricing", () => {
   })
 
   /**
-   * The boundary itself. `isGreatDeal` is `methodAmount < defaultShipmentFee`, so a carrier rate
-   * that exactly equals the flat fee is NOT a deal - there is nothing to discount. Getting this
-   * wrong invents a "$0.00 shipping discount" badge on an ordinary rate, and the mirror condition
-   * (`defaultShipmentFee < methodAmount`) decides whether the buyer is charged the carrier price
-   * or the flat one. Both are money, and neither was pinned before.
+   * The boundary itself. `isGreatDeal` is `methodAmount < vendorShipmentFee` (the plain product
+   * shipment fee, heavy surcharge excluded — NOT `defaultShipmentFee`, which bundles the heavy
+   * surcharge and is a price ceiling, not a discountable fee). A carrier rate that exactly equals
+   * the plain fee is NOT a deal - there is nothing to discount. Getting this wrong invents a
+   * "$0.00 shipping discount" badge on an ordinary rate. `defaultShipmentFee` is varied
+   * independently here to confirm the badge truly never looks at it (only the displayed/capped
+   * price does).
    */
   it.each([
-    ["under the flat fee", "10.00", 25, true, "$10.00"],
-    ["exactly the flat fee", "25.00", 25, false, "$25.00"],
-    ["over the flat fee", "40.00", 25, false, "$25.00"],
+    ["under the plain fee", "10.00", 25, true, "$10.00"],
+    ["exactly the plain fee", "25.00", 25, false, "$25.00"],
+    ["over the plain fee", "40.00", 25, false, "$25.00"],
     // `undefined`, not null: the API type is `defaultShipmentFee?: number`, so "no flat fee"
-    // reaches the component as an absent field.
-    ["with no flat fee at all", "10.00", undefined, false, "$10.00"],
+    // reaches the component as an absent field. The badge still fires off `vendorShipmentFee`
+    // regardless — it never depended on `defaultShipmentFee` being present.
+    ["with no flat fee at all", "10.00", undefined, true, "$10.00"],
   ])("carrier rate %s: deal badge %s", async (_label, amount, defaultShipmentFee, expectsBadge, expectedPrice) => {
     const { addressId, cartId, sellerId } = uniqueIds()
+    // quantity 1 * shipmentFee 25 => vendorShipmentFee 25, independent of `defaultShipmentFee`.
+    const itemsWithFee = [{ userProductId: "up-1", productId: "prod-1", name: "Widget", quantity: 1, shipmentFee: 25 }]
     getRates.mockResolvedValue({
       shippoRates: [makeShippoRate({ objectId: "rate-boundary", amount })],
       uberQuote: null,
@@ -730,7 +737,7 @@ describe("VendorShipmentRates — rate selection and pricing", () => {
       <VendorShipmentRates
         sellerId={sellerId}
         sellerName="Acme Dental"
-        items={items}
+        items={itemsWithFee}
         addressId={addressId}
         cartId={cartId}
         onSelect={vi.fn()}
@@ -777,25 +784,30 @@ describe("VendorShipmentRates — rate selection and pricing", () => {
     await waitFor(() => expect(screen.getByText(expected)).toBeInTheDocument())
   })
 
-  // The discount figure is `defaultShipmentFee - methodAmount`. If that arithmetic drifts the
-  // badge advertises a saving the buyer is not getting.
+  // The discount figure is `vendorShipmentFee - methodAmount` (the plain product shipment fee,
+  // heavy surcharge excluded). If that arithmetic drifts the badge advertises a saving the buyer
+  // is not getting.
   it.each([
     ["25.00", 40, "$15.00"],
     ["10.00", 12.5, "$2.50"],
     ["0.00", 25, "$25.00"],
-  ])("prices the discount as fee minus carrier rate (%s vs %s)", async (amount, defaultShipmentFee, expected) => {
+  ])("prices the discount as fee minus carrier rate (%s vs %s)", async (amount, vendorFee, expected) => {
     const { addressId, cartId, sellerId } = uniqueIds()
+    // quantity 1 so the per-item shipmentFee IS the vendorShipmentFee, matching the old
+    // `defaultShipmentFee` fixture values 1:1.
+    const itemsWithFee = [
+      { userProductId: "up-1", productId: "prod-1", name: "Widget", quantity: 1, shipmentFee: vendorFee },
+    ]
     getRates.mockResolvedValue({
       shippoRates: [makeShippoRate({ objectId: "rate-discount", amount })],
       uberQuote: null,
-      defaultShipmentFee,
     })
 
     render(
       <VendorShipmentRates
         sellerId={sellerId}
         sellerName="Acme Dental"
-        items={items}
+        items={itemsWithFee}
         addressId={addressId}
         cartId={cartId}
         onSelect={vi.fn()}
@@ -805,6 +817,86 @@ describe("VendorShipmentRates — rate selection and pricing", () => {
     await waitFor(() =>
       expect(screen.getByText(new RegExp(`Great deal: \\${expected} shipping discount`))).toBeInTheDocument(),
     )
+  })
+
+  it("shows no badge when the carrier rate is at or above the plain shipment fee", async () => {
+    const { addressId, cartId, sellerId } = uniqueIds()
+    const itemsWithFee = [{ userProductId: "up-1", productId: "prod-1", name: "Widget", quantity: 1, shipmentFee: 10 }]
+    getRates.mockResolvedValue({
+      shippoRates: [makeShippoRate({ objectId: "rate-no-deal", amount: "10.00" })],
+      uberQuote: null,
+    })
+
+    render(
+      <VendorShipmentRates
+        sellerId={sellerId}
+        sellerName="Acme Dental"
+        items={itemsWithFee}
+        addressId={addressId}
+        cartId={cartId}
+        onSelect={vi.fn()}
+      />,
+    )
+
+    await waitFor(() => expect(screen.getByText("$10.00")).toBeInTheDocument())
+    expect(screen.queryByText(/Great deal:/)).not.toBeInTheDocument()
+  })
+
+  it("shows no badge when the vendor's plain shipment fee is zero", async () => {
+    const { addressId, cartId, sellerId } = uniqueIds()
+    const itemsWithFee = [{ userProductId: "up-1", productId: "prod-1", name: "Widget", quantity: 1, shipmentFee: 0 }]
+    getRates.mockResolvedValue({
+      shippoRates: [makeShippoRate({ objectId: "rate-free-vendor-fee", amount: "5.00" })],
+      uberQuote: null,
+    })
+
+    render(
+      <VendorShipmentRates
+        sellerId={sellerId}
+        sellerName="Acme Dental"
+        items={itemsWithFee}
+        addressId={addressId}
+        cartId={cartId}
+        onSelect={vi.fn()}
+      />,
+    )
+
+    await waitFor(() => expect(screen.getByText("$5.00")).toBeInTheDocument())
+    expect(screen.queryByText(/Great deal:/)).not.toBeInTheDocument()
+  })
+
+  // Regression guard: the price cap must stay pinned to `defaultShipmentFee` (which bundles the
+  // heavy surcharge and can legitimately be much larger than the plain per-item fee) even though
+  // the badge base (`vendorShipmentFee`, heavy excluded) is much smaller.
+  it("keeps the displayed/selected price capped at defaultShipmentFee while showing no badge, when defaultShipmentFee (heavy included) is far above vendorShipmentFee", async () => {
+    const { addressId, cartId, sellerId } = uniqueIds()
+    // vendorShipmentFee = 5 (plain fee only); defaultShipmentFee = 30 (bundles a large heavy
+    // surcharge); the carrier rate (50) sits above defaultShipmentFee and so gets capped down to
+    // it — the same capping behavior as before this change, unaffected by the badge base moving.
+    const itemsWithFee = [{ userProductId: "up-1", productId: "prod-1", name: "Widget", quantity: 1, shipmentFee: 5 }]
+    const onSelect = vi.fn()
+    getRates.mockResolvedValue({
+      shippoRates: [makeShippoRate({ objectId: "rate-capped", amount: "50.00" })],
+      uberQuote: null,
+      defaultShipmentFee: 30,
+    })
+
+    render(
+      <VendorShipmentRates
+        sellerId={sellerId}
+        sellerName="Acme Dental"
+        items={itemsWithFee}
+        addressId={addressId}
+        cartId={cartId}
+        onSelect={onSelect}
+      />,
+    )
+
+    // Capped at defaultShipmentFee (30), not the raw carrier rate (50) and not vendorShipmentFee
+    // (5) — and no badge, since the raw carrier rate (50) is nowhere near vendorShipmentFee.
+    await waitFor(() => expect(screen.getByText("$30.00")).toBeInTheDocument())
+    expect(screen.queryByText(/Great deal:/)).not.toBeInTheDocument()
+    await waitFor(() => expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ amount: "30.00" })))
   })
 
   it("renders all shippo rates in ascending price order, not fetch order", async () => {

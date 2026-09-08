@@ -49,18 +49,33 @@ describe("CheckoutPage", () => {
     await waitFor(() => expect(router.push).toHaveBeenCalledWith("/cart"))
   })
 
-  it("renders the shipping step with the buyer's saved addresses", async () => {
+  it("renders the shipping step with the buyer's single address, not a picker", async () => {
     useCheckoutStore.setState({ currentStep: 2 })
 
     render(<CheckoutPage />)
 
-    expect(await screen.findByRole("heading", { name: "Select Shipping Address" })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: "Shipping Address" })).toBeInTheDocument()
     expect(screen.getAllByRole("heading", { name: "Clinic" }).length).toBeGreaterThan(0)
-    const addressRadios = screen
-      .getAllByRole("radio")
-      .filter((radio) => radio.getAttribute("name") === "shippingAddress")
-    expect(addressRadios).toHaveLength(1)
-    expect(addressRadios[0]).toBeChecked()
+    expect(
+      screen.queryAllByRole("radio").filter((radio) => radio.getAttribute("name") === "shippingAddress"),
+    ).toHaveLength(0)
+  })
+
+  it("shows only the primary address when older records left more than one behind", async () => {
+    server.use(
+      http.get("*/backend-api/address", () =>
+        HttpResponse.json([
+          makeAddress({ id: "addr-1", title: "Clinic", defaultAddress: false }),
+          makeAddress({ id: "addr-2", title: "Warehouse", defaultAddress: true }),
+        ]),
+      ),
+    )
+    useCheckoutStore.setState({ currentStep: 2 })
+
+    render(<CheckoutPage />)
+
+    expect((await screen.findAllByRole("heading", { name: "Warehouse" })).length).toBeGreaterThan(0)
+    expect(screen.queryByRole("heading", { name: "Clinic" })).not.toBeInTheDocument()
   })
 
   it("shows the order summary on every step except the confirmation", async () => {
@@ -111,13 +126,13 @@ describe("CheckoutPage", () => {
     expect(screen.getByRole("button", { name: /Continue to Billing/ })).toBeDisabled()
   })
 
-  it("routes 'Add New Address' to the buyer's address book", async () => {
+  it("routes 'Edit Address' to the buyer's address book", async () => {
     const user = userEvent.setup()
     useCheckoutStore.setState({ currentStep: 2 })
 
     const { router } = render(<CheckoutPage />)
 
-    await user.click(await screen.findByRole("button", { name: /Add New Address/ }))
+    await user.click(await screen.findByRole("button", { name: /Edit Address/ }))
 
     expect(router.push).toHaveBeenCalledWith("/buyer-dashboard/settings")
   })
@@ -134,28 +149,39 @@ describe("CheckoutPage", () => {
     await waitFor(() => expect(useCheckoutStore.getState().currentStep).toBe(3))
   })
 
-  it("warns that repeat deliveries ignore a non-primary address", async () => {
+  it("warns about repeat deliveries when the account has no primary address at all", async () => {
+    // The buyer can no longer pick a non-primary address here, so the only way this order can ship
+    // somewhere the auto order scheduler will not follow is an account whose records never marked
+    // one address as primary.
     server.use(
       http.get("*/backend-api/cart", () =>
         HttpResponse.json(makeCart({ cartItems: [makeCartItem({ autoOrder: "ONE_MONTH" })] })),
       ),
       http.get("*/backend-api/address", () =>
-        HttpResponse.json([
-          makeAddress({ id: "addr-1", title: "Clinic", defaultAddress: false }),
-          makeAddress({ id: "addr-2", title: "Home", defaultAddress: true }),
-        ]),
+        HttpResponse.json([makeAddress({ id: "addr-1", title: "Clinic", defaultAddress: false })]),
       ),
     )
     useCheckoutStore.setState({ currentStep: 2 })
-    const user = userEvent.setup()
+
+    render(<CheckoutPage />)
+
+    expect(await screen.findByText("Auto order deliveries use your primary address")).toBeInTheDocument()
+  })
+
+  it("stays quiet about repeat deliveries when the shown address is the primary one", async () => {
+    server.use(
+      http.get("*/backend-api/cart", () =>
+        HttpResponse.json(makeCart({ cartItems: [makeCartItem({ autoOrder: "ONE_MONTH" })] })),
+      ),
+      http.get("*/backend-api/address", () =>
+        HttpResponse.json([makeAddress({ id: "addr-1", title: "Clinic", defaultAddress: true })]),
+      ),
+    )
+    useCheckoutStore.setState({ currentStep: 2 })
 
     render(<CheckoutPage />)
 
     await screen.findAllByRole("heading", { name: "Clinic" })
     expect(screen.queryByText("Auto order deliveries use your primary address")).not.toBeInTheDocument()
-
-    await user.click(screen.getAllByRole("radio")[0] as HTMLElement)
-
-    expect(await screen.findByText("Auto order deliveries use your primary address")).toBeInTheDocument()
   })
 })

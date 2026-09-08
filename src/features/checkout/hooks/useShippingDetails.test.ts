@@ -205,6 +205,38 @@ describe("useShippingDetails — vendor grouping", () => {
 
     expect(result.current.sellerGroups["Standard Seller"].name).toBe("Standard Seller")
   })
+
+  it("carries the per-unit product shipment fee through onto each seller group item", async () => {
+    useCartStore.setState({
+      items: [
+        makeCartItem({
+          userProduct: makeCartUserProduct({ userProductId: "up-1", sellerId: "seller-1", shipmentFee: 12.5 }),
+        }),
+      ],
+    })
+
+    const { result } = await mountHook()
+
+    expect(result.current.sellerGroups["seller-1"].items[0].shipmentFee).toBe(12.5)
+  })
+
+  it("treats a missing product shipment fee as zero rather than undefined", async () => {
+    useCartStore.setState({
+      items: [
+        makeCartItem({
+          userProduct: makeCartUserProduct({
+            userProductId: "up-1",
+            sellerId: "seller-1",
+            shipmentFee: undefined as unknown as number,
+          }),
+        }),
+      ],
+    })
+
+    const { result } = await mountHook()
+
+    expect(result.current.sellerGroups["seller-1"].items[0].shipmentFee).toBe(0)
+  })
 })
 
 describe("useShippingDetails — rate selection", () => {

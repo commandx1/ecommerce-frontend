@@ -190,12 +190,6 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
               </Link>
             ))}
           </nav>
-
-          <div className="flex items-center gap-3">
-            <span className="hidden rounded-full border border-border-soft bg-surface-elevated px-3 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.24em] text-text-muted md:inline-flex">
-              Verified vendors nationwide
-            </span>
-          </div>
         </div>
       </div>
 
@@ -271,10 +265,6 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
               <User className="w-4 h-4" /> Sign In
             </button>
           )}
-
-          <span className="mt-2 inline-flex w-fit rounded-full border border-border-soft bg-surface-elevated px-3 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.24em] text-text-muted">
-            Verified vendors nationwide
-          </span>
         </nav>
       </div>
     </header>

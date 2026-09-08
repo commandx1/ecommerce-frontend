@@ -113,6 +113,7 @@ export function useShippingDetails(): UseShippingDetailsResult {
         name: item.product.name,
         quantity: item.quantity,
         autoOrder: item.autoOrder,
+        shipmentFee: item.userProduct.shipmentFee ?? 0,
       })
 
       return groups

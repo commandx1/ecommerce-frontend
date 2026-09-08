@@ -4,9 +4,9 @@ import formatCurrency from "@/lib/helpers/formatCurrency"
 interface OrderSummaryTotalsProps {
   isTaxLoading: boolean
   itemCount: number
-  shipmentFee: number
+  shipping: number
+  hasSelectedShipping: boolean
   heavyShipmentFee: number
-  totalShipmentFee: number
   subtotal: number
   // null = tax could not be estimated yet (no address, or the estimate call failed) — render as
   // "calculated at checkout", not $0.00.
@@ -18,9 +18,9 @@ interface OrderSummaryTotalsProps {
 export default function OrderSummaryTotals({
   isTaxLoading,
   itemCount,
-  shipmentFee,
+  shipping,
+  hasSelectedShipping,
   heavyShipmentFee,
-  totalShipmentFee,
   subtotal,
   tax,
   total,
@@ -38,24 +38,18 @@ export default function OrderSummaryTotals({
           <span className="font-medium text-success">-{formatCurrency(volumeDiscount)}</span>
         </div>
       ) : null}
-      <div className="flex justify-between text-sm">
-        <span className="text-text-secondary">Shipment fee</span>
-        <span className="font-medium text-text-primary">
-          {shipmentFee === 0 ? "Free" : formatCurrency(shipmentFee)}
-        </span>
-      </div>
-      <div className="flex justify-between text-sm">
-        <span className="text-text-secondary">Heavy shipment fee</span>
-        <span className="font-medium text-text-primary">
-          {heavyShipmentFee === 0 ? "Free" : formatCurrency(heavyShipmentFee)}
-        </span>
-      </div>
-      <div className="flex justify-between text-sm">
-        <span className="text-text-secondary">Total shipment fee</span>
-        <span className="font-medium text-text-primary">
-          {totalShipmentFee === 0 ? "Free" : formatCurrency(totalShipmentFee)}
-        </span>
-      </div>
+      {hasSelectedShipping ? (
+        <div className="flex justify-between text-sm">
+          <span className="text-text-secondary">Shipment fee</span>
+          <span className="font-medium text-text-primary">{shipping === 0 ? "Free" : formatCurrency(shipping)}</span>
+        </div>
+      ) : null}
+      {heavyShipmentFee > 0 ? (
+        <div className="flex justify-between text-sm">
+          <span className="text-text-secondary">Heavy shipment fee</span>
+          <span className="font-medium text-text-primary">{formatCurrency(heavyShipmentFee)}</span>
+        </div>
+      ) : null}
       <div className="flex justify-between text-sm">
         <span className="text-text-secondary">Estimated Tax</span>
         {isTaxLoading ? (

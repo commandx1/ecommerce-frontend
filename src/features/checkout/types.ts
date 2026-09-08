@@ -10,6 +10,8 @@ export interface SellerGroupItem {
   quantity: number
   /** Carried over from the cart item; null for a one-off purchase. */
   autoOrder: AutoOrderPeriod | null
+  /** Per-unit product shipment fee (heavy surcharge excluded), carried over from the cart item. */
+  shipmentFee: number
 }
 
 export interface SellerGroup {

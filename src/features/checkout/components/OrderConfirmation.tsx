@@ -1,33 +1,62 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useEffect, useRef } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import OrderConfirmationActions from "@/features/checkout/components/OrderConfirmationActions"
-import OrderConfirmationAutoOrderNotice from "@/features/checkout/components/OrderConfirmationAutoOrderNotice"
 import OrderConfirmationHeader from "@/features/checkout/components/OrderConfirmationHeader"
 import OrderConfirmationItems from "@/features/checkout/components/OrderConfirmationItems"
 import OrderConfirmationShipping from "@/features/checkout/components/OrderConfirmationShipping"
 import OrderConfirmationStats from "@/features/checkout/components/OrderConfirmationStats"
 import { useAutoOrderRegistration } from "@/features/checkout/hooks/useAutoOrderRegistration"
+import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
 export default function OrderConfirmation() {
   const router = useRouter()
   const { clearCart } = useCartStore()
-  const { reset, orderResult, selectedVendorShippingMethods, selectedShippingCost } = useCheckoutStore()
-  const autoOrderRegistration = useAutoOrderRegistration()
+  const {
+    reset,
+    orderResult,
+    orderPayload,
+    autoOrderUserProductIds,
+    selectedVendorShippingMethods,
+    selectedShippingCost,
+  } = useCheckoutStore()
+  const { status: autoOrderStatus } = useAutoOrderRegistration()
   const confirmationRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     confirmationRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
   }, [])
 
+  /**
+   * The order response carries no schedule, so the repeat lines are read back off the payload
+   * snapshot that was actually sent. `autoOrderUserProductIds` is the fallback: it always lists the
+   * repeating lines, just without naming their period.
+   */
+  const autoOrderPeriods = useMemo(() => {
+    const periods: Record<string, AutoOrderPeriod | null> = {}
+
+    for (const userProductId of autoOrderUserProductIds) {
+      periods[userProductId] = null
+    }
+
+    const rateOrders = [...(orderPayload?.shippoRateOrders ?? []), ...(orderPayload?.uberRateOrders ?? [])]
+    for (const rateOrder of rateOrders) {
+      for (const product of rateOrder?.products ?? []) {
+        if (product?.autoOrder) periods[product.userProductId] = product.autoOrder
+      }
+    }
+
+    return periods
+  }, [orderPayload, autoOrderUserProductIds])
+
   const onContinueShopping = () => {
     void clearCart()
     reset()
-    router.push("/")
+    router.push("/products")
   }
 
   return (
@@ -43,10 +72,13 @@ export default function OrderConfirmation() {
                 totalShippingCost={selectedShippingCost}
               />
             </div>
-            <OrderConfirmationItems orderResult={orderResult} />
+            <OrderConfirmationItems
+              orderResult={orderResult}
+              autoOrderPeriods={autoOrderPeriods}
+              autoOrderPending={autoOrderStatus === "pending"}
+            />
           </>
         ) : null}
-        <OrderConfirmationAutoOrderNotice {...autoOrderRegistration} />
 
         <OrderConfirmationActions onContinueShopping={onContinueShopping} />
       </SurfaceCard>

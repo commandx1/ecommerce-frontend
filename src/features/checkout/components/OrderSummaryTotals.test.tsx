@@ -8,9 +8,9 @@ const renderTotals = (overrides: Partial<React.ComponentProps<typeof OrderSummar
       isTaxLoading={false}
       itemCount={3}
       subtotal={1234.5}
-      shipmentFee={0}
+      shipping={0}
+      hasSelectedShipping={false}
       heavyShipmentFee={0}
-      totalShipmentFee={0}
       tax={98.76}
       total={1333.26}
       volumeDiscount={0}
@@ -28,20 +28,36 @@ describe("OrderSummaryTotals", () => {
     expect(screen.getByText("$1,333.26")).toBeInTheDocument()
   })
 
-  it("shows 'Free' rather than $0.00 for waived shipping", () => {
-    renderTotals({ shipmentFee: 0, heavyShipmentFee: 0, totalShipmentFee: 0 })
+  it("does not show the shipment fee row until a shipping method is selected", () => {
+    renderTotals({ hasSelectedShipping: false, shipping: 0 })
 
-    expect(amountFor("Shipment fee")).toBe("Free")
-    expect(amountFor("Heavy shipment fee")).toBe("Free")
-    expect(amountFor("Total shipment fee")).toBe("Free")
+    expect(screen.queryByText("Shipment fee")).not.toBeInTheDocument()
   })
 
-  it("shows real shipping amounts when they are charged", () => {
-    renderTotals({ shipmentFee: 8.5, heavyShipmentFee: 75, totalShipmentFee: 83.5 })
+  it("shows 'Free' rather than $0.00 for waived shipping once a method is selected", () => {
+    renderTotals({ hasSelectedShipping: true, shipping: 0, heavyShipmentFee: 0 })
+
+    expect(amountFor("Shipment fee")).toBe("Free")
+    expect(screen.queryByText("Heavy shipment fee")).not.toBeInTheDocument()
+  })
+
+  it("shows the selected method's shipping cost once a method is selected", () => {
+    renderTotals({ hasSelectedShipping: true, shipping: 8.5, heavyShipmentFee: 75 })
 
     expect(amountFor("Shipment fee")).toBe("$8.50")
     expect(amountFor("Heavy shipment fee")).toBe("$75.00")
-    expect(amountFor("Total shipment fee")).toBe("$83.50")
+  })
+
+  it("hides the heavy shipment fee row when it is zero", () => {
+    renderTotals({ hasSelectedShipping: true, shipping: 8.5, heavyShipmentFee: 0 })
+
+    expect(screen.queryByText("Heavy shipment fee")).not.toBeInTheDocument()
+  })
+
+  it("never renders a 'Total shipment fee' row", () => {
+    renderTotals({ hasSelectedShipping: true, shipping: 8.5, heavyShipmentFee: 75 })
+
+    expect(screen.queryByText("Total shipment fee")).not.toBeInTheDocument()
   })
 
   it("hides the volume discount row when there is no discount", () => {

@@ -17,7 +17,6 @@ export default function ShippingDetails() {
     sellerGroups,
     showAutoOrderAddressNotice,
     onAddAddress,
-    onAddressChange,
     onRateSelect,
     onSubmit,
   } = useShippingDetails()
@@ -29,7 +28,6 @@ export default function ShippingDetails() {
         isLoading={isLoadingAddresses}
         selectedAddressId={selectedAddressId}
         onAddAddress={onAddAddress}
-        onSelectAddress={onAddressChange}
       />
 
       {showAutoOrderAddressNotice ? (

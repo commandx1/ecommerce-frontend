@@ -70,7 +70,7 @@ describe("useOrderSummary", () => {
     expect(result.current.volumeDiscount).toBe(120)
   })
 
-  it("splits the shipment fees into base, heavy and total", () => {
+  it("sums the heavy shipping surcharge across items", () => {
     useCartStore.setState({
       items: [
         makeCartItem({
@@ -88,12 +88,10 @@ describe("useOrderSummary", () => {
 
     const { result } = renderHook(() => useOrderSummary())
 
-    expect(result.current.shipmentFee).toBe(13)
     expect(result.current.heavyShipmentFee).toBe(40)
-    expect(result.current.totalShipmentFee).toBe(53)
   })
 
-  it("treats missing fee fields as zero rather than NaN", () => {
+  it("treats a missing heavy surcharge field as zero rather than NaN", () => {
     useCartStore.setState({
       items: [
         makeCartItem({
@@ -109,7 +107,44 @@ describe("useOrderSummary", () => {
 
     const { result } = renderHook(() => useOrderSummary())
 
-    expect(result.current.totalShipmentFee).toBe(0)
+    expect(result.current.heavyShipmentFee).toBe(0)
+  })
+
+  it("has no selected shipping method until selectedVendorShippingMethods is populated", () => {
+    const { result } = renderHook(() => useOrderSummary())
+
+    expect(result.current.hasSelectedShipping).toBe(false)
+  })
+
+  it("reports a selected shipping method once selectedVendorShippingMethods is populated", () => {
+    useCheckoutStore.setState({
+      selectedVendorShippingMethods: {
+        "seller-1": { sellerName: "Acme Dental", methodText: "Priority Mail - 2 business days", amount: 9.5 },
+      },
+    })
+
+    const { result } = renderHook(() => useOrderSummary())
+
+    expect(result.current.hasSelectedShipping).toBe(true)
+  })
+
+  it("does not add the heavy surcharge into the total (total = subtotal - discount + shipping + tax)", async () => {
+    const bodies = captureTaxRequests(1.5)
+    useCartStore.setState({
+      items: [
+        makeCartItem({
+          quantity: 1,
+          userProduct: makeCartUserProduct({ price: 100, shipmentFee: 5, heavyShippingSurcharge: 999 }),
+        }),
+      ],
+    })
+    useCheckoutStore.setState({ orderPayload: orderPayload(), selectedShippingCost: 15 })
+
+    const { result } = renderHook(() => useOrderSummary())
+
+    await waitFor(() => expect(bodies).toHaveLength(1))
+    await waitFor(() => expect(result.current.tax).toBe(1.5))
+    expect(result.current.total).toBeCloseTo(100 - 0 + 15 + 1.5, 5)
   })
 
   it("leaves tax unestimated (null) and never calls the backend without an address", async () => {

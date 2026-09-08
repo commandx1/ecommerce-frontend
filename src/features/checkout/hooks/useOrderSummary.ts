@@ -13,9 +13,8 @@ interface UseOrderSummaryResult {
   items: ReturnType<typeof useCartStore.getState>["items"]
   subtotal: number
   shipping: number
-  shipmentFee: number
   heavyShipmentFee: number
-  totalShipmentFee: number
+  hasSelectedShipping: boolean
   // null = not yet estimated (no address/items) or the estimate call failed — distinct from a
   // real $0 estimate the backend returned. Render this as "calculated at checkout", not $0.00.
   tax: number | null
@@ -50,13 +49,10 @@ export function useOrderSummary(): UseOrderSummaryResult {
   // total, and the UI below is responsible for making clear that tax is still to be added.
   const total = subtotal - volumeDiscount + shipping + (tax ?? 0)
 
-  const shipmentFee = useMemo(() => {
-    return items.reduce((sum, item) => sum + (item.userProduct.shipmentFee ?? 0) * item.quantity, 0)
-  }, [items])
   const heavyShipmentFee = useMemo(() => {
     return items.reduce((sum, item) => sum + (item.userProduct.heavyShippingSurcharge ?? 0) * item.quantity, 0)
   }, [items])
-  const totalShipmentFee = shipmentFee + heavyShipmentFee
+  const hasSelectedShipping = Object.keys(selectedVendorShippingMethods).length > 0
 
   const addressId = orderPayload?.addressId
 
@@ -117,9 +113,8 @@ export function useOrderSummary(): UseOrderSummaryResult {
     items,
     subtotal,
     shipping,
-    shipmentFee,
     heavyShipmentFee,
-    totalShipmentFee,
+    hasSelectedShipping,
     tax,
     isTaxLoading,
     total,
