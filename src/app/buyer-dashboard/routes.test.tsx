@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { describe, expect, it, vi } from "vitest"
 import { redirectMock } from "@/test/mocks/next-navigation"
 import { render, screen } from "@/test/render"
@@ -21,10 +22,11 @@ vi.mock("@/features/suppliers/FavoriteSuppliersPage", () => ({
   default: () => <div data-testid="favorite-suppliers-page" />,
 }))
 vi.mock("@/components/dashboard-shared/AccountSettingsShared", () => ({
-  default: ({ title, description }: { title: string; description: string }) => (
+  default: ({ title, description, children }: { title: string; description: string; children?: ReactNode }) => (
     <div data-testid="account-settings">
       <h1>{title}</h1>
       <p>{description}</p>
+      {children}
     </div>
   ),
 }))
@@ -61,18 +63,13 @@ describe("buyer dashboard routes", () => {
     expect(screen.getByTestId("favorite-suppliers-page")).toBeInTheDocument()
   })
 
-  it("passes buyer-facing copy into the shared settings screen", async () => {
+  it("passes buyer-facing copy into the shared settings screen and embeds the address manager", async () => {
     const { default: Page } = await import("./settings/page")
     render(<Page />)
 
     expect(screen.getByRole("heading", { name: "Account Settings" })).toBeInTheDocument()
     expect(screen.getByText("Manage your professional profile and security preferences.")).toBeInTheDocument()
-  })
-
-  it("renders the shared address manager at /buyer-dashboard/settings/addresses", async () => {
-    const { default: Page } = await import("./settings/addresses/page")
-    render(<Page />)
-
+    expect(screen.getByTestId("account-settings")).toBeInTheDocument()
     expect(screen.getByTestId("address-management")).toBeInTheDocument()
   })
 

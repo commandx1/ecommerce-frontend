@@ -32,7 +32,7 @@ export default function AutoOrderReadinessBanner({ readiness }: AutoOrderReadine
         {!readiness.hasPrimaryAddress ? (
           <li>
             <Link
-              href="/buyer-dashboard/settings/addresses"
+              href="/buyer-dashboard/settings"
               className="font-semibold text-brand underline underline-offset-2 hover:text-brand-strong"
             >
               Set a primary address

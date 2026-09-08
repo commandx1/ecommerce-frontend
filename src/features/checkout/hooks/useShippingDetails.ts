@@ -238,7 +238,7 @@ export function useShippingDetails(): UseShippingDetailsResult {
   )
 
   const onAddAddress = useCallback(() => {
-    router.push("/buyer-dashboard/settings/addresses")
+    router.push("/buyer-dashboard/settings")
   }, [router])
 
   const showAutoOrderAddressNotice = useMemo(() => {

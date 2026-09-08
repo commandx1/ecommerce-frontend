@@ -119,7 +119,7 @@ describe("CheckoutPage", () => {
 
     await user.click(await screen.findByRole("button", { name: /Add New Address/ }))
 
-    expect(router.push).toHaveBeenCalledWith("/buyer-dashboard/settings/addresses")
+    expect(router.push).toHaveBeenCalledWith("/buyer-dashboard/settings")
   })
 
   it("advances to billing once an address is chosen", async () => {

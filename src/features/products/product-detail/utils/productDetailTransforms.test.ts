@@ -224,6 +224,70 @@ describe("buildSuppliers", () => {
     expect(suppliers.map((s) => s.userProductId)).toEqual(["up-cheap", "up-expensive"])
   })
 
+  it("pins the Best Seller listing first even when it is the farthest away", () => {
+    const near: UserProduct = { ...baseUserProduct, id: "up-near", vendorDistance: "1 mi" }
+    const far: UserProduct = { ...baseUserProduct, id: "up-far", vendorDistance: "50 mi" }
+    const suppliers = buildSuppliers([near, far], "up-far")
+    expect(suppliers.map((s) => s.userProductId)).toEqual(["up-far", "up-near"])
+  })
+
+  it("sorts the non-best-seller suppliers from nearest to farthest by distance", () => {
+    const far: UserProduct = { ...baseUserProduct, id: "up-far", vendorDistance: "20 mi" }
+    const mid: UserProduct = { ...baseUserProduct, id: "up-mid", vendorDistance: "5 mi" }
+    const near: UserProduct = { ...baseUserProduct, id: "up-near", vendorDistance: "1 mi" }
+    const suppliers = buildSuppliers([far, near, mid], null)
+    expect(suppliers.map((s) => s.userProductId)).toEqual(["up-near", "up-mid", "up-far"])
+  })
+
+  it('parses "ft" distances as closer than "mi" distances', () => {
+    const feet: UserProduct = { ...baseUserProduct, id: "up-feet", vendorDistance: "800 ft" }
+    const miles: UserProduct = { ...baseUserProduct, id: "up-miles", vendorDistance: "2 mi" }
+    const suppliers = buildSuppliers([miles, feet], null)
+    expect(suppliers.map((s) => s.userProductId)).toEqual(["up-feet", "up-miles"])
+  })
+
+  it("handles comma thousands separators in the distance string", () => {
+    const far: UserProduct = { ...baseUserProduct, id: "up-far", vendorDistance: "1,200 mi" }
+    const near: UserProduct = { ...baseUserProduct, id: "up-near", vendorDistance: "300 mi" }
+    const suppliers = buildSuppliers([far, near], null)
+    expect(suppliers.map((s) => s.userProductId)).toEqual(["up-near", "up-far"])
+  })
+
+  it("pushes suppliers with a missing or unparseable distance to the end", () => {
+    const near: UserProduct = { ...baseUserProduct, id: "up-near", price: 30, vendorDistance: "3 mi" }
+    const missing: UserProduct = { ...baseUserProduct, id: "up-missing", price: 10, vendorDistance: undefined }
+    const unparseable: UserProduct = { ...baseUserProduct, id: "up-unparseable", price: 20, vendorDistance: "unknown" }
+    const suppliers = buildSuppliers([unparseable, missing, near], null)
+    expect(suppliers.map((s) => s.userProductId)).toEqual(["up-near", "up-missing", "up-unparseable"])
+  })
+
+  it("keeps ascending price as the tie-breaker when distances are equal or absent", () => {
+    const cheapSameDistance: UserProduct = {
+      ...baseUserProduct,
+      id: "up-cheap-same",
+      price: 10,
+      vendorDistance: "5 mi",
+    }
+    const expensiveSameDistance: UserProduct = {
+      ...baseUserProduct,
+      id: "up-expensive-same",
+      price: 20,
+      vendorDistance: "5 mi",
+    }
+    const cheapNoDistance: UserProduct = { ...baseUserProduct, id: "up-cheap-none", price: 30 }
+    const expensiveNoDistance: UserProduct = { ...baseUserProduct, id: "up-expensive-none", price: 40 }
+    const suppliers = buildSuppliers(
+      [expensiveNoDistance, expensiveSameDistance, cheapNoDistance, cheapSameDistance],
+      null,
+    )
+    expect(suppliers.map((s) => s.userProductId)).toEqual([
+      "up-cheap-same",
+      "up-expensive-same",
+      "up-cheap-none",
+      "up-expensive-none",
+    ])
+  })
+
   it("marks an out-of-stock listing as Out of Stock with a gray stock color", () => {
     const outOfStock: UserProduct = { ...baseUserProduct, stock: 0 }
     const [supplier] = buildSuppliers([outOfStock], null)

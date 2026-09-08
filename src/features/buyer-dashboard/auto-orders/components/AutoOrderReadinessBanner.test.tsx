@@ -40,7 +40,7 @@ describe("AutoOrderReadinessBanner", () => {
 
     expect(screen.getByRole("link", { name: "Set a primary address" })).toHaveAttribute(
       "href",
-      "/buyer-dashboard/settings/addresses",
+      "/buyer-dashboard/settings",
     )
     expect(screen.queryByRole("link", { name: "Choose a card for auto orders" })).not.toBeInTheDocument()
   })

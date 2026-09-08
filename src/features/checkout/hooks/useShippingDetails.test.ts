@@ -171,7 +171,7 @@ describe("useShippingDetails — address selection", () => {
     })
 
     const { getRouterMock } = await import("@/test/mocks/next-navigation")
-    expect(getRouterMock().push).toHaveBeenCalledWith("/buyer-dashboard/settings/addresses")
+    expect(getRouterMock().push).toHaveBeenCalledWith("/buyer-dashboard/settings")
   })
 })
 

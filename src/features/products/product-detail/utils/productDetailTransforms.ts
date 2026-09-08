@@ -58,11 +58,56 @@ export const resolveBestPriceVendorUserProductId = (product: ProductDetail, user
   return best?.id ?? null
 }
 
+// vendorDistance is a pre-formatted string from Google Distance Matrix (e.g. "12.3 mi", "500 ft"),
+// not a numeric field, so it has to be parsed before it can be used for ordering.
+const parseDistanceToMiles = (value?: string): number | null => {
+  if (!value) return null
+
+  const trimmed = value.trim()
+  if (!trimmed) return null
+
+  const match = trimmed.replace(/,/g, "").match(/^(-?\d+(?:\.\d+)?)\s*(mi|ft|km|m)$/i)
+  if (!match) return null
+
+  const amount = Number.parseFloat(match[1])
+  if (Number.isNaN(amount)) return null
+
+  const unit = match[2].toLowerCase()
+  switch (unit) {
+    case "mi":
+      return amount
+    case "ft":
+      return amount / 5280
+    case "km":
+      return amount * 0.621371
+    case "m":
+      return (amount / 1000) * 0.621371
+    default:
+      return null
+  }
+}
+
 export const buildSuppliers = (userProducts: UserProduct[], bestPriceVendorUserProductId: string | null) => {
   if (userProducts.length === 0) return []
 
+  // Best Seller always leads the table; everyone else is ordered nearest-to-farthest,
+  // with missing/unparseable distances sent to the end and price as the tie-breaker.
   return [...userProducts]
-    .sort((a, b) => a.price - b.price)
+    .sort((a, b) => {
+      const aIsBest = a.id === bestPriceVendorUserProductId
+      const bIsBest = b.id === bestPriceVendorUserProductId
+      if (aIsBest !== bIsBest) return aIsBest ? -1 : 1
+
+      const aDistance = parseDistanceToMiles(a.vendorDistance)
+      const bDistance = parseDistanceToMiles(b.vendorDistance)
+      if (aDistance !== null && bDistance !== null && aDistance !== bDistance) {
+        return aDistance - bDistance
+      }
+      if (aDistance !== null && bDistance === null) return -1
+      if (aDistance === null && bDistance !== null) return 1
+
+      return a.price - b.price
+    })
     .map((up, index): SupplierViewModel => {
       const shipmentFee = up.shipmentFee ?? 0
       const heavyShippingSurcharge = up.heavyShippingSurcharge ?? 0

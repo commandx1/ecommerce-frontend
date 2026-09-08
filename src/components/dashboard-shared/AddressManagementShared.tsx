@@ -24,9 +24,14 @@ const formatAddressDetails = (address: Address) =>
 interface AddressManagementSharedProps {
   /** Renders as a compact card section (for embedding inside another settings page) instead of a standalone page. */
   embedded?: boolean
+  /** Buyers only get one address: hides the multi-address grid/Add New/Delete UI and forces `defaultAddress: true` on save. */
+  singleAddress?: boolean
 }
 
-export default function AddressManagementShared({ embedded = false }: AddressManagementSharedProps = {}) {
+export default function AddressManagementShared({
+  embedded = false,
+  singleAddress = false,
+}: AddressManagementSharedProps = {}) {
   const { user } = useAuthStore()
   const idBase = useId()
   const addressTitleId = `${idBase}-address-title`
@@ -69,7 +74,7 @@ export default function AddressManagementShared({ embedded = false }: AddressMan
       title: "",
       fullName: `${user?.name || ""} ${user?.surname || ""}`.trim(),
       phoneNumber: user?.phoneNumber || "",
-      defaultAddress: addresses.length === 0,
+      defaultAddress: singleAddress || addresses.length === 0,
     })
     setIsEditing(true)
   }
@@ -102,15 +107,18 @@ export default function AddressManagementShared({ embedded = false }: AddressMan
     setIsSaving(true)
     try {
       const isUpdate = !!currentAddress.id
+      // Buyers only ever have one address, so it must always be the default: useAutoOrders'
+      // hasPrimaryAddress check reads this flag directly.
+      const addressPayload = singleAddress ? { ...currentAddress, defaultAddress: true } : currentAddress
 
       if (isUpdate) {
         const addressId = currentAddress.id
         if (!addressId) {
           throw new Error("Address ID is missing for update")
         }
-        await addressAPI.updateAddress(addressId, currentAddress as UpdateAddressPayload)
+        await addressAPI.updateAddress(addressId, addressPayload as UpdateAddressPayload)
       } else {
-        await addressAPI.createAddress(currentAddress as CreateAddressPayload)
+        await addressAPI.createAddress(addressPayload as CreateAddressPayload)
       }
 
       showToast.success(isUpdate ? "Address updated" : "New address added")
@@ -241,16 +249,18 @@ export default function AddressManagementShared({ embedded = false }: AddressMan
         </div>
       )}
 
-      <div className="flex items-center space-x-2 py-2">
-        <Checkbox
-          id={defaultAddressId}
-          checked={currentAddress.defaultAddress || false}
-          onChange={(e) => setCurrentAddress({ ...currentAddress, defaultAddress: e.target.checked })}
-        />
-        <Label htmlFor={defaultAddressId} className="text-sm text-text-secondary">
-          Set as default address
-        </Label>
-      </div>
+      {!singleAddress && (
+        <div className="flex items-center space-x-2 py-2">
+          <Checkbox
+            id={defaultAddressId}
+            checked={currentAddress.defaultAddress || false}
+            onChange={(e) => setCurrentAddress({ ...currentAddress, defaultAddress: e.target.checked })}
+          />
+          <Label htmlFor={defaultAddressId} className="text-sm text-text-secondary">
+            Set as default address
+          </Label>
+        </div>
+      )}
 
       <div className="pt-4 flex space-x-3">
         <Button type="submit" disabled={isSaving || !currentAddress.placeId} className="rounded-lg">
@@ -264,78 +274,87 @@ export default function AddressManagementShared({ embedded = false }: AddressMan
     </form>
   )
 
-  const addressList = (
-    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-      {addresses.length === 0 ? (
-        <div className="col-span-full rounded-2xl border border-dashed border-border-strong bg-surface-muted/40 p-12 text-center">
-          <MapPin className="icon-float mx-auto mb-4 h-10 w-10 text-brand/60" />
-          <p className="text-text-secondary">You haven't added an address yet.</p>
-          <Button type="button" onClick={handleAddNew} variant="link" size="sm" className="mt-2 h-auto p-0">
-            Add your first address
-          </Button>
-        </div>
-      ) : (
-        addresses.map((address) => (
-          <div
-            key={address.id}
+  // Buyers only ever see/manage one address; the rest stay in `addresses` untouched (not deleted).
+  const displayedAddress = singleAddress ? (addresses.find((a) => a.defaultAddress) ?? addresses[0] ?? null) : null
+
+  const renderAddressCard = (address: Address) => (
+    <div
+      key={address.id}
+      className={cn(
+        "group relative overflow-hidden rounded-2xl border bg-surface-elevated p-6 shadow-soft transition-all duration-200 hover:-translate-y-0.5 hover:shadow-panel",
+        address.defaultAddress ? "border-brand/40" : "border-border-soft",
+      )}
+    >
+      {address.defaultAddress && <span className="absolute inset-y-0 left-0 w-1 bg-brand" />}
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <span
             className={cn(
-              "group relative overflow-hidden rounded-2xl border bg-surface-elevated p-6 shadow-soft transition-all duration-200 hover:-translate-y-0.5 hover:shadow-panel",
-              address.defaultAddress ? "border-brand/40" : "border-border-soft",
+              "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+              address.defaultAddress ? "bg-brand/10 text-brand" : "bg-surface-muted text-text-muted",
             )}
           >
-            {address.defaultAddress && <span className="absolute inset-y-0 left-0 w-1 bg-brand" />}
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <span
-                  className={cn(
-                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-                    address.defaultAddress ? "bg-brand/10 text-brand" : "bg-surface-muted text-text-muted",
-                  )}
-                >
-                  <MapPin className="h-5 w-5" />
-                </span>
-                <div>
-                  <h3 className="font-semibold text-text-primary">{address.title}</h3>
-                  <p className="mt-0.5 text-sm text-text-secondary">{address.fullName}</p>
-                </div>
-              </div>
-              {address.defaultAddress && (
-                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-success">
-                  <BadgeCheck className="h-3.5 w-3.5" />
-                  Default
-                </span>
-              )}
-            </div>
-            <div className="mb-6 space-y-1 pl-[3.25rem] text-sm text-text-muted">
-              <p>{address.formattedAddress || address.addressLine}</p>
-              <p>{address.phoneNumber}</p>
-              {formatAddressDetails(address) && <p>{formatAddressDetails(address)}</p>}
-            </div>
-            <div className="flex items-center gap-4 border-t border-border-soft pt-4">
-              <Button
-                type="button"
-                variant="link"
-                size="sm"
-                onClick={() => handleEdit(address)}
-                className="h-auto p-0 text-sm font-medium text-brand"
-              >
-                <Edit2 className="w-4 h-4 mr-1" />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="link"
-                size="sm"
-                onClick={() => setAddressToDelete(address.id)}
-                className="h-auto p-0 text-sm font-medium text-danger"
-              >
-                <Trash2 className="w-4 h-4 mr-1" />
-                Delete
-              </Button>
-            </div>
+            <MapPin className="h-5 w-5" />
+          </span>
+          <div>
+            <h3 className="font-semibold text-text-primary">{address.title}</h3>
+            <p className="mt-0.5 text-sm text-text-secondary">{address.fullName}</p>
           </div>
-        ))
-      )}
+        </div>
+        {!singleAddress && address.defaultAddress && (
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-success">
+            <BadgeCheck className="h-3.5 w-3.5" />
+            Default
+          </span>
+        )}
+      </div>
+      <div className="mb-6 space-y-1 pl-[3.25rem] text-sm text-text-muted">
+        <p>{address.formattedAddress || address.addressLine}</p>
+        <p>{address.phoneNumber}</p>
+        {formatAddressDetails(address) && <p>{formatAddressDetails(address)}</p>}
+      </div>
+      <div className="flex items-center gap-4 border-t border-border-soft pt-4">
+        <Button
+          type="button"
+          variant="link"
+          size="sm"
+          onClick={() => handleEdit(address)}
+          className="h-auto p-0 text-sm font-medium text-brand"
+        >
+          <Edit2 className="w-4 h-4 mr-1" />
+          Edit
+        </Button>
+        {!singleAddress && (
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            onClick={() => setAddressToDelete(address.id)}
+            className="h-auto p-0 text-sm font-medium text-danger"
+          >
+            <Trash2 className="w-4 h-4 mr-1" />
+            Delete
+          </Button>
+        )}
+      </div>
+    </div>
+  )
+
+  const emptyState = (
+    <div className="col-span-full rounded-2xl border border-dashed border-border-strong bg-surface-muted/40 p-12 text-center">
+      <MapPin className="icon-float mx-auto mb-4 h-10 w-10 text-brand/60" />
+      <p className="text-text-secondary">You haven't added an address yet.</p>
+      <Button type="button" onClick={handleAddNew} variant="link" size="sm" className="mt-2 h-auto p-0">
+        {singleAddress ? "Add your address" : "Add your first address"}
+      </Button>
+    </div>
+  )
+
+  const addressList = singleAddress ? (
+    <div className="grid grid-cols-1 gap-5">{displayedAddress ? renderAddressCard(displayedAddress) : emptyState}</div>
+  ) : (
+    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+      {addresses.length === 0 ? emptyState : addresses.map((address) => renderAddressCard(address))}
     </div>
   )
 
@@ -365,11 +384,13 @@ export default function AddressManagementShared({ embedded = false }: AddressMan
               <MapPin className="h-4 w-4" />
             </span>
             <div>
-              <h2 className="text-lg font-semibold text-text-primary">Addresses</h2>
-              <p className="text-sm text-text-muted">Delivery locations for your shipments.</p>
+              <h2 className="text-lg font-semibold text-text-primary">{singleAddress ? "Address" : "Addresses"}</h2>
+              <p className="text-sm text-text-muted">
+                {singleAddress ? "Your delivery location." : "Delivery locations for your shipments."}
+              </p>
             </div>
           </div>
-          {!isEditing && (
+          {!isEditing && (!singleAddress || addresses.length === 0) && (
             <Button onClick={handleAddNew} size="sm">
               <Plus className="mr-1.5 h-4 w-4" />
               Add New
@@ -377,7 +398,7 @@ export default function AddressManagementShared({ embedded = false }: AddressMan
           )}
         </div>
         {isEditing && currentAddress ? addressForm : <div className="p-6">{addressList}</div>}
-        {deleteModal}
+        {!singleAddress && deleteModal}
       </section>
     )
   }
@@ -424,7 +445,7 @@ export default function AddressManagementShared({ embedded = false }: AddressMan
         addressList
       )}
 
-      {deleteModal}
+      {!singleAddress && deleteModal}
     </div>
   )
 }
