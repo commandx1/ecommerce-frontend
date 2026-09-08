@@ -82,22 +82,24 @@ export default function DashboardHeader({
               <span className="ml-3 truncate text-xl font-bold text-text-primary sm:text-2xl">DentyPro</span>
             </Link>
 
-            <nav className="hidden space-x-8 md:flex">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "border-b-2 pb-1 font-medium transition-colors",
-                    isNavItemActive(item)
-                      ? "border-brand text-brand"
-                      : "border-transparent text-text-secondary hover:text-text-primary",
-                  )}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
+            {navItems.length > 0 ? (
+              <nav className="hidden space-x-8 md:flex">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "border-b-2 pb-1 font-medium transition-colors",
+                      isNavItemActive(item)
+                        ? "border-brand text-brand"
+                        : "border-transparent text-text-secondary hover:text-text-primary",
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+            ) : null}
           </div>
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">

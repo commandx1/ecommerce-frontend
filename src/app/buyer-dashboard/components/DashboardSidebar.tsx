@@ -5,7 +5,6 @@ import {
   FileText,
   Heart,
   HelpCircle,
-  Home,
   MapPin,
   Plus,
   Repeat,
@@ -23,7 +22,8 @@ const NAV_GROUPS: DashboardSidebarGroup[] = [
   {
     title: "Buyer Navigation",
     items: [
-      { href: "/buyer-dashboard", label: "Overview", icon: Home },
+      // Overview dummy veriyle çalıştığı için gizlendi - backend'e bağlanınca Home ikonuyla birlikte geri aç.
+      // { href: "/buyer-dashboard", label: "Overview", icon: Home },
       { href: "/buyer-dashboard/orders", label: "All Orders", icon: ShoppingBag },
       { href: "/buyer-dashboard/auto-orders", label: "Auto Orders", icon: Repeat },
       { href: "/buyer-dashboard/vendors/favorites", label: "Favorites", icon: Heart },

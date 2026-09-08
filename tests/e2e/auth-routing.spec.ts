@@ -60,14 +60,15 @@ test.describe("auth-routing (src/proxy.ts)", () => {
     await expect(guestPage).toHaveURL(/\/products$/)
   })
 
-  test("Buyer hitting /vendor-dashboard is redirected to /buyer-dashboard", async ({ buyerPage }) => {
+  test("Buyer hitting /vendor-dashboard is redirected to /buyer-dashboard/orders", async ({ buyerPage }) => {
     await buyerPage.goto("/vendor-dashboard", { waitUntil: "domcontentloaded" })
-    await expect(buyerPage).toHaveURL(/\/buyer-dashboard$/)
+    await expect(buyerPage).toHaveURL(/\/buyer-dashboard\/orders$/)
   })
 
-  test("Buyer hitting their own /buyer-dashboard is NOT redirected", async ({ buyerPage }) => {
+  test("Buyer hitting /buyer-dashboard lands on /buyer-dashboard/orders", async ({ buyerPage }) => {
+    // Kök sayfa artık Orders'a redirect ediyor; overview dummy veri olduğu için gizlendi.
     await buyerPage.goto("/buyer-dashboard", { waitUntil: "domcontentloaded" })
-    await expect(buyerPage).toHaveURL(/\/buyer-dashboard$/)
+    await expect(buyerPage).toHaveURL(/\/buyer-dashboard\/orders$/)
   })
 
   test("Vendor hitting a non-dashboard page (/products) is redirected to /vendor-dashboard", async ({ vendorPage }) => {

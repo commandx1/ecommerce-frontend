@@ -80,6 +80,7 @@ describe("buyer dashboard routes", () => {
     ["./suppliers/page", "/buyer-dashboard/vendors/favorites"],
     ["./suppliers/favorites/page", "/buyer-dashboard/vendors/favorites"],
     ["./vendors/page", "/buyer-dashboard/vendors/favorites"],
+    ["./page", "/buyer-dashboard/orders"],
   ])("redirects the legacy route %s", async (modulePath, target) => {
     const { default: Page } = await import(modulePath)
 
