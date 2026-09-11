@@ -3,8 +3,8 @@ import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
-import { makeAccountUser } from "@/test/factories"
-import { render, screen, waitFor } from "@/test/render"
+import { makeAccountUser, makeLicense } from "@/test/factories"
+import { render, screen, waitFor, within } from "@/test/render"
 import AccountSettingsShared from "./AccountSettingsShared"
 
 const toastSpies = vi.hoisted(() => ({
@@ -196,6 +196,8 @@ describe("AccountSettingsShared", () => {
     expect(screen.getByText("Buyer Account")).toBeInTheDocument()
     expect(screen.queryByRole("link", { name: /Company/ })).not.toBeInTheDocument()
     expect(screen.queryByRole("link", { name: /Payouts/ })).not.toBeInTheDocument()
+    expect(screen.getByRole("link", { name: /Licenses/ })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { level: 3, name: "Professional Licenses" })).toBeInTheDocument()
     buyerView.unmount()
 
     signIn({ roleName: "Vendor" })
@@ -204,7 +206,24 @@ describe("AccountSettingsShared", () => {
     expect(screen.getByText("Vendor Account")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /Company/ })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /Payouts/ })).toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: /Licenses/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "Professional Licenses" })).not.toBeInTheDocument()
     await waitFor(() => expect(screen.getByRole("heading", { name: "Payouts" })).toBeInTheDocument())
+  })
+
+  it("nests the license section inside the personal information card", async () => {
+    signIn({ roleName: "BUYER" })
+    server.use(
+      http.get("*/backend-api/licenses", () => HttpResponse.json({ licenses: [makeLicense({ id: "l-1" })], total: 1 })),
+    )
+    renderSettings()
+
+    const heading = screen.getByRole("heading", { name: "Personal Information" })
+    const section = heading.closest("section")
+    expect(section).not.toBeNull()
+    expect(
+      await within(section as HTMLElement).findByRole("heading", { level: 3, name: "Professional Licenses" }),
+    ).toBeInTheDocument()
   })
 
   it("adds a quick-nav entry for an embedded extra section", () => {

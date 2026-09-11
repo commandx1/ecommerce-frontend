@@ -2,7 +2,8 @@ import { ChevronRight } from "lucide-react"
 import Link from "next/link"
 import PageSizeSelect from "./PageSizeSelect"
 
-const PAGE_SIZE_OPTIONS = [10, 20, 50, 100]
+// Every option must be <= MAX_PAGE_SIZE in parse-listing-search-params.ts (backend public cap 30).
+export const PAGE_SIZE_OPTIONS = [10, 20, 30]
 
 interface PaginationBarProps {
   currentPage: number

@@ -124,6 +124,10 @@ export const useAuthStore = create<AuthState>()(
             const { useCartStore } = await import("./cartStore")
             useCartStore.getState().resetCart()
 
+            // Clear favorite products state
+            const { useFavoriteProductsStore } = await import("./favoriteProductsStore")
+            useFavoriteProductsStore.getState().reset()
+
             // Router push operation will be handled in components
           }
         })().finally(() => {

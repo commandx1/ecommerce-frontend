@@ -145,6 +145,12 @@ describe("ProductDetailPageView", () => {
     expect(screen.getByText("Units available: 40")).toBeInTheDocument()
   })
 
+  it("renders a Save to favorites button in the hero", () => {
+    render(<ProductDetailPageView viewModel={viewModel} />, { route: "/products/abcdef1234567890" })
+
+    expect(screen.getByRole("button", { name: "Save to favorites" })).toBeInTheDocument()
+  })
+
   it("shows the product's own review and question empty states", () => {
     render(<ProductDetailPageView viewModel={viewModel} />, { route: "/products/abcdef1234567890" })
 

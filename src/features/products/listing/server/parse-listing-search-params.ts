@@ -36,7 +36,8 @@ export interface ParsedListingSearchParams {
 
 const DEFAULT_PAGE = 1
 const DEFAULT_PAGE_SIZE = 10
-const MAX_PAGE_SIZE = 60
+// Must match backend ProductController.MAX_PUBLIC_PRODUCT_PAGE_SIZE (30); GET /api/products/public returns 400 above it.
+export const MAX_PAGE_SIZE = 30
 
 function parsePositiveInt(value: string | undefined, fallback: number) {
   const parsedValue = Number.parseInt(value ?? "", 10)

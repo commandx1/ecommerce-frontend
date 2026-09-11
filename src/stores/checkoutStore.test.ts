@@ -396,6 +396,30 @@ describe("checkoutStore shipping selections", () => {
     expect(store().selectedVendorShippingMethods).toEqual({})
     expect(store().selectedShippingCost).toBe(0)
   })
+
+  it("clearShippingSelection resets only the frozen shipping fields, leaving other fields untouched", () => {
+    store().setStep(3)
+    store().updatePONumber("PO-9001")
+    store().updatePaymentMethod({ type: "wire" })
+    store().setSelectedVendorShippingMethods({
+      "seller-1": { sellerName: "Acme Dental", methodText: "Ground", amount: 9.5 },
+    })
+    store().setSelectedShippingCost(9.5)
+    store().setSelectedShippingEtaText("Ground - 5 business days")
+    store().setOrderPayload(orderPayload)
+    store().setExcludedFromOrder([{ sellerName: "Beta Dental", itemNames: ["Widget"] }])
+
+    store().clearShippingSelection()
+
+    expect(store().selectedVendorShippingMethods).toEqual({})
+    expect(store().selectedShippingCost).toBe(0)
+    expect(store().selectedShippingEtaText).toBe("")
+    expect(store().orderPayload).toBeNull()
+    expect(store().excludedFromOrder).toEqual([])
+    expect(store().poNumber).toBe("PO-9001")
+    expect(store().currentStep).toBe(3)
+    expect(store().paymentMethod).toEqual({ type: "wire" })
+  })
 })
 
 describe("checkoutStore address and order metadata", () => {

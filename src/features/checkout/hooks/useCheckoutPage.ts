@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo } from "react"
 import { cartRequiresDentalLicense } from "@/features/cart/utils/license-check"
+import { useCheckoutCartSync } from "@/features/checkout/hooks/useCheckoutCartSync"
 import { useDentalLicenseGate } from "@/lib/hooks/useDentalLicenseGate"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
@@ -44,6 +45,8 @@ export function useCheckoutPage(): UseCheckoutPageResult {
 
     router.replace("/cart")
   }, [currentStep, items, licenseGate.isChecking, licenseGate.checkFailed, licenseGate.status, router])
+
+  useCheckoutCartSync()
 
   const view = useMemo<CheckoutView>(() => {
     if (currentStep === 2) return "shipping"

@@ -127,11 +127,11 @@ describe("ProductListingClient", () => {
     const { router } = renderListing({}, "page=4&size=20")
 
     await user.click(screen.getByRole("combobox", { name: "Items per page" }))
-    await user.click(await screen.findByRole("option", { name: "50" }))
+    await user.click(await screen.findByRole("option", { name: "30" }))
 
     const [url] = router.push.mock.calls[0] as [string]
     const params = new URLSearchParams(url.split("?")[1])
-    expect(params.get("size")).toBe("50")
+    expect(params.get("size")).toBe("30")
     expect(params.get("page")).toBe("1")
   })
 

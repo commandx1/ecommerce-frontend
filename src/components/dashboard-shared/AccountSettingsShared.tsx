@@ -5,6 +5,7 @@ import {
   BadgeCheck,
   Building2,
   CreditCard,
+  FileBadge2,
   Fingerprint,
   Lock,
   Mail,
@@ -19,7 +20,7 @@ import {
 import type { ReactNode } from "react"
 import { useEffect, useId, useState } from "react"
 import CompanyInfoCard from "@/components/dashboard-shared/CompanyInfoCard"
-import LicenseManagementCard from "@/components/dashboard-shared/LicenseManagementCard"
+import LicenseManagementSection from "@/components/dashboard-shared/LicenseManagementSection"
 import StripeConnectCard from "@/components/dashboard-shared/StripeConnectCard"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -200,6 +201,15 @@ export default function AccountSettingsShared({
           <User className="h-3.5 w-3.5" />
           Profile
         </a>
+        {!isVendor && (
+          <a
+            href="#licenses"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface-elevated px-4 py-1.5 text-xs font-semibold text-text-secondary shadow-soft transition-colors hover:border-brand/40 hover:text-brand"
+          >
+            <FileBadge2 className="h-3.5 w-3.5" />
+            Licenses
+          </a>
+        )}
         {children && (
           <a
             href={`#${extraSectionId}`}
@@ -237,10 +247,7 @@ export default function AccountSettingsShared({
       </nav>
 
       <div className="space-y-6">
-        <div
-          id={profileSectionId}
-          className={cn("grid scroll-mt-24 grid-cols-1 gap-6", !isVendor && "lg:grid-cols-2 lg:items-start")}
-        >
+        <div id={profileSectionId} className="scroll-mt-24">
           <section
             className="fade-up overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
             style={{ animationDelay: "120ms" }}
@@ -338,13 +345,8 @@ export default function AccountSettingsShared({
                 </Button>
               </div>
             </form>
+            {!isVendor && <LicenseManagementSection />}
           </section>
-
-          {!isVendor && (
-            <div className="fade-up" style={{ animationDelay: "160ms" }}>
-              <LicenseManagementCard />
-            </div>
-          )}
         </div>
 
         {children && (

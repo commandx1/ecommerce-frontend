@@ -1,16 +1,16 @@
 "use client"
 
 import { AlertCircle, BadgeCheck, Clock3, FileBadge2, Plus, ShieldX, Trash2 } from "lucide-react"
-import { useCallback, useEffect, useId, useState } from "react"
+import { useCallback, useEffect, useId, useRef, useState } from "react"
 import ConfirmationModal from "@/components/feedback/ConfirmationModal"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import Modal from "@/components/ui/Modal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
 import usStateList from "@/data/usstate-list.json"
 import { type CreateLicensePayload, type License, type LicenseType, licenseAPI } from "@/lib/api/licenses"
+import { resolveDentalLicenseStatus } from "@/lib/helpers/dentalLicense"
 import { cn } from "@/lib/utils"
 
 const US_STATES = usStateList.slice(
@@ -58,6 +58,51 @@ function StatusBadge({ license }: { license: License }) {
   )
 }
 
+// Mirrors `resolveDentalLicenseStatus` to summarise all of a buyer's licenses into the single
+// most actionable status pill shown in the section header.
+function SummaryBadge({ licenses }: { licenses: License[] }) {
+  const status = resolveDentalLicenseStatus(licenses)
+
+  if (status === "valid") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-success">
+        <BadgeCheck className="h-3.5 w-3.5" />
+        Verified
+      </span>
+    )
+  }
+  if (status === "pending") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-warning">
+        <Clock3 className="h-3.5 w-3.5" />
+        Pending review
+      </span>
+    )
+  }
+  if (status === "expired") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-danger/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-danger">
+        <AlertCircle className="h-3.5 w-3.5" />
+        Expired
+      </span>
+    )
+  }
+  if (status === "rejected") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-danger/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-danger">
+        <ShieldX className="h-3.5 w-3.5" />
+        Rejected
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-surface-muted px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-text-muted">
+      <FileBadge2 className="h-3.5 w-3.5" />
+      No license on file
+    </span>
+  )
+}
+
 const emptyFormData: CreateLicensePayload = {
   licenseType: "STATE_DENTAL",
   stateOfLicense: "",
@@ -67,12 +112,22 @@ const emptyFormData: CreateLicensePayload = {
   day: 0,
 }
 
-export default function LicenseManagementCard() {
+type FormErrors = {
+  licenseNumber?: string
+  stateOfLicense?: string
+  expirationDate?: string
+}
+
+export default function LicenseManagementSection() {
   const idBase = useId()
   const licenseTypeId = `${idBase}-license-type`
   const stateOfLicenseId = `${idBase}-state`
   const licenseNumberId = `${idBase}-license-number`
   const expirationId = `${idBase}-expiration`
+  const formTitleId = `${idBase}-form-title`
+  const stateErrorId = `${idBase}-state-error`
+  const licenseNumberErrorId = `${idBase}-license-number-error`
+  const expirationErrorId = `${idBase}-expiration-error`
 
   const [licenses, setLicenses] = useState<License[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -80,9 +135,15 @@ export default function LicenseManagementCard() {
   const [formData, setFormData] = useState<CreateLicensePayload>(emptyFormData)
   const [expirationDate, setExpirationDate] = useState("")
   const [isSaving, setIsSaving] = useState(false)
+  const [errors, setErrors] = useState<FormErrors>({})
 
   const [licenseToDelete, setLicenseToDelete] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  const licenseTypeTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const stateOfLicenseTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const licenseNumberRef = useRef<HTMLInputElement | null>(null)
+  const expirationRef = useRef<HTMLInputElement | null>(null)
 
   const fetchLicenses = useCallback(async () => {
     try {
@@ -99,25 +160,49 @@ export default function LicenseManagementCard() {
     fetchLicenses()
   }, [fetchLicenses])
 
+  useEffect(() => {
+    if (isFormOpen) {
+      licenseTypeTriggerRef.current?.focus()
+    }
+  }, [isFormOpen])
+
   const handleAddNew = () => {
     setFormData(emptyFormData)
     setExpirationDate("")
+    setErrors({})
     setIsFormOpen(true)
+  }
+
+  const handleCancel = () => {
+    setIsFormOpen(false)
+    setFormData(emptyFormData)
+    setExpirationDate("")
+    setErrors({})
   }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    const nextErrors: FormErrors = {}
     if (!formData.licenseNumber.trim()) {
-      showToast.error("License number is required")
-      return
+      nextErrors.licenseNumber = "License number is required"
     }
     if (formData.licenseType === "STATE_DENTAL" && !formData.stateOfLicense?.trim()) {
-      showToast.error("State of license is required")
-      return
+      nextErrors.stateOfLicense = "State of license is required"
     }
     if (!expirationDate) {
-      showToast.error("Expiration date is required")
+      nextErrors.expirationDate = "Expiration date is required"
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors)
+      if (nextErrors.stateOfLicense) {
+        stateOfLicenseTriggerRef.current?.focus()
+      } else if (nextErrors.licenseNumber) {
+        licenseNumberRef.current?.focus()
+      } else if (nextErrors.expirationDate) {
+        expirationRef.current?.focus()
+      }
       return
     }
 
@@ -137,7 +222,7 @@ export default function LicenseManagementCard() {
       }
       await licenseAPI.createLicense(payload)
       showToast.success("License submitted for review")
-      setIsFormOpen(false)
+      handleCancel()
       fetchLicenses()
     } catch (_error) {
       showToast.error("An error occurred while saving the license")
@@ -163,30 +248,46 @@ export default function LicenseManagementCard() {
   }
 
   return (
-    <section className="flex-1 overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
-      <div className="flex items-center justify-between border-b border-border-soft p-6">
-        <div className="flex items-center space-x-3">
-          <FileBadge2 className="h-5 w-5 text-brand" />
-          <h2 className="text-xl font-semibold text-text-primary">License Information</h2>
-        </div>
-        <Button type="button" onClick={handleAddNew} variant="quiet" size="icon-sm" aria-label="Add license">
-          <Plus className="h-5 w-5" />
-        </Button>
-      </div>
-
+    // biome-ignore lint/correctness/useUniqueElementIds: static id is a deep-link anchor (#licenses) targeted from CartSummaryPanel/ProductHeroDetails.
+    <div id="licenses" className="scroll-mt-24 border-t border-border-soft">
       <div className="p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
+              <FileBadge2 className="h-4 w-4" />
+            </span>
+            <div>
+              <h3 className="text-base font-semibold text-text-primary">Professional Licenses</h3>
+              <p className="text-sm text-text-muted">Required to buy prescription products. Reviewed by our team.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {!isLoading && <SummaryBadge licenses={licenses} />}
+            {!isFormOpen && (
+              <Button type="button" size="sm" onClick={handleAddNew} aria-label="Add license">
+                <Plus className="h-4 w-4" />
+                Add license
+              </Button>
+            )}
+          </div>
+        </div>
+
         {isLoading ? (
-          <p className="text-sm text-text-secondary">Loading...</p>
-        ) : licenses.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border-strong p-8 text-center">
+          // biome-ignore lint/a11y/useSemanticElements: a <fieldset> here would imply form controls; this is a non-interactive loading placeholder.
+          <div role="group" aria-busy="true" aria-label="Loading licenses" className="mt-4 space-y-3">
+            <div className="h-16 animate-pulse rounded-xl bg-surface-muted" />
+            <div className="h-16 animate-pulse rounded-xl bg-surface-muted" />
+          </div>
+        ) : licenses.length === 0 && !isFormOpen ? (
+          <div className="mt-4 rounded-xl border border-dashed border-border-strong p-8 text-center">
             <FileBadge2 className="mx-auto mb-3 h-8 w-8 text-text-muted" />
             <p className="text-sm text-text-secondary">You haven't added a license yet.</p>
             <Button type="button" onClick={handleAddNew} variant="link" size="sm" className="mt-2 h-auto p-0">
               Add your first license
             </Button>
           </div>
-        ) : (
-          <ul className="space-y-3">
+        ) : licenses.length > 0 ? (
+          <ul className="mt-4 space-y-3">
             {licenses.map((license) => (
               <li
                 key={license.id}
@@ -195,7 +296,7 @@ export default function LicenseManagementCard() {
                   license.approved === false ? "border-danger/30" : "border-border-soft",
                 )}
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] sm:items-start">
                   <div className="space-y-1">
                     <p className="text-sm text-text-primary">
                       <span className="font-semibold text-text-secondary">License Type:</span>{" "}
@@ -238,96 +339,136 @@ export default function LicenseManagementCard() {
               </li>
             ))}
           </ul>
+        ) : null}
+
+        {isFormOpen && (
+          <form
+            onSubmit={handleSave}
+            noValidate
+            aria-labelledby={formTitleId}
+            className="fade-up mt-4 space-y-4 rounded-xl border border-brand/30 bg-brand/5 p-4"
+          >
+            <h4 id={formTitleId} className="text-sm font-semibold text-text-primary">
+              New license
+            </h4>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor={licenseTypeId} className="text-text-secondary">
+                  License Type
+                </Label>
+                <Select
+                  value={formData.licenseType}
+                  onValueChange={(value: LicenseType) =>
+                    setFormData({ ...formData, licenseType: value, stateOfLicense: "" })
+                  }
+                >
+                  <SelectTrigger id={licenseTypeId} className="w-full" ref={licenseTypeTriggerRef}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="STATE_DENTAL">State Dental</SelectItem>
+                    <SelectItem value="DEA">DEA</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.licenseType === "STATE_DENTAL" && (
+                <div className="space-y-2">
+                  <Label htmlFor={stateOfLicenseId} className="text-text-secondary">
+                    State of License
+                  </Label>
+                  <Select
+                    value={formData.stateOfLicense || undefined}
+                    onValueChange={(value: string) => {
+                      setFormData({ ...formData, stateOfLicense: value })
+                      setErrors((prev) => ({ ...prev, stateOfLicense: undefined }))
+                    }}
+                  >
+                    <SelectTrigger
+                      id={stateOfLicenseId}
+                      className="w-full"
+                      ref={stateOfLicenseTriggerRef}
+                      aria-invalid={Boolean(errors.stateOfLicense) || undefined}
+                      aria-describedby={errors.stateOfLicense ? stateErrorId : undefined}
+                    >
+                      <SelectValue placeholder="Select a state" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {US_STATES.map((state) => (
+                        <SelectItem key={state.abbreviation} value={state.abbreviation}>
+                          {state.name} ({state.abbreviation})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.stateOfLicense && (
+                    <p id={stateErrorId} role="alert" className="text-xs text-danger">
+                      {errors.stateOfLicense}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor={licenseNumberId} className="text-text-secondary">
+                  License Number
+                </Label>
+                <Input
+                  id={licenseNumberId}
+                  type="text"
+                  ref={licenseNumberRef}
+                  value={formData.licenseNumber}
+                  onChange={(e) => {
+                    setFormData({ ...formData, licenseNumber: e.target.value })
+                    setErrors((prev) => ({ ...prev, licenseNumber: undefined }))
+                  }}
+                  placeholder="D123456"
+                  aria-invalid={Boolean(errors.licenseNumber) || undefined}
+                  aria-describedby={errors.licenseNumber ? licenseNumberErrorId : undefined}
+                />
+                {errors.licenseNumber && (
+                  <p id={licenseNumberErrorId} role="alert" className="text-xs text-danger">
+                    {errors.licenseNumber}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor={expirationId} className="text-text-secondary">
+                  Expiration Date
+                </Label>
+                <Input
+                  id={expirationId}
+                  type="date"
+                  ref={expirationRef}
+                  value={expirationDate}
+                  onChange={(e) => {
+                    setExpirationDate(e.target.value)
+                    setErrors((prev) => ({ ...prev, expirationDate: undefined }))
+                  }}
+                  aria-invalid={Boolean(errors.expirationDate) || undefined}
+                  aria-describedby={errors.expirationDate ? expirationErrorId : undefined}
+                />
+                {errors.expirationDate && (
+                  <p id={expirationErrorId} role="alert" className="text-xs text-danger">
+                    {errors.expirationDate}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button type="button" variant="outline" onClick={handleCancel}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSaving}>
+                {isSaving ? "Submitting..." : "Submit for review"}
+              </Button>
+            </div>
+          </form>
         )}
       </div>
-
-      <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title="Add License" maxWidthClassName="max-w-md">
-        <form onSubmit={handleSave} className="p-6 space-y-4">
-          <div className="flex items-center space-x-3">
-            <FileBadge2 className="h-5 w-5 text-brand" />
-            <h3 className="text-lg font-semibold text-text-primary">Add License</h3>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor={licenseTypeId} className="text-text-secondary">
-              License Type
-            </Label>
-            <Select
-              value={formData.licenseType}
-              onValueChange={(value: LicenseType) =>
-                setFormData({ ...formData, licenseType: value, stateOfLicense: "" })
-              }
-            >
-              <SelectTrigger id={licenseTypeId} className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="STATE_DENTAL">State Dental</SelectItem>
-                <SelectItem value="DEA">DEA</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {formData.licenseType === "STATE_DENTAL" && (
-            <div className="space-y-2">
-              <Label htmlFor={stateOfLicenseId} className="text-text-secondary">
-                State of License
-              </Label>
-              <Select
-                value={formData.stateOfLicense || undefined}
-                onValueChange={(value: string) => setFormData({ ...formData, stateOfLicense: value })}
-              >
-                <SelectTrigger id={stateOfLicenseId} className="w-full">
-                  <SelectValue placeholder="Select a state" />
-                </SelectTrigger>
-                <SelectContent>
-                  {US_STATES.map((state) => (
-                    <SelectItem key={state.abbreviation} value={state.abbreviation}>
-                      {state.name} ({state.abbreviation})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor={licenseNumberId} className="text-text-secondary">
-              License Number
-            </Label>
-            <Input
-              id={licenseNumberId}
-              type="text"
-              required
-              value={formData.licenseNumber}
-              onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })}
-              placeholder="D123456"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor={expirationId} className="text-text-secondary">
-              Expiration Date
-            </Label>
-            <Input
-              id={expirationId}
-              type="date"
-              required
-              value={expirationDate}
-              onChange={(e) => setExpirationDate(e.target.value)}
-            />
-          </div>
-
-          <div className="flex space-x-3 pt-2">
-            <Button type="submit" disabled={isSaving} className="rounded-lg">
-              {isSaving ? "Saving..." : "Save License"}
-            </Button>
-            <Button type="button" onClick={() => setIsFormOpen(false)} variant="outline" className="rounded-lg">
-              Cancel
-            </Button>
-          </div>
-        </form>
-      </Modal>
 
       <ConfirmationModal
         isOpen={!!licenseToDelete}
@@ -340,6 +481,6 @@ export default function LicenseManagementCard() {
         isDanger={true}
         isLoading={isDeleting}
       />
-    </section>
+    </div>
   )
 }

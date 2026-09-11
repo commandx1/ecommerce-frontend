@@ -1,6 +1,7 @@
 import { ShieldCheck } from "lucide-react"
 import Link from "next/link"
 import NoticeBanner from "@/components/feedback/NoticeBanner"
+import FavoriteProductButton from "@/features/products/favorites/FavoriteProductButton"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import type { ProductHeroViewModel, SupplierViewModel } from "../types"
 import { getStockColorClass } from "../utils/stockStyles"
@@ -32,6 +33,7 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
           <span className="rounded-full bg-warning/20 px-3 py-1 text-sm font-medium text-warning-strong">
             Best Seller
           </span>
+          <FavoriteProductButton productId={product.productId} className="ml-auto" />
         </div>
         <h1 className="mb-4 text-3xl font-semibold text-text-primary sm:text-4xl md:text-5xl">{product.title}</h1>
         <p className="text-base leading-7 text-text-secondary sm:text-lg sm:leading-8">{product.description}</p>
@@ -145,7 +147,7 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
         >
           <p className="text-sm text-yellow-700">
             This product requires verification of your dental license to view pricing and place orders.{" "}
-            <Link href="/buyer-dashboard/settings" className="font-medium underline">
+            <Link href="/buyer-dashboard/settings#licenses" className="font-medium underline">
               Complete verification
             </Link>{" "}
             to access exclusive professional pricing.

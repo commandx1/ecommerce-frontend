@@ -68,7 +68,7 @@ const symmetricCases: [name: string, filters: BuilderBase][] = [
   ["stock filter switched off", filtersOf({ inStock: false })],
   ["a non-default sort", filtersOf({ sort: "price-desc" })],
   ["a deep page with a custom page size", filtersOf({ currentPage: 7, pageSize: 24 })],
-  ["the maximum allowed page size", filtersOf({ pageSize: 60 })],
+  ["the maximum allowed page size", filtersOf({ pageSize: 30 })],
   ["an inverted price range (preserved as-is on both ends)", filtersOf({ minPrice: 900, maxPrice: 10 })],
   ["values needing URL encoding", filtersOf({ brands: ["a&b=c", "İmplant Çelik", "🦷 implant", "50% off"] })],
   ["attribute pairs with reserved characters", filtersOf({ attributes: ["color:red", "size=XL", "a+b"] })],
@@ -166,12 +166,12 @@ describe("products URL round-trip: known asymmetries (locked in, NOT endorsed)",
     expect(parsed.apiPage).toBe(0)
   })
 
-  // ASYMMETRY 4 — page size above MAX_PAGE_SIZE (60).
+  // ASYMMETRY 4 — page size above MAX_PAGE_SIZE (30).
   // build: writes size=500.
-  // parse: caps it at 60.
-  // Effect: a "show 100 per page" control would appear to work in the URL but silently serve 60.
-  it("caps an over-sized page size at 60", () => {
-    expect(roundTrip(filtersOf({ pageSize: 500 })).pageSize).toBe(60)
+  // parse: caps it at 30.
+  // Effect: a manually crafted size=500 URL would appear to work but silently serve 30.
+  it("caps an over-sized page size at 30", () => {
+    expect(roundTrip(filtersOf({ pageSize: 500 })).pageSize).toBe(30)
   })
 
   // ASYMMETRY 5 — negative numeric bounds.

@@ -119,7 +119,7 @@ export default function CartSummaryPanel({
             className="mb-4 rounded-lg px-3 py-2"
           >
             <Link
-              href="/buyer-dashboard/settings"
+              href="/buyer-dashboard/settings#licenses"
               className="mt-1 inline-block text-sm font-semibold text-brand underline underline-offset-2 hover:text-brand-strong"
             >
               View your license
@@ -133,7 +133,7 @@ export default function CartSummaryPanel({
             className="mb-4 rounded-lg px-3 py-2"
           >
             <Link
-              href="/buyer-dashboard/settings"
+              href="/buyer-dashboard/settings#licenses"
               className="mt-1 inline-block text-sm font-semibold text-brand underline underline-offset-2 hover:text-brand-strong"
             >
               Renew your license
@@ -151,7 +151,7 @@ export default function CartSummaryPanel({
               <p className="mt-1 text-sm text-text-secondary">Reason: {licenseRejectionReason}</p>
             ) : null}
             <Link
-              href="/buyer-dashboard/settings"
+              href="/buyer-dashboard/settings#licenses"
               className="mt-1 inline-block text-sm font-semibold text-brand underline underline-offset-2 hover:text-brand-strong"
             >
               Update your license
@@ -166,7 +166,7 @@ export default function CartSummaryPanel({
             className="mb-4 rounded-lg px-3 py-2"
           >
             <Link
-              href="/buyer-dashboard/settings"
+              href="/buyer-dashboard/settings#licenses"
               className="mt-1 inline-block text-sm font-semibold text-brand underline underline-offset-2 hover:text-brand-strong"
             >
               Add your license

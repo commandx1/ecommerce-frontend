@@ -1,6 +1,7 @@
 import { HttpResponse, http } from "msw"
 import {
   makeActiveProductSearchItem,
+  makeFavoriteProductItem,
   makeMyProductsPageResponse,
   makeProduct,
   makePublicProductsResponse,
@@ -52,6 +53,15 @@ export const mark3VariantAttributesResponse = {
 }
 
 export const productsHandlers = [
+  // ==================== Favorite products ====================
+  http.get("*/backend-api/products/favorite-ids", () => HttpResponse.json([])),
+
+  http.get("*/backend-api/products/favorites", () => HttpResponse.json([makeFavoriteProductItem()])),
+
+  http.post("*/backend-api/products/:productId/favorite", () => new HttpResponse(null, { status: 200 })),
+
+  http.delete("*/backend-api/products/:productId/favorite", () => new HttpResponse(null, { status: 204 })),
+
   // ==================== Product search / listing (Next.js API proxy) ====================
   http.get("*/api/products/my-products", () => HttpResponse.json(makeMyProductsPageResponse())),
 

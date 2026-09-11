@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import type { SellerGroup, ShippingRate } from "@/features/checkout/types"
+import { getSellerGroupKey } from "@/features/checkout/utils/seller-group-key"
 import { type Address, addressAPI } from "@/lib/api/address"
 import type { ShippoRateOrder, UberRateOrder } from "@/lib/api/orders"
 import { useAuthStore } from "@/stores/authStore"
@@ -97,7 +98,7 @@ export function useShippingDetails(): UseShippingDetailsResult {
   const sellerGroups = useMemo<Record<string, SellerGroup>>(() => {
     return items.reduce<Record<string, SellerGroup>>((groups, item) => {
       const sellerName = item.userProduct.sellerName || "Standard Seller"
-      const sellerId = item.userProduct.sellerId || sellerName
+      const sellerId = getSellerGroupKey(item)
 
       if (!groups[sellerId]) {
         groups[sellerId] = {

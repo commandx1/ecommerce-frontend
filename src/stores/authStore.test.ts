@@ -4,6 +4,7 @@ import { server } from "@/mocks/server"
 import { makeCart } from "@/test/factories"
 import { useAuthStore } from "./authStore"
 import { useCartStore } from "./cartStore"
+import { useFavoriteProductsStore } from "./favoriteProductsStore"
 
 const COOKIE_NAME = "auth-storage"
 
@@ -255,6 +256,17 @@ describe("authStore logout", () => {
     await store().logout()
 
     expect(useCartStore.getState()).toMatchObject({ items: [], cartCount: 0, cartId: null, lastFetchedAt: 0 })
+  })
+
+  it("resets the favorite products store on logout", async () => {
+    store().setAuth(user, "access-1", "refresh-1")
+    useFavoriteProductsStore.getState().setFavorite("p-1", true)
+    expect(useFavoriteProductsStore.getState().ids.size).toBe(1)
+
+    await store().logout()
+
+    expect(useFavoriteProductsStore.getState().ids.size).toBe(0)
+    expect(useFavoriteProductsStore.getState().hasHydrated).toBe(false)
   })
 
   it("issues only one logout request when called twice in sequence", async () => {

@@ -3,6 +3,7 @@
 import { Eye, Star, Truck } from "lucide-react"
 import Link from "next/link"
 import { SpotlightCard } from "@/components/ui/spotlight-card"
+import FavoriteProductButton from "@/features/products/favorites/FavoriteProductButton"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import ProductImageWithFallback from "../ProductImageWithFallback"
 
@@ -17,6 +18,7 @@ export interface ProductCardData {
   reviewCount?: number
   stock?: number
   href: string
+  favoriteProductId?: string
 }
 
 interface ProductCardProps {
@@ -41,6 +43,11 @@ const ProductCard = ({ data }: ProductCardProps) => {
             fill
             className="object-contain p-4 transition-transform duration-500 group-hover:scale-105 sm:p-6"
           />
+          {data.favoriteProductId && (
+            <div className="absolute right-2.5 top-2.5 sm:right-4 sm:top-4">
+              <FavoriteProductButton productId={data.favoriteProductId} />
+            </div>
+          )}
           {data.stock !== undefined && (
             <div className="absolute bottom-2.5 left-2.5 sm:bottom-4 sm:left-4">
               <div

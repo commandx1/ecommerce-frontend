@@ -4,13 +4,15 @@ import { AccountSettingsPage, BuyerAddressesPage } from "./pages/vendor-settings
 
 /**
  * `/buyer-dashboard/settings` renders the same `AccountSettingsShared` component as the vendor
- * side, but composed differently: no `CompanyInfoCard`/`StripeConnectCard`/embedded
- * `AddressManagementShared` (isVendor is false), and `LicenseManagementCard` renders instead
- * (see AccountSettingsShared.tsx: `{!isVendor && <LicenseManagementCard />}`). Addresses live on
- * their own route (`/buyer-dashboard/settings/addresses`, see DashboardSidebar.tsx), not
- * embedded here. Account/address SAVE behaviour is already covered end-to-end in
- * vendor-settings.spec.ts against the identical shared components - this file only verifies the
- * buyer-side composition wires up correctly, per the task brief.
+ * side, but composed differently: no `CompanyInfoCard`/`StripeConnectCard` (isVendor is false),
+ * the buyer page embeds `AddressManagementShared` with `singleAddress` as the shared component's
+ * `children` (see src/app/buyer-dashboard/settings/page.tsx; the vendor page embeds the same
+ * component without `singleAddress`), and the buyer's Personal Information card additionally
+ * nests `LicenseManagementSection` as a sub-section (see AccountSettingsShared.tsx:
+ * `{!isVendor && <LicenseManagementSection />}`, rendered inside the same `<section>` as the
+ * profile form, right after the form). Account/address SAVE behaviour is already covered
+ * end-to-end in vendor-settings.spec.ts against the identical shared components - this file only
+ * verifies the buyer-side composition wires up correctly, per the task brief.
  *
  * `GET /backend-api/licenses` is NOT registered by account.mocks.ts (the handler wraps
  * `makeLicense()` in a `{ licenses, total }` literal with no exported factory - see that file's
@@ -49,10 +51,10 @@ test.describe("buyer settings composition", () => {
     await expect(page.profileSection).toBeVisible()
     await expect(page.firstNameInput).toHaveValue("Serhat")
     await expect(page.emailInput).toBeDisabled()
-    await expect(buyerPage.getByRole("heading", { name: "License Information" })).toBeVisible()
+    await expect(buyerPage.getByRole("heading", { name: "Professional Licenses", level: 3 })).toBeVisible()
 
-    // Buyer settings composes AccountSettingsShared WITHOUT the embedded address section -
-    // addresses are a separate route (see file header comment).
+    // Buyers embed AddressManagementShared with `singleAddress`, whose heading is the singular
+    // "Address" - the plural vendor heading must not appear (see file header comment).
     await expect(buyerPage.getByRole("heading", { name: "Addresses", exact: true })).toHaveCount(0)
   })
 

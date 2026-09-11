@@ -94,13 +94,21 @@ describe("ProductCard", () => {
 
   // The favourite and compare controls were removed (27 Aug 2026, user decision): both were
   // handler-less, so a shopper clicking them got a silent no-op. A control that cannot work is
-  // worse than no control. This test is the guard against either one reappearing unwired.
-  it("no longer renders the favourite and compare controls that did nothing when clicked", () => {
+  // worse than no control. This test is the guard against either one reappearing unwired - for
+  // data WITHOUT `favoriteProductId` (the favorite heart is opt-in per card, see the sibling
+  // test below for the case where it is set).
+  it("does not render a favorites button when favoriteProductId is not set", () => {
     render(<ProductCard data={makeData()} />)
 
-    expect(screen.queryByRole("button", { name: "Add to favorites" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /favorites/i })).not.toBeInTheDocument()
     // The detail link (Eye icon) is a real <a>, so the only button left is Add to Cart.
     expect(screen.getAllByRole("button")).toHaveLength(1)
+  })
+
+  it("renders a favorites button when favoriteProductId is set", () => {
+    render(<ProductCard data={makeData({ favoriteProductId: "p-1" })} />)
+
+    expect(screen.getByRole("button", { name: "Save to favorites" })).toBeInTheDocument()
   })
 
   // Add to Cart is still unwired. Unlike favourite/compare it is a core catalogue action, so it

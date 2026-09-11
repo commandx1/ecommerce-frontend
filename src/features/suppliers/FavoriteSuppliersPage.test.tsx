@@ -117,6 +117,15 @@ describe("FavoriteSuppliersPage", () => {
     expect(mockToastError).toHaveBeenCalledWith("Action failed", expect.any(String))
   })
 
+  it("hides its own heading when embedded", async () => {
+    render(<FavoriteSuppliersPage embedded />)
+    await screen.findByRole("heading", { name: "Acme Dental", level: 3 })
+
+    expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Grid/ })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Table/ })).toBeInTheDocument()
+  })
+
   it("removes a vendor from the table view too", async () => {
     const user = userEvent.setup()
     let deletedId: string | undefined

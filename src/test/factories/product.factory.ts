@@ -1,3 +1,4 @@
+import type { FavoriteProductItem } from "@/lib/api/favorite-products"
 import type {
   ActiveProductSearchItem,
   MyProductsPageResponse,
@@ -131,6 +132,28 @@ export function makeUserProductsFilterResponse(
     totalPages: 1,
     page: 0,
     size: 10,
+    ...overrides,
+  }
+}
+
+export function makeFavoriteProductItem(overrides: Partial<FavoriteProductItem> = {}): FavoriteProductItem {
+  return {
+    productId: "p-1",
+    productName: "Intra Oral Mixing Tips",
+    brand: "MARK3",
+    barcode: null,
+    coverPhotoPath: "/uploads/tips.png",
+    manufacturerCode: null,
+    reorderId: null,
+    referanceNumber: null,
+    overallStar: 4.5,
+    reviewCount: 12,
+    vendorsCount: 3,
+    bestPriceVendor: "Acme Dental",
+    price: 56,
+    oldPrice: 70,
+    discount: 20,
+    stock: 40,
     ...overrides,
   }
 }

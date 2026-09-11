@@ -113,6 +113,14 @@ interface CheckoutStore {
   setPayloadAutoOrder: (userProductId: string, autoOrder: AutoOrderPeriod | null) => void
   setExcludedFromOrder: (excluded: ExcludedSellerLines[]) => void
   setOrderResult: (result: PlaceOrderResponse) => void
+  /**
+   * Wipes everything the shipping step froze — the ETA text, the per-vendor method map, the
+   * shipping cost, the `orderPayload` snapshot, and the excluded-line list — without touching the
+   * address, payment method, or any other field the buyer already filled in. `useCheckoutCartSync`
+   * calls this when the cart changes underneath a frozen step 3/4 payload, so the buyer re-picks
+   * shipping against the current cart instead of placing an order for lines that no longer match.
+   */
+  clearShippingSelection: () => void
   reset: () => void
 }
 
@@ -256,5 +264,13 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
     }),
   setExcludedFromOrder: (excluded) => set({ excludedFromOrder: excluded }),
   setOrderResult: (result) => set({ orderResult: result }),
+  clearShippingSelection: () =>
+    set({
+      selectedShippingEtaText: initialState.selectedShippingEtaText,
+      selectedVendorShippingMethods: initialState.selectedVendorShippingMethods,
+      selectedShippingCost: initialState.selectedShippingCost,
+      orderPayload: initialState.orderPayload,
+      excludedFromOrder: initialState.excludedFromOrder,
+    }),
   reset: () => set({ ...initialState }),
 }))

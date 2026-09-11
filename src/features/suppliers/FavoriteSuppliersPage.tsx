@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
 
 type ViewMode = "grid" | "table"
 
-export default function FavoriteSuppliersPage() {
+export default function FavoriteSuppliersPage({ embedded = false }: { embedded?: boolean }) {
   const [viewMode, setViewMode] = useState<ViewMode>("grid")
   const [vendors, setVendors] = useState<VendorListItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -54,13 +54,20 @@ export default function FavoriteSuppliersPage() {
 
   return (
     <section>
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary">Favorite Vendors</h1>
-          <p className="mt-1 text-text-secondary">
-            Quick access to your starred vendors. Switch between grid and table views.
-          </p>
-        </div>
+      <div
+        className={cn(
+          "mb-8 flex flex-col gap-4 sm:flex-row sm:items-center",
+          embedded ? "sm:justify-end" : "sm:justify-between",
+        )}
+      >
+        {embedded ? null : (
+          <div>
+            <h1 className="text-3xl font-bold text-text-primary">Favorite Vendors</h1>
+            <p className="mt-1 text-text-secondary">
+              Quick access to your starred vendors. Switch between grid and table views.
+            </p>
+          </div>
+        )}
 
         <div className="inline-flex items-center rounded-full border border-border-soft bg-surface-elevated p-1 shadow-soft">
           <button

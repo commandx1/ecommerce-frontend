@@ -141,7 +141,10 @@ describe("CartSummaryPanel", () => {
 
     expect(screen.getByText("Dental license required")).toBeInTheDocument()
     expect(screen.getByText(/require a valid, approved dental license/i)).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: /Add your license/i })).toHaveAttribute("href", "/buyer-dashboard/settings")
+    expect(screen.getByRole("link", { name: /Add your license/i })).toHaveAttribute(
+      "href",
+      "/buyer-dashboard/settings#licenses",
+    )
     expect(screen.queryByText("Checkout is blocked")).not.toBeInTheDocument()
   })
 
@@ -152,7 +155,7 @@ describe("CartSummaryPanel", () => {
     expect(screen.getByText(/under review/i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /View your license/i })).toHaveAttribute(
       "href",
-      "/buyer-dashboard/settings",
+      "/buyer-dashboard/settings#licenses",
     )
   })
 
@@ -163,7 +166,7 @@ describe("CartSummaryPanel", () => {
     expect(screen.getByText(/renew yours/i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /Renew your license/i })).toHaveAttribute(
       "href",
-      "/buyer-dashboard/settings",
+      "/buyer-dashboard/settings#licenses",
     )
   })
 
@@ -173,7 +176,7 @@ describe("CartSummaryPanel", () => {
     expect(screen.getByText("Your dental license wasn't approved")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /Update your license/i })).toHaveAttribute(
       "href",
-      "/buyer-dashboard/settings",
+      "/buyer-dashboard/settings#licenses",
     )
     expect(screen.queryByText(/^Reason:/)).not.toBeInTheDocument()
   })

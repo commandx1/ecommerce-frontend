@@ -52,9 +52,9 @@ const filterArray = fc.array(arrayMember, { maxLength: 5 })
 // real round-trip equality rather than re-deriving the known clamp.
 const validPage = fc.integer({ min: 1, max: 100000 })
 
-// pageSize: parse caps at MAX_PAGE_SIZE=60 (ASYMMETRY 4). Restrict to the valid range for the
+// pageSize: parse caps at MAX_PAGE_SIZE=30 (ASYMMETRY 4). Restrict to the valid range for the
 // pure-equality property; the capping behavior itself is exercised in its own test below.
-const validPageSize = fc.integer({ min: 1, max: 60 })
+const validPageSize = fc.integer({ min: 1, max: 30 })
 
 const sortValue = fc.constantFrom<BuilderBase["sort"]>(...VALID_SORT_VALUES, "best-match")
 
@@ -255,9 +255,9 @@ describe("products URL round-trip property: known asymmetry classes still hold f
   })
 
   // Cross-check ASYMMETRY 4 (page size capping) with random oversized page sizes.
-  it("ASYMMETRY 4 generalizes: any pageSize above 60 is capped to 60", () => {
+  it("ASYMMETRY 4 generalizes: any pageSize above 30 is capped to 30", () => {
     fc.assert(
-      fc.property(fc.integer({ min: 61, max: 10_000_000 }), (pageSize) => {
+      fc.property(fc.integer({ min: 31, max: 10_000_000 }), (pageSize) => {
         const result = roundTrip({
           currentPage: 1,
           pageSize,
@@ -273,7 +273,7 @@ describe("products URL round-trip property: known asymmetry classes still hold f
           attributes: [],
           companyId: null,
         })
-        expect(result.pageSize).toBe(60)
+        expect(result.pageSize).toBe(30)
       }),
       { seed: 42 },
     )

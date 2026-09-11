@@ -97,8 +97,8 @@ describe("parseListingSearchParams — paging", () => {
     expect(parse({ size: "24" }).pageSize).toBe(24)
   })
 
-  it("caps the page size at 60", () => {
-    expect(parse({ size: "500" }).pageSize).toBe(60)
+  it("caps the page size at 30", () => {
+    expect(parse({ size: "500" }).pageSize).toBe(30)
   })
 
   it.each([
@@ -297,7 +297,7 @@ describe("parseListingSearchParams — hostile input never throws", () => {
       expect(result.displayPage).toBeGreaterThan(0)
       expect(result.apiPage).toBeGreaterThanOrEqual(0)
       expect(result.pageSize).toBeGreaterThan(0)
-      expect(result.pageSize).toBeLessThanOrEqual(60)
+      expect(result.pageSize).toBeLessThanOrEqual(30)
       const knownSort = VALID_SORT_VALUES.includes(result.sort as (typeof VALID_SORT_VALUES)[number])
       expect(knownSort || result.sort === "best-match").toBe(true)
       expect(Array.isArray(result.brands)).toBe(true)

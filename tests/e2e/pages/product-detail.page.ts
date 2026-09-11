@@ -28,4 +28,17 @@ export class ProductDetailPage extends BasePage {
   get selectedSupplierButton(): Locator {
     return this.page.getByRole("button", { name: "Selected", exact: true })
   }
+
+  /**
+   * Heart toggle (FavoriteProductButton) in the hero badge row
+   * (ProductHeroDetails.tsx). Matches only the real toggle's two accessible
+   * names ("Save to favorites" / "Remove from favorites") - the static
+   * "Related Products" section below the hero (RelatedProducts.tsx) also
+   * renders non-functional `aria-label="Add to favorites"` buttons, which a
+   * loose `/favorites/i` would ambiguously match too.
+   */
+  favoriteToggle(productName?: string | RegExp): Locator {
+    void productName
+    return this.page.getByRole("button", { name: /^(Save to favorites|Remove from favorites)$/ })
+  }
 }

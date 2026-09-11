@@ -1,5 +1,6 @@
 import {
   makeActiveProductSearchItem,
+  makeFavoriteProductItem,
   makeMyProductsPageResponse,
   makeProduct,
   makePublicProductsResponse,
@@ -115,4 +116,23 @@ export function registerProductsMocks(apiMock: ApiMock) {
     body: makeUserProductDetailResponse({ id: params.id }),
   }))
   apiMock.on("GET", "/api/user-products", () => ({ body: [makeVendorUserProduct()] }))
+
+  /**
+   * Favorite products (FavoriteProductButton, useFavoriteProductsStore.hydrate()). Unlike the
+   * rest of this domain these go straight to the backend (`/backend-api/...`), not through a
+   * Next.js `/api` route - see the variant-attributes routes above for the same pattern.
+   *
+   * `GET /backend-api/products/favorite-ids` is a MANDATORY default: every `buyerPage` visit to
+   * `/products` or `/products/:id` now mounts a heart button that fires this on mount (see
+   * FavoriteProductButton.tsx's `useEffect`), so without a default here the strict `apiMock`
+   * would 599 it in every pre-existing spec that merely visits those routes as a buyer
+   * (browse-to-cart.spec.ts, a11y-smoke.spec.ts) even though they have nothing to do with
+   * favorites. Empty array = "nothing favorited yet"; tests that care about the favorited state
+   * override this route with their own `apiMock.on` call BEFORE `registerAllMocks` (first
+   * registration wins - see the fixture's doc-comment).
+   */
+  apiMock.on("GET", "/backend-api/products/favorite-ids", () => ({ body: [] }))
+  apiMock.on("GET", "/backend-api/products/favorites", () => ({ body: [makeFavoriteProductItem()] }))
+  apiMock.on("POST", "/backend-api/products/:productId/favorite", () => ({ status: 200 }))
+  apiMock.on("DELETE", "/backend-api/products/:productId/favorite", () => ({ status: 204 }))
 }

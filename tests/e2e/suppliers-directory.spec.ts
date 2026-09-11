@@ -14,7 +14,9 @@ import { SuppliersDirectoryPage } from "./pages/suppliers-directory.page"
  *    but no component anywhere calls it with one - there is no search input
  *    in the UI at all (grepped src/features/suppliers/**). Not covered below.
  *  - The card/table toggle only exists on the buyer-dashboard favorites page
- *    (FavoriteSuppliersPage, /buyer-dashboard/vendors/favorites), which has
+ *    (FavoriteSuppliersPage, embedded in the "Vendors" tab of
+ *    /buyer-dashboard/favorites - /buyer-dashboard/vendors/favorites now just
+ *    `redirect()`s there with `?tab=vendors`), which has
  *    no filter/sort of its own - it just lists whatever `getMyFavoriteVendors()`
  *    returns. Not covered below either; this spec sticks to what /vendors
  *    actually renders: rating filter, sort, favorite toggle and pagination.
