@@ -18,8 +18,8 @@ vi.mock("@/features/buyer-dashboard/invoices/BuyerInvoicesPage", () => ({
 vi.mock("@/features/buyer-dashboard/payment-methods/BuyerPaymentMethodsPage", () => ({
   default: () => <div data-testid="payment-methods-page" />,
 }))
-vi.mock("@/features/suppliers/FavoriteSuppliersPage", () => ({
-  default: () => <div data-testid="favorite-suppliers-page" />,
+vi.mock("@/features/favorites/FavoritesPage", () => ({
+  default: () => <div data-testid="favorites-page" />,
 }))
 vi.mock("@/components/dashboard-shared/AccountSettingsShared", () => ({
   default: ({ title, description, children }: { title: string; description: string; children?: ReactNode }) => (
@@ -56,11 +56,11 @@ describe("buyer dashboard routes", () => {
     expect(screen.getByTestId("payment-methods-page")).toBeInTheDocument()
   })
 
-  it("renders the favourite vendors feature at /buyer-dashboard/vendors/favorites", async () => {
-    const { default: Page } = await import("./vendors/favorites/page")
+  it("renders the favorites feature at /buyer-dashboard/favorites", async () => {
+    const { default: Page } = await import("./favorites/page")
     render(<Page />)
 
-    expect(screen.getByTestId("favorite-suppliers-page")).toBeInTheDocument()
+    expect(screen.getByTestId("favorites-page")).toBeInTheDocument()
   })
 
   it("passes buyer-facing copy into the shared settings screen and embeds the address manager", async () => {
@@ -74,9 +74,10 @@ describe("buyer dashboard routes", () => {
   })
 
   it.each([
-    ["./suppliers/page", "/buyer-dashboard/vendors/favorites"],
-    ["./suppliers/favorites/page", "/buyer-dashboard/vendors/favorites"],
-    ["./vendors/page", "/buyer-dashboard/vendors/favorites"],
+    ["./suppliers/page", "/buyer-dashboard/favorites?tab=vendors"],
+    ["./suppliers/favorites/page", "/buyer-dashboard/favorites?tab=vendors"],
+    ["./vendors/page", "/buyer-dashboard/favorites?tab=vendors"],
+    ["./vendors/favorites/page", "/buyer-dashboard/favorites?tab=vendors"],
     ["./page", "/buyer-dashboard/orders"],
   ])("redirects the legacy route %s", async (modulePath, target) => {
     const { default: Page } = await import(modulePath)
