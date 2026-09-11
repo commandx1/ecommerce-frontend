@@ -1,5 +1,8 @@
 import { ChevronRight } from "lucide-react"
 import Link from "next/link"
+import PageSizeSelect from "./PageSizeSelect"
+
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100]
 
 interface PaginationBarProps {
   currentPage: number
@@ -22,20 +25,10 @@ const PaginationBar = ({ currentPage, pageSize, totalElements, totalPages, build
         </span>
         <div className="flex flex-wrap items-center justify-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-[0.14em] text-text-muted">Items per page</span>
-          {[10, 20, 50, 100].map((size) => (
-            <Link
-              key={size}
-              href={buildUrl({ page: 1, size })}
-              aria-current={pageSize === size ? "true" : undefined}
-              className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
-                pageSize === size
-                  ? "border-brand/40 bg-brand/10 font-semibold text-brand"
-                  : "border-border-soft bg-surface text-text-secondary hover:border-brand/30 hover:text-brand"
-              }`}
-            >
-              {size}
-            </Link>
-          ))}
+          <PageSizeSelect
+            pageSize={pageSize}
+            options={PAGE_SIZE_OPTIONS.map((size) => ({ size, href: buildUrl({ page: 1, size }) }))}
+          />
         </div>
       </div>
 

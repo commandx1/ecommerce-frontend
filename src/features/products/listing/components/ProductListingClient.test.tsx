@@ -122,11 +122,15 @@ describe("ProductListingClient", () => {
     expect(new URLSearchParams(url.split("?")[1]).has("sort")).toBe(false)
   })
 
-  it("changing the page size resets to page 1", () => {
-    renderListing({}, "page=4&size=20")
+  it("changing the page size resets to page 1", async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 })
+    const { router } = renderListing({}, "page=4&size=20")
 
-    const link = screen.getByRole("link", { name: "50" })
-    const params = new URLSearchParams(link.getAttribute("href")!.split("?")[1])
+    await user.click(screen.getByRole("combobox", { name: "Items per page" }))
+    await user.click(await screen.findByRole("option", { name: "50" }))
+
+    const [url] = router.push.mock.calls[0] as [string]
+    const params = new URLSearchParams(url.split("?")[1])
     expect(params.get("size")).toBe("50")
     expect(params.get("page")).toBe("1")
   })

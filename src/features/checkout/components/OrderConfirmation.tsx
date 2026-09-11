@@ -65,6 +65,11 @@ export default function OrderConfirmation() {
         <OrderConfirmationHeader />
         {orderResult ? (
           <>
+            <OrderConfirmationItems
+              orderResult={orderResult}
+              autoOrderPeriods={autoOrderPeriods}
+              autoOrderPending={autoOrderStatus === "pending"}
+            />
             <div className="mb-10 grid gap-6 lg:grid-cols-2">
               <OrderConfirmationStats orderResult={orderResult} />
               <OrderConfirmationShipping
@@ -72,11 +77,6 @@ export default function OrderConfirmation() {
                 totalShippingCost={selectedShippingCost}
               />
             </div>
-            <OrderConfirmationItems
-              orderResult={orderResult}
-              autoOrderPeriods={autoOrderPeriods}
-              autoOrderPending={autoOrderStatus === "pending"}
-            />
           </>
         ) : null}
 

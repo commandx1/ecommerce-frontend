@@ -29,6 +29,36 @@ describe("OrderConfirmation", () => {
     expect(screen.getByText("$1,234.50")).toBeInTheDocument()
   })
 
+  it("lists the order items above the payment and shipping cards", () => {
+    useCheckoutStore.setState({
+      currentStep: 5,
+      orderResult: orderResult({
+        orderItems: [
+          {
+            id: "item-1",
+            userProductId: "up-1",
+            productId: "product-1",
+            productName: "Composite Kit",
+            productCoverPhotoPath: "/uploads/composite-kit.png",
+            price: 42.5,
+            quantity: 1,
+            status: "PROCESSING",
+            shippingLink: [],
+            trackingLink: [],
+            updatedDate: null,
+          },
+        ],
+      }) as never,
+      autoOrderUserProductIds: [],
+    })
+
+    render(<OrderConfirmation />)
+
+    const itemsHeading = screen.getByText("Order Items")
+    const paymentCard = screen.getByText("Payment Status")
+    expect(itemsHeading.compareDocumentPosition(paymentCard) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
   it("flags a payment that is still pending rather than claiming success", () => {
     useCheckoutStore.setState({
       currentStep: 5,
