@@ -174,7 +174,7 @@ export default function NotFound() {
           <div className="overflow-hidden rounded-4xl bg-brand text-inverse-foreground shadow-panel dark:bg-brand-surface">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
               <div className="p-12 text-inverse-foreground">
-                <h2 className="text-4xl font-bold mb-6">Need Help?</h2>
+                <h2 className="mb-6 text-4xl font-bold text-inverse-foreground">Need Help?</h2>
                 <p className="mb-8 text-lg leading-relaxed text-inverse-muted">
                   Our support team is here to assist you 24/7. Whether you have questions about products, orders, or
                   your account, we're ready to help.

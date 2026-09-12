@@ -60,7 +60,7 @@ export default function CartContent({
     <PageSectionContainer as="main" className="min-h-screen bg-canvas py-8">
       <SectionHeading titleAs="h1" title="Shopping Cart" className="mb-8" />
       <div className="flex flex-col gap-8 lg:flex-row">
-        <div className="mx-auto flex-1 lg:w-2/3">
+        <div className="w-full min-w-0 flex-1 lg:w-2/3">
           <CartItemsPanel
             cartId={cartId}
             isClearConfirmOpen={isClearConfirmOpen}

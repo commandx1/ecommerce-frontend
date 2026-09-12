@@ -74,6 +74,6 @@ export const config = {
     // The lookahead is anchored to a segment boundary (`api/` or end-of-path) so that a page
     // whose first segment merely STARTS with an excluded name (`/apidocs`, `/api-status`)
     // still goes through the auth guard.
-    "/((?!api/|api$|backend-api/|backend-api$|_next/static|_next/image|favicon\\.ico$|qz-tray\\.js$).*)",
+    "/((?!api/|api$|backend-api/|backend-api$|_next/static|_next/image|favicon\\.ico$|qz-tray\\.js$|.*\\.(?:png|jpe?g|gif|svg|webp|avif|ico|txt|xml|json|woff2?)$).*)",
   ],
 }

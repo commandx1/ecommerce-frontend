@@ -366,7 +366,7 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
       isOpen={isOpen}
       onClose={handleClose}
       title="Import Products"
-      maxWidthClassName="w-5xl"
+      maxWidthClassName="max-w-5xl"
       overlayClassName="bg-brand-strong/40 backdrop-blur-[2px]"
       contentClassName="rounded-2xl border border-border-soft bg-surface-elevated p-0"
     >

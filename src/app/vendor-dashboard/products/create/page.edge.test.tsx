@@ -84,11 +84,20 @@ const fillBasicTab = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.selectOptions(screen.getByRole("combobox", { name: "Fulfillment Policy *" }), "Ships within 2 days")
 }
 
+const K_FILES_LABEL = "Endodontic products > Hand files-reamers-hedstroms > K-Files"
+
+const selectCategory = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.click(screen.getByLabelText("Category *"))
+  await user.type(screen.getByPlaceholderText("Search categories…"), "k-files")
+  await user.click(await screen.findByRole("option", { name: K_FILES_LABEL }))
+}
+
 const fillDetailsTab = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.type(screen.getByLabelText("Detailed Description *"), "A great dental product")
   await user.type(screen.getByLabelText("Manufacturer Code *"), "MNF-1")
   await user.type(screen.getByLabelText("Manufacturer *"), "MARK3")
   await user.type(screen.getByLabelText("Brand"), "Acme Dental")
+  await selectCategory(user)
   await user.type(screen.getByLabelText("Manufacturer Site Product Page *"), "https://example.com/products/item")
   await user.type(screen.getByLabelText("Weight *"), "1.5")
 }
@@ -597,6 +606,10 @@ describe("CreateProductPage — review-edit mode (loadProductForReviewEdit)", ()
             dentalLicenseRequired: "No",
             coverPhotoPath: "/uploads/existing.png",
             weight: 1,
+            categoryLevel1: "Dental Supplies",
+            categoryLevel2: "Endodontic products",
+            categoryLevel3: "Hand files-reamers-hedstroms",
+            categoryLevel4: "K-Files",
           }),
         ),
       ),
@@ -651,6 +664,10 @@ describe("CreateProductPage — review-edit mode (loadProductForReviewEdit)", ()
             dentalLicenseRequired: "No",
             coverPhotoPath: "/uploads/existing.png",
             weight: 1,
+            categoryLevel1: "Dental Supplies",
+            categoryLevel2: "Endodontic products",
+            categoryLevel3: "Hand files-reamers-hedstroms",
+            categoryLevel4: "K-Files",
           }),
         ),
       ),
@@ -698,9 +715,104 @@ describe("CreateProductPage — review-edit mode (loadProductForReviewEdit)", ()
       shipmentFee: 1,
       heavyShippingSurcharge: 0,
       fulfillmentPolicy: "Ships within 2 days",
+      categoryLevel1: "Dental Supplies",
+      categoryLevel2: "Endodontic products",
+      categoryLevel3: "Hand files-reamers-hedstroms",
+      categoryLevel4: "K-Files",
     })
     expect(typeof json.active).toBe("boolean")
     expect(typeof json.exportPackaging).toBe("boolean")
+  })
+
+  it("shows the stored category path in the picker trigger when it is a valid tree leaf", async () => {
+    server.use(
+      http.get("*/api/products/:id/owner", ({ params }) =>
+        HttpResponse.json(
+          makeProduct({
+            id: String(params.id),
+            categoryLevel1: "Dental Supplies",
+            categoryLevel2: "Endodontic products",
+            categoryLevel3: "Hand files-reamers-hedstroms",
+            categoryLevel4: "K-Files",
+          }),
+        ),
+      ),
+      http.get("*/api/user-products/:id", () =>
+        HttpResponse.json(
+          makeUserProductDetailResponse({ id: "up-9", fulfillmentPolicy: "Ships within 2 business days" }),
+        ),
+      ),
+    )
+
+    render(<CreateProductPage />, { searchParams: "reviewEditId=p-1&reviewUserProductId=up-9" })
+    await screen.findByLabelText(/Product Name/)
+    await userEvent.setup().click(tabButton("Product Details"))
+
+    expect(await screen.findByLabelText("Category *")).toHaveTextContent(
+      "Dental Supplies > Endodontic products > Hand files-reamers-hedstroms > K-Files",
+    )
+    expect(screen.queryByRole("note")).not.toBeInTheDocument()
+  })
+
+  it("shows a legacy hint instead of a selection when the stored category is not a tree leaf", async () => {
+    server.use(
+      http.get("*/api/products/:id/owner", ({ params }) =>
+        HttpResponse.json(
+          makeProduct({
+            id: String(params.id),
+            categoryLevel1: "Restorative",
+            categoryLevel2: "Composite",
+          }),
+        ),
+      ),
+      http.get("*/api/user-products/:id", () =>
+        HttpResponse.json(
+          makeUserProductDetailResponse({ id: "up-9", fulfillmentPolicy: "Ships within 2 business days" }),
+        ),
+      ),
+    )
+
+    render(<CreateProductPage />, { searchParams: "reviewEditId=p-1&reviewUserProductId=up-9" })
+    await screen.findByLabelText(/Product Name/)
+    await userEvent.setup().click(tabButton("Product Details"))
+
+    expect(await screen.findByLabelText("Category *")).toHaveTextContent("Select a category")
+    expect(screen.getByRole("note")).toHaveTextContent("Previous: Restorative > Composite")
+
+    // The legacy value is a hint only - it never satisfies the required rule, so moving forward
+    // is blocked until the vendor picks a real tree leaf.
+    await userEvent.setup().click(tabButton("Media"))
+    expect(await screen.findByText("Category is required")).toBeInTheDocument()
+    expect(screen.getByLabelText("Category *")).toBeInTheDocument()
+  })
+
+  it("shows no category selection or legacy hint when every stored category level is empty", async () => {
+    server.use(
+      http.get("*/api/products/:id/owner", ({ params }) =>
+        HttpResponse.json(
+          makeProduct({
+            id: String(params.id),
+            categoryLevel1: undefined,
+            categoryLevel2: undefined,
+            categoryLevel3: undefined,
+            categoryLevel4: undefined,
+            categoryLevel5: undefined,
+          }),
+        ),
+      ),
+      http.get("*/api/user-products/:id", () =>
+        HttpResponse.json(
+          makeUserProductDetailResponse({ id: "up-9", fulfillmentPolicy: "Ships within 2 business days" }),
+        ),
+      ),
+    )
+
+    render(<CreateProductPage />, { searchParams: "reviewEditId=p-1&reviewUserProductId=up-9" })
+    await screen.findByLabelText(/Product Name/)
+    await userEvent.setup().click(tabButton("Product Details"))
+
+    expect(await screen.findByLabelText("Category *")).toHaveTextContent("Select a category")
+    expect(screen.queryByRole("note")).not.toBeInTheDocument()
   })
 })
 
@@ -1029,6 +1141,10 @@ describe("CreateProductPage — removing an existing photo in review-edit mode",
             coverPhotoPath: "/uploads/existing-cover.png",
             photoPhats: ["/uploads/existing-1.png", "/uploads/existing-2.png"],
             weight: 1,
+            categoryLevel1: "Dental Supplies",
+            categoryLevel2: "Endodontic products",
+            categoryLevel3: "Hand files-reamers-hedstroms",
+            categoryLevel4: "K-Files",
           }),
         ),
       ),
@@ -1288,6 +1404,10 @@ describe("CreateProductPage — replacing and removing cover photos", () => {
             coverPhotoPath: "/uploads/existing-cover.png",
             photoPhats: [],
             weight: 1,
+            categoryLevel1: "Dental Supplies",
+            categoryLevel2: "Endodontic products",
+            categoryLevel3: "Hand files-reamers-hedstroms",
+            categoryLevel4: "K-Files",
           }),
         ),
       ),

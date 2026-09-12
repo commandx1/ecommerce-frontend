@@ -108,12 +108,21 @@ const fillBasicTab = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.selectOptions(screen.getByRole("combobox", { name: "Fulfillment Policy *" }), "Ships within 2 days")
 }
 
+const K_FILES_LABEL = "Endodontic products > Hand files-reamers-hedstroms > K-Files"
+
+const selectCategory = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.click(screen.getByLabelText("Category *"))
+  await user.type(screen.getByPlaceholderText("Search categories…"), "k-files")
+  await user.click(await screen.findByRole("option", { name: K_FILES_LABEL }))
+}
+
 /** Fills every required Details-tab field; leaves the form on the Details tab. */
 const fillDetailsTab = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.type(screen.getByLabelText("Detailed Description *"), "A great dental product")
   await user.type(screen.getByLabelText("Manufacturer Code *"), "MNF-1")
   await user.type(screen.getByLabelText("Manufacturer *"), "MARK3")
   await user.type(screen.getByLabelText("Brand"), "Acme Dental")
+  await selectCategory(user)
   await user.type(screen.getByLabelText("Manufacturer Site Product Page *"), "https://example.com/products/item")
   await user.type(screen.getByLabelText("Weight *"), "1.5")
 }
@@ -339,12 +348,17 @@ describe("CreateProductPage — submitting a new product", () => {
       heavyShippingSurcharge: 3,
       exportPackaging: false,
       fulfillmentPolicy: "Ships within 2 days",
+      categoryLevel1: "Dental Supplies",
+      categoryLevel2: "Endodontic products",
+      categoryLevel3: "Hand files-reamers-hedstroms",
+      categoryLevel4: "K-Files",
     })
     expect(typeof json.price).toBe("number")
     expect(typeof json.stock).toBe("number")
     expect(Number.isInteger(json.stock)).toBe(true)
     expect(typeof json.active).toBe("boolean")
     expect(typeof json.exportPackaging).toBe("boolean")
+    expect(json).not.toHaveProperty("categoryLevel5")
   })
 
   it("creates only a vendor listing when an existing catalogue product is selected", async () => {

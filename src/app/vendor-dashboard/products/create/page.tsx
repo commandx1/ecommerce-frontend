@@ -23,6 +23,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useCallback, useEffect, useRef, useState } from "react"
 import BrandFilterDropdown from "@/app/vendor-dashboard/products/create/components/BrandFilterDropdown"
+import CategoryPicker from "@/app/vendor-dashboard/products/create/components/CategoryPicker"
 import ProductDetailsModal from "@/app/vendor-dashboard/products/create/components/ProductDetailsModal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
@@ -37,6 +38,13 @@ import {
   userProductBrandsQueryKey,
 } from "@/lib/api/products"
 import { vendorProductStatsQueryKey } from "@/lib/api/vendor-products"
+import {
+  type CategoryPath,
+  categoryPathToLevels,
+  formatLegacyCategory,
+  isLeafPath,
+  levelsToCategoryPath,
+} from "@/lib/category-tree"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -74,11 +82,7 @@ const TAB_FIELDS = {
     "manufacturer",
     "brand",
     "exampleVariationsProductId",
-    "categoryLevel1",
-    "categoryLevel2",
-    "categoryLevel3",
-    "categoryLevel4",
-    "categoryLevel5",
+    "category",
     "manufacturerSiteProductPage",
     "dentalLicenseRequired",
     "height",
@@ -112,11 +116,8 @@ interface FormData {
   manufacturer: string
   brand: string
   exampleVariationsProductId: string
-  categoryLevel1: string
-  categoryLevel2: string
-  categoryLevel3: string
-  categoryLevel4: string
-  categoryLevel5: string
+  categoryPath: CategoryPath | null
+  legacyCategory: string | null
   manufacturerSiteProductPage: string
   dentalLicenseRequired: string
   height: string
@@ -152,11 +153,8 @@ const initialFormData: FormData = {
   manufacturer: "",
   brand: "",
   exampleVariationsProductId: "",
-  categoryLevel1: "",
-  categoryLevel2: "",
-  categoryLevel3: "",
-  categoryLevel4: "",
-  categoryLevel5: "",
+  categoryPath: null,
+  legacyCategory: null,
   manufacturerSiteProductPage: "",
   dentalLicenseRequired: "No",
   height: "",
@@ -442,6 +440,8 @@ function CreateProductPageContent() {
         productsAPI.getUserProductById(reviewUserProductId, accessToken),
       ])
 
+      const categoryPath = levelsToCategoryPath(product)
+
       setFormData({
         ...initialFormData,
         name: product.name || "",
@@ -454,11 +454,8 @@ function CreateProductPageContent() {
         manufacturer: product.manufacturer || "",
         brand: product.brand || "",
         exampleVariationsProductId: product.exampleVariationsProductId || "",
-        categoryLevel1: product.categoryLevel1 || "",
-        categoryLevel2: product.categoryLevel2 || "",
-        categoryLevel3: product.categoryLevel3 || "",
-        categoryLevel4: product.categoryLevel4 || "",
-        categoryLevel5: product.categoryLevel5 || "",
+        categoryPath,
+        legacyCategory: categoryPath ? null : formatLegacyCategory(product),
         manufacturerSiteProductPage: product.manufacturerSiteProductPage || "",
         dentalLicenseRequired: product.dentalLicenseRequired || "No",
         height: product.height != null ? String(product.height) : "",
@@ -923,6 +920,10 @@ function CreateProductPageContent() {
       newErrors.brand = "Brand is required"
     }
 
+    if (has("category") && !isLeafPath(formData.categoryPath ?? [])) {
+      newErrors.category = "Category is required"
+    }
+
     if (has("manufacturerSiteProductPage")) {
       if (!formData.manufacturerSiteProductPage.trim()) {
         newErrors.manufacturerSiteProductPage = "Manufacturer site product page is required"
@@ -1071,11 +1072,7 @@ function CreateProductPageContent() {
         manufacturer: toOptionalString(formData.manufacturer),
         brand: toOptionalString(formData.brand),
         exampleVariationsProductId: toOptionalString(formData.exampleVariationsProductId),
-        categoryLevel1: toOptionalString(formData.categoryLevel1),
-        categoryLevel2: toOptionalString(formData.categoryLevel2),
-        categoryLevel3: toOptionalString(formData.categoryLevel3),
-        categoryLevel4: toOptionalString(formData.categoryLevel4),
-        categoryLevel5: toOptionalString(formData.categoryLevel5),
+        ...categoryPathToLevels(formData.categoryPath ?? []),
         manufacturerSiteProductPage: toOptionalString(formData.manufacturerSiteProductPage),
         dentalLicenseRequired: toOptionalString(formData.dentalLicenseRequired),
         height: toOptionalNumber(formData.height),
@@ -1133,9 +1130,9 @@ function CreateProductPageContent() {
   ).length
 
   return (
-    <div className="p-8">
+    <div className="p-0 sm:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-8">
         <div className="flex items-center space-x-4">
           <Link
             href="/vendor-dashboard/products"
@@ -1156,7 +1153,7 @@ function CreateProductPageContent() {
             </p>
           </div>
         </div>
-        <div className="flex space-x-3">
+        <div className="flex flex-wrap gap-3">
           {view === "form" && !isEditMode && !isReviewEditMode && (
             <button
               type="button"
@@ -1347,11 +1344,11 @@ function CreateProductPageContent() {
         <>
           {/* Tabs */}
           <div className="bg-surface-elevated rounded-t-2xl shadow-sm border-b border-border-soft">
-            <div className="flex space-x-8 px-8">
+            <div className="no-scrollbar flex gap-4 overflow-x-auto px-4 sm:gap-8 sm:px-8">
               <button
                 type="button"
                 onClick={() => tryLeaveTab("basic")}
-                className={`py-4 px-2 font-medium border-b-2 transition-colors ${
+                className={`shrink-0 whitespace-nowrap py-4 px-2 font-medium border-b-2 transition-colors ${
                   activeTab === "basic"
                     ? "text-brand border-brand"
                     : basicErrorCount > 0
@@ -1373,7 +1370,7 @@ function CreateProductPageContent() {
               <button
                 type="button"
                 onClick={() => tryLeaveTab("details")}
-                className={`py-4 px-2 font-medium border-b-2 transition-colors ${
+                className={`shrink-0 whitespace-nowrap py-4 px-2 font-medium border-b-2 transition-colors ${
                   activeTab === "details"
                     ? "text-brand border-brand"
                     : detailsErrorCount > 0
@@ -1398,7 +1395,7 @@ function CreateProductPageContent() {
               <button
                 type="button"
                 onClick={() => tryLeaveTab("media")}
-                className={`py-4 px-2 font-medium border-b-2 transition-colors ${
+                className={`shrink-0 whitespace-nowrap py-4 px-2 font-medium border-b-2 transition-colors ${
                   activeTab === "media"
                     ? "text-brand border-brand"
                     : mediaErrorCount > 0
@@ -1422,7 +1419,7 @@ function CreateProductPageContent() {
 
           {/* Form */}
           <form id="create-product-form" onSubmit={handleSubmit}>
-            <div className="bg-surface-elevated rounded-b-2xl shadow-lg p-8">
+            <div className="bg-surface-elevated rounded-b-2xl shadow-lg p-4 sm:p-8">
               {errors.submit && (
                 <div className="mb-6 bg-destructive/10 border border-destructive/25 rounded-lg p-4 flex items-start space-x-3">
                   <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
@@ -1633,7 +1630,7 @@ function CreateProductPageContent() {
                             Fulfillment Policy *
                           </label>
                           <div
-                            className={`flex min-h-12 items-center gap-3 rounded-lg border px-4 py-3 text-sm ${errors.fulfillmentPolicy ? "border-destructive" : "border-border-soft"} bg-white`}
+                            className={`flex min-h-12 flex-wrap items-center gap-3 rounded-lg border bg-surface-elevated px-4 py-3 text-sm ${errors.fulfillmentPolicy ? "border-destructive" : "border-border-soft"}`}
                           >
                             <span className="text-text-primary">Ships within</span>
                             <select
@@ -1833,36 +1830,24 @@ function CreateProductPageContent() {
                     </div>
                   </div>
 
-                  {/* Categories */}
+                  {/* Category */}
                   <div>
-                    <h4 className="text-sm font-semibold text-text-primary mb-3">Categories</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                      {(
-                        [
-                          "categoryLevel1",
-                          "categoryLevel2",
-                          "categoryLevel3",
-                          "categoryLevel4",
-                          "categoryLevel5",
-                        ] as const
-                      ).map((field, index) => (
-                        <div key={field}>
-                          <label htmlFor={field} className="block text-sm font-medium text-text-primary mb-2">
-                            Level {index + 1}
-                          </label>
-                          <input
-                            id={field}
-                            type="text"
-                            name={field}
-                            value={formData[field]}
-                            onChange={handleInputChange}
-                            disabled={isProductSelected}
-                            className="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
-                            placeholder={`Category level ${index + 1}`}
-                          />
-                        </div>
-                      ))}
-                    </div>
+                    <label htmlFor="category" className="block text-sm font-medium text-text-primary mb-2">
+                      Category *
+                    </label>
+                    <CategoryPicker
+                      id="category"
+                      value={formData.categoryPath}
+                      legacyValue={formData.legacyCategory}
+                      hasError={Boolean(errors.category)}
+                      disabled={isProductSelected}
+                      onChange={(path) => {
+                        setFormData((prev) => ({ ...prev, categoryPath: path, legacyCategory: null }))
+                        clearError("category")
+                      }}
+                      triggerClassName={`w-full px-4 py-3 border ${errors.category ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
+                    />
+                    {errors.category && <p className="text-destructive text-sm mt-1">{errors.category}</p>}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

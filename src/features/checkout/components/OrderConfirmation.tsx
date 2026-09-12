@@ -61,7 +61,7 @@ export default function OrderConfirmation() {
 
   return (
     <div ref={confirmationRef}>
-      <SurfaceCard variant="editorial" className="mb-8 p-12">
+      <SurfaceCard variant="editorial" className="mb-8 p-5 sm:p-8 lg:p-12">
         <OrderConfirmationHeader />
         {orderResult ? (
           <>

@@ -1271,12 +1271,12 @@ export default function ProductsPage() {
     <>
       {/* Page Header */}
       <section id={`${id}-page-header`} className="mb-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-text-primary">Product Management</h1>
             <p className="text-text-secondary mt-1">Manage your entire product catalog, inventory, and pricing</p>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Button
               type="button"
               variant="secondary"

@@ -276,7 +276,6 @@ export default function ProductDetailsModal({ product, isOpen, onClose, onSucces
           ? (originalData as BarcodeLookupProduct).barcode_formats
           : (originalData as BarcodeProduct).barcodeFormats
         const manufacturer = "manufacturer" in originalData ? originalData.manufacturer : undefined
-        const category = "category" in originalData ? originalData.category : undefined
         const manufacturerCode = "mpn" in originalData ? originalData.mpn : undefined
         const description = isBarcodeLookup ? (originalData as BarcodeLookupProduct).description : undefined
 
@@ -320,7 +319,6 @@ export default function ProductDetailsModal({ product, isOpen, onClose, onSucces
           manufacturer,
           manufacturerCode,
           brand: product.brand,
-          categoryLevel1: category,
           length: isBarcodeLookup ? toNumber((originalData as BarcodeLookupProduct).length) : undefined,
           width: isBarcodeLookup ? toNumber((originalData as BarcodeLookupProduct).width) : undefined,
           height: isBarcodeLookup ? toNumber((originalData as BarcodeLookupProduct).height) : undefined,
@@ -351,7 +349,7 @@ export default function ProductDetailsModal({ product, isOpen, onClose, onSucces
       isOpen={isOpen}
       onClose={onClose}
       title={product.title || "Product Details"}
-      maxWidthClassName="w-[calc(100vh - 2rem)] max-w-7xl mx-auto"
+      maxWidthClassName="max-w-7xl"
       contentClassName="rounded-2xl border border-border-soft bg-surface-elevated p-0"
     >
       <div className="flex items-center justify-between border-b border-border-soft px-6 py-4">

@@ -54,7 +54,9 @@ function CheckoutProgressItem({
         </div>
       </div>
 
-      {!isLast ? <div className={`mx-2 h-0.5 w-8 md:w-16 ${isCompleted ? "bg-brand" : "bg-border-soft"}`} /> : null}
+      {!isLast ? (
+        <div className={`mx-1.5 h-0.5 w-4 md:mx-2 md:w-16 ${isCompleted ? "bg-brand" : "bg-border-soft"}`} />
+      ) : null}
     </div>
   )
 }

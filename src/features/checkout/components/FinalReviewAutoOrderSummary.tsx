@@ -42,7 +42,7 @@ function AutoOrderRow({
 }) {
   return (
     <li className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-      <span className="min-w-0 flex-1 truncate text-sm text-text-primary">
+      <span className="min-w-0 flex-1 basis-full truncate text-sm text-text-primary sm:basis-0">
         {line.productName}
         <span className="text-text-muted"> × {line.quantity}</span>
       </span>

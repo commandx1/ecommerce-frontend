@@ -24,7 +24,7 @@ export default function OrderTrackingStatusBanner() {
               {index < TRACKING_STEPS.length - 1 ? (
                 <div className={`mb-3 hidden h-1 sm:mb-4 sm:block ${active ? "bg-accent-strong/90" : "bg-brand/35"}`} />
               ) : null}
-              <h3 className="mb-1 text-sm font-semibold sm:mb-2 sm:text-base">{title}</h3>
+              <h3 className="mb-1 text-sm font-semibold text-inverse-foreground sm:mb-2 sm:text-base">{title}</h3>
               <p className="text-xs text-inverse-muted sm:text-sm">{description}</p>
             </div>
           ))}

@@ -271,6 +271,11 @@ describe("proxy config.matcher", () => {
     ["/_next/image", false],
     ["/favicon.ico", false],
     ["/qz-tray.js", false],
+    // Public static assets must bypass the guard: the Vendor-role redirect used to catch
+    // /DentyProLogo.png (307 -> /vendor-dashboard) and break the vendor header logo.
+    ["/DentyProLogo.png", false],
+    ["/shippo-logo.png", false],
+    ["/fonts/inter.woff2", false],
     ["/", true],
     ["/products/1", true],
     ["/buyer-dashboard/orders", true],

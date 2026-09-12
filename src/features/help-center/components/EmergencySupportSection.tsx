@@ -32,7 +32,7 @@ export default function EmergencySupportSection() {
         <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-white/14">
           <AlertTriangle className="h-10 w-10 text-inverse-foreground" />
         </div>
-        <h2 className="mb-4 text-4xl font-bold">Emergency Support</h2>
+        <h2 className="mb-4 text-4xl font-bold text-inverse-foreground">Emergency Support</h2>
         <p className="mx-auto mb-8 max-w-3xl text-xl text-inverse-muted">
           Need immediate assistance with a critical issue? Our emergency support line is available 24/7 for urgent
           matters that impact patient care.

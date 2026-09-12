@@ -81,12 +81,21 @@ const fillBasicTab = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.selectOptions(screen.getByRole("combobox", { name: "Fulfillment Policy *" }), "Ships within 2 days")
 }
 
+const K_FILES_LABEL = "Endodontic products > Hand files-reamers-hedstroms > K-Files"
+
+const selectCategory = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.click(screen.getByLabelText("Category *"))
+  await user.type(screen.getByPlaceholderText("Search categories…"), "k-files")
+  await user.click(await screen.findByRole("option", { name: K_FILES_LABEL }))
+}
+
 /** Fills every required Details-tab field; leaves the form on the Details tab. */
 const fillDetailsTab = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.type(screen.getByLabelText("Detailed Description *"), "A great dental product")
   await user.type(screen.getByLabelText("Manufacturer Code *"), "MNF-1")
   await user.type(screen.getByLabelText("Manufacturer *"), "MARK3")
   await user.type(screen.getByLabelText("Brand"), "Acme Dental")
+  await selectCategory(user)
   await user.type(screen.getByLabelText("Manufacturer Site Product Page *"), "https://example.com/products/item")
   await user.type(screen.getByLabelText("Weight *"), "1.5")
 }
@@ -148,7 +157,36 @@ describe("CreateProductPage — form validation", () => {
     await user.click(tabButton("Media"))
     // Blocked: still on Details, and its error badge now shows.
     expect(screen.getByLabelText("Detailed Description *")).toBeInTheDocument()
-    expect(await screen.findByTitle("6 errors")).toBeInTheDocument()
+    expect(await screen.findByTitle("7 errors")).toBeInTheDocument()
+  })
+
+  it("requires a category before leaving the Details tab", async () => {
+    const user = userEvent.setup()
+    await openBlankForm(user)
+    await fillBasicTab(user)
+    await user.click(nextButton())
+    expect(await screen.findByLabelText("Detailed Description *")).toBeInTheDocument()
+
+    await user.type(screen.getByLabelText("Detailed Description *"), "A great dental product")
+    await user.type(screen.getByLabelText("Manufacturer Code *"), "MNF-1")
+    await user.type(screen.getByLabelText("Manufacturer *"), "MARK3")
+    await user.type(screen.getByLabelText("Brand"), "Acme Dental")
+    await user.type(screen.getByLabelText("Manufacturer Site Product Page *"), "https://example.com/products/item")
+    await user.type(screen.getByLabelText("Weight *"), "1.5")
+
+    await user.click(tabButton("Media"))
+
+    // Still on Details: the category error blocks forward navigation.
+    expect(await screen.findByText("Category is required")).toBeInTheDocument()
+    expect(screen.getByLabelText("Detailed Description *")).toBeInTheDocument()
+    expect(screen.getByTitle("1 error")).toBeInTheDocument()
+
+    await selectCategory(user)
+
+    expect(screen.queryByText("Category is required")).not.toBeInTheDocument()
+    await user.click(tabButton("Media"))
+    expect(await screen.findByText("Cover Photo *")).toBeInTheDocument()
+    expect(screen.queryByLabelText("Detailed Description *")).not.toBeInTheDocument()
   })
 
   it("allows backward navigation away from Details even while it has errors", async () => {

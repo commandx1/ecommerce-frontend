@@ -145,7 +145,7 @@ export default function AccountSettingsShared({
       {/* Hero */}
       <div className="spotlight-border fade-up relative overflow-hidden rounded-3xl border border-border-soft bg-surface-elevated p-6 shadow-panel sm:p-8">
         <div className="mesh-panel pointer-events-none absolute inset-0 opacity-80" />
-        <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-5">
             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-brand-strong font-display text-2xl text-inverse-foreground shadow-panel">
               {initials}
@@ -160,7 +160,7 @@ export default function AccountSettingsShared({
             </div>
           </div>
 
-          <div className="flex shrink-0 flex-wrap items-center gap-2 sm:flex-col sm:items-end">
+          <div className="flex shrink-0 flex-wrap items-center gap-2 lg:flex-col lg:items-end">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface/80 px-3 py-1.5 text-xs font-medium text-text-secondary backdrop-blur-sm">
               Member since {memberSince}
             </span>
@@ -417,7 +417,7 @@ export default function AccountSettingsShared({
                 </label>
               </div>
 
-              <div className="flex items-center justify-between gap-4 p-6">
+              <div className="flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-3">
                   <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-muted text-brand">
                     <Lock className="h-5 w-5" />

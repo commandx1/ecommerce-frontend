@@ -27,11 +27,11 @@ const selectShowing = (text: string): HTMLElement => {
 
 /**
  * jsdom renders the desktop table AND the mobile card list at once (CSS hides one of them).
- * This scopes queries to the mobile wrapper (`.md:hidden`) so mobile-only interactions don't
+ * This scopes queries to the mobile wrapper (`.lg:hidden`) so mobile-only interactions don't
  * collide with the desktop table's copies of the same text/buttons.
  */
 const mobileContainer = (): HTMLElement => {
-  const container = document.querySelector(".px-4.py-4.md\\:hidden")
+  const container = document.querySelector(".px-4.py-4.lg\\:hidden")
   if (!container) {
     throw new Error("Mobile list container not found")
   }

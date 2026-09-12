@@ -345,7 +345,7 @@ export default function VendorShipmentRates({
         </span>
       </div>
 
-      <div className="grid grid-cols-1 gap-3">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
         {sortedShipmentOptions.map((option) =>
           (() => {
             if (option.type === "uber") {
@@ -368,7 +368,7 @@ export default function VendorShipmentRates({
                     checked={selectedRateId === quote.id}
                     onChange={() => onSelect(sellerId, quote)}
                   />
-                  <div className="flex flex-1 items-center">
+                  <div className="flex min-w-0 flex-1 items-center">
                     <div className="mr-3 min-w-0 flex-1">
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-text-primary">Uber Direct</span>
@@ -427,7 +427,7 @@ export default function VendorShipmentRates({
                   checked={selectedRateId === rate.objectId}
                   onChange={() => onSelect(sellerId, selectableRate)}
                 />
-                <div className="flex flex-1 items-center">
+                <div className="flex min-w-0 flex-1 items-center">
                   <div className="mr-3 min-w-0 flex-1">
                     <div className="flex items-center justify-between">
                       <span className="truncate font-bold text-text-primary">

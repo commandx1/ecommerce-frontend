@@ -353,7 +353,7 @@ export default function AddressManagementShared({
   const addressList = singleAddress ? (
     <div className="grid grid-cols-1 gap-5">{displayedAddress ? renderAddressCard(displayedAddress) : emptyState}</div>
   ) : (
-    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
       {addresses.length === 0 ? emptyState : addresses.map((address) => renderAddressCard(address))}
     </div>
   )

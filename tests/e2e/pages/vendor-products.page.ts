@@ -166,10 +166,23 @@ export class VendorCreateProductPage extends BasePage {
     await this.manufacturerInput.fill("MARK3")
     await this.brandTrigger.click()
     await this.page.getByRole("button", { name: "Acme Dental" }).click()
+    await this.selectCategory()
     await this.manufacturerSiteInput.fill("https://example.com/products/item")
     await this.reorderIdInput.fill("RO-1001")
     await this.referenceNumberInput.fill("REF-2024-01")
     await this.weightInput.fill("1.5")
+  }
+
+  /**
+   * Picks a leaf in the required Category field (search + drill-down picker over the static
+   * category tree; level 1 "Dental Supplies" is fixed and the tree covers levels 2-5).
+   */
+  async selectCategory(): Promise<void> {
+    await this.page.getByLabel("Category *").click()
+    await this.page.getByPlaceholder("Search categories…").fill("k-files")
+    await this.page
+      .getByRole("option", { name: "Endodontic products > Hand files-reamers-hedstroms > K-Files" })
+      .click()
   }
 
   /** Fills Basic then Details via the "Next" button, landing on the Media tab. */

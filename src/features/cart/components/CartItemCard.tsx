@@ -90,13 +90,13 @@ export default function CartItemCard({
             </div>
           ) : null}
 
-          <div className="mt-2 flex items-center justify-between">
+          <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CartItemQuantityControl
               quantity={quantity}
               onDecrease={() => onQuantityChange(userProduct.userProductId, quantity, -1)}
               onIncrease={() => onQuantityChange(userProduct.userProductId, quantity, 1)}
             />
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center justify-between gap-4 sm:justify-end">
               <CartItemPrice
                 oldPrice={userProduct.oldPrice}
                 price={userProduct.price}

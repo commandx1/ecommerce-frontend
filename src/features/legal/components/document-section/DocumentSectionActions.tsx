@@ -7,7 +7,7 @@ export default function DocumentSectionActions() {
   const { handleDownload, handlePrint } = useDocumentActions()
 
   return (
-    <div className="flex space-x-3">
+    <div className="flex flex-wrap gap-3">
       <button
         type="button"
         onClick={handlePrint}

@@ -52,7 +52,7 @@ export default function CartItemPrice({
   const formattedDiscount = Number.isInteger(discount) ? `${discount}` : discount.toFixed(1)
 
   return (
-    <div className="text-right">
+    <div className="min-w-0 flex-1 text-right sm:flex-none">
       <div className="flex items-center justify-end gap-2">
         {discount > 0 ? <span className="text-xs text-text-muted line-through">{formatCurrency(oldPrice)}</span> : null}
         {discount > 0 ? (
@@ -63,7 +63,7 @@ export default function CartItemPrice({
         <span className="font-semibold text-brand">{formatCurrency(price)}</span>
       </div>
 
-      <div className="mt-2 min-w-[9.75rem] space-y-1.5 rounded-xl border border-border-soft/70 bg-surface-muted/60 px-2.5 py-2">
+      <div className="mt-2 space-y-1.5 sm:min-w-[9.75rem] rounded-xl border border-border-soft/70 bg-surface-muted/60 px-2.5 py-2">
         <FeeRow icon={Truck} label="Shipment" amount={shipmentFeeTotal} />
         {heavyShipmentFeeTotal > 0 ? <FeeRow icon={Weight} label="Heavy fee" amount={heavyShipmentFeeTotal} /> : null}
       </div>

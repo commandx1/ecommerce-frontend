@@ -38,11 +38,11 @@ function BuyerOrdersPageContent() {
           <OrdersStatusTabs />
         </div>
 
-        <div className="hidden md:block md:overflow-x-auto">
+        <div className="hidden lg:block lg:overflow-x-auto">
           <OrdersTable />
         </div>
 
-        <div className="px-4 py-4 md:hidden">
+        <div className="px-4 py-4 lg:hidden">
           <OrdersMobileList />
         </div>
 

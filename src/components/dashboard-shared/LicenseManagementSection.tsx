@@ -296,7 +296,7 @@ export default function LicenseManagementSection() {
                   license.approved === false ? "border-danger/30" : "border-border-soft",
                 )}
               >
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] sm:items-start">
+                <div className="grid grid-cols-1 justify-items-start gap-3 sm:grid-cols-[1fr_auto] sm:items-start">
                   <div className="space-y-1">
                     <p className="text-sm text-text-primary">
                       <span className="font-semibold text-text-secondary">License Type:</span>{" "}

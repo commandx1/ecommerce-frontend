@@ -209,7 +209,10 @@ function PaymentMethodsContent() {
       try {
         await paymentMethodsAPI.setAutoOrderCard(method.id, true)
         await refreshMethods()
-        showToast.success("Auto order card updated", `${method.brandLabel} •••• ${method.last4} will pay for auto orders.`)
+        showToast.success(
+          "Auto order card updated",
+          `${method.brandLabel} •••• ${method.last4} will pay for auto orders.`,
+        )
       } catch (err: unknown) {
         const status = (err as { response?: { status?: number } })?.response?.status
         if (status === 409) {
@@ -353,7 +356,7 @@ function PaymentMethodsContent() {
           </Button>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
           <KpiCard
             icon={<CreditCard className="h-5 w-5 text-brand" />}
             label="Saved Cards"

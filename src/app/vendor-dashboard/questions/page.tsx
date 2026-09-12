@@ -390,7 +390,7 @@ export default function VendorQuestionsPage() {
 
       <section className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
         <div className="flex flex-col gap-3 border-b border-border-soft px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="inline-flex items-center gap-1.5 rounded-sm border border-border-soft bg-surface p-1.5 shadow-soft">
+          <div className="flex max-w-full flex-wrap items-center gap-1.5 rounded-sm border border-border-soft bg-surface p-1.5 shadow-soft">
             {FILTER_TABS.map(({ key, label }) => {
               const count = counts
                 ? key === "all"

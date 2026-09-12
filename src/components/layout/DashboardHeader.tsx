@@ -69,7 +69,7 @@ export default function DashboardHeader({
     <header id={headerId} className="sticky top-0 z-50 border-b border-border-soft bg-surface-elevated shadow-soft">
       <div className="max-w-full px-4 sm:px-6">
         <div className="flex h-16 items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-3 sm:space-x-8">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3 sm:space-x-8">
             <button
               type="button"
               onClick={toggleMobileSidebar}
@@ -82,11 +82,11 @@ export default function DashboardHeader({
 
             <Link href="/" className="flex min-w-0 items-center">
               <Logo />
-              <span className="ml-3 truncate text-xl font-bold text-text-primary sm:text-2xl">DentyPro</span>
+              <span className="ml-2 truncate text-lg font-bold text-text-primary sm:ml-3 sm:text-2xl">DentyPro</span>
             </Link>
 
             {navItems.length > 0 ? (
-              <nav className="hidden space-x-8 md:flex">
+              <nav className="hidden lg:flex lg:space-x-6 xl:space-x-8">
                 {navItems.map((item) => (
                   <Link
                     key={item.href}

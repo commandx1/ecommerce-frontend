@@ -11,7 +11,10 @@ const DocumentSectionHeader = ({ document }: DocumentSectionHeaderProps) => {
   const headerSpacing = ["compliance-certifications", "audit-reports"].includes(document.id) ? 0 : "1.5rem"
 
   return (
-    <div className="flex items-center justify-between" style={{ marginBottom: headerSpacing }}>
+    <div
+      className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+      style={{ marginBottom: headerSpacing }}
+    >
       <div className="flex items-center">
         <div className="mr-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand text-primary-foreground">
           {IconComponent && <IconComponent className="h-6 w-6" />}

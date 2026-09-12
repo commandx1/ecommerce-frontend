@@ -441,7 +441,7 @@ export default function VendorOrdersPage() {
           </div>
         </div>
 
-        <div className="hidden md:block md:overflow-x-auto">
+        <div className="hidden lg:block lg:overflow-x-auto">
           <OrdersTable
             orders={orders}
             isLoading={isLoading}
@@ -464,7 +464,7 @@ export default function VendorOrdersPage() {
           />
         </div>
 
-        <div className="px-4 py-4 md:hidden">
+        <div className="px-4 py-4 lg:hidden">
           <OrdersMobileList
             orders={orders}
             isLoading={isLoading}

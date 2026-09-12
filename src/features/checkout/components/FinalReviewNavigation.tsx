@@ -16,7 +16,7 @@ export default function FinalReviewNavigation({
   onPlaceOrder,
 }: FinalReviewNavigationProps) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
       <ActionButton type="button" onClick={onBack} intent="outline">
         <ArrowLeft className="mr-2 w-5 h-5" />
         Back to Billing

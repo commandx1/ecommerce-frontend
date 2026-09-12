@@ -117,7 +117,7 @@ const CustomerAnalyticsChart = () => {
       <div className="h-64">
         <Line data={data} options={options} />
       </div>
-      <div className="grid grid-cols-4 gap-4 mt-6">
+      <div className="mt-6 grid grid-cols-2 gap-4 xl:grid-cols-4">
         {vendorCustomerAnalyticsData.stats.map((stat) => (
           <div key={stat.id} className="rounded-xl border border-border-soft bg-surface-muted/70 p-4 text-center">
             <div className="text-2xl font-bold text-text-primary">{stat.value}</div>
