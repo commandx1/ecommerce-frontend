@@ -15,7 +15,8 @@ import { useAuthStore } from "@/stores/authStore"
 
 interface WriteReviewModalProps {
   productId: string
-  userProductId?: string
+  userProductId: string
+  productName: string
   vendorName?: string
   isOpen: boolean
   onClose: () => void
@@ -25,6 +26,7 @@ interface WriteReviewModalProps {
 export default function WriteReviewModal({
   productId,
   userProductId,
+  productName,
   vendorName,
   isOpen,
   onClose,
@@ -58,11 +60,6 @@ export default function WriteReviewModal({
 
     if (!comment.trim()) {
       showToast.error("Please enter your review")
-      return
-    }
-
-    if (!userProductId) {
-      showToast.error("Please select a vendor from the supplier table first")
       return
     }
 
@@ -117,19 +114,12 @@ export default function WriteReviewModal({
             <NoticeBanner tone="warning" description="You need to log in to write a review." className="rounded-lg" />
           )}
 
-          {isAuthenticated && !userProductId && (
-            <NoticeBanner
-              tone="warning"
-              description="Please select a vendor from the supplier table first."
-              className="rounded-lg"
-            />
-          )}
-
-          {isAuthenticated && userProductId && (
+          {isAuthenticated && (
             <>
               <NoticeBanner tone="info" className="rounded-lg" title="Review destination">
                 <p className="text-sm font-medium text-text-primary">
-                  Review will be submitted for: <span className="font-bold">{vendorName || "Selected Vendor"}</span>
+                  Review for: <span className="font-bold">{productName}</span> — sold by{" "}
+                  <span className="font-bold">{vendorName || "Selected Vendor"}</span>
                 </p>
               </NoticeBanner>
 

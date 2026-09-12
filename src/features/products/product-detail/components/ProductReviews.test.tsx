@@ -88,6 +88,22 @@ describe("ProductReviews", () => {
     expect(screen.getByText(/Based on 2 reviews across all vendors/)).toBeInTheDocument()
   })
 
+  it("no longer offers a direct write-a-review button, only a link to delivered orders", () => {
+    render(
+      <ProductReviews
+        productId="p-1"
+        initialReviews={makeReviewsResponse([makeReview()])}
+        userProducts={userProducts}
+      />,
+    )
+
+    expect(screen.queryByRole("button", { name: /Write a Review/i })).not.toBeInTheDocument()
+    expect(screen.getByRole("link", { name: /Write a review from your delivered orders/i })).toHaveAttribute(
+      "href",
+      "/buyer-dashboard/orders",
+    )
+  })
+
   it("invites the first review when the product has none", () => {
     render(<ProductReviews productId="p-1" initialReviews={makeReviewsResponse([])} userProducts={userProducts} />)
 

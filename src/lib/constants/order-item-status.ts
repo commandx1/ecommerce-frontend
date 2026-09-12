@@ -15,6 +15,7 @@ export enum ShippoCancelableStatus {
 export enum OrderItemStatus {
   CANCELLATION_PENDING = "CANCELLATION_PENDING",
   CANCEL_REQUESTED = "CANCEL_REQUESTED",
+  DELIVERED = "DELIVERED",
 }
 
 const CANCELABLE_ORDER_ITEM_STATUS_SET = new Set<string>([
@@ -39,4 +40,12 @@ export function isPreShippingCancelableStatus(status: string): boolean {
 
 export function isWarningOrderItemStatus(status: string): boolean {
   return status === ShippoCancelableStatus.WAITING_FOR_SHIPMENT || status === OrderItemStatus.CANCELLATION_PENDING
+}
+
+export function isDeliveredOrderItemStatus(status: string | null | undefined): boolean {
+  return (
+    String(status ?? "")
+      .trim()
+      .toUpperCase() === OrderItemStatus.DELIVERED
+  )
 }

@@ -1,8 +1,26 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
+import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { server } from "@/mocks/server"
+import { useAuthStore } from "@/stores/authStore"
+import { makeAccountUser } from "@/test/factories"
 import { makeBuyerOrder, makeBuyerOrderItem, makeBuyerOrderSellerGroup } from "@/test/factories/order.factory"
 import { buildBuyerOrderViewModel } from "../lib/order-view-utils"
 import OrderExpandedContent from "./order-expanded-content"
+
+const mockToastError = vi.fn()
+const mockToastSuccess = vi.fn()
+vi.mock("@/components/ui/Toast", () => ({
+  showToast: {
+    error: (...args: unknown[]) => mockToastError(...args),
+    success: (...args: unknown[]) => mockToastSuccess(...args),
+    warning: vi.fn(),
+    info: vi.fn(),
+  },
+}))
+
+const signIn = () => useAuthStore.getState().setAuth(makeAccountUser(), "token-1", "refresh-1")
 
 const tableActions = {
   requestCancelAction: vi.fn(),
@@ -70,5 +88,183 @@ describe("OrderExpandedContent — cancellation shipping money", () => {
 
     expect(screen.queryByText(/Shipping charged on cancellation/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/Shipping refunded/i)).not.toBeInTheDocument()
+  })
+})
+
+describe("OrderExpandedContent — write a review", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    mockToastError.mockClear()
+    mockToastSuccess.mockClear()
+  })
+
+  it('shows "Write a Review" for a DELIVERED item', () => {
+    renderExpanded(makeBuyerOrderSellerGroup({ orderItems: [makeBuyerOrderItem({ status: "DELIVERED" })] }))
+
+    expect(screen.getByRole("button", { name: /Write a Review/i })).toBeInTheDocument()
+  })
+
+  it.each(["ON_WAY", "RETURNED", "REFUNDED", "CANCELLED", "PROCESSING"])("hides the button for status %s", (status) => {
+    renderExpanded(makeBuyerOrderSellerGroup({ orderItems: [makeBuyerOrderItem({ status })] }))
+
+    expect(screen.queryByRole("button", { name: /Write a Review/i })).not.toBeInTheDocument()
+  })
+
+  it("treats lowercase and padded status as delivered", () => {
+    renderExpanded(makeBuyerOrderSellerGroup({ orderItems: [makeBuyerOrderItem({ status: " delivered " })] }))
+
+    expect(screen.getByRole("button", { name: /Write a Review/i })).toBeInTheDocument()
+  })
+
+  it.each([
+    ["undefined", undefined],
+    ["empty string", ""],
+  ])("hides the button when status is %s", (_label, status) => {
+    renderExpanded(
+      makeBuyerOrderSellerGroup({
+        orderItems: [makeBuyerOrderItem({ status: status as unknown as string })],
+      }),
+    )
+
+    expect(screen.queryByRole("button", { name: /Write a Review/i })).not.toBeInTheDocument()
+  })
+
+  it("hides the button when the seller cancelled the item", () => {
+    renderExpanded(
+      makeBuyerOrderSellerGroup({
+        orderItems: [makeBuyerOrderItem({ status: "DELIVERED", cancelledBySeller: true })],
+      }),
+    )
+
+    expect(screen.queryByRole("button", { name: /Write a Review/i })).not.toBeInTheDocument()
+  })
+
+  it("hides the button when the customer cancelled the item", () => {
+    renderExpanded(
+      makeBuyerOrderSellerGroup({
+        orderItems: [makeBuyerOrderItem({ status: "DELIVERED", cancelledByCustomer: true })],
+      }),
+    )
+
+    expect(screen.queryByRole("button", { name: /Write a Review/i })).not.toBeInTheDocument()
+  })
+
+  it("hides the button when no productId can be resolved from the item", () => {
+    renderExpanded(
+      makeBuyerOrderSellerGroup({
+        orderItems: [makeBuyerOrderItem({ status: "DELIVERED", productId: undefined })],
+      }),
+    )
+
+    expect(screen.queryByRole("button", { name: /Write a Review/i })).not.toBeInTheDocument()
+  })
+
+  it("shows a disabled Reviewed button when the backend already marked the item reviewed", () => {
+    renderExpanded(
+      makeBuyerOrderSellerGroup({
+        orderItems: [makeBuyerOrderItem({ status: "DELIVERED", reviewed: true })],
+      }),
+    )
+
+    expect(screen.getByRole("button", { name: "Reviewed" })).toBeDisabled()
+    expect(screen.queryByRole("button", { name: "Write a Review" })).not.toBeInTheDocument()
+  })
+
+  it.each([
+    ["null", null],
+    ["absent", undefined],
+  ])("keeps the button enabled when reviewed is %s", (_label, reviewed) => {
+    renderExpanded(
+      makeBuyerOrderSellerGroup({
+        orderItems: [makeBuyerOrderItem({ status: "DELIVERED", reviewed })],
+      }),
+    )
+
+    expect(screen.getByRole("button", { name: "Write a Review" })).not.toBeDisabled()
+  })
+
+  it("opens the modal with the product name and seller full name", async () => {
+    const user = userEvent.setup()
+    signIn()
+    renderExpanded(
+      makeBuyerOrderSellerGroup({
+        sellerName: "Acme",
+        sellerSurname: "Store",
+        orderItems: [makeBuyerOrderItem({ status: "DELIVERED", productName: "Dental Kit" })],
+      }),
+    )
+
+    await user.click(screen.getByRole("button", { name: /Write a Review/i }))
+
+    const dialog = within(await screen.findByRole("dialog"))
+    expect(dialog.getByText("Dental Kit")).toBeInTheDocument()
+    expect(dialog.getByText("Acme Store")).toBeInTheDocument()
+  })
+
+  it("posts the review for the delivered item and marks it as reviewed", async () => {
+    const user = userEvent.setup()
+    signIn()
+    let body: unknown = null
+    server.use(
+      http.post("*/api/reviews", async ({ request }) => {
+        body = await request.json()
+        return new HttpResponse(null, { status: 200 })
+      }),
+    )
+    renderExpanded(
+      makeBuyerOrderSellerGroup({
+        orderItems: [
+          makeBuyerOrderItem({
+            id: "item-9",
+            productId: "p-9",
+            userProductId: "up-9",
+            status: "DELIVERED",
+            productName: "Dental Kit",
+          }),
+        ],
+      }),
+    )
+
+    await user.click(screen.getByRole("button", { name: /Write a Review/i }))
+    const dialog = within(await screen.findByRole("dialog"))
+    await user.click(dialog.getAllByRole("button")[5])
+    await user.type(dialog.getByLabelText("Review Title *"), "Great")
+    await user.type(dialog.getByLabelText("Your Review *"), "Works well")
+    await user.click(dialog.getByRole("button", { name: /Submit Review/i }))
+
+    await waitFor(() => expect(body).not.toBeNull())
+    expect(body).toMatchObject({
+      productId: "p-9",
+      userProductId: "up-9",
+      star: 5,
+      title: "Great",
+      comment: "Works well",
+    })
+
+    expect(await screen.findByRole("button", { name: "Reviewed" })).toBeDisabled()
+  })
+
+  it("reports a 400 with the backend message and keeps the button enabled", async () => {
+    const user = userEvent.setup()
+    signIn()
+    server.use(
+      http.post("*/api/reviews", () =>
+        HttpResponse.json({ message: "You have already reviewed this seller's listing" }, { status: 400 }),
+      ),
+    )
+    renderExpanded(makeBuyerOrderSellerGroup({ orderItems: [makeBuyerOrderItem({ status: "DELIVERED" })] }))
+
+    await user.click(screen.getByRole("button", { name: /Write a Review/i }))
+    const dialog = within(await screen.findByRole("dialog"))
+    await user.click(dialog.getAllByRole("button")[3])
+    await user.type(dialog.getByLabelText("Review Title *"), "Great")
+    await user.type(dialog.getByLabelText("Your Review *"), "Works well")
+    await user.click(dialog.getByRole("button", { name: /Submit Review/i }))
+
+    await waitFor(() => expect(mockToastError).toHaveBeenCalledWith("You have already reviewed this seller's listing"))
+    // The failed submit keeps the modal open (same behavior as WriteReviewModal's other callers);
+    // closing it manually confirms the item was never marked as reviewed.
+    await user.click(dialog.getByRole("button", { name: /Cancel/i }))
+    expect(screen.getByRole("button", { name: "Write a Review" })).not.toBeDisabled()
   })
 })

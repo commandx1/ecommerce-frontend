@@ -75,6 +75,7 @@ export interface BuyerOrderItem {
   returnTrackingLinks?: BuyerOrderTrackingLink[]
   returnShippingLinks?: BuyerOrderShippingLink[]
   returnenable?: boolean | null
+  reviewed?: boolean | null
   updatedDate: string
 }
 

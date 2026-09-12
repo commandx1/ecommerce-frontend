@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
   isCancelableOrderItemStatus,
+  isDeliveredOrderItemStatus,
   isPreShippingCancelableStatus,
   isWarningOrderItemStatus,
   OrderItemStatus,
@@ -95,6 +96,28 @@ describe("isWarningOrderItemStatus", () => {
 
   it("returns false for an unknown status", () => {
     expect(isWarningOrderItemStatus("NOT_A_REAL_STATUS")).toBe(false)
+  })
+})
+
+describe("isDeliveredOrderItemStatus", () => {
+  it("returns true for DELIVERED", () => {
+    expect(isDeliveredOrderItemStatus("DELIVERED")).toBe(true)
+  })
+
+  it("returns true for lowercase and surrounding whitespace", () => {
+    expect(isDeliveredOrderItemStatus(" delivered ")).toBe(true)
+  })
+
+  it("returns false for ON_WAY", () => {
+    expect(isDeliveredOrderItemStatus("ON_WAY")).toBe(false)
+  })
+
+  it("returns false for undefined", () => {
+    expect(isDeliveredOrderItemStatus(undefined)).toBe(false)
+  })
+
+  it("returns false for null", () => {
+    expect(isDeliveredOrderItemStatus(null)).toBe(false)
   })
 })
 

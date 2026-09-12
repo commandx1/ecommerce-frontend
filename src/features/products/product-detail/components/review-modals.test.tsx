@@ -43,6 +43,7 @@ describe("WriteReviewModal", () => {
       <WriteReviewModal
         productId="p-1"
         userProductId="up-1"
+        productName="Composite Kit"
         vendorName="Acme Dental"
         isOpen
         {...handlers}
@@ -60,19 +61,12 @@ describe("WriteReviewModal", () => {
     expect(screen.queryByLabelText(/Review Title/)).not.toBeInTheDocument()
   })
 
-  it("explains that a vendor must be picked before a review can be written", () => {
-    signIn()
-    renderModal({ userProductId: undefined })
-
-    expect(screen.getByText("Please select a vendor from the supplier table first.")).toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: /Submit Review/i })).not.toBeInTheDocument()
-  })
-
   it("names the vendor the review will be attributed to", () => {
     signIn()
     renderModal()
 
     expect(screen.getByText("Acme Dental")).toBeInTheDocument()
+    expect(screen.getByText("Composite Kit")).toBeInTheDocument()
   })
 
   it("refuses to submit without a star rating", async () => {

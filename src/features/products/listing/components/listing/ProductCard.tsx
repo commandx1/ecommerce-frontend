@@ -1,9 +1,11 @@
 "use client"
 
-import { Eye, Star, Truck } from "lucide-react"
+import { Eye, Minus, Plus, Star, Truck } from "lucide-react"
 import Link from "next/link"
+import { useState } from "react"
 import { SpotlightCard } from "@/components/ui/spotlight-card"
 import FavoriteProductButton from "@/features/products/favorites/FavoriteProductButton"
+import { useAddToCartFromCard } from "@/features/products/listing/hooks/useAddToCartFromCard"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import ProductImageWithFallback from "../ProductImageWithFallback"
 
@@ -28,6 +30,13 @@ interface ProductCardProps {
 const ProductCard = ({ data }: ProductCardProps) => {
   const discount =
     data.oldPrice && data.oldPrice > data.price ? Math.round((1 - data.price / data.oldPrice) * 100) : null
+  const { addToCart, pendingProductId } = useAddToCartFromCard()
+  const productId = String(data.id)
+  const isOutOfStock = data.stock !== undefined && data.stock <= 0
+  const isPending = pendingProductId === productId
+  const [quantity, setQuantity] = useState(1)
+  const maxQuantity = data.stock !== undefined && data.stock > 0 ? data.stock : 999
+  const setClamped = (v: number) => setQuantity(Math.min(maxQuantity, Math.max(1, v)))
 
   return (
     <SpotlightCard
@@ -122,11 +131,51 @@ const ProductCard = ({ data }: ProductCardProps) => {
             </div>
 
             <div className="flex gap-1.5 sm:gap-2">
+              <div className="flex h-9 shrink-0 items-center rounded-full border border-border-strong bg-surface sm:h-11">
+                <button
+                  type="button"
+                  aria-label="Decrease quantity"
+                  disabled={quantity <= 1 || isPending || isOutOfStock}
+                  onClick={() => setClamped(quantity - 1)}
+                  className="flex h-full w-8 items-center justify-center rounded-l-full text-text-secondary transition-colors hover:text-brand disabled:opacity-30 sm:w-9"
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                </button>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={maxQuantity}
+                  value={quantity}
+                  aria-label={`Quantity for ${data.name}`}
+                  disabled={isPending || isOutOfStock}
+                  onChange={(e) => setClamped(Number(e.target.value))}
+                  onBlur={() => {
+                    if (!Number.isFinite(quantity) || quantity < 1) setQuantity(1)
+                  }}
+                  className="h-full w-9 border-x border-border-strong bg-transparent text-center text-xs font-semibold text-text-primary outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none sm:w-10 sm:text-sm"
+                />
+                <button
+                  type="button"
+                  aria-label="Increase quantity"
+                  disabled={quantity >= maxQuantity || isPending || isOutOfStock}
+                  onClick={() => setClamped(quantity + 1)}
+                  className="flex h-full w-8 items-center justify-center rounded-r-full text-text-secondary transition-colors hover:text-brand disabled:opacity-30 sm:w-9"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
+              </div>
               <button
                 type="button"
-                className="flex-1 rounded-full bg-brand py-2.5 text-xs font-bold text-white shadow-soft transition-all hover:-translate-y-0.5 hover:bg-brand-strong sm:py-3 sm:text-sm"
+                onClick={async () => {
+                  const ok = await addToCart(productId, data.name, quantity)
+                  if (ok) setQuantity(1)
+                }}
+                disabled={isPending || isOutOfStock}
+                aria-busy={isPending}
+                className="min-w-0 flex-1 rounded-full bg-brand py-2.5 text-xs font-bold text-white shadow-soft transition-all hover:-translate-y-0.5 hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-60 sm:py-3 sm:text-sm"
               >
-                Add to Cart
+                {isOutOfStock ? "Out of Stock" : isPending ? "Adding..." : "Add to Cart"}
               </button>
               <Link
                 href={data.href}

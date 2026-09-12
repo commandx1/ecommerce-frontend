@@ -1,7 +1,8 @@
 "use client"
 
 import { Edit2, Reply, ThumbsUp, Trash2 } from "lucide-react"
-import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import SurfaceCard from "@/components/ui/SurfaceCard"
@@ -11,11 +12,9 @@ import { fetchReviewsByProduct } from "@/lib/api/product-reviews"
 import { useAuthStore } from "@/stores/authStore"
 import type { Review, ReviewsResponse } from "../types"
 import { formatRelativeDate } from "../utils/relativeDate"
-import { resolveSelectedUserProductId } from "../utils/selectedVendor"
 import DeleteReviewModal from "./DeleteReviewModal"
 import EditReviewModal from "./EditReviewModal"
 import StarRating from "./StarRating"
-import WriteReviewButton from "./WriteReviewButton"
 
 interface UserProduct {
   id: string
@@ -39,7 +38,6 @@ export default function ProductReviews({
   userProducts,
 }: ProductReviewsProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { user } = useAuthStore()
   const [editingReview, setEditingReview] = useState<Review | null>(null)
   const [deletingReview, setDeletingReview] = useState<Review | null>(null)
@@ -48,11 +46,6 @@ export default function ProductReviews({
   const [activeFilter, setActiveFilter] = useState<string>(initialUserProductId ?? ALL_VENDORS)
   const [fetchedReviews, setFetchedReviews] = useState<ReviewsResponse | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-
-  // The vendor selected in the supplier table drives where a *new* review is submitted,
-  // independently of which vendor's reviews are currently being read.
-  const purchaseUserProductId = resolveSelectedUserProductId(searchParams.get("vendorId"), userProducts)
-  const purchaseVendorName = userProducts.find((up) => up.id === purchaseUserProductId)?.vendor
 
   const activeVendorName = userProducts.find((up) => up.id === activeFilter)?.vendor
 
@@ -146,11 +139,13 @@ export default function ProductReviews({
               </span>
             </div>
           </div>
-          <WriteReviewButton
-            productId={productId}
-            userProductId={purchaseUserProductId}
-            vendorName={purchaseVendorName}
-          />
+          <p className="text-sm text-text-secondary">
+            Bought this product?{" "}
+            <Link href="/buyer-dashboard/orders" className="font-medium text-brand hover:underline">
+              Write a review from your delivered orders
+            </Link>
+            .
+          </p>
         </div>
 
         {userProducts.length > 1 && (
