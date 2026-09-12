@@ -271,6 +271,12 @@ export default function VendorOrderExpandedContent({
         </div>
 
         <div className="flex w-full flex-col gap-6 lg:w-80">
+          <div className="rounded-[8px] border border-border-soft bg-surface-muted/55 p-4 text-left">
+            <h4 className="mb-3 text-sm font-semibold text-text-primary">Customer Details</h4>
+            <p className="text-sm font-semibold text-text-secondary">{customerName || "-"}</p>
+            <AddressContactInfo className="mt-2" address={customerAddress ?? ""} phone={customerPhone} />
+          </div>
+
           <div className="rounded-[8px] border border-border-soft bg-surface-muted/55 p-4">
             <div className="space-y-2 text-sm">
               <div className="flex justify-between text-text-muted">
@@ -286,12 +292,6 @@ export default function VendorOrderExpandedContent({
                 <span className="text-text-primary">{formatCurrency(orderTotal)}</span>
               </div>
             </div>
-          </div>
-
-          <div className="rounded-[8px] border border-border-soft bg-surface-muted/55 p-4">
-            <h4 className="mb-3 text-sm font-semibold text-text-primary">Customer Details</h4>
-            <p className="text-sm font-semibold text-text-secondary">{customerName || "-"}</p>
-            <AddressContactInfo className="mt-2" address={customerAddress ?? ""} phone={customerPhone} />
           </div>
         </div>
       </div>
