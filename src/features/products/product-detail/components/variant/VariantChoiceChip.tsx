@@ -8,6 +8,7 @@ interface VariantChoiceChipProps {
   attribute: string
   choice: VariantChoice
   disabled: boolean
+  currentProductName: string
   onSelect: (params: SelectVariantParams) => void
 }
 
@@ -28,7 +29,13 @@ function resolveChipClassName(choice: VariantChoice): string {
   return "border-dashed border-border-soft text-text-muted opacity-45"
 }
 
-export default function VariantChoiceChip({ attribute, choice, disabled, onSelect }: VariantChoiceChipProps) {
+export default function VariantChoiceChip({
+  attribute,
+  choice,
+  disabled,
+  currentProductName,
+  onSelect,
+}: VariantChoiceChipProps) {
   const className = `rounded-full border px-4 py-1.5 text-sm transition-colors disabled:pointer-events-none ${resolveChipClassName(
     choice,
   )}`
@@ -41,6 +48,7 @@ export default function VariantChoiceChip({ attribute, choice, disabled, onSelec
         attribute={attribute}
         choice={choice}
         disabled={disabled}
+        currentProductName={currentProductName}
         triggerClassName={className}
         onSelect={onSelect}
       />
@@ -53,7 +61,12 @@ export default function VariantChoiceChip({ attribute, choice, disabled, onSelec
       aria-pressed={choice.selected}
       disabled={disabled}
       className={className}
-      onClick={() => onSelect({ attribute, value: choice.value, productName: choice.names[0] })}
+      // Re-clicking the already-selected chip would only re-fetch /match and push the same
+      // URL, so it's a no-op instead of a redundant navigation.
+      onClick={() => {
+        if (choice.selected) return
+        onSelect({ attribute, value: choice.value, productName: choice.names[0] })
+      }}
     >
       {choice.value}
     </button>

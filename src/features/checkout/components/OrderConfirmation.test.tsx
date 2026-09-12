@@ -80,7 +80,7 @@ describe("OrderConfirmation", () => {
     expect(screen.queryByText("Payment Status")).not.toBeInTheDocument()
   })
 
-  it("clears the cart, resets checkout and opens product listing on Continue Shopping", async () => {
+  it("clears the cart and opens product listing on Continue Shopping without resetting the checkout step", async () => {
     const user = userEvent.setup()
     useCheckoutStore.setState({ currentStep: 5, orderResult: orderResult() as never })
     useCartStore.setState({ cartId: "cart-1" })
@@ -90,7 +90,8 @@ describe("OrderConfirmation", () => {
     await user.click(screen.getByRole("button", { name: /Continue Shopping/ }))
 
     expect(router.push).toHaveBeenCalledWith("/products")
-    await waitFor(() => expect(useCheckoutStore.getState().currentStep).toBe(1))
+    await waitFor(() => expect(useCartStore.getState().cartId).toBeNull())
+    expect(useCheckoutStore.getState().currentStep).toBe(5)
   })
 
   it("shows an Auto order badge and its schedule for a line placed on repeat", () => {

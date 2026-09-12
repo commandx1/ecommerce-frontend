@@ -5,9 +5,10 @@ import VariantChoiceChip from "./VariantChoiceChip"
 
 interface VariantAttributeSelectorProps {
   productId: string
+  currentProductName: string
 }
 
-export default function VariantAttributeSelector({ productId }: VariantAttributeSelectorProps) {
+export default function VariantAttributeSelector({ productId, currentProductName }: VariantAttributeSelectorProps) {
   const { status, groups, pendingValue, select } = useVariantAttributes(productId)
 
   // Every backend failure (including "this product simply has no variants") arrives as the same
@@ -43,6 +44,7 @@ export default function VariantAttributeSelector({ productId }: VariantAttribute
                 attribute={group.attribute}
                 choice={choice}
                 disabled={isPending}
+                currentProductName={currentProductName}
                 onSelect={select}
               />
             ))}

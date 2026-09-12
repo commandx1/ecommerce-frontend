@@ -48,14 +48,36 @@ describe("useCheckoutPage", () => {
   })
 
   // The cart is deliberately emptied once the order is placed, so step 5 must never bounce the
-  // buyer away from their confirmation (and its auto-order registration polling).
-  it("stays on the confirmation step even with an empty cart", async () => {
+  // buyer away from their confirmation (and its auto-order registration polling) while the
+  // confirmation is still live — i.e. reached by a step transition, not a cold mount. See
+  // "keeps the confirmation when the step reaches 5 after mount" below.
+  it("resets a stale confirmation left by a previous order on mount", async () => {
     setStep(5)
+    useCheckoutStore.setState({ orderResult: { orderId: "order-1" } as never })
 
-    const { result } = renderHook(() => useCheckoutPage())
+    renderHook(() => useCheckoutPage())
+
+    await waitFor(() => expect(useCheckoutStore.getState().currentStep).toBe(1))
+    expect(useCheckoutStore.getState().orderResult).toBeNull()
+  })
+
+  it("keeps the confirmation when the step reaches 5 after mount, even once the cart empties", async () => {
+    setStep(4)
+    useCartStore.setState({ items: [makeCartItem()] })
+
+    const { result, rerender } = renderHook(() => useCheckoutPage())
+
+    // Placing the order bumps the step and soft-deletes the cart server-side; neither the stale
+    // reset nor the empty-cart guard may fire here.
+    act(() => {
+      setStep(5)
+      useCartStore.setState({ items: [] })
+    })
+    rerender()
 
     await waitFor(() => expect(fetchCart).toHaveBeenCalled())
     expect(getRouterMock().push).not.toHaveBeenCalled()
+    expect(useCheckoutStore.getState().currentStep).toBe(5)
     expect(result.current.view).toBe("confirmation")
   })
 
@@ -74,7 +96,6 @@ describe("useCheckoutPage", () => {
     [2, "shipping"],
     [3, "billing"],
     [4, "review"],
-    [5, "confirmation"],
   ])("maps step %i onto the %s view", (step, view) => {
     setStep(step)
     useCartStore.setState({ items: [makeCartItem()] })
@@ -83,6 +104,21 @@ describe("useCheckoutPage", () => {
 
     expect(result.current.currentStep).toBe(step)
     expect(result.current.view).toBe(view)
+  })
+
+  // Step 5 is deliberately excluded from the table above: a cold mount at step 5 is treated as a
+  // stale confirmation and reset (see "resets a stale confirmation..."), not mapped to the
+  // "confirmation" view.
+  it("maps step 5 onto the confirmation view when reached by a transition, not a cold mount", () => {
+    setStep(4)
+    useCartStore.setState({ items: [makeCartItem()] })
+    const { result, rerender } = renderHook(() => useCheckoutPage())
+
+    act(() => setStep(5))
+    rerender()
+
+    expect(result.current.currentStep).toBe(5)
+    expect(result.current.view).toBe("confirmation")
   })
 
   it("hides the order summary only on the confirmation step", () => {

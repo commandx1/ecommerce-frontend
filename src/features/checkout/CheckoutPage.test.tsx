@@ -1,7 +1,9 @@
+import { act } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { server } from "@/mocks/server"
+import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 import { makeAddress, makeCart, makeCartItem } from "@/test/factories"
 import { render, screen, waitFor } from "@/test/render"
@@ -80,15 +82,48 @@ describe("CheckoutPage", () => {
 
   it("shows the order summary on every step except the confirmation", async () => {
     useCheckoutStore.setState({ currentStep: 2 })
-    const shipping = render(<CheckoutPage />)
-
-    expect(await screen.findByRole("heading", { name: "Order Summary" })).toBeInTheDocument()
-    shipping.unmount()
-
-    useCheckoutStore.setState({ currentStep: 5 })
     render(<CheckoutPage />)
 
+    expect(await screen.findByRole("heading", { name: "Order Summary" })).toBeInTheDocument()
+
+    // Transition to the confirmation step while mounted, rather than cold-mounting at step 5,
+    // which useCheckoutPage now treats as a stale confirmation and resets.
+    act(() => {
+      useCheckoutStore.setState({ currentStep: 5 })
+    })
+
     await waitFor(() => expect(screen.queryByRole("heading", { name: "Order Summary" })).not.toBeInTheDocument())
+  })
+
+  it("sends Continue Shopping to /products, never bouncing through /cart", async () => {
+    // Mounts at step 4 and transitions to 5, mirroring how an order is actually placed while the
+    // checkout page stays mounted. A cold mount at step 5 is treated as a stale confirmation and
+    // reset instead (see useCheckoutPage.test.ts), so it would not reach this button at all.
+    const user = userEvent.setup()
+    useCheckoutStore.setState({ currentStep: 4 })
+    useCartStore.setState({ items: [makeCartItem()] })
+
+    const { router } = render(<CheckoutPage />)
+
+    act(() => {
+      useCheckoutStore.setState({
+        currentStep: 5,
+        orderResult: {
+          orderId: "order-1",
+          totalPrice: 1234.5,
+          status: "PAYMENT_SUCCESS",
+          paymentStatus: "succeeded",
+          createdDate: "2026-08-22T10:00:00Z",
+          orderItems: [],
+        } as never,
+      })
+      useCartStore.setState({ items: [] })
+    })
+
+    await user.click(await screen.findByRole("button", { name: /Continue Shopping/ }))
+
+    expect(router.push).toHaveBeenCalledWith("/products")
+    expect(router.push).not.toHaveBeenCalledWith("/cart")
   })
 
   it("shows no contact details at all until an address is picked", async () => {

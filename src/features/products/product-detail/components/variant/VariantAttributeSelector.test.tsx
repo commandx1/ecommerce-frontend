@@ -41,7 +41,7 @@ describe("VariantAttributeSelector", () => {
       ),
     )
 
-    const { container } = render(<VariantAttributeSelector productId="p-1" />)
+    const { container } = render(<VariantAttributeSelector productId="p-1" currentProductName="unrelated product" />)
 
     expect(container.querySelector("[aria-hidden]")).toBeInTheDocument()
     expect(container.querySelectorAll("button")).toHaveLength(0)
@@ -57,7 +57,7 @@ describe("VariantAttributeSelector", () => {
       ),
     )
 
-    const { container } = render(<VariantAttributeSelector productId="p-1" />)
+    const { container } = render(<VariantAttributeSelector productId="p-1" currentProductName="unrelated product" />)
 
     await waitFor(() => expect(container.querySelector("[aria-hidden]")).not.toBeInTheDocument())
     // ThemeProvider (next-themes) always injects a <script> into the container, so it's never
@@ -70,7 +70,7 @@ describe("VariantAttributeSelector", () => {
   it("renders nothing when the fetch succeeds with no usable groups", async () => {
     server.use(http.post("*/backend-api/products/variant-attributes", () => HttpResponse.json({ attributes: [] })))
 
-    const { container } = render(<VariantAttributeSelector productId="p-1" />)
+    const { container } = render(<VariantAttributeSelector productId="p-1" currentProductName="unrelated product" />)
 
     await waitFor(() => expect(container.querySelector("[aria-hidden]")).not.toBeInTheDocument())
     expect(container.querySelectorAll("button")).toHaveLength(0)
@@ -80,7 +80,7 @@ describe("VariantAttributeSelector", () => {
   it("renders one label and one chip per choice, per group, sorted by attribute name", async () => {
     server.use(http.post("*/backend-api/products/variant-attributes", () => HttpResponse.json(readyAttributesResponse)))
 
-    const { container } = render(<VariantAttributeSelector productId="p-1" />)
+    const { container } = render(<VariantAttributeSelector productId="p-1" currentProductName="unrelated product" />)
 
     await screen.findByText("Color")
 
@@ -102,7 +102,7 @@ describe("VariantAttributeSelector", () => {
     )
 
     const user = userEvent.setup()
-    const { container } = render(<VariantAttributeSelector productId="p-1" />)
+    const { container } = render(<VariantAttributeSelector productId="p-1" currentProductName="unrelated product" />)
     const largeButton = await screen.findByRole("button", { name: "Large" })
 
     await user.click(largeButton)

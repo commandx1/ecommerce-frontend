@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { cartRequiresDentalLicense } from "@/features/cart/utils/license-check"
 import { useCheckoutCartSync } from "@/features/checkout/hooks/useCheckoutCartSync"
 import { useDentalLicenseGate } from "@/lib/hooks/useDentalLicenseGate"
@@ -19,12 +19,22 @@ interface UseCheckoutPageResult {
 export function useCheckoutPage(): UseCheckoutPageResult {
   const router = useRouter()
   const { items, fetchCart } = useCartStore()
-  const { currentStep } = useCheckoutStore()
+  const { currentStep, reset } = useCheckoutStore()
   const licenseGate = useDentalLicenseGate()
 
   useEffect(() => {
     void fetchCart()
   }, [fetchCart])
+
+  // A confirmation left in the store by a previous order must not greet the buyer on the next
+  // visit. OrderConfirmation deliberately does not reset on "Continue Shopping": resetting to step
+  // 1 while the (already emptied) cart is still mounted trips the empty-cart guard below and
+  // bounces the buyer to /cart instead of /products. So the store is cleared on the next entry
+  // instead.
+  const initialStepRef = useRef(currentStep)
+  useEffect(() => {
+    if (initialStepRef.current === 5) reset()
+  }, [reset])
 
   useEffect(() => {
     if (items.length === 0 && currentStep !== 5) {

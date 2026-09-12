@@ -9,6 +9,7 @@ interface VariantNamePopoverProps {
   attribute: string
   choice: VariantChoice
   disabled: boolean
+  currentProductName: string
   triggerClassName: string
   onSelect: (params: SelectVariantParams) => void
 }
@@ -22,6 +23,7 @@ export default function VariantNamePopover({
   attribute,
   choice,
   disabled,
+  currentProductName,
   triggerClassName,
   onSelect,
 }: VariantNamePopoverProps) {
@@ -50,20 +52,33 @@ export default function VariantNamePopover({
       </PopoverTrigger>
       <PopoverContent align="start" className="w-56 p-2" onPointerLeave={() => setOpen(false)}>
         <div className="flex flex-col gap-1">
-          {choice.names.map((name) => (
-            <button
-              key={name}
-              type="button"
-              disabled={disabled}
-              className="rounded-lg px-3 py-2 text-left text-sm text-text-primary transition-colors hover:bg-surface-muted disabled:pointer-events-none disabled:opacity-50"
-              onClick={() => {
-                setOpen(false)
-                onSelect({ attribute, value: choice.value, productName: name })
-              }}
-            >
-              {name}
-            </button>
-          ))}
+          {/* The current product is spotted by comparing the trimmed name with the page title
+              (product.name). Known gap: the backend prefers `detailedName` for these names when
+              it is set (ProductServiceImpl.resolveDisambiguatingName), so a product whose
+              detailedName differs from its name gets no highlight. */}
+          {choice.names.map((name) => {
+            const isCurrent = name.trim() === currentProductName.trim()
+            return (
+              <button
+                key={name}
+                type="button"
+                disabled={disabled}
+                aria-current={isCurrent ? "true" : undefined}
+                className={`rounded-lg px-3 py-2 text-left text-sm transition-colors disabled:pointer-events-none disabled:opacity-50 ${
+                  isCurrent
+                    ? "bg-warning/10 text-warning-strong font-medium"
+                    : "text-text-primary hover:bg-surface-muted"
+                }`}
+                onClick={() => {
+                  setOpen(false)
+                  if (isCurrent) return
+                  onSelect({ attribute, value: choice.value, productName: name })
+                }}
+              >
+                {name}
+              </button>
+            )
+          })}
         </div>
       </PopoverContent>
     </Popover>

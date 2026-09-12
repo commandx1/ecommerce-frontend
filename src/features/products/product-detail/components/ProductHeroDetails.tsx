@@ -64,7 +64,7 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
         ) : null}
       </div>
 
-      <VariantAttributeSelector productId={product.productId} />
+      <VariantAttributeSelector productId={product.productId} currentProductName={product.title} />
 
       <div className="rounded-3xl border border-border-soft bg-surface p-5">
         <div className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-text-muted">Selected pricing</div>

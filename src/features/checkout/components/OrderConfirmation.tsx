@@ -16,14 +16,8 @@ import { useCheckoutStore } from "@/stores/checkoutStore"
 export default function OrderConfirmation() {
   const router = useRouter()
   const { clearCart } = useCartStore()
-  const {
-    reset,
-    orderResult,
-    orderPayload,
-    autoOrderUserProductIds,
-    selectedVendorShippingMethods,
-    selectedShippingCost,
-  } = useCheckoutStore()
+  const { orderResult, orderPayload, autoOrderUserProductIds, selectedVendorShippingMethods, selectedShippingCost } =
+    useCheckoutStore()
   const { status: autoOrderStatus } = useAutoOrderRegistration()
   const confirmationRef = useRef<HTMLDivElement | null>(null)
 
@@ -53,9 +47,12 @@ export default function OrderConfirmation() {
     return periods
   }, [orderPayload, autoOrderUserProductIds])
 
+  // Do not reset the checkout store here: resetting sets currentStep to 1 synchronously, and on
+  // the next render useCheckoutPage's empty-cart guard sees the (already emptied) cart with
+  // currentStep !== 5 and bounces the buyer to /cart instead of /products. The store is cleared
+  // lazily on the next /checkout mount instead (see useCheckoutPage).
   const onContinueShopping = () => {
     void clearCart()
-    reset()
     router.push("/products")
   }
 

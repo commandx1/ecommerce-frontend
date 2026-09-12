@@ -21,7 +21,11 @@ const baseChoice: VariantChoice = {
   names: ["MARK3 Mixing Tips 200/Pk. White", "MARK3 Mixing Tips 200/Pk. Yellow", "MARK3 Mixing Tips 200/Pk. Blue"],
 }
 
-function renderPopover(overrides: Partial<VariantChoice> = {}, disabled = false) {
+function renderPopover(
+  overrides: Partial<VariantChoice> = {},
+  disabled = false,
+  currentProductName = "unrelated product",
+) {
   const onSelect = vi.fn()
   const choice: VariantChoice = { ...baseChoice, ...overrides }
   const utils = render(
@@ -29,6 +33,7 @@ function renderPopover(overrides: Partial<VariantChoice> = {}, disabled = false)
       attribute="Packaging"
       choice={choice}
       disabled={disabled}
+      currentProductName={currentProductName}
       triggerClassName="trigger"
       onSelect={onSelect}
     />,
@@ -114,5 +119,59 @@ describe("VariantNamePopover", () => {
     for (const name of baseChoice.names) {
       expect(await screen.findByRole("button", { name })).toBeDisabled()
     }
+  })
+
+  it("marks the button matching the current product's name with aria-current and the warning style", async () => {
+    const user = userEvent.setup()
+    renderPopover({}, false, "MARK3 Mixing Tips 200/Pk. Yellow")
+
+    await user.click(screen.getByRole("button", { name: "200/Pk." }))
+
+    const currentButton = await screen.findByRole("button", { name: "MARK3 Mixing Tips 200/Pk. Yellow" })
+    expect(currentButton).toHaveAttribute("aria-current", "true")
+    expect(currentButton.className).toContain("text-warning-strong")
+
+    for (const name of ["MARK3 Mixing Tips 200/Pk. White", "MARK3 Mixing Tips 200/Pk. Blue"]) {
+      const otherButton = screen.getByRole("button", { name })
+      expect(otherButton).not.toHaveAttribute("aria-current")
+      expect(otherButton.className).not.toContain("text-warning-strong")
+    }
+  })
+
+  it("still marks the current product's name when currentProductName has leading/trailing whitespace", async () => {
+    const user = userEvent.setup()
+    renderPopover({}, false, "  MARK3 Mixing Tips 200/Pk. Yellow  ")
+
+    await user.click(screen.getByRole("button", { name: "200/Pk." }))
+
+    const currentButton = await screen.findByRole("button", { name: "MARK3 Mixing Tips 200/Pk. Yellow" })
+    expect(currentButton).toHaveAttribute("aria-current", "true")
+  })
+
+  it("closes the popover without calling onSelect when the current product's name is clicked", async () => {
+    const user = userEvent.setup()
+    const { onSelect } = renderPopover({}, false, "MARK3 Mixing Tips 200/Pk. Yellow")
+
+    await user.click(screen.getByRole("button", { name: "200/Pk." }))
+    await user.click(await screen.findByRole("button", { name: "MARK3 Mixing Tips 200/Pk. Yellow" }))
+
+    expect(onSelect).not.toHaveBeenCalled()
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: "MARK3 Mixing Tips 200/Pk. Yellow" })).not.toBeInTheDocument(),
+    )
+  })
+
+  it("still calls onSelect for a non-current name when currentProductName is set", async () => {
+    const user = userEvent.setup()
+    const { onSelect } = renderPopover({}, false, "MARK3 Mixing Tips 200/Pk. Yellow")
+
+    await user.click(screen.getByRole("button", { name: "200/Pk." }))
+    await user.click(await screen.findByRole("button", { name: "MARK3 Mixing Tips 200/Pk. White" }))
+
+    expect(onSelect).toHaveBeenCalledWith({
+      attribute: "Packaging",
+      value: "200/Pk.",
+      productName: "MARK3 Mixing Tips 200/Pk. White",
+    })
   })
 })
