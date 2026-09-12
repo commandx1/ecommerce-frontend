@@ -28,6 +28,8 @@ const pageData: ProductDetailPageData = {
       name: "Intra Oral Mixing Tips",
       price: 56,
       primaryMarket: "Impression Materials",
+      categoryLevel2: "Endodontic products",
+      categoryLevel3: "Endodontic sealers & cements",
       bestPriceVendor: "Acme Dental",
       bestPriceVendorUserProductId: "up-1",
       overallStar: 4.5,
@@ -156,5 +158,27 @@ describe("ProductDetailPageView", () => {
 
     expect(screen.getByText("No reviews yet. Be the first to review this product!")).toBeInTheDocument()
     expect(screen.getByText("No questions yet. Be the first to ask a question!")).toBeInTheDocument()
+  })
+
+  it("renders breadcrumb links for each category level, pointing at the listing filter", () => {
+    render(<ProductDetailPageView viewModel={viewModel} />, { route: "/products/abcdef1234567890" })
+
+    expect(screen.getByRole("link", { name: "Endodontic products" })).toHaveAttribute(
+      "href",
+      "/products?categories=Endodontic+products",
+    )
+    expect(screen.getByRole("link", { name: "Endodontic sealers & cements" })).toHaveAttribute(
+      "href",
+      "/products?categories=Endodontic+products+%3E+Endodontic+sealers+%26+cements",
+    )
+  })
+
+  it('links the "View All" related products action at the product\'s root category', () => {
+    render(<ProductDetailPageView viewModel={viewModel} />, { route: "/products/abcdef1234567890" })
+
+    expect(screen.getByRole("link", { name: /View All Endodontic products/ })).toHaveAttribute(
+      "href",
+      "/products?categories=Endodontic+products",
+    )
   })
 })

@@ -13,7 +13,7 @@ export default function ProductDetailHeroSection({ viewModel }: ProductDetailHer
       <Breadcrumb
         product={{
           title: viewModel.productName,
-          category: viewModel.productCategory,
+          categoryTrail: viewModel.categoryTrail,
         }}
       />
       <ProductWithSuppliers

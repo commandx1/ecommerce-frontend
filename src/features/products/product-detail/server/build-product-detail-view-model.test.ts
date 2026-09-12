@@ -39,8 +39,8 @@ function makeData(overrides: Partial<ProductDetailPageData["productData"]["produ
 }
 
 describe("buildProductDetailViewModel", () => {
-  it("builds the productId, sku, and category from the product and route id", () => {
-    const data = makeData({ primaryMarket: "Impression Materials" })
+  it("builds the productId and sku from the product and route id, and productCategory from the leaf category level", () => {
+    const data = makeData({ categoryLevel2: "Impression Materials" })
     const vm = buildProductDetailViewModel("abcdef1234567890", data, null)
 
     expect(vm.productId).toBe("abcdef1234567890")
@@ -48,10 +48,35 @@ describe("buildProductDetailViewModel", () => {
     expect(vm.productCategory).toBe("Impression Materials")
   })
 
-  it('falls back productCategory to "Products" when primaryMarket is missing', () => {
-    const data = makeData()
+  it("derives productCategory and the hero category from the deepest set category level", () => {
+    const data = makeData({ categoryLevel2: "Endodontic products", categoryLevel3: "Endodontic accessories" })
     const vm = buildProductDetailViewModel("abcdef1234567890", data, null)
+
+    expect(vm.productCategory).toBe("Endodontic accessories")
+    expect(vm.productHero.category).toBe("Endodontic accessories")
+    expect(vm.categoryTrail).toEqual([
+      {
+        label: "Endodontic products",
+        fullPath: "Endodontic products",
+        href: `/products?${new URLSearchParams([["categories", "Endodontic products"]]).toString()}`,
+      },
+      {
+        label: "Endodontic accessories",
+        fullPath: "Endodontic products > Endodontic accessories",
+        href: `/products?${new URLSearchParams([["categories", "Endodontic products > Endodontic accessories"]]).toString()}`,
+      },
+    ])
+  })
+
+  it('falls back productCategory to primaryMarket, or "Products", when no category levels are set', () => {
+    const data = makeData({ primaryMarket: "Impression Materials" })
+    let vm = buildProductDetailViewModel("abcdef1234567890", data, null)
+    expect(vm.productCategory).toBe("Impression Materials")
+    expect(vm.categoryTrail).toEqual([])
+
+    vm = buildProductDetailViewModel("abcdef1234567890", makeData(), null)
     expect(vm.productCategory).toBe("Products")
+    expect(vm.categoryTrail).toEqual([])
   })
 
   it("derives a positive relatedProductSeed from the first 8 hex chars of the id", () => {

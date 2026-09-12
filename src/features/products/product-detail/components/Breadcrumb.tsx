@@ -1,21 +1,26 @@
 import { ChevronRight } from "lucide-react"
 import Link from "next/link"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
+import type { CategoryCrumb } from "../types"
 
 interface BreadcrumbProps {
   product?: {
     title: string
-    category: string
+    categoryTrail: CategoryCrumb[]
   }
 }
 
 const Breadcrumb = ({ product }: BreadcrumbProps) => {
-  const breadcrumbItems = [
+  const categoryTrail = product?.categoryTrail ?? []
+  // No category levels: fall back to the whole catalogue instead of the old (non-existent) /categories route.
+  const categoryItems =
+    categoryTrail.length > 0
+      ? categoryTrail.map((crumb) => ({ label: crumb.label, href: crumb.href }))
+      : [{ label: "Products", href: "/products" }]
+
+  const breadcrumbItems: Array<{ label: string; href?: string }> = [
     { label: "Home", href: "/" },
-    {
-      label: product?.category || "Products",
-      href: `/categories/${product?.category.toLowerCase().replace(/\s+/g, "-") || "products"}`,
-    },
+    ...categoryItems,
     { label: product?.title || "Product" },
   ]
 

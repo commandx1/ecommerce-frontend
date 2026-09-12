@@ -1,9 +1,11 @@
 import type {
+  CategoryCrumb,
   ProductDetailPageData,
   ReviewsResponse,
   SpecificationItem,
 } from "@/features/products/product-detail/types"
 import {
+  buildCategoryTrail,
   buildPhotoPaths,
   buildSpecifications,
   buildSuppliers,
@@ -20,6 +22,7 @@ export interface ProductDetailPageViewModel {
   productName: string
   productPrice: number
   productCategory: string
+  categoryTrail: CategoryCrumb[]
   productHero: {
     productId: string
     price: number
@@ -72,20 +75,24 @@ export function buildProductDetailViewModel(
   const bestPriceVendorUserProductId = resolveBestPriceVendorUserProductId(product, userProducts)
   const suppliers = buildSuppliers(userProducts, bestPriceVendorUserProductId)
   const thumbnailImages = buildThumbnailImages(photoPaths)
+  const categoryTrail = buildCategoryTrail(product)
+  const categoryLabel =
+    categoryTrail.length > 0 ? categoryTrail[categoryTrail.length - 1].label : product.primaryMarket || "Products"
 
   return {
     productId: id,
     relatedProductSeed: buildRelatedProductSeed(id),
     productName: product.name || "",
     productPrice: product.price || 0,
-    productCategory: product.primaryMarket || "Products",
+    productCategory: categoryLabel,
+    categoryTrail,
     productHero: {
       productId: product.id,
       price: product.price || 0,
       title: product.name,
       bestPriceVendor: product.bestPriceVendor || "",
       description: product.aboutProduct || "",
-      category: product.primaryMarket || "Products",
+      category: categoryLabel,
       rating: product.overallStar || 0,
       reviewCount: product.reviewCount || 0,
       sku: product.id.substring(0, 8).toUpperCase(),

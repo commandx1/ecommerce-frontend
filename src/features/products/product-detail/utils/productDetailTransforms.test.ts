@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import type { ProductDetail, UserProduct } from "../types"
 import {
+  buildCategoryTrail,
   buildPhotoPaths,
   buildSpecifications,
   buildSuppliers,
@@ -23,6 +24,83 @@ const baseUserProduct: UserProduct = {
   price: 56,
   stock: 40,
 }
+
+describe("buildCategoryTrail", () => {
+  it("builds a 2-level trail", () => {
+    const product: ProductDetail = {
+      ...baseProduct,
+      categoryLevel1: "Dental Supplies",
+      categoryLevel2: "Cements, liners & adhesives",
+      categoryLevel3: "Cement",
+    }
+    expect(buildCategoryTrail(product)).toEqual([
+      {
+        label: "Cements, liners & adhesives",
+        fullPath: "Cements, liners & adhesives",
+        href: `/products?${new URLSearchParams([["categories", "Cements, liners & adhesives"]]).toString()}`,
+      },
+      {
+        label: "Cement",
+        fullPath: "Cements, liners & adhesives > Cement",
+        href: `/products?${new URLSearchParams([["categories", "Cements, liners & adhesives > Cement"]]).toString()}`,
+      },
+    ])
+  })
+
+  it("builds a 3-level trail", () => {
+    const product: ProductDetail = {
+      ...baseProduct,
+      categoryLevel1: "Dental Supplies",
+      categoryLevel2: "Endodontic products",
+      categoryLevel3: "Endodontic accessories",
+      categoryLevel4: "Endo organizers & accessories",
+    }
+    const trail = buildCategoryTrail(product)
+    expect(trail).toHaveLength(3)
+    expect(trail.map((crumb) => crumb.label)).toEqual([
+      "Endodontic products",
+      "Endodontic accessories",
+      "Endo organizers & accessories",
+    ])
+    expect(trail[2].fullPath).toBe("Endodontic products > Endodontic accessories > Endo organizers & accessories")
+  })
+
+  it("trims whitespace around level values", () => {
+    const product: ProductDetail = {
+      ...baseProduct,
+      categoryLevel2: "  Cements, liners & adhesives  ",
+      categoryLevel3: "  Cement  ",
+    }
+    const trail = buildCategoryTrail(product)
+    expect(trail.map((crumb) => crumb.label)).toEqual(["Cements, liners & adhesives", "Cement"])
+  })
+
+  it("stops at the first missing level, ignoring deeper levels set out of order", () => {
+    const product: ProductDetail = {
+      ...baseProduct,
+      categoryLevel2: "Endodontic products",
+      categoryLevel3: "",
+      categoryLevel4: "Endo organizers & accessories",
+    }
+    const trail = buildCategoryTrail(product)
+    expect(trail).toHaveLength(1)
+    expect(trail[0].label).toBe("Endodontic products")
+  })
+
+  it("returns an empty array when no category levels are set", () => {
+    expect(buildCategoryTrail(baseProduct)).toEqual([])
+  })
+
+  it("URL-encodes the fullPath in href, including '&' and '>'", () => {
+    const product: ProductDetail = {
+      ...baseProduct,
+      categoryLevel2: "Endodontic products",
+      categoryLevel3: "Endodontic sealers & cements",
+    }
+    const trail = buildCategoryTrail(product)
+    expect(trail[1].href).toContain("categories=Endodontic+products+%3E+Endodontic+sealers+%26+cements")
+  })
+})
 
 describe("buildPhotoPaths", () => {
   it("puts the cover photo first, ahead of the gallery paths", () => {

@@ -134,7 +134,10 @@ function emptyPage(content = []) {
 }
 
 /** Base catalog product shared by the listing and detail factories, via `makeProduct()`. */
-const baseProduct = makeProduct()
+const baseProduct = makeProduct({
+  categoryLevel2: "Endodontic products",
+  categoryLevel3: "Endodontic sealers & cements",
+})
 
 // ---------------------------------------------------------------------------
 // GET /api/products/public - src/lib/api/public-products.ts getPublicProducts()

@@ -20,6 +20,17 @@ export interface ProductDetail {
   dentalLicenseRequired?: string | null
   attributes?: ProductAttribute[]
   sds?: string | null
+  categoryLevel1?: string | null
+  categoryLevel2?: string | null
+  categoryLevel3?: string | null
+  categoryLevel4?: string | null
+  categoryLevel5?: string | null
+}
+
+export interface CategoryCrumb {
+  label: string
+  fullPath: string
+  href: string
 }
 
 export interface ProductAttribute {

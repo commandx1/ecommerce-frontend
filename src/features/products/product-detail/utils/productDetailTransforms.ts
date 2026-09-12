@@ -1,7 +1,8 @@
+import { CATEGORY_PATH_SEPARATOR } from "@/features/products/listing/lib/category-facet-tree"
 import { getFullImageUrl } from "@/lib/api/products"
 import { isDentalLicenseRequiredValue } from "@/lib/helpers/dentalLicense"
 import formatCurrency from "@/lib/helpers/formatCurrency"
-import type { ProductDetail, SpecificationItem, SupplierViewModel, UserProduct } from "../types"
+import type { CategoryCrumb, ProductDetail, SpecificationItem, SupplierViewModel, UserProduct } from "../types"
 
 const FALLBACK_IMAGE = "/dentypro-product-placeholder.png"
 
@@ -35,6 +36,28 @@ export const buildSpecifications = (product: ProductDetail): SpecificationItem[]
     if (label && value) items.push({ label, value })
     return items
   }, [])
+}
+
+// Level 1 is always "Dental Supplies" (not shown); the trail is Level 2..5, stopping at the
+// first missing/empty level so a set level4 with an empty level3 doesn't produce a gapped path.
+export function buildCategoryTrail(product: ProductDetail): CategoryCrumb[] {
+  const levels = [product.categoryLevel2, product.categoryLevel3, product.categoryLevel4, product.categoryLevel5]
+
+  const segments: string[] = []
+  for (const level of levels) {
+    const trimmed = level?.trim()
+    if (!trimmed) break
+    segments.push(trimmed)
+  }
+
+  return segments.map((label, index) => {
+    const fullPath = segments.slice(0, index + 1).join(CATEGORY_PATH_SEPARATOR)
+    return {
+      label,
+      fullPath,
+      href: `/products?${new URLSearchParams([["categories", fullPath]]).toString()}`,
+    }
+  })
 }
 
 export const resolveSdsUrl = (product: ProductDetail): string | null => {

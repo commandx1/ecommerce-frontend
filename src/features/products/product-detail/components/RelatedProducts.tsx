@@ -6,12 +6,14 @@ import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import SectionHeading from "@/components/layout/SectionHeading"
 import productsData from "@/data/products.json"
 import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
+import type { CategoryCrumb } from "../types"
 
 interface RelatedProductsProps {
   currentProductId: number
+  rootCategory?: CategoryCrumb
 }
 
-const RelatedProducts = ({ currentProductId }: RelatedProductsProps) => {
+const RelatedProducts = ({ currentProductId, rootCategory }: RelatedProductsProps) => {
   // Get related products (exclude current product, limit to 4)
   const relatedProducts = productsData.filter((p) => p.id !== currentProductId).slice(0, 4)
   return (
@@ -21,11 +23,10 @@ const RelatedProducts = ({ currentProductId }: RelatedProductsProps) => {
         className="mb-8"
         actions={
           <Link
-            // /categories/** is not a route; the catalogue filters by category instead.
-            href="/products?category=imaging"
+            href={rootCategory?.href ?? "/products"}
             className="flex items-center font-medium text-brand hover:underline"
           >
-            View All Imaging Equipment
+            View All {rootCategory?.label ?? "Products"}
             <ArrowRight className="ml-1 w-4 h-4" />
           </Link>
         }
