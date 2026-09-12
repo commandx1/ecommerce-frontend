@@ -920,8 +920,13 @@ function CreateProductPageContent() {
       newErrors.brand = "Brand is required"
     }
 
-    if (has("category") && !isLeafPath(formData.categoryPath ?? [])) {
-      newErrors.category = "Category is required"
+    if (has("category")) {
+      const path = formData.categoryPath ?? []
+      if (path.length === 0) {
+        newErrors.category = "Category is required"
+      } else if (!isLeafPath(path)) {
+        newErrors.category = "Please select a category at every level"
+      }
     }
 
     if (has("manufacturerSiteProductPage")) {
@@ -1832,9 +1837,6 @@ function CreateProductPageContent() {
 
                   {/* Category */}
                   <div>
-                    <label htmlFor="category" className="block text-sm font-medium text-text-primary mb-2">
-                      Category *
-                    </label>
                     <CategoryPicker
                       id="category"
                       value={formData.categoryPath}
@@ -1845,7 +1847,10 @@ function CreateProductPageContent() {
                         setFormData((prev) => ({ ...prev, categoryPath: path, legacyCategory: null }))
                         clearError("category")
                       }}
-                      triggerClassName={`w-full px-4 py-3 border ${errors.category ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
+                      // The picker itself marks only the first empty level red (aria-invalid), so the
+                      // shared trigger class must stay neutral - a conditional border here would paint
+                      // every level's dropdown red at once.
+                      triggerClassName="w-full px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
                     />
                     {errors.category && <p className="text-destructive text-sm mt-1">{errors.category}</p>}
                   </div>

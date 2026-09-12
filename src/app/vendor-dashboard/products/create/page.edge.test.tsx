@@ -5,8 +5,11 @@ import { apiRequest } from "@/lib/api/request"
 import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
 import { makeAccountUser, makeProduct, makeUserProductDetailResponse, makeVendorUserProduct } from "@/test/factories"
+import { installRadixPointerPolyfills } from "@/test/radix"
 import { fireEvent, render, screen, waitFor, within } from "@/test/render"
 import CreateProductPage from "./page"
+
+installRadixPointerPolyfills()
 
 // Same rationale as page.validation.test.tsx / page.submit.test.tsx: this file drives the full
 // multi-tab form through userEvent, which is legitimately slow under parallel worker load.
@@ -84,12 +87,13 @@ const fillBasicTab = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.selectOptions(screen.getByRole("combobox", { name: "Fulfillment Policy *" }), "Ships within 2 days")
 }
 
-const K_FILES_LABEL = "Endodontic products > Hand files-reamers-hedstroms > K-Files"
-
 const selectCategory = async (user: ReturnType<typeof userEvent.setup>) => {
-  await user.click(screen.getByLabelText("Category *"))
-  await user.type(screen.getByPlaceholderText("Search categories…"), "k-files")
-  await user.click(await screen.findByRole("option", { name: K_FILES_LABEL }))
+  await user.click(screen.getByRole("combobox", { name: "Category 2" }))
+  await user.click(await screen.findByRole("option", { name: "Endodontic products" }))
+  await user.click(screen.getByRole("combobox", { name: "Category 3" }))
+  await user.click(await screen.findByRole("option", { name: "Hand files-reamers-hedstroms" }))
+  await user.click(screen.getByRole("combobox", { name: "Category 4" }))
+  await user.click(await screen.findByRole("option", { name: "K-Files" }))
 }
 
 const fillDetailsTab = async (user: ReturnType<typeof userEvent.setup>) => {
@@ -748,9 +752,9 @@ describe("CreateProductPage — review-edit mode (loadProductForReviewEdit)", ()
     await screen.findByLabelText(/Product Name/)
     await userEvent.setup().click(tabButton("Product Details"))
 
-    expect(await screen.findByLabelText("Category *")).toHaveTextContent(
-      "Dental Supplies > Endodontic products > Hand files-reamers-hedstroms > K-Files",
-    )
+    expect(await screen.findByRole("combobox", { name: "Category 2" })).toHaveTextContent("Endodontic products")
+    expect(screen.getByRole("combobox", { name: "Category 3" })).toHaveTextContent("Hand files-reamers-hedstroms")
+    expect(screen.getByRole("combobox", { name: "Category 4" })).toHaveTextContent("K-Files")
     expect(screen.queryByRole("note")).not.toBeInTheDocument()
   })
 
@@ -776,14 +780,14 @@ describe("CreateProductPage — review-edit mode (loadProductForReviewEdit)", ()
     await screen.findByLabelText(/Product Name/)
     await userEvent.setup().click(tabButton("Product Details"))
 
-    expect(await screen.findByLabelText("Category *")).toHaveTextContent("Select a category")
+    expect(await screen.findByRole("combobox", { name: "Category 2" })).toHaveTextContent("Select…")
     expect(screen.getByRole("note")).toHaveTextContent("Previous: Restorative > Composite")
 
     // The legacy value is a hint only - it never satisfies the required rule, so moving forward
     // is blocked until the vendor picks a real tree leaf.
     await userEvent.setup().click(tabButton("Media"))
     expect(await screen.findByText("Category is required")).toBeInTheDocument()
-    expect(screen.getByLabelText("Category *")).toBeInTheDocument()
+    expect(screen.getByRole("combobox", { name: "Category 2" })).toBeInTheDocument()
   })
 
   it("shows no category selection or legacy hint when every stored category level is empty", async () => {
@@ -811,7 +815,8 @@ describe("CreateProductPage — review-edit mode (loadProductForReviewEdit)", ()
     await screen.findByLabelText(/Product Name/)
     await userEvent.setup().click(tabButton("Product Details"))
 
-    expect(await screen.findByLabelText("Category *")).toHaveTextContent("Select a category")
+    expect(await screen.findByRole("combobox", { name: "Category 2" })).toHaveTextContent("Select…")
+    expect(screen.queryByRole("combobox", { name: "Category 3" })).not.toBeInTheDocument()
     expect(screen.queryByRole("note")).not.toBeInTheDocument()
   })
 })

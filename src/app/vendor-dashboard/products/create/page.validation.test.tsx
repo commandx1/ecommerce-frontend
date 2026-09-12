@@ -6,8 +6,11 @@ import { apiRequest } from "@/lib/api/request"
 import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
 import { makeAccountUser, makeProduct, makeVendorUserProduct } from "@/test/factories"
+import { installRadixPointerPolyfills } from "@/test/radix"
 import { render, screen, waitFor } from "@/test/render"
 import CreateProductPage from "./page"
+
+installRadixPointerPolyfills()
 
 // This file drives the full 17-field, three-tab create-product form through userEvent, so its
 // slowest cases legitimately take ~1.8s in isolation. Under the full suite's parallel worker load
@@ -81,12 +84,13 @@ const fillBasicTab = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.selectOptions(screen.getByRole("combobox", { name: "Fulfillment Policy *" }), "Ships within 2 days")
 }
 
-const K_FILES_LABEL = "Endodontic products > Hand files-reamers-hedstroms > K-Files"
-
 const selectCategory = async (user: ReturnType<typeof userEvent.setup>) => {
-  await user.click(screen.getByLabelText("Category *"))
-  await user.type(screen.getByPlaceholderText("Search categories…"), "k-files")
-  await user.click(await screen.findByRole("option", { name: K_FILES_LABEL }))
+  await user.click(screen.getByRole("combobox", { name: "Category 2" }))
+  await user.click(await screen.findByRole("option", { name: "Endodontic products" }))
+  await user.click(screen.getByRole("combobox", { name: "Category 3" }))
+  await user.click(await screen.findByRole("option", { name: "Hand files-reamers-hedstroms" }))
+  await user.click(screen.getByRole("combobox", { name: "Category 4" }))
+  await user.click(await screen.findByRole("option", { name: "K-Files" }))
 }
 
 /** Fills every required Details-tab field; leaves the form on the Details tab. */
@@ -187,6 +191,30 @@ describe("CreateProductPage — form validation", () => {
     await user.click(tabButton("Media"))
     expect(await screen.findByText("Cover Photo *")).toBeInTheDocument()
     expect(screen.queryByLabelText("Detailed Description *")).not.toBeInTheDocument()
+  })
+
+  it("requires every category level to be filled, not just the first one", async () => {
+    const user = userEvent.setup()
+    await openBlankForm(user)
+    await fillBasicTab(user)
+    await user.click(nextButton())
+    expect(await screen.findByLabelText("Detailed Description *")).toBeInTheDocument()
+
+    await user.type(screen.getByLabelText("Detailed Description *"), "A great dental product")
+    await user.type(screen.getByLabelText("Manufacturer Code *"), "MNF-1")
+    await user.type(screen.getByLabelText("Manufacturer *"), "MARK3")
+    await user.type(screen.getByLabelText("Brand"), "Acme Dental")
+    await user.type(screen.getByLabelText("Manufacturer Site Product Page *"), "https://example.com/products/item")
+    await user.type(screen.getByLabelText("Weight *"), "1.5")
+
+    await user.click(screen.getByRole("combobox", { name: "Category 2" }))
+    await user.click(await screen.findByRole("option", { name: "Endodontic products" }))
+
+    await user.click(tabButton("Media"))
+
+    // Still on Details: Category 2 is a branch, not a leaf, so the chain is incomplete.
+    expect(await screen.findByText("Please select a category at every level")).toBeInTheDocument()
+    expect(screen.getByRole("combobox", { name: "Category 3" })).toHaveAttribute("aria-invalid", "true")
   })
 
   it("allows backward navigation away from Details even while it has errors", async () => {

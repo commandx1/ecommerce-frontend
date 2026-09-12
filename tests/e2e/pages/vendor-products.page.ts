@@ -174,15 +174,17 @@ export class VendorCreateProductPage extends BasePage {
   }
 
   /**
-   * Picks a leaf in the required Category field (search + drill-down picker over the static
-   * category tree; level 1 "Dental Supplies" is fixed and the tree covers levels 2-5).
+   * Picks a leaf in the required Category field via the chain of dependent dropdowns
+   * (Category 2 -> 3 -> 4) over the static category tree; level 1 "Dental Supplies" is fixed
+   * and the tree covers levels 2-5.
    */
   async selectCategory(): Promise<void> {
-    await this.page.getByLabel("Category *").click()
-    await this.page.getByPlaceholder("Search categories…").fill("k-files")
-    await this.page
-      .getByRole("option", { name: "Endodontic products > Hand files-reamers-hedstroms > K-Files" })
-      .click()
+    await this.page.getByRole("combobox", { name: "Category 2" }).click()
+    await this.page.getByRole("option", { name: "Endodontic products" }).click()
+    await this.page.getByRole("combobox", { name: "Category 3" }).click()
+    await this.page.getByRole("option", { name: "Hand files-reamers-hedstroms" }).click()
+    await this.page.getByRole("combobox", { name: "Category 4" }).click()
+    await this.page.getByRole("option", { name: "K-Files" }).click()
   }
 
   /** Fills Basic then Details via the "Next" button, landing on the Media tab. */

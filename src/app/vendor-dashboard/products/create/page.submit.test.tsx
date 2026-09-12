@@ -5,8 +5,11 @@ import { apiRequest } from "@/lib/api/request"
 import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
 import { makeAccountUser, makeProduct } from "@/test/factories"
+import { installRadixPointerPolyfills } from "@/test/radix"
 import { render, screen, waitFor } from "@/test/render"
 import CreateProductPage from "./page"
+
+installRadixPointerPolyfills()
 
 // This file drives the full 17-field, three-tab create-product form through userEvent, so its
 // slowest cases legitimately take ~1.8s in isolation. Under the full suite's parallel worker load
@@ -108,12 +111,13 @@ const fillBasicTab = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.selectOptions(screen.getByRole("combobox", { name: "Fulfillment Policy *" }), "Ships within 2 days")
 }
 
-const K_FILES_LABEL = "Endodontic products > Hand files-reamers-hedstroms > K-Files"
-
 const selectCategory = async (user: ReturnType<typeof userEvent.setup>) => {
-  await user.click(screen.getByLabelText("Category *"))
-  await user.type(screen.getByPlaceholderText("Search categories…"), "k-files")
-  await user.click(await screen.findByRole("option", { name: K_FILES_LABEL }))
+  await user.click(screen.getByRole("combobox", { name: "Category 2" }))
+  await user.click(await screen.findByRole("option", { name: "Endodontic products" }))
+  await user.click(screen.getByRole("combobox", { name: "Category 3" }))
+  await user.click(await screen.findByRole("option", { name: "Hand files-reamers-hedstroms" }))
+  await user.click(screen.getByRole("combobox", { name: "Category 4" }))
+  await user.click(await screen.findByRole("option", { name: "K-Files" }))
 }
 
 /** Fills every required Details-tab field; leaves the form on the Details tab. */
