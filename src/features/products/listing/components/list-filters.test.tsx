@@ -177,9 +177,10 @@ describe("AttributeFilter", () => {
 
 describe("CategoryFilter", () => {
   const categories: FilterOption[] = [
-    { name: "Consumables > Impression > Trays", count: 12 },
-    { name: "Consumables > Impression > Tips", count: 4 },
-    { name: "Equipment", count: 7 },
+    { name: "Endodontic products > Endodontic sealers & cements", count: 2 },
+    { name: "Endodontic products > Endodontic accessories > Endo organizers & accessories", count: 1 },
+    { name: "Infection control - personal products > Gloves", count: 11 },
+    { name: "Disposables", count: 3 },
   ]
 
   it("renders nothing without categories", () => {
@@ -188,31 +189,125 @@ describe("CategoryFilter", () => {
     expect(screen.queryByRole("heading", { name: "Category" })).not.toBeInTheDocument()
   })
 
-  it("nests the '>'-separated path into an expandable tree", async () => {
+  it("collapses roots by default and rolls up their descendant counts", () => {
+    renderWithFilterNavigation(<CategoryFilter categories={categories} />)
+
+    expect(screen.getByText("Endodontic products")).toBeInTheDocument()
+    expect(screen.getByText("Infection control - personal products")).toBeInTheDocument()
+    expect(screen.getByText("Disposables")).toBeInTheDocument()
+
+    expect(screen.queryByText("Gloves")).not.toBeInTheDocument()
+    expect(screen.queryByLabelText("Endodontic sealers & cements")).not.toBeInTheDocument()
+
+    const row = screen.getByLabelText("Endodontic products").closest("div")?.parentElement
+    expect(row).toHaveTextContent("3")
+  })
+
+  it("expands and collapses a root via its chevron", async () => {
     const user = userEvent.setup()
     renderWithFilterNavigation(<CategoryFilter categories={categories} />)
 
-    expect(screen.getByLabelText("Trays")).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Expand Endodontic products" }))
 
-    await user.click(screen.getByRole("button", { name: /Consumables/ }))
-    expect(screen.queryByLabelText("Trays")).not.toBeInTheDocument()
+    expect(screen.getByLabelText("Endodontic sealers & cements")).toBeInTheDocument()
+    expect(screen.getByLabelText("Endodontic accessories")).toBeInTheDocument()
+    expect(screen.queryByLabelText("Endo organizers & accessories")).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "Collapse Endodontic products" }))
+
+    expect(screen.queryByLabelText("Endodontic sealers & cements")).not.toBeInTheDocument()
   })
 
-  it("sends the full path of a leaf, not just its label", async () => {
+  it("selecting a root pushes just the root path", async () => {
     const user = userEvent.setup()
     const { router } = renderWithFilterNavigation(<CategoryFilter categories={categories} />)
 
-    await user.click(screen.getByLabelText("Tips"))
+    await user.click(screen.getByLabelText("Endodontic products"))
 
-    expect(lastPushedParams(router).getAll("categories")).toEqual(["Consumables > Impression > Tips"])
+    expect(lastPushedParams(router).getAll("categories")).toEqual(["Endodontic products"])
   })
 
-  it("offers a top-level category with no children as a plain checkbox", async () => {
+  it("selecting a leaf pushes its full path", async () => {
     const user = userEvent.setup()
     const { router } = renderWithFilterNavigation(<CategoryFilter categories={categories} />)
 
-    await user.click(screen.getByLabelText("Equipment"))
+    await user.click(screen.getByRole("button", { name: "Expand Endodontic products" }))
+    await user.click(screen.getByLabelText("Endodontic sealers & cements"))
 
-    expect(lastPushedParams(router).getAll("categories")).toEqual(["Equipment"])
+    expect(lastPushedParams(router).getAll("categories")).toEqual([
+      "Endodontic products > Endodontic sealers & cements",
+    ])
+  })
+
+  it("auto-expands a branch that is already selected via the URL", () => {
+    renderWithFilterNavigation(
+      <CategoryFilter categories={categories} />,
+      "categories=Endodontic+products+%3E+Endodontic+accessories",
+    )
+
+    const deepCheckbox = screen.getByLabelText("Endo organizers & accessories")
+    expect(deepCheckbox).toBeInTheDocument()
+    expect(deepCheckbox).toBeChecked()
+    expect(deepCheckbox).toBeDisabled()
+
+    const branchCheckbox = screen.getByLabelText("Endodontic accessories")
+    expect(branchCheckbox).toBeChecked()
+    expect(branchCheckbox).toBeEnabled()
+  })
+
+  it("selecting a parent drops an already-selected descendant", async () => {
+    const user = userEvent.setup()
+    const { router } = renderWithFilterNavigation(
+      <CategoryFilter categories={categories} />,
+      "categories=Endodontic+products+%3E+Endodontic+sealers+%26+cements",
+    )
+
+    await user.click(screen.getByLabelText("Endodontic products"))
+
+    expect(lastPushedParams(router).getAll("categories")).toEqual(["Endodontic products"])
+  })
+
+  it("unchecking a selected path removes only it", async () => {
+    const user = userEvent.setup()
+    const { router } = renderWithFilterNavigation(
+      <CategoryFilter categories={categories} />,
+      "categories=Endodontic+products+%3E+Endodontic+sealers+%26+cements&categories=Disposables",
+    )
+
+    await user.click(screen.getByLabelText("Disposables"))
+
+    expect(lastPushedParams(router).getAll("categories")).toEqual([
+      "Endodontic products > Endodontic sealers & cements",
+    ])
+  })
+
+  it("filters the tree by search, auto-expanding matches", async () => {
+    const user = userEvent.setup()
+    renderWithFilterNavigation(<CategoryFilter categories={categories} />)
+
+    const searchBox = screen.getByPlaceholderText("Search categories...")
+    await user.type(searchBox, "glove")
+
+    expect(screen.getByText("Gloves")).toBeInTheDocument()
+    expect(screen.queryByText("Disposables")).not.toBeInTheDocument()
+
+    await user.clear(searchBox)
+    await user.type(searchBox, "zzz")
+
+    expect(screen.getByText("No categories found")).toBeInTheDocument()
+
+    await user.clear(searchBox)
+
+    expect(screen.getByText("Disposables")).toBeInTheDocument()
+    expect(screen.queryByText("Gloves")).not.toBeInTheDocument()
+  })
+
+  it("Clear resets the selection", async () => {
+    const user = userEvent.setup()
+    const { router } = renderWithFilterNavigation(<CategoryFilter categories={categories} />, "categories=Disposables")
+
+    await user.click(screen.getByRole("button", { name: "Clear" }))
+
+    expect(lastPushedParams(router).getAll("categories")).toEqual([])
   })
 })

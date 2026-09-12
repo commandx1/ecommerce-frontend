@@ -57,7 +57,7 @@ describe("ProductListingPage", () => {
     expect(screen.getAllByText("MARK3").length).toBeGreaterThan(0) // brands + manufacturers
     // Mobile and desktop filter panels both render (see ProductListingClient.test.tsx), so more
     // than one node is expected here.
-    expect(screen.getAllByText("Consumables").length).toBeGreaterThan(0) // categories
+    expect(screen.getAllByText("Infection control - personal products").length).toBeGreaterThan(0) // categories (collapsed root)
   })
 
   it("shows a friendly error screen, not a crash, when the product list fails to load", async () => {

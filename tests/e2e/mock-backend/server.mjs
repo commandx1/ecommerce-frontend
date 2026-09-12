@@ -174,7 +174,7 @@ on("GET", "/api/products/vendors", (_req, res) => {
 })
 
 on("GET", "/api/products/categories", (_req, res) => {
-  sendJson(res, 200, [{ name: "Consumables", count: 1 }])
+  sendJson(res, 200, [{ name: "Infection control - personal products > Gloves", count: 1 }])
 })
 
 on("GET", "/api/products/attributes", (_req, res) => {

@@ -103,7 +103,9 @@ export const productsHandlers = [
     HttpResponse.json([{ id: "company-1", name: "Acme Dental Supplies", count: 12 }]),
   ),
 
-  http.get("*/api/products/categories", () => HttpResponse.json([{ name: "Consumables", count: 45 }])),
+  http.get("*/api/products/categories", () =>
+    HttpResponse.json([{ name: "Infection control - personal products > Gloves", count: 45 }]),
+  ),
 
   http.get("*/api/products/attributes", () =>
     HttpResponse.json([{ attributeName: "Color", values: [{ value: "Yellow", count: 10 }] }]),
