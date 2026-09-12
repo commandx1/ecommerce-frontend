@@ -249,37 +249,41 @@ export default function LicenseManagementSection() {
 
   return (
     // biome-ignore lint/correctness/useUniqueElementIds: static id is a deep-link anchor (#licenses) targeted from CartSummaryPanel/ProductHeroDetails.
-    <div id="licenses" className="scroll-mt-24 border-t border-border-soft">
-      <div className="p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
-              <FileBadge2 className="h-4 w-4" />
-            </span>
-            <div>
-              <h3 className="text-base font-semibold text-text-primary">Professional Licenses</h3>
-              <p className="text-sm text-text-muted">Required to buy prescription products. Reviewed by our team.</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {!isLoading && <SummaryBadge licenses={licenses} />}
-            {!isFormOpen && (
-              <Button type="button" size="sm" onClick={handleAddNew} aria-label="Add license">
-                <Plus className="h-4 w-4" />
-                Add license
-              </Button>
-            )}
+    <section
+      id="licenses"
+      className="fade-up scroll-mt-24 overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
+      style={{ animationDelay: "300ms" }}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border-soft p-6">
+        <div className="flex items-center gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
+            <FileBadge2 className="h-4 w-4" />
+          </span>
+          <div>
+            <h2 className="text-lg font-semibold text-text-primary">Professional Licenses</h2>
+            <p className="text-sm text-text-muted">Required to buy prescription products. Reviewed by our team.</p>
           </div>
         </div>
+        <div className="flex items-center gap-3">
+          {!isLoading && <SummaryBadge licenses={licenses} />}
+          {!isFormOpen && (
+            <Button type="button" size="sm" onClick={handleAddNew} aria-label="Add license">
+              <Plus className="h-4 w-4" />
+              Add license
+            </Button>
+          )}
+        </div>
+      </div>
 
+      <div className="p-6">
         {isLoading ? (
           // biome-ignore lint/a11y/useSemanticElements: a <fieldset> here would imply form controls; this is a non-interactive loading placeholder.
-          <div role="group" aria-busy="true" aria-label="Loading licenses" className="mt-4 space-y-3">
+          <div role="group" aria-busy="true" aria-label="Loading licenses" className="space-y-3">
             <div className="h-16 animate-pulse rounded-xl bg-surface-muted" />
             <div className="h-16 animate-pulse rounded-xl bg-surface-muted" />
           </div>
         ) : licenses.length === 0 && !isFormOpen ? (
-          <div className="mt-4 rounded-xl border border-dashed border-border-strong p-8 text-center">
+          <div className="rounded-xl border border-dashed border-border-strong p-8 text-center">
             <FileBadge2 className="mx-auto mb-3 h-8 w-8 text-text-muted" />
             <p className="text-sm text-text-secondary">You haven't added a license yet.</p>
             <Button type="button" onClick={handleAddNew} variant="link" size="sm" className="mt-2 h-auto p-0">
@@ -287,7 +291,7 @@ export default function LicenseManagementSection() {
             </Button>
           </div>
         ) : licenses.length > 0 ? (
-          <ul className="mt-4 space-y-3">
+          <ul className="space-y-3">
             {licenses.map((license) => (
               <li
                 key={license.id}
@@ -346,7 +350,10 @@ export default function LicenseManagementSection() {
             onSubmit={handleSave}
             noValidate
             aria-labelledby={formTitleId}
-            className="fade-up mt-4 space-y-4 rounded-xl border border-brand/30 bg-brand/5 p-4"
+            className={cn(
+              "fade-up space-y-4 rounded-xl border border-brand/30 bg-brand/5 p-4",
+              licenses.length > 0 && "mt-4",
+            )}
           >
             <h4 id={formTitleId} className="text-sm font-semibold text-text-primary">
               New license
@@ -481,6 +488,6 @@ export default function LicenseManagementSection() {
         isDanger={true}
         isLoading={isDeleting}
       />
-    </div>
+    </section>
   )
 }

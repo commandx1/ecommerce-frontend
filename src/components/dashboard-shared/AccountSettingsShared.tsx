@@ -201,15 +201,6 @@ export default function AccountSettingsShared({
           <User className="h-3.5 w-3.5" />
           Profile
         </a>
-        {!isVendor && (
-          <a
-            href="#licenses"
-            className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface-elevated px-4 py-1.5 text-xs font-semibold text-text-secondary shadow-soft transition-colors hover:border-brand/40 hover:text-brand"
-          >
-            <FileBadge2 className="h-3.5 w-3.5" />
-            Licenses
-          </a>
-        )}
         {children && (
           <a
             href={`#${extraSectionId}`}
@@ -217,6 +208,15 @@ export default function AccountSettingsShared({
           >
             <MapPinned className="h-3.5 w-3.5" />
             {extraSectionLabel}
+          </a>
+        )}
+        {!isVendor && (
+          <a
+            href="#licenses"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface-elevated px-4 py-1.5 text-xs font-semibold text-text-secondary shadow-soft transition-colors hover:border-brand/40 hover:text-brand"
+          >
+            <FileBadge2 className="h-3.5 w-3.5" />
+            Licenses
           </a>
         )}
         {isVendor && (
@@ -345,7 +345,6 @@ export default function AccountSettingsShared({
                 </Button>
               </div>
             </form>
-            {!isVendor && <LicenseManagementSection />}
           </section>
         </div>
 
@@ -354,6 +353,8 @@ export default function AccountSettingsShared({
             {children}
           </div>
         )}
+
+        {!isVendor && <LicenseManagementSection />}
 
         {isVendor && (
           <div id={companySectionId} className="fade-up scroll-mt-24" style={{ animationDelay: "160ms" }}>

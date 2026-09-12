@@ -197,7 +197,7 @@ describe("AccountSettingsShared", () => {
     expect(screen.queryByRole("link", { name: /Company/ })).not.toBeInTheDocument()
     expect(screen.queryByRole("link", { name: /Payouts/ })).not.toBeInTheDocument()
     expect(screen.getByRole("link", { name: /Licenses/ })).toBeInTheDocument()
-    expect(await screen.findByRole("heading", { level: 3, name: "Professional Licenses" })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { level: 2, name: "Professional Licenses" })).toBeInTheDocument()
     buyerView.unmount()
 
     signIn({ roleName: "Vendor" })
@@ -211,19 +211,48 @@ describe("AccountSettingsShared", () => {
     await waitFor(() => expect(screen.getByRole("heading", { name: "Payouts" })).toBeInTheDocument())
   })
 
-  it("nests the license section inside the personal information card", async () => {
+  it("renders licenses as a separate card between the extra section and security", async () => {
     signIn({ roleName: "BUYER" })
     server.use(
       http.get("*/backend-api/licenses", () => HttpResponse.json({ licenses: [makeLicense({ id: "l-1" })], total: 1 })),
     )
-    renderSettings()
+    renderSettings(<div>Address manager</div>)
 
-    const heading = screen.getByRole("heading", { name: "Personal Information" })
-    const section = heading.closest("section")
-    expect(section).not.toBeNull()
+    const licensesHeading = await screen.findByRole("heading", { level: 2, name: "Professional Licenses" })
+
+    const personalInfoHeading = screen.getByRole("heading", { name: "Personal Information" })
+    const personalInfoSection = personalInfoHeading.closest("section")
+    expect(personalInfoSection).not.toBeNull()
     expect(
-      await within(section as HTMLElement).findByRole("heading", { level: 3, name: "Professional Licenses" }),
-    ).toBeInTheDocument()
+      within(personalInfoSection as HTMLElement).queryByRole("heading", { name: "Professional Licenses" }),
+    ).not.toBeInTheDocument()
+    expect(licensesHeading.closest("section")).not.toBe(personalInfoSection)
+
+    const order = [
+      personalInfoHeading,
+      screen.getByText("Address manager"),
+      licensesHeading,
+      screen.getByRole("heading", { name: "Security" }),
+    ]
+    for (const [before, after] of [
+      [order[0], order[1]],
+      [order[1], order[2]],
+      [order[2], order[3]],
+    ]) {
+      expect(before.compareDocumentPosition(after) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    }
+  })
+
+  it("orders the quick nav to match the page order for buyers", () => {
+    signIn({ roleName: "BUYER" })
+    renderSettings(<div>Address manager</div>)
+
+    const nav = screen.getByRole("navigation", { name: "Jump to settings section" })
+    expect(
+      within(nav)
+        .getAllByRole("link")
+        .map((link) => link.textContent?.trim()),
+    ).toEqual(["Profile", "Addresses", "Licenses", "Security"])
   })
 
   it("adds a quick-nav entry for an embedded extra section", () => {

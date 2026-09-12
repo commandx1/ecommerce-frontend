@@ -7,10 +7,10 @@ import { AccountSettingsPage, BuyerAddressesPage } from "./pages/vendor-settings
  * side, but composed differently: no `CompanyInfoCard`/`StripeConnectCard` (isVendor is false),
  * the buyer page embeds `AddressManagementShared` with `singleAddress` as the shared component's
  * `children` (see src/app/buyer-dashboard/settings/page.tsx; the vendor page embeds the same
- * component without `singleAddress`), and the buyer's Personal Information card additionally
- * nests `LicenseManagementSection` as a sub-section (see AccountSettingsShared.tsx:
- * `{!isVendor && <LicenseManagementSection />}`, rendered inside the same `<section>` as the
- * profile form, right after the form). Account/address SAVE behaviour is already covered
+ * component without `singleAddress`), and the buyer page additionally renders
+ * `LicenseManagementSection` as its own card directly below the address card (see
+ * AccountSettingsShared.tsx: `{!isVendor && <LicenseManagementSection />}`, placed after the
+ * `children` block and before Security). Account/address SAVE behaviour is already covered
  * end-to-end in vendor-settings.spec.ts against the identical shared components - this file only
  * verifies the buyer-side composition wires up correctly, per the task brief.
  *
@@ -51,7 +51,7 @@ test.describe("buyer settings composition", () => {
     await expect(page.profileSection).toBeVisible()
     await expect(page.firstNameInput).toHaveValue("Serhat")
     await expect(page.emailInput).toBeDisabled()
-    await expect(buyerPage.getByRole("heading", { name: "Professional Licenses", level: 3 })).toBeVisible()
+    await expect(buyerPage.getByRole("heading", { name: "Professional Licenses", level: 2 })).toBeVisible()
 
     // Buyers embed AddressManagementShared with `singleAddress`, whose heading is the singular
     // "Address" - the plural vendor heading must not appear (see file header comment).
