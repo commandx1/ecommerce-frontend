@@ -189,6 +189,18 @@ describe("buildProductDetailViewModel", () => {
     ])
   })
 
+  it("marks a supplier uberDirectEligible when uberEnabled is true and the distance is under 10 miles", () => {
+    const data: ProductDetailPageData = {
+      productData: {
+        product: { id: "abcdef1234567890", name: "Item", price: 10 },
+        userProducts: [{ id: "up-1", vendor: "Acme", price: 10, stock: 5, uberEnabled: true, vendorDistance: "2 mi" }],
+      },
+      questions: emptyQuestions,
+    }
+    const vm = buildProductDetailViewModel("abcdef1234567890", data, null)
+    expect(vm.suppliers[0].uberDirectEligible).toBe(true)
+  })
+
   it("defaults userProducts/vendors/suppliers to empty when userProducts is undefined", () => {
     const data: ProductDetailPageData = {
       productData: { product: { id: "abcdef1234567890", name: "Item", price: 10 } },

@@ -41,6 +41,7 @@ describe("getMyCompany contract", () => {
     expect(typeof response.id).toBe("string")
     expect(typeof response.active).toBe("boolean")
     expect(response.companyRole).toBe("OWNER")
+    expect(response.uberEnabled).toBe(mockCompany.uberEnabled)
   })
 
   it("tolerates a company with every nullable field null", async () => {
@@ -102,12 +103,31 @@ describe("updateMyCompany contract", () => {
       phoneNumber: "+15551234567",
       website: "https://acmedental.example.com",
       description: "Wholesale dental supplies",
+      uberEnabled: true,
     }
 
     const response = await updateMyCompany(payload)
 
     expect(capturedPutBody).toEqual(payload)
     expect(response).toEqual(mockCompany)
+  })
+
+  it("serializes uberEnabled: false without dropping it from the PUT body", async () => {
+    const payload: UpdateCompanyPayload = {
+      name: "Acme Dental Supplies",
+      companyPhoto: null,
+      taxNumber: "1234567890",
+      email: "billing@acmedental.example.com",
+      phoneNumber: "+15551234567",
+      website: "https://acmedental.example.com",
+      description: "Wholesale dental supplies",
+      uberEnabled: false,
+    }
+
+    await updateMyCompany(payload)
+
+    expect(capturedPutBody).not.toBeNull()
+    expect(capturedPutBody).toHaveProperty("uberEnabled", false)
   })
 
   it("rejects with a 400 when the new tax number already belongs to another company", async () => {
@@ -131,6 +151,7 @@ describe("updateMyCompany contract", () => {
         phoneNumber: null,
         website: null,
         description: null,
+        uberEnabled: true,
       }),
     ).rejects.toMatchObject({ status: 400 })
   })
@@ -154,6 +175,7 @@ describe("updateMyCompany contract", () => {
       phoneNumber: null,
       website: null,
       description: null,
+      uberEnabled: true,
     }).catch((e) => e)
 
     expect(error.status).toBe(403)
@@ -174,6 +196,7 @@ describe("updateMyCompany contract", () => {
         phoneNumber: null,
         website: null,
         description: null,
+        uberEnabled: true,
       }),
     ).rejects.toMatchObject({ status: 500 })
   })

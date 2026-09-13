@@ -23,6 +23,7 @@ const makeSupplier = (overrides: Partial<SupplierViewModel> = {}): SupplierViewM
   distanceTime: "2 days",
   rating: 4.5,
   reviewCount: 12,
+  uberDirectEligible: false,
   ...overrides,
 })
 
@@ -96,6 +97,29 @@ describe("SupplierComparison", () => {
     render(<SupplierComparison suppliers={[makeSupplier({ distance: undefined, distanceTime: undefined })]} />)
 
     expect(within(rowFor("Acme Dental")).getAllByText("-")).toHaveLength(2)
+  })
+
+  it("shows the Uber Direct badge when the supplier is eligible", () => {
+    render(<SupplierComparison suppliers={[makeSupplier({ uberDirectEligible: true })]} />)
+
+    const row = rowFor("Acme Dental")
+    expect(within(row).getByTestId("uber-direct-badge")).toBeInTheDocument()
+    expect(within(row).getByText("Uber Direct same-day delivery available")).toBeInTheDocument()
+  })
+
+  it("opens the shared tooltip primitive when the Uber Direct badge is hovered", async () => {
+    const user = userEvent.setup()
+    render(<SupplierComparison suppliers={[makeSupplier({ uberDirectEligible: true })]} />)
+
+    await user.hover(within(rowFor("Acme Dental")).getByTestId("uber-direct-badge"))
+
+    expect(await screen.findByRole("tooltip")).toHaveTextContent("Uber Direct same-day delivery available")
+  })
+
+  it("hides the Uber Direct badge when the supplier is not eligible", () => {
+    render(<SupplierComparison suppliers={[makeSupplier({ uberDirectEligible: false })]} />)
+
+    expect(within(rowFor("Acme Dental")).queryByTestId("uber-direct-badge")).not.toBeInTheDocument()
   })
 
   it("selects a supplier from its action button", async () => {

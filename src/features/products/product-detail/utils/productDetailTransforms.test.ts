@@ -430,3 +430,23 @@ describe("buildSuppliers", () => {
     expect(supplier.reviewCount).toBe(0)
   })
 })
+
+describe("uberDirectEligible", () => {
+  it.each<[boolean | undefined, string | undefined, boolean]>([
+    [true, "3.2 mi", true],
+    [true, "9.9 mi", true],
+    [true, "10 mi", false],
+    [true, "12.3 mi", false],
+    [true, "800 ft", true],
+    [true, "15 km", true],
+    [true, "20 km", false],
+    [true, undefined, false],
+    [true, "unknown", false],
+    [false, "1 mi", false],
+    [undefined, "1 mi", false],
+  ])("uberEnabled=%s, vendorDistance=%s -> %s", (uberEnabled, vendorDistance, expected) => {
+    const up: UserProduct = { ...baseUserProduct, uberEnabled, vendorDistance }
+    const [supplier] = buildSuppliers([up], null)
+    expect(supplier.uberDirectEligible).toBe(expected)
+  })
+})

@@ -3,6 +3,7 @@
 import { Building2, Globe, Mail, Phone, Save } from "lucide-react"
 import Image from "next/image"
 import { useCallback, useEffect, useId, useState } from "react"
+import { CheckboxField } from "@/components/form/CheckboxField"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -37,6 +38,9 @@ const toFormState = (company: CompanyProfile): UpdateCompanyPayload => ({
   phoneNumber: company.phoneNumber || "",
   website: company.website || "",
   description: company.description || "",
+  // Entity default is true; if an older API build omits the field, the box must not silently
+  // flip to false on save.
+  uberEnabled: company.uberEnabled ?? true,
 })
 
 export default function CompanyInfoCard() {
@@ -48,6 +52,7 @@ export default function CompanyInfoCard() {
   const websiteId = `${idBase}-company-website`
   const descriptionId = `${idBase}-company-description`
   const logoId = `${idBase}-company-logo`
+  const uberEnabledId = `${idBase}-uber-enabled`
 
   const [company, setCompany] = useState<CompanyProfile | null>(null)
   const [formData, setFormData] = useState<UpdateCompanyPayload | null>(null)
@@ -89,7 +94,7 @@ export default function CompanyInfoCard() {
 
   const canEdit = company?.companyRole === "OWNER"
 
-  const handleFieldChange = (field: keyof UpdateCompanyPayload, value: string) => {
+  const handleFieldChange = (field: keyof UpdateCompanyPayload, value: string | boolean) => {
     setFormData((prev) => (prev ? { ...prev, [field]: value } : prev))
     if (field === "companyPhoto") {
       setLogoFailed(false)
@@ -297,6 +302,17 @@ export default function CompanyInfoCard() {
                 disabled={!canEdit}
               />
             </div>
+          </div>
+
+          <div className="border-t border-border-soft pt-4">
+            <CheckboxField
+              id={uberEnabledId}
+              label="Enable Uber Direct delivery"
+              description="Offer same-day courier delivery to buyers within 10 miles of your address."
+              checked={formData.uberEnabled}
+              onChange={(e) => handleFieldChange("uberEnabled", e.target.checked)}
+              disabled={!canEdit}
+            />
           </div>
 
           <div className="flex items-center justify-between gap-4 border-t border-border-soft pt-4">

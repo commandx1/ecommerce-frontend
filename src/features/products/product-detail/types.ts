@@ -58,6 +58,8 @@ export interface UserProduct {
   heavyShippingSurcharge?: number
   vendorRating?: number
   vendorReviewCount?: number
+  /** Backend CustomerUserProductResponseDto.uberEnabled — seller's company allows Uber Direct delivery. */
+  uberEnabled?: boolean
 }
 
 /** Spring Data page sort block */
@@ -169,6 +171,8 @@ export interface SupplierViewModel {
   distanceTime?: string
   rating: number
   reviewCount: number
+  /** uberEnabled && distance < 10 mi; false when distance is unknown. */
+  uberDirectEligible: boolean
 }
 
 export interface ProductHeroViewModel {

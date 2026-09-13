@@ -16,11 +16,16 @@ export interface CompanyProfile {
   createdDate: string
   /** Current user's role within the company; only OWNER may update it. */
   companyRole: CompanyRole | null
+  /**
+   * Backend `CompanyResponse.uberEnabled` is a primitive boolean (never null) — whether the
+   * company's listings are eligible for Uber Direct delivery.
+   */
+  uberEnabled: boolean
 }
 
 export type UpdateCompanyPayload = Pick<
   CompanyProfile,
-  "name" | "companyPhoto" | "taxNumber" | "email" | "phoneNumber" | "website" | "description"
+  "name" | "companyPhoto" | "taxNumber" | "email" | "phoneNumber" | "website" | "description" | "uberEnabled"
 >
 
 export async function getMyCompany(): Promise<CompanyProfile> {

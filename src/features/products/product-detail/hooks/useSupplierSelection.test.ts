@@ -21,6 +21,7 @@ const makeSupplier = (overrides: Partial<SupplierViewModel> = {}): SupplierViewM
   heavyShippingFee: "$0.00",
   rating: 4.5,
   reviewCount: 12,
+  uberDirectEligible: false,
   ...overrides,
 })
 

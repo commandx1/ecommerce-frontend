@@ -81,9 +81,13 @@ export const resolveBestPriceVendorUserProductId = (product: ProductDetail, user
   return best?.id ?? null
 }
 
+// Mirrors the hardcoded `>= 10.0` gate in ecommerce-api ShipmentService.createShipmentRates —
+// both must change together.
+export const UBER_DIRECT_MAX_DISTANCE_MILES = 10
+
 // vendorDistance is a pre-formatted string from Google Distance Matrix (e.g. "12.3 mi", "500 ft"),
 // not a numeric field, so it has to be parsed before it can be used for ordering.
-const parseDistanceToMiles = (value?: string): number | null => {
+export const parseDistanceToMiles = (value?: string): number | null => {
   if (!value) return null
 
   const trimmed = value.trim()
@@ -135,6 +139,7 @@ export const buildSuppliers = (userProducts: UserProduct[], bestPriceVendorUserP
       const shipmentFee = up.shipmentFee ?? 0
       const heavyShippingSurcharge = up.heavyShippingSurcharge ?? 0
       const shippingTotal = shipmentFee + heavyShippingSurcharge
+      const miles = parseDistanceToMiles(up.vendorDistance)
 
       return {
         id: index + 1,
@@ -156,6 +161,7 @@ export const buildSuppliers = (userProducts: UserProduct[], bestPriceVendorUserP
         distanceTime: up.vendorDistanceTime,
         rating: up.vendorRating ?? 0,
         reviewCount: up.vendorReviewCount ?? 0,
+        uberDirectEligible: up.uberEnabled === true && miles !== null && miles < UBER_DIRECT_MAX_DISTANCE_MILES,
       }
     })
 }

@@ -1,9 +1,13 @@
 "use client"
 
+import Image from "next/image"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
 import type { SupplierViewModel } from "../types"
 import { getStockColorClass } from "../utils/stockStyles"
 import StarRating from "./StarRating"
+
+const UBER_DIRECT_BADGE_LABEL = "Uber Direct same-day delivery available"
 
 interface SupplierComparisonRowProps {
   supplier: SupplierViewModel
@@ -97,6 +101,21 @@ const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }:
         <div className="flex flex-col items-center justify-center">
           <div className="text-sm font-medium text-text-primary">{supplier.distance || "-"}</div>
           <div className="text-xs text-text-muted">{supplier.distanceTime || "-"}</div>
+          {supplier.uberDirectEligible && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {/* White pill even in dark theme: the wordmark is black on a transparent background. */}
+                <span
+                  data-testid="uber-direct-badge"
+                  className="mt-1.5 inline-flex cursor-help items-center rounded-full bg-white px-2 py-0.5 ring-1 ring-border-soft ring-inset"
+                >
+                  <Image src="/uber-direct.webp" alt="" width={40} height={14} className="h-3.5 w-auto" />
+                  <span className="sr-only">{UBER_DIRECT_BADGE_LABEL}</span>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>{UBER_DIRECT_BADGE_LABEL}</TooltipContent>
+            </Tooltip>
+          )}
         </div>
       </td>
       <td className="px-6 py-4 text-center">

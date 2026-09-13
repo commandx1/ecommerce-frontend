@@ -31,7 +31,7 @@ beforeEach(() => {
 
 describe("CompanyInfoCard", () => {
   describe("A axis - outgoing payload on save", () => {
-    it("sends exactly the seven CompanyUpdateRequest fields, unchanged, when the owner saves without editing", async () => {
+    it("sends exactly the eight CompanyUpdateRequest fields, unchanged, when the owner saves without editing", async () => {
       const user = userEvent.setup()
       const company = makeCompanyProfile()
       serveCompany(company)
@@ -47,10 +47,10 @@ describe("CompanyInfoCard", () => {
       await user.click(await screen.findByRole("button", { name: /Save Changes/i }))
 
       await waitFor(() => expect(capturedBody).not.toBeNull())
-      // Backend `auth/dto/CompanyUpdateRequest.java` declares exactly these seven fields - no
+      // Backend `auth/dto/CompanyUpdateRequest.java` declares exactly these eight fields - no
       // `id`, `active`, `createdDate` or `companyRole` (those are response-only / server-owned).
       expect(Object.keys(capturedBody ?? {}).sort()).toEqual(
-        ["name", "companyPhoto", "taxNumber", "email", "phoneNumber", "website", "description"].sort(),
+        ["name", "companyPhoto", "taxNumber", "email", "phoneNumber", "website", "description", "uberEnabled"].sort(),
       )
       expect(capturedBody).toEqual({
         name: company.name,
@@ -60,6 +60,7 @@ describe("CompanyInfoCard", () => {
         phoneNumber: company.phoneNumber ?? "",
         website: company.website ?? "",
         description: company.description ?? "",
+        uberEnabled: company.uberEnabled,
       })
     })
 
@@ -91,6 +92,51 @@ describe("CompanyInfoCard", () => {
       expect(await screen.findByLabelText("Company Name")).toBeDisabled()
       expect(screen.queryByRole("button", { name: /Save Changes/i })).not.toBeInTheDocument()
       expect(screen.getByText(/Only the company owner can edit/i)).toBeInTheDocument()
+    })
+
+    it("renders the Uber Direct checkbox checked when the company has uberEnabled: true", async () => {
+      serveCompany(makeCompanyProfile({ uberEnabled: true }))
+
+      render(<CompanyInfoCard />)
+
+      expect(await screen.findByLabelText("Enable Uber Direct delivery")).toBeChecked()
+    })
+
+    it("renders the Uber Direct checkbox unchecked when the company has uberEnabled: false", async () => {
+      serveCompany(makeCompanyProfile({ uberEnabled: false }))
+
+      render(<CompanyInfoCard />)
+
+      expect(await screen.findByLabelText("Enable Uber Direct delivery")).not.toBeChecked()
+    })
+
+    it("disables the Uber Direct checkbox for a non-owner", async () => {
+      serveCompany(makeCompanyProfile({ companyRole: "MANAGER" }))
+
+      render(<CompanyInfoCard />)
+
+      expect(await screen.findByLabelText("Enable Uber Direct delivery")).toBeDisabled()
+    })
+
+    it("sends uberEnabled: false in the PUT payload after the owner unchecks it and saves", async () => {
+      const user = userEvent.setup()
+      const company = makeCompanyProfile({ uberEnabled: true })
+      serveCompany(company)
+      let capturedBody: UpdateCompanyPayload | null = null
+      server.use(
+        http.put("*/backend-api/companies/me", async ({ request }) => {
+          capturedBody = (await request.json()) as UpdateCompanyPayload
+          return HttpResponse.json({ ...company, uberEnabled: false })
+        }),
+      )
+
+      render(<CompanyInfoCard />)
+      const checkbox = await screen.findByLabelText("Enable Uber Direct delivery")
+      expect(checkbox).toBeChecked()
+      await user.click(checkbox)
+      await user.click(screen.getByRole("button", { name: /Save Changes/i }))
+
+      await waitFor(() => expect(capturedBody?.uberEnabled).toBe(false))
     })
   })
 
@@ -187,6 +233,15 @@ describe("CompanyInfoCard", () => {
       fireEvent.error(logo)
 
       await waitFor(() => expect(container.querySelector("img")).not.toBeInTheDocument())
+    })
+
+    it("defaults the Uber Direct checkbox to checked when the GET response omits uberEnabled entirely", async () => {
+      const { uberEnabled: _uberEnabled, ...companyWithoutUberEnabled } = makeCompanyProfile()
+      serveCompany(companyWithoutUberEnabled as CompanyProfile)
+
+      render(<CompanyInfoCard />)
+
+      expect(await screen.findByLabelText("Enable Uber Direct delivery")).toBeChecked()
     })
 
     it("shows a friendly error, not the raw backend message, when saving fails", async () => {

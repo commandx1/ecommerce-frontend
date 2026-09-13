@@ -90,7 +90,7 @@ test.describe("vendor settings", () => {
     const body = request.postDataJSON()
 
     expect(Object.keys(body).sort()).toEqual(
-      ["name", "companyPhoto", "taxNumber", "email", "phoneNumber", "website", "description"].sort(),
+      ["name", "companyPhoto", "taxNumber", "email", "phoneNumber", "website", "description", "uberEnabled"].sort(),
     )
     expect(body.name).toBe("Acme Dental Supplies Co.")
 
