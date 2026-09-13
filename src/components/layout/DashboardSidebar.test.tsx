@@ -143,24 +143,11 @@ describe("DashboardSidebar", () => {
 
   it("renders the brand label and footer items", () => {
     renderSidebar({
-      footerItems: [{ href: "/buyer-dashboard/settings", label: "Account", icon: Settings }],
+      footerItems: [{ href: "/buyer-dashboard/preferences", label: "Preferences", icon: Settings }],
     })
 
     expect(screen.getByText("Buyer Panel")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Account" })).toHaveAttribute("href", "/buyer-dashboard/settings")
-  })
-
-  it("renders the signed-in user at the bottom as a link to the account page", () => {
-    renderSidebar(
-      { account: { name: "Serhat Belen", email: "serhat@example.com", href: "/buyer-dashboard/settings" } },
-      "/buyer-dashboard/settings",
-    )
-
-    const link = screen.getByRole("link", { name: /Serhat Belen/ })
-    expect(link).toHaveAttribute("href", "/buyer-dashboard/settings")
-    expect(link).toHaveTextContent("serhat@example.com")
-    expect(link.className).toContain("bg-brand/10")
-    expect(screen.getByText("SB")).toHaveAttribute("aria-hidden", "true")
+    expect(screen.getByRole("link", { name: "Preferences" })).toHaveAttribute("href", "/buyer-dashboard/preferences")
   })
 
   it("stays expanded on mobile when matchMedia is unavailable", () => {

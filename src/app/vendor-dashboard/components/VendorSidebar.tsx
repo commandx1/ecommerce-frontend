@@ -1,12 +1,24 @@
 "use client"
 
-import { Box, Megaphone, MessageSquare, Plus, ShoppingBag, Star, Store, Tag, TrendingUp, Users } from "lucide-react"
+import {
+  Box,
+  Megaphone,
+  MessageSquare,
+  Plus,
+  Settings,
+  ShoppingBag,
+  Star,
+  Store,
+  Tag,
+  TrendingUp,
+  Users,
+} from "lucide-react"
 import { useMemo } from "react"
 import CommonDashboardSidebar, {
   type DashboardSidebarGroup,
+  type DashboardSidebarNavItem,
   type DashboardSidebarQuickAction,
 } from "@/components/layout/DashboardSidebar"
-import { useAuthStore } from "@/stores/authStore"
 import { useCompanyRole } from "../CompanyRoleContext"
 
 const VENDOR_QUICK_ACTIONS: DashboardSidebarQuickAction[] = [
@@ -44,6 +56,10 @@ const VENDOR_NAV_GROUPS: DashboardSidebarGroup[] = [
   },
 ]
 
+const VENDOR_FOOTER_ITEMS: DashboardSidebarNavItem[] = [
+  { href: "/vendor-dashboard/settings", label: "Settings", icon: Settings, matchMode: "startsWith" },
+]
+
 const TEAM_NAV_ITEM = {
   href: "/vendor-dashboard/team",
   label: "Team",
@@ -53,8 +69,6 @@ const TEAM_NAV_ITEM = {
 
 const VendorSidebar = () => {
   const { companyRole, companyName } = useCompanyRole()
-  const user = useAuthStore((state) => state.user)
-  const displayName = user ? `${user.name} ${user.surname}`.trim() || user.email : "Account"
 
   const navGroups = useMemo<DashboardSidebarGroup[]>(() => {
     if (companyRole !== "OWNER") {
@@ -67,7 +81,7 @@ const VendorSidebar = () => {
   return (
     <CommonDashboardSidebar
       brand={{ label: companyName ?? "Vendor Panel", icon: Store }}
-      account={{ name: displayName, email: user?.email, href: "/vendor-dashboard/settings", matchMode: "exact" }}
+      footerItems={VENDOR_FOOTER_ITEMS}
       quickActions={VENDOR_QUICK_ACTIONS}
       quickActionSize="compact"
       groups={navGroups}

@@ -10,13 +10,14 @@ import {
   Repeat,
   RotateCcw,
   Search,
+  Settings,
   ShoppingBag,
 } from "lucide-react"
 import CommonDashboardSidebar, {
   type DashboardSidebarGroup,
+  type DashboardSidebarNavItem,
   type DashboardSidebarQuickAction,
 } from "@/components/layout/DashboardSidebar"
-import { useAuthStore } from "@/stores/authStore"
 
 const NAV_GROUPS: DashboardSidebarGroup[] = [
   {
@@ -34,6 +35,10 @@ const NAV_GROUPS: DashboardSidebarGroup[] = [
   },
 ]
 
+const BUYER_FOOTER_ITEMS: DashboardSidebarNavItem[] = [
+  { href: "/buyer-dashboard/settings", label: "Settings", icon: Settings, matchMode: "startsWith" },
+]
+
 const BUYER_QUICK_ACTIONS: DashboardSidebarQuickAction[] = [
   { label: "New Order", icon: Plus, tone: "brand", href: "/products" },
   { label: "Reorder Items", icon: RotateCcw, tone: "accent", href: "/buyer-dashboard/orders" },
@@ -41,13 +46,10 @@ const BUYER_QUICK_ACTIONS: DashboardSidebarQuickAction[] = [
 ]
 
 const DashboardSidebar = () => {
-  const user = useAuthStore((state) => state.user)
-  const displayName = user ? `${user.name} ${user.surname}`.trim() || user.email : "Account"
-
   return (
     <CommonDashboardSidebar
       brand={{ label: "Buyer Panel", icon: LayoutDashboard }}
-      account={{ name: displayName, email: user?.email, href: "/buyer-dashboard/settings" }}
+      footerItems={BUYER_FOOTER_ITEMS}
       quickActions={BUYER_QUICK_ACTIONS}
       groups={NAV_GROUPS}
       groupVariant="stacked"

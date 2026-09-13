@@ -50,18 +50,9 @@ export interface DashboardSidebarQuickAction {
   disabled?: boolean
 }
 
-export interface DashboardSidebarAccount {
-  name: string
-  email?: string | null
-  href: string
-  matchMode?: SidebarMatchMode
-}
-
 interface DashboardSidebarProps {
   brand: { label: string; icon: LucideIcon }
   footerItems?: DashboardSidebarNavItem[]
-  /** Signed-in user shown at the very bottom; links to the account/settings page. */
-  account?: DashboardSidebarAccount
   quickActions?: DashboardSidebarQuickAction[]
   quickActionSize?: SidebarItemSize
   groups: DashboardSidebarGroup[]
@@ -94,15 +85,6 @@ export const isItemActive = (
 
   return pathname === matchPath
 }
-
-const getInitials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase() || "?"
 
 const labelVariants = {
   open: { x: 0, opacity: 1 },
@@ -184,7 +166,6 @@ const SidebarNavItem = ({
 export default function DashboardSidebar({
   brand,
   footerItems,
-  account,
   quickActions,
   // Kept for API compatibility; the rail design uses one row size for quick actions.
   quickActionSize: _quickActionSize = "default",
@@ -469,34 +450,6 @@ export default function DashboardSidebar({
                     onNavigate={handleNavigate}
                   />
                 ))}
-              </div>
-            ) : null}
-
-            {account ? (
-              <div className="border-t border-sidebar-border p-2">
-                <Link
-                  href={account.href}
-                  title={expanded ? undefined : account.name}
-                  onClick={handleNavigate}
-                  className={cn(
-                    "flex h-10 w-full items-center rounded-md px-2 py-1.5 transition",
-                    !expanded ? "md:justify-center" : "",
-                    isItemActive(pathname, account)
-                      ? "bg-brand/10 text-brand"
-                      : "text-text-secondary hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                  )}
-                >
-                  <span
-                    aria-hidden="true"
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand text-[10px] font-semibold text-primary-foreground"
-                  >
-                    {getInitials(account.name)}
-                  </span>
-                  <SidebarLabel expanded={expanded} className="ml-2 flex min-w-0 flex-col leading-tight">
-                    <span className="truncate text-sm font-medium text-text-primary">{account.name}</span>
-                    {account.email ? <span className="truncate text-xs text-text-muted">{account.email}</span> : null}
-                  </SidebarLabel>
-                </Link>
               </div>
             ) : null}
           </motion.div>
