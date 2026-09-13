@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  Bell,
   Box,
   Megaphone,
   MessageSquare,
@@ -50,6 +51,12 @@ const VENDOR_NAV_GROUPS: DashboardSidebarGroup[] = [
         href: "/vendor-dashboard/questions",
         label: "Questions",
         icon: MessageSquare,
+        matchMode: "startsWith",
+      },
+      {
+        href: "/vendor-dashboard/notifications",
+        label: "Notifications",
+        icon: Bell,
         matchMode: "startsWith",
       },
     ],

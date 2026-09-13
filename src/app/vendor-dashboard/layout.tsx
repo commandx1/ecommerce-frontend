@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useId, useState } from "react"
 import { DashboardMobileSidebarProvider } from "@/components/layout/DashboardMobileSidebarContext"
 import { showToast } from "@/components/ui/Toast"
+import NotificationSocketBridge from "@/features/notifications/components/NotificationSocketBridge"
 import { cookieStorage } from "@/lib/storage/cookie-storage"
 import { useAuthStore } from "@/stores/authStore"
 import { CompanyRoleProvider } from "./CompanyRoleContext"
@@ -114,6 +115,7 @@ export default function VendorDashboardLayout({ children }: { children: React.Re
   return (
     <CompanyRoleProvider>
       <DashboardMobileSidebarProvider>
+        <NotificationSocketBridge />
         <div className="flex min-h-screen flex-col bg-canvas">
           <VendorHeader />
           <div className="flex flex-1">

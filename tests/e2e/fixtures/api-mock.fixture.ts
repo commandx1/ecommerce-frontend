@@ -179,6 +179,11 @@ async function createApiMock(page: Page): Promise<ApiMock> {
     })
   }
 
+  // SockJS /info 404 → client closes → stompjs backs off; deliberately not counted as unmatched.
+  await page.route("**/backend-ws/**", async (route) => {
+    await route.fulfill({ status: 404, contentType: "text/plain", body: "" })
+  })
+
   await page.route("**/backend-api/**", resolver)
   await page.route("**/api/**", resolver)
 

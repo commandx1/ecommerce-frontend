@@ -5,7 +5,6 @@ import GeographicDistribution from "../components/GeographicDistribution"
 import MarketingPerformance from "../components/MarketingPerformance"
 import RevenueChart from "../components/RevenueChart"
 import VendorMetricsCards from "../components/VendorMetricsCards"
-import VendorNotifications from "../components/VendorNotifications"
 
 export default function VendorAnalyticsPage() {
   return (
@@ -33,10 +32,7 @@ export default function VendorAnalyticsPage() {
         <GeographicDistribution />
       </div>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <MarketingPerformance />
-        <VendorNotifications />
-      </div>
+      <MarketingPerformance />
     </>
   )
 }

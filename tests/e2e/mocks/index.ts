@@ -2,6 +2,7 @@ import type { ApiMock } from "../fixtures/api-mock.fixture"
 import { registerAccountMocks } from "./account.mocks"
 import { registerAutoOrdersMocks } from "./auto-orders.mocks"
 import { registerCartMocks } from "./cart.mocks"
+import { registerNotificationsMocks } from "./notifications.mocks"
 import { registerOrdersMocks } from "./orders.mocks"
 import { registerPaymentsMocks } from "./payments.mocks"
 import { registerProductsMocks } from "./products.mocks"
@@ -27,6 +28,7 @@ export function registerAllMocks(apiMock: ApiMock) {
   registerAccountMocks(apiMock)
   registerAutoOrdersMocks(apiMock)
   registerCartMocks(apiMock)
+  registerNotificationsMocks(apiMock)
   registerOrdersMocks(apiMock)
   registerPaymentsMocks(apiMock)
   registerProductsMocks(apiMock)

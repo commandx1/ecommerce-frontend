@@ -17,7 +17,6 @@ vi.mock("./components/InventoryStatus", () => stub("inventory-status"))
 vi.mock("./components/GeographicDistribution", () => stub("geographic-distribution"))
 vi.mock("./components/CustomerAnalyticsChart", () => stub("customer-analytics-chart"))
 vi.mock("./components/MarketingPerformance", () => stub("marketing-performance"))
-vi.mock("./components/VendorNotifications", () => stub("vendor-notifications"))
 vi.mock("@/components/dashboard-shared/AccountSettingsShared", () => ({
   default: ({ title, description, children }: { title: string; description: string; children?: React.ReactNode }) => (
     <div>
@@ -31,6 +30,9 @@ vi.mock("@/components/dashboard-shared/AddressManagementShared", () => ({
   default: ({ embedded }: { embedded?: boolean }) => (
     <div data-testid={embedded ? "addresses-embedded" : "addresses"} />
   ),
+}))
+vi.mock("@/features/notifications/NotificationsPage", () => ({
+  default: () => <div data-testid="notifications-page" />,
 }))
 
 describe("vendor dashboard routes", () => {
@@ -58,8 +60,14 @@ describe("vendor dashboard routes", () => {
     expect(screen.getByRole("heading", { name: "Analytics" })).toBeInTheDocument()
     expect(screen.getByTestId("customer-analytics-chart")).toBeInTheDocument()
     expect(screen.getByTestId("marketing-performance")).toBeInTheDocument()
-    expect(screen.getByTestId("vendor-notifications")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Export Analytics/ })).toBeInTheDocument()
+  })
+
+  it("renders the notifications feature at /vendor-dashboard/notifications", async () => {
+    const { default: Page } = await import("./notifications/page")
+    render(<Page />)
+
+    expect(screen.getByTestId("notifications-page")).toBeInTheDocument()
   })
 
   it("gives vendors their own settings copy and embeds the address manager", async () => {

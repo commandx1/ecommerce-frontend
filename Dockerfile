@@ -10,6 +10,7 @@ FROM node:20-alpine AS build
 WORKDIR /app
 
 ARG BACKEND_URL=http://ecommerce-api:8080
+# NEXT_PUBLIC_WS_URL is optional (direct socket origin); only add an ARG here if the socket must bypass the /backend-ws rewrite.
 ENV BACKEND_URL=$BACKEND_URL
 
 COPY --from=deps /app/node_modules ./node_modules

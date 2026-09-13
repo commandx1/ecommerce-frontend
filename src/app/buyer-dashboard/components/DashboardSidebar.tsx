@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  Bell,
   CreditCard,
   FileText,
   Heart,
@@ -28,6 +29,7 @@ const NAV_GROUPS: DashboardSidebarGroup[] = [
       { href: "/buyer-dashboard/orders", label: "All Orders", icon: ShoppingBag },
       { href: "/buyer-dashboard/auto-orders", label: "Auto Orders", icon: Repeat },
       { href: "/buyer-dashboard/favorites", label: "Favorites", icon: Heart },
+      { href: "/buyer-dashboard/notifications", label: "Notifications", icon: Bell },
       { href: "/buyer-dashboard/invoices", label: "Invoices", icon: FileText },
       { href: "/buyer-dashboard/payment-methods", label: "Payment Methods", icon: CreditCard },
       { href: "/help-center", label: "Help Center", icon: HelpCircle },

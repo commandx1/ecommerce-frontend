@@ -6,7 +6,6 @@ import AccountInfo from "./AccountInfo"
 import AccountSettings from "./AccountSettings"
 import HelpSupport from "./HelpSupport"
 import MetricsCards from "./MetricsCards"
-import Notifications from "./Notifications"
 import PaymentSummary from "./PaymentSummary"
 import QuickReorder from "./QuickReorder"
 import RecentInvoices from "./RecentInvoices"
@@ -41,9 +40,8 @@ export default function BuyerOverview() {
         <RecentInvoices />
         <PaymentSummary />
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <div className="mb-8">
         <AccountSettings />
-        <Notifications />
       </div>
       <HelpSupport />
     </>

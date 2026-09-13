@@ -99,6 +99,13 @@ describe("DashboardHeader", () => {
     expect(screen.getAllByPlaceholderText("Search products, brands, or suppliers...").length).toBeGreaterThan(0)
   })
 
+  it("renders the notification bell slot", () => {
+    signIn()
+    renderHeader({ notificationBell: <button type="button">bell-slot</button> })
+
+    expect(screen.getByRole("button", { name: "bell-slot" })).toBeInTheDocument()
+  })
+
   it("toggles the mobile sidebar drawer", async () => {
     const user = userEvent.setup()
     signIn()

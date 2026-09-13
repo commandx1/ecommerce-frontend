@@ -1,6 +1,7 @@
 "use client"
 
 import DashboardHeader, { type DashboardHeaderNavItem } from "@/components/layout/DashboardHeader"
+import NotificationBell from "@/features/notifications/components/NotificationBell"
 
 // Üst navigasyon kaldırıldı - tek navigasyon kaynağı sol sidebar.
 const BUYER_NAV_ITEMS: DashboardHeaderNavItem[] = [
@@ -12,5 +13,13 @@ const BUYER_NAV_ITEMS: DashboardHeaderNavItem[] = [
 ]
 
 export default function BuyerHeader() {
-  return <DashboardHeader navItems={BUYER_NAV_ITEMS} accountFallbackName="Account" showCart showSearch />
+  return (
+    <DashboardHeader
+      navItems={BUYER_NAV_ITEMS}
+      accountFallbackName="Account"
+      showCart
+      showSearch
+      notificationBell={<NotificationBell />}
+    />
+  )
 }

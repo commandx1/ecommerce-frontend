@@ -267,6 +267,8 @@ describe("proxy config.matcher", () => {
   it.each([
     ["/api/users", false],
     ["/backend-api/products", false],
+    ["/backend-ws/info", false],
+    ["/backend-ws", false],
     ["/_next/static/chunk.js", false],
     ["/_next/image", false],
     ["/favicon.ico", false],
@@ -287,6 +289,7 @@ describe("proxy config.matcher", () => {
     ["/api-status", true],
     ["/apiary/spec", true],
     ["/backend-api-docs", true],
+    ["/backend-ws-docs", true],
     ["/api", false],
     ["/backend-api", false],
   ])("matcher against %s -> %s", (pathname, expected) => {

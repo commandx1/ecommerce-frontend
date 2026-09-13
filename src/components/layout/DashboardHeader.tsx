@@ -3,7 +3,7 @@
 import { LogOut, Menu, ShoppingCart, X } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useId } from "react"
+import { type ReactNode, useEffect, useId } from "react"
 import MainSearchbox from "@/components/search/main-searchbox/MainSearchbox"
 import ThemeToggle from "@/components/theme/ThemeToggle"
 import { cn } from "@/lib/utils"
@@ -26,6 +26,7 @@ interface DashboardHeaderProps {
   accountMenuClassName?: string
   showCart?: boolean
   showSearch?: boolean
+  notificationBell?: ReactNode
 }
 
 export default function DashboardHeader({
@@ -34,6 +35,7 @@ export default function DashboardHeader({
   accountMenuClassName,
   showCart = false,
   showSearch = false,
+  notificationBell,
 }: DashboardHeaderProps) {
   const headerId = useId()
   const pathname = usePathname()
@@ -126,6 +128,7 @@ export default function DashboardHeader({
                 ) : null}
               </Link>
             ) : null}
+            {notificationBell}
             <ThemeToggle />
             <AccountMenu
               className={accountMenuClassName}

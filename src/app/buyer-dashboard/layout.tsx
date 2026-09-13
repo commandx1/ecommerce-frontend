@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useEffect, useId, useRef, useState } from "react"
 import { DashboardMobileSidebarProvider } from "@/components/layout/DashboardMobileSidebarContext"
+import NotificationSocketBridge from "@/features/notifications/components/NotificationSocketBridge"
 import { cookieStorage } from "@/lib/storage/cookie-storage"
 import { useAuthStore } from "@/stores/authStore"
 import BuyerDashboardLayoutSkeleton from "./components/BuyerDashboardLayoutSkeleton"
@@ -88,6 +89,7 @@ export default function BuyerDashboardLayout({ children }: { children: React.Rea
 
   return (
     <DashboardMobileSidebarProvider>
+      <NotificationSocketBridge />
       <div className="flex min-h-screen flex-col bg-canvas">
         <BuyerHeader />
         <div className="flex flex-1">

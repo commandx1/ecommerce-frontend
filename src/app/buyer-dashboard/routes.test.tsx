@@ -21,6 +21,9 @@ vi.mock("@/features/buyer-dashboard/payment-methods/BuyerPaymentMethodsPage", ()
 vi.mock("@/features/favorites/FavoritesPage", () => ({
   default: () => <div data-testid="favorites-page" />,
 }))
+vi.mock("@/features/notifications/NotificationsPage", () => ({
+  default: () => <div data-testid="notifications-page" />,
+}))
 vi.mock("@/components/dashboard-shared/AccountSettingsShared", () => ({
   default: ({ title, description, children }: { title: string; description: string; children?: ReactNode }) => (
     <div data-testid="account-settings">
@@ -61,6 +64,13 @@ describe("buyer dashboard routes", () => {
     render(<Page />)
 
     expect(screen.getByTestId("favorites-page")).toBeInTheDocument()
+  })
+
+  it("renders the notifications feature at /buyer-dashboard/notifications", async () => {
+    const { default: Page } = await import("./notifications/page")
+    render(<Page />)
+
+    expect(screen.getByTestId("notifications-page")).toBeInTheDocument()
   })
 
   it("passes buyer-facing copy into the shared settings screen and embeds the address manager", async () => {

@@ -1,6 +1,7 @@
 import { accountHandlers } from "./account.handlers"
 import { autoOrdersHandlers } from "./auto-orders.handlers"
 import { cartHandlers } from "./cart.handlers"
+import { notificationsHandlers } from "./notifications.handlers"
 import { ordersHandlers } from "./orders.handlers"
 import { paymentsHandlers } from "./payments.handlers"
 import { productsHandlers } from "./products.handlers"
@@ -10,6 +11,7 @@ import { vendorHandlers } from "./vendor.handlers"
 export { accountHandlers } from "./account.handlers"
 export { autoOrdersHandlers } from "./auto-orders.handlers"
 export { cartHandlers } from "./cart.handlers"
+export { notificationsHandlers } from "./notifications.handlers"
 export { ordersHandlers } from "./orders.handlers"
 export { paymentsHandlers } from "./payments.handlers"
 export { productsHandlers } from "./products.handlers"
@@ -25,4 +27,5 @@ export const handlers = [
   ...accountHandlers,
   ...vendorHandlers,
   ...shipmentHandlers,
+  ...notificationsHandlers,
 ]

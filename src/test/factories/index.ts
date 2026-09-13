@@ -1,5 +1,6 @@
 export * from "./auto-order.factory"
 export * from "./cart.factory"
+export * from "./notification.factory"
 export * from "./order.factory"
 export * from "./payment.factory"
 export * from "./product.factory"

@@ -56,6 +56,12 @@ const nextConfig: NextConfig = {
         source: "/backend-api/:path*",
         destination: `${backendBaseUrl}/api/:path*`,
       },
+      // SockJS/STOMP endpoint lives at backend `/ws` (not under `/api`). `:path*` also matches the
+      // bare `/backend-ws`; the SockJS client requests `/info` and `/{server}/{session}/xhr_streaming|xhr_send`.
+      {
+        source: "/backend-ws/:path*",
+        destination: `${backendBaseUrl}/ws/:path*`,
+      },
       // Proxy images
       {
         source: "/api/images/:path*",
