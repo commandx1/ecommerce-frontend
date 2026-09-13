@@ -21,6 +21,19 @@ vi.mock("@/components/ui/Toast", () => ({
   },
 }))
 
+// The related-products section fetches from the backend on the server and isn't this view's
+// concern - stub it with a probe that surfaces the props it was given instead of exercising
+// resolveRelatedProducts (covered in RelatedProducts.test.tsx and resolve-related-products.test.ts).
+vi.mock("./ProductDetailRecommendationsSection", () => ({
+  default: (props: { productId: string; categoryTrail: Array<{ fullPath: string }> }) => (
+    <div
+      data-testid="recommendations"
+      data-product-id={props.productId}
+      data-leaf={props.categoryTrail.at(-1)?.fullPath ?? ""}
+    />
+  ),
+}))
+
 const pageData: ProductDetailPageData = {
   productData: {
     product: {
@@ -173,12 +186,11 @@ describe("ProductDetailPageView", () => {
     )
   })
 
-  it('links the "View All" related products action at the product\'s root category', () => {
+  it("passes the product id and leaf category path down to the recommendations section", () => {
     render(<ProductDetailPageView viewModel={viewModel} />, { route: "/products/abcdef1234567890" })
 
-    expect(screen.getByRole("link", { name: /View All Endodontic products/ })).toHaveAttribute(
-      "href",
-      "/products?categories=Endodontic+products",
-    )
+    const recommendations = screen.getByTestId("recommendations")
+    expect(recommendations).toHaveAttribute("data-product-id", viewModel.productId)
+    expect(recommendations).toHaveAttribute("data-leaf", "Endodontic products > Endodontic sealers & cements")
   })
 })

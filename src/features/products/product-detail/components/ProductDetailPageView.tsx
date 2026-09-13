@@ -17,10 +17,7 @@ export default function ProductDetailPageView({ viewModel }: ProductDetailPageVi
       <ProductDetailHeroSection viewModel={viewModel} />
       <ProductDetailPurchaseSection viewModel={viewModel} />
       <ProductDetailCommunitySection viewModel={viewModel} />
-      <ProductDetailRecommendationsSection
-        relatedProductSeed={viewModel.relatedProductSeed}
-        rootCategory={viewModel.categoryTrail[0]}
-      />
+      <ProductDetailRecommendationsSection productId={viewModel.productId} categoryTrail={viewModel.categoryTrail} />
     </main>
   )
 }

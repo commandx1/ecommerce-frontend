@@ -161,7 +161,25 @@ on("GET", "/api/products/public", (_req, res) => {
     discount: 20,
     stock: 40,
   }
-  sendJson(res, 200, { content: [listingProduct], totalElements: 1, totalPages: 1 })
+  // Two extra rows sharing the base product's category so the product detail page's
+  // "Related Products" section (RelatedProducts.tsx / resolveRelatedProducts) has
+  // something to render - it fetches this same endpoint and filters the current
+  // product out client-side, so a single-row response would always resolve empty.
+  const relatedProductTwo = {
+    ...listingProduct,
+    productId: "p-2",
+    productName: "Related Sealer Two",
+  }
+  const relatedProductThree = {
+    ...listingProduct,
+    productId: "p-3",
+    productName: "Related Sealer Three",
+  }
+  sendJson(res, 200, {
+    content: [listingProduct, relatedProductTwo, relatedProductThree],
+    totalElements: 3,
+    totalPages: 1,
+  })
 })
 
 on("GET", "/api/products/brands", (_req, res) => {

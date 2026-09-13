@@ -16,8 +16,10 @@ export class ProductDetailPage extends BasePage {
 
   get addToCartButton(): Locator {
     // PurchaseActions -> AsyncSubmitButton idleText="Add to Cart" (or "Out of Stock" when stockCount <= 0)
-    // - match both so callers can inspect which state it's actually in.
-    return this.page.getByRole("button", { name: /^(Add to Cart|Out of Stock)$/ })
+    // - match both so callers can inspect which state it's actually in. The Related Products
+    // section below (real `ProductCard`s) renders its own "Add to Cart" buttons with the same
+    // name, so `.first()` is required - the purchase panel precedes that section in DOM order.
+    return this.page.getByRole("button", { name: /^(Add to Cart|Out of Stock)$/ }).first()
   }
 
   /** Supplier comparison table rows' "Select" button (SupplierComparisonRow.tsx) - excludes the already-selected one, which reads "Selected". */
@@ -32,13 +34,14 @@ export class ProductDetailPage extends BasePage {
   /**
    * Heart toggle (FavoriteProductButton) in the hero badge row
    * (ProductHeroDetails.tsx). Matches only the real toggle's two accessible
-   * names ("Save to favorites" / "Remove from favorites") - the static
-   * "Related Products" section below the hero (RelatedProducts.tsx) also
-   * renders non-functional `aria-label="Add to favorites"` buttons, which a
-   * loose `/favorites/i` would ambiguously match too.
+   * names ("Save to favorites" / "Remove from favorites") - the "Related
+   * Products" section below the hero (RelatedProducts.tsx) now renders real
+   * `ProductCard`s with their own `FavoriteProductButton`s carrying the same
+   * accessible names, so `.first()` is required: the hero gallery precedes
+   * the Related Products section in DOM order, so it always wins.
    */
   favoriteToggle(productName?: string | RegExp): Locator {
     void productName
-    return this.page.getByRole("button", { name: /^(Save to favorites|Remove from favorites)$/ })
+    return this.page.getByRole("button", { name: /^(Save to favorites|Remove from favorites)$/ }).first()
   }
 }

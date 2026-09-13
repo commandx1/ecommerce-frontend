@@ -79,19 +79,6 @@ describe("buildProductDetailViewModel", () => {
     expect(vm.categoryTrail).toEqual([])
   })
 
-  it("derives a positive relatedProductSeed from the first 8 hex chars of the id", () => {
-    const data = makeData()
-    const vm = buildProductDetailViewModel("abcdef1234567890", data, null)
-    expect(vm.relatedProductSeed).toBe(0xabcdef12)
-    expect(vm.relatedProductSeed).toBeGreaterThan(0)
-  })
-
-  it("falls back relatedProductSeed to 1 when the id does not parse to a positive hex number", () => {
-    const data = makeData()
-    const vm = buildProductDetailViewModel("zzzzzzzz", data, null)
-    expect(vm.relatedProductSeed).toBe(1)
-  })
-
   it("defaults productName and productPrice for missing fields", () => {
     const data = makeData({ name: undefined as unknown as string, price: undefined as unknown as number })
     const vm = buildProductDetailViewModel("abcdef1234567890", data, null)

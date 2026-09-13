@@ -18,7 +18,6 @@ import {
 
 export interface ProductDetailPageViewModel {
   productId: string
-  relatedProductSeed: number
   productName: string
   productPrice: number
   productCategory: string
@@ -51,11 +50,6 @@ export interface ProductDetailPageViewModel {
   vendors: Array<{ id: string; vendor: string }>
 }
 
-function buildRelatedProductSeed(id: string) {
-  const seed = Number.parseInt(id.substring(0, 8), 16)
-  return Number.isFinite(seed) && seed > 0 ? seed : 1
-}
-
 export function buildProductDetailViewModel(
   id: string,
   data: ProductDetailPageData,
@@ -81,7 +75,6 @@ export function buildProductDetailViewModel(
 
   return {
     productId: id,
-    relatedProductSeed: buildRelatedProductSeed(id),
     productName: product.name || "",
     productPrice: product.price || 0,
     productCategory: categoryLabel,
