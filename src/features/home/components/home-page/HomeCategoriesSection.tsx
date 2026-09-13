@@ -1,9 +1,10 @@
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
-import CategoryCard from "@/features/home/components/CategoryCard"
-import type { HomeCategoryItem } from "@/features/home/types"
+import CategoryCard, { CATEGORY_CARD_TONES } from "@/features/home/components/CategoryCard"
+import { getFeaturedCategoryAsset } from "@/features/home/data/featured-category-assets"
+import type { FeaturedCategory } from "@/features/home/lib/select-featured-categories"
 
 interface HomeCategoriesSectionProps {
-  categories: ReadonlyArray<HomeCategoryItem>
+  categories: ReadonlyArray<FeaturedCategory>
 }
 
 export default function HomeCategoriesSection({ categories }: HomeCategoriesSectionProps) {
@@ -17,15 +18,24 @@ export default function HomeCategoriesSection({ categories }: HomeCategoriesSect
       </p>
 
       <div className="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-        {categories.map((category, index) => (
-          <div key={category.id} className="h-full">
-            <CategoryCard
-              {...category}
-              eyebrow={index % 3 === 0 ? "Most Ordered" : index % 3 === 1 ? "Restock Core" : "Specialty Focus"}
-              href={`/products?category=${encodeURIComponent(category.title)}`}
-            />
-          </div>
-        ))}
+        {categories.map((category, index) => {
+          const { icon } = getFeaturedCategoryAsset(category.name)
+          const description = category.topChildren.join(", ")
+
+          return (
+            <div key={category.name} className="h-full">
+              <CategoryCard
+                title={category.name}
+                description={description}
+                productCount={category.count.toLocaleString("en-US")}
+                icon={icon}
+                tone={CATEGORY_CARD_TONES[index % CATEGORY_CARD_TONES.length]}
+                eyebrow={index === 0 ? "Most stocked" : "Category"}
+                href={`/products?categories=${encodeURIComponent(category.name)}`}
+              />
+            </div>
+          )
+        })}
       </div>
     </PageSectionContainer>
   )

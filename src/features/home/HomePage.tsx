@@ -1,4 +1,3 @@
-import categoriesData from "@/data/categories.json"
 import suppliersData from "@/data/suppliers.json"
 import trendingProducts from "@/data/trending-products.json"
 import HomeBuyLaneSection from "@/features/home/components/home-page/HomeBuyLaneSection"
@@ -8,10 +7,14 @@ import HomeHeroSectionClient from "@/features/home/components/home-page/HomeHero
 import HomeSuppliersSection from "@/features/home/components/home-page/HomeSuppliersSection"
 import HomeTrendingProductsSection from "@/features/home/components/home-page/HomeTrendingProductsSection"
 import { homeBuyLaneItems } from "@/features/home/homePageData"
-import type { HomeCategoryItem, HomeProductItem, HomeSupplierItem } from "@/features/home/types"
+import type { FeaturedCategory } from "@/features/home/lib/select-featured-categories"
+import type { HomeProductItem, HomeSupplierItem } from "@/features/home/types"
 
-export default function HomePage() {
-  const featuredCategories: ReadonlyArray<HomeCategoryItem> = categoriesData
+interface HomePageProps {
+  featuredCategories: ReadonlyArray<FeaturedCategory>
+}
+
+export default function HomePage({ featuredCategories }: HomePageProps) {
   const featuredProducts: ReadonlyArray<HomeProductItem> = trendingProducts.slice(0, 4)
   const featuredSuppliers: ReadonlyArray<HomeSupplierItem> = suppliersData.slice(0, 3)
 
@@ -29,7 +32,7 @@ export default function HomePage() {
         <HomeHeroSectionClient />
       </div>
 
-      <HomeCategoriesSection categories={featuredCategories} />
+      {featuredCategories.length > 0 && <HomeCategoriesSection categories={featuredCategories} />}
       <HomeTrendingProductsSection products={featuredProducts} />
       <HomeSuppliersSection suppliers={featuredSuppliers} />
       <HomeBuyLaneSection items={homeBuyLaneItems} />

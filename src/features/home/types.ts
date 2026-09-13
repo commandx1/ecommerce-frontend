@@ -1,14 +1,5 @@
 import type { LucideIcon } from "lucide-react"
 
-export interface HomeCategoryItem {
-  id: number
-  title: string
-  description: string
-  productCount: string
-  image: string
-  alt: string
-}
-
 export interface HomeProductItem {
   id: number
   title: string
