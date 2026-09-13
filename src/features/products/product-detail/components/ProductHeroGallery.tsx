@@ -2,6 +2,7 @@
 
 import { Search } from "lucide-react"
 import { useRef } from "react"
+import FavoriteProductButton from "@/features/products/favorites/FavoriteProductButton"
 import { useImageMagnifier } from "../hooks/useImageMagnifier"
 import { useProductImageGallery } from "../hooks/useProductImageGallery"
 import ImageMagnifierOverlay from "./ImageMagnifierOverlay"
@@ -13,9 +14,10 @@ interface ProductHeroGalleryProps {
   mainImage: string
   thumbnailImages: string[]
   badge?: string
+  productId: string
 }
 
-const ProductHeroGallery = ({ title, sku, mainImage, thumbnailImages, badge }: ProductHeroGalleryProps) => {
+const ProductHeroGallery = ({ title, sku, mainImage, thumbnailImages, badge, productId }: ProductHeroGalleryProps) => {
   const imageRef = useRef<HTMLImageElement>(null)
   const { images, selectedImage, setSelectedImage } = useProductImageGallery(mainImage, thumbnailImages)
   const { isEnabled, position, toggleMagnifier, handleMouseMove, handleMouseLeave } = useImageMagnifier(imageRef)
@@ -55,6 +57,9 @@ const ProductHeroGallery = ({ title, sku, mainImage, thumbnailImages, badge }: P
             <span className="rounded-full bg-success px-3 py-1 text-sm font-medium text-white">{badge}</span>
           </div>
         )}
+        <div className="absolute top-4 right-4 z-10">
+          <FavoriteProductButton productId={productId} />
+        </div>
         <div className="absolute bottom-4 right-4 hidden lg:block">
           <button
             type="button"

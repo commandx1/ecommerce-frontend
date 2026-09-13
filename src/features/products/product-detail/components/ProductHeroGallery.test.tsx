@@ -10,6 +10,7 @@ const renderGallery = (props: Partial<Parameters<typeof ProductHeroGallery>[0]> 
       sku="ABCDEF12"
       mainImage="/uploads/main.png"
       thumbnailImages={["/uploads/alt-1.png", "/uploads/alt-2.png"]}
+      productId="p-1"
       {...props}
     />,
   )
@@ -69,17 +70,19 @@ describe("ProductHeroGallery", () => {
         sku="ABCDEF12"
         mainImage="/uploads/main.png"
         thumbnailImages={["/uploads/alt-1.png", "/uploads/alt-2.png"]}
+        productId="p-1"
       />,
     )
 
     expect(screen.getByAltText("Intra Oral Mixing Tips")).toHaveAttribute("src", "/uploads/alt-1.png")
   })
 
-  // Removed 27 Aug 2026 (user decision) - it had no handler, so it was a silent no-op.
-  it("offers no favourites control that does nothing when clicked", () => {
+  // 13 Sep 2026: the working FavoriteProductButton moved here from ProductHeroDetails so the
+  // heart sits on the top-right corner of the product image.
+  it("renders the favorites button over the image", () => {
     renderGallery()
 
-    expect(screen.queryByRole("button", { name: "Add to favorites" })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Save to favorites" })).toBeInTheDocument()
   })
 
   // A11y: axe's `nested-interactive` flagged this on /products/p-1 - `role="img"` used to sit on

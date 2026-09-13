@@ -21,6 +21,7 @@ const ProductHero = ({ product, selectedSupplier }: ProductHeroProps) => {
             mainImage={product.mainImage}
             thumbnailImages={product.thumbnailImages}
             badge={product.badge}
+            productId={product.productId}
           />
           <ProductHeroDetails product={product} selectedSupplier={selectedSupplier} />
         </div>

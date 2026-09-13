@@ -1,7 +1,6 @@
 import { ShieldCheck } from "lucide-react"
 import Link from "next/link"
 import NoticeBanner from "@/components/feedback/NoticeBanner"
-import FavoriteProductButton from "@/features/products/favorites/FavoriteProductButton"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import type { ProductHeroViewModel, SupplierViewModel } from "../types"
 import { getStockColorClass } from "../utils/stockStyles"
@@ -33,7 +32,6 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
           <span className="rounded-full bg-warning/20 px-3 py-1 text-sm font-medium text-warning-strong">
             Best Seller
           </span>
-          <FavoriteProductButton productId={product.productId} className="ml-auto" />
         </div>
         <h1 className="mb-4 text-3xl font-semibold text-text-primary sm:text-4xl md:text-5xl">{product.title}</h1>
         <p className="text-base leading-7 text-text-secondary sm:text-lg sm:leading-8">{product.description}</p>
