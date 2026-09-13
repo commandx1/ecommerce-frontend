@@ -94,6 +94,9 @@ const ProductListingClient = ({
   return (
     <FilterNavigationProvider>
       <div className="min-h-screen bg-canvas font-sans">
+        <ProductListingBreadcrumb />
+        {/* On small screens the collapsible filters card sits directly under the breadcrumb;
+           on lg+ the sticky <aside> below takes over and MobileFilters hides itself. */}
         <Suspense>
           <MobileFilters
             brands={brands}
@@ -103,7 +106,6 @@ const ProductListingClient = ({
             attributeGroups={attributeGroups}
           />
         </Suspense>
-        <ProductListingBreadcrumb />
         {/* The listing hero was removed, but /products must still expose exactly one <h1>
            (a11y-smoke: "expected exactly 1 <h1> on /products, found 0"). It is kept visually
            hidden and worded like loading.tsx's skeleton heading so both states announce the

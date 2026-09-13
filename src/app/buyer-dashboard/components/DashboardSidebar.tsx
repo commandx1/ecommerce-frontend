@@ -5,17 +5,18 @@ import {
   FileText,
   Heart,
   HelpCircle,
+  LayoutDashboard,
   Plus,
   Repeat,
   RotateCcw,
   Search,
   ShoppingBag,
-  User,
 } from "lucide-react"
 import CommonDashboardSidebar, {
   type DashboardSidebarGroup,
   type DashboardSidebarQuickAction,
 } from "@/components/layout/DashboardSidebar"
+import { useAuthStore } from "@/stores/authStore"
 
 const NAV_GROUPS: DashboardSidebarGroup[] = [
   {
@@ -28,7 +29,6 @@ const NAV_GROUPS: DashboardSidebarGroup[] = [
       { href: "/buyer-dashboard/favorites", label: "Favorites", icon: Heart },
       { href: "/buyer-dashboard/invoices", label: "Invoices", icon: FileText },
       { href: "/buyer-dashboard/payment-methods", label: "Payment Methods", icon: CreditCard },
-      { href: "/buyer-dashboard/settings", label: "Account", icon: User },
       { href: "/help-center", label: "Help Center", icon: HelpCircle },
     ],
   },
@@ -41,9 +41,13 @@ const BUYER_QUICK_ACTIONS: DashboardSidebarQuickAction[] = [
 ]
 
 const DashboardSidebar = () => {
+  const user = useAuthStore((state) => state.user)
+  const displayName = user ? `${user.name} ${user.surname}`.trim() || user.email : "Account"
+
   return (
     <CommonDashboardSidebar
-      collapseStorageKey="buyer-dashboard-sidebar-collapsed"
+      brand={{ label: "Buyer Panel", icon: LayoutDashboard }}
+      account={{ name: displayName, email: user?.email, href: "/buyer-dashboard/settings" }}
       quickActions={BUYER_QUICK_ACTIONS}
       groups={NAV_GROUPS}
       groupVariant="stacked"

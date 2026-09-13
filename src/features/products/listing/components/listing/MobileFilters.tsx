@@ -1,4 +1,5 @@
 import { Filter, X } from "lucide-react"
+import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import type { AttributeGroup, FilterOption, VendorOption } from "@/lib/api/public-products"
 import ProductFiltersPanel from "./ProductFiltersPanel"
 
@@ -12,7 +13,7 @@ interface MobileFiltersProps {
 
 const MobileFilters = ({ brands, manufacturers, categories, vendors, attributeGroups }: MobileFiltersProps) => {
   return (
-    <div className="lg:hidden px-4 sm:px-6 lg:px-8 pt-4">
+    <PageSectionContainer as="div" className="lg:hidden" containerClassName="pt-4">
       <details className="rounded-xl border border-border-soft bg-surface-elevated shadow-soft">
         <summary className="flex items-center justify-between cursor-pointer px-4 py-3 text-sm font-semibold text-brand">
           <span className="flex items-center">
@@ -31,7 +32,7 @@ const MobileFilters = ({ brands, manufacturers, categories, vendors, attributeGr
           />
         </div>
       </details>
-    </div>
+    </PageSectionContainer>
   )
 }
 
