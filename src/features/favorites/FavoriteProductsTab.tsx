@@ -54,10 +54,12 @@ export default function FavoriteProductsTab() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-      {visible.map((p) => (
-        <ProductCard key={p.productId} data={adaptProductCardData(p)} />
-      ))}
+    <div className="@container">
+      <div className="grid grid-cols-1 gap-5 @xl:grid-cols-2 @3xl:grid-cols-3 @min-[69rem]:grid-cols-4">
+        {visible.map((p) => (
+          <ProductCard key={p.productId} data={adaptProductCardData(p)} />
+        ))}
+      </div>
     </div>
   )
 }

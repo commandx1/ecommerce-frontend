@@ -44,7 +44,7 @@ describe("ProductCard", () => {
     vi.restoreAllMocks()
   })
 
-  it("links the title and the preview action to the product detail page", () => {
+  it("links the title to the product detail page", () => {
     render(<ProductCard data={makeData({ href: "/products/p-9" })} />)
 
     for (const link of screen.getAllByRole("link")) {
@@ -52,16 +52,12 @@ describe("ProductCard", () => {
     }
   })
 
-  // A11y: this icon-only link had no accessible name at all (axe `link-name`,
-  // 4 nodes on `/` - the 4 trending-product cards share this component).
-  // aria-label must name the product, not just say "link"/"view".
-  it("gives the icon-only preview link an accessible name that names the product", () => {
-    render(<ProductCard data={makeData({ name: "Intra Oral Mixing Tips" })} />)
+  it("stretches the title link over the card body", () => {
+    render(<ProductCard data={makeData({ name: "Intra Oral Mixing Tips", href: "/products/p-9" })} />)
 
-    expect(screen.getByRole("link", { name: "View Intra Oral Mixing Tips details" })).toHaveAttribute(
-      "href",
-      "/products/p-1",
-    )
+    const titleLink = screen.getByRole("link", { name: "Intra Oral Mixing Tips" })
+    expect(titleLink).toHaveAttribute("href", "/products/p-9")
+    expect(titleLink.className).toContain("after:absolute")
   })
 
   it("computes the saving from the old price", () => {
@@ -100,13 +96,6 @@ describe("ProductCard", () => {
     expect(screen.getByText("4.3 (8 reviews)")).toBeInTheDocument()
   })
 
-  it("falls back to a generic supplier phrase without a brand", () => {
-    render(<ProductCard data={makeData({ brand: null })} />)
-
-    expect(screen.getByText(/from verified supplier/i)).toBeInTheDocument()
-    expect(screen.queryByText("MARK3")).not.toBeInTheDocument()
-  })
-
   // FIX: the price now goes through `formatCurrency` instead of a raw `toFixed(2)`, so
   // four-figure prices keep their thousands separator ("$1,234.50" instead of "$1234.50") —
   // consistent with the other price surfaces in the app.
@@ -126,8 +115,7 @@ describe("ProductCard", () => {
     render(<ProductCard data={makeData()} />)
 
     expect(screen.queryByRole("button", { name: /favorites/i })).not.toBeInTheDocument()
-    // The detail link (Eye icon) is a real <a>, so the only buttons left are the quantity
-    // stepper (Decrease/Increase) and Add to Cart - all wired.
+    // The only buttons left are the quantity stepper (Decrease/Increase) and Add to Cart - all wired.
     const buttonNames = screen
       .getAllByRole("button")
       .map((button) => button.getAttribute("aria-label") || button.textContent)

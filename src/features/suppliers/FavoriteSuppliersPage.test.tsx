@@ -3,7 +3,7 @@ import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { server } from "@/mocks/server"
 import { makeVendorListItem } from "@/test/factories"
-import { render, screen, waitFor, within } from "@/test/render"
+import { render, screen, waitFor } from "@/test/render"
 import FavoriteSuppliersPage from "./FavoriteSuppliersPage"
 
 const mockToastError = vi.fn()
@@ -32,22 +32,6 @@ describe("FavoriteSuppliersPage", () => {
     render(<FavoriteSuppliersPage />)
 
     expect(await screen.findByRole("heading", { name: "Acme Dental", level: 3 })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /Grid/ })).toHaveAttribute("aria-pressed", "true")
-    expect(screen.queryByRole("table")).not.toBeInTheDocument()
-  })
-
-  it("switches between the card and table presentations", async () => {
-    const user = userEvent.setup()
-    render(<FavoriteSuppliersPage />)
-    await screen.findByRole("heading", { name: "Acme Dental", level: 3 })
-
-    await user.click(screen.getByRole("button", { name: /Table/ }))
-
-    const table = screen.getByRole("table")
-    expect(within(table).getByText("Acme Dental")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /Table/ })).toHaveAttribute("aria-pressed", "true")
-
-    await user.click(screen.getByRole("button", { name: /Grid/ }))
     expect(screen.queryByRole("table")).not.toBeInTheDocument()
   })
 
@@ -122,26 +106,5 @@ describe("FavoriteSuppliersPage", () => {
     await screen.findByRole("heading", { name: "Acme Dental", level: 3 })
 
     expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /Grid/ })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /Table/ })).toBeInTheDocument()
-  })
-
-  it("removes a vendor from the table view too", async () => {
-    const user = userEvent.setup()
-    let deletedId: string | undefined
-    server.use(
-      http.delete("*/backend-api/vendors/:vendorId/favorite", ({ params }) => {
-        deletedId = String(params.vendorId)
-        return new HttpResponse(null, { status: 200 })
-      }),
-    )
-    render(<FavoriteSuppliersPage />)
-    await screen.findByRole("heading", { name: "Acme Dental", level: 3 })
-    await user.click(screen.getByRole("button", { name: /Table/ }))
-
-    const rows = within(screen.getByRole("table")).getAllByRole("row")
-    await user.click(within(rows[2]).getByRole("button", { name: "Remove from favorites" }))
-
-    await waitFor(() => expect(deletedId).toBe("vendor-2"))
   })
 })

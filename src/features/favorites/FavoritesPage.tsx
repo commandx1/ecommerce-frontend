@@ -32,13 +32,20 @@ export default function FavoritesPage() {
 
   return (
     <section>
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-8 flex flex-col gap-5">
         <div>
           <h1 className="text-3xl font-bold text-text-primary">Favorites</h1>
           <p className="mt-1 text-text-secondary">Products and vendors you have saved for quick access.</p>
         </div>
 
-        <AnimatedTabs<FavoritesTab> value={tab} options={TAB_OPTIONS} onValueChange={handleTabChange} />
+        <AnimatedTabs<FavoritesTab>
+          value={tab}
+          options={TAB_OPTIONS}
+          onValueChange={handleTabChange}
+          className="self-start"
+          listClassName="rounded-full p-1"
+          triggerClassName="h-10 px-5 text-sm"
+        />
       </div>
 
       {tab === "products" ? <FavoriteProductsTab /> : <FavoriteSuppliersPage embedded />}
