@@ -1100,6 +1100,18 @@ describe("CreateProductPage — Product Details tab controls", () => {
 
     expect(screen.getByPlaceholderText("Attribute name (e.g., Color)")).toBeInTheDocument()
   })
+
+  it("renders the Detailed Description field after the Add Attribute button", async () => {
+    const user = userEvent.setup()
+    await openBlankForm(user)
+    await fillBasicTab(user)
+    await user.click(tabButton("Product Details"))
+
+    const addAttributeButton = screen.getByRole("button", { name: /Add Attribute/ })
+    const descriptionField = screen.getByLabelText("Detailed Description *")
+
+    expect(addAttributeButton.compareDocumentPosition(descriptionField) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
 })
 
 describe("CreateProductPage — edit-mode discount field", () => {
@@ -1354,15 +1366,11 @@ describe("CreateProductPage — more numeric/validation branches", () => {
 })
 
 describe("CreateProductPage — checkbox fields", () => {
-  it("toggles the Product is Active checkbox", async () => {
+  it("does not render a Product is Active checkbox", async () => {
     const user = userEvent.setup()
     await openBlankForm(user)
 
-    const activeCheckbox = screen.getByRole("checkbox", { name: "Product is Active" })
-    expect(activeCheckbox).toBeChecked()
-
-    await user.click(activeCheckbox)
-    expect(activeCheckbox).not.toBeChecked()
+    expect(screen.queryByRole("checkbox", { name: "Product is Active" })).toBeNull()
   })
 
   it("toggles the Export Packaging checkbox", async () => {

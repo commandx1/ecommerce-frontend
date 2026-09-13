@@ -66,7 +66,6 @@ const TAB_FIELDS = {
     "detailedName",
     "barcode",
     "barcodeFormats",
-    "active",
     "skuCode",
     "price",
     "discount",
@@ -1043,7 +1042,7 @@ function CreateProductPageContent() {
           price: Number(formData.price),
           discount: 0,
           stock: Number(formData.stock),
-          active: formData.active,
+          active: true,
         }
 
         await productsAPI.createUserProduct(userProductPayload, accessToken || "")
@@ -1089,7 +1088,7 @@ function CreateProductPageContent() {
         skuCode: toOptionalString(formData.skuCode),
         price: Number(formData.price),
         stock: Number(formData.stock),
-        active: formData.active,
+        active: true,
         shipmentFee: toOptionalNumber(formData.shipmentFee),
         heavyShippingSurcharge: toOptionalNumber(formData.heavyShippingSurcharge),
         exportPackaging: formData.exportPackaging,
@@ -1513,20 +1512,6 @@ function CreateProductPageContent() {
                         </SelectContent>
                       </Select>
                     </div>
-
-                    <div className="flex items-center">
-                      <label className="flex items-center cursor-pointer mt-6">
-                        <input
-                          type="checkbox"
-                          name="active"
-                          checked={formData.active}
-                          onChange={handleInputChange}
-                          disabled={isProductSelected && !isEditMode}
-                          className="w-5 h-5 text-brand border-border-soft rounded focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
-                        />
-                        <span className="ml-3 text-sm font-medium text-text-primary">Product is Active</span>
-                      </label>
-                    </div>
                   </div>
 
                   {/* User Product Fields */}
@@ -1759,23 +1744,6 @@ function CreateProductPageContent() {
                       These details provide additional information about your product and help buyers make informed
                       decisions.
                     </p>
-                  </div>
-
-                  <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-text-primary mb-2">
-                      Detailed Description *
-                    </label>
-                    <textarea
-                      id="description"
-                      name="description"
-                      value={formData.description}
-                      onChange={handleInputChange}
-                      disabled={isProductSelected}
-                      rows={4}
-                      className={`w-full px-4 py-3 border ${errors.description ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent resize-none disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
-                      placeholder="Detailed product description..."
-                    />
-                    {errors.description && <p className="text-destructive text-sm mt-1">{errors.description}</p>}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -2035,6 +2003,23 @@ function CreateProductPageContent() {
                         ))}
                       </div>
                     )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="description" className="block text-sm font-medium text-text-primary mb-2">
+                      Detailed Description *
+                    </label>
+                    <textarea
+                      id="description"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      disabled={isProductSelected}
+                      rows={4}
+                      className={`w-full px-4 py-3 border ${errors.description ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent resize-none disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
+                      placeholder="Detailed product description..."
+                    />
+                    {errors.description && <p className="text-destructive text-sm mt-1">{errors.description}</p>}
                   </div>
                 </div>
               )}
