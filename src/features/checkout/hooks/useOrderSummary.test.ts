@@ -128,13 +128,13 @@ describe("useOrderSummary", () => {
     expect(result.current.hasSelectedShipping).toBe(true)
   })
 
-  it("does not add the heavy surcharge into the total (total = subtotal - discount + shipping + tax)", async () => {
+  it("adds the heavy surcharge into the total and folds it into the tax estimate's shippingAmount (total = subtotal - discount + shipping + heavy + tax)", async () => {
     const bodies = captureTaxRequests(1.5)
     useCartStore.setState({
       items: [
         makeCartItem({
           quantity: 1,
-          userProduct: makeCartUserProduct({ price: 100, shipmentFee: 5, heavyShippingSurcharge: 999 }),
+          userProduct: makeCartUserProduct({ price: 100, shipmentFee: 5, heavyShippingSurcharge: 20 }),
         }),
       ],
     })
@@ -144,7 +144,28 @@ describe("useOrderSummary", () => {
 
     await waitFor(() => expect(bodies).toHaveLength(1))
     await waitFor(() => expect(result.current.tax).toBe(1.5))
-    expect(result.current.total).toBeCloseTo(100 - 0 + 15 + 1.5, 5)
+    expect(bodies).toEqual([{ addressId: "address-1", shippingAmount: 35 }])
+    expect(result.current.total).toBeCloseTo(100 - 0 + 15 + 20 + 1.5, 5)
+  })
+
+  it("sends the heavy surcharge as shippingAmount and adds it to the total even before a shipping method is selected", async () => {
+    const bodies = captureTaxRequests(0)
+    useCartStore.setState({
+      items: [
+        makeCartItem({
+          quantity: 1,
+          userProduct: makeCartUserProduct({ price: 100, shipmentFee: 5, heavyShippingSurcharge: 20 }),
+        }),
+      ],
+    })
+    useCheckoutStore.setState({ orderPayload: orderPayload(), selectedShippingCost: 0 })
+
+    const { result } = renderHook(() => useOrderSummary())
+
+    await waitFor(() => expect(bodies).toHaveLength(1))
+    expect(bodies).toEqual([{ addressId: "address-1", shippingAmount: 20 }])
+    await waitFor(() => expect(result.current.tax).toBe(0))
+    expect(result.current.total).toBeCloseTo(100 - 0 + 0 + 20 + 0, 5)
   })
 
   it("leaves tax unestimated (null) and never calls the backend without an address", async () => {

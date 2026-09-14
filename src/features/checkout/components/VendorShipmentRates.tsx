@@ -287,9 +287,11 @@ export default function VendorShipmentRates({
     }
   }, [addressId, cartId, items, sellerId])
 
-  // The seller's plain product shipment fee (heavy surcharge EXCLUDED), used only as the "Great
-  // deal" badge's comparison base — see the badge computation below for why this must diverge
-  // from `defaultShipmentFee`.
+  // The seller's plain product shipment fee (heavy surcharge excluded), used only as the "Great
+  // deal" badge's comparison base. Since the 2026-09-12 backend change, `defaultShipmentFee`
+  // itself is also Σ shipmentFee·qty with heavy excluded (ShipmentService.calculateDefaultShipmentFee),
+  // so this is really the same figure recomputed client-side — see the badge computation below
+  // for why the two are still kept separate.
   const vendorShipmentFee = useMemo(
     () => items.reduce((sum, item) => sum + (item.shipmentFee ?? 0) * item.quantity, 0),
     [items],
@@ -397,13 +399,14 @@ export default function VendorShipmentRates({
               defaultShipmentFee !== null && Number.isFinite(methodAmount) && defaultShipmentFee < methodAmount
                 ? defaultShipmentFee
                 : methodAmount
-            // Backend: `defaultShipmentFee` bundles the heavy shipping surcharge on top of the
-            // plain product shipment fee (ShipmentService.java:493-513) — it's a price ceiling
-            // used to cap what the buyer can be charged, not a discountable fee. Comparing the
-            // badge against it would credit the buyer for "saving" money on a surcharge that was
-            // never really being charged as a discount target, so the badge instead compares the
-            // carrier rate against `vendorShipmentFee` (heavy excluded) while the displayed price
-            // and cap above stay pinned to `defaultShipmentFee` for backend parity.
+            // Backend: since the 2026-09-12 change, `defaultShipmentFee` is Σ shipmentFee·qty
+            // with the heavy shipping surcharge EXCLUDED (ShipmentService.calculateDefaultShipmentFee)
+            // — heavy is charged separately, in full, in the order summary (OrderCreationService).
+            // `defaultShipmentFee` is still a price ceiling used to cap what the buyer can be
+            // charged for carrier shipping, not a discountable fee. The badge compares the carrier
+            // rate against `vendorShipmentFee` (the same plain-fee figure, computed client-side)
+            // while the displayed price and cap above stay pinned to `defaultShipmentFee` for
+            // backend parity.
             const isGreatDeal = Number.isFinite(methodAmount) && methodAmount < vendorShipmentFee
             const discountAmount = isGreatDeal ? vendorShipmentFee - methodAmount : 0
             const selectableRate: ShipmentRate =

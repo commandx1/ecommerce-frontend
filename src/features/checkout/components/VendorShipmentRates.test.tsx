@@ -708,8 +708,9 @@ describe("VendorShipmentRates — rate selection and pricing", () => {
 
   /**
    * The boundary itself. `isGreatDeal` is `methodAmount < vendorShipmentFee` (the plain product
-   * shipment fee, heavy surcharge excluded — NOT `defaultShipmentFee`, which bundles the heavy
-   * surcharge and is a price ceiling, not a discountable fee). A carrier rate that exactly equals
+   * shipment fee, heavy surcharge excluded — NOT `defaultShipmentFee`, which is a backend price
+   * ceiling used to cap the displayed/selected price, not a discountable fee, even though it
+   * happens to be the same plain-fee figure). A carrier rate that exactly equals
    * the plain fee is NOT a deal - there is nothing to discount. Getting this wrong invents a
    * "$0.00 shipping discount" badge on an ordinary rate. `defaultShipmentFee` is varied
    * independently here to confirm the badge truly never looks at it (only the displayed/capped
@@ -865,14 +866,15 @@ describe("VendorShipmentRates — rate selection and pricing", () => {
     expect(screen.queryByText(/Great deal:/)).not.toBeInTheDocument()
   })
 
-  // Regression guard: the price cap must stay pinned to `defaultShipmentFee` (which bundles the
-  // heavy surcharge and can legitimately be much larger than the plain per-item fee) even though
-  // the badge base (`vendorShipmentFee`, heavy excluded) is much smaller.
-  it("keeps the displayed/selected price capped at defaultShipmentFee while showing no badge, when defaultShipmentFee (heavy included) is far above vendorShipmentFee", async () => {
+  // Regression guard: the price cap must stay pinned to `defaultShipmentFee` (the backend's
+  // plain-fee ceiling, which can legitimately be much larger than the per-item fee sent to this
+  // component) even though the badge base (`vendorShipmentFee`, heavy excluded) is much smaller.
+  it("keeps the displayed/selected price capped at defaultShipmentFee while showing no badge, when defaultShipmentFee is far above vendorShipmentFee", async () => {
     const { addressId, cartId, sellerId } = uniqueIds()
-    // vendorShipmentFee = 5 (plain fee only); defaultShipmentFee = 30 (bundles a large heavy
-    // surcharge); the carrier rate (50) sits above defaultShipmentFee and so gets capped down to
-    // it — the same capping behavior as before this change, unaffected by the badge base moving.
+    // vendorShipmentFee = 5 (plain fee only, computed client-side); defaultShipmentFee = 30 (the
+    // backend's plain-fee ceiling for this fixture); the carrier rate (50) sits above
+    // defaultShipmentFee and so gets capped down to it — the same capping behavior as before this
+    // change, unaffected by the badge base moving.
     const itemsWithFee = [{ userProductId: "up-1", productId: "prod-1", name: "Widget", quantity: 1, shipmentFee: 5 }]
     const onSelect = vi.fn()
     getRates.mockResolvedValue({

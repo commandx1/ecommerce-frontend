@@ -43,15 +43,16 @@ export function useOrderSummary(): UseOrderSummaryResult {
 
   const volumeDiscount = subtotal > 2000 ? subtotal * 0.05 : 0
   const shipping = selectedShippingCost
-  // The real charge is computed and collected server-side (OrderCreationService.computeTaxes),
-  // so this total is a display-only estimate. Treating an unknown tax as 0 here (rather than
-  // blocking the number entirely) matches that: the buyer sees an untaxed subtotal+shipping
-  // total, and the UI below is responsible for making clear that tax is still to be added.
-  const total = subtotal - volumeDiscount + shipping + (tax ?? 0)
-
   const heavyShipmentFee = useMemo(() => {
     return items.reduce((sum, item) => sum + (item.userProduct.heavyShippingSurcharge ?? 0) * item.quantity, 0)
   }, [items])
+  // The real charge is computed and collected server-side (OrderCreationService.computeTaxes),
+  // so this total is a display-only estimate mirroring items + shipping + heavy + tax. Treating
+  // an unknown tax as 0 here (rather than blocking the number entirely) matches that: the buyer
+  // sees an untaxed subtotal+shipping+heavy total, and the UI below is responsible for making
+  // clear that tax is still to be added.
+  const total = subtotal - volumeDiscount + shipping + heavyShipmentFee + (tax ?? 0)
+
   const hasSelectedShipping = Object.keys(selectedVendorShippingMethods).length > 0
 
   const addressId = orderPayload?.addressId
@@ -63,10 +64,14 @@ export function useOrderSummary(): UseOrderSummaryResult {
       return
     }
 
+    // The backend counts heavy as shipping for tax purposes and does not add it itself, so we
+    // must fold heavyShipmentFee into the shippingAmount we send.
+    const shippingAmountForTax = shipping + heavyShipmentFee
+
     // Backend: CartTaxEstimateRequest.shippingAmount is a Double (@NotNull @PositiveOrZero) — an
     // unserializable shipping figure (NaN/Infinity) or a negative one can never be estimated, so
     // skip the request instead of sending a value the backend would 400 on.
-    if (!Number.isFinite(shipping) || shipping < 0) {
+    if (!Number.isFinite(shippingAmountForTax) || shippingAmountForTax < 0) {
       setTax(null)
       setIsTaxLoading(false)
       return
@@ -78,7 +83,7 @@ export function useOrderSummary(): UseOrderSummaryResult {
       try {
         const estimate = await cartAPI.getTaxEstimate({
           addressId,
-          shippingAmount: shipping,
+          shippingAmount: shippingAmountForTax,
         })
         if (!isCancelled) {
           // The estimate is money the buyer reads: a non-numeric `taxAmount` from a malformed 200
@@ -103,7 +108,7 @@ export function useOrderSummary(): UseOrderSummaryResult {
     return () => {
       isCancelled = true
     }
-  }, [addressId, items.length, shipping])
+  }, [addressId, items.length, shipping, heavyShipmentFee])
 
   return {
     currentStep,
