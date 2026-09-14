@@ -58,6 +58,9 @@ export interface BuyerOrderItem {
   sellerSurname: string
   shipmentPrice?: number | null
   shipmentFreeBySeller?: boolean | null
+  takedHeavyShipmentFee?: number | null
+  heavyShippingSurcharge?: number | null
+  taxPrice?: number | null
   cancelledByCustomer?: boolean | null
   cancelledBySeller?: boolean | null
   cancelledWithShippingFee?: boolean | null
@@ -85,6 +88,7 @@ export interface BuyerOrderSellerGroup {
   sellerSurname: string
   cancellationShipmentFee?: number | null
   cancellationShipmentRefundFee?: number | null
+  cancellationHeavyShipmentFeeRefund?: number | null
   orderItems: BuyerOrderItem[]
 }
 

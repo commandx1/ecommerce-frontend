@@ -133,6 +133,29 @@ describe("OrdersMobileList — rendering", () => {
     expect(screen.getByText(expectedText)).toBeInTheDocument()
   })
 
+  it("does not multiply shipmentPrice by quantity and includes the heavy shipment fee in the shipping line", () => {
+    const order = makeBuyerOrder({
+      sellerGroups: [
+        makeBuyerOrderSellerGroup({
+          orderItems: [
+            makeBuyerOrderItem({
+              shipmentPrice: 12.99,
+              quantity: 2,
+              takedHeavyShipmentFee: 50,
+              shipmentFreeBySeller: false,
+            }),
+          ],
+        }),
+      ],
+    })
+    mockUseBuyerOrdersTableSelector.mockReturnValue(createTableState({ filteredOrders: [order] }))
+
+    render(<OrdersMobileList />)
+
+    // shippingTotal (12.99, NOT *2) + heavyShipmentTotal (50) = 62.99.
+    expect(screen.getByText("+$62.99 shipping")).toBeInTheDocument()
+  })
+
   it("renders a '+N more' hint when the order has more than one seller", () => {
     const order = makeBuyerOrder({
       sellerGroups: [

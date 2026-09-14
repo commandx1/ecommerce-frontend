@@ -34,6 +34,8 @@ export interface BuyerOrderViewModel {
     title: string
   }
   shippingTotal: number
+  heavyShipmentTotal: number
+  taxTotal: number
   totalAmountFromItemPrices: number
   totalQuantity: number
   trackingCount: number

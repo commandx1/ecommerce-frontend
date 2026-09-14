@@ -134,7 +134,7 @@ export default function OrdersTable() {
       header: () => "Shipment Fee",
       cell: ({ row }) => {
         const summary = getSummary(row.original)
-        return <p className="text-3sm">{formatCurrency(summary.shippingTotal)}</p>
+        return <p className="text-3sm">{formatCurrency(summary.shippingTotal + summary.heavyShipmentTotal)}</p>
       },
       meta: {
         cellClassName: "px-6 py-4 text-right font-medium text-text-primary",

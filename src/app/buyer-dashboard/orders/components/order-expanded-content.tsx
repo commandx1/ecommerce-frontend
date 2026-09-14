@@ -18,6 +18,7 @@ import { useBuyerOrdersTableActions, useBuyerOrdersTableSelector } from "../cont
 import {
   formatDateTime,
   formatOrderItemStatus,
+  getOrderItemHeavyShipmentFee,
   getOrderItemShipmentFee,
   getOrderItemStatusTagClass,
   getSellerFirstTwoLetters,
@@ -177,6 +178,8 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                               !item.cancelledByCustomer &&
                               !item.cancelledBySeller
                             const isReviewed = item.reviewed === true || reviewedItemIds.has(item.id)
+                            const shipmentFee = getOrderItemShipmentFee(item)
+                            const heavyShipmentFee = getOrderItemHeavyShipmentFee(item)
 
                             return (
                               <div
@@ -235,11 +238,17 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                                         <span className="text-[11px]">({formatCurrency(item.price)} each)</span>
                                       ) : null}
                                       <span className="text-border-strong">·</span>
-                                      {item.shipmentFreeBySeller ? (
+                                      {shipmentFee === 0 ? (
                                         <span className="font-medium text-success">Free Shipping</span>
                                       ) : (
-                                        <span>Shipment: {formatCurrency(getOrderItemShipmentFee(item))}</span>
+                                        <span>Shipment: {formatCurrency(shipmentFee)}</span>
                                       )}
+                                      {heavyShipmentFee > 0 ? (
+                                        <>
+                                          <span className="text-border-strong">·</span>
+                                          <span>Heavy fee: {formatCurrency(heavyShipmentFee)}</span>
+                                        </>
+                                      ) : null}
                                     </div>
                                   </div>
                                 </div>
@@ -361,9 +370,12 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                           has not cancelled - OrderMapper:289-350), so they are null on a live order
                           and appear once items are cancelled. Until now the values arrived and were
                           never shown, leaving the buyer to discover the shipping deduction on their
-                          statement. */}
+                          statement. `cancellationHeavyShipmentFeeRefund` is the matching heavy
+                          surcharge refund and follows the same null-until-cancelled rule. */}
                         {typeof group.cancellationShipmentFee === "number" ||
-                        typeof group.cancellationShipmentRefundFee === "number" ? (
+                        typeof group.cancellationShipmentRefundFee === "number" ||
+                        (typeof group.cancellationHeavyShipmentFeeRefund === "number" &&
+                          group.cancellationHeavyShipmentFeeRefund > 0) ? (
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border-soft px-3 py-2 text-xs sm:px-4">
                             {typeof group.cancellationShipmentFee === "number" ? (
                               <span className="text-text-secondary">
@@ -378,6 +390,15 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                                 Shipping refunded:{" "}
                                 <span className="font-semibold text-success">
                                   {formatCurrency(group.cancellationShipmentRefundFee)}
+                                </span>
+                              </span>
+                            ) : null}
+                            {typeof group.cancellationHeavyShipmentFeeRefund === "number" &&
+                            group.cancellationHeavyShipmentFeeRefund > 0 ? (
+                              <span className="text-text-secondary">
+                                Heavy fee refunded:{" "}
+                                <span className="font-semibold text-success">
+                                  {formatCurrency(group.cancellationHeavyShipmentFeeRefund)}
                                 </span>
                               </span>
                             ) : null}
@@ -420,6 +441,18 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
           </div>
 
           <div className="flex w-full flex-col gap-6 lg:w-80">
+            <div className="rounded-[8px] border border-border-soft bg-surface-muted/55 p-4 text-left">
+              <h4 className="mb-3 text-sm font-semibold text-text-primary">Customer Details</h4>
+              <p className="text-sm font-semibold text-text-secondary">
+                {order.shipmentAddress?.fullName || summary.customerLabel}
+              </p>
+              <AddressContactInfo
+                className="mt-2"
+                address={summary.shippingAddress.line}
+                phone={order.shipmentAddress?.phoneNumber}
+              />
+            </div>
+
             <div className="rounded-[8px] border border-border-soft bg-surface-muted/55 p-4">
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between text-text-muted">
@@ -432,25 +465,30 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                     {summary.shippingTotal > 0 ? formatCurrency(summary.shippingTotal) : "FREE"}
                   </span>
                 </div>
+                {summary.heavyShipmentTotal > 0 ? (
+                  <div className="flex justify-between text-text-muted">
+                    <span>Heavy shipment fee</span>
+                    <span className="text-text-primary">{formatCurrency(summary.heavyShipmentTotal)}</span>
+                  </div>
+                ) : null}
+                {summary.taxTotal > 0 ? (
+                  <div className="flex justify-between text-text-muted">
+                    <span>Tax</span>
+                    <span className="text-text-primary">{formatCurrency(summary.taxTotal)}</span>
+                  </div>
+                ) : null}
                 <div className="mt-2 flex justify-between border-t border-border-soft pt-2 font-semibold">
                   <span className="text-text-primary">Total</span>
                   <span className="text-text-primary">
-                    {formatCurrency(summary.totalAmountFromItemPrices + summary.shippingTotal)}
+                    {formatCurrency(
+                      summary.totalAmountFromItemPrices +
+                        summary.shippingTotal +
+                        summary.heavyShipmentTotal +
+                        summary.taxTotal,
+                    )}
                   </span>
                 </div>
               </div>
-            </div>
-
-            <div className="rounded-[8px] border border-border-soft bg-surface-muted/55 p-4">
-              <h4 className="mb-3 text-sm font-semibold text-text-primary">Customer Details</h4>
-              <p className="text-sm font-semibold text-text-secondary">
-                {order.shipmentAddress?.fullName || summary.customerLabel}
-              </p>
-              <AddressContactInfo
-                className="mt-2"
-                address={summary.shippingAddress.line}
-                phone={order.shipmentAddress?.phoneNumber}
-              />
             </div>
           </div>
         </div>

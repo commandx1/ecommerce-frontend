@@ -256,7 +256,28 @@ describe("OrdersTable", () => {
     expect(screen.getByText("3 items")).toBeInTheDocument()
     expect(screen.getByText("2 line item(s)")).toBeInTheDocument()
     expect(screen.getByText("$240.00")).toBeInTheDocument()
-    expect(screen.getByText("$10.00")).toBeInTheDocument()
+    // shipmentPrice is already the line total (5 for item-1, 0 for item-2) - not multiplied by quantity.
+    expect(screen.getByText("$5.00")).toBeInTheDocument()
+  })
+
+  it("includes the heavy shipment fee in the Shipment Fee column total", () => {
+    const orderWithHeavyFee: BuyerOrder = {
+      ...order,
+      sellerGroups: order.sellerGroups?.map((group) => ({
+        ...group,
+        orderItems: group.orderItems.map((item) =>
+          item.id === "item-1" ? { ...item, takedHeavyShipmentFee: 50 } : item,
+        ),
+      })),
+    }
+    configureTableMocks({
+      filteredOrders: [orderWithHeavyFee],
+      summariesByOrderId: new Map([[orderWithHeavyFee.orderId, buildBuyerOrderViewModel(orderWithHeavyFee)]]),
+    })
+    render(<OrdersTable />)
+
+    // shippingTotal (5) + heavyShipmentTotal (50) = 55.
+    expect(screen.getByText("$55.00")).toBeInTheDocument()
   })
 
   it("requests a sort on the matching field when a sortable header is clicked", async () => {

@@ -102,8 +102,9 @@ test.describe("buyer orders smoke", () => {
     await expect(buyerPage.getByText("Acme Store").first()).toBeVisible()
     await expect(buyerPage.getByText("3 items", { exact: true }).first()).toBeVisible()
     await expect(buyerPage.getByText("$245.00").first()).toBeVisible()
-    // Shipment fee column: item-1's 5.00 * qty 2 = 10.00, item-2 is seller-free.
-    await expect(buyerPage.getByText("$10.00").first()).toBeVisible()
+    // Shipment fee column: shipmentPrice is already the line total (not per-unit), so
+    // item-1's 5.00 + item-2's 0.00 = 5.00 (not 5.00 * qty 2).
+    await expect(buyerPage.getByText("$5.00").first()).toBeVisible()
 
     await orders.expandFirstRow()
 

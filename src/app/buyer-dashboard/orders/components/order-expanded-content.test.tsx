@@ -91,6 +91,101 @@ describe("OrderExpandedContent — cancellation shipping money", () => {
   })
 })
 
+describe("OrderExpandedContent — heavy shipment fee refund on cancellation", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it("shows the heavy fee refunded when it is greater than 0", () => {
+    renderExpanded(makeBuyerOrderSellerGroup({ cancellationHeavyShipmentFeeRefund: 50 }))
+
+    expect(screen.getByText(/Heavy fee refunded/i)).toBeInTheDocument()
+    expect(screen.getByText("$50.00")).toBeInTheDocument()
+  })
+
+  it.each([
+    ["0", 0],
+    ["null", null],
+  ])("hides the heavy fee refunded row when the value is %s", (_label, value) => {
+    renderExpanded(
+      makeBuyerOrderSellerGroup({
+        cancellationHeavyShipmentFeeRefund: value,
+        orderItems: [makeBuyerOrderItem()],
+      }),
+    )
+
+    expect(screen.queryByText(/Heavy fee refunded/i)).not.toBeInTheDocument()
+  })
+})
+
+describe("OrderExpandedContent — item shipment/heavy fee display and summary panel", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it("shows the charged shipment amount without multiplying by quantity", () => {
+    renderExpanded(
+      makeBuyerOrderSellerGroup({
+        orderItems: [makeBuyerOrderItem({ shipmentPrice: 12.99, quantity: 2 })],
+      }),
+    )
+
+    expect(screen.getByText(/Shipment: \$12\.99/)).toBeInTheDocument()
+  })
+
+  it("shows Free Shipping when shipmentPrice is 0, even if shipmentFreeBySeller is not set", () => {
+    renderExpanded(makeBuyerOrderSellerGroup({ orderItems: [makeBuyerOrderItem({ shipmentPrice: 0 })] }))
+
+    expect(screen.getByText("Free Shipping")).toBeInTheDocument()
+  })
+
+  it("shows the charged shipment amount even when shipmentFreeBySeller is true (Uber orders can have both)", () => {
+    renderExpanded(
+      makeBuyerOrderSellerGroup({
+        orderItems: [makeBuyerOrderItem({ shipmentPrice: 12.99, shipmentFreeBySeller: true })],
+      }),
+    )
+
+    expect(screen.getByText(/Shipment: \$12\.99/)).toBeInTheDocument()
+    expect(screen.queryByText("Free Shipping")).not.toBeInTheDocument()
+  })
+
+  it("shows the heavy fee on the item row when greater than 0, and hides it when 0/null", () => {
+    renderExpanded(
+      makeBuyerOrderSellerGroup({
+        orderItems: [makeBuyerOrderItem({ takedHeavyShipmentFee: 50 })],
+      }),
+    )
+    expect(screen.getByText(/Heavy fee: \$50\.00/)).toBeInTheDocument()
+  })
+
+  it("hides the heavy fee item row when takedHeavyShipmentFee is 0 or null", () => {
+    renderExpanded(makeBuyerOrderSellerGroup({ orderItems: [makeBuyerOrderItem({ takedHeavyShipmentFee: null })] }))
+
+    expect(screen.queryByText(/Heavy fee:/)).not.toBeInTheDocument()
+  })
+
+  it("shows the Heavy shipment fee and Tax rows in the summary panel when present, and computes the QA-verified total", () => {
+    renderExpanded(
+      makeBuyerOrderSellerGroup({
+        orderItems: [
+          makeBuyerOrderItem({
+            price: 55.3,
+            quantity: 2,
+            shipmentPrice: 12.99,
+            takedHeavyShipmentFee: 50,
+            taxPrice: 0,
+          }),
+        ],
+      }),
+    )
+
+    expect(screen.getByText("Heavy shipment fee")).toBeInTheDocument()
+    expect(screen.queryByText("Tax")).not.toBeInTheDocument()
+    expect(screen.getByText("$173.59")).toBeInTheDocument()
+  })
+})
+
 describe("OrderExpandedContent — write a review", () => {
   beforeEach(() => {
     vi.restoreAllMocks()

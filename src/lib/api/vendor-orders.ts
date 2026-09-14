@@ -58,6 +58,8 @@ export interface VendorOrderItem {
   cancelledBySeller?: boolean | null
   cancelledWithShippingFee?: boolean | null
   takedShipmentPrice?: number | null
+  takedHeavyShipmentFee?: number | null
+  heavyShippingSurcharge?: number | null
   shipmentFreeBySeller?: boolean | null
   sellerConfirmedReturn?: boolean | null
   deliveredDate?: string | null
@@ -89,6 +91,7 @@ export interface VendorOrder {
   totalShippingCost?: number | null
   cancellationShipmentFee?: number | null
   cancellationShipmentRefundFee?: number | null
+  cancellationHeavyShipmentFeeRefund?: number | null
   /** True when the scheduler placed this order from a buyer's auto order. */
   autoOrder?: boolean
   sellerAddress?: VendorOrderAddress

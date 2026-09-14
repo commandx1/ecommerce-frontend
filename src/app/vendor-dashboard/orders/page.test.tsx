@@ -1760,6 +1760,104 @@ describe("VendorOrdersPage", () => {
       expect(table.getByText("Shipment: $7.25")).toBeInTheDocument()
     })
 
+    // Uber orders can have `shipmentFreeBySeller: true` while `takedShipmentPrice` was still
+    // charged, so the free flag must never zero out the actual amount collected.
+    it("shows the real shipment charge instead of Free Shipping when a fee was still taken", async () => {
+      serveOrders(
+        makeVendorOrder({
+          orderId: "vorder-1",
+          orderItems: [makeVendorOrderItem({ id: "vitem-1", shipmentFreeBySeller: true, takedShipmentPrice: 12.99 })],
+        }),
+      )
+
+      render(<VendorOrdersPage />)
+      await expandFirstOrder(userEvent.setup())
+      const table = await desktopTable()
+      expect(table.getByText("Shipment: $12.99")).toBeInTheDocument()
+      expect(table.queryByText("Free Shipping")).not.toBeInTheDocument()
+    })
+
+    it("shows the heavy shipment fee on the item row and in the order summary total", async () => {
+      serveOrders(
+        makeVendorOrder({
+          orderId: "vorder-1",
+          totalShippingCost: 0,
+          orderItems: [makeVendorOrderItem({ id: "vitem-1", totalPrice: 110.6, takedHeavyShipmentFee: 50 })],
+        }),
+      )
+
+      render(<VendorOrdersPage />)
+      await expandFirstOrder(userEvent.setup())
+      const table = await desktopTable()
+      expect(table.getByText("Heavy fee: $50.00")).toBeInTheDocument()
+      expect(table.getByText("Heavy shipment fee")).toBeInTheDocument()
+      expect(table.getByText("$160.60")).toBeInTheDocument()
+    })
+
+    it("hides the heavy shipment fee row and label when there is no heavy fee", async () => {
+      serveOrders(
+        makeVendorOrder({
+          orderId: "vorder-1",
+          orderItems: [makeVendorOrderItem({ id: "vitem-1", takedHeavyShipmentFee: 0 })],
+        }),
+      )
+
+      render(<VendorOrdersPage />)
+      await expandFirstOrder(userEvent.setup())
+      const table = await desktopTable()
+      expect(table.queryByText(/Heavy fee/)).not.toBeInTheDocument()
+      expect(table.queryByText("Heavy shipment fee")).not.toBeInTheDocument()
+    })
+
+    it("shows the heavy fee refund in the cancellation strip", async () => {
+      serveOrders(
+        makeVendorOrder({
+          orderId: "vorder-1",
+          cancellationHeavyShipmentFeeRefund: 50,
+          orderItems: [makeVendorOrderItem({ id: "vitem-1" })],
+        }),
+      )
+
+      render(<VendorOrdersPage />)
+      await expandFirstOrder(userEvent.setup())
+      const table = await desktopTable()
+      expect(table.getByText(/Heavy fee refunded to buyer/)).toBeInTheDocument()
+      expect(table.getByText("$50.00")).toBeInTheDocument()
+    })
+
+    it("shows no cancellation strip when none of the cancellation fields apply", async () => {
+      serveOrders(
+        makeVendorOrder({
+          orderId: "vorder-1",
+          cancellationShipmentFee: null,
+          cancellationShipmentRefundFee: null,
+          cancellationHeavyShipmentFeeRefund: 0,
+          orderItems: [makeVendorOrderItem({ id: "vitem-1" })],
+        }),
+      )
+
+      render(<VendorOrdersPage />)
+      await expandFirstOrder(userEvent.setup())
+      expect(screen.queryByText(/Shipping charged on cancellation/)).not.toBeInTheDocument()
+      expect(screen.queryByText(/Shipping refunded/)).not.toBeInTheDocument()
+      expect(screen.queryByText(/Heavy fee refunded to buyer/)).not.toBeInTheDocument()
+    })
+
+    it("includes the heavy shipment fee in the table's Shipping column", async () => {
+      serveOrders(
+        makeVendorOrder({
+          orderId: "vorder-1",
+          totalShippingCost: 10,
+          orderItems: [makeVendorOrderItem({ id: "vitem-1", takedHeavyShipmentFee: 50 })],
+        }),
+      )
+
+      render(<VendorOrdersPage />)
+      const table = await desktopTable()
+      await table.findAllByText("Jane Doe")
+      expect(table.getAllByText("$60.00").length).toBeGreaterThan(0)
+    })
+
     it("shows the auto-order badge and correct status classes for a PAYMENT_SUCCESS order", async () => {
       serveOrders(
         makeVendorOrder({

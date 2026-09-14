@@ -63,12 +63,28 @@ function resolveVendorShippingUrls(item: VendorOrderItem): string[] {
 }
 
 function getVendorShipmentFee(item: VendorOrderItem): number {
-  if (item.shipmentFreeBySeller) return 0
   if (typeof item.takedShipmentPrice === "number") {
     return item.takedShipmentPrice
   }
   const fromShippingLink = item.shippingLinks?.find((link) => typeof link?.shipmentPrice === "number")?.shipmentPrice
   return typeof fromShippingLink === "number" ? fromShippingLink : 0
+}
+
+/**
+ * `takedHeavyShipmentFee` is the total heavy surcharge actually charged for the line - not
+ * `heavyShippingSurcharge`, which is the *current* per-unit product value and must never be
+ * shown as money.
+ */
+export function getVendorHeavyShipmentFee(item: VendorOrderItem): number {
+  return typeof item.takedHeavyShipmentFee === "number" && Number.isFinite(item.takedHeavyShipmentFee)
+    ? item.takedHeavyShipmentFee
+    : 0
+}
+
+export function getVendorOrderShippingWithHeavyTotal(order: VendorOrder): number {
+  const baseShipping = typeof order.totalShippingCost === "number" ? order.totalShippingCost : 0
+  const heavyTotal = order.orderItems.reduce((sum, item) => sum + getVendorHeavyShipmentFee(item), 0)
+  return baseShipping + heavyTotal
 }
 
 function hasVendorOrderItemReturnFlowStarted(item: VendorOrderItem): boolean {
@@ -88,7 +104,8 @@ export default function VendorOrderExpandedContent({
 }: VendorOrderExpandedContentProps) {
   const itemsSubtotal = order.orderItems.reduce((sum, item) => sum + (item.totalPrice ?? 0), 0)
   const shippingTotal = typeof order.totalShippingCost === "number" ? order.totalShippingCost : 0
-  const orderTotal = itemsSubtotal + shippingTotal
+  const heavyTotal = order.orderItems.reduce((sum, item) => sum + getVendorHeavyShipmentFee(item), 0)
+  const orderTotal = itemsSubtotal + shippingTotal + heavyTotal
   const customerName = [order.buyerName, order.buyerSurname].filter(Boolean).join(" ").trim()
   const customerAddress = order.sellerAddress?.formattedAddress || order.sellerAddress?.addressLine
   const customerPhone = order.sellerAddress?.phoneNumber
@@ -167,11 +184,17 @@ export default function VendorOrderExpandedContent({
                         <span className="text-[11px]">({formatCurrency(item.price)} each)</span>
                       ) : null}
                       <span className="text-border-strong">·</span>
-                      {item.shipmentFreeBySeller ? (
+                      {getVendorShipmentFee(item) === 0 ? (
                         <span className="font-medium text-success">Free Shipping</span>
                       ) : (
                         <span>Shipment: {formatCurrency(getVendorShipmentFee(item))}</span>
                       )}
+                      {getVendorHeavyShipmentFee(item) > 0 ? (
+                        <>
+                          <span className="text-border-strong">·</span>
+                          <span>Heavy fee: {formatCurrency(getVendorHeavyShipmentFee(item))}</span>
+                        </>
+                      ) : null}
                     </div>
 
                     <div className="mt-3 flex w-full flex-wrap items-center gap-2 border-t border-border-soft pt-3">
@@ -268,6 +291,44 @@ export default function VendorOrderExpandedContent({
               </div>
             )
           })}
+
+          {/* What the cancellation actually cost. Mirrors the buyer strip in
+            buyer-dashboard/orders/components/order-expanded-content.tsx (~line 358-385): the
+            backend only fills these fields AFTER a cancellation, so they stay null on a live
+            order. `cancellationHeavyShipmentFeeRefund` is 0 (not null) when cancelled items had
+            no heavy fee, so it must be compared to `> 0`, not just checked for being a number. */}
+          {typeof order.cancellationShipmentFee === "number" ||
+          typeof order.cancellationShipmentRefundFee === "number" ||
+          (typeof order.cancellationHeavyShipmentFeeRefund === "number" &&
+            order.cancellationHeavyShipmentFeeRefund > 0) ? (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-[8px] border border-border-soft bg-surface-muted/55 px-3 py-2 text-xs sm:px-4">
+              {typeof order.cancellationShipmentFee === "number" ? (
+                <span className="text-text-secondary">
+                  Shipping charged on cancellation:{" "}
+                  <span className="font-semibold text-text-primary">
+                    {formatCurrency(order.cancellationShipmentFee)}
+                  </span>
+                </span>
+              ) : null}
+              {typeof order.cancellationShipmentRefundFee === "number" ? (
+                <span className="text-text-secondary">
+                  Shipping refunded:{" "}
+                  <span className="font-semibold text-success">
+                    {formatCurrency(order.cancellationShipmentRefundFee)}
+                  </span>
+                </span>
+              ) : null}
+              {typeof order.cancellationHeavyShipmentFeeRefund === "number" &&
+              order.cancellationHeavyShipmentFeeRefund > 0 ? (
+                <span className="text-text-secondary">
+                  Heavy fee refunded to buyer:{" "}
+                  <span className="font-semibold text-success">
+                    {formatCurrency(order.cancellationHeavyShipmentFeeRefund)}
+                  </span>
+                </span>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         <div className="flex w-full flex-col gap-6 lg:w-80">
@@ -287,6 +348,12 @@ export default function VendorOrderExpandedContent({
                 <span>Shipping</span>
                 <span className="text-text-primary">{shippingTotal > 0 ? formatCurrency(shippingTotal) : "FREE"}</span>
               </div>
+              {heavyTotal > 0 ? (
+                <div className="flex justify-between text-text-muted">
+                  <span>Heavy shipment fee</span>
+                  <span className="text-text-primary">{formatCurrency(heavyTotal)}</span>
+                </div>
+              ) : null}
               <div className="mt-2 flex justify-between border-t border-border-soft pt-2 font-semibold">
                 <span className="text-text-primary">Total</span>
                 <span className="text-text-primary">{formatCurrency(orderTotal)}</span>

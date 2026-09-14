@@ -8,7 +8,7 @@ import { Collapse, CollapseContent, CollapseTrigger } from "@/components/ui/coll
 import type { VendorOrder, VendorOrderItem } from "@/lib/api/vendor-orders"
 import { isCancelableOrderItemStatus } from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
-import VendorOrderExpandedContent from "./order-expanded-content"
+import VendorOrderExpandedContent, { getVendorOrderShippingWithHeavyTotal } from "./order-expanded-content"
 
 interface CancelActionOptions {
   cancelingItemId?: string
@@ -211,7 +211,9 @@ export default function VendorOrdersMobileList({
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-semibold text-brand">{formatCurrency(total)}</p>
-                  <p className="text-xs text-text-muted">+{formatCurrency(order.totalShippingCost ?? 0)} shipping</p>
+                  <p className="text-xs text-text-muted">
+                    +{formatCurrency(getVendorOrderShippingWithHeavyTotal(order))} shipping
+                  </p>
                 </div>
               </div>
             </CollapseTrigger>

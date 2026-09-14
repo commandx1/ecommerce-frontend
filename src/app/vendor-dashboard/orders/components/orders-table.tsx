@@ -10,7 +10,7 @@ import DataTable from "@/components/ui/data-table"
 import type { VendorOrder, VendorOrderItem } from "@/lib/api/vendor-orders"
 import { isCancelableOrderItemStatus } from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
-import VendorOrderExpandedContent from "./order-expanded-content"
+import VendorOrderExpandedContent, { getVendorOrderShippingWithHeavyTotal } from "./order-expanded-content"
 
 interface CancelActionOptions {
   cancelingItemId?: string
@@ -204,7 +204,7 @@ export default function VendorOrdersTable({
     {
       id: "shipping",
       header: () => "Shipping",
-      cell: ({ row }) => <p>{formatCurrency(row.original.totalShippingCost ?? 0)}</p>,
+      cell: ({ row }) => <p>{formatCurrency(getVendorOrderShippingWithHeavyTotal(row.original))}</p>,
       meta: {
         cellClassName: "px-6 py-4 text-right text-text-secondary",
         headerClassName: "px-6 py-4 text-right",

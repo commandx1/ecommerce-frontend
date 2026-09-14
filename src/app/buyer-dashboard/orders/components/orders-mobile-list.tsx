@@ -33,6 +33,8 @@ function buildFallbackSummary(order: BuyerOrder): BuyerOrderViewModel {
     sellerSummary: { moreCount: 0, primarySeller: "Unknown Seller" },
     shippingAddress: { line: "-", title: "-" },
     shippingTotal: 0,
+    heavyShipmentTotal: 0,
+    taxTotal: 0,
     totalAmountFromItemPrices: 0,
     totalQuantity: 0,
     trackingCount: 0,
@@ -208,8 +210,10 @@ export default function OrdersMobileList() {
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-semibold text-text-primary">{formatCurrency(summary.money.netTotal)}</p>
-                  {summary.shippingTotal > 0 ? (
-                    <p className="text-xs text-text-muted">+{formatCurrency(summary.shippingTotal)} shipping</p>
+                  {summary.shippingTotal + summary.heavyShipmentTotal > 0 ? (
+                    <p className="text-xs text-text-muted">
+                      +{formatCurrency(summary.shippingTotal + summary.heavyShipmentTotal)} shipping
+                    </p>
                   ) : (
                     <p className="text-xs font-medium text-success">Free shipping</p>
                   )}

@@ -216,6 +216,7 @@ export function getOrderSellerGroups(order: BuyerOrder): BuyerOrderSellerGroup[]
         sellerSurname,
         cancellationShipmentFee: null,
         cancellationShipmentRefundFee: null,
+        cancellationHeavyShipmentFeeRefund: null,
         orderItems: [],
       })
     }
@@ -488,9 +489,17 @@ export function formatRefundStatus(refundStatus: string): string {
 }
 
 export function getOrderItemShipmentFee(item: BuyerOrderItem): number {
-  if (item.shipmentFreeBySeller) return 0
-  const shipmentUnitPrice = typeof item.shipmentPrice === "number" ? item.shipmentPrice : 0
-  return shipmentUnitPrice * item.quantity
+  return typeof item.shipmentPrice === "number" && Number.isFinite(item.shipmentPrice) ? item.shipmentPrice : 0
+}
+
+export function getOrderItemHeavyShipmentFee(item: BuyerOrderItem): number {
+  return typeof item.takedHeavyShipmentFee === "number" && Number.isFinite(item.takedHeavyShipmentFee)
+    ? item.takedHeavyShipmentFee
+    : 0
+}
+
+export function getOrderItemTaxPrice(item: BuyerOrderItem): number {
+  return typeof item.taxPrice === "number" && Number.isFinite(item.taxPrice) ? item.taxPrice : 0
 }
 
 export function hasOrderItemReturnFlowStarted(item: BuyerOrderItem): boolean {
@@ -520,6 +529,8 @@ export function buildBuyerOrderViewModel(order: BuyerOrder): BuyerOrderViewModel
   const trackingCount = getTrackingLinkCount(orderItems)
   const customerLabel = order.shipmentAddress?.fullName || payment.title || "Customer"
   const shippingTotal = orderItems.reduce((sum, item) => sum + getOrderItemShipmentFee(item), 0)
+  const heavyShipmentTotal = orderItems.reduce((sum, item) => sum + getOrderItemHeavyShipmentFee(item), 0)
+  const taxTotal = orderItems.reduce((sum, item) => sum + getOrderItemTaxPrice(item), 0)
   const totalAmountFromItemPrices = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const itemTotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const money = resolveOrderMoneyBreakdown(itemTotal, shippingTotal, order.totalPrice)
@@ -540,6 +551,8 @@ export function buildBuyerOrderViewModel(order: BuyerOrder): BuyerOrderViewModel
     sellerSummary,
     shippingAddress,
     shippingTotal,
+    heavyShipmentTotal,
+    taxTotal,
     totalAmountFromItemPrices,
     totalQuantity,
     trackingCount,
