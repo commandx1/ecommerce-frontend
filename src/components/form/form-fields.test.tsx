@@ -5,7 +5,6 @@ import { render, screen } from "@/test/render"
 import { CheckboxField } from "./CheckboxField"
 import { FormField } from "./FormField"
 import { PasswordField } from "./PasswordField"
-import { RadioField } from "./RadioField"
 import { SelectField } from "./SelectField"
 import { TextAreaField } from "./TextAreaField"
 import { TextField } from "./TextField"
@@ -148,23 +147,6 @@ describe("CheckboxField", () => {
     await user.click(screen.getByLabelText("I agree"))
 
     expect(onChange).not.toHaveBeenCalled()
-  })
-})
-
-describe("RadioField", () => {
-  it("selects one option out of a named group", async () => {
-    const user = userEvent.setup()
-    render(
-      <>
-        <RadioField id="card" name="payment" value="card" label="Card" />
-        <RadioField id="net30" name="payment" value="net30" label="Net 30" />
-      </>,
-    )
-
-    await user.click(screen.getByLabelText("Net 30"))
-
-    expect(screen.getByLabelText("Net 30")).toBeChecked()
-    expect(screen.getByLabelText("Card")).not.toBeChecked()
   })
 })
 

@@ -141,8 +141,6 @@ export const productsHandlers = [
 
   http.put("*/api/products/:id", ({ params }) => HttpResponse.json(makeProduct({ id: String(params.id) }))),
 
-  http.delete("*/api/products/:id", () => new HttpResponse(null, { status: 204 })),
-
   // ==================== User products (vendor listings) ====================
   http.get("*/api/user-products/filter", () => HttpResponse.json(makeUserProductsFilterResponse())),
 

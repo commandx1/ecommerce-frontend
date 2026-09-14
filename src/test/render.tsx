@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { type RenderOptions, type RenderResult, render } from "@testing-library/react"
 import type { ReactElement, ReactNode } from "react"
-import { SWRConfig } from "swr"
 import ThemeProvider from "@/components/theme/ThemeProvider"
 import { getRouterMock, type RouterMock, setPathname, setSearchParams } from "./mocks/next-navigation"
 
@@ -28,8 +27,8 @@ export interface RenderWithProvidersResult extends RenderResult {
 
 /**
  * Renders a component inside the providers the app relies on at runtime:
- * React Query (no retries, no cache carry-over), SWR (fresh per-test cache, no deduping)
- * and the next-themes provider. Router state is bound to the global `next/navigation` mock.
+ * React Query (no retries, no cache carry-over) and the next-themes provider.
+ * Router state is bound to the global `next/navigation` mock.
  */
 export function renderWithProviders(
   ui: ReactElement,
@@ -46,9 +45,7 @@ export function renderWithProviders(
 
   const Wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-      <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0, revalidateOnFocus: false }}>
-        <ThemeProvider>{children}</ThemeProvider>
-      </SWRConfig>
+      <ThemeProvider>{children}</ThemeProvider>
     </QueryClientProvider>
   )
 

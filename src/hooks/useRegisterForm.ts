@@ -81,6 +81,7 @@ const initialFormData: RegisterPayload = {
     website: "",
     description: "",
     active: true,
+    shipmentPolicy: "",
   },
 }
 
@@ -138,6 +139,10 @@ const mapZodErrors = (errors: z.ZodIssue[]) => {
       fieldErrors.taxNumber = issue.message
       continue
     }
+    if (path === "company.shipmentPolicy") {
+      fieldErrors.shipmentPolicy = issue.message
+      continue
+    }
 
     const fieldKey = issue.path[0]
     if (fieldKey) {
@@ -184,6 +189,7 @@ const ownerInviteSchema = z
         .trim()
         .min(1, "Company phone is required")
         .refine((value) => /^\d{10}$/.test(value.replace(/\s/g, "")), "Please enter a valid 10-digit phone number"),
+      shipmentPolicy: z.string().min(1, "Shipment policy is required"),
     }),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -464,7 +470,7 @@ export const useRegisterForm = (options?: {
       ...prev,
       company: {
         ...(prev.company as CompanyPayload),
-        [field]: value,
+        [field]: value as CompanyPayload[typeof field],
       },
     }))
     clearError(

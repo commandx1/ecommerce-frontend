@@ -23,6 +23,8 @@ export interface AddressPayload {
   formattedAddress: string
 }
 
+export type ShipmentPolicy = "ONE_DAY" | "TWO_DAYS" | "THREE_DAYS" | "FOUR_DAYS" | "FIVE_DAYS"
+
 export interface CompanyPayload {
   name: string
   companyPhoto: string
@@ -32,6 +34,7 @@ export interface CompanyPayload {
   website: string
   description: string
   active: boolean
+  shipmentPolicy: ShipmentPolicy | ""
 }
 
 export interface VendorInviteRegisterPayload {

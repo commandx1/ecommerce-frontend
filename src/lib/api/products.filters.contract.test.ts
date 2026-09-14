@@ -338,57 +338,6 @@ describe("productsAPI.normalizeActiveProductSearchItem (pure helper)", () => {
   })
 })
 
-describe("productsAPI.normalizeSearchResults (pure helper)", () => {
-  it("normalizes local products, deriving images from coverPhotoPath + photoPhats", () => {
-    const product = makeProduct()
-    const normalized = productsAPI.normalizeSearchResults({ products: [product], barcodeProducts: [] })
-
-    expect(normalized).toHaveLength(1)
-    expect(normalized[0]).toMatchObject({ id: "p-1", source: "local", title: product.name })
-    expect(normalized[0]?.images).toContain("/api/images/uploads/tips.png")
-  })
-
-  it("falls back to legacy comma-separated photoPaths when coverPhotoPath/photoPhats are absent", () => {
-    const product = makeProduct({
-      coverPhotoPath: undefined,
-      photoPhats: undefined,
-      photoPaths: "/uploads/a.png,/uploads/b.png",
-    })
-    const normalized = productsAPI.normalizeSearchResults({ products: [product], barcodeProducts: [] })
-
-    expect(normalized[0]?.images).toEqual(["/api/images/uploads/a.png", "/api/images/uploads/b.png"])
-  })
-
-  it("normalizes barcode-lookup products", () => {
-    const barcodeProduct: BarcodeLookupProduct = {
-      barcode_number: "999",
-      title: "External Product",
-      brand: "ExtBrand",
-      category: "Consumables",
-      images: ["https://example.com/x.png"],
-    }
-    const normalized = productsAPI.normalizeSearchResults({ products: [], barcodeProducts: [barcodeProduct] })
-
-    expect(normalized).toEqual([
-      {
-        id: "999",
-        barcode: "999",
-        title: "External Product",
-        brand: "ExtBrand",
-        category: "Consumables",
-        images: ["https://example.com/x.png"],
-        source: "barcode_lookup",
-        originalData: barcodeProduct,
-      },
-    ])
-  })
-
-  it("tolerates an empty products/barcodeProducts payload", () => {
-    const normalized = productsAPI.normalizeSearchResults({ products: [], barcodeProducts: [] })
-    expect(normalized).toEqual([])
-  })
-})
-
 describe("productsAPI.normalizeBarcodeResult (pure helper)", () => {
   it("normalizes a BarcodeLookupProduct (has barcode_number)", () => {
     const product: BarcodeLookupProduct = { barcode_number: "111", title: "Lookup item", images: [] }

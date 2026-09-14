@@ -1,12 +1,11 @@
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import type { AttributeGroup, CompanyOption, FilterOption, VendorOption } from "@/lib/api/public-products"
+import type { AttributeGroup, FilterOption, VendorOption } from "@/lib/api/public-products"
 import { lastPushedParams, renderWithFilterNavigation } from "@/test/harness/filter-navigation-harness"
 import { screen } from "@/test/render"
 import AttributeFilter from "./AttributeFilter"
 import BrandFilter from "./BrandFilter"
 import CategoryFilter from "./CategoryFilter"
-import CompanyFilter from "./CompanyFilter"
 import ManufacturerFilter from "./ManufacturerFilter"
 import VendorFilter from "./VendorFilter"
 
@@ -112,38 +111,6 @@ describe("VendorFilter", () => {
     await user.click(screen.getByLabelText("Beta Supplies"))
 
     expect(lastPushedParams(router).getAll("vendors")).toEqual(["vendor-1", "vendor-2"])
-  })
-})
-
-describe("CompanyFilter", () => {
-  const companies: CompanyOption[] = [
-    { id: "company-1", name: "Northwind Dental", count: 8 },
-    { id: "company-2", name: "Southgate Labs", count: 2 },
-  ]
-
-  it("renders nothing when the backend returned no companies", () => {
-    renderWithFilterNavigation(<CompanyFilter companies={[]} />)
-
-    expect(screen.queryByRole("heading", { name: "Vendor" })).not.toBeInTheDocument()
-  })
-
-  it("is single-select — picking another company replaces the current one", async () => {
-    const user = userEvent.setup()
-    const { router } = renderWithFilterNavigation(<CompanyFilter companies={companies} />, "companyId=company-1")
-
-    expect(screen.getByLabelText("Northwind Dental")).toBeChecked()
-    await user.click(screen.getByLabelText("Southgate Labs"))
-
-    expect(lastPushedParams(router).get("companyId")).toBe("company-2")
-  })
-
-  it("re-clicking the active company clears the scope", async () => {
-    const user = userEvent.setup()
-    const { router } = renderWithFilterNavigation(<CompanyFilter companies={companies} />, "companyId=company-1")
-
-    await user.click(screen.getByLabelText("Northwind Dental"))
-
-    expect(lastPushedParams(router).has("companyId")).toBe(false)
   })
 })
 

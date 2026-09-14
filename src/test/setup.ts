@@ -67,7 +67,7 @@ vi.mock("sonner", async () => {
 
 /* ------------------------------------------------------------------ *
  * jsdom polyfills
- * Radix (matchMedia), react-intersection-observer (IntersectionObserver),
+ * Radix (matchMedia), motion (IntersectionObserver),
  * charts/resizable panels (ResizeObserver) and lenis (scrollTo) all need these.
  * ------------------------------------------------------------------ */
 

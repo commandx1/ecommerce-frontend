@@ -2,7 +2,7 @@ import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { server } from "@/mocks/server"
 import { makeProduct, makeVendorUserProduct } from "@/test/factories"
-import type { BarcodeProduct, CreateUserProductPayload, ProductVendorRequestData } from "./products"
+import type { CreateUserProductPayload, ProductVendorRequestData } from "./products"
 import { productsAPI } from "./products"
 import { apiRequest } from "./request"
 
@@ -16,11 +16,9 @@ const reviewRequestData: ProductVendorRequestData = {
 }
 
 let capturedUpdateReviewFormData: FormData | null = null
-let capturedDeleteProductAuthHeader: string | null | undefined
 let capturedCreateUserProductBody: Record<string, unknown> | null = null
 let capturedUpdateUserProductBody: Record<string, unknown> | null = null
 let capturedBulkDiscountBody: Record<string, unknown> | null = null
-let capturedSearchTitleQuery: URLSearchParams | null = null
 
 /**
  * These handlers capture the outgoing request so the assertions below can pin the exact wire
@@ -29,21 +27,15 @@ let capturedSearchTitleQuery: URLSearchParams | null = null
  */
 beforeEach(() => {
   capturedUpdateReviewFormData = null
-  capturedDeleteProductAuthHeader = undefined
   capturedCreateUserProductBody = null
   capturedUpdateUserProductBody = null
   capturedBulkDiscountBody = null
-  capturedSearchTitleQuery = null
 
   server.use(
     http.post("*/api/products/review", () => HttpResponse.json(makeProduct())),
     http.put("*/api/products/review/:id", async ({ request, params }) => {
       capturedUpdateReviewFormData = await request.formData()
       return HttpResponse.json(makeProduct({ id: String(params.id) }))
-    }),
-    http.delete("*/api/products/:id", ({ request }) => {
-      capturedDeleteProductAuthHeader = request.headers.get("authorization")
-      return new HttpResponse(null, { status: 204 })
     }),
     http.post("*/api/user-products", async ({ request }) => {
       capturedCreateUserProductBody = (await request.json()) as Record<string, unknown>
@@ -58,15 +50,6 @@ beforeEach(() => {
       capturedBulkDiscountBody = (await request.json()) as Record<string, unknown>
       return HttpResponse.json([makeVendorUserProduct()])
     }),
-    http.get("*/api/barcode/products/search", ({ request }) => {
-      capturedSearchTitleQuery = new URL(request.url).searchParams
-      return HttpResponse.json({ products: [makeProduct()], barcodeProducts: [] })
-    }),
-    http.get("*/api/barcode/products", () =>
-      HttpResponse.json<BarcodeProduct[]>([
-        { id: 1, barcodeNumber: "123456789012", title: "Intra Oral Mixing Tips", images: [] },
-      ]),
-    ),
   )
 })
 
@@ -117,44 +100,6 @@ describe("productsAPI.createProductForReview / updateProductForReview contract",
 
     await expect(productsAPI.updateProductForReview("p-1", { data: reviewRequestData }, "token-1")).rejects.toThrow(
       "Only rejected products can be updated.",
-    )
-  })
-})
-
-describe("productsAPI.deleteProduct contract", () => {
-  it("deleteProduct sends the bearer token and resolves on 204", async () => {
-    await expect(productsAPI.deleteProduct("p-1", "token-1")).resolves.toBeUndefined()
-    expect(capturedDeleteProductAuthHeader).toBe("Bearer token-1")
-  })
-
-  // Backend: ProductServiceImpl.delete (line ~609-617) has NO ownership/authorization check at
-  // all - it only checks the product exists (ProductNotFoundException -> 400 via the
-  // RuntimeException catch-all, see the getProductById fix above) and whether a UserProduct
-  // references it (ProductInUseException, also unmapped -> falls through to the same 400
-  // catch-all). A 403 "Forbidden" response is not producible by this endpoint for any vendor -
-  // ownership is not checked before deletion. Replaced with the two real failure shapes.
-  it("deleteProduct rejects on 400 when the product no longer exists", async () => {
-    server.use(
-      http.delete("*/api/products/:id", () =>
-        HttpResponse.json({ message: "Product not found. ID: p-1" }, { status: 400 }),
-      ),
-    )
-
-    await expect(productsAPI.deleteProduct("p-1", "token-1")).rejects.toThrow("Product not found. ID: p-1")
-  })
-
-  it("deleteProduct rejects on 400 when the product is already published by a vendor (in use)", async () => {
-    server.use(
-      http.delete("*/api/products/:id", () =>
-        HttpResponse.json(
-          { message: "This product cannot be deleted because user(s) have published it." },
-          { status: 400 },
-        ),
-      ),
-    )
-
-    await expect(productsAPI.deleteProduct("p-1", "token-1")).rejects.toThrow(
-      "This product cannot be deleted because user(s) have published it.",
     )
   })
 })
@@ -266,82 +211,5 @@ describe("productsAPI.bulkDiscount contract", () => {
     await expect(productsAPI.bulkDiscount("token-1", { userProductIds: ["up-1"], discount: 150 })).rejects.toThrow(
       "Discount must be 0-100",
     )
-  })
-})
-
-describe("productsAPI barcode search/lookup contract", () => {
-  it("searchProductsByTitle serializes the title query param and returns local + barcode products", async () => {
-    const result = await productsAPI.searchProductsByTitle("mixing tips", "token-1")
-
-    expect(capturedSearchTitleQuery?.get("title")).toBe("mixing tips")
-    expect(result.products).toEqual([makeProduct()])
-    expect(result.barcodeProducts).toEqual([])
-  })
-
-  it("searchProductsByTitle tolerates an empty result set", async () => {
-    server.use(
-      http.get("*/api/barcode/products/search", () => HttpResponse.json({ products: [], barcodeProducts: [] })),
-    )
-
-    const result = await productsAPI.searchProductsByTitle("nothing", "token-1")
-    expect(result.products).toEqual([])
-    expect(result.barcodeProducts).toEqual([])
-  })
-
-  it("getAllBarcodeProducts returns the typed array", async () => {
-    const result = await productsAPI.getAllBarcodeProducts("token-1")
-    expect(result).toEqual([{ id: 1, barcodeNumber: "123456789012", title: "Intra Oral Mixing Tips", images: [] }])
-  })
-
-  it("getAllBarcodeProducts tolerates an empty array", async () => {
-    server.use(http.get("*/api/barcode/products", () => HttpResponse.json([])))
-    await expect(productsAPI.getAllBarcodeProducts("token-1")).resolves.toEqual([])
-  })
-
-  it("getProductByBarcode returns a local product on 200", async () => {
-    server.use(http.get("*/api/barcode/products/bybarcode/:barcode", () => HttpResponse.json(makeProduct())))
-
-    const result = await productsAPI.getProductByBarcode("123456789012", "token-1")
-    expect(result).toEqual(makeProduct())
-  })
-
-  it("getProductByBarcode URL-encodes the barcode", async () => {
-    let capturedUrl = ""
-    server.use(
-      http.get("*/api/barcode/products/bybarcode/:barcode", ({ request }) => {
-        capturedUrl = request.url
-        return HttpResponse.json(makeProduct())
-      }),
-    )
-
-    await productsAPI.getProductByBarcode("12/34 56", "token-1")
-    expect(capturedUrl).toContain(encodeURIComponent("12/34 56"))
-  })
-
-  it("getProductByBarcode throws the JSON error body on a JSON error response", async () => {
-    server.use(
-      http.get("*/api/barcode/products/bybarcode/:barcode", () =>
-        HttpResponse.json({ message: "Not found" }, { status: 404 }),
-      ),
-    )
-
-    await expect(productsAPI.getProductByBarcode("000", "token-1")).rejects.toEqual({ message: "Not found" })
-  })
-
-  it("getProductByBarcode throws a generic 'Product not found' Error on a non-JSON error response", async () => {
-    server.use(
-      http.get(
-        "*/api/barcode/products/bybarcode/:barcode",
-        () => new HttpResponse("Not Found", { status: 404, headers: { "content-type": "text/plain" } }),
-      ),
-    )
-
-    await expect(productsAPI.getProductByBarcode("000", "token-1")).rejects.toThrow("Product not found (404)")
-  })
-
-  it("getProductByBarcode rejects on network failure", async () => {
-    server.use(http.get("*/api/barcode/products/bybarcode/:barcode", () => HttpResponse.error()))
-
-    await expect(productsAPI.getProductByBarcode("000", "token-1")).rejects.toThrow()
   })
 })

@@ -16,6 +16,7 @@ export interface RegisterFormErrors {
   companyEmail?: string
   companyPhoneNumber?: string
   taxNumber?: string
+  shipmentPolicy?: string
 }
 
 export type RegisterFormData = RegisterPayload

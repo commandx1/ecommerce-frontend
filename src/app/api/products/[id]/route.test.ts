@@ -2,7 +2,7 @@ import { HttpResponse, http } from "msw"
 import { describe, expect, it } from "vitest"
 import { server } from "@/mocks/server"
 import { AUTH, BACKEND, createCapture, jsonRequest, record, routeParams, routeRequest } from "@/test/route-harness"
-import { DELETE, GET, PUT } from "./route"
+import { GET, PUT } from "./route"
 
 /**
  * `/api/products/:id` is the one product route that goes through axios (`proxyRequest`) instead
@@ -187,59 +187,10 @@ describe("PUT /api/products/[id]", () => {
   })
 })
 
-describe("DELETE /api/products/[id]", () => {
-  it("answers a success envelope and forwards the Authorization header", async () => {
-    const captured = createCapture()
-    server.use(
-      http.delete(ANY, ({ request }) => {
-        record(captured, request)
-        return new HttpResponse(null, { status: 204 })
-      }),
-    )
-
-    const response = await DELETE(
-      routeRequest("/api/products/p-1", { method: "DELETE", authorization: AUTH }),
-      routeParams({ id: "p-1" }),
-    )
-
-    expect(response.status).toBe(200)
-    await expect(response.json()).resolves.toEqual({ success: true })
-    expect(captured.url).toBe(`${BACKEND}/api/products/p-1`)
-    expect(captured.authorization).toBe(AUTH)
-  })
-
-  it("answers 401 without calling the backend when unauthenticated", async () => {
-    const captured = createCapture()
-    server.use(
-      http.delete(ANY, ({ request }) => {
-        record(captured, request)
-        return new HttpResponse(null, { status: 204 })
-      }),
-    )
-
-    const response = await DELETE(routeRequest("/api/products/p-1", { method: "DELETE" }), routeParams({ id: "p-1" }))
-
-    expect(response.status).toBe(401)
-    expect(captured.count).toBe(0)
-  })
-
-  it.each([403, 404, 409])("forwards the backend error and status %i", async (status) => {
-    server.use(http.delete(ANY, () => HttpResponse.json({ message: "cannot delete" }, { status })))
-
-    const response = await DELETE(
-      routeRequest("/api/products/p-1", { method: "DELETE", authorization: AUTH }),
-      routeParams({ id: "p-1" }),
-    )
-
-    expect(response.status).toBe(status)
-    await expect(response.json()).resolves.toEqual({ message: "cannot delete" })
-  })
-})
-
 describe("/api/products/[id] route surface", () => {
-  it("exposes GET, PUT and DELETE only", async () => {
+  it("exposes GET and PUT only", async () => {
     const route = await import("./route")
 
-    expect(Object.keys(route).sort()).toEqual(["DELETE", "GET", "PUT"])
+    expect(Object.keys(route).sort()).toEqual(["GET", "PUT"])
   })
 })

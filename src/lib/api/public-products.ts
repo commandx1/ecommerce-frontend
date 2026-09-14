@@ -10,7 +10,6 @@ export type PublicProductsResponse<TProduct = unknown> = {
 
 export type FilterOption = { name: string; count: number }
 export type VendorOption = { id: string; name: string; count: number }
-export type CompanyOption = { id: string; name: string; count: number }
 export type AttributeValueOption = { value: string; count: number }
 export type AttributeGroup = { attributeName: string; values: AttributeValueOption[] }
 

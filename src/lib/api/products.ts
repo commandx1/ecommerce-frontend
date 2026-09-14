@@ -185,11 +185,6 @@ export interface BarcodeProduct {
   lastUpdate?: string
 }
 
-export interface ProductSearchResponse {
-  products: Product[]
-  barcodeProducts: BarcodeLookupProduct[]
-}
-
 // Generic Spring Page<T> wrapper
 export interface PageResponse<T> {
   content: T[]
@@ -474,20 +469,6 @@ class ProductsAPI {
     })
   }
 
-  /**
-   * Delete product by ID
-   * DELETE /api/products/:id
-   */
-  async deleteProduct(id: string, token: string): Promise<void> {
-    await apiRequest.requestJson<void>({
-      client: "app",
-      method: "DELETE",
-      headers: this.getAuthHeaders(token),
-      url: `${BASE_URL}/api/products/${id}`,
-      fallbackMessage: "Failed to delete product",
-    })
-  }
-
   // ==================== Product Search (active products + brand filter) ====================
 
   /**
@@ -563,115 +544,6 @@ class ProductsAPI {
         manufacturerCode: item.manufacturerCode ?? undefined,
       } as Product,
     }
-  }
-
-  // ==================== Barcode Lookup ====================
-
-  /**
-   * Search products by title
-   * GET /api/barcode/products/search?title=...
-   */
-  async searchProductsByTitle(title: string, token: string): Promise<ProductSearchResponse> {
-    return apiRequest.requestJson<ProductSearchResponse>({
-      client: "app",
-      method: "GET",
-      headers: this.getAuthHeaders(token),
-      url: `${BASE_URL}/api/barcode/products/search`,
-      params: { title },
-      fallbackMessage: "Failed to search products",
-    })
-  }
-
-  /**
-   * Get product by barcode
-   * GET /api/barcode/products/bybarcode/:barcode
-   */
-  async getProductByBarcode(barcode: string, token: string): Promise<Product | BarcodeLookupProduct> {
-    const response = await apiRequest.requestResponse<Product | BarcodeLookupProduct | string>({
-      client: "app",
-      method: "GET",
-      headers: this.getAuthHeaders(token),
-      url: `${BASE_URL}/api/barcode/products/bybarcode/${encodeURIComponent(barcode)}`,
-      validateStatus: () => true,
-      fallbackMessage: "Failed to fetch product by barcode",
-    })
-
-    if (response.status < 200 || response.status >= 300) {
-      const contentType = response.headers["content-type"]
-      const hasJson = typeof contentType === "string" && contentType.includes("application/json")
-
-      if (hasJson) {
-        throw response.data
-      } else {
-        throw new Error(`Product not found (${response.status})`)
-      }
-    }
-
-    return response.data as Product | BarcodeLookupProduct
-  }
-
-  /**
-   * Get all products from saved barcode lookup
-   * GET /api/barcode/products
-   */
-  async getAllBarcodeProducts(token: string): Promise<BarcodeProduct[]> {
-    return apiRequest.requestJson<BarcodeProduct[]>({
-      client: "app",
-      method: "GET",
-      headers: this.getAuthHeaders(token),
-      url: `${BASE_URL}/api/barcode/products`,
-      fallbackMessage: "Failed to fetch barcode products",
-    })
-  }
-
-  /**
-   * Normalize search results for autocomplete
-   */
-  normalizeSearchResults(response: ProductSearchResponse): NormalizedSearchProduct[] {
-    const normalized: NormalizedSearchProduct[] = []
-
-    // Normalize local products
-    for (const product of response.products) {
-      // Build images array from coverPhotoPath and photoPhats
-      const images: string[] = []
-      if (product.coverPhotoPath) {
-        images.push(getFullImageUrl(product.coverPhotoPath))
-      }
-      if (product.photoPhats && product.photoPhats.length > 0) {
-        images.push(...product.photoPhats.map(getFullImageUrl))
-      }
-      // Fallback to legacy photoPaths if available
-      if (images.length === 0 && product.photoPaths) {
-        images.push(...product.photoPaths.split(",").filter(Boolean).map(getFullImageUrl))
-      }
-
-      normalized.push({
-        id: product.id,
-        barcode: String(product.barcode || ""),
-        title: product.name || product.detailedName || "",
-        brand: product.brand,
-        category: undefined,
-        images,
-        source: "local",
-        originalData: product,
-      })
-    }
-
-    // Normalize barcode lookup products
-    for (const product of response.barcodeProducts) {
-      normalized.push({
-        id: product.barcode_number,
-        barcode: product.barcode_number,
-        title: product.title || "",
-        brand: product.brand,
-        category: product.category,
-        images: product.images || [],
-        source: "barcode_lookup",
-        originalData: product,
-      })
-    }
-
-    return normalized
   }
 
   // ==================== User Products ====================
