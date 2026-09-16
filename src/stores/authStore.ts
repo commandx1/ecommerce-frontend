@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-import { cookieStorage } from "@/lib/storage/cookie-storage"
+import { broadcastLogout } from "@/lib/storage/session-events"
+import { tabSessionStorage } from "@/lib/storage/tab-session-storage"
 
 // Mirrors the `authFailurePromise` pattern in `src/lib/api/client.ts`: without this, calling
 // `logout()` twice concurrently (e.g. `Promise.all([logout(), logout()])`) fires two
@@ -37,6 +38,7 @@ interface AuthState {
   setAuth: (user: User, accessToken: string, refreshToken: string, isAdminImpersonating?: boolean) => void
   setIsAdminImpersonating: (isImpersonating: boolean) => void
   clearAuth: () => void
+  clearLocalSession: () => Promise<void>
   logout: () => Promise<void>
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
@@ -88,6 +90,20 @@ export const useAuthStore = create<AuthState>()(
           error: null,
         }),
 
+      clearLocalSession: async () => {
+        get().clearAuth()
+        // persist only rewrote an empty state; delete it so proxy.ts sees no cookie at all.
+        useAuthStore.persist.clearStorage()
+
+        // Clear cart state
+        const { useCartStore } = await import("./cartStore")
+        useCartStore.getState().resetCart()
+
+        // Clear favorite products state
+        const { useFavoriteProductsStore } = await import("./favoriteProductsStore")
+        useFavoriteProductsStore.getState().reset()
+      },
+
       logout: async () => {
         if (logoutPromise) {
           return logoutPromise
@@ -95,6 +111,7 @@ export const useAuthStore = create<AuthState>()(
 
         logoutPromise = (async () => {
           const currentState = get()
+          const userId = currentState.user?.id
           try {
             if (currentState.refreshToken && currentState.accessToken) {
               const { authAPIDirect } = await import("@/lib/api/auth-direct")
@@ -103,31 +120,10 @@ export const useAuthStore = create<AuthState>()(
           } catch {
             // Hata olsa bile local state'i temizle
           } finally {
-            // Clear auth state
-            set({
-              user: null,
-              accessToken: null,
-              refreshToken: null,
-              isAuthenticated: false,
-              isAdminImpersonating: false,
-              error: null,
-            })
-
-            // `set()` above only rewrites the persisted cookie with an empty state (via the
-            // persist middleware's setItem call) - it does not delete it. Explicitly remove the
-            // cookie so `auth-storage` is actually gone, matching what `src/proxy.ts` expects
-            // (code that only checks cookie *presence* would otherwise keep treating the session
-            // as logged in).
-            useAuthStore.persist.clearStorage()
-
-            // Clear cart state
-            const { useCartStore } = await import("./cartStore")
-            useCartStore.getState().resetCart()
-
-            // Clear favorite products state
-            const { useFavoriteProductsStore } = await import("./favoriteProductsStore")
-            useFavoriteProductsStore.getState().reset()
-
+            await get().clearLocalSession()
+            if (userId) {
+              broadcastLogout(userId)
+            }
             // Router push operation will be handled in components
           }
         })().finally(() => {
@@ -150,7 +146,7 @@ export const useAuthStore = create<AuthState>()(
     {
       name: "auth-storage",
       // biome-ignore lint/suspicious/noExplicitAny: Zustand persist storage type compatibility
-      storage: cookieStorage as any,
+      storage: tabSessionStorage as any,
       partialize: (state) => ({
         user: state.user,
         accessToken: state.accessToken,

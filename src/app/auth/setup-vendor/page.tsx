@@ -11,9 +11,13 @@ function SetupVendorContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const setAuth = useAuthStore((state) => state.setAuth)
+  const clearLocalSession = useAuthStore((state) => state.clearLocalSession)
 
   useEffect(() => {
     const performSetup = async () => {
+      // This tab may have adopted another tab's session on load; drop it locally so a failed exchange
+      // leaves a guest tab (not the previous account) and a successful one replaces it cleanly.
+      await clearLocalSession()
       const refreshToken = searchParams.get("refreshToken")
 
       if (!refreshToken) {
@@ -48,7 +52,7 @@ function SetupVendorContent() {
     }
 
     performSetup()
-  }, [searchParams, router, setAuth])
+  }, [searchParams, router, setAuth, clearLocalSession])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

@@ -62,7 +62,7 @@ const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }:
               // `text-warning-strong`, not `text-warning`: text on its own tint needs a darker
               // foreground for WCAG AA (axe `color-contrast` measured 1.93:1 here) - see the
               // `--warning-strong` comment in globals.css.
-              <span className="pointer-events-none absolute top-full left-0 mt-1.5 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-warning/14 px-2 py-0.5 text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-warning-strong ring-1 ring-warning/30 ring-inset">
+              <span className="pointer-events-none absolute top-full left-1/2 mt-1.5 -translate-x-1/2 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-warning/14 px-2 py-0.5 text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-warning-strong ring-1 ring-warning/30 ring-inset">
                 <span aria-hidden="true">★</span>
                 <span>Best Seller</span>
               </span>
@@ -107,9 +107,9 @@ const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }:
                 {/* White pill even in dark theme: the wordmark is black on a transparent background. */}
                 <span
                   data-testid="uber-direct-badge"
-                  className="mt-1.5 inline-flex cursor-help items-center rounded-full bg-white px-2 py-0.5 ring-1 ring-border-soft ring-inset"
+                  className="beam-border mt-1.5 inline-flex cursor-help items-center rounded-full px-2.5 py-1 shadow-sm"
                 >
-                  <Image src="/uber-direct.webp" alt="" width={40} height={14} className="h-3.5 w-auto" />
+                  <Image src="/uber-direct.webp" alt="" width={57} height={20} className="h-7 w-auto" />
                   <span className="sr-only">{UBER_DIRECT_BADGE_LABEL}</span>
                 </span>
               </TooltipTrigger>

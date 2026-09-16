@@ -15,7 +15,9 @@ export const useLoginForm = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { setUser, setError } = useAuthStore()
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const hasShownAuthReasonToast = useRef(false)
+  const hasAutoRedirected = useRef(false)
 
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
@@ -51,6 +53,16 @@ export const useLoginForm = () => {
 
     return redirect
   }, [searchParams])
+
+  // Proxy bounce self-heal: a tab whose session is valid but whose shared cookie was stale at
+  // SSR time (per-tab sessions, sibling tab wrote the cookie) lands here with `?redirect=`. The
+  // page load already re-pointed the cookie to this tab, so just continue to the intended page.
+  // Plain /login without `redirect` is left alone so a new tab can still sign in as another account.
+  useEffect(() => {
+    if (hasAutoRedirected.current || !isAuthenticated || !searchParams.get("redirect")) return
+    hasAutoRedirected.current = true
+    router.replace(postLoginRedirect)
+  }, [isAuthenticated, searchParams, postLoginRedirect, router])
 
   useEffect(() => {
     if (hasShownAuthReasonToast.current) {

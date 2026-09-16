@@ -2,14 +2,18 @@
 
 import { Loader2 } from "lucide-react"
 import { useEffect, useState } from "react"
+import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
 import { showToast } from "@/components/ui/Toast"
 import SupplierDirectoryCard from "@/features/suppliers/components/SupplierDirectoryCard"
 import { addVendorFavorite, getMyFavoriteVendors, removeVendorFavorite, type VendorListItem } from "@/lib/api/vendors"
+
+const PAGE_SIZE = 12
 
 export default function FavoriteSuppliersPage({ embedded = false }: { embedded?: boolean }) {
   const [vendors, setVendors] = useState<VendorListItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
+  const [page, setPage] = useState(0)
 
   useEffect(() => {
     getMyFavoriteVendors()
@@ -47,6 +51,10 @@ export default function FavoriteSuppliersPage({ embedded = false }: { embedded?:
     isFavorite: true,
   }))
 
+  const totalPages = Math.max(1, Math.ceil(supplierItems.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages - 1)
+  const pageItems = supplierItems.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
+
   return (
     <section>
       {embedded ? null : (
@@ -69,15 +77,25 @@ export default function FavoriteSuppliersPage({ embedded = false }: { embedded?:
           No favorite vendors yet.
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {supplierItems.map((supplier) => (
-            <SupplierDirectoryCard
-              key={supplier.id}
-              supplier={supplier}
-              onToggleFavorite={() => handleToggleFavorite(supplier.id as string)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {pageItems.map((supplier) => (
+              <SupplierDirectoryCard
+                key={supplier.id}
+                supplier={supplier}
+                onToggleFavorite={() => handleToggleFavorite(supplier.id as string)}
+              />
+            ))}
+          </div>
+          <DashboardPagination
+            currentPage={safePage}
+            totalPages={totalPages}
+            totalElements={supplierItems.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setPage}
+            className="mt-6"
+          />
+        </>
       )}
     </section>
   )

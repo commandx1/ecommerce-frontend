@@ -2,8 +2,8 @@
 
 import { Edit3, LoaderCircle, Repeat, ShieldCheck, Trash2 } from "lucide-react"
 import React from "react"
+import ConfirmPopover from "@/components/feedback/ConfirmPopover"
 import { Button } from "@/components/ui/button"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import type { SavedPaymentMethod } from "../paymentMethodsData"
@@ -138,47 +138,22 @@ export default function PaymentMethodCard({
         </div>
         <div className="flex items-center gap-2">
           <IconButton label="Rename" onClick={() => onRename(method)} icon={<Edit3 className="h-4 w-4" />} />
-          <Popover
+          <ConfirmPopover
             open={deletePopoverOpenId === method.id}
             onOpenChange={(open) => setDeletePopoverOpenId(open ? method.id : null)}
+            trigger={<IconButton label="Remove" onClick={() => {}} icon={<Trash2 className="h-4 w-4" />} />}
+            title="Remove card?"
+            description={`${method.brandLabel} •••• ${method.last4} will be permanently deleted.`}
+            confirmText="Remove"
+            isLoading={isDeleting}
+            onConfirm={() => onRemove(method)}
           >
-            <PopoverTrigger asChild>
-              <IconButton label="Remove" onClick={() => {}} icon={<Trash2 className="h-4 w-4" />} />
-            </PopoverTrigger>
-            <PopoverContent side="top" className="w-64 p-4">
-              <p className="text-sm font-semibold text-text-primary">Remove card?</p>
-              <p className="mt-1 text-xs text-text-secondary">
-                {method.brandLabel} •••• {method.last4} will be permanently deleted.
+            {method.autoOrderCard ? (
+              <p className="mt-2 rounded-md bg-warning/10 px-2 py-1.5 text-xs text-warning">
+                This is your auto order card — removing it pauses all of your active auto orders.
               </p>
-              {method.autoOrderCard ? (
-                <p className="mt-2 rounded-md bg-warning/10 px-2 py-1.5 text-xs text-warning">
-                  This is your auto order card — removing it pauses all of your active auto orders.
-                </p>
-              ) : null}
-              <div className="mt-3 flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="quiet"
-                  size="sm"
-                  disabled={isDeleting}
-                  onClick={() => setDeletePopoverOpenId(null)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  disabled={isDeleting}
-                  onClick={() => onRemove(method)}
-                  className={cn("relative transition-[padding] duration-200", isDeleting && "pl-7")}
-                >
-                  <ButtonSpinner show={isDeleting} />
-                  Remove
-                </Button>
-              </div>
-            </PopoverContent>
-          </Popover>
+            ) : null}
+          </ConfirmPopover>
         </div>
       </div>
 
@@ -189,43 +164,21 @@ export default function PaymentMethodCard({
 
       <div className="mt-4 flex flex-wrap gap-2">
         {method.status !== "default" ? (
-          <Popover
+          <ConfirmPopover
             open={defaultPopoverOpenId === method.id}
             onOpenChange={(open) => setDefaultPopoverOpenId(open ? method.id : null)}
-          >
-            <PopoverTrigger asChild>
+            trigger={
               <Button type="button" variant="outline" size="sm">
                 Set as Default
               </Button>
-            </PopoverTrigger>
-            <PopoverContent side="top" className="w-64 p-4">
-              <p className="text-sm font-semibold text-text-primary">Set as default?</p>
-              <p className="mt-1 text-xs text-text-secondary">
-                {method.brandLabel} •••• {method.last4} will be used for all future invoices.
-              </p>
-              <div className="mt-3 flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="quiet"
-                  size="sm"
-                  disabled={isSettingDefault}
-                  onClick={() => setDefaultPopoverOpenId(null)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  disabled={isSettingDefault}
-                  onClick={() => onSetDefault(method)}
-                  className={cn("relative transition-[padding] duration-200", isSettingDefault && "pl-7")}
-                >
-                  <ButtonSpinner show={isSettingDefault} />
-                  OK
-                </Button>
-              </div>
-            </PopoverContent>
-          </Popover>
+            }
+            title="Set as default?"
+            description={`${method.brandLabel} •••• ${method.last4} will be used for all future invoices.`}
+            confirmText="OK"
+            isDanger={false}
+            isLoading={isSettingDefault}
+            onConfirm={() => onSetDefault(method)}
+          />
         ) : (
           <Button type="button" variant="outline" size="sm" disabled>
             Default Card

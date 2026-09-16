@@ -56,12 +56,41 @@ describe("SupplierDirectoryCard", () => {
     expect(screen.queryByRole("link", { name: "Contact supplier" })).not.toBeInTheDocument()
   })
 
-  it("labels the favourite control by what clicking it will do", async () => {
+  it("labels the favourite control by what clicking it will do", () => {
+    render(<SupplierDirectoryCard supplier={makeSupplier({ isFavorite: true })} />)
+
+    expect(screen.getByRole("button", { name: "Remove from favorites" })).toBeInTheDocument()
+  })
+
+  it("adds a favourite immediately with a single click", async () => {
+    const user = userEvent.setup()
+    const onToggleFavorite = vi.fn()
+    render(<SupplierDirectoryCard supplier={makeSupplier({ isFavorite: false })} onToggleFavorite={onToggleFavorite} />)
+
+    await user.click(screen.getByRole("button", { name: "Save to favorites" }))
+
+    expect(onToggleFavorite).toHaveBeenCalledTimes(1)
+    expect(screen.queryByText("Remove from favorites?")).not.toBeInTheDocument()
+  })
+
+  it("asks for confirmation before removing a favourite", async () => {
     const user = userEvent.setup()
     const onToggleFavorite = vi.fn()
     render(<SupplierDirectoryCard supplier={makeSupplier({ isFavorite: true })} onToggleFavorite={onToggleFavorite} />)
 
     await user.click(screen.getByRole("button", { name: "Remove from favorites" }))
+
+    expect(screen.getByText("Remove from favorites?")).toBeInTheDocument()
+    expect(onToggleFavorite).not.toHaveBeenCalled()
+  })
+
+  it("removes the favourite only after confirming", async () => {
+    const user = userEvent.setup()
+    const onToggleFavorite = vi.fn()
+    render(<SupplierDirectoryCard supplier={makeSupplier({ isFavorite: true })} onToggleFavorite={onToggleFavorite} />)
+
+    await user.click(screen.getByRole("button", { name: "Remove from favorites" }))
+    await user.click(screen.getByRole("button", { name: "Remove" }))
 
     expect(onToggleFavorite).toHaveBeenCalledTimes(1)
   })

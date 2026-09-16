@@ -176,6 +176,98 @@ export function filterTreeByQuery(tree: CategoryFacetNode[], query: string): Cat
   return filterNodes(tree)
 }
 
+function findFacetNode(nodes: CategoryFacetNode[], fullPath: string): CategoryFacetNode | undefined {
+  for (const node of nodes) {
+    if (node.fullPath === fullPath) {
+      return node
+    }
+    if (isSameOrDescendant(fullPath, node.fullPath)) {
+      const found = findFacetNode(node.children, fullPath)
+      if (found) {
+        return found
+      }
+    }
+  }
+  return undefined
+}
+
+/**
+ * Toggle `fullPath` in/out of `selected`, given the backend's "path is a prefix match" semantics:
+ * - Already selected -> remove it.
+ * - Implicitly selected (a selected ancestor covers it) -> "exclude" it: drop the ancestor and re-add every
+ *   sibling branch from the ancestor down to the target's parent, skipping the branch that leads to the target.
+ *   ponytail: this expands every intermediate category on the path into its children, so a product assigned
+ *   directly to one of those intermediate categories (not to a leaf) is dropped from the selection. QA data
+ *   only has products on leaf paths today; revisit if that changes.
+ * - Otherwise -> select it, drop any selected descendants, then merge up: whenever every child of a tree
+ *   node ends up selected, replace them with the parent, repeating toward the root.
+ */
+export function toggleCategorySelection(tree: CategoryFacetNode[], selected: string[], fullPath: string): string[] {
+  if (selected.includes(fullPath)) {
+    return selected.filter((path) => path !== fullPath)
+  }
+
+  const selectedAncestor = selected.find((path) => path !== fullPath && isSameOrDescendant(fullPath, path))
+
+  if (selectedAncestor !== undefined) {
+    const withoutAncestor = selected.filter((path) => path !== selectedAncestor)
+    const ancestorNode = findFacetNode(tree, selectedAncestor)
+    if (!ancestorNode) {
+      return withoutAncestor
+    }
+
+    const targetSegments = splitCategoryPath(fullPath)
+    const ancestorSegments = splitCategoryPath(selectedAncestor)
+    const additions: string[] = []
+    let node = ancestorNode
+
+    for (let i = ancestorSegments.length; i < targetSegments.length; i++) {
+      const nextLabel = targetSegments[i]
+      const nextNode = node.children.find((child) => child.label === nextLabel)
+      for (const child of node.children) {
+        if (child.label !== nextLabel) {
+          additions.push(child.fullPath)
+        }
+      }
+      if (!nextNode) {
+        break
+      }
+      node = nextNode
+    }
+
+    return [...withoutAncestor, ...additions]
+  }
+
+  const withoutDescendants = selected.filter((path) => !isSameOrDescendant(path, fullPath))
+  let result = [...withoutDescendants, fullPath]
+  let currentPath = fullPath
+
+  while (true) {
+    const segments = splitCategoryPath(currentPath)
+    if (segments.length <= 1) {
+      break
+    }
+
+    const parentPath = segments.slice(0, -1).join(CATEGORY_PATH_SEPARATOR)
+    const parentNode = findFacetNode(tree, parentPath)
+    if (!parentNode || parentNode.children.length === 0) {
+      break
+    }
+
+    const allChildrenSelected = parentNode.children.every((child) => result.includes(child.fullPath))
+    if (!allChildrenSelected) {
+      break
+    }
+
+    const childPaths = new Set(parentNode.children.map((child) => child.fullPath))
+    result = result.filter((path) => !childPaths.has(path))
+    result.push(parentPath)
+    currentPath = parentPath
+  }
+
+  return result
+}
+
 /** fullPaths of every node in `tree` that has at least one child (used to compute "expand all matches"). */
 export function collectBranchPaths(tree: CategoryFacetNode[]): string[] {
   const paths: string[] = []

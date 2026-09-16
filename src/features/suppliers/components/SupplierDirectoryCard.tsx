@@ -1,5 +1,8 @@
 import { Heart, Mail, Star } from "lucide-react"
 import Link from "next/link"
+import type React from "react"
+import { useState } from "react"
+import ConfirmPopover from "@/components/feedback/ConfirmPopover"
 import { SpotlightCard } from "@/components/ui/spotlight-card"
 import SupplierAboutText from "@/features/suppliers/components/SupplierAboutText"
 import type { SupplierDirectoryItem } from "@/features/suppliers/suppliersPageData"
@@ -14,6 +17,17 @@ export default function SupplierDirectoryCard({
   supplier: SupplierDirectoryItem
   onToggleFavorite?: () => void
 }) {
+  const [open, setOpen] = useState(false)
+
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault()
+    if (supplier.isFavorite) {
+      setOpen(true)
+      return
+    }
+    onToggleFavorite?.()
+  }
+
   return (
     <SpotlightCard className="h-full rounded-[1.25rem] shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-panel">
       <article className="flex h-full flex-col overflow-hidden rounded-[1.25rem] bg-surface-elevated p-6">
@@ -22,17 +36,30 @@ export default function SupplierDirectoryCard({
             <h3 className="text-xl font-semibold text-text-primary">{supplier.name}</h3>
             {supplier.location ? <p className="mt-1 text-sm text-text-secondary">{supplier.location}</p> : null}
           </div>
-          <button
-            type="button"
-            onClick={onToggleFavorite}
-            className={cn(
-              "transition-colors",
-              supplier.isFavorite ? "text-rose-500 hover:text-rose-600" : "text-text-muted hover:text-rose-500",
-            )}
-            aria-label={supplier.isFavorite ? "Remove from favorites" : "Save to favorites"}
-          >
-            <Heart className={cn("h-5 w-5", supplier.isFavorite ? "fill-current" : "")} />
-          </button>
+          <ConfirmPopover
+            open={open}
+            onOpenChange={setOpen}
+            title="Remove from favorites?"
+            description="This supplier will be removed from your favorites."
+            confirmText="Remove"
+            onConfirm={() => {
+              onToggleFavorite?.()
+              setOpen(false)
+            }}
+            trigger={
+              <button
+                type="button"
+                onClick={handleClick}
+                className={cn(
+                  "transition-colors",
+                  supplier.isFavorite ? "text-rose-500 hover:text-rose-600" : "text-text-muted hover:text-rose-500",
+                )}
+                aria-label={supplier.isFavorite ? "Remove from favorites" : "Save to favorites"}
+              >
+                <Heart className={cn("h-5 w-5", supplier.isFavorite ? "fill-current" : "")} />
+              </button>
+            }
+          />
         </div>
 
         <div className="mb-3 flex items-center gap-2">

@@ -20,7 +20,7 @@ export default function RegisterForm() {
   const initialToken = searchParams.get("token") ?? undefined
   const initialRole = searchParams.get("role") === "TEAM_MEMBER" ? "TEAM_MEMBER" : undefined
   const isTokenFlow = !!initialToken
-  const { logout, isAuthenticated } = useAuthStore()
+  const { clearLocalSession, isAuthenticated } = useAuthStore()
   const {
     confirmPassword,
     errors,
@@ -47,10 +47,12 @@ export default function RegisterForm() {
   const lastSubmitErrorTokenRef = useRef<number | null>(null)
 
   useEffect(() => {
+    // This invite tab inherited another tab's session on load (shared cookie) - drop it locally
+    // without revoking the server token or logging out sibling tabs.
     if (initialToken && isAuthenticated) {
-      logout()
+      clearLocalSession()
     }
-  }, [initialToken, isAuthenticated, logout])
+  }, [initialToken, isAuthenticated, clearLocalSession])
 
   useEffect(() => {
     if (errors.submit && submitErrorToken !== lastSubmitErrorTokenRef.current) {

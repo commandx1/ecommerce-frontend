@@ -58,6 +58,7 @@ export default async function RootLayout({
         <ThemeProvider>
           <StripeConfigProvider publishableKey={stripePublishableKey}>
             <QueryProvider>
+              {/* Must stay the first sibling so its restore effect runs before any page effect reads the auth store. */}
               <AuthHydration />
               <ConditionalNavbar initialAuthState={initialState} />
               {children}

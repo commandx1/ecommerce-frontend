@@ -143,6 +143,7 @@ test.describe("suppliers directory", () => {
         request.method() === "DELETE" && request.url().endsWith(`/backend-api/vendors/${VENDOR_A.id}/favorite`),
     )
     await favoriteButton.click()
+    await buyerPage.getByRole("button", { name: "Remove", exact: true }).click()
     await removeRequest
     await expect(favoriteButton).toHaveAccessibleName("Save to favorites")
   })

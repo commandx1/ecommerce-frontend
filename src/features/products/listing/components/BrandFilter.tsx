@@ -52,14 +52,14 @@ const BrandFilter = ({ brands }: BrandFilterProps) => {
       )}
       <div className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
         {visibleItems.map((option) => (
-          <div key={option.name} className="flex items-center justify-between gap-2">
+          <div key={option.name} className="flex items-start justify-between gap-2">
             <CheckboxField
               id={`${uid}-brand-${option.name}`}
               label={option.name}
               checked={currentBrands.includes(option.name)}
               onChange={() => toggle(option.name)}
             />
-            <span className="shrink-0 text-xs text-text-muted">{option.count}</span>
+            <span className="shrink-0 leading-5 text-xs text-text-muted">{option.count}</span>
           </div>
         ))}
         {filtered.length === 0 && <p className="text-sm italic text-text-muted">No brands found</p>}

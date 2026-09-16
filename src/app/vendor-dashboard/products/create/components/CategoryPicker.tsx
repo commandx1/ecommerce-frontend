@@ -1,7 +1,7 @@
 "use client"
 
 import { ChevronRight } from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import SearchableSelect from "@/components/ui/searchable-select"
 import { type CategoryNode, type CategoryPath, getChildren, ROOT_CATEGORY } from "@/lib/category-tree"
 
 export interface CategoryPickerProps {
@@ -15,7 +15,7 @@ export interface CategoryPickerProps {
 }
 
 const DEFAULT_TRIGGER_CLASSNAME =
-  "w-full rounded-lg border-border-soft bg-surface-elevated px-4 py-3 text-text-primary shadow-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:bg-surface disabled:opacity-60"
+  "w-full rounded-lg border border-border-soft bg-surface-elevated px-4 py-3 text-text-primary shadow-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:bg-surface disabled:opacity-60"
 
 interface Column {
   /** 0-based level index; Category (k + 2) in the UI. */
@@ -62,18 +62,14 @@ export default function CategoryPicker({
           <label htmlFor={`${idBase}-level-1`} className="block text-sm font-medium text-text-primary mb-2">
             Category 1
           </label>
-          <Select value={ROOT_CATEGORY} disabled onValueChange={() => {}}>
-            <SelectTrigger
-              id={`${idBase}-level-1`}
-              className={`${triggerClass} [&>span]:truncate`}
-              title={ROOT_CATEGORY}
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ROOT_CATEGORY}>{ROOT_CATEGORY}</SelectItem>
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            id={`${idBase}-level-1`}
+            value={ROOT_CATEGORY}
+            options={[{ value: ROOT_CATEGORY, label: ROOT_CATEGORY }]}
+            onValueChange={() => {}}
+            disabled
+            className={triggerClass}
+          />
         </div>
 
         {columns.map(({ k, options }) => {
@@ -89,35 +85,24 @@ export default function CategoryPicker({
               >
                 Category {levelNum}
               </label>
-              <Select
-                value={selected ?? ""}
+              <SearchableSelect
+                id={`${idBase}-level-${levelNum}`}
+                value={selected ?? null}
                 onValueChange={(next) => onChange([...path.slice(0, k), next])}
                 disabled={disabled}
-              >
-                <SelectTrigger
-                  id={`${idBase}-level-${levelNum}`}
-                  aria-invalid={isErrorTarget || undefined}
-                  title={selected}
-                  className={`${triggerClass} [&>span]:truncate ${isErrorTarget ? "border-destructive" : ""}`}
-                >
-                  {/* Explicit children stop Radix from copying the option's ItemText (which carries the
-                      branch chevron) into the trigger; the trigger shows the bare name only. */}
-                  <SelectValue placeholder="Select…">{selected}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {options.map((option) => {
-                    const isBranch = !!option.children && option.children.length > 0
-                    return (
-                      <SelectItem key={option.name} value={option.name} data-branch={isBranch ? "true" : undefined}>
-                        {option.name}
-                        {isBranch && (
-                          <ChevronRight aria-hidden className="ml-auto mr-6 w-4 h-4 text-text-muted shrink-0" />
-                        )}
-                      </SelectItem>
-                    )
-                  })}
-                </SelectContent>
-              </Select>
+                aria-invalid={isErrorTarget || undefined}
+                className={`${triggerClass} ${isErrorTarget ? "border-destructive" : ""}`}
+                options={options.map((option) => {
+                  const isBranch = !!option.children && option.children.length > 0
+                  return {
+                    value: option.name,
+                    label: option.name,
+                    suffix: isBranch ? (
+                      <ChevronRight aria-hidden className="w-4 h-4 text-text-muted shrink-0" />
+                    ) : undefined,
+                  }
+                })}
+              />
             </div>
           )
         })}

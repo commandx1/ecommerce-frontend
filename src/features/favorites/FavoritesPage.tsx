@@ -43,7 +43,7 @@ export default function FavoritesPage() {
           options={TAB_OPTIONS}
           onValueChange={handleTabChange}
           className="self-start"
-          listClassName="rounded-full p-1"
+          listClassName="p-1"
           triggerClassName="h-10 px-5 text-sm"
         />
       </div>

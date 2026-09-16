@@ -37,14 +37,11 @@ export async function proxy(request: NextRequest) {
   }
 
   // Vendor users can only access vendor dashboard routes
-  // Exception: /register?token=... is the admin-invited signup flow — let it through
-  const isSignupLinkFlow = pathname === "/register" && url.searchParams.has("token")
-  if (
-    isAuthenticated &&
-    user?.roleName === "Vendor" &&
-    !pathname.startsWith("/vendor-dashboard") &&
-    !isSignupLinkFlow
-  ) {
+  // Auth pages establish or replace THIS tab's session (per-tab sessions), so a vendor cookie
+  // left by another tab must never bounce them to /vendor-dashboard.
+  const AUTH_PATHS = ["/login", "/register", "/verify-email", "/verify-2fa", "/forgot-password", "/reset-password"]
+  const isAuthPage = pathname.startsWith("/auth/") || AUTH_PATHS.includes(pathname)
+  if (isAuthenticated && user?.roleName === "Vendor" && !pathname.startsWith("/vendor-dashboard") && !isAuthPage) {
     return NextResponse.redirect(new URL("/vendor-dashboard", request.url))
   }
 

@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { cookieStorage } from "@/lib/storage/cookie-storage"
+import { onLogoutBroadcast } from "@/lib/storage/session-events"
+import { bindActiveTabSync, tabSessionStorage } from "@/lib/storage/tab-session-storage"
 import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
 
@@ -19,6 +20,9 @@ export function useAuthHydration() {
   const isAdminImpersonating = useAuthStore((state) => state.isAdminImpersonating)
   const fetchCart = useCartStore((state) => state.fetchCart)
 
+  // Mount-only: this is a one-shot restore after a hard refresh. Re-running on every auth change
+  // would re-read storage right after a cross-tab `clearLocalSession()` and could undo the clear.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: mount-only fallback, see comment above
   useEffect(() => {
     // Only run on client-side
     if (typeof window === "undefined") {
@@ -28,7 +32,7 @@ export function useAuthHydration() {
     // Check if we need to restore from cookie
     if (!isAuthenticated || !user || !accessToken) {
       try {
-        const cookieData = cookieStorage.getItem("auth-storage")
+        const cookieData = tabSessionStorage.getItem("auth-storage")
         if (cookieData) {
           let parsed = null
           try {
@@ -55,7 +59,7 @@ export function useAuthHydration() {
     }
 
     setIsHydrated(true)
-  }, [isAuthenticated, user, accessToken, setUser, setTokens]) // Include dependencies
+  }, [])
 
   // Fetch cart once authenticated (only for non-impersonating users)
   useEffect(() => {
@@ -63,6 +67,22 @@ export function useAuthHydration() {
       fetchCart()
     }
   }, [isAuthenticated, accessToken, isAdminImpersonating, fetchCart])
+
+  // Keep the shared cookie pointed at this tab while it's focused, and drop this tab's session
+  // locally (without touching the server or sibling tabs) if the same account logs out elsewhere.
+  useEffect(() => {
+    const unbindSync = bindActiveTabSync("auth-storage")
+    const unbindLogout = onLogoutBroadcast((userId) => {
+      const state = useAuthStore.getState()
+      if (state.user?.id === userId) {
+        void state.clearLocalSession()
+      }
+    })
+    return () => {
+      unbindSync()
+      unbindLogout()
+    }
+  }, [])
 
   return isHydrated
 }

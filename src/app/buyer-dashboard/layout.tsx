@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useId, useRef, useState } from "react"
 import { DashboardMobileSidebarProvider } from "@/components/layout/DashboardMobileSidebarContext"
 import NotificationSocketBridge from "@/features/notifications/components/NotificationSocketBridge"
-import { cookieStorage } from "@/lib/storage/cookie-storage"
+import { tabSessionStorage } from "@/lib/storage/tab-session-storage"
 import { useAuthStore } from "@/stores/authStore"
 import BuyerDashboardLayoutSkeleton from "./components/BuyerDashboardLayoutSkeleton"
 import BuyerHeader from "./components/BuyerHeader"
@@ -26,7 +26,7 @@ export default function BuyerDashboardLayout({ children }: { children: React.Rea
     // Check cookie directly first (before hydration completes)
     const checkAuth = () => {
       try {
-        const cookieData = cookieStorage.getItem("auth-storage")
+        const cookieData = tabSessionStorage.getItem("auth-storage")
         if (cookieData) {
           const parsed = JSON.parse(cookieData)
           const storedUser = parsed?.state?.user

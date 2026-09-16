@@ -215,11 +215,36 @@ describe("CategoryFilter", () => {
     const deepCheckbox = screen.getByLabelText("Endo organizers & accessories")
     expect(deepCheckbox).toBeInTheDocument()
     expect(deepCheckbox).toBeChecked()
-    expect(deepCheckbox).toBeDisabled()
+    expect(deepCheckbox).toBeEnabled()
 
     const branchCheckbox = screen.getByLabelText("Endodontic accessories")
     expect(branchCheckbox).toBeChecked()
     expect(branchCheckbox).toBeEnabled()
+  })
+
+  it("excludes one child from an implicitly-selected branch, keeping siblings selected", async () => {
+    const user = userEvent.setup()
+    const { router } = renderWithFilterNavigation(
+      <CategoryFilter categories={categories} />,
+      "categories=Endodontic+products",
+    )
+
+    await user.click(screen.getByRole("button", { name: "Expand Endodontic accessories" }))
+    await user.click(screen.getByLabelText("Endo organizers & accessories"))
+
+    expect(lastPushedParams(router).getAll("categories")).toEqual([
+      "Endodontic products > Endodontic sealers & cements",
+    ])
+  })
+
+  it("marks the root checkbox indeterminate when only a descendant is selected", () => {
+    renderWithFilterNavigation(
+      <CategoryFilter categories={categories} />,
+      "categories=Endodontic+products+%3E+Endodontic+accessories",
+    )
+
+    const rootCheckbox = screen.getByLabelText("Endodontic products")
+    expect((rootCheckbox as HTMLInputElement).indeterminate).toBe(true)
   })
 
   it("selecting a parent drops an already-selected descendant", async () => {

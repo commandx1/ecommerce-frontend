@@ -82,6 +82,7 @@ describe("FavoriteProductsTab remove-from-card flow", () => {
     await screen.findByText(item.productName)
 
     await user.click(screen.getByRole("button", { name: "Remove from favorites" }))
+    await user.click(await screen.findByRole("button", { name: "Remove" }))
 
     await waitFor(() => expect(screen.queryByText(item.productName)).not.toBeInTheDocument())
     expect(deletedId).toBe(item.productId)
@@ -94,8 +95,72 @@ describe("FavoriteProductsTab remove-from-card flow", () => {
     await screen.findByText(item.productName)
 
     await user.click(screen.getByRole("button", { name: "Remove from favorites" }))
+    await user.click(await screen.findByRole("button", { name: "Remove" }))
 
     expect(await screen.findByText(item.productName)).toBeInTheDocument()
     expect(mockToastError).toHaveBeenCalledWith("Action failed", expect.any(String))
+  })
+})
+
+describe("FavoriteProductsTab pagination", () => {
+  const manyItems = Array.from({ length: 13 }, (_, i) =>
+    makeFavoriteProductItem({ productId: `p-${i}`, productName: `Product ${i}` }),
+  )
+
+  it("shows 12 cards on page 1, with pagination, and 1 card after clicking next", async () => {
+    server.use(
+      http.get("*/backend-api/products/favorites", () => HttpResponse.json(manyItems)),
+      http.get("*/backend-api/products/favorite-ids", () => HttpResponse.json(manyItems.map((p) => p.productId))),
+    )
+    const user = userEvent.setup()
+    render(<FavoriteProductsTab />)
+
+    await screen.findByText("Product 0")
+    for (let i = 0; i < 12; i++) {
+      expect(screen.getByText(`Product ${i}`)).toBeInTheDocument()
+    }
+    expect(screen.queryByText("Product 12")).not.toBeInTheDocument()
+    expect(screen.getByRole("navigation", { name: "pagination" })).toBeInTheDocument()
+
+    await user.click(screen.getByText("Next"))
+
+    expect(await screen.findByText("Product 12")).toBeInTheDocument()
+    expect(screen.queryByText("Product 0")).not.toBeInTheDocument()
+  })
+
+  it("falls back to page 1 and hides pagination once the last item on page 2 is removed", async () => {
+    signIn()
+    server.use(
+      http.get("*/backend-api/products/favorites", () => HttpResponse.json(manyItems)),
+      http.get("*/backend-api/products/favorite-ids", () => HttpResponse.json(manyItems.map((p) => p.productId))),
+      http.delete("*/backend-api/products/:productId/favorite", () => new HttpResponse(null, { status: 200 })),
+    )
+    const user = userEvent.setup()
+    render(<FavoriteProductsTab />)
+
+    await screen.findByText("Product 0")
+    await user.click(screen.getByText("Next"))
+    await screen.findByText("Product 12")
+
+    await user.click(screen.getByRole("button", { name: "Remove from favorites" }))
+    await user.click(await screen.findByRole("button", { name: "Remove" }))
+
+    await waitFor(() => expect(screen.queryByText("Product 12")).not.toBeInTheDocument())
+    for (let i = 0; i < 12; i++) {
+      expect(screen.getByText(`Product ${i}`)).toBeInTheDocument()
+    }
+    expect(screen.queryByRole("navigation", { name: "pagination" })).not.toBeInTheDocument()
+  })
+
+  it("renders no pagination control with 12 or fewer items", async () => {
+    const twelveItems = manyItems.slice(0, 12)
+    server.use(
+      http.get("*/backend-api/products/favorites", () => HttpResponse.json(twelveItems)),
+      http.get("*/backend-api/products/favorite-ids", () => HttpResponse.json(twelveItems.map((p) => p.productId))),
+    )
+    render(<FavoriteProductsTab />)
+
+    await screen.findByText("Product 0")
+    expect(screen.queryByRole("navigation", { name: "pagination" })).not.toBeInTheDocument()
   })
 })

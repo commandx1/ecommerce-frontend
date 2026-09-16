@@ -115,11 +115,11 @@ export default function VendorOrdersTable({
         </Button>
       ),
       cell: ({ row }) => (
-        <>
+        <div>
           <p>{formatDateOnly(row.original.orderCreatedDate)}</p>
           <p className="text-xs">{formatTimeOnly(row.original.orderCreatedDate)}</p>
           {row.original.autoOrder ? <AutoOrderBadge isBuyerView={false} /> : null}
-        </>
+        </div>
       ),
       meta: {
         cellClassName: "px-6 py-4 text-text-muted",
@@ -133,7 +133,7 @@ export default function VendorOrdersTable({
           type="button"
           variant="unstyled"
           onClick={() => onSortToggle("quantity")}
-          className="inline-flex w-full items-center justify-end gap-1 text-xs font-semibold tracking-wider text-text-muted uppercase hover:text-text-secondary"
+          className="inline-flex items-center gap-1 text-xs font-semibold tracking-wider text-text-muted uppercase hover:text-text-secondary"
           aria-label={`Sort by quantity ${sortBy === "quantity" && sortDir === "desc" ? "ascending" : "descending"}`}
         >
           Quantity
@@ -153,8 +153,8 @@ export default function VendorOrdersTable({
         return <p className="font-medium text-text-primary">{quantity}</p>
       },
       meta: {
-        cellClassName: "border-l-2 border-border-soft px-6 py-4 text-right text-text-secondary",
-        headerClassName: "border-l-2 border-border-soft px-6 py-4 text-right",
+        cellClassName: "px-6 py-4 text-text-secondary",
+        headerClassName: "px-6 py-4",
       },
     },
     {
@@ -166,8 +166,8 @@ export default function VendorOrdersTable({
         </p>
       ),
       meta: {
-        cellClassName: "px-6 py-4 text-right text-text-secondary",
-        headerClassName: "px-6 py-4 text-right",
+        cellClassName: "px-6 py-4 text-text-secondary",
+        headerClassName: "px-6 py-4",
       },
     },
     {
@@ -177,7 +177,7 @@ export default function VendorOrdersTable({
           type="button"
           variant="unstyled"
           onClick={() => onSortToggle("price")}
-          className="inline-flex w-full items-center justify-end gap-1 text-xs font-semibold tracking-wider text-text-muted uppercase hover:text-text-secondary"
+          className="inline-flex items-center gap-1 text-xs font-semibold tracking-wider text-text-muted uppercase hover:text-text-secondary"
           aria-label={`Sort by price ${sortBy === "price" && sortDir === "desc" ? "ascending" : "descending"}`}
         >
           Price
@@ -197,8 +197,8 @@ export default function VendorOrdersTable({
         return <p className="font-semibold text-brand">{formatCurrency(total)}</p>
       },
       meta: {
-        cellClassName: "border-l-2 border-border-soft px-6 py-4 text-right",
-        headerClassName: "border-l-2 border-border-soft px-6 py-4 text-right",
+        cellClassName: "px-6 py-4",
+        headerClassName: "px-6 py-4",
       },
     },
     {
@@ -206,8 +206,8 @@ export default function VendorOrdersTable({
       header: () => "Shipping",
       cell: ({ row }) => <p>{formatCurrency(getVendorOrderShippingWithHeavyTotal(row.original))}</p>,
       meta: {
-        cellClassName: "px-6 py-4 text-right text-text-secondary",
-        headerClassName: "px-6 py-4 text-right",
+        cellClassName: "px-6 py-4 text-text-secondary",
+        headerClassName: "px-6 py-4",
       },
     },
     {
@@ -221,8 +221,8 @@ export default function VendorOrdersTable({
         </span>
       ),
       meta: {
-        cellClassName: "border-l-2 border-border-soft px-6 py-4",
-        headerClassName: "border-l-2 border-border-soft px-6 py-4",
+        cellClassName: "px-6 py-4",
+        headerClassName: "px-6 py-4",
       },
     },
     {
@@ -287,8 +287,8 @@ export default function VendorOrdersTable({
         )
       },
       meta: {
-        cellClassName: "border-l-2 border-border-soft px-6 py-4 text-right",
-        headerClassName: "border-l-2 border-border-soft px-6 py-4 text-right",
+        cellClassName: "px-6 py-4",
+        headerClassName: "px-6 py-4",
       },
     },
     {

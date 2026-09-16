@@ -2,6 +2,7 @@
 
 import { waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { __resetTabSessionStorageForTests } from "@/lib/storage/tab-session-storage"
 import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
 import { renderWithProviders } from "@/test/render"
@@ -43,6 +44,15 @@ const clearAllCookies = (): void => {
 // running before the global unmount.
 beforeEach(() => {
   clearAllCookies()
+  // `resetAllStores()` in the global `afterEach` calls `clearAuth()`, which - now that the store
+  // persists via `tabSessionStorage` - also writes an empty (but present) state into
+  // `sessionStorage`. Without clearing it here, that leftover entry would take priority over the
+  // raw cookie these tests write directly, since `tabSessionStorage.getItem` reads sessionStorage
+  // before falling back to the cookie.
+  sessionStorage.clear()
+  // `tabSessionStorage` only inherits the cookie into a fresh sessionStorage once per page load;
+  // each test below simulates a separate page load, so reset the gate.
+  __resetTabSessionStorageForTests()
   useCartStore.setState({ fetchCart: vi.fn(async () => {}) })
 })
 

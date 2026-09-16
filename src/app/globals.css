@@ -675,6 +675,47 @@ button {
   animation: shine var(--shine-duration, 14s) infinite linear;
 }
 
+/* ── Rotating border beam (Uber Direct badge) ── */
+
+@keyframes beam-spin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+.beam-border {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Rotating square larger than the pill, so the wide badge's corners stay covered at every angle.
+   The faint green track keeps the pill edge visible while the beam is on the far side. */
+.beam-border::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: -2;
+  width: 200%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: conic-gradient(rgb(22 163 74 / 0.18) 0 65%, #16a34a, #4ade80, #bbf7d0, rgb(22 163 74 / 0.18) 100%);
+  animation: beam-spin 3s linear infinite;
+  pointer-events: none;
+}
+
+/* Inner fill leaves a 2px ring through which the beam shows. */
+.beam-border::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  z-index: -1;
+  border-radius: inherit;
+  background: #fff;
+  pointer-events: none;
+}
+
 @keyframes moveHorizontal {
   0% {
     transform: translateX(-50%) translateY(-10%);
@@ -828,6 +869,11 @@ button {
 
   .hero-route-packet {
     display: none;
+  }
+
+  /* The universal rule above loses to `.beam-border::before` on specificity; stop the beam explicitly. */
+  .beam-border::before {
+    animation: none;
   }
 }
 

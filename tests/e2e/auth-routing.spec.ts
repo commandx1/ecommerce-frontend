@@ -10,10 +10,13 @@ import { buildAuthCookie, buildVendorAuthCookie } from "./fixtures/auth-cookie"
  *      `isAuthenticated = false`.
  *   2. Vendor guard (runs BEFORE the dashboard block, and independently of
  *      it): `isAuthenticated === true` AND `user.roleName === "Vendor"` AND
- *      path does not start with "/vendor-dashboard" AND NOT the
- *      `/register?token=...` signup-link exception -> redirect to
- *      /vendor-dashboard. This fires for ANY path, not just dashboard paths
- *      (e.g. Vendor hitting /products). (K14 fix: the guard now also checks
+ *      path does not start with "/vendor-dashboard" AND is NOT an auth page
+ *      (/login, /register, /verify-*, /forgot-password, /reset-password,
+ *      /auth/*) -> redirect to /vendor-dashboard. This fires for ANY path,
+ *      not just dashboard paths (e.g. Vendor hitting /products). Auth pages
+ *      are exempt because sessions are per-tab: a new tab must be able to
+ *      sign in as a different account even while a vendor cookie from
+ *      another tab is still in the shared auth-storage cookie. (K14 fix: the guard now also checks
  *      isAuthenticated - previously an unauthenticated-but-Vendor-shaped
  *      cookie was bounced here too, chaining into an infinite redirect loop
  *      with the dashboard block below. See the two K14 regression tests.)
@@ -97,11 +100,16 @@ test.describe("auth-routing (src/proxy.ts)", () => {
     await expect(page).toHaveURL(/\/register\?token=abc123/)
   })
 
-  test("Vendor hitting /register WITHOUT a token is redirected to /vendor-dashboard (the signup-link exception requires the token param)", async ({
+  test("Vendor hitting /register WITHOUT a token passes through (auth pages are exempt from the vendor jail)", async ({
     vendorPage,
   }) => {
     await vendorPage.goto("/register", { waitUntil: "domcontentloaded" })
-    await expect(vendorPage).toHaveURL(/\/vendor-dashboard$/)
+    await expect(vendorPage).toHaveURL(/\/register$/)
+  })
+
+  test("Vendor hitting /login passes through", async ({ vendorPage }) => {
+    await vendorPage.goto("/login", { waitUntil: "domcontentloaded" })
+    await expect(vendorPage).toHaveURL(/\/login$/)
   })
 
   test("a broken/unparseable auth-storage cookie is treated as unauthenticated -> /login", async ({

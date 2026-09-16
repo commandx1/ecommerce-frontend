@@ -13,6 +13,7 @@ import {
   collectBranchPaths,
   filterTreeByQuery,
   isSameOrDescendant,
+  toggleCategorySelection,
 } from "../lib/category-facet-tree"
 
 function hasAnyBranch(tree: CategoryFacetNode[]): boolean {
@@ -45,17 +46,21 @@ function TreeNode({
   const hasSelectedAncestor = currentCategories.some(
     (sel) => sel !== node.fullPath && isSameOrDescendant(node.fullPath, sel),
   )
+  const isIndeterminate =
+    !isSelected &&
+    !hasSelectedAncestor &&
+    currentCategories.some((sel) => sel !== node.fullPath && isSameOrDescendant(sel, node.fullPath))
 
   return (
     <div>
-      <div className="flex items-center gap-1 min-h-[28px]" style={{ paddingLeft: depth * 16 }}>
+      <div className="flex items-start gap-1" style={{ paddingLeft: depth * 20 }}>
         {hasChildren ? (
           <button
             type="button"
             aria-label={`${open ? "Collapse" : "Expand"} ${node.label}`}
             aria-expanded={open}
             onClick={() => onToggleExpand(node.fullPath)}
-            className="flex w-3.5 shrink-0 items-center justify-center"
+            className="flex h-5 w-4 shrink-0 items-center justify-center"
           >
             {open ? (
               <ChevronDown className="w-3.5 h-3.5 shrink-0 text-text-muted" />
@@ -64,22 +69,24 @@ function TreeNode({
             )}
           </button>
         ) : (
-          <span className="w-3.5 shrink-0" />
+          <span className="h-5 w-4 shrink-0" />
         )}
-        <div className="flex items-center justify-between gap-2 w-full">
+        <div className="flex items-start justify-between gap-2 w-full">
           <CheckboxField
             id={`${uid}-cat-${node.fullPath}`}
             label={node.label}
             checked={isSelected || hasSelectedAncestor}
-            disabled={hasSelectedAncestor}
             onChange={() => onToggleSelect(node.fullPath)}
+            ref={(el) => {
+              if (el) el.indeterminate = isIndeterminate
+            }}
           />
-          <span className="ml-auto shrink-0 text-xs text-text-muted">{node.count}</span>
+          <span className="ml-auto shrink-0 leading-5 text-xs text-text-muted">{node.count}</span>
         </div>
       </div>
 
       {hasChildren && open && (
-        <div>
+        <div className="mt-2 space-y-2">
           {node.children.map((child) => (
             <TreeNode
               key={child.fullPath}
@@ -161,13 +168,7 @@ const CategoryFilter = ({ categories }: CategoryFilterProps) => {
   }
 
   const toggleSelect = (fullPath: string) => {
-    if (currentCategories.includes(fullPath)) {
-      navigate({ categories: currentCategories.filter((c) => c !== fullPath) })
-      return
-    }
-
-    const next = [...currentCategories.filter((c) => !isSameOrDescendant(c, fullPath)), fullPath]
-    navigate({ categories: next })
+    navigate({ categories: toggleCategorySelection(tree, currentCategories, fullPath) })
   }
 
   return (
@@ -197,7 +198,7 @@ const CategoryFilter = ({ categories }: CategoryFilterProps) => {
           />
         </div>
       )}
-      <div className="space-y-1 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+      <div className="space-y-2 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
         {displayedTree.map((node) => (
           <TreeNode
             key={node.fullPath}

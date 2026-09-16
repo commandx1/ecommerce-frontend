@@ -25,7 +25,7 @@ const user = {
 }
 
 /** Reads the raw (still URL-encoded) cookie value, exactly as a browser hands it over. */
-function readRawAuthCookie(): string | null {
+async function readRawAuthCookie(): Promise<string | null> {
   const match = `; ${document.cookie}`.split(`; ${COOKIE_NAME}=`)
   if (match.length !== 2) {
     return null
@@ -42,6 +42,8 @@ let logoutRequests: { authorization: string | null; body: unknown }[]
 
 beforeEach(() => {
   clearAuthCookie()
+  sessionStorage.clear()
+  localStorage.clear()
   logoutRequests = []
 
   server.use(
@@ -149,16 +151,16 @@ describe("authStore clearAuth", () => {
     })
   })
 
-  it("leaves an emptied auth-storage cookie behind rather than deleting it", () => {
+  it("leaves an emptied auth-storage cookie behind rather than deleting it", async () => {
     store().setAuth(user, "access-1", "refresh-1")
-    expect(readRawAuthCookie()).not.toBeNull()
+    expect(await readRawAuthCookie()).not.toBeNull()
 
     store().clearAuth()
 
     // The persist middleware writes the new (cleared) state instead of removing the cookie, so
     // `auth-storage` still exists - only its contents are empty. `src/proxy.ts` handles this by
     // checking `state.user` / `state.isAuthenticated`, not cookie presence alone.
-    const raw = readRawAuthCookie()
+    const raw = await readRawAuthCookie()
     expect(raw).not.toBeNull()
     const persisted = JSON.parse(decodeURIComponent(raw as string))
     expect(persisted.state.user).toBeNull()
@@ -166,11 +168,11 @@ describe("authStore clearAuth", () => {
     expect(persisted.state.isAuthenticated).toBe(false)
   })
 
-  it("does not leave isLoading behind in the persisted cookie", () => {
+  it("does not leave isLoading behind in the persisted cookie", async () => {
     store().setAuth(user, "access-1", "refresh-1")
     store().setLoading(true)
 
-    const persisted = JSON.parse(decodeURIComponent(readRawAuthCookie() as string))
+    const persisted = JSON.parse(decodeURIComponent((await readRawAuthCookie()) as string))
 
     // `partialize` keeps only the five session fields; `isLoading` and `error` are excluded so a
     // stale spinner state can never be rehydrated.
@@ -190,10 +192,10 @@ describe("authStore clearAuth", () => {
  * routing silently stops working - these assertions are the tripwire.
  */
 describe("authStore persist + cookieStorage contract", () => {
-  it("writes a URL-encoded auth-storage cookie readable via decodeURIComponent + JSON.parse", () => {
+  it("writes a URL-encoded auth-storage cookie readable via decodeURIComponent + JSON.parse", async () => {
     store().setAuth(user, "access-1", "refresh-1")
 
-    const raw = readRawAuthCookie()
+    const raw = await readRawAuthCookie()
     expect(raw).not.toBeNull()
     // The value is stored percent-encoded, so the raw cookie must not contain a bare `{`.
     expect(raw).not.toContain("{")
@@ -204,18 +206,18 @@ describe("authStore persist + cookieStorage contract", () => {
     expect(persisted.state.accessToken).toBe("access-1")
   })
 
-  it("keeps the impersonation flag readable from the cookie", () => {
+  it("keeps the impersonation flag readable from the cookie", async () => {
     store().setAuth(user, "access-1", "refresh-1", true)
 
-    const persisted = JSON.parse(decodeURIComponent(readRawAuthCookie() as string))
+    const persisted = JSON.parse(decodeURIComponent((await readRawAuthCookie()) as string))
 
     expect(persisted.state.isAdminImpersonating).toBe(true)
   })
 
-  it("survives a role name that needs escaping", () => {
+  it("survives a role name that needs escaping", async () => {
     store().setAuth({ ...user, roleName: "Vendor Manager;Buyer" }, "access-1", "refresh-1")
 
-    const persisted = JSON.parse(decodeURIComponent(readRawAuthCookie() as string))
+    const persisted = JSON.parse(decodeURIComponent((await readRawAuthCookie()) as string))
 
     // A raw `;` would truncate the cookie - encodeURIComponent is what keeps this parseable.
     expect(persisted.state.user.roleName).toBe("Vendor Manager;Buyer")
@@ -346,7 +348,57 @@ describe("authStore logout", () => {
 
     await store().logout()
 
-    expect(readRawAuthCookie()).toBeNull()
+    expect(await readRawAuthCookie()).toBeNull()
+  })
+
+  it("broadcasts the logged-out user's id via the cross-tab logout event", async () => {
+    store().setAuth(user, "access-1", "refresh-1")
+
+    await store().logout()
+
+    const raw = localStorage.getItem("auth-logout")
+    expect(raw).not.toBeNull()
+    expect(JSON.parse(raw as string).userId).toBe(user.id)
+  })
+
+  it("does not broadcast when there is no session to log out of", async () => {
+    await store().logout()
+
+    expect(localStorage.getItem("auth-logout")).toBeNull()
+  })
+})
+
+describe("authStore clearLocalSession", () => {
+  it("clears the session without calling the server", async () => {
+    store().setAuth(user, "access-1", "refresh-1")
+
+    await store().clearLocalSession()
+
+    expect(logoutRequests).toHaveLength(0)
+    expect(store()).toMatchObject({
+      user: null,
+      accessToken: null,
+      refreshToken: null,
+      isAuthenticated: false,
+      isAdminImpersonating: false,
+      error: null,
+    })
+  })
+
+  it("does not write the cross-tab logout broadcast key", async () => {
+    store().setAuth(user, "access-1", "refresh-1")
+
+    await store().clearLocalSession()
+
+    expect(localStorage.getItem("auth-logout")).toBeNull()
+  })
+
+  it("deletes the persisted cookie", async () => {
+    store().setAuth(user, "access-1", "refresh-1")
+
+    await store().clearLocalSession()
+
+    expect(await readRawAuthCookie()).toBeNull()
   })
 })
 

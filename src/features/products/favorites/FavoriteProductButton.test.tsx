@@ -67,7 +67,7 @@ describe("FavoriteProductButton authenticated", () => {
     await waitFor(() => expect(writes).toEqual([{ method: "POST", productId: "p-1" }]))
   })
 
-  it("toggles back to unfavorited on a second click, sending a DELETE", async () => {
+  it("toggles back to unfavorited after confirming removal, sending a DELETE", async () => {
     signIn()
     const user = userEvent.setup()
     render(<FavoriteProductButton productId="p-1" />)
@@ -76,6 +76,7 @@ describe("FavoriteProductButton authenticated", () => {
     await screen.findByRole("button", { name: "Remove from favorites" })
 
     await user.click(screen.getByRole("button", { name: "Remove from favorites" }))
+    await user.click(screen.getByRole("button", { name: "Remove" }))
 
     expect(await screen.findByRole("button", { name: "Save to favorites" })).toHaveAttribute("aria-pressed", "false")
     await waitFor(() =>
@@ -84,6 +85,46 @@ describe("FavoriteProductButton authenticated", () => {
         { method: "DELETE", productId: "p-1" },
       ]),
     )
+  })
+
+  it("opens a confirmation popover instead of toggling when removing a favorite", async () => {
+    signIn()
+    server.use(http.get("*/backend-api/products/favorite-ids", () => HttpResponse.json(["p-1"])))
+    const user = userEvent.setup()
+    render(<FavoriteProductButton productId="p-1" />)
+
+    await screen.findByRole("button", { name: "Remove from favorites" })
+    await user.click(screen.getByRole("button", { name: "Remove from favorites" }))
+
+    expect(await screen.findByText("Remove from favorites?")).toBeInTheDocument()
+    expect(writes).toEqual([])
+  })
+
+  it("closes the popover and writes nothing when Cancel is clicked", async () => {
+    signIn()
+    server.use(http.get("*/backend-api/products/favorite-ids", () => HttpResponse.json(["p-1"])))
+    const user = userEvent.setup()
+    render(<FavoriteProductButton productId="p-1" />)
+
+    await screen.findByRole("button", { name: "Remove from favorites" })
+    await user.click(screen.getByRole("button", { name: "Remove from favorites" }))
+    await screen.findByText("Remove from favorites?")
+
+    await user.click(screen.getByRole("button", { name: "Cancel" }))
+
+    await waitFor(() => expect(screen.queryByText("Remove from favorites?")).not.toBeInTheDocument())
+    expect(writes).toEqual([])
+  })
+
+  it("adds a favorite immediately with a single click and no popover", async () => {
+    signIn()
+    const user = userEvent.setup()
+    render(<FavoriteProductButton productId="p-1" />)
+
+    await user.click(screen.getByRole("button", { name: "Save to favorites" }))
+
+    await waitFor(() => expect(writes).toEqual([{ method: "POST", productId: "p-1" }]))
+    expect(screen.queryByText("Remove from favorites?")).not.toBeInTheDocument()
   })
 
   it("renders as already favorited once hydrate resolves an id that includes this product", async () => {
@@ -104,6 +145,24 @@ describe("FavoriteProductButton authenticated", () => {
     await user.click(screen.getByRole("button", { name: "Save to favorites" }))
 
     expect(await screen.findByRole("button", { name: "Save to favorites" })).toBeInTheDocument()
+    expect(mockToastError).toHaveBeenCalledWith("Action failed", expect.any(String))
+  })
+
+  it("shows an error toast when confirming removal fails", async () => {
+    signIn()
+    server.use(
+      http.get("*/backend-api/products/favorite-ids", () => HttpResponse.json(["p-1"])),
+      http.delete("*/backend-api/products/:productId/favorite", () => new HttpResponse(null, { status: 500 })),
+    )
+    const user = userEvent.setup()
+    render(<FavoriteProductButton productId="p-1" />)
+
+    await screen.findByRole("button", { name: "Remove from favorites" })
+    await user.click(screen.getByRole("button", { name: "Remove from favorites" }))
+    await screen.findByText("Remove from favorites?")
+    await user.click(screen.getByRole("button", { name: "Remove" }))
+
+    expect(await screen.findByRole("button", { name: "Remove from favorites" })).toBeInTheDocument()
     expect(mockToastError).toHaveBeenCalledWith("Action failed", expect.any(String))
   })
 

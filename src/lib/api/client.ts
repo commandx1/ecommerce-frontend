@@ -55,31 +55,7 @@ const resolveAccessToken = (): string | null => {
     return null
   }
 
-  const name = "auth-storage="
-  const decodedCookie = decodeURIComponent(document.cookie)
-  const parts = decodedCookie.split(";")
-
-  for (let index = 0; index < parts.length; index++) {
-    let cookiePart = parts[index]
-    while (cookiePart.charAt(0) === " ") {
-      cookiePart = cookiePart.substring(1)
-    }
-
-    if (cookiePart.indexOf(name) !== 0) {
-      continue
-    }
-
-    try {
-      const authData = JSON.parse(cookiePart.substring(name.length, cookiePart.length))
-      return authData.state?.accessToken || null
-    } catch {
-      // Cookie present but unparseable (corrupted/partial value) - fall through to the
-      // `localStorage` fallback below instead of returning null and silently dropping the token.
-      break
-    }
-  }
-
-  return localStorage.getItem("token")
+  return useAuthStore.getState().accessToken ?? null
 }
 
 /**

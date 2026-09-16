@@ -974,8 +974,8 @@ export default function ProductsPage() {
       ),
       cell: renderPriceCell,
       meta: {
-        headerClassName: "border-l-2 border-border-soft px-6 py-4 text-center",
-        cellClassName: "border-l-2 border-border-soft px-6 py-4 text-center",
+        headerClassName: "px-6 py-4 text-center",
+        cellClassName: "px-6 py-4 text-center",
       },
     },
     {

@@ -8,6 +8,7 @@ import {
   filterTreeByQuery,
   isSameOrDescendant,
   splitCategoryPath,
+  toggleCategorySelection,
 } from "./category-facet-tree"
 
 function findNode(nodes: CategoryFacetNode[], fullPath: string): CategoryFacetNode | undefined {
@@ -224,6 +225,49 @@ describe("filterTreeByQuery", () => {
     const infection = findNode(filtered, "Infection control - personal products")
     expect(infection).toBeDefined()
     expect(infection?.children.map((child) => child.label)).toEqual(["Gloves"])
+  })
+})
+
+describe("toggleCategorySelection", () => {
+  const branchOptions: FilterOption[] = [
+    { name: "A > B", count: 1 },
+    { name: "A > C > D", count: 1 },
+    { name: "A > C > E", count: 1 },
+  ]
+  const branchTree = buildCategoryFacetTree(branchOptions)
+
+  const onlyChildOptions: FilterOption[] = [
+    { name: "A > B", count: 1 },
+    { name: "A > C > D", count: 1 },
+  ]
+  const onlyChildTree = buildCategoryFacetTree(onlyChildOptions)
+
+  it("deselects an already-selected path", () => {
+    expect(toggleCategorySelection(branchTree, ["A"], "A")).toEqual([])
+  })
+
+  it("excludes one child under a selected root by expanding siblings", () => {
+    expect(toggleCategorySelection(branchTree, ["A"], "A > C > D")).toEqual(["A > B", "A > C > E"])
+  })
+
+  it("drops the whole branch when the excluded child was an only child", () => {
+    expect(toggleCategorySelection(onlyChildTree, ["A"], "A > C > D")).toEqual(["A > B"])
+  })
+
+  it("re-selecting the excluded child merges the branch back up to the root", () => {
+    const afterExclude = toggleCategorySelection(branchTree, ["A"], "A > C > D")
+    expect(afterExclude).toEqual(["A > B", "A > C > E"])
+
+    const afterReselect = toggleCategorySelection(branchTree, afterExclude, "A > C > D")
+    expect(afterReselect).toEqual(["A"])
+  })
+
+  it("selecting a parent drops already-selected descendants", () => {
+    expect(toggleCategorySelection(branchTree, ["A > B"], "A")).toEqual(["A"])
+  })
+
+  it("plain deselect removes only the given path", () => {
+    expect(toggleCategorySelection(branchTree, ["A > B", "A > C > D"], "A > B")).toEqual(["A > C > D"])
   })
 })
 

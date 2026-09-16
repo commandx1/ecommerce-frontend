@@ -42,10 +42,22 @@ test.describe("favorite products", () => {
     await addRequest
     await expect(toggle).toHaveAccessibleName("Remove from favorites")
 
+    const deleteRequests: string[] = []
+    buyerPage.on("request", (request) => {
+      if (request.method() === "DELETE" && request.url().endsWith("/backend-api/products/p-1/favorite")) {
+        deleteRequests.push(request.url())
+      }
+    })
+    await toggle.click()
+    await buyerPage.getByRole("button", { name: "Cancel", exact: true }).click()
+    expect(deleteRequests).toEqual([])
+    await expect(toggle).toHaveAccessibleName("Remove from favorites")
+
     const removeRequest = buyerPage.waitForRequest(
       (request) => request.method() === "DELETE" && request.url().endsWith("/backend-api/products/p-1/favorite"),
     )
     await toggle.click()
+    await buyerPage.getByRole("button", { name: "Remove", exact: true }).click()
     await removeRequest
     await expect(toggle).toHaveAccessibleName("Save to favorites")
   })
@@ -121,6 +133,7 @@ test.describe("favorite products", () => {
       (request) => request.method() === "DELETE" && request.url().endsWith("/backend-api/products/p-1/favorite"),
     )
     await favorites.favoriteToggle(FAVORITE_PRODUCT.productName).click()
+    await buyerPage.getByRole("button", { name: "Remove", exact: true }).click()
     await removeRequest
 
     await expect(favorites.productCard(FAVORITE_PRODUCT.productName)).toBeHidden()

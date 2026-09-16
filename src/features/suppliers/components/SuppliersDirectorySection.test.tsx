@@ -234,6 +234,7 @@ describe("SuppliersDirectorySection", () => {
       render(<SuppliersDirectorySection />)
 
       await user().click(await screen.findByRole("button", { name: "Remove from favorites" }))
+      await user().click(await screen.findByRole("button", { name: "Remove" }))
 
       await waitFor(() => expect(favoriteWrites).toEqual([{ method: "DELETE", vendorId: "vendor-1" }]))
     })

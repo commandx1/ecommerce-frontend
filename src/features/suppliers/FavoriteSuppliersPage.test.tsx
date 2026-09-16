@@ -81,6 +81,7 @@ describe("FavoriteSuppliersPage", () => {
     await screen.findByRole("heading", { name: "Acme Dental", level: 3 })
 
     await user.click(screen.getAllByRole("button", { name: "Remove from favorites" })[0])
+    await user.click(await screen.findByRole("button", { name: "Remove" }))
 
     await waitFor(() =>
       expect(screen.queryByRole("heading", { name: "Acme Dental", level: 3 })).not.toBeInTheDocument(),
@@ -96,6 +97,7 @@ describe("FavoriteSuppliersPage", () => {
     await screen.findByRole("heading", { name: "Acme Dental", level: 3 })
 
     await user.click(screen.getAllByRole("button", { name: "Remove from favorites" })[0])
+    await user.click(await screen.findByRole("button", { name: "Remove" }))
 
     expect(await screen.findByRole("heading", { name: "Acme Dental", level: 3 })).toBeInTheDocument()
     expect(mockToastError).toHaveBeenCalledWith("Action failed", expect.any(String))
@@ -106,5 +108,61 @@ describe("FavoriteSuppliersPage", () => {
     await screen.findByRole("heading", { name: "Acme Dental", level: 3 })
 
     expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument()
+  })
+})
+
+describe("FavoriteSuppliersPage pagination", () => {
+  const manyVendors = Array.from({ length: 13 }, (_, i) =>
+    makeVendorListItem({ id: `vendor-${i}`, name: `Vendor ${i}` }),
+  )
+
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    mockToastError.mockClear()
+    server.use(http.get("*/backend-api/vendors/favorites", () => HttpResponse.json(manyVendors)))
+  })
+
+  it("shows 12 cards on page 1, with pagination, and 1 card after clicking next", async () => {
+    const user = userEvent.setup()
+    render(<FavoriteSuppliersPage />)
+
+    await screen.findByRole("heading", { name: "Vendor 0", level: 3 })
+    for (let i = 0; i < 12; i++) {
+      expect(screen.getByRole("heading", { name: `Vendor ${i}`, level: 3 })).toBeInTheDocument()
+    }
+    expect(screen.queryByRole("heading", { name: "Vendor 12", level: 3 })).not.toBeInTheDocument()
+    expect(screen.getByRole("navigation", { name: "pagination" })).toBeInTheDocument()
+
+    await user.click(screen.getByText("Next"))
+
+    expect(await screen.findByRole("heading", { name: "Vendor 12", level: 3 })).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "Vendor 0", level: 3 })).not.toBeInTheDocument()
+  })
+
+  it("falls back to page 1 and hides pagination once the last vendor on page 2 is removed", async () => {
+    server.use(http.delete("*/backend-api/vendors/:vendorId/favorite", () => new HttpResponse(null, { status: 200 })))
+    const user = userEvent.setup()
+    render(<FavoriteSuppliersPage />)
+
+    await screen.findByRole("heading", { name: "Vendor 0", level: 3 })
+    await user.click(screen.getByText("Next"))
+    await screen.findByRole("heading", { name: "Vendor 12", level: 3 })
+
+    await user.click(screen.getByRole("button", { name: "Remove from favorites" }))
+    await user.click(await screen.findByRole("button", { name: "Remove" }))
+
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Vendor 12", level: 3 })).not.toBeInTheDocument())
+    for (let i = 0; i < 12; i++) {
+      expect(screen.getByRole("heading", { name: `Vendor ${i}`, level: 3 })).toBeInTheDocument()
+    }
+    expect(screen.queryByRole("navigation", { name: "pagination" })).not.toBeInTheDocument()
+  })
+
+  it("renders no pagination control with 12 or fewer vendors", async () => {
+    server.use(http.get("*/backend-api/vendors/favorites", () => HttpResponse.json(manyVendors.slice(0, 12))))
+    render(<FavoriteSuppliersPage />)
+
+    await screen.findByRole("heading", { name: "Vendor 0", level: 3 })
+    expect(screen.queryByRole("navigation", { name: "pagination" })).not.toBeInTheDocument()
   })
 })

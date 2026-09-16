@@ -97,32 +97,83 @@ describe("proxy role routing matrix", () => {
       redirectTo: "/vendor-dashboard",
     },
     {
-      name: "vendor on plain /register is pinned to the vendor dashboard",
+      name: "vendor on a lookalike prefix (/registerx, not an auth page) is pinned to the vendor dashboard",
       cookie: VENDOR,
-      path: "/register",
+      path: "/registerx",
       redirectTo: "/vendor-dashboard",
     },
 
-    // --- admin-invited signup exception ------------------------------------
+    // --- per-tab session: auth pages are exempt from the vendor jail -------
+    // Auth pages establish or replace THIS tab's session, so a vendor cookie left by another
+    // tab must never bounce them away before the auth page gets a chance to run.
     {
-      name: "vendor on /register?token=abc is let through (admin-invited signup flow)",
+      name: "vendor cookie hitting /register passes through (auth pages are exempt from the vendor jail)",
+      cookie: VENDOR,
+      path: "/register",
+      redirectTo: null,
+    },
+    {
+      name: "vendor cookie hitting /register?ref=abc passes through",
+      cookie: VENDOR,
+      path: "/register?ref=abc",
+      redirectTo: null,
+    },
+    {
+      name: "vendor cookie hitting /register?token=abc passes through (admin-invited signup flow)",
       cookie: VENDOR,
       path: "/register?token=abc",
       redirectTo: null,
     },
     {
-      // `URLSearchParams.has("token")` is true for an EMPTY value too, so a bare `?token=`
-      // is enough to open the signup exception. Locked in as current behaviour.
-      name: "vendor on /register?token= (empty value) is also let through — has() accepts an empty value",
+      name: "vendor cookie hitting /register?token= (empty value) passes through",
       cookie: VENDOR,
       path: "/register?token=",
       redirectTo: null,
     },
     {
-      name: "vendor on /register with an unrelated query param is still pinned to the dashboard",
+      name: "vendor cookie hitting /login passes through",
       cookie: VENDOR,
-      path: "/register?ref=abc",
-      redirectTo: "/vendor-dashboard",
+      path: "/login",
+      redirectTo: null,
+    },
+    {
+      name: "vendor cookie hitting /verify-email passes through",
+      cookie: VENDOR,
+      path: "/verify-email?email=x",
+      redirectTo: null,
+    },
+    {
+      name: "vendor cookie hitting /verify-2fa passes through",
+      cookie: VENDOR,
+      path: "/verify-2fa",
+      redirectTo: null,
+    },
+    {
+      name: "vendor cookie hitting /forgot-password passes through",
+      cookie: VENDOR,
+      path: "/forgot-password",
+      redirectTo: null,
+    },
+    {
+      name: "vendor cookie hitting /reset-password passes through",
+      cookie: VENDOR,
+      path: "/reset-password?token=x",
+      redirectTo: null,
+    },
+    {
+      // A vendor is logged in in the focused tab (shared cookie), but this NEW tab is
+      // establishing a different (impersonated) session via /auth/impersonate. It must not be
+      // bounced to /vendor-dashboard before that page gets to run.
+      name: "vendor cookie hitting /auth/impersonate is let through",
+      cookie: VENDOR,
+      path: "/auth/impersonate?refreshToken=x",
+      redirectTo: null,
+    },
+    {
+      name: "vendor cookie hitting /auth/setup-vendor is let through",
+      cookie: VENDOR,
+      path: "/auth/setup-vendor",
+      redirectTo: null,
     },
 
     // --- cookie present but session not authenticated -----------------------
@@ -214,10 +265,9 @@ describe("proxy role routing matrix", () => {
       redirectTo: "/vendor-dashboard",
     },
     {
-      // `isSignupLinkFlow` must require BOTH `pathname === "/register"` AND a `token` param
-      // (proxy.ts line 34). A vendor cookie hitting an unrelated page with a `token` query
-      // param (e.g. a tracking link) must still be pinned to the vendor dashboard — the token
-      // alone must not be enough to open the signup exception.
+      // `isAuthPage` matches on pathname alone, not query params — a vendor cookie hitting an
+      // unrelated, non-auth page with a `token` query param (e.g. a tracking link) must still be
+      // pinned to the vendor dashboard.
       name: "vendor on an unrelated page with a token query param is still pinned to the vendor dashboard",
       cookie: VENDOR,
       path: "/products?token=abc",

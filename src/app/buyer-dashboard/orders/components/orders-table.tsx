@@ -51,11 +51,11 @@ export default function OrdersTable() {
       cell: ({ row }) => {
         const summary = getSummary(row.original)
         return (
-          <>
+          <div>
             <p>{summary.orderDate}</p>
             <p className="text-xs">{summary.orderTime}</p>
             {row.original.autoOrder ? <AutoOrderBadge /> : null}
-          </>
+          </div>
         )
       },
       meta: {

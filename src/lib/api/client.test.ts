@@ -10,7 +10,7 @@ import apiClient, { appApiClient } from "./client"
 
 /**
  * `client.ts` owns two cross-cutting auth behaviours every request in the app inherits:
- *   1. attaching the bearer token resolved from the `auth-storage` cookie (localStorage fallback)
+ *   1. attaching the bearer token held by the auth store
  *   2. a single-flight logout + redirect to /login when the backend reports an expired session
  *
  * The redirect is asserted against the `window.location.assign` stub installed in
@@ -35,23 +35,22 @@ const setLocation = (pathname: string, search = ""): void => {
   Object.assign(window.location, { pathname, search, href: `${ORIGIN}${pathname}${search}` })
 }
 
-const authCookie = (state: Record<string, unknown>): void => {
-  document.cookie = `auth-storage=${encodeURIComponent(JSON.stringify({ state }))}; path=/`
-}
-
 const originalLogout = useAuthStore.getState().logout
 
 beforeEach(() => {
   clearAllCookies()
   localStorage.clear()
+  sessionStorage.clear()
+  useAuthStore.setState({ accessToken: null })
   assignMock.mockClear()
   setLocation("/", "")
 })
 
 afterEach(() => {
-  useAuthStore.setState({ logout: originalLogout })
+  useAuthStore.setState({ logout: originalLogout, accessToken: null })
   clearAllCookies()
   localStorage.clear()
+  sessionStorage.clear()
 })
 
 /** Narrows a request that is expected to reject down to the axios error it rejected with. */
@@ -80,34 +79,25 @@ const captureAuthHeader = (path: string): { get: () => string | null } => {
 }
 
 describe("token attachment", () => {
-  it("sends the access token from the auth-storage cookie", async () => {
+  it("sends the access token held by the auth store", async () => {
     const captured = captureAuthHeader("/backend-api/client-test/ping")
-    authCookie({ accessToken: "cookie-token", isAuthenticated: true })
+    useAuthStore.setState({ accessToken: "store-token" })
 
     await apiClient.get("/client-test/ping")
 
-    expect(captured.get()).toBe("Bearer cookie-token")
+    expect(captured.get()).toBe("Bearer store-token")
   })
 
   it("applies the same interceptor to the app client", async () => {
     const captured = captureAuthHeader("/client-test/app-ping")
-    authCookie({ accessToken: "cookie-token" })
+    useAuthStore.setState({ accessToken: "store-token" })
 
     await appApiClient.get("/client-test/app-ping")
 
-    expect(captured.get()).toBe("Bearer cookie-token")
+    expect(captured.get()).toBe("Bearer store-token")
   })
 
-  it("falls back to the localStorage token when no auth-storage cookie exists", async () => {
-    const captured = captureAuthHeader("/backend-api/client-test/ping")
-    localStorage.setItem("token", "ls-token")
-
-    await apiClient.get("/client-test/ping")
-
-    expect(captured.get()).toBe("Bearer ls-token")
-  })
-
-  it("sends no Authorization header when neither source has a token", async () => {
+  it("sends no Authorization header when the store has no token", async () => {
     const captured = captureAuthHeader("/backend-api/client-test/ping")
 
     await apiClient.get("/client-test/ping")
@@ -115,74 +105,13 @@ describe("token attachment", () => {
     expect(captured.get()).toBeNull()
   })
 
-  it("skips leading whitespace when the auth cookie is not the first one", async () => {
+  it("sends no header when the store's accessToken is null", async () => {
     const captured = captureAuthHeader("/backend-api/client-test/ping")
-    document.cookie = "theme=dark; path=/"
-    authCookie({ accessToken: "second-cookie-token" })
-    document.cookie = "locale=tr; path=/"
-
-    await apiClient.get("/client-test/ping")
-
-    expect(captured.get()).toBe("Bearer second-cookie-token")
-  })
-
-  it("ignores a cookie that only shares the auth-storage prefix", async () => {
-    const captured = captureAuthHeader("/backend-api/client-test/ping")
-    document.cookie = `auth-storage-old=${encodeURIComponent('{"state":{"accessToken":"stale"}}')}; path=/`
-    localStorage.setItem("token", "ls-token")
-
-    await apiClient.get("/client-test/ping")
-
-    expect(captured.get()).toBe("Bearer ls-token")
-  })
-
-  it("sends no header when the auth cookie holds no accessToken", async () => {
-    const captured = captureAuthHeader("/backend-api/client-test/ping")
-    authCookie({ isAuthenticated: false })
+    useAuthStore.setState({ accessToken: null })
 
     await apiClient.get("/client-test/ping")
 
     expect(captured.get()).toBeNull()
-  })
-
-  it("falls back to the localStorage token — not a crash — when the auth cookie is unparseable", async () => {
-    const captured = captureAuthHeader("/backend-api/client-test/ping")
-    document.cookie = "auth-storage=not-json; path=/"
-    // A malformed/corrupted auth cookie must not swallow the localStorage fallback - otherwise
-    // the token is never sent and the user appears logged out for no reason.
-    localStorage.setItem("token", "ls-token")
-
-    await expect(apiClient.get("/client-test/ping")).resolves.toBeTruthy()
-
-    expect(captured.get()).toBe("Bearer ls-token")
-  })
-
-  it("sends no header when the auth cookie is unparseable and there is no localStorage token either", async () => {
-    const captured = captureAuthHeader("/backend-api/client-test/ping")
-    document.cookie = "auth-storage=not-json; path=/"
-
-    await expect(apiClient.get("/client-test/ping")).resolves.toBeTruthy()
-
-    expect(captured.get()).toBeNull()
-  })
-
-  it("trims every leading space from a cookie segment before matching its name, not just one", async () => {
-    // A natural `document.cookie` read-back only ever inserts a single space (from the "; "
-    // join between cookies), which a single `if` could also strip - too weak to prove the
-    // trim is a loop. Stubbing the getter lets us plant three leading spaces, which only a
-    // `while` can fully remove before `indexOf("auth-storage=")` can match at position 0.
-    const captured = captureAuthHeader("/backend-api/client-test/ping")
-    const rawCookie = `theme=dark;   auth-storage=${encodeURIComponent(JSON.stringify({ state: { accessToken: "trim-token" } }))}`
-    const descriptor = Object.getOwnPropertyDescriptor(Document.prototype, "cookie")
-    if (!descriptor) throw new Error("Document.prototype.cookie has no descriptor in this environment")
-    Object.defineProperty(document, "cookie", { configurable: true, get: () => rawCookie, set: () => undefined })
-
-    try {
-      await apiClient.get("/client-test/ping")
-      expect(captured.get()).toBe("Bearer trim-token")
-    } finally {
-      Object.defineProperty(document, "cookie", descriptor)
-    }
   })
 })
 
@@ -341,10 +270,7 @@ describe("403 with an expired access token", () => {
   it("logs out and redirects to /login when the held token is already past its exp", async () => {
     arm403()
     const logout = vi.fn(async () => {})
-    useAuthStore.setState({ logout })
-    // Written after setState on purpose: the store's persist middleware rewrites the
-    // auth-storage cookie on every setState and would otherwise clear this token.
-    authCookie({ accessToken: jwtExpiringIn(-3600), isAuthenticated: true })
+    useAuthStore.setState({ logout, accessToken: jwtExpiringIn(-3600) })
     setLocation("/buyer-dashboard/orders", "?selectedTab=All")
 
     const error = await expectAxiosError(apiClient.get("/client-test/secure"))
@@ -363,10 +289,7 @@ describe("403 with an expired access token", () => {
   it("leaves a 403 alone while the held token is still valid — a business-rule rejection", async () => {
     arm403()
     const logout = vi.fn(async () => {})
-    useAuthStore.setState({ logout })
-    // Written after setState on purpose: the store's persist middleware rewrites the
-    // auth-storage cookie on every setState and would otherwise clear this token.
-    authCookie({ accessToken: jwtExpiringIn(3600), isAuthenticated: true })
+    useAuthStore.setState({ logout, accessToken: jwtExpiringIn(3600) })
 
     const error = await expectAxiosError(apiClient.get("/client-test/secure"))
 
@@ -378,10 +301,7 @@ describe("403 with an expired access token", () => {
   it("leaves a 403 alone when the stored token is opaque and carries no readable exp", async () => {
     arm403()
     const logout = vi.fn(async () => {})
-    useAuthStore.setState({ logout })
-    // Written after setState on purpose: the store's persist middleware rewrites the
-    // auth-storage cookie on every setState and would otherwise clear this token.
-    authCookie({ accessToken: "not-a-jwt", isAuthenticated: true })
+    useAuthStore.setState({ logout, accessToken: "not-a-jwt" })
 
     await apiClient.get("/client-test/secure").catch(() => undefined)
 
@@ -427,9 +347,8 @@ describe("server-side rendering guard", () => {
         return new HttpResponse(null, { status: 401 })
       }),
     )
-    authCookie({ accessToken: "cookie-token" })
     const logout = vi.fn(async () => {})
-    useAuthStore.setState({ logout })
+    useAuthStore.setState({ logout, accessToken: "store-token" })
 
     vi.stubGlobal("window", undefined)
     try {

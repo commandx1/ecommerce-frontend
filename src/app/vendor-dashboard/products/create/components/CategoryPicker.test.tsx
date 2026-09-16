@@ -73,7 +73,7 @@ describe("CategoryPicker", () => {
     expect(onChange).toHaveBeenCalledWith(["Instruments"])
   })
 
-  it("marks branch options with data-branch and leaves leaf options unmarked", async () => {
+  it("shows a chevron suffix on branch options and none on leaf options", async () => {
     const user = userEvent.setup()
 
     // "Endodontic products" mixes leaf and branch children, so it exercises both cases at once.
@@ -91,10 +91,29 @@ describe("CategoryPicker", () => {
     await user.click(screen.getByRole("combobox", { name: "Category 3" }))
 
     const branchOption = await screen.findByRole("option", { name: branchName as string })
-    expect(branchOption).toHaveAttribute("data-branch", "true")
+    expect(branchOption.querySelector("svg")).toBeInTheDocument()
 
     const leafOption = screen.getByRole("option", { name: leafName as string })
-    expect(leafOption).not.toHaveAttribute("data-branch")
+    expect(leafOption.querySelector("svg")).not.toBeInTheDocument()
+  })
+
+  it("typing in Category 2's search filters to matching names, including a case-insensitive match", async () => {
+    const user = userEvent.setup()
+    const { onChange } = renderPicker()
+
+    await user.click(screen.getByRole("combobox", { name: "Category 2" }))
+    await user.type(screen.getByRole("textbox"), "endo")
+
+    const options = screen.getAllByRole("option")
+    expect(options.length).toBeGreaterThan(0)
+    for (const option of options) {
+      expect(option.textContent?.toLowerCase()).toContain("endo")
+    }
+
+    const endoOption = screen.getByRole("option", { name: "Endodontic products" })
+    await user.click(endoOption)
+
+    expect(onChange).toHaveBeenCalledWith(["Endodontic products"])
   })
 
   it("marks the Category 2 trigger invalid when hasError is true and value is empty", () => {

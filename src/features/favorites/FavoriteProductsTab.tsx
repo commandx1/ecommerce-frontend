@@ -2,15 +2,19 @@
 
 import { Loader2 } from "lucide-react"
 import { useEffect, useState } from "react"
+import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
 import { adaptProductCardData } from "@/features/products/listing/components/listing/adaptProductCardData"
 import ProductCard from "@/features/products/listing/components/listing/ProductCard"
 import { type FavoriteProductItem, getMyFavoriteProducts } from "@/lib/api/favorite-products"
 import { useFavoriteProductsStore } from "@/stores/favoriteProductsStore"
 
+const PAGE_SIZE = 12
+
 export default function FavoriteProductsTab() {
   const [items, setItems] = useState<FavoriteProductItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
+  const [page, setPage] = useState(0)
 
   const hydrate = useFavoriteProductsStore((s) => s.hydrate)
   const ids = useFavoriteProductsStore((s) => s.ids)
@@ -53,13 +57,25 @@ export default function FavoriteProductsTab() {
     )
   }
 
+  const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages - 1)
+  const pageItems = visible.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
+
   return (
     <div className="@container">
       <div className="grid grid-cols-1 gap-5 @xl:grid-cols-2 @3xl:grid-cols-3 @min-[69rem]:grid-cols-4">
-        {visible.map((p) => (
+        {pageItems.map((p) => (
           <ProductCard key={p.productId} data={adaptProductCardData(p)} />
         ))}
       </div>
+      <DashboardPagination
+        currentPage={safePage}
+        totalPages={totalPages}
+        totalElements={visible.length}
+        pageSize={PAGE_SIZE}
+        onPageChange={setPage}
+        className="mt-6"
+      />
     </div>
   )
 }

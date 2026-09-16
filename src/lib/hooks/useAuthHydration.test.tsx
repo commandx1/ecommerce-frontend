@@ -2,7 +2,8 @@
 
 import { waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cookieStorage } from "@/lib/storage/cookie-storage"
+import { LOGOUT_EVENT_KEY } from "@/lib/storage/session-events"
+import { __resetTabSessionStorageForTests, tabSessionStorage } from "@/lib/storage/tab-session-storage"
 import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
 import { renderWithProviders } from "@/test/render"
@@ -62,12 +63,19 @@ let fetchCart: ReturnType<typeof vi.fn>
 beforeEach(() => {
   renders.length = 0
   clearAllCookies()
+  sessionStorage.clear()
+  localStorage.clear()
+  // `tabSessionStorage` only inherits the cookie into a fresh sessionStorage once per page load;
+  // each test below simulates a separate page load, so reset the gate.
+  __resetTabSessionStorageForTests()
   fetchCart = vi.fn(async () => {})
   useCartStore.setState({ fetchCart })
 })
 
 afterEach(() => {
   vi.restoreAllMocks()
+  sessionStorage.clear()
+  localStorage.clear()
 })
 
 describe("useAuthHydration hydration flag", () => {
@@ -146,14 +154,47 @@ describe("useAuthHydration cookie restore", () => {
     expect(consoleError).toHaveBeenCalledWith("Error restoring auth from cookie:", expect.anything())
   })
 
-  it("does not touch the cookie when the store is already fully populated", async () => {
-    const getItem = vi.spyOn(cookieStorage, "getItem")
+  it("does not touch storage when the store is already fully populated", async () => {
+    const getItem = vi.spyOn(tabSessionStorage, "getItem")
     useAuthStore.getState().setAuth(USER, "at", "rt")
 
     const { getByTestId } = renderWithProviders(<Probe />)
 
     await waitFor(() => expect(getByTestId("hydrated")).toHaveTextContent("true"))
     expect(getItem).not.toHaveBeenCalled()
+  })
+})
+
+describe("useAuthHydration bootstrap + real restore (persist's module-eval read never restores state)", () => {
+  it("restores the session on mount after the bootstrap read adopted the cookie (persist itself never restores)", async () => {
+    writeAuthCookie({ user: USER, accessToken: "at", refreshToken: "rt", isAuthenticated: true })
+
+    // Simulates what zustand persist's module-eval `storage.getItem` call does: it's a STRING
+    // return, which persist's v5 merge logic ignores (it expects `{state, version}`, not a JSON
+    // string) - so this call's only observable effect is consuming the once-per-page-load
+    // bootstrap adoption (copying the cookie into sessionStorage). The actual restore into the
+    // store happens later, in this hook's own mount effect.
+    tabSessionStorage.getItem("auth-storage")
+    expect(useAuthStore.getState().isAuthenticated).toBe(false)
+
+    renderWithProviders(<Probe />)
+
+    await waitFor(() => expect(useAuthStore.getState().isAuthenticated).toBe(true))
+    const state = useAuthStore.getState()
+    expect(state.user?.email).toBe("ada@example.com")
+    expect(state.accessToken).toBe("at")
+  })
+
+  it("a guest render (no cookie, bootstrap already consumed) leaves the store empty and does not throw", async () => {
+    // Bootstrap read with nothing in the cookie or sessionStorage - consumes the gate, same as
+    // persist's module-eval read on a guest tab.
+    tabSessionStorage.getItem("auth-storage")
+
+    const { getByTestId } = renderWithProviders(<Probe />)
+
+    await waitFor(() => expect(getByTestId("hydrated")).toHaveTextContent("true"))
+    expect(useAuthStore.getState().isAuthenticated).toBe(false)
+    expect(useAuthStore.getState().user).toBeNull()
   })
 })
 
@@ -180,5 +221,51 @@ describe("useAuthHydration cart bootstrap", () => {
 
     await waitFor(() => expect(getByTestId("hydrated")).toHaveTextContent("true"))
     expect(fetchCart).not.toHaveBeenCalled()
+  })
+})
+
+/** Dispatches a native `storage` event, the mechanism `onLogoutBroadcast` listens on. */
+const dispatchLogoutBroadcast = (userId: string): void => {
+  window.dispatchEvent(
+    new StorageEvent("storage", { key: LOGOUT_EVENT_KEY, newValue: JSON.stringify({ userId, at: Date.now() }) }),
+  )
+}
+
+describe("useAuthHydration cross-tab logout", () => {
+  it("clears the store when a logout broadcast names the same user id", async () => {
+    useAuthStore.getState().setAuth(USER, "at", "rt")
+    const { getByTestId } = renderWithProviders(<Probe />)
+    await waitFor(() => expect(getByTestId("hydrated")).toHaveTextContent("true"))
+
+    dispatchLogoutBroadcast(USER.id)
+
+    await waitFor(() => expect(useAuthStore.getState().isAuthenticated).toBe(false))
+    expect(useAuthStore.getState().user).toBeNull()
+  })
+
+  it("ignores a logout broadcast for a different user id", async () => {
+    useAuthStore.getState().setAuth(USER, "at", "rt")
+    const { getByTestId } = renderWithProviders(<Probe />)
+    await waitFor(() => expect(getByTestId("hydrated")).toHaveTextContent("true"))
+
+    dispatchLogoutBroadcast("some-other-user")
+
+    // Give any (wrongly fired) async clear a chance to run before asserting it didn't.
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(useAuthStore.getState().isAuthenticated).toBe(true)
+    expect(useAuthStore.getState().user?.id).toBe(USER.id)
+  })
+
+  it("removes its storage/focus listeners on unmount", async () => {
+    useAuthStore.getState().setAuth(USER, "at", "rt")
+    const { getByTestId, unmount } = renderWithProviders(<Probe />)
+    await waitFor(() => expect(getByTestId("hydrated")).toHaveTextContent("true"))
+
+    unmount()
+    dispatchLogoutBroadcast(USER.id)
+
+    // No listener left to react - the store must still show the session that was live at unmount.
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(useAuthStore.getState().isAuthenticated).toBe(true)
   })
 })
