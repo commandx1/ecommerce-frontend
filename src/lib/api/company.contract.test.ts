@@ -104,6 +104,7 @@ describe("updateMyCompany contract", () => {
       website: "https://acmedental.example.com",
       description: "Wholesale dental supplies",
       uberEnabled: true,
+      shipmentPolicy: null,
     }
 
     const response = await updateMyCompany(payload)
@@ -122,6 +123,7 @@ describe("updateMyCompany contract", () => {
       website: "https://acmedental.example.com",
       description: "Wholesale dental supplies",
       uberEnabled: false,
+      shipmentPolicy: null,
     }
 
     await updateMyCompany(payload)
@@ -152,6 +154,7 @@ describe("updateMyCompany contract", () => {
         website: null,
         description: null,
         uberEnabled: true,
+        shipmentPolicy: null,
       }),
     ).rejects.toMatchObject({ status: 400 })
   })
@@ -176,6 +179,7 @@ describe("updateMyCompany contract", () => {
       website: null,
       description: null,
       uberEnabled: true,
+      shipmentPolicy: null,
     }).catch((e) => e)
 
     expect(error.status).toBe(403)
@@ -197,6 +201,7 @@ describe("updateMyCompany contract", () => {
         website: null,
         description: null,
         uberEnabled: true,
+        shipmentPolicy: null,
       }),
     ).rejects.toMatchObject({ status: 500 })
   })

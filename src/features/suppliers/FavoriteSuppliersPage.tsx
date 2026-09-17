@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
 import { showToast } from "@/components/ui/Toast"
 import SupplierDirectoryCard from "@/features/suppliers/components/SupplierDirectoryCard"
+import { vendorToSupplierItem } from "@/features/suppliers/suppliersPageData"
 import { addVendorFavorite, getMyFavoriteVendors, removeVendorFavorite, type VendorListItem } from "@/lib/api/vendors"
 
 const PAGE_SIZE = 12
@@ -40,16 +41,7 @@ export default function FavoriteSuppliersPage({ embedded = false }: { embedded?:
     }
   }
 
-  const supplierItems = vendors.map((v) => ({
-    id: v.id,
-    name: v.name,
-    slug: v.slug,
-    about: "",
-    rating: v.averageRating,
-    reviewCount: v.reviewCount,
-    productCount: v.productCount,
-    isFavorite: true,
-  }))
+  const supplierItems = vendors.map((v) => ({ ...vendorToSupplierItem(v), isFavorite: true }))
 
   const totalPages = Math.max(1, Math.ceil(supplierItems.length / PAGE_SIZE))
   const safePage = Math.min(page, totalPages - 1)

@@ -12,8 +12,8 @@ import {
   removeVendorFavorite,
 } from "./vendors"
 
-const vendor = makeVendorListItem()
-const company = makeCompanyListItem()
+const vendor = makeVendorListItem({ shipmentPolicy: "TWO_DAYS" })
+const company = makeCompanyListItem({ shipmentPolicy: "TWO_DAYS" })
 
 let capturedVendorsQuery: URLSearchParams | null = null
 let capturedCompaniesQuery: URLSearchParams | null = null

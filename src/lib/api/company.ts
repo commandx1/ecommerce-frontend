@@ -2,6 +2,21 @@ import { apiRequest } from "@/lib/api/request"
 
 export type CompanyRole = "OWNER" | "MANAGER" | "MEMBER"
 
+export type ShipmentPolicy = "ONE_DAY" | "TWO_DAYS" | "THREE_DAYS" | "FOUR_DAYS" | "FIVE_DAYS"
+
+export const SHIPMENT_POLICY_DAYS: Record<ShipmentPolicy, number> = {
+  ONE_DAY: 1,
+  TWO_DAYS: 2,
+  THREE_DAYS: 3,
+  FOUR_DAYS: 4,
+  FIVE_DAYS: 5,
+}
+
+export const shipmentPolicyLabel = (policy: ShipmentPolicy) => {
+  const d = SHIPMENT_POLICY_DAYS[policy]
+  return `Ships in ${d} day${d > 1 ? "s" : ""}`
+}
+
 /** Vendor's own company record — mirrors the register-time company payload. */
 export interface CompanyProfile {
   id: string
@@ -21,11 +36,20 @@ export interface CompanyProfile {
    * company's listings are eligible for Uber Direct delivery.
    */
   uberEnabled: boolean
+  shipmentPolicy: ShipmentPolicy | null
 }
 
 export type UpdateCompanyPayload = Pick<
   CompanyProfile,
-  "name" | "companyPhoto" | "taxNumber" | "email" | "phoneNumber" | "website" | "description" | "uberEnabled"
+  | "name"
+  | "companyPhoto"
+  | "taxNumber"
+  | "email"
+  | "phoneNumber"
+  | "website"
+  | "description"
+  | "uberEnabled"
+  | "shipmentPolicy"
 >
 
 export async function getMyCompany(): Promise<CompanyProfile> {

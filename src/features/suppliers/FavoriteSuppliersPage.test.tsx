@@ -17,8 +17,14 @@ vi.mock("@/components/ui/Toast", () => ({
 }))
 
 const favorites = [
-  makeVendorListItem({ id: "vendor-1", name: "Acme Dental" }),
-  makeVendorListItem({ id: "vendor-2", name: "Beta Supplies", averageRating: 3.4, reviewCount: 12 }),
+  makeVendorListItem({ id: "vendor-1", name: "Acme Dental", companyName: null }),
+  makeVendorListItem({
+    id: "vendor-2",
+    name: "Beta Supplies",
+    companyName: null,
+    averageRating: 3.4,
+    reviewCount: 12,
+  }),
 ]
 
 describe("FavoriteSuppliersPage", () => {
@@ -103,6 +109,19 @@ describe("FavoriteSuppliersPage", () => {
     expect(mockToastError).toHaveBeenCalledWith("Action failed", expect.any(String))
   })
 
+  it("shows the vendor's company name and a mailto link, reusing the /vendors card mapper", async () => {
+    server.use(
+      http.get("*/backend-api/vendors/favorites", () => HttpResponse.json([makeVendorListItem({ id: "vendor-3" })])),
+    )
+    render(<FavoriteSuppliersPage />)
+
+    expect(await screen.findByRole("heading", { name: "Acme Dental Supplies", level: 3 })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Contact supplier" })).toHaveAttribute(
+      "href",
+      "mailto:sales@acmedental.example.com",
+    )
+  })
+
   it("hides its own heading when embedded", async () => {
     render(<FavoriteSuppliersPage embedded />)
     await screen.findByRole("heading", { name: "Acme Dental", level: 3 })
@@ -113,7 +132,7 @@ describe("FavoriteSuppliersPage", () => {
 
 describe("FavoriteSuppliersPage pagination", () => {
   const manyVendors = Array.from({ length: 13 }, (_, i) =>
-    makeVendorListItem({ id: `vendor-${i}`, name: `Vendor ${i}` }),
+    makeVendorListItem({ id: `vendor-${i}`, name: `Vendor ${i}`, companyName: null }),
   )
 
   beforeEach(() => {

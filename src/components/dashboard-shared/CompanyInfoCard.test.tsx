@@ -47,10 +47,20 @@ describe("CompanyInfoCard", () => {
       await user.click(await screen.findByRole("button", { name: /Save Changes/i }))
 
       await waitFor(() => expect(capturedBody).not.toBeNull())
-      // Backend `auth/dto/CompanyUpdateRequest.java` declares exactly these eight fields - no
+      // Backend `auth/dto/CompanyUpdateRequest.java` declares exactly these nine fields - no
       // `id`, `active`, `createdDate` or `companyRole` (those are response-only / server-owned).
       expect(Object.keys(capturedBody ?? {}).sort()).toEqual(
-        ["name", "companyPhoto", "taxNumber", "email", "phoneNumber", "website", "description", "uberEnabled"].sort(),
+        [
+          "name",
+          "companyPhoto",
+          "taxNumber",
+          "email",
+          "phoneNumber",
+          "website",
+          "description",
+          "uberEnabled",
+          "shipmentPolicy",
+        ].sort(),
       )
       expect(capturedBody).toEqual({
         name: company.name,
@@ -61,6 +71,7 @@ describe("CompanyInfoCard", () => {
         website: company.website ?? "",
         description: company.description ?? "",
         uberEnabled: company.uberEnabled,
+        shipmentPolicy: company.shipmentPolicy ?? null,
       })
     })
 
@@ -90,8 +101,58 @@ describe("CompanyInfoCard", () => {
       render(<CompanyInfoCard />)
 
       expect(await screen.findByLabelText("Company Name")).toBeDisabled()
+      expect(screen.getByLabelText("Shipment Policy")).toBeDisabled()
       expect(screen.queryByRole("button", { name: /Save Changes/i })).not.toBeInTheDocument()
       expect(screen.getByText(/Only the company owner can edit/i)).toBeInTheDocument()
+    })
+
+    it("shows the company's current shipment policy in the select", async () => {
+      serveCompany(makeCompanyProfile({ shipmentPolicy: "THREE_DAYS" }))
+
+      render(<CompanyInfoCard />)
+
+      expect(await screen.findByLabelText("Shipment Policy")).toHaveValue("THREE_DAYS")
+    })
+
+    it('shows an empty selection and sends shipmentPolicy: null (not "") when the company has no shipment policy set', async () => {
+      const user = userEvent.setup()
+      const company = makeCompanyProfile({ shipmentPolicy: null })
+      serveCompany(company)
+      let capturedBody: UpdateCompanyPayload | null = null
+      server.use(
+        http.put("*/backend-api/companies/me", async ({ request }) => {
+          capturedBody = (await request.json()) as UpdateCompanyPayload
+          return HttpResponse.json(company)
+        }),
+      )
+
+      render(<CompanyInfoCard />)
+
+      expect(await screen.findByLabelText("Shipment Policy")).toHaveValue("")
+      await user.click(screen.getByRole("button", { name: /Save Changes/i }))
+
+      await waitFor(() => expect(capturedBody).not.toBeNull())
+      expect((capturedBody as UpdateCompanyPayload | null)?.shipmentPolicy).toBeNull()
+    })
+
+    it("sends the newly selected shipment policy in the PUT payload", async () => {
+      const user = userEvent.setup()
+      const company = makeCompanyProfile({ shipmentPolicy: "ONE_DAY" })
+      serveCompany(company)
+      let capturedBody: UpdateCompanyPayload | null = null
+      server.use(
+        http.put("*/backend-api/companies/me", async ({ request }) => {
+          capturedBody = (await request.json()) as UpdateCompanyPayload
+          return HttpResponse.json({ ...company, shipmentPolicy: "TWO_DAYS" })
+        }),
+      )
+
+      render(<CompanyInfoCard />)
+      const select = await screen.findByLabelText("Shipment Policy")
+      await user.selectOptions(select, "TWO_DAYS")
+      await user.click(screen.getByRole("button", { name: /Save Changes/i }))
+
+      await waitFor(() => expect(capturedBody?.shipmentPolicy).toBe("TWO_DAYS"))
     })
 
     it("renders the Uber Direct checkbox checked when the company has uberEnabled: true", async () => {

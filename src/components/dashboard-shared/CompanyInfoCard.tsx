@@ -9,28 +9,27 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { showToast } from "@/components/ui/Toast"
 import { Textarea } from "@/components/ui/textarea"
-import { type CompanyProfile, getMyCompany, type UpdateCompanyPayload, updateMyCompany } from "@/lib/api/company"
+import {
+  type CompanyProfile,
+  getMyCompany,
+  SHIPMENT_POLICY_DAYS,
+  type ShipmentPolicy,
+  shipmentPolicyLabel,
+  type UpdateCompanyPayload,
+  updateMyCompany,
+} from "@/lib/api/company"
 import { ApiRequestError } from "@/lib/api/request"
-import { cn } from "@/lib/utils"
+import { cn, isHttpUrl } from "@/lib/utils"
 
 /** Statuses that mean "no company data to show" rather than a real failure. */
 const EMPTY_STATE_STATUSES = new Set([404, 501])
 
 const DESCRIPTION_MAX_LENGTH = 2000
 
-/** The logo is a free-text URL, so only render absolute http(s) values through next/image. */
-const isRenderableImageUrl = (value: string | null) => {
-  if (!value) return false
+/** Same as UpdateCompanyPayload, but shipmentPolicy can be "" (unset) to bind a native <select>. */
+type CompanyFormState = Omit<UpdateCompanyPayload, "shipmentPolicy"> & { shipmentPolicy: ShipmentPolicy | "" }
 
-  try {
-    const { protocol } = new URL(value)
-    return protocol === "http:" || protocol === "https:"
-  } catch {
-    return false
-  }
-}
-
-const toFormState = (company: CompanyProfile): UpdateCompanyPayload => ({
+const toFormState = (company: CompanyProfile): CompanyFormState => ({
   name: company.name || "",
   companyPhoto: company.companyPhoto || "",
   taxNumber: company.taxNumber || "",
@@ -41,6 +40,7 @@ const toFormState = (company: CompanyProfile): UpdateCompanyPayload => ({
   // Entity default is true; if an older API build omits the field, the box must not silently
   // flip to false on save.
   uberEnabled: company.uberEnabled ?? true,
+  shipmentPolicy: company.shipmentPolicy ?? "",
 })
 
 export default function CompanyInfoCard() {
@@ -53,9 +53,10 @@ export default function CompanyInfoCard() {
   const descriptionId = `${idBase}-company-description`
   const logoId = `${idBase}-company-logo`
   const uberEnabledId = `${idBase}-uber-enabled`
+  const shipmentPolicyId = `${idBase}-shipment-policy`
 
   const [company, setCompany] = useState<CompanyProfile | null>(null)
-  const [formData, setFormData] = useState<UpdateCompanyPayload | null>(null)
+  const [formData, setFormData] = useState<CompanyFormState | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -94,7 +95,7 @@ export default function CompanyInfoCard() {
 
   const canEdit = company?.companyRole === "OWNER"
 
-  const handleFieldChange = (field: keyof UpdateCompanyPayload, value: string | boolean) => {
+  const handleFieldChange = (field: keyof CompanyFormState, value: string | boolean) => {
     setFormData((prev) => (prev ? { ...prev, [field]: value } : prev))
     if (field === "companyPhoto") {
       setLogoFailed(false)
@@ -108,7 +109,7 @@ export default function CompanyInfoCard() {
     setIsSaving(true)
 
     try {
-      const updated = await updateMyCompany(formData)
+      const updated = await updateMyCompany({ ...formData, shipmentPolicy: formData.shipmentPolicy || null })
       setCompany(updated)
       setFormData(toFormState(updated))
       showToast.success("Company information updated successfully!")
@@ -244,21 +245,45 @@ export default function CompanyInfoCard() {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor={websiteId} className="text-xs font-semibold uppercase tracking-wide text-text-muted">
-              Website
-            </Label>
-            <div className="relative">
-              <Globe className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
-              <Input
-                id={websiteId}
-                type="text"
-                value={formData.website ?? ""}
-                onChange={(e) => handleFieldChange("website", e.target.value)}
-                className="pl-10"
-                placeholder="www.company.com"
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor={websiteId} className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                Website
+              </Label>
+              <div className="relative">
+                <Globe className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+                <Input
+                  id={websiteId}
+                  type="text"
+                  value={formData.website ?? ""}
+                  onChange={(e) => handleFieldChange("website", e.target.value)}
+                  className="pl-10"
+                  placeholder="www.company.com"
+                  disabled={!canEdit}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label
+                htmlFor={shipmentPolicyId}
+                className="text-xs font-semibold uppercase tracking-wide text-text-muted"
+              >
+                Shipment Policy
+              </Label>
+              <select
+                id={shipmentPolicyId}
+                value={formData.shipmentPolicy}
+                onChange={(e) => handleFieldChange("shipmentPolicy", e.target.value as ShipmentPolicy | "")}
                 disabled={!canEdit}
-              />
+                className="file:text-foreground placeholder:text-muted-foreground dark:bg-input/30 h-11 w-full min-w-0 rounded-2xl border border-transparent bg-surface-elevated px-4 py-2 text-sm text-text-primary shadow-soft transition-[color,box-shadow,border-color,background-color] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 focus-visible:border-brand/40 focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              >
+                <option value="">Not set</option>
+                {(Object.keys(SHIPMENT_POLICY_DAYS) as ShipmentPolicy[]).map((policy) => (
+                  <option key={policy} value={policy}>
+                    {shipmentPolicyLabel(policy)}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -282,7 +307,7 @@ export default function CompanyInfoCard() {
               Company Logo URL
             </Label>
             <div className="flex items-center gap-3">
-              {isRenderableImageUrl(formData.companyPhoto) && !logoFailed && (
+              {isHttpUrl(formData.companyPhoto) && !logoFailed && (
                 <Image
                   src={formData.companyPhoto as string}
                   alt=""

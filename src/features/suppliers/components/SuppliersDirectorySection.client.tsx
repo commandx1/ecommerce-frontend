@@ -1,13 +1,18 @@
 "use client"
 
-import { ChevronLeft, ChevronRight, Loader2, Star } from "lucide-react"
+import { ChevronLeft, ChevronRight, Star } from "lucide-react"
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
 import SupplierDirectoryCard from "@/features/suppliers/components/SupplierDirectoryCard"
-import { supplierCategories, supplierTestimonials, supplierTrustItems } from "@/features/suppliers/suppliersPageData"
+import {
+  supplierCategories,
+  supplierTestimonials,
+  supplierTrustItems,
+  vendorToSupplierItem,
+} from "@/features/suppliers/suppliersPageData"
 import type { VendorListItem } from "@/lib/api/vendors"
 import {
   addVendorFavorite,
@@ -39,20 +44,6 @@ function toApiMinRating(rating: RatingOption): number | undefined {
   if (rating === "4+ Stars") return 4
   if (rating === "3+ Stars") return 3
   return undefined
-}
-
-function vendorToSupplierItem(vendor: VendorListItem) {
-  return {
-    id: vendor.id,
-    name: vendor.companyName ?? vendor.name,
-    slug: vendor.slug,
-    companyPhoto: vendor.companyPhoto,
-    about: vendor.description ?? "",
-    email: vendor.email,
-    rating: vendor.averageRating,
-    reviewCount: vendor.reviewCount,
-    productCount: vendor.productCount,
-  }
 }
 
 export default function SuppliersDirectorySection() {
@@ -143,25 +134,6 @@ export default function SuppliersDirectorySection() {
 
   return (
     <>
-      <section className="relative overflow-hidden bg-brand-surface py-18 text-inverse-foreground">
-        <div aria-hidden className="pointer-events-none absolute inset-0 mesh-panel opacity-50" />
-        <PageSectionContainer>
-          <div className="relative max-w-4xl">
-            <h1 className="text-4xl font-semibold leading-[1.02] text-inverse-foreground md:text-6xl">
-              Trusted Dental Vendors
-            </h1>
-            <p className="mt-5 max-w-3xl text-lg leading-relaxed text-inverse-muted md:text-xl">
-              Connect with verified vendors offering quality dental products and equipment across the United States.
-            </p>
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <HeroMetric value="450+" label="Verified Vendors" />
-              <HeroMetric value="98%" label="Satisfaction Rate" />
-              <HeroMetric value="24/7" label="Support Available" />
-            </div>
-          </div>
-        </PageSectionContainer>
-      </section>
-
       <section className="sticky top-20 z-30 border-y border-border-soft/80 bg-surface/90 py-5 backdrop-blur-xl">
         <PageSectionContainer>
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
@@ -212,7 +184,7 @@ export default function SuppliersDirectorySection() {
 
       <PageSectionContainer className="py-12 lg:py-14">
         <div className="mb-8">
-          <h2 className="text-3xl font-semibold text-text-primary md:text-4xl">Browse Vendors</h2>
+          <h1 className="text-3xl font-semibold text-text-primary md:text-4xl">Browse Vendors</h1>
           <p className="mt-3 text-base text-text-secondary">
             {isLoading
               ? "Loading vendors…"
@@ -221,8 +193,10 @@ export default function SuppliersDirectorySection() {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-24 text-text-muted">
-            <Loader2 className="h-8 w-8 animate-spin" />
+          <div aria-busy="true" className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: ITEMS_PER_PAGE }, (_, i) => (
+              <SupplierCardSkeleton key={`vendor-skeleton-${i + 1}`} />
+            ))}
           </div>
         ) : hasError ? (
           <div className="rounded-[1.25rem] border border-border-soft bg-surface-elevated p-6 text-sm text-text-secondary">
@@ -417,11 +391,20 @@ export default function SuppliersDirectorySection() {
   )
 }
 
-function HeroMetric({ value, label }: { value: string; label: string }) {
+function SupplierCardSkeleton() {
   return (
-    <div className="rounded-2xl border border-white/25 bg-white/10 px-5 py-4 backdrop-blur-sm">
-      <p className="text-3xl font-semibold text-inverse-foreground">{value}</p>
-      <p className="mt-1 text-sm text-inverse-muted">{label}</p>
+    <div className="animate-pulse rounded-[1.25rem] bg-surface-elevated p-6 shadow-soft">
+      <div className="mb-4 flex items-center gap-3">
+        <div className="h-14 w-14 shrink-0 rounded-2xl bg-surface-muted" />
+        <div className="h-6 w-2/3 rounded-full bg-surface-muted" />
+      </div>
+      <div className="mb-4 h-4 w-1/2 rounded-full bg-surface-muted" />
+      <div className="mb-2 h-3.5 w-full rounded-full bg-surface-muted" />
+      <div className="mb-8 h-3.5 w-5/6 rounded-full bg-surface-muted" />
+      <div className="flex items-center gap-3">
+        <div className="h-10 flex-1 rounded-full bg-surface-muted" />
+        <div className="h-10 w-10 rounded-full bg-surface-muted" />
+      </div>
     </div>
   )
 }

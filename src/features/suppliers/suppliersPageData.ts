@@ -1,5 +1,7 @@
 import { Beaker, Headset, MonitorCog, ShieldCheck, Syringe, Truck, Wrench } from "lucide-react"
 import type { ComponentType } from "react"
+import type { ShipmentPolicy } from "@/lib/api/company"
+import type { VendorListItem } from "@/lib/api/vendors"
 
 export interface SupplierDirectoryItem {
   id: string | number
@@ -15,6 +17,22 @@ export interface SupplierDirectoryItem {
   email?: string | null
   deliveryMethods?: string[]
   isFavorite?: boolean
+  shipmentPolicy?: ShipmentPolicy | null
+}
+
+export function vendorToSupplierItem(vendor: VendorListItem): SupplierDirectoryItem {
+  return {
+    id: vendor.id,
+    name: vendor.companyName ?? vendor.name,
+    slug: vendor.slug,
+    companyPhoto: vendor.companyPhoto,
+    about: vendor.description ?? "",
+    email: vendor.email,
+    rating: vendor.averageRating,
+    reviewCount: vendor.reviewCount,
+    productCount: vendor.productCount,
+    shipmentPolicy: vendor.shipmentPolicy,
+  }
 }
 
 export interface SupplierCategoryItem {

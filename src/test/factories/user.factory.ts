@@ -40,6 +40,7 @@ export function makeCompanyProfile(overrides: Partial<CompanyProfile> = {}): Com
     createdDate: "2026-01-01T00:00:00Z",
     companyRole: "OWNER",
     uberEnabled: true,
+    shipmentPolicy: null,
     ...overrides,
   }
 }

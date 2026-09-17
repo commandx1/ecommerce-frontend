@@ -20,6 +20,7 @@ export function makeVendorListItem(overrides: Partial<VendorListItem> = {}): Ven
     description: "Trusted dental supplies vendor",
     companyPhoto: null,
     email: "sales@acmedental.example.com",
+    shipmentPolicy: null,
     ...overrides,
   }
 }
@@ -33,6 +34,7 @@ export function makeCompanyListItem(overrides: Partial<CompanyListItem> = {}): C
     averageRating: 4.6,
     reviewCount: 128,
     productCount: 340,
+    shipmentPolicy: null,
     ...overrides,
   }
 }

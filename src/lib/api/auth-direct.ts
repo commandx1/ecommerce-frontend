@@ -1,8 +1,11 @@
 // Direct API calls to backend through Next.js rewrites (proxy)
 // This bypasses CORS issues and Mixed Content (HTTPS -> HTTP) by routing through same-origin
+import type { ShipmentPolicy } from "@/lib/api/company"
 import type { BusinessType } from "@/lib/constants/business-types"
 import { appApiClient } from "./client"
 import { apiRequest } from "./request"
+
+export type { ShipmentPolicy }
 
 const BASE_URL = "/backend-api"
 
@@ -22,8 +25,6 @@ export interface AddressPayload {
   placeId: string
   formattedAddress: string
 }
-
-export type ShipmentPolicy = "ONE_DAY" | "TWO_DAYS" | "THREE_DAYS" | "FOUR_DAYS" | "FIVE_DAYS"
 
 export interface CompanyPayload {
   name: string

@@ -1,3 +1,4 @@
+import type { ShipmentPolicy } from "@/lib/api/company"
 import { apiRequest } from "@/lib/api/request"
 
 export interface VendorListItem {
@@ -11,6 +12,7 @@ export interface VendorListItem {
   description: string | null
   companyPhoto: string | null
   email: string | null
+  shipmentPolicy: ShipmentPolicy | null
 }
 
 export interface VendorPageResponse {
@@ -29,6 +31,7 @@ export interface CompanyListItem {
   averageRating: number
   reviewCount: number
   productCount: number
+  shipmentPolicy: ShipmentPolicy | null
 }
 
 export interface CompanyPageResponse {

@@ -100,4 +100,33 @@ describe("SupplierDirectoryCard", () => {
 
     expect(screen.queryByText("Trusted dental supplies vendor")).not.toBeInTheDocument()
   })
+
+  it("shows initials when the vendor has no logo", () => {
+    render(<SupplierDirectoryCard supplier={makeSupplier({ name: "Belen Dental Group" })} />)
+
+    expect(screen.getByText("BD")).toBeInTheDocument()
+    expect(screen.queryByRole("img")).not.toBeInTheDocument()
+  })
+
+  it("renders the vendor's logo when a valid photo URL is set", () => {
+    render(
+      <SupplierDirectoryCard
+        supplier={makeSupplier({ name: "Belen Dental Group", companyPhoto: "https://example.com/logo.png" })}
+      />,
+    )
+
+    expect(screen.getByRole("img", { name: "Belen Dental Group logo" })).toBeInTheDocument()
+  })
+
+  it("shows the shipment policy badge when set", () => {
+    render(<SupplierDirectoryCard supplier={makeSupplier({ shipmentPolicy: "THREE_DAYS" })} />)
+
+    expect(screen.getByText("Ships in 3 days")).toBeInTheDocument()
+  })
+
+  it("hides the shipment policy badge when not set", () => {
+    render(<SupplierDirectoryCard supplier={makeSupplier({ shipmentPolicy: null })} />)
+
+    expect(screen.queryByText(/Ships in/)).not.toBeInTheDocument()
+  })
 })
