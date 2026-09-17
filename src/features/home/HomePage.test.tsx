@@ -41,8 +41,8 @@ describe("HomePage", () => {
     const productLinks = screen
       .getAllByRole("link")
       .filter((link) => /^\/products\/\d+$/.test(link.getAttribute("href") ?? ""))
-    // one title link plus one preview link per card
-    expect(productLinks).toHaveLength(8)
+    // one link per card: the title link covers the whole card via its ::after overlay
+    expect(productLinks).toHaveLength(4)
     expect(screen.getByRole("link", { name: "Premium Composite Kit" })).toHaveAttribute("href", "/products/1")
   })
 

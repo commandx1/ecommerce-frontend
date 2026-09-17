@@ -126,8 +126,13 @@ describe("useOrderSummary at 10,000 lines — totals and floating-point accumula
     expect(result.current.volumeDiscount).toBeCloseTo(expectedSubtotal * 0.05, 6)
     // No address is set in this suite, so the tax estimate never fires and stays null (not yet
     // estimated) — the total math treats that the same as $0, same as `useOrderSummary` itself.
+    // Heavy shipment fee is part of the total (orders.total_price includes taked_heavy_shipment_fee).
     expect(result.current.total).toBeCloseTo(
-      expectedSubtotal - expectedSubtotal * 0.05 + result.current.shipping + (result.current.tax ?? 0),
+      expectedSubtotal -
+        expectedSubtotal * 0.05 +
+        result.current.shipping +
+        result.current.heavyShipmentFee +
+        (result.current.tax ?? 0),
       6,
     )
 

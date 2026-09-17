@@ -1,6 +1,6 @@
 import { HttpResponse, http } from "msw"
 import { describe, expect, it } from "vitest"
-import type { ListingSearchParams } from "@/features/products/listing/server/parse-listing-search-params"
+import { type ListingSearchParams, MAX_PAGE_SIZE } from "@/features/products/listing/server/parse-listing-search-params"
 import { server } from "@/mocks/server"
 import { render, screen } from "@/test/render"
 import { BACKEND, createCapture, record } from "@/test/route-harness"
@@ -131,8 +131,8 @@ describe("ProductListingPage", () => {
     const query = new URL(captured.url ?? "").searchParams
     // Invalid page -> default displayPage 1 -> apiPage 0.
     expect(query.get("page")).toBe("0")
-    // Requested size 9999 -> clamped to MAX_PAGE_SIZE (60).
-    expect(query.get("size")).toBe("60")
+    // Requested size 9999 -> clamped to MAX_PAGE_SIZE (backend rejects anything above it).
+    expect(query.get("size")).toBe(String(MAX_PAGE_SIZE))
     // Invalid sort -> falls back to "best-match", which is omitted from the query entirely.
     expect(query.has("sort")).toBe(false)
 

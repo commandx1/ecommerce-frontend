@@ -103,6 +103,15 @@ describe("Navbar", () => {
     },
   )
 
+  it("links All Categories to the category directory", () => {
+    render(<Navbar />, { route: "/" })
+
+    // Rendered once in the desktop bar and once in the mobile drawer.
+    for (const link of screen.getAllByRole("link", { name: /all categories/i })) {
+      expect(link).toHaveAttribute("href", "/categories")
+    }
+  })
+
   it("toggles the mobile menu and reports its state", async () => {
     const user = userEvent.setup()
     render(<Navbar />, { route: "/" })

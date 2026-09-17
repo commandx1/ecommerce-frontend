@@ -173,13 +173,13 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
 
         <div className="hidden min-h-14 items-center justify-between gap-6 py-3 lg:flex">
           <nav className="flex flex-wrap items-center gap-7">
-            <button
-              type="button"
+            <Link
+              href="/categories"
               className="flex items-center font-medium text-text-primary transition-colors hover:text-brand"
             >
               <Menu className="mr-2 w-4 h-4" />
               All Categories
-            </button>
+            </Link>
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
@@ -200,13 +200,14 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
         }`}
       >
         <nav className="app-container mx-auto flex flex-col gap-1 px-3 py-4 sm:px-6">
-          <button
-            type="button"
+          <Link
+            href="/categories"
+            onClick={closeMobileMenu}
             className="flex items-center rounded-xl px-3 py-2.5 font-medium text-text-primary transition-colors hover:bg-surface-muted hover:text-brand"
           >
             <Menu className="mr-3 w-4 h-4" />
             All Categories
-          </button>
+          </Link>
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}

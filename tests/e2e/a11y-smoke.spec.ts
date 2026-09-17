@@ -20,7 +20,7 @@ import { registerAllMocks } from "./mocks"
 // `/products/p-1` is here because the supplier-comparison table on the detail page carried an
 // `aria-selected` on a plain <tr> for months and no scan ever saw it - the route was simply not
 // in this list. The mock backend answers `/api/products/:id/with-user-products` for any id.
-const PUBLIC_ROUTES = ["/", "/products", "/products/p-1", "/cart", "/login"]
+const PUBLIC_ROUTES = ["/", "/products", "/products/p-1", "/categories", "/cart", "/login"]
 const BUYER_ROUTE = "/buyer-dashboard"
 const VENDOR_ROUTE = "/vendor-dashboard"
 

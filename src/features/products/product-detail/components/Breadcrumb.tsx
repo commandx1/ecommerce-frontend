@@ -12,7 +12,7 @@ interface BreadcrumbProps {
 
 const Breadcrumb = ({ product }: BreadcrumbProps) => {
   const categoryTrail = product?.categoryTrail ?? []
-  // No category levels: fall back to the whole catalogue instead of the old (non-existent) /categories route.
+  // No category levels: fall back to the whole catalogue (/products) rather than the /categories directory.
   const categoryItems =
     categoryTrail.length > 0
       ? categoryTrail.map((crumb) => ({ label: crumb.label, href: crumb.href }))
