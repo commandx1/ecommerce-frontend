@@ -266,7 +266,7 @@ describe("useShippingDetails — rate selection", () => {
 
     expect(result.current.selectedRates["seller-1"]).toEqual({ type: "uber", rateId: "quote-uber-1", amount: 18.99 })
     expect(useCheckoutStore.getState().selectedVendorShippingMethods["seller-1"].methodText).toBe(
-      "Same-day delivery - 45 mins",
+      "Same-day delivery - Est. 1-4 hours",
     )
     await waitFor(() => expect(useCheckoutStore.getState().selectedShippingCost).toBe(18.99))
   })

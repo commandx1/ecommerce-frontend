@@ -380,7 +380,7 @@ export default function VendorShipmentRates({
                       </div>
                       <div className="mt-1 flex items-center justify-between">
                         <span className="text-xs text-text-muted">Same-day delivery</span>
-                        <span className="text-xs font-medium text-success">{quote.duration} mins</span>
+                        <span className="text-xs font-medium text-success">Est. 1-4 hours</span>
                       </div>
                     </div>
                   </div>

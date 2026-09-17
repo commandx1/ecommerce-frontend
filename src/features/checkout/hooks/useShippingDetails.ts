@@ -132,7 +132,7 @@ export function useShippingDetails(): UseShippingDetailsResult {
       // like that are intentionally still selectable (VendorShipmentRates keeps them rather than
       // dropping a deliverable option), so this can't assume `servicelevel.name` is always there.
       const etaText = isUber
-        ? `Same-day delivery - ${rate.duration} mins`
+        ? "Same-day delivery - Est. 1-4 hours"
         : `${rate.servicelevel?.name ?? "Shipping"} - ${rate.estimatedDays} business days`
 
       setSelectedRates((prev) => {
