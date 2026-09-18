@@ -12,6 +12,8 @@ interface CategoryCardProps {
   eyebrow?: string
   href?: string
   featured?: boolean
+  /** Above-the-fold cards: preload instead of lazy-loading. */
+  priority?: boolean
   className?: string
 }
 
@@ -23,6 +25,7 @@ export default function CategoryCard({
   eyebrow = "Category",
   href = "/products",
   featured = false,
+  priority = false,
   className,
 }: CategoryCardProps) {
   return (
@@ -40,16 +43,12 @@ export default function CategoryCard({
           featured ? "min-h-[26rem]" : "min-h-[23.5rem]",
         )}
       >
-        <div
-          className={cn(
-            "relative overflow-hidden bg-[#EEF2F6]",
-            featured ? "h-72 md:h-[22rem]" : "aspect-[4/3]",
-          )}
-        >
+        <div className={cn("relative overflow-hidden bg-[#EEF2F6]", featured ? "h-72 md:h-[22rem]" : "aspect-[4/3]")}>
           <Image
             src={image}
             alt=""
             fill
+            priority={priority}
             sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />

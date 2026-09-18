@@ -7,6 +7,7 @@ import {
   FEATURED_CATEGORY_FALLBACK_IMAGE,
   FEATURED_CATEGORY_IMAGES,
   getFeaturedCategoryAsset,
+  toThumbPath,
 } from "./featured-category-assets"
 
 describe("featured-category-assets", () => {
@@ -30,17 +31,18 @@ describe("featured-category-assets", () => {
     }
   })
 
-  it("points every image path at a file that exists under public/", () => {
-    for (const imagePath of Object.values(FEATURED_CATEGORY_IMAGES)) {
-      const absolutePath = join(process.cwd(), "public", imagePath)
-      expect(existsSync(absolutePath)).toBe(true)
+  it("points every image and thumb path at a file that exists under public/", () => {
+    for (const imagePath of [...Object.values(FEATURED_CATEGORY_IMAGES), FEATURED_CATEGORY_FALLBACK_IMAGE]) {
+      expect(existsSync(join(process.cwd(), "public", imagePath))).toBe(true)
+      expect(existsSync(join(process.cwd(), "public", toThumbPath(imagePath)))).toBe(true)
     }
-
-    expect(existsSync(join(process.cwd(), "public", FEATURED_CATEGORY_FALLBACK_IMAGE))).toBe(true)
   })
 
-  it("returns the mapped image for a known category", () => {
-    expect(getFeaturedCategoryAsset("Disposables").image).toBe(FEATURED_CATEGORY_IMAGES.Disposables)
+  it("returns the mapped image and its 600px thumb for a known category", () => {
+    expect(getFeaturedCategoryAsset("Disposables")).toEqual({
+      image: FEATURED_CATEGORY_IMAGES.Disposables,
+      thumb: "/categories/disposables-600.webp",
+    })
   })
 
   it("falls back to the default image for an unknown category", () => {

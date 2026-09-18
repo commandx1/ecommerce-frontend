@@ -10,7 +10,7 @@ interface CategoryTileProps {
 }
 
 export default function CategoryTile({ entry }: CategoryTileProps) {
-  const { image } = getFeaturedCategoryAsset(entry.name)
+  const { thumb } = getFeaturedCategoryAsset(entry.name)
 
   return (
     <SpotlightCard
@@ -20,7 +20,7 @@ export default function CategoryTile({ entry }: CategoryTileProps) {
       <div className="relative flex h-full flex-col overflow-hidden rounded-[1.5rem] bg-surface-elevated">
         <div className="relative aspect-[4/3] overflow-hidden bg-[#EEF2F6]">
           <Image
-            src={image}
+            src={thumb}
             alt=""
             fill
             sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"

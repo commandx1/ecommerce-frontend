@@ -19,7 +19,7 @@ export default function HomeCategoriesSection({ categories }: HomeCategoriesSect
 
       <div className="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
         {categories.map((category, index) => {
-          const { image } = getFeaturedCategoryAsset(category.name)
+          const { thumb } = getFeaturedCategoryAsset(category.name)
           const description = category.topChildren.join(", ")
 
           return (
@@ -28,7 +28,8 @@ export default function HomeCategoriesSection({ categories }: HomeCategoriesSect
                 title={category.name}
                 description={description}
                 productCount={category.count.toLocaleString("en-US")}
-                image={image}
+                image={thumb}
+                priority={index < 4}
                 eyebrow={index === 0 ? "Most stocked" : "Category"}
                 href={`/products?categories=${encodeURIComponent(category.name)}`}
               />

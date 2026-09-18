@@ -1,11 +1,20 @@
 export interface FeaturedCategoryAsset {
+  /** 1200x900 original. */
   image: string
+  /** 600x450 variant for cards; the custom image loader skips Next's resizer, so we ship our own. */
+  thumb: string
 }
 
 export const FEATURED_CATEGORY_FALLBACK_IMAGE = "/categories/_fallback.webp"
 
+/** `/categories/x.webp` → `/categories/x-600.webp`; see category-image-prompts.md for the cwebp loop that produces them. */
+export function toThumbPath(image: string): string {
+  return image.replace(/\.webp$/, "-600.webp")
+}
+
 export const FEATURED_CATEGORY_FALLBACK: FeaturedCategoryAsset = {
   image: FEATURED_CATEGORY_FALLBACK_IMAGE,
+  thumb: toThumbPath(FEATURED_CATEGORY_FALLBACK_IMAGE),
 }
 
 // Every top-level category_tree.json root maps to a category photo shown on the featured cards
@@ -59,5 +68,5 @@ export function getFeaturedCategoryAsset(name: string): FeaturedCategoryAsset {
   if (!image) {
     return FEATURED_CATEGORY_FALLBACK
   }
-  return { image }
+  return { image, thumb: toThumbPath(image) }
 }
