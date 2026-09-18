@@ -30,6 +30,7 @@ export default function HomeCategoriesSection({ categories }: HomeCategoriesSect
                 productCount={category.count.toLocaleString("en-US")}
                 image={thumb}
                 priority={index < 4}
+                accent={index === 0}
                 eyebrow={index === 0 ? "Most stocked" : "Category"}
                 href={`/products?categories=${encodeURIComponent(category.name)}`}
               />

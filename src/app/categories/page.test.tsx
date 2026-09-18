@@ -20,7 +20,7 @@ const getGrid = (input: HTMLElement) => {
 const tileCount = (grid: HTMLElement) => grid.querySelectorAll(":scope > li").length
 
 describe("CategoriesRoutePage", () => {
-  it("renders featured categories and the full directory from the backend's counts", async () => {
+  it("renders the full directory sorted by the backend's counts", async () => {
     server.use(
       http.get(CATEGORIES, () =>
         HttpResponse.json([
@@ -34,18 +34,19 @@ describe("CategoriesRoutePage", () => {
     render(await CategoriesRoutePage(), { route: "/categories" })
 
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
-    expect(screen.getByRole("heading", { name: "Most stocked right now" })).toBeInTheDocument()
-
-    const featuredHeading = screen.getByRole("heading", { name: "Most stocked right now" })
-    const featuredGrid = featuredHeading.nextElementSibling as HTMLElement
-    expect(within(featuredGrid).getByText("Instruments")).toBeInTheDocument()
-    expect(within(featuredGrid).getByText("5 products")).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "Most stocked right now" })).not.toBeInTheDocument()
 
     const input = screen.getByLabelText("Find a category")
     const grid = getGrid(input)
     expect(grid).not.toBeNull()
     expect(tileCount(grid as HTMLElement)).toBe(41)
     const gridScope = within(grid as HTMLElement)
+
+    // Stocked categories lead, most products first; the rest follow alphabetically.
+    const tileTitles = [...(grid as HTMLElement).querySelectorAll(":scope > li h3")].map((h) => h.textContent)
+    expect(tileTitles.slice(0, 2)).toEqual(["Instruments", "Preventives"])
+    expect(tileTitles[2]).toBe("Acrylics, reline & tray materials")
+    expect(gridScope.getByText("5 products")).toBeInTheDocument()
 
     expect(gridScope.getByRole("link", { name: "Instruments" })).toHaveAttribute(
       "href",
@@ -63,12 +64,10 @@ describe("CategoriesRoutePage", () => {
 
     render(await CategoriesRoutePage(), { route: "/categories" })
 
-    expect(screen.queryByRole("heading", { name: "Most stocked right now" })).not.toBeInTheDocument()
-
     const input = screen.getByLabelText("Find a category")
     const grid = getGrid(input)
     expect(tileCount(grid as HTMLElement)).toBe(41)
-    expect(screen.getByText(/0 products/)).toBeInTheDocument()
+    expect(within(grid as HTMLElement).getAllByText("Coming soon")).toHaveLength(41)
   })
 
   it("filters the directory by query and clears back to the full list", async () => {
