@@ -7,7 +7,7 @@ import { useTheme } from "next-themes"
 import { useCallback, useEffect, useState } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import { BackgroundGradientAnimation } from "@/components/ui/background-gradient-animation"
-import { ShineBorder } from "@/components/ui/shine-border"
+import { LiquidGlass } from "@/components/ui/liquid-glass"
 
 const revealVariants = {
   hidden: { opacity: 0, y: 30 },
@@ -39,33 +39,25 @@ const featureHighlights = [
     title: "Uber Direct",
     detail: "Same-day local delivery",
     desktopPositionClass: "top-[7%] left-[1.5%]",
-    bgClassName: "bg-success/14",
     titleClassName: "text-success",
-    shineColors: ["#16a34a", "#4ade80", "#bbf7d0"] as string[],
   },
   {
     title: "Shippo",
     detail: "Multi-carrier shipping orchestration",
     desktopPositionClass: "top-[7%] right-[1.5%]",
-    bgClassName: "bg-brand/14",
     titleClassName: "text-brand",
-    shineColors: ["#1d4ed8", "#60a5fa", "#bfdbfe"] as string[],
   },
   {
     title: "Trusted Vendors",
     detail: "Verified vendor reliability",
     desktopPositionClass: "bottom-[8%] left-[3%]",
-    bgClassName: "bg-accent/55",
     titleClassName: "text-accent-foreground",
-    shineColors: ["#65a30d", "#a3e635", "#d9f99d"] as string[],
   },
   {
     title: "Easy Returns",
     detail: "Frictionless returns flow",
     desktopPositionClass: "bottom-[8%] right-[3%]",
-    bgClassName: "bg-warning/14",
     titleClassName: "text-warning",
-    shineColors: ["#b45309", "#fbbf24", "#fde68a"] as string[],
   },
 ]
 
@@ -343,18 +335,15 @@ export default function HomeHeroSectionClient() {
                 variants={revealVariants}
                 className={`hero-signal-node hero-signal-node-float-${(index % 4) + 1} absolute ${feature.desktopPositionClass}`}
               >
-                <ShineBorder
-                  borderRadius={16}
-                  borderWidth={1}
-                  duration={10}
-                  color={feature.shineColors}
-                  className={`w-[13.2rem] px-4 py-3 shadow-panel backdrop-blur ${feature.bgClassName}`}
-                >
-                  <p className={`text-[0.64rem] font-semibold uppercase tracking-[0.16em] ${feature.titleClassName}`}>
+                <div className="relative w-[13.2rem] rounded-2xl px-4 py-3">
+                  <LiquidGlass borderRadius={16} blur={6} distortion={16} className="z-0" />
+                  <p
+                    className={`relative z-10 text-[0.64rem] font-semibold uppercase tracking-[0.16em] ${feature.titleClassName}`}
+                  >
                     {feature.title}
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-text-primary">{feature.detail}</p>
-                </ShineBorder>
+                  <p className="relative z-10 mt-1 text-sm font-semibold text-text-primary">{feature.detail}</p>
+                </div>
               </motion.div>
             ))}
           </div>

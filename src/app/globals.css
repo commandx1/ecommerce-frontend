@@ -970,3 +970,22 @@ button {
 .fade-up {
   animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+/* Category tile photo→panel fade, dark mode only (see CategoryTile.tsx).
+   A linear ramp from a pale photo to a dark panel ends with an abrupt slope break at the photo's
+   bottom edge, which reads as a seam. These stops approximate smoothstep: zero slope at both ends. */
+.dark .category-tile-fade {
+  height: 58%;
+  background-image: linear-gradient(
+    to top,
+    var(--surface-elevated) 0%,
+    color-mix(in oklab, var(--surface-elevated) 97%, transparent) 10%,
+    color-mix(in oklab, var(--surface-elevated) 89%, transparent) 22%,
+    color-mix(in oklab, var(--surface-elevated) 74%, transparent) 35%,
+    color-mix(in oklab, var(--surface-elevated) 50%, transparent) 50%,
+    color-mix(in oklab, var(--surface-elevated) 26%, transparent) 65%,
+    color-mix(in oklab, var(--surface-elevated) 11%, transparent) 78%,
+    color-mix(in oklab, var(--surface-elevated) 3%, transparent) 90%,
+    transparent 100%
+  );
+}

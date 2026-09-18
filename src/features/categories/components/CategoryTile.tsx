@@ -2,6 +2,7 @@ import { ArrowUpRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { SpotlightCard } from "@/components/ui/spotlight-card"
+import SubcategoryChips from "@/features/categories/components/SubcategoryChips.client"
 import { type CategoryDirectoryEntry, categoryHref } from "@/features/categories/lib/build-category-directory"
 import { getFeaturedCategoryAsset } from "@/features/home/data/featured-category-assets"
 
@@ -33,7 +34,7 @@ export default function CategoryTile({ entry, priority = false }: CategoryTilePr
             fill
             priority={priority}
             sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04] dark:brightness-[0.86] dark:saturate-[0.95]"
           />
           <span
             className={`absolute left-4 top-4 z-10 inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-[0.72rem] font-semibold tabular-nums shadow-sm ring-1 ring-black/5 backdrop-blur ${
@@ -42,9 +43,12 @@ export default function CategoryTile({ entry, priority = false }: CategoryTilePr
           >
             {inStock ? `${entry.count.toLocaleString("en-US")} products` : "Coming soon"}
           </span>
+          {/* Light: photo and card are both near-white, so a short linear fade is invisible. Dark: the
+              same fade crosses ~75% luminance; `.dark .category-tile-fade` (globals.css) swaps in a
+              taller smoothstep ramp so there is no slope break at the photo's bottom edge. */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-surface-elevated to-transparent"
+            className="category-tile-fade pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-surface-elevated to-transparent"
           />
         </div>
 
@@ -66,20 +70,7 @@ export default function CategoryTile({ entry, priority = false }: CategoryTilePr
             </span>
           </div>
 
-          {entry.children.length > 0 && (
-            <ul className="relative z-10 mt-4 flex flex-wrap gap-1.5" aria-label={`${entry.name} sub-categories`}>
-              {entry.children.map((child) => (
-                <li key={child}>
-                  <Link
-                    href={categoryHref(entry.name, child)}
-                    className="inline-flex min-h-9 items-center rounded-full border border-border-soft bg-surface px-3 py-1.5 text-[0.78rem] font-medium text-text-secondary transition-colors duration-150 hover:border-brand hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                  >
-                    {child}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
+          {entry.children.length > 0 && <SubcategoryChips category={entry.name} items={entry.children} />}
         </div>
       </article>
     </SpotlightCard>
