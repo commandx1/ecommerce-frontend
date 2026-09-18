@@ -7,6 +7,8 @@ import { getFeaturedCategoryAsset } from "@/features/home/data/featured-category
 
 interface CategoryTileProps {
   entry: CategoryDirectoryEntry
+  /** Above-the-fold tiles: preload the photo instead of lazy-loading it. */
+  priority?: boolean
 }
 
 /**
@@ -14,7 +16,7 @@ interface CategoryTileProps {
  * text panel instead of sitting in a boxed thumbnail. Product count lives in a pill over the
  * image, the title carries the stretched link, and sub-category chips stay individually clickable.
  */
-export default function CategoryTile({ entry }: CategoryTileProps) {
+export default function CategoryTile({ entry, priority = false }: CategoryTileProps) {
   const { thumb } = getFeaturedCategoryAsset(entry.name)
   const inStock = entry.count > 0
 
@@ -29,6 +31,7 @@ export default function CategoryTile({ entry }: CategoryTileProps) {
             src={thumb}
             alt=""
             fill
+            priority={priority}
             sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
           />

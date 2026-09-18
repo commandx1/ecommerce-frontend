@@ -77,31 +77,25 @@ describe("HomePage", () => {
     expect(within(section).getAllByText("Verified partner")).toHaveLength(3)
   })
 
-  it("renders one category card per featured category, linked to its filtered listing", () => {
+  it("renders one category tile per featured category, linked to its filtered listing", () => {
     render(<HomePage featuredCategories={FEATURED_CATEGORIES} />)
 
-    const categoryLinks = screen
-      .getAllByRole("link")
-      .filter((link) => (link.getAttribute("href") ?? "").startsWith("/products?categories="))
-    expect(categoryLinks).toHaveLength(FEATURED_CATEGORIES.length)
-    expect(categoryLinks[0]).toHaveAttribute(
-      "href",
-      `/products?categories=${encodeURIComponent(FEATURED_CATEGORIES[0].name)}`,
-    )
+    for (const category of FEATURED_CATEGORIES) {
+      expect(screen.getByRole("link", { name: category.name })).toHaveAttribute(
+        "href",
+        `/products?categories=${encodeURIComponent(category.name)}`,
+      )
+    }
   })
 
-  it("labels only the first category card as most stocked", () => {
-    render(<HomePage featuredCategories={FEATURED_CATEGORIES} />)
-
-    expect(screen.getByText("Most stocked")).toBeInTheDocument()
-    expect(screen.getAllByText("Category")).toHaveLength(FEATURED_CATEGORIES.length - 1)
-  })
-
-  it("shows the product count and joined top children for a category card", () => {
+  it("shows the product count and links each top child to its own listing", () => {
     render(<HomePage featuredCategories={FEATURED_CATEGORIES} />)
 
     expect(screen.getByText("11 products")).toBeInTheDocument()
-    expect(screen.getByText("Hand instruments, Diamond burs, Mirrors")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Diamond burs" })).toHaveAttribute(
+      "href",
+      "/products?categories=Instruments%20%3E%20Diamond%20burs",
+    )
   })
 
   it("hides the category section when there are no featured categories", () => {

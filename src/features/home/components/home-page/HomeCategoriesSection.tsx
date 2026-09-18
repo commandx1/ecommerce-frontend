@@ -1,6 +1,5 @@
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
-import CategoryCard from "@/features/home/components/CategoryCard"
-import { getFeaturedCategoryAsset } from "@/features/home/data/featured-category-assets"
+import CategoryTile from "@/features/categories/components/CategoryTile"
 import type { FeaturedCategory } from "@/features/home/lib/select-featured-categories"
 
 interface HomeCategoriesSectionProps {
@@ -17,26 +16,14 @@ export default function HomeCategoriesSection({ categories }: HomeCategoriesSect
         We bring high-intent categories to the front so clinics can go from discovery to order faster.
       </p>
 
-      <div className="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-        {categories.map((category, index) => {
-          const { thumb } = getFeaturedCategoryAsset(category.name)
-          const description = category.topChildren.join(", ")
-
-          return (
-            <div key={category.name} className="h-full">
-              <CategoryCard
-                title={category.name}
-                description={description}
-                productCount={category.count.toLocaleString("en-US")}
-                image={thumb}
-                priority={index < 4}
-                accent={index === 0}
-                eyebrow={index === 0 ? "Most stocked" : "Category"}
-                href={`/products?categories=${encodeURIComponent(category.name)}`}
-              />
-            </div>
-          )
-        })}
+      <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        {categories.map((category, index) => (
+          <CategoryTile
+            key={category.name}
+            entry={{ name: category.name, count: category.count, children: category.topChildren }}
+            priority={index < 4}
+          />
+        ))}
       </div>
     </PageSectionContainer>
   )
