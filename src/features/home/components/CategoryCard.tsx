@@ -1,33 +1,14 @@
-import type { LucideIcon } from "lucide-react"
 import { ArrowUpRight } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { SpotlightCard } from "@/components/ui/spotlight-card"
 import { cn } from "@/lib/utils"
-
-/**
- * Dark tile tones for the icon area. All sit at ~31-34% oklch lightness so the white icon keeps
- * its contrast on every hue and in both themes; the list is ordered so neighbouring cards differ.
- */
-export const CATEGORY_CARD_TONES = ["ocean", "plum", "teal", "rust", "moss", "indigo", "amber", "slate"] as const
-export type CategoryCardTone = (typeof CATEGORY_CARD_TONES)[number]
-
-const TONE_CLASS: Record<CategoryCardTone, string> = {
-  ocean: "bg-brand-surface",
-  plum: "bg-[oklch(32%_0.07_320)]",
-  teal: "bg-[oklch(33%_0.06_195)]",
-  rust: "bg-[oklch(34%_0.075_35)]",
-  moss: "bg-[oklch(33%_0.06_150)]",
-  indigo: "bg-[oklch(32%_0.075_280)]",
-  amber: "bg-[oklch(35%_0.07_70)]",
-  slate: "bg-[oklch(32%_0.03_260)]",
-}
 
 interface CategoryCardProps {
   title: string
   description: string
   productCount: string
-  icon: LucideIcon
-  tone?: CategoryCardTone
+  image: string
   eyebrow?: string
   href?: string
   featured?: boolean
@@ -38,8 +19,7 @@ export default function CategoryCard({
   title,
   description,
   productCount,
-  icon: Icon,
-  tone = "ocean",
+  image,
   eyebrow = "Category",
   href = "/products",
   featured = false,
@@ -62,22 +42,16 @@ export default function CategoryCard({
       >
         <div
           className={cn(
-            "relative flex items-center justify-center overflow-hidden",
-            TONE_CLASS[tone],
-            featured ? "h-72 md:h-[22rem]" : "h-48",
+            "relative overflow-hidden bg-[#EEF2F6]",
+            featured ? "h-72 md:h-[22rem]" : "aspect-[4/3]",
           )}
         >
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,color-mix(in_oklab,white_18%,transparent),transparent_65%)]"
-          />
-          <Icon
-            aria-hidden
-            strokeWidth={1.5}
-            className={cn(
-              "relative text-white/90 drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)] transition-transform duration-300 group-hover:scale-110",
-              featured ? "h-24 w-24" : "h-16 w-16",
-            )}
+          <Image
+            src={image}
+            alt=""
+            fill
+            sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         </div>
         <div className={`relative ${featured ? "p-7 md:p-8" : "p-6"}`}>

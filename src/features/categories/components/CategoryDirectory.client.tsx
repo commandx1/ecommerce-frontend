@@ -10,7 +10,7 @@ import {
   filterEntries,
   selectFeaturedEntries,
 } from "@/features/categories/lib/build-category-directory"
-import CategoryCard, { CATEGORY_CARD_TONES } from "@/features/home/components/CategoryCard"
+import CategoryCard from "@/features/home/components/CategoryCard"
 import { getFeaturedCategoryAsset } from "@/features/home/data/featured-category-assets"
 
 interface CategoryDirectoryProps {
@@ -60,15 +60,14 @@ export default function CategoryDirectory({ entries }: CategoryDirectoryProps) {
           <h2 className="mt-10 font-display text-2xl text-text-primary">Most stocked right now</h2>
           <div className="mt-5 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
             {featured.map((entry, index) => {
-              const { icon } = getFeaturedCategoryAsset(entry.name)
+              const { image } = getFeaturedCategoryAsset(entry.name)
               return (
                 <div key={entry.name}>
                   <CategoryCard
                     title={entry.name}
                     description={entry.children.join(", ")}
                     productCount={entry.count.toLocaleString("en-US")}
-                    icon={icon}
-                    tone={CATEGORY_CARD_TONES[index % CATEGORY_CARD_TONES.length]}
+                    image={image}
                     eyebrow={index === 0 ? "Most stocked" : "Category"}
                     href={categoryHref(entry.name)}
                   />
@@ -104,7 +103,7 @@ export default function CategoryDirectory({ entries }: CategoryDirectoryProps) {
                 className="fade-up"
                 style={{ animationDelay: `${Math.min(originalIndex, 12) * 30}ms` }}
               >
-                <CategoryTile entry={entry} tone={CATEGORY_CARD_TONES[originalIndex % CATEGORY_CARD_TONES.length]} />
+                <CategoryTile entry={entry} />
               </li>
             )
           })}

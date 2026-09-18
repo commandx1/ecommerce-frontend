@@ -50,6 +50,17 @@ const nextConfig: NextConfig = {
     dangerouslyAllowSVG: true,
     contentDispositionType: "attachment",
   },
+  async headers() {
+    return [
+      // Category photos are overwritten in place (no hashed names), so cache for a day instead of
+      // `immutable`; stale-while-revalidate keeps repeat visits instant while an update rolls out.
+      {
+        // Match only the webp files, not the /categories page route.
+        source: "/categories/:file([^/]+\\.webp)",
+        headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }],
+      },
+    ]
+  },
   async rewrites() {
     return [
       {

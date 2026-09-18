@@ -1,5 +1,5 @@
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
-import CategoryCard, { CATEGORY_CARD_TONES } from "@/features/home/components/CategoryCard"
+import CategoryCard from "@/features/home/components/CategoryCard"
 import { getFeaturedCategoryAsset } from "@/features/home/data/featured-category-assets"
 import type { FeaturedCategory } from "@/features/home/lib/select-featured-categories"
 
@@ -19,7 +19,7 @@ export default function HomeCategoriesSection({ categories }: HomeCategoriesSect
 
       <div className="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
         {categories.map((category, index) => {
-          const { icon } = getFeaturedCategoryAsset(category.name)
+          const { image } = getFeaturedCategoryAsset(category.name)
           const description = category.topChildren.join(", ")
 
           return (
@@ -28,8 +28,7 @@ export default function HomeCategoriesSection({ categories }: HomeCategoriesSect
                 title={category.name}
                 description={description}
                 productCount={category.count.toLocaleString("en-US")}
-                icon={icon}
-                tone={CATEGORY_CARD_TONES[index % CATEGORY_CARD_TONES.length]}
+                image={image}
                 eyebrow={index === 0 ? "Most stocked" : "Category"}
                 href={`/products?categories=${encodeURIComponent(category.name)}`}
               />
