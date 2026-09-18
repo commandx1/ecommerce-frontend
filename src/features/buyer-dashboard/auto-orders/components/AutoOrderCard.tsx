@@ -30,7 +30,7 @@ export default function AutoOrderCard({
   onToggleActive,
   onRequestDelete,
 }: AutoOrderCardProps) {
-  const imageSrc = getFullImageUrl(autoOrder.productCoverPhotoPath) || "/dentypro-product-placeholder.png"
+  const imageSrc = getFullImageUrl(autoOrder.productCoverPhotoPath)
   const relativeDate = describeNextOrderDate(autoOrder.nextOrderDate)
   const isResumeBlocked = !autoOrder.active && !canActivate
 

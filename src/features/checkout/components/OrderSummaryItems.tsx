@@ -20,7 +20,7 @@ export default function OrderSummaryItems({ items }: OrderSummaryItemsProps) {
         const { product, userProduct, quantity } = item
         const sellerMeta = userProduct as UserProductSellerMeta
         const totalPrice = userProduct.price * quantity
-        const productImageSrc = getFullImageUrl(product.coverPhotoPath) || "/dentypro-product-placeholder.png"
+        const productImageSrc = getFullImageUrl(product.coverPhotoPath)
 
         return (
           <div

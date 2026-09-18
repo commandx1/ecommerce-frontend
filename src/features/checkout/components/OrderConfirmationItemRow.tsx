@@ -87,7 +87,7 @@ export default function OrderConfirmationItemRow({
       <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-4 sm:gap-4 transition-colors hover:bg-surface-muted/60 sm:px-5">
         <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-border-soft bg-surface-elevated">
           <ProductImageWithFallback
-            src={getFullImageUrl(item.productCoverPhotoPath) || "/dentypro-product-placeholder.png"}
+            src={getFullImageUrl(item.productCoverPhotoPath)}
             alt={item.productName || "Product image"}
             fill
             className="object-cover"

@@ -3,14 +3,16 @@
 import Image, { type ImageProps } from "next/image"
 import { useState } from "react"
 
+const PLACEHOLDER = "/dentypro-product-placeholder.png"
+
 type ProductImageWithFallbackProps = Omit<ImageProps, "src"> & {
-  src: string
+  src?: string | null
 }
 
 const ProductImageWithFallback = ({ src, alt, ...rest }: ProductImageWithFallbackProps) => {
   const [hasError, setHasError] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const resolvedSrc = hasError ? "/dentypro-product-placeholder.png" : src
+  const resolvedSrc = hasError || !src ? PLACEHOLDER : src
 
   return (
     <>

@@ -19,7 +19,7 @@ export default function CartItemCard({
 }: CartItemCardProps) {
   const { userProduct, product, quantity } = item
   const productDetailHref = `/products/${product.id}?vendorId=${encodeURIComponent(userProduct.userProductId)}`
-  const productImageSrc = getFullImageUrl(product.coverPhotoPath) || "/dentypro-product-placeholder.png"
+  const productImageSrc = getFullImageUrl(product.coverPhotoPath)
   const { productAlert, stockAlert, userProductAlert } = getCartItemAlerts(item)
   const hasAlerts = Boolean(productAlert || stockAlert || userProductAlert)
 

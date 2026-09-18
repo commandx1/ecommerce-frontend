@@ -153,7 +153,7 @@ export default function VendorOrderExpandedContent({
                 <div className="flex items-start gap-3">
                   <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md bg-surface-elevated shadow-sm ring-1 ring-border-soft/50">
                     <ProductImageWithFallback
-                      src={getFullImageUrl(item.productCoverPhotoPath) || "/dentypro-product-placeholder.png"}
+                      src={getFullImageUrl(item.productCoverPhotoPath)}
                       alt={item.productName}
                       width={56}
                       height={56}
