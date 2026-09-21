@@ -37,12 +37,6 @@ function ImpersonateContent() {
 
         setAuth(userObj as any, data.accessToken, (data.refreshToken as string | undefined) || refreshToken, true)
 
-        showToast.success(
-          "Logged in as Vendor (Admin Impersonation)",
-          "You are currently viewing this account as an administrator.",
-          5000,
-        )
-
         router.push("/vendor-dashboard")
       } catch (error) {
         console.error("Impersonation error:", error)
