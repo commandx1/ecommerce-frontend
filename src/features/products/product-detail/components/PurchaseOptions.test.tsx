@@ -2,9 +2,13 @@ import userEvent from "@testing-library/user-event"
 import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { server } from "@/mocks/server"
+import { useAuthStore } from "@/stores/authStore"
+import { makeAccountUser } from "@/test/factories"
 import { render, screen, waitFor, within } from "@/test/render"
 import type { SupplierViewModel } from "../types"
 import PurchaseOptions from "./PurchaseOptions"
+
+const signIn = () => useAuthStore.getState().setAuth(makeAccountUser(), "token-1", "refresh-1")
 
 const mockToastError = vi.fn()
 vi.mock("@/components/ui/Toast", () => ({
@@ -138,6 +142,7 @@ describe("PurchaseOptions", () => {
   })
 
   it("adds the selected supplier's listing and quantity to the cart", async () => {
+    signIn()
     const user = userEvent.setup()
     let body: unknown = null
     server.use(
@@ -156,20 +161,27 @@ describe("PurchaseOptions", () => {
     await waitFor(() => expect(body).toEqual({ userProductId: "up-1", quantity: 2, autoOrder: null }))
   })
 
-  // The axios interceptor stamps 401s as "auth handled" and performs the redirect itself, so the
-  // component's own `router.push("/login")` branch is unreachable — the same dead-code pattern
-  // TEST-FINDINGS already records for `addToCart`.
-  it("leaves an unauthorised cart write to the interceptor's redirect", async () => {
+  // The store's own guest guard (cartStore.addToCart) now redirects before any request goes out,
+  // so a logged-out shopper never reaches the backend at all - unlike an actual session expiring
+  // mid-visit, which is still the axios interceptor's job.
+  it("redirects an anonymous shopper to /login instead of writing to the cart", async () => {
     const user = userEvent.setup()
-    server.use(http.post("*/backend-api/cart/items", () => new HttpResponse(null, { status: 401 })))
+    let addItemCalled = false
+    server.use(
+      http.post("*/backend-api/cart/items", () => {
+        addItemCalled = true
+        return new HttpResponse(null, { status: 200 })
+      }),
+    )
     const { router } = renderPurchase()
 
     await user.click(screen.getByRole("button", { name: /Add to Cart/i }))
 
     await waitFor(() => expect(window.location.assign).toHaveBeenCalled())
     expect(String((window.location.assign as unknown as { mock: { calls: string[][] } }).mock.calls[0][0])).toContain(
-      "/login",
+      "reason=login-required",
     )
+    expect(addItemCalled).toBe(false)
     expect(router.push).not.toHaveBeenCalled()
     expect(mockToastError).not.toHaveBeenCalled()
   })
@@ -178,6 +190,7 @@ describe("PurchaseOptions", () => {
   // component's catch block never ran — a 500 left the shopper with a button that finished its
   // spinner and said nothing while the item was not in the cart. It now rethrows.
   it("warns the shopper when the cart write fails with a 500", async () => {
+    signIn()
     const user = userEvent.setup()
     server.use(http.post("*/backend-api/cart/items", () => new HttpResponse(null, { status: 500 })))
     const { router } = renderPurchase()

@@ -1,11 +1,11 @@
 "use client"
 
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { useMemo, useState } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import { showToast } from "@/components/ui/Toast"
-import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
+import { isAuthHandledError } from "@/lib/api/auth-error"
 import { useCartStore } from "@/stores/cartStore"
 import { usePurchaseCalculator } from "../hooks/usePurchaseCalculator"
 import type { SupplierViewModel } from "../types"
@@ -43,7 +43,6 @@ const PurchaseOptions = ({
   suppliers,
   bestPriceVendorUserProductId,
 }: PurchaseOptionsProps) => {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const addToCart = useCartStore((state) => state.addToCart)
   const selectedVendorId = searchParams.get("vendorId")
@@ -94,12 +93,6 @@ const PurchaseOptions = ({
         return
       }
 
-      const status = extractErrorStatus(err)
-      if (isAuthErrorStatus(status)) {
-        showToast.error("Authentication required", "Please sign in to add items to cart.")
-        router.push("/login")
-        return
-      }
       showToast.error("Failed to add to cart. Please try again.")
     } finally {
       setIsAddingToCart(false)

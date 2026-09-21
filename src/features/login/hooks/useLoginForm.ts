@@ -5,6 +5,7 @@ import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState 
 import { showToast } from "@/components/ui/Toast"
 import { login } from "@/features/login/services/login"
 import type { LoginFormData } from "@/features/login/types"
+import { safeRedirect } from "@/lib/utils/safe-redirect"
 import { useAuthStore } from "@/stores/authStore"
 
 const REMEMBER_ME_EMAIL_KEY = "remembered_email"
@@ -41,18 +42,14 @@ export const useLoginForm = () => {
   }, [])
 
   const isFormValid = useMemo(() => formData.email.length > 0 && formData.password.length > 0, [formData])
-  const postLoginRedirect = useMemo(() => {
-    const redirect = searchParams.get("redirect")
-    if (!redirect) {
-      return "/"
-    }
+  const postLoginRedirect = useMemo(() => safeRedirect(searchParams.get("redirect")), [searchParams])
 
-    if (!redirect.startsWith("/") || redirect.startsWith("//") || redirect.startsWith("/login")) {
-      return "/"
-    }
-
-    return redirect
-  }, [searchParams])
+  // Carries `redirect` through the 2FA hop so a code-required login still lands back where the
+  // shopper started once `verify-2fa` succeeds.
+  const verify2FAUrl = (email: string): string => {
+    const base = `/verify-2fa?email=${encodeURIComponent(email)}`
+    return postLoginRedirect === "/" ? base : `${base}&redirect=${encodeURIComponent(postLoginRedirect)}`
+  }
 
   // Proxy bounce self-heal: a tab whose session is valid but whose shared cookie was stale at
   // SSR time (per-tab sessions, sibling tab wrote the cookie) lands here with `?redirect=`. The
@@ -76,14 +73,23 @@ export const useLoginForm = () => {
 
     hasShownAuthReasonToast.current = true
 
-    if (reason === "session-expired") {
-      showToast.error("Session expired", "Your session expired. Please sign in again.")
-      return
-    }
+    // Deferred a tick: on a full page load this effect runs before the root layout's <Toaster>
+    // (a later sibling) has subscribed, and sonner drops toasts published before that.
+    setTimeout(() => {
+      if (reason === "session-expired") {
+        showToast.error("Session expired", "Your session expired. Please sign in again.")
+        return
+      }
 
-    if (reason === "access-denied") {
-      showToast.error("Access denied", "Please sign in again to continue.")
-    }
+      if (reason === "access-denied") {
+        showToast.error("Access denied", "Please sign in again to continue.")
+        return
+      }
+
+      if (reason === "login-required") {
+        showToast.info("Sign in to continue", "Please sign in to add products to your cart.")
+      }
+    }, 0)
   }, [searchParams])
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -125,7 +131,7 @@ export const useLoginForm = () => {
 
       if (response.twoFactorRequired || response.requires2FA || response.twoFactorEnabled) {
         showToast.info("Two-factor required", response.message || "2FA code has been sent to your email.")
-        router.push(`/verify-2fa?email=${encodeURIComponent(formData.email)}`)
+        router.push(verify2FAUrl(formData.email))
         return
       }
 
@@ -165,7 +171,7 @@ export const useLoginForm = () => {
 
       if (err.requires2FA || err.message?.includes("2FA") || err.message?.includes("two-factor")) {
         showToast.info("Two-factor required", "We sent a verification code to your email.")
-        router.push(`/verify-2fa?email=${encodeURIComponent(formData.email)}`)
+        router.push(verify2FAUrl(formData.email))
         return
       }
 

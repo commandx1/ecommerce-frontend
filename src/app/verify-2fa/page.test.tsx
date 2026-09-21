@@ -62,4 +62,32 @@ describe("Verify2FAPage success redirect", () => {
 
     await vi.waitFor(() => expect(router.push).toHaveBeenCalledWith("/"))
   })
+
+  it("falls back to / when the redirect param is a tab-smuggled evil.com attempt", async () => {
+    mockVerify.mockResolvedValue(validVerifyResponse)
+    const { router } = render(<Verify2FAPage />, {
+      searchParams: "email=buyer%40example.com&redirect=%2F%09%2Fevil.com",
+    })
+
+    await submitCode()
+
+    await vi.waitFor(() => expect(router.push).toHaveBeenCalledWith("/"))
+  })
+})
+
+describe("Verify2FAPage Back to Sign In link", () => {
+  it("carries a valid redirect through to /login", () => {
+    render(<Verify2FAPage />, { searchParams: "email=buyer%40example.com&redirect=%2Fproducts%2Fabc" })
+
+    expect(screen.getByRole("link", { name: /Back to Sign In/i })).toHaveAttribute(
+      "href",
+      `/login?redirect=${encodeURIComponent("/products/abc")}`,
+    )
+  })
+
+  it("drops a hostile (tab-smuggled) redirect, pointing plainly at /login", () => {
+    render(<Verify2FAPage />, { searchParams: "email=buyer%40example.com&redirect=%2F%09%2Fevil.com" })
+
+    expect(screen.getByRole("link", { name: /Back to Sign In/i })).toHaveAttribute("href", "/login")
+  })
 })

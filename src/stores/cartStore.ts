@@ -1,7 +1,9 @@
 import { create } from "zustand"
 import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
 import { type CartItem, cartAPI } from "@/lib/api/cart"
+import { redirectToLogin } from "@/lib/api/client"
 import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
+import { useAuthStore } from "@/stores/authStore"
 
 const FETCH_DEDUP_WINDOW_MS = 1000
 let inFlightCartFetch: Promise<void> | null = null
@@ -121,6 +123,14 @@ export const useCartStore = create<CartStore>((set, get) => ({
   },
 
   addToCart: async (userProductId, quantity = 1, autoOrder) => {
+    // Backend has no guest cart (`/api/cart/**` requires auth) - a guest is sent to /login before
+    // any request goes out. `authHandled` mirrors the axios interceptor's flag so every existing
+    // caller's `isAuthHandledError` check already exits silently instead of showing an error toast.
+    if (!useAuthStore.getState().isAuthenticated) {
+      redirectToLogin("login-required")
+      throw Object.assign(new Error("Login required"), { authHandled: true })
+    }
+
     set({ isLoading: true, error: null })
     try {
       await cartAPI.addItem(userProductId, quantity, resolveAutoOrder(get().items, userProductId, autoOrder))

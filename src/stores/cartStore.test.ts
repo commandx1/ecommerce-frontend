@@ -2,7 +2,8 @@ import { HttpResponse, http } from "msw"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { type Cart, cartAPI } from "@/lib/api/cart"
 import { server } from "@/mocks/server"
-import { makeCart, makeCartItem, makeCartUserProduct } from "@/test/factories"
+import { useAuthStore } from "@/stores/authStore"
+import { makeAccountUser, makeCart, makeCartItem, makeCartUserProduct } from "@/test/factories"
 import { useCartStore } from "./cartStore"
 
 /**
@@ -35,7 +36,15 @@ beforeEach(() => {
   lastPutBody = null
   cartResponse = makeCart()
 
+  // Every suite in this file exercises the store's own write/fetch logic against an
+  // already-signed-in shopper. The guest guard on `addToCart` is covered on its own below.
+  useAuthStore.getState().setAuth(makeAccountUser(), "token-1", "refresh-1")
+
   server.use(
+    // Signing in above means a real 401 now drives the axios interceptor's `handleAuthFailure`
+    // into an actual `authAPIDirect.logout()` call (it only skips that when there is no token
+    // pair). `authStore.logout` swallows the failure either way, but this keeps MSW quiet.
+    http.post("*/backend-api/auth/logout", () => new HttpResponse(null, { status: 200 })),
     http.get("*/backend-api/cart", () => {
       counts.getCart += 1
       return jsonCart()
@@ -846,5 +855,93 @@ describe("cartStore generic error message fallback for a non-Error rejection", (
     await store().clearCart()
 
     expect(store().error).toBe("Failed to clear cart")
+  })
+})
+
+/**
+ * The backend has no guest cart, so a not-logged-in shopper must never even reach
+ * `cartAPI.addItem` - they are bounced to /login before the store touches `isLoading`/`error`.
+ */
+describe("cartStore addToCart guest guard", () => {
+  const assignMock = window.location.assign as unknown as ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    useAuthStore.getState().clearAuth()
+    assignMock.mockClear()
+    Object.assign(window.location, {
+      pathname: "/products/p-1",
+      search: "?vendorId=up-1",
+      href: "http://localhost:3000/products/p-1?vendorId=up-1",
+    })
+  })
+
+  it("redirects to /login with reason=login-required instead of calling the API", async () => {
+    await expect(store().addToCart("up-1", 1)).rejects.toMatchObject({ authHandled: true })
+
+    expect(counts.addItem).toBe(0)
+    expect(store().isLoading).toBe(false)
+    expect(assignMock).toHaveBeenCalledTimes(1)
+    const target = String(assignMock.mock.calls[0][0])
+    expect(target).toContain("reason=login-required")
+    expect(target).toContain(`redirect=${encodeURIComponent("/products/p-1?vendorId=up-1")}`)
+  })
+
+  it("omits the redirect param on the home page", async () => {
+    Object.assign(window.location, { pathname: "/", search: "", href: "http://localhost:3000/" })
+
+    await expect(store().addToCart("up-1", 1)).rejects.toMatchObject({ authHandled: true })
+
+    const target = String(assignMock.mock.calls[0][0])
+    expect(target).not.toContain("redirect=")
+    expect(target).toContain("reason=login-required")
+  })
+})
+
+/**
+ * The guard in `addToCart` reads `useAuthStore.getState().isAuthenticated` live, not a value
+ * captured earlier - a shopper who was signed in and then loses the session (token expiry,
+ * cross-tab logout) must still be bounced on their very next `addToCart` call, with no stale
+ * "still authenticated" state carried over from before the session was cleared. `clearAuth()`
+ * (not `clearLocalSession()`) is used here deliberately: the latter also resets the cart store
+ * itself, which would make "items/cartCount untouched" trivially true against an already-empty
+ * cart instead of actually proving the guard leaves them alone.
+ */
+describe("cartStore addToCart guest guard reads live auth state, not a stale snapshot", () => {
+  const assignMock = window.location.assign as unknown as ReturnType<typeof vi.fn>
+
+  beforeEach(async () => {
+    useAuthStore.getState().setAuth(makeAccountUser(), "token-1", "refresh-1")
+    cartResponse = makeCart({ cartItems: [makeCartItem({ id: "ci-1", quantity: 4 })] })
+    await store().fetchCart()
+
+    assignMock.mockClear()
+    Object.assign(window.location, {
+      pathname: "/products/p-1",
+      search: "",
+      href: "http://localhost:3000/products/p-1",
+    })
+  })
+
+  it("redirects on the next addToCart after the session is cleared, even though it was authenticated moments ago", async () => {
+    expect(store().cartCount).toBe(4)
+    useAuthStore.getState().clearAuth()
+
+    await expect(store().addToCart("up-2", 1)).rejects.toMatchObject({ authHandled: true })
+
+    expect(counts.addItem).toBe(0)
+    expect(assignMock).toHaveBeenCalledTimes(1)
+    expect(String(assignMock.mock.calls[0][0])).toContain("reason=login-required")
+  })
+
+  it("does not write the shared error state and leaves items/cartCount exactly as they were", async () => {
+    const itemsBefore = store().items
+    const countBefore = store().cartCount
+    useAuthStore.getState().clearAuth()
+
+    await expect(store().addToCart("up-2", 1)).rejects.toMatchObject({ authHandled: true })
+
+    expect(store().error).toBeNull()
+    expect(store().items).toBe(itemsBefore)
+    expect(store().cartCount).toBe(countBefore)
   })
 })

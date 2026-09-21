@@ -1,25 +1,24 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import { resolveBestPriceVendorUserProductId } from "@/features/products/product-detail/utils/productDetailTransforms"
-import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
+import { isAuthHandledError } from "@/lib/api/auth-error"
+import { redirectToLogin } from "@/lib/api/client"
 import { getProductWithOffers } from "@/lib/api/product-offers"
 import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
 
 export function useAddToCartFromCard() {
-  const router = useRouter()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const addToCartInStore = useCartStore((s) => s.addToCart)
   const [pendingProductId, setPendingProductId] = useState<string | null>(null)
 
   const addToCart = async (productId: string, productName: string, quantity: number): Promise<boolean> => {
     // Checked before any request: an unauthenticated shopper should never trigger a network
-    // call just to be told to log in.
+    // call just to be told to log in - send them to /login and let them land back here.
     if (!isAuthenticated) {
-      showToast.warning("Login required", "Please sign in to add products to your cart.")
+      redirectToLogin("login-required")
       return false
     }
 
@@ -41,13 +40,6 @@ export function useAddToCartFromCard() {
       return true
     } catch (err: unknown) {
       if (isAuthHandledError(err)) {
-        return false
-      }
-
-      const status = extractErrorStatus(err)
-      if (isAuthErrorStatus(status)) {
-        showToast.error("Authentication required", "Please sign in to add items to cart.")
-        router.push("/login")
         return false
       }
 

@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
 import { isAuthHandledError } from "./auth-error"
-import apiClient, { appApiClient } from "./client"
+import apiClient, { appApiClient, buildLoginUrl } from "./client"
 
 /**
  * `client.ts` owns two cross-cutting auth behaviours every request in the app inherits:
@@ -134,6 +134,50 @@ describe("default request config", () => {
   })
 })
 
+describe("buildLoginUrl reason param", () => {
+  it("defaults to session-expired when no reason is passed", () => {
+    expect(buildLoginUrl()).toBe(`${ORIGIN}/login?reason=session-expired`)
+  })
+
+  it("sets the reason to whatever is passed", () => {
+    expect(buildLoginUrl("login-required")).toBe(`${ORIGIN}/login?reason=login-required`)
+  })
+
+  it("carries the hash into the redirect param for login-required", () => {
+    setLocation("/products/x", "?vendorId=1")
+    Object.assign(window.location, { hash: "#reviews" })
+
+    const result = buildLoginUrl("login-required")
+
+    expect(new URL(result).searchParams.get("redirect")).toBe("/products/x?vendorId=1#reviews")
+    expect(new URL(result).searchParams.get("reason")).toBe("login-required")
+
+    // `setLocation` (this file's helper) never touches `hash` - clear it explicitly so it
+    // doesn't leak into a later test's `currentPath` via the shared `beforeEach`.
+    Object.assign(window.location, { hash: "" })
+  })
+
+  it("omits the redirect param on the home page for login-required", () => {
+    setLocation("/", "")
+
+    expect(buildLoginUrl("login-required")).toBe(`${ORIGIN}/login?reason=login-required`)
+  })
+
+  it("omits the redirect param on a path starting with /login for login-required", () => {
+    setLocation("/login", "?redirect=%2Fcart")
+
+    expect(buildLoginUrl("login-required")).toBe(`${ORIGIN}/login?reason=login-required`)
+  })
+
+  it("round-trips an encoded query byte-for-byte", () => {
+    setLocation("/products", "?category=A%2CB&search=a%20b")
+
+    const result = buildLoginUrl("login-required")
+
+    expect(new URL(result).searchParams.get("redirect")).toBe("/products?category=A%2CB&search=a%20b")
+  })
+})
+
 describe("401 handling", () => {
   const arm401 = (path = "/backend-api/client-test/secure") => {
     let count = 0
@@ -246,6 +290,27 @@ describe("401 handling", () => {
     expect(error.response?.status).toBe(401)
     expect(error.isAxiosError).toBe(true)
   })
+
+  // The backend answers 401 ("Invalid email or password") for a wrong password. That must reach
+  // the login form as an ordinary error - not log out and hard-reload /login, dropping `redirect`.
+  it.each(["/backend-api/auth/login", "/backend-api/auth/login/verify-2fa"])(
+    "leaves a 401 from the sign-in endpoint %s to the caller",
+    async (path) => {
+      server.use(
+        http.post(`*${path}`, () => HttpResponse.json({ message: "Invalid email or password" }, { status: 401 })),
+      )
+      const logout = vi.fn(async () => {})
+      useAuthStore.setState({ logout })
+      setLocation("/login", "?redirect=%2Fproducts%2Fabc")
+
+      const error = await expectAxiosError(appApiClient.post(path, {}))
+
+      expect(error.response?.status).toBe(401)
+      expect(isAuthHandledError(error)).toBe(false)
+      expect(logout).not.toHaveBeenCalled()
+      expect(assignMock).not.toHaveBeenCalled()
+    },
+  )
 })
 
 /** Builds an unsigned, base64url-encoded JWT expiring `secondsFromNow` from now. */

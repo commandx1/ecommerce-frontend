@@ -143,12 +143,16 @@ describe("ProductCard", () => {
       bestPriceVendorUserProductId: "up-best",
     }
 
-    it("warns an anonymous shopper to sign in and fetches nothing", async () => {
+    it("redirects an anonymous shopper to /login and fetches nothing", async () => {
       render(<ProductCard data={makeData()} />)
 
       await userEvent.setup().click(screen.getByRole("button", { name: "Add to Cart" }))
 
-      expect(mockToastWarning).toHaveBeenCalledWith("Login required", expect.any(String))
+      expect(window.location.assign).toHaveBeenCalledTimes(1)
+      expect(String((window.location.assign as unknown as { mock: { calls: string[][] } }).mock.calls[0][0])).toContain(
+        "reason=login-required",
+      )
+      expect(mockToastWarning).not.toHaveBeenCalled()
       expect(getProductWithOffers).not.toHaveBeenCalled()
     })
 
