@@ -11,7 +11,11 @@ export default function ProductDetailSpecificationsSection({ viewModel }: Produc
   if (viewModel.specifications.length === 0 && !viewModel.sdsUrl) return null
 
   return (
-    <PageSectionContainer as="section" id="specifications" className="scroll-mt-24 bg-canvas py-12">
+    <PageSectionContainer
+      as="section"
+      id="specifications"
+      className="scroll-mt-[calc(var(--header-height)+1rem)] bg-canvas py-12"
+    >
       <SectionHeading
         title="Specifications"
         titleClassName="mb-2 md:text-3xl font-semibold text-text-primary"

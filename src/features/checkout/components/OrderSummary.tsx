@@ -29,7 +29,7 @@ export default function OrderSummary() {
   if (currentStep === 5) return null
 
   return (
-    <SurfaceCard variant="technical" className="sticky top-40 p-6">
+    <SurfaceCard variant="technical" className="sticky top-[calc(var(--header-height)+1rem)] p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-semibold text-text-primary">Order Summary</h3>
         <button

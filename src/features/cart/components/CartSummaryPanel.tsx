@@ -58,7 +58,7 @@ export default function CartSummaryPanel({
   ]
 
   return (
-    <SurfaceCard variant="technical" className="sticky top-6 p-6">
+    <SurfaceCard variant="technical" className="sticky top-[calc(var(--header-height)+1rem)] p-6">
       <h3 className="mb-6 text-xl font-bold text-text-primary">Order Summary</h3>
       <div className="mb-6 space-y-3">
         {summaryRows.map((row) => (

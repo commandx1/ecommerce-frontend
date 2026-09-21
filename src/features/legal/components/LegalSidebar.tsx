@@ -36,7 +36,7 @@ interface LegalSidebarProps {
 const LegalSidebar = ({ selectedId }: LegalSidebarProps) => {
   return (
     <div className="lg:col-span-1">
-      <div className="sticky top-12 rounded-[1.5rem] border border-border-soft bg-surface-elevated p-6 shadow-soft">
+      <div className="sticky top-[calc(var(--header-height)+1rem)] rounded-[1.5rem] border border-border-soft bg-surface-elevated p-6 shadow-soft">
         <h3 className="mb-4 text-lg font-semibold text-text-primary">Document Categories</h3>
         <nav className="space-y-2">
           {legalDocumentsData.sidebarNav.map((item) => {

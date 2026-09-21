@@ -116,8 +116,8 @@ const ProductListingClient = ({
           <div className="flex flex-col gap-8 lg:flex-row">
             <aside className="hidden w-72 shrink-0 lg:block">
               <div
-                style={{ maxHeight: "calc(100vh - 11.5rem)" }}
-                className="sticky top-42 overflow-y-auto rounded-[1.75rem] border border-border-soft bg-surface-elevated shadow-soft"
+                style={{ maxHeight: "calc(100vh - var(--header-height) - 2rem)" }}
+                className="sticky top-[calc(var(--header-height)+1rem)] overflow-y-auto rounded-[1.75rem] border border-border-soft bg-surface-elevated shadow-soft"
               >
                 <Suspense>
                   <ProductFiltersPanel

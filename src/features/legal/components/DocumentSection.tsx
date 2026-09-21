@@ -11,7 +11,7 @@ const DocumentSection = ({ document }: DocumentSectionProps) => {
   return (
     <section
       id={document.id}
-      className="mb-8 scroll-mt-24 rounded-[1.75rem] border border-border-soft bg-surface-elevated p-8 shadow-soft"
+      className="mb-8 scroll-mt-[calc(var(--header-height)+1rem)] rounded-[1.75rem] border border-border-soft bg-surface-elevated p-8 shadow-soft"
     >
       <DocumentSectionHeader document={document} />
 
