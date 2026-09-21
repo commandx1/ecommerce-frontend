@@ -25,12 +25,7 @@ export default function HomePage({ featuredCategories }: HomePageProps) {
           are per-section, not page-level. Screen reader / a11y-scan
           users still need exactly one <h1> describing the page. */}
       <h1 className="sr-only">DentyPro — B2B dental supply marketplace</h1>
-      {/* overflow-hidden scoped only to decorative hero section so sticky cards can work below */}
-      <div className="relative overflow-hidden">
-        <div aria-hidden className="home-nebula pointer-events-none absolute inset-0" />
-        <div aria-hidden className="home-grid-fade pointer-events-none absolute inset-0 opacity-60" />
-        <HomeHeroSectionClient />
-      </div>
+      <HomeHeroSectionClient />
 
       {featuredCategories.length > 0 && <HomeCategoriesSection categories={featuredCategories} />}
       <HomeTrendingProductsSection products={featuredProducts} />
