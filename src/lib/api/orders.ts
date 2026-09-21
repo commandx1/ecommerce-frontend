@@ -97,6 +97,18 @@ export interface GetPaymentStatusResponse {
   error: string | null
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * The orders endpoints' optional `orderId` param is a UUID on the backend - a non-UUID value
+ * makes Spring return 400. Both orders pages read `orderId` from the URL (set by a notification
+ * link), so this validates it before it ever reaches an API call. Lowercases the result so an
+ * upper-case URL still matches the backend's lowercase `order.orderId` for auto-expand.
+ */
+export function parseOrderIdParam(value: string | null): string | null {
+  return value && UUID_PATTERN.test(value) ? value.toLowerCase() : null
+}
+
 class OrdersAPI {
   async placeOrder(payload: PlaceOrderPayload): Promise<PlaceOrderResponse> {
     const response = await apiClient.post<PlaceOrderResponse>("/orders", payload)

@@ -16,14 +16,12 @@ const mockIsAuthErrorStatus = vi.fn()
 const mockIsAuthHandledError = vi.fn()
 
 let mockIsAuthenticated = true
+let mockSearchParams = new URLSearchParams()
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/buyer-dashboard/orders",
   useRouter: () => ({ push: mockPush, replace: mockReplace }),
-  useSearchParams: () => ({
-    get: () => null,
-    toString: () => "",
-  }),
+  useSearchParams: () => mockSearchParams,
 }))
 
 vi.mock("@/components/ui/Toast", () => ({
@@ -102,6 +100,7 @@ const baseOrder: BuyerOrder = {
 
 beforeEach(() => {
   mockIsAuthenticated = true
+  mockSearchParams = new URLSearchParams()
   mockPush.mockReset()
   mockReplace.mockReset()
   mockGetBuyerOrders.mockReset()
@@ -132,8 +131,17 @@ describe("useBuyerOrdersPage", () => {
       expect(result.current.isLoading).toBe(false)
     })
 
-    // The 6th argument is the AbortSignal the hook uses to cancel in-flight fetches.
-    expect(mockGetBuyerOrders).toHaveBeenCalledWith(0, 10, "createdDate", "desc", "ALL", expect.any(AbortSignal))
+    // The 6th argument is the AbortSignal the hook uses to cancel in-flight fetches; the 7th is
+    // the optional orderId (undefined here, since the URL carries none).
+    expect(mockGetBuyerOrders).toHaveBeenCalledWith(
+      0,
+      10,
+      "createdDate",
+      "desc",
+      "ALL",
+      expect.any(AbortSignal),
+      undefined,
+    )
     expect(result.current.filteredOrders).toHaveLength(1)
     expect(result.current.totalPages).toBe(3)
     expect(result.current.totalElements).toBe(25)
@@ -334,5 +342,242 @@ describe("useBuyerOrdersPage", () => {
       result.current.handleExpandedChange({})
     })
     expect(result.current.expandedState).toEqual({})
+  })
+
+  it("passes a valid orderId to the API and expands it, but drops an invalid one", async () => {
+    mockGetBuyerOrders.mockResolvedValue({ orders: [baseOrder], totalPages: 1, totalElements: 1 })
+    mockSearchParams = new URLSearchParams("orderId=11111111-1111-1111-1111-111111111111")
+
+    const { result } = renderHook(() => useBuyerOrdersPage())
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    expect(mockGetBuyerOrders).toHaveBeenLastCalledWith(
+      0,
+      10,
+      "createdDate",
+      "desc",
+      "ALL",
+      expect.any(AbortSignal),
+      "11111111-1111-1111-1111-111111111111",
+    )
+    expect(result.current.expandedState).toEqual({ "11111111-1111-1111-1111-111111111111": true })
+
+    mockGetBuyerOrders.mockClear()
+    mockSearchParams = new URLSearchParams("orderId=garbage")
+
+    const { result: resultWithGarbage } = renderHook(() => useBuyerOrdersPage())
+
+    await waitFor(() => {
+      expect(resultWithGarbage.current.isLoading).toBe(false)
+    })
+
+    expect(mockGetBuyerOrders).toHaveBeenLastCalledWith(
+      0,
+      10,
+      "createdDate",
+      "desc",
+      "ALL",
+      expect.any(AbortSignal),
+      undefined,
+    )
+  })
+
+  it("lowercases an UPPERCASE orderId before sending it and exposing it as singleOrderId", async () => {
+    mockGetBuyerOrders.mockResolvedValue({ orders: [baseOrder], totalPages: 1, totalElements: 1 })
+    mockSearchParams = new URLSearchParams(`orderId=${"11111111-1111-1111-1111-111111111111".toUpperCase()}`)
+
+    const { result } = renderHook(() => useBuyerOrdersPage())
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    expect(result.current.singleOrderId).toBe("11111111-1111-1111-1111-111111111111")
+    expect(mockGetBuyerOrders).toHaveBeenLastCalledWith(
+      0,
+      10,
+      "createdDate",
+      "desc",
+      "ALL",
+      expect.any(AbortSignal),
+      "11111111-1111-1111-1111-111111111111",
+    )
+  })
+
+  // F1: a notification link can arrive while the shopper is deep in pagination. The stale
+  // page must not ride along once the single-order view kicks in (DashboardPagination would
+  // otherwise print a nonsensical "Showing 31 to 1 of 1 results").
+  it("resets to page 0 once an orderId appears in the URL while on a later page", async () => {
+    mockGetBuyerOrders.mockResolvedValue({ orders: [baseOrder], totalPages: 5, totalElements: 50 })
+
+    const { result, rerender } = renderHook(() => useBuyerOrdersPage())
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    act(() => {
+      result.current.handlePageChange(2)
+    })
+
+    await waitFor(() => {
+      expect(mockGetBuyerOrders).toHaveBeenLastCalledWith(
+        2,
+        10,
+        "createdDate",
+        "desc",
+        "ALL",
+        expect.any(AbortSignal),
+        undefined,
+      )
+    })
+
+    mockSearchParams = new URLSearchParams("orderId=11111111-1111-1111-1111-111111111111")
+    rerender()
+
+    await waitFor(() => {
+      expect(mockGetBuyerOrders).toHaveBeenLastCalledWith(
+        0,
+        10,
+        "createdDate",
+        "desc",
+        "ALL",
+        expect.any(AbortSignal),
+        "11111111-1111-1111-1111-111111111111",
+      )
+    })
+    expect(result.current.currentPage).toBe(0)
+    // Exactly one filtered request: the page is derived, so there is no stale-page request to abort and re-send.
+    expect(mockGetBuyerOrders.mock.calls.filter((call) => call[6] !== undefined).map((call) => call[0])).toEqual([0])
+  })
+
+  it("re-fetches and expands the new order when the orderId in the URL changes from A to B", async () => {
+    const orderA = "11111111-1111-1111-1111-111111111111"
+    const orderB = "22222222-2222-2222-2222-222222222222"
+    mockGetBuyerOrders.mockResolvedValue({ orders: [baseOrder], totalPages: 1, totalElements: 1 })
+    mockSearchParams = new URLSearchParams(`orderId=${orderA}`)
+
+    const { result, rerender } = renderHook(() => useBuyerOrdersPage())
+
+    await waitFor(() => {
+      expect(result.current.singleOrderId).toBe(orderA)
+    })
+    expect(result.current.expandedState).toEqual({ [orderA]: true })
+
+    mockSearchParams = new URLSearchParams(`orderId=${orderB}`)
+    rerender()
+
+    await waitFor(() => {
+      expect(result.current.singleOrderId).toBe(orderB)
+    })
+    expect(result.current.expandedState).toEqual({ [orderB]: true })
+    expect(mockGetBuyerOrders).toHaveBeenLastCalledWith(
+      0,
+      10,
+      "createdDate",
+      "desc",
+      "ALL",
+      expect.any(AbortSignal),
+      orderB,
+    )
+  })
+
+  it("replaces the URL with the new selectedTab, no orderId, keeping other params on tab change", async () => {
+    mockGetBuyerOrders.mockResolvedValue({ orders: [baseOrder], totalPages: 1, totalElements: 1 })
+    mockSearchParams = new URLSearchParams("orderId=11111111-1111-1111-1111-111111111111&foo=bar")
+
+    const { result } = renderHook(() => useBuyerOrdersPage())
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    act(() => {
+      result.current.handleTabChange("Delivered")
+    })
+
+    const replacedUrl = mockReplace.mock.calls[0]?.[0] as string
+    const params = new URL(replacedUrl, "http://localhost").searchParams
+    expect(params.get("selectedTab")).toBe("Delivered")
+    expect(params.has("orderId")).toBe(false)
+    expect(params.get("foo")).toBe("bar")
+  })
+
+  it("clears only the orderId param, keeping the rest, when clearSingleOrder is called", async () => {
+    mockGetBuyerOrders.mockResolvedValue({ orders: [baseOrder], totalPages: 1, totalElements: 1 })
+    mockSearchParams = new URLSearchParams("selectedTab=Delivered&orderId=11111111-1111-1111-1111-111111111111")
+
+    const { result } = renderHook(() => useBuyerOrdersPage())
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    act(() => {
+      result.current.clearSingleOrder()
+    })
+
+    expect(mockReplace).toHaveBeenCalledWith("/buyer-dashboard/orders?selectedTab=Delivered", { scroll: false })
+  })
+
+  it("replaces to exactly the pathname, with no trailing '?', when orderId was the only param", async () => {
+    mockGetBuyerOrders.mockResolvedValue({ orders: [baseOrder], totalPages: 1, totalElements: 1 })
+    mockSearchParams = new URLSearchParams("orderId=11111111-1111-1111-1111-111111111111")
+
+    const { result } = renderHook(() => useBuyerOrdersPage())
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    act(() => {
+      result.current.clearSingleOrder()
+    })
+
+    expect(mockReplace).toHaveBeenCalledWith("/buyer-dashboard/orders", { scroll: false })
+  })
+
+  it("shows no error toast when orderId points at someone else's order (empty, ownership-checked result)", async () => {
+    mockGetBuyerOrders.mockResolvedValue({ orders: [], totalPages: 0, totalElements: 0 })
+    mockSearchParams = new URLSearchParams("orderId=11111111-1111-1111-1111-111111111111")
+
+    const { result } = renderHook(() => useBuyerOrdersPage())
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    expect(result.current.filteredOrders).toHaveLength(0)
+    expect(result.current.singleOrderId).toBe("11111111-1111-1111-1111-111111111111")
+    expect(mockToastError).not.toHaveBeenCalled()
+  })
+
+  it("shows an error toast and clears the list when the fetch rejects while an orderId is set", async () => {
+    mockGetBuyerOrders.mockRejectedValue(new Error("network"))
+    mockSearchParams = new URLSearchParams("orderId=11111111-1111-1111-1111-111111111111")
+
+    const { result } = renderHook(() => useBuyerOrdersPage())
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    expect(result.current.filteredOrders).toHaveLength(0)
+    expect(mockToastError).toHaveBeenCalledWith(
+      "Orders unavailable",
+      "Your orders could not be loaded right now. Please try again.",
+    )
+  })
+
+  it("never calls the API when unauthenticated, even with a valid orderId in the URL", async () => {
+    mockIsAuthenticated = false
+    mockSearchParams = new URLSearchParams("orderId=11111111-1111-1111-1111-111111111111")
+
+    renderHook(() => useBuyerOrdersPage())
+
+    expect(mockGetBuyerOrders).not.toHaveBeenCalled()
   })
 })

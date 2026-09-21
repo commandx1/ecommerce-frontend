@@ -69,4 +69,9 @@ describe("safeRedirect", () => {
   it("returns / unchanged", () => {
     expect(safeRedirect("/")).toBe("/")
   })
+
+  it("returns a notification-link orderId redirect unchanged", () => {
+    const path = "/buyer-dashboard/orders?orderId=11111111-1111-1111-1111-111111111111"
+    expect(safeRedirect(path)).toBe(path)
+  })
 })

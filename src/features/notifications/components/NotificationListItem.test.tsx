@@ -32,15 +32,32 @@ describe("NotificationListItem", () => {
     expect(screen.queryByText("Unread:")).not.toBeInTheDocument()
   })
 
-  it("resolves the vendor Uber Direct notification to the vendor orders page", () => {
-    const notification = makeNotification({ type: "VENDOR_WAITING_FOR_UBER_DIRECT" })
+  it("resolves the vendor Uber Direct notification without an orderId to the vendor orders page", () => {
+    const notification = makeNotification({ type: "VENDOR_WAITING_FOR_UBER_DIRECT", orderId: null })
     renderItem({ notification, role: "vendor", variant: "compact" })
 
     expect(screen.getByRole("link")).toHaveAttribute("href", "/vendor-dashboard/orders")
   })
 
-  it("resolves to the buyer notifications page for a buyer", () => {
-    const notification = makeNotification({ type: "VENDOR_WAITING_FOR_UBER_DIRECT" })
+  it("resolves to the buyer notifications page for a buyer when there is no orderId", () => {
+    const notification = makeNotification({ type: "VENDOR_WAITING_FOR_UBER_DIRECT", orderId: null })
+    renderItem({ notification, role: "buyer", variant: "compact" })
+
+    expect(screen.getByRole("link")).toHaveAttribute("href", "/buyer-dashboard/notifications")
+  })
+
+  it("resolves a notification carrying a valid orderId to that role's orders page", () => {
+    const notification = makeNotification({ orderId: "11111111-1111-1111-1111-111111111111" })
+    renderItem({ notification, role: "buyer", variant: "compact" })
+
+    expect(screen.getByRole("link")).toHaveAttribute(
+      "href",
+      "/buyer-dashboard/orders?orderId=11111111-1111-1111-1111-111111111111",
+    )
+  })
+
+  it("falls back to the old behaviour when the notification's orderId is not a valid UUID", () => {
+    const notification = makeNotification({ type: "SOME_UNKNOWN_TYPE", orderId: "order-1" })
     renderItem({ notification, role: "buyer", variant: "compact" })
 
     expect(screen.getByRole("link")).toHaveAttribute("href", "/buyer-dashboard/notifications")

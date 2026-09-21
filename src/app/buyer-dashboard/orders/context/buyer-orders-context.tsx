@@ -4,8 +4,8 @@ import { createContext, type ReactNode, useContext, useMemo } from "react"
 import { type UseBuyerOrdersPageResult, useBuyerOrdersPage } from "../hooks/use-buyer-orders-page"
 
 type BuyerOrdersAuthState = Pick<UseBuyerOrdersPageResult, "isAuthenticated">
-type BuyerOrdersTabsState = Pick<UseBuyerOrdersPageResult, "selectedTab">
-type BuyerOrdersTabsActions = Pick<UseBuyerOrdersPageResult, "handleTabChange">
+type BuyerOrdersTabsState = Pick<UseBuyerOrdersPageResult, "selectedTab" | "singleOrderId">
+type BuyerOrdersTabsActions = Pick<UseBuyerOrdersPageResult, "handleTabChange" | "clearSingleOrder">
 
 type BuyerOrdersTableState = Pick<
   UseBuyerOrdersPageResult,
@@ -102,15 +102,17 @@ export function BuyerOrdersProvider({ children }: BuyerOrdersProviderProps) {
   const tabsState = useMemo<BuyerOrdersTabsState>(
     () => ({
       selectedTab: buyerOrders.selectedTab,
+      singleOrderId: buyerOrders.singleOrderId,
     }),
-    [buyerOrders.selectedTab],
+    [buyerOrders.selectedTab, buyerOrders.singleOrderId],
   )
 
   const tabsActions = useMemo<BuyerOrdersTabsActions>(
     () => ({
       handleTabChange: buyerOrders.handleTabChange,
+      clearSingleOrder: buyerOrders.clearSingleOrder,
     }),
-    [buyerOrders.handleTabChange],
+    [buyerOrders.handleTabChange, buyerOrders.clearSingleOrder],
   )
 
   const tableState = useMemo<BuyerOrdersTableState>(

@@ -290,10 +290,36 @@ describe("proxy role routing matrix", () => {
 })
 
 describe("proxy redirect construction", () => {
-  it("keeps the redirect param path-only, dropping the query string of the blocked route", async () => {
+  it("keeps the query string of the blocked route in the redirect param (F2)", async () => {
     const response = await proxy(makeRequest("/buyer-dashboard/orders?page=2&status=open"))
 
-    expect(response.headers.get("location")).toBe(`${ORIGIN}/login?redirect=%2Fbuyer-dashboard%2Forders`)
+    expect(response.headers.get("location")).toBe(
+      `${ORIGIN}/login?redirect=${encodeURIComponent("/buyer-dashboard/orders?page=2&status=open")}`,
+    )
+  })
+
+  it("keeps a notification-link orderId query string across the login redirect (buyer)", async () => {
+    const orderId = "11111111-1111-1111-1111-111111111111"
+    const response = await proxy(makeRequest(`/buyer-dashboard/orders?orderId=${orderId}`))
+
+    expect(response.headers.get("location")).toBe(
+      `${ORIGIN}/login?redirect=${encodeURIComponent(`/buyer-dashboard/orders?orderId=${orderId}`)}`,
+    )
+  })
+
+  it("keeps a notification-link orderId query string across the login redirect (vendor)", async () => {
+    const orderId = "11111111-1111-1111-1111-111111111111"
+    const response = await proxy(makeRequest(`/vendor-dashboard/orders?orderId=${orderId}`))
+
+    expect(response.headers.get("location")).toBe(
+      `${ORIGIN}/login?redirect=${encodeURIComponent(`/vendor-dashboard/orders?orderId=${orderId}`)}`,
+    )
+  })
+
+  it("still redirects with a bare path (no query string) unchanged (regression guard)", async () => {
+    const response = await proxy(makeRequest("/buyer-dashboard"))
+
+    expect(response.headers.get("location")).toBe(`${ORIGIN}/login?redirect=%2Fbuyer-dashboard`)
   })
 
   it("redirects to an absolute URL on the request origin", async () => {

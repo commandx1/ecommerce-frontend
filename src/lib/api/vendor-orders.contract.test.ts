@@ -153,6 +153,55 @@ describe("vendorOrdersAPI.getVendorOrders contract", () => {
 
     await expect(vendorOrdersAPI.getVendorOrders()).rejects.toThrow()
   })
+
+  it("includes orderId when provided, and omits it otherwise", async () => {
+    await vendorOrdersAPI.getVendorOrders(0, 10, "createdDate", "desc", "ALL", undefined, "order-99")
+    expect(capturedQuery?.get("orderId")).toBe("order-99")
+
+    await vendorOrdersAPI.getVendorOrders()
+    expect(capturedQuery?.has("orderId")).toBe(false)
+  })
+
+  it("adds orderId without disturbing the other params", async () => {
+    await vendorOrdersAPI.getVendorOrders(
+      2,
+      25,
+      "orderCreatedDate",
+      "desc",
+      "DELIVERED",
+      undefined,
+      "11111111-1111-1111-1111-111111111111",
+    )
+
+    expect(capturedQuery?.get("page")).toBe("2")
+    expect(capturedQuery?.get("size")).toBe("25")
+    expect(capturedQuery?.get("sortBy")).toBe("orderCreatedDate")
+    expect(capturedQuery?.get("sortDir")).toBe("desc")
+    expect(capturedQuery?.get("type")).toBe("DELIVERED")
+    expect(capturedQuery?.get("orderId")).toBe("11111111-1111-1111-1111-111111111111")
+  })
+
+  it("omits the orderId key for an empty string", async () => {
+    await vendorOrdersAPI.getVendorOrders(0, 10, "createdDate", "desc", "ALL", undefined, "")
+    expect(capturedQuery?.has("orderId")).toBe(false)
+  })
+
+  it("still forwards the abort signal when orderId is set", async () => {
+    const controller = new AbortController()
+    controller.abort()
+
+    await expect(
+      vendorOrdersAPI.getVendorOrders(
+        0,
+        10,
+        "createdDate",
+        "desc",
+        "ALL",
+        controller.signal,
+        "11111111-1111-1111-1111-111111111111",
+      ),
+    ).rejects.toBeTruthy()
+  })
 })
 
 describe("vendorOrdersAPI.processUberDeliveries contract", () => {

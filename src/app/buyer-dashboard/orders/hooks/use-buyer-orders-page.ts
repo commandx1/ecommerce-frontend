@@ -13,6 +13,7 @@ import {
   buyerOrdersAPI,
   type RefundOrderPayload,
 } from "@/lib/api/buyer-orders"
+import { parseOrderIdParam } from "@/lib/api/orders"
 import { OrderItemStatus } from "@/lib/constants/order-item-status"
 import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
@@ -80,16 +81,31 @@ export function useBuyerOrdersPage() {
     return "All"
   }, [searchParams])
 
+  // Coming from a notification: the backend ignores type/page/sort while this is set and
+  // returns only this one order (ownership-checked), so the tab bar and pagination are
+  // irrelevant until the shopper clears it.
+  const singleOrderId = useMemo(() => parseOrderIdParam(searchParams.get("orderId")), [searchParams])
+  // Derived, not reset in an effect: a second state update would abort and re-send the request.
+  const effectivePage = singleOrderId ? 0 : currentPage
+
   const handleTabChange = useCallback(
     (tab: BuyerOrderStatusTab) => {
       const nextParams = new URLSearchParams(searchParams.toString())
       nextParams.set("selectedTab", tab)
+      nextParams.delete("orderId")
       router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false })
       setCurrentPage(0)
       setExpandedOrderId(null)
     },
     [pathname, router, searchParams],
   )
+
+  const clearSingleOrder = useCallback(() => {
+    const nextParams = new URLSearchParams(searchParams.toString())
+    nextParams.delete("orderId")
+    const query = nextParams.toString()
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+  }, [pathname, router, searchParams])
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -102,12 +118,13 @@ export function useBuyerOrdersPage() {
       try {
         setIsLoading(true)
         const response = await buyerOrdersAPI.getBuyerOrders(
-          currentPage,
+          effectivePage,
           pageSize,
           sort.field,
           sort.dir,
           ORDER_STATUS_TAB_TO_FILTER_TYPE[selectedTab],
           controller.signal,
+          singleOrderId ?? undefined,
         )
         setOrders(Array.isArray(response.orders) ? response.orders : [])
         setTotalPages(typeof response.totalPages === "number" ? response.totalPages : 0)
@@ -132,7 +149,13 @@ export function useBuyerOrdersPage() {
     return () => {
       abortControllerRef.current?.abort()
     }
-  }, [isAuthenticated, currentPage, pageSize, sort, selectedTab])
+  }, [isAuthenticated, effectivePage, pageSize, sort, selectedTab, singleOrderId])
+
+  useEffect(() => {
+    if (singleOrderId) {
+      setExpandedOrderId(singleOrderId)
+    }
+  }, [singleOrderId])
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page)
@@ -428,7 +451,7 @@ export function useBuyerOrdersPage() {
     cancelingItemId,
     cancelingSellerKey,
     confirmPendingCancelAction,
-    currentPage,
+    currentPage: effectivePage,
     sortField: sort.field,
     sortDir: sort.dir,
     expandedState,
@@ -448,6 +471,8 @@ export function useBuyerOrdersPage() {
     requestCancelAction,
     requestRefundAction,
     selectedTab,
+    singleOrderId,
+    clearSingleOrder,
     submitRefundOrder,
     setPendingCancelAction,
     setPendingRefundOrder,

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
 import { makeAccountUser, makeVendorOrder, makeVendorOrderItem } from "@/test/factories"
+import { setSearchParams } from "@/test/mocks/next-navigation"
 import { installRadixPointerPolyfills } from "@/test/radix"
 import { fireEvent, render, screen, waitFor, within } from "@/test/render"
 import VendorOrdersPage from "./page"
@@ -192,6 +193,95 @@ describe("VendorOrdersPage", () => {
       expect(screen.getByRole("button", { name: "Delivered" })).toHaveAttribute("aria-pressed", "true"),
     )
     expect(screen.getByRole("button", { name: "All" })).toHaveAttribute("aria-pressed", "false")
+  })
+
+  it("requests only the notified order when a valid orderId is in the URL, and clears it via View all orders", async () => {
+    const user = userEvent.setup()
+    const requests = serveOrdersTracking([makeVendorOrder({ orderId: "vorder-1" })])
+
+    const { router } = render(<VendorOrdersPage />, {
+      searchParams: "orderId=11111111-1111-1111-1111-111111111111",
+    })
+
+    await waitFor(() => expect(requests.length).toBeGreaterThan(0))
+    expect(requests[0]?.get("orderId")).toBe("11111111-1111-1111-1111-111111111111")
+    expect(await screen.findByText("Showing a single order from your notification.")).toBeInTheDocument()
+    expect(screen.getByRole("status")).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "View all orders" }))
+    // orderId was the only param, so clearing it must replace to exactly the pathname - no
+    // trailing "?" (F4). This suite doesn't set a `route`, so the mocked pathname is "/".
+    expect(router.replace).toHaveBeenCalledWith("/", { scroll: false })
+  })
+
+  it("does not send a non-UUID orderId to the backend", async () => {
+    const requests = serveOrdersTracking([makeVendorOrder()])
+
+    render(<VendorOrdersPage />, { searchParams: "orderId=not-a-uuid" })
+
+    await waitFor(() => expect(requests.length).toBeGreaterThan(0))
+    expect(requests[0]?.has("orderId")).toBe(false)
+    expect(screen.queryByText("Showing a single order from your notification.")).not.toBeInTheDocument()
+    expect(screen.queryByRole("status")).not.toBeInTheDocument()
+  })
+
+  it("lowercases an UPPERCASE orderId before sending it to the backend", async () => {
+    const requests = serveOrdersTracking([makeVendorOrder({ orderId: "vorder-1" })])
+
+    render(<VendorOrdersPage />, {
+      searchParams: `orderId=${"11111111-1111-1111-1111-111111111111".toUpperCase()}`,
+    })
+
+    await waitFor(() => expect(requests.length).toBeGreaterThan(0))
+    expect(requests[0]?.get("orderId")).toBe("11111111-1111-1111-1111-111111111111")
+  })
+
+  it("still shows the single-order notice alongside an empty result set (ownership-checked orderId)", async () => {
+    serveOrdersTracking([])
+
+    render(<VendorOrdersPage />, { searchParams: "orderId=11111111-1111-1111-1111-111111111111" })
+
+    expect(await screen.findByRole("status")).toBeInTheDocument()
+    expect(screen.getByText("Showing a single order from your notification.")).toBeInTheDocument()
+  })
+
+  it("drops orderId and keeps other params when a status tab is clicked", async () => {
+    const user = userEvent.setup()
+    serveOrdersTracking([makeVendorOrder({ orderId: "vorder-1" })])
+
+    const { router } = render(<VendorOrdersPage />, {
+      searchParams: "orderId=11111111-1111-1111-1111-111111111111&foo=bar",
+    })
+
+    await screen.findByText("Showing a single order from your notification.")
+    await user.click(screen.getByRole("button", { name: "Shipped" }))
+
+    const replacedUrl = router.replace.mock.calls[0]?.[0] as string
+    const params = new URL(replacedUrl, "http://localhost").searchParams
+    expect(params.get("selectedTab")).toBe("Shipped")
+    expect(params.has("orderId")).toBe(false)
+    expect(params.get("foo")).toBe("bar")
+  })
+
+  it("resets to page 0 once an orderId appears in the URL while on a later page", async () => {
+    const requests = serveOrdersTracking([makeVendorOrder({ orderId: "vorder-1" })], {
+      totalPages: 5,
+      totalElements: 50,
+    })
+
+    const { rerender } = render(<VendorOrdersPage />)
+    await waitFor(() => expect(requests.length).toBeGreaterThan(0))
+
+    const user = userEvent.setup()
+    await user.click(screen.getByRole("button", { name: "2" }))
+    await waitFor(() => expect(requests.at(-1)?.get("page")).toBe("1"))
+
+    setSearchParams("orderId=11111111-1111-1111-1111-111111111111")
+    rerender(<VendorOrdersPage />)
+
+    await waitFor(() => expect(requests.at(-1)?.get("orderId")).toBe("11111111-1111-1111-1111-111111111111"))
+    // Exactly one filtered request: the page is derived, so there is no stale-page request to abort and re-send.
+    expect(requests.filter((request) => request.get("orderId")).map((request) => request.get("page"))).toEqual(["0"])
   })
 
   it("shows Cancel only while at least one item is still cancelable", async () => {

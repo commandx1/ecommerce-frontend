@@ -184,6 +184,7 @@ class BuyerOrdersAPI {
     sortDir?: "asc" | "desc",
     type: BuyerOrderFilterType = "ALL",
     signal?: AbortSignal,
+    orderId?: string,
   ): Promise<BuyerOrdersResponse> {
     const response = await apiClient.get<BuyerOrdersResponse>("/orders/buyer", {
       params: {
@@ -192,6 +193,7 @@ class BuyerOrdersAPI {
         sortBy,
         sortDir,
         type,
+        ...(orderId ? { orderId } : {}),
       },
       signal,
     })

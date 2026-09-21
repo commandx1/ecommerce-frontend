@@ -167,6 +167,7 @@ class VendorOrdersAPI {
     sortDir?: "asc" | "desc",
     type: VendorOrderFilterType = "ALL",
     signal?: AbortSignal,
+    orderId?: string,
   ): Promise<VendorOrdersResponse> {
     const response = await apiClient.get<VendorOrdersResponse>("/orders/seller", {
       params: {
@@ -175,6 +176,7 @@ class VendorOrdersAPI {
         sortBy,
         sortDir,
         type,
+        ...(orderId ? { orderId } : {}),
       },
       signal,
     })

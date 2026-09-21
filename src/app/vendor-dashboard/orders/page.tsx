@@ -6,9 +6,11 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { extractApiErrorMessage } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
 import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
+import SingleOrderNotice from "@/components/dashboard-shared/SingleOrderNotice"
 import Modal from "@/components/ui/Modal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
+import { parseOrderIdParam } from "@/lib/api/orders"
 import {
   type ProcessUberDeliveriesResponse,
   type VendorOrder,
@@ -60,10 +62,15 @@ export default function VendorOrdersPage() {
     const value = searchParams.get("selectedTab")
     return VENDOR_ORDER_TABS.includes(value as VendorOrderStatusTab) ? (value as VendorOrderStatusTab) : "All"
   }, [searchParams])
+  // See buyer orders page: the backend ignores type/page/sort while orderId is set and
+  // returns only that one order.
+  const singleOrderId = useMemo(() => parseOrderIdParam(searchParams.get("orderId")), [searchParams])
   const [orders, setOrders] = useState<VendorOrder[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [pageSize, setPageSize] = useState<number>(10)
   const [currentPage, setCurrentPage] = useState<number>(0)
+  // Derived, not reset in an effect: a second state update would abort and re-send the request.
+  const effectivePage = singleOrderId ? 0 : currentPage
   const [totalPages, setTotalPages] = useState<number>(1)
   const [totalElements, setTotalElements] = useState<number>(0)
   const [sortBy, setSortBy] = useState<"price" | "quantity" | "createdDate">("createdDate")
@@ -106,12 +113,13 @@ export default function VendorOrdersPage() {
       try {
         setIsLoading(true)
         const response = await vendorOrdersAPI.getVendorOrders(
-          currentPage,
+          effectivePage,
           pageSize,
           sortBy,
           sortDir,
           TAB_TO_FILTER[selectedTab],
           controller.signal,
+          singleOrderId ?? undefined,
         )
         // A malformed 200 (empty/partial body, wrong shape from a misbehaving proxy) parses fine
         // as JSON but can leave `orders` missing - `orders-mobile-list.tsx` calls `orders.length`
@@ -137,7 +145,13 @@ export default function VendorOrdersPage() {
     return () => {
       abortControllerRef.current?.abort()
     }
-  }, [isAuthenticated, currentPage, pageSize, sortBy, sortDir, selectedTab])
+  }, [isAuthenticated, effectivePage, pageSize, sortBy, sortDir, selectedTab, singleOrderId])
+
+  useEffect(() => {
+    if (singleOrderId) {
+      setExpandedOrderId(singleOrderId)
+    }
+  }, [singleOrderId])
 
   useEffect(() => {
     if (!labelModalLinks) return
@@ -184,12 +198,20 @@ export default function VendorOrdersPage() {
     (tab: VendorOrderStatusTab) => {
       const nextParams = new URLSearchParams(searchParams.toString())
       nextParams.set("selectedTab", tab)
+      nextParams.delete("orderId")
       router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false })
       setCurrentPage(0)
       setExpandedOrderId(null)
     },
     [pathname, router, searchParams],
   )
+
+  const clearSingleOrder = useCallback(() => {
+    const nextParams = new URLSearchParams(searchParams.toString())
+    nextParams.delete("orderId")
+    const query = nextParams.toString()
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+  }, [pathname, router, searchParams])
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
@@ -441,6 +463,8 @@ export default function VendorOrdersPage() {
           </div>
         </div>
 
+        {singleOrderId ? <SingleOrderNotice onClear={clearSingleOrder} /> : null}
+
         <div className="hidden lg:block lg:overflow-x-auto">
           <OrdersTable
             orders={orders}
@@ -502,7 +526,7 @@ export default function VendorOrdersPage() {
           <span className="text-sm text-text-secondary">per page</span>
         </div>
         <DashboardPagination
-          currentPage={currentPage}
+          currentPage={effectivePage}
           totalPages={totalPages}
           totalElements={totalElements}
           pageSize={pageSize}

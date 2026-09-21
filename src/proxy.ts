@@ -49,7 +49,7 @@ export async function proxy(request: NextRequest) {
   if (pathname.startsWith("/vendor-dashboard") || pathname.startsWith("/buyer-dashboard")) {
     if (!authCookie || !user || !isAuthenticated) {
       const loginUrl = new URL("/login", request.url)
-      loginUrl.searchParams.set("redirect", pathname)
+      loginUrl.searchParams.set("redirect", pathname + request.nextUrl.search)
       return NextResponse.redirect(loginUrl)
     }
 

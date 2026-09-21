@@ -1,5 +1,6 @@
 "use client"
 
+import SingleOrderNotice from "@/components/dashboard-shared/SingleOrderNotice"
 import CancelConfirmModal from "./components/cancel-confirm-modal"
 import OrdersMobileList from "./components/orders-mobile-list"
 import OrdersPagination from "./components/orders-pagination"
@@ -7,10 +8,17 @@ import OrdersStatusTabs from "./components/orders-status-tabs"
 import OrdersTable from "./components/orders-table"
 import RefundOrderModal from "./components/refund-order-modal"
 import TrackingLinksModal from "./components/tracking-links-modal"
-import { BuyerOrdersProvider, useBuyerOrdersAuthState } from "./context/buyer-orders-context"
+import {
+  BuyerOrdersProvider,
+  useBuyerOrdersAuthState,
+  useBuyerOrdersTabsActions,
+  useBuyerOrdersTabsState,
+} from "./context/buyer-orders-context"
 
 function BuyerOrdersPageContent() {
   const { isAuthenticated } = useBuyerOrdersAuthState()
+  const { singleOrderId } = useBuyerOrdersTabsState()
+  const { clearSingleOrder } = useBuyerOrdersTabsActions()
 
   if (!isAuthenticated) {
     return (
@@ -37,6 +45,8 @@ function BuyerOrdersPageContent() {
         <div className="border-b border-border-soft px-4 pt-4 sm:px-6">
           <OrdersStatusTabs />
         </div>
+
+        {singleOrderId ? <SingleOrderNotice onClear={clearSingleOrder} /> : null}
 
         <div className="hidden lg:block lg:overflow-x-auto">
           <OrdersTable />

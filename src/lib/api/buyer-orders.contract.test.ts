@@ -71,6 +71,51 @@ describe("buyerOrdersAPI contract", () => {
     expect(response.orders[0]?.sellerGroups?.[0]?.orderItems[0]?.productName).toBe("Dental Kit")
   })
 
+  it("adds orderId to the params without disturbing the other params, and still forwards the signal", async () => {
+    const controller = new AbortController()
+    await buyerOrdersAPI.getBuyerOrders(
+      1,
+      10,
+      "createdDate",
+      "asc",
+      "RETURNED",
+      controller.signal,
+      "11111111-1111-1111-1111-111111111111",
+    )
+
+    expect(capturedQuery?.get("page")).toBe("1")
+    expect(capturedQuery?.get("size")).toBe("10")
+    expect(capturedQuery?.get("sortBy")).toBe("createdDate")
+    expect(capturedQuery?.get("sortDir")).toBe("asc")
+    expect(capturedQuery?.get("type")).toBe("RETURNED")
+    expect(capturedQuery?.get("orderId")).toBe("11111111-1111-1111-1111-111111111111")
+  })
+
+  it("still forwards the abort signal when orderId is set", async () => {
+    const controller = new AbortController()
+    controller.abort()
+
+    await expect(
+      buyerOrdersAPI.getBuyerOrders(
+        0,
+        10,
+        "createdDate",
+        "desc",
+        "ALL",
+        controller.signal,
+        "11111111-1111-1111-1111-111111111111",
+      ),
+    ).rejects.toBeTruthy()
+  })
+
+  it("omits the orderId key entirely when undefined or an empty string", async () => {
+    await buyerOrdersAPI.getBuyerOrders(0, 10, "createdDate", "desc", "ALL", undefined, undefined)
+    expect(capturedQuery?.has("orderId")).toBe(false)
+
+    await buyerOrdersAPI.getBuyerOrders(0, 10, "createdDate", "desc", "ALL", undefined, "")
+    expect(capturedQuery?.has("orderId")).toBe(false)
+  })
+
   it("sends expected cancellation payload and returns cancellation contract response", async () => {
     const payload: CancelDuringDeliveryByCustomerPayload = { orderItemIds: ["item-1"] }
     const response = await buyerOrdersAPI.cancelDuringDeliveryByCustomer(payload)
@@ -149,6 +194,14 @@ describe("buyerOrdersAPI pagination and filter serialisation", () => {
     await buyerOrdersAPI.getBuyerOrders(1, 20, "totalPrice", "asc", "DELIVERED")
 
     expect([...(capturedQuery?.keys() ?? [])].sort()).toEqual(["page", "size", "sortBy", "sortDir", "type"])
+  })
+
+  it("includes orderId when provided, and omits it otherwise", async () => {
+    await buyerOrdersAPI.getBuyerOrders(0, 10, "createdDate", "desc", "ALL", undefined, "order-99")
+    expect(capturedQuery?.get("orderId")).toBe("order-99")
+
+    await buyerOrdersAPI.getBuyerOrders()
+    expect(capturedQuery?.has("orderId")).toBe(false)
   })
 
   it("aborts in flight when the caller's signal fires", async () => {
