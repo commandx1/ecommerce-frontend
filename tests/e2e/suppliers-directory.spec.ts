@@ -178,4 +178,66 @@ test.describe("suppliers directory", () => {
     // registering /favorite) is enough; the apiMock teardown assertion would
     // fail this test if the click had fired one.
   })
+
+  test("card content: full vendor shows features/about/contact, minimal vendor hides them", async ({
+    guestPage,
+    apiMock,
+  }) => {
+    const FULL_VENDOR = makeVendorListItem({
+      id: "company-full",
+      name: "Full Featured Supplies",
+      companyName: "Full Featured Supplies",
+      productCount: 1,
+      shipmentPolicy: "ONE_DAY",
+      description: "We stock everything a modern dental practice needs.",
+      email: "sales@fullfeatured.example.com",
+    })
+    const MINIMAL_VENDOR = makeVendorListItem({
+      id: "company-minimal",
+      name: "Minimal Supplies Co",
+      companyName: "Minimal Supplies Co",
+      productCount: 0,
+      shipmentPolicy: null,
+      description: null,
+      email: null,
+      companyPhoto: null,
+    })
+
+    apiMock.on("GET", "/backend-api/vendors", () => ({
+      body: { vendors: [FULL_VENDOR, MINIMAL_VENDOR], totalCount: 2, page: 0, size: 6, totalPages: 1 },
+    }))
+    registerAllMocks(apiMock)
+
+    const directory = new SuppliersDirectoryPage(guestPage)
+    await directory.goto()
+
+    const fullCard = directory.supplierCard(FULL_VENDOR.name)
+    const minimalCard = directory.supplierCard(MINIMAL_VENDOR.name)
+    await expect(fullCard).toBeVisible()
+    await expect(minimalCard).toBeVisible()
+
+    // Full vendor: every feature line, about box and contact link present.
+    await expect(fullCard.getByText("Verified partner")).toBeVisible()
+    await expect(fullCard.getByText("1 Product Available", { exact: true })).toBeVisible()
+    await expect(fullCard.getByText("Ships in 1 day", { exact: true })).toBeVisible()
+    await expect(fullCard.getByText("About this vendor")).toBeVisible()
+    const fullCatalogLink = fullCard.getByRole("link", { name: "View Catalog" })
+    await expect(fullCatalogLink).toHaveAttribute("href", `/products?vendors=${FULL_VENDOR.id}`)
+    await expect(fullCard.getByRole("link", { name: "Contact supplier" })).toBeVisible()
+
+    // Minimal vendor: only the always-on chrome, none of the optional bits.
+    await expect(minimalCard.getByText("Verified partner")).toBeVisible()
+    const minimalCatalogLink = minimalCard.getByRole("link", { name: "View Catalog" })
+    await expect(minimalCatalogLink).toHaveAttribute("href", `/products?vendors=${MINIMAL_VENDOR.id}`)
+    await expect(minimalCard.getByText(/Available/)).toHaveCount(0)
+    await expect(minimalCard.getByText(/Ships in/)).toHaveCount(0)
+    await expect(minimalCard.getByText("About this vendor")).toHaveCount(0)
+    await expect(minimalCard.getByRole("link", { name: "Contact supplier" })).toHaveCount(0)
+    // No logo photo -> initials fallback ("Minimal Supplies Co" -> "MS").
+    await expect(minimalCard.getByText("MS", { exact: true })).toBeVisible()
+
+    // Clicking "View Catalog" navigates to the vendor-filtered products URL.
+    await fullCatalogLink.click()
+    await expect(guestPage).toHaveURL(new RegExp(`/products\\?vendors=${FULL_VENDOR.id}`))
+  })
 })

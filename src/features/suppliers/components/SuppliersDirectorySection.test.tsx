@@ -246,7 +246,7 @@ describe("SuppliersDirectorySection", () => {
     // It now returns one row per COMPANY, with `id` = company id, and the frontend
     // carries that id through unchanged into the card link and the favorite call.
     // This test documents that contract: distinct companies -> distinct card
-    // headings, each "View Products" link pointing at its own company id.
+    // headings, each "View Catalog" link pointing at its own company id.
     it("renders one card per company with the card's own company id in its link", async () => {
       installVendorHandlers(
         vendorPage(
@@ -267,11 +267,11 @@ describe("SuppliersDirectorySection", () => {
 
       const acmeCard = acmeHeading.closest("article") as HTMLElement
       const betaCard = betaHeading.closest("article") as HTMLElement
-      expect(within(acmeCard).getByRole("link", { name: /Products$/ })).toHaveAttribute(
+      expect(within(acmeCard).getByRole("link", { name: "View Catalog" })).toHaveAttribute(
         "href",
         "/products?vendors=company-1",
       )
-      expect(within(betaCard).getByRole("link", { name: /Products$/ })).toHaveAttribute(
+      expect(within(betaCard).getByRole("link", { name: "View Catalog" })).toHaveAttribute(
         "href",
         "/products?vendors=company-2",
       )

@@ -393,17 +393,22 @@ export default function SuppliersDirectorySection() {
 
 function SupplierCardSkeleton() {
   return (
-    <div className="animate-pulse rounded-[1.25rem] bg-surface-elevated p-6 shadow-soft">
-      <div className="mb-4 flex items-center gap-3">
-        <div className="h-14 w-14 shrink-0 rounded-2xl bg-surface-muted" />
-        <div className="h-6 w-2/3 rounded-full bg-surface-muted" />
+    <div className="animate-pulse rounded-[1.75rem] bg-surface-elevated p-8 shadow-soft">
+      <div className="mb-4 h-6 w-32 rounded-full bg-surface-muted" />
+      <div className="mb-6 flex items-center gap-4">
+        <div className="h-16 w-16 shrink-0 rounded-[1.25rem] bg-surface-muted" />
+        <div className="flex-1">
+          <div className="h-6 w-2/3 rounded-full bg-surface-muted" />
+          <div className="mt-2 h-4 w-1/2 rounded-full bg-surface-muted" />
+        </div>
       </div>
-      <div className="mb-4 h-4 w-1/2 rounded-full bg-surface-muted" />
-      <div className="mb-2 h-3.5 w-full rounded-full bg-surface-muted" />
-      <div className="mb-8 h-3.5 w-5/6 rounded-full bg-surface-muted" />
+      <div className="mb-3 h-4 w-1/2 rounded-full bg-surface-muted" />
+      <div className="mb-6 h-4 w-2/5 rounded-full bg-surface-muted" />
+      <div className="mb-5 h-20 rounded-[1.1rem] bg-surface-muted" />
       <div className="flex items-center gap-3">
-        <div className="h-10 flex-1 rounded-full bg-surface-muted" />
-        <div className="h-10 w-10 rounded-full bg-surface-muted" />
+        <div className="h-11 flex-1 rounded-full bg-surface-muted" />
+        <div className="h-11 w-11 rounded-full bg-surface-muted" />
+        <div className="h-11 w-11 rounded-full bg-surface-muted" />
       </div>
     </div>
   )
