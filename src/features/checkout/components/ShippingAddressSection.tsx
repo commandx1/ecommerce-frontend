@@ -16,7 +16,7 @@ export default function ShippingAddressSection({
   selectedAddressId,
   onAddAddress,
 }: ShippingAddressSectionProps) {
-  // Buyers keep a single address (see `AddressManagementShared`'s `singleAddress` mode), so this
+  // Buyers keep a single address (`AddressManagementShared` always manages just one now), so this
   // step reports where the order ships rather than asking. The id `useShippingDetails` already
   // resolved wins; the rest of the chain repeats its fallback for accounts whose older records
   // still hold more than one address.

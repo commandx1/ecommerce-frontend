@@ -10,7 +10,7 @@ export default function SettingsPage() {
       description="Manage your professional profile and security preferences."
       extraSectionLabel="Address"
     >
-      <AddressManagementShared embedded singleAddress />
+      <AddressManagementShared />
     </AccountSettingsShared>
   )
 }

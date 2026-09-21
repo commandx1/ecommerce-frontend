@@ -252,14 +252,14 @@ describe("AccountSettingsShared", () => {
       within(nav)
         .getAllByRole("link")
         .map((link) => link.textContent?.trim()),
-    ).toEqual(["Profile", "Addresses", "Licenses", "Security"])
+    ).toEqual(["Profile", "Address", "Licenses", "Security"])
   })
 
   it("adds a quick-nav entry for an embedded extra section", () => {
     signIn()
     renderSettings(<div>Address manager</div>)
 
-    expect(screen.getByRole("link", { name: /Addresses/ })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Address" })).toBeInTheDocument()
     expect(screen.getByText("Address manager")).toBeInTheDocument()
   })
 

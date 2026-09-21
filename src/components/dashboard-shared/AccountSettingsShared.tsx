@@ -42,7 +42,7 @@ interface AccountSettingsSharedProps {
 export default function AccountSettingsShared({
   title,
   description,
-  extraSectionLabel = "Addresses",
+  extraSectionLabel = "Address",
   children,
 }: AccountSettingsSharedProps) {
   const { user, setUser, accessToken } = useAuthStore()

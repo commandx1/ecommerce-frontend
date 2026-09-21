@@ -4,10 +4,10 @@ import { BasePage } from "./base.page"
 /**
  * `AccountSettingsShared` (src/components/dashboard-shared/AccountSettingsShared.tsx) backs
  * both `/vendor-dashboard/settings` and `/buyer-dashboard/settings` - only the embedded
- * children differ per role (vendor gets `CompanyInfoCard` + `StripeConnectCard` +
- * `AddressManagementShared embedded`; buyer gets neither). One page object models the shared
- * markup, with `path` injected so both dashboards can reuse it instead of duplicating
- * near-identical locators in a second page object.
+ * children differ per role (vendor gets `CompanyInfoCard` + `StripeConnectCard`; buyer gets
+ * neither). Both dashboards embed `AddressManagementShared` the same way: one address, heading
+ * "Address". One page object models the shared markup, with `path` injected so both dashboards
+ * can reuse it instead of duplicating near-identical locators in a second page object.
  */
 export class AccountSettingsPage extends BasePage {
   readonly path: string
@@ -69,7 +69,7 @@ export class AccountSettingsPage extends BasePage {
   }
 
   get addressSection(): Locator {
-    return this.sectionByHeading("Addresses")
+    return this.sectionByHeading("Address")
   }
 
   get addNewAddressButton(): Locator {
@@ -107,23 +107,5 @@ export class AccountSettingsPage extends BasePage {
 
   get saveAddressButton(): Locator {
     return this.addressSection.getByRole("button", { name: "Save", exact: true })
-  }
-}
-
-/**
- * Standalone (non-embedded) `AddressManagementShared` render at
- * `/buyer-dashboard/settings/addresses` - the buyer-only counterpart to the address section
- * embedded in the vendor settings page above. Kept in this file since both model the same
- * shared component; a third page-object file would just duplicate its locators.
- */
-export class BuyerAddressesPage extends BasePage {
-  readonly path = "/buyer-dashboard/settings/addresses"
-
-  get heading(): Locator {
-    return this.page.getByRole("heading", { name: "My Addresses" })
-  }
-
-  get addNewAddressButton(): Locator {
-    return this.page.getByRole("button", { name: "Add New Address" })
   }
 }

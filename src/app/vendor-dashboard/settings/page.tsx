@@ -6,7 +6,7 @@ import AddressManagementShared from "@/components/dashboard-shared/AddressManage
 export default function VendorSettingsPage() {
   return (
     <AccountSettingsShared title="Vendor Settings" description="Manage your vendor profile and security preferences.">
-      <AddressManagementShared embedded />
+      <AddressManagementShared />
     </AccountSettingsShared>
   )
 }

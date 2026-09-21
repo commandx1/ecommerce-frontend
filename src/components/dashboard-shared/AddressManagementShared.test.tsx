@@ -1,11 +1,11 @@
 import userEvent from "@testing-library/user-event"
-import { HttpResponse, http } from "msw"
+import { delay, HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { ParsedAddress } from "@/lib/utils/google-maps"
 import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
 import { makeAccountUser, makeAddress } from "@/test/factories"
-import { render, screen, waitFor, within } from "@/test/render"
+import { render, screen, waitFor } from "@/test/render"
 import AddressManagementShared from "./AddressManagementShared"
 
 const { toastSpies, placesMocks } = vi.hoisted(() => ({
@@ -74,50 +74,59 @@ beforeEach(() => {
 })
 
 describe("AddressManagementShared", () => {
-  it("lists saved addresses and flags the default one", async () => {
+  it("shows only the default address when several exist", async () => {
     serveAddresses(
-      makeAddress({ id: "a-1", title: "Clinic", defaultAddress: true }),
-      makeAddress({ id: "a-2", title: "Warehouse", defaultAddress: false }),
+      makeAddress({ id: "a-1", title: "Warehouse", defaultAddress: false }),
+      makeAddress({ id: "a-2", title: "Clinic", defaultAddress: true }),
     )
 
     render(<AddressManagementShared />)
 
     expect(await screen.findByRole("heading", { name: "Clinic" })).toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: "Warehouse" })).toBeInTheDocument()
-    expect(screen.getAllByText("Default")).toHaveLength(1)
+    expect(screen.queryByRole("heading", { name: "Warehouse" })).not.toBeInTheDocument()
   })
 
-  it("invites the buyer to add a first address when there are none", async () => {
+  it("falls back to the first address when none is marked default", async () => {
+    serveAddresses(
+      makeAddress({ id: "a-1", title: "Warehouse", defaultAddress: false }),
+      makeAddress({ id: "a-2", title: "Clinic", defaultAddress: false }),
+    )
+
+    render(<AddressManagementShared />)
+
+    expect(await screen.findByRole("heading", { name: "Warehouse" })).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "Clinic" })).not.toBeInTheDocument()
+  })
+
+  it("hides Add New once an address exists", async () => {
+    serveAddresses(makeAddress({ id: "a-1", title: "Clinic", defaultAddress: true }))
+
+    render(<AddressManagementShared />)
+
+    await screen.findByRole("heading", { name: "Clinic" })
+    expect(screen.queryByRole("button", { name: /Add New/ })).not.toBeInTheDocument()
+  })
+
+  it("invites the user to add an address when there are none", async () => {
     const user = userEvent.setup()
     serveAddresses()
 
     render(<AddressManagementShared />)
 
-    await user.click(await screen.findByRole("button", { name: "Add your first address" }))
-    expect(screen.getByRole("heading", { name: "Add New Address" })).toBeInTheDocument()
+    await user.click(await screen.findByRole("button", { name: "Add your address" }))
+    expect(await screen.findByLabelText(/Address Title/)).toBeInTheDocument()
   })
 
-  it("prefills the new-address form from the signed-in user and defaults the first address", async () => {
+  it("prefills the new-address form from the signed-in user", async () => {
     const user = userEvent.setup()
     serveAddresses()
 
     render(<AddressManagementShared />)
 
-    await user.click(await screen.findByRole("button", { name: /Add New Address/ }))
+    await user.click(await screen.findByRole("button", { name: "Add your address" }))
 
     expect(screen.getByLabelText("Full Name")).toHaveValue("Serhat Belen")
     expect(screen.getByLabelText("Phone Number")).toHaveValue("+15551234567")
-    expect(screen.getByLabelText("Set as default address")).toBeChecked()
-  })
-
-  it("does not pre-tick 'default' when other addresses already exist", async () => {
-    const user = userEvent.setup()
-    serveAddresses(makeAddress({ id: "a-1" }))
-
-    render(<AddressManagementShared />)
-
-    await user.click(await screen.findByRole("button", { name: /Add New Address/ }))
-    expect(screen.getByLabelText("Set as default address")).not.toBeChecked()
   })
 
   it("keeps Save disabled until a place has been chosen from Google Places", async () => {
@@ -125,7 +134,7 @@ describe("AddressManagementShared", () => {
     serveAddresses()
 
     render(<AddressManagementShared />)
-    await user.click(await screen.findByRole("button", { name: /Add New Address/ }))
+    await user.click(await screen.findByRole("button", { name: "Add your address" }))
 
     expect(screen.getByRole("button", { name: /Save/ })).toBeDisabled()
 
@@ -148,7 +157,7 @@ describe("AddressManagementShared", () => {
     )
 
     render(<AddressManagementShared />)
-    await user.click(await screen.findByRole("button", { name: /Add New Address/ }))
+    await user.click(await screen.findByRole("button", { name: "Add your address" }))
 
     await user.type(screen.getByLabelText(/Address Title/), "Clinic")
     await pickAddressFromPlaces(user)
@@ -162,6 +171,7 @@ describe("AddressManagementShared", () => {
       postalCode: "90001",
       latitude: 37.422,
       longitude: -122.084,
+      defaultAddress: true,
       // The component deliberately stores the state abbreviation in `city`
       // and the city name in `district`.
       city: "CA",
@@ -174,6 +184,27 @@ describe("AddressManagementShared", () => {
     // AddressManagementShared.tsx makes this assertion fail - measured locally before writing
     // this test.
     expect(payload).not.toHaveProperty("state")
+  })
+
+  it("always sends defaultAddress: true when updating an address", async () => {
+    const user = userEvent.setup()
+    serveAddresses(makeAddress({ id: "a-1", title: "Clinic", defaultAddress: false }))
+
+    let payload: Record<string, unknown> | null = null
+    server.use(
+      http.put("*/backend-api/address/:id", async ({ request, params }) => {
+        payload = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(makeAddress({ id: String(params.id) }))
+      }),
+    )
+
+    render(<AddressManagementShared />)
+
+    await user.click(await screen.findByRole("button", { name: /Edit/ }))
+    await user.click(screen.getByRole("button", { name: /Save/ }))
+
+    await waitFor(() => expect(toastSpies.success).toHaveBeenCalledWith("Address updated"))
+    expect(payload).toMatchObject({ defaultAddress: true })
   })
 
   it("will not submit an address whose zip code Places did not return", async () => {
@@ -189,14 +220,16 @@ describe("AddressManagementShared", () => {
     )
 
     render(<AddressManagementShared />)
-    await user.click(await screen.findByRole("button", { name: /Add New Address/ }))
+    await user.click(await screen.findByRole("button", { name: "Add your address" }))
     await user.type(screen.getByLabelText(/Address Title/), "Clinic")
     await pickAddressFromPlaces(user)
     await waitFor(() => expect(screen.getByRole("button", { name: /Save/ })).toBeEnabled())
     await user.click(screen.getByRole("button", { name: /Save/ }))
 
-    // The zip field is `required`, so the form never submits and the guard in
-    // `handleSave` ("Zip code is required") is unreachable from the UI.
+    // The zip field is `required`, so an EMPTY value never submits and the guard in
+    // `handleSave` ("Zip code is required") is unreachable that way from the UI. A
+    // whitespace-only value satisfies `required`, though - see the test below that reaches
+    // the guard through it.
     expect(screen.getByLabelText("Zip Code")).toBeRequired()
     expect(screen.getByLabelText("Zip Code")).toHaveValue("")
     expect(created).not.toHaveBeenCalled()
@@ -217,7 +250,7 @@ describe("AddressManagementShared", () => {
     render(<AddressManagementShared />)
 
     await user.click(await screen.findByRole("button", { name: /Edit/ }))
-    expect(screen.getByRole("heading", { name: "Edit Address" })).toBeInTheDocument()
+    expect(await screen.findByDisplayValue("Clinic")).toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: /Save/ }))
 
@@ -225,37 +258,161 @@ describe("AddressManagementShared", () => {
     expect(updatedId).toBe("a-1")
   })
 
-  it("deletes an address only after the confirmation is accepted", async () => {
+  it("shows a retry state instead of an empty address book when the load fails, and recovers on retry", async () => {
     const user = userEvent.setup()
-    serveAddresses(makeAddress({ id: "a-1", title: "Clinic" }))
-    const deleted = vi.fn()
-    server.use(
-      http.delete("*/backend-api/address/:id", () => {
-        deleted()
-        return new HttpResponse(null, { status: 200 })
-      }),
-    )
-
-    render(<AddressManagementShared />)
-
-    await user.click(await screen.findByRole("button", { name: /Delete/ }))
-    const dialog = await screen.findByRole("dialog")
-    await user.click(within(dialog).getByRole("button", { name: "Cancel" }))
-    expect(deleted).not.toHaveBeenCalled()
-
-    await user.click(screen.getByRole("button", { name: /Delete/ }))
-    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Delete" }))
-
-    await waitFor(() => expect(toastSpies.success).toHaveBeenCalledWith("Address deleted successfully"))
-    expect(deleted).toHaveBeenCalledTimes(1)
-  })
-
-  it("reports a failed load instead of showing an empty address book", async () => {
     server.use(http.get("*/backend-api/address", () => new HttpResponse(null, { status: 500 })))
 
     render(<AddressManagementShared />)
 
     await waitFor(() => expect(toastSpies.error).toHaveBeenCalledWith("An error occurred while loading addresses"))
+    expect(screen.queryByText("You haven't added an address yet.")).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /Add New/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Add your address" })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument()
+
+    // The 2s module cache in `src/lib/api/address.ts` only stores successful responses, so a
+    // failed load leaves nothing cached for the retry to hit.
+    serveAddresses(makeAddress({ id: "a-1", title: "Clinic" }))
+    await user.click(screen.getByRole("button", { name: "Try again" }))
+
+    expect(await screen.findByRole("heading", { name: "Clinic" })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument()
+  })
+
+  it("shows only the first address when more than one is marked default", async () => {
+    serveAddresses(
+      makeAddress({ id: "a-1", title: "Warehouse", defaultAddress: true }),
+      makeAddress({ id: "a-2", title: "Clinic", defaultAddress: true }),
+    )
+
+    render(<AddressManagementShared />)
+
+    expect(await screen.findByRole("heading", { name: "Warehouse" })).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "Clinic" })).not.toBeInTheDocument()
+    expect(screen.getAllByRole("button", { name: /Edit/ })).toHaveLength(1)
+  })
+
+  it("shows only the newly created address after a successful create", async () => {
+    const user = userEvent.setup()
+    let created = false
+    server.use(
+      http.get("*/backend-api/address", () =>
+        created ? HttpResponse.json([makeAddress({ id: "a-1", title: "Clinic" })]) : HttpResponse.json([]),
+      ),
+      http.post("*/backend-api/address", () => {
+        created = true
+        return HttpResponse.json(makeAddress({ id: "a-1", title: "Clinic" }))
+      }),
+    )
+
+    render(<AddressManagementShared />)
+    await user.click(await screen.findByRole("button", { name: "Add your address" }))
+    await user.type(screen.getByLabelText(/Address Title/), "Clinic")
+    await pickAddressFromPlaces(user)
+    await waitFor(() => expect(screen.getByRole("button", { name: /Save/ })).toBeEnabled())
+    await user.click(screen.getByRole("button", { name: /Save/ }))
+
+    expect(await screen.findByRole("heading", { name: "Clinic" })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /Add New/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Add your address" })).not.toBeInTheDocument()
+  })
+
+  it("keeps the edit form open with the user's input when the update fails", async () => {
+    const user = userEvent.setup()
+    serveAddresses(makeAddress({ id: "a-1", title: "Clinic" }))
+    server.use(http.put("*/backend-api/address/:id", () => new HttpResponse(null, { status: 400 })))
+
+    render(<AddressManagementShared />)
+
+    await user.click(await screen.findByRole("button", { name: /Edit/ }))
+    const titleInput = screen.getByLabelText(/Address Title/)
+    await user.clear(titleInput)
+    await user.type(titleInput, "Office")
+    await user.click(screen.getByRole("button", { name: /Save/ }))
+
+    await waitFor(() => expect(toastSpies.error).toHaveBeenCalledWith("An error occurred while saving the address"))
+    expect(toastSpies.success).not.toHaveBeenCalled()
+    expect(screen.getByLabelText(/Address Title/)).toHaveValue("Office")
+  })
+
+  it("discards edits when Cancel is clicked", async () => {
+    const user = userEvent.setup()
+    serveAddresses(makeAddress({ id: "a-1", title: "Clinic" }))
+
+    render(<AddressManagementShared />)
+
+    await user.click(await screen.findByRole("button", { name: /Edit/ }))
+    const titleInput = screen.getByLabelText(/Address Title/)
+    await user.clear(titleInput)
+    await user.type(titleInput, "Changed")
+    await user.click(screen.getByRole("button", { name: "Cancel" }))
+
+    expect(await screen.findByRole("heading", { name: "Clinic" })).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: /Edit/ }))
+    expect(screen.getByLabelText(/Address Title/)).toHaveValue("Clinic")
+  })
+
+  it("rejects a whitespace-only zip code without calling the API", async () => {
+    const user = userEvent.setup()
+    serveAddresses(makeAddress({ id: "a-1", title: "Clinic" }))
+    const putCalled = vi.fn()
+    server.use(
+      http.put("*/backend-api/address/:id", ({ params }) => {
+        putCalled()
+        return HttpResponse.json(makeAddress({ id: String(params.id) }))
+      }),
+    )
+
+    render(<AddressManagementShared />)
+
+    await user.click(await screen.findByRole("button", { name: /Edit/ }))
+    const zipInput = screen.getByLabelText("Zip Code")
+    await user.clear(zipInput)
+    await user.type(zipInput, "   ")
+    await user.click(screen.getByRole("button", { name: /Save/ }))
+
+    expect(toastSpies.error).toHaveBeenCalledWith("Zip code is required")
+    expect(putCalled).not.toHaveBeenCalled()
+  })
+
+  it("submits only once when Save is clicked twice quickly", async () => {
+    const user = userEvent.setup()
+    let postCount = 0
+    server.use(
+      http.get("*/backend-api/address", () => HttpResponse.json([])),
+      http.post("*/backend-api/address", async () => {
+        postCount++
+        await delay(100)
+        return HttpResponse.json(makeAddress())
+      }),
+    )
+
+    render(<AddressManagementShared />)
+    await user.click(await screen.findByRole("button", { name: "Add your address" }))
+    await user.type(screen.getByLabelText(/Address Title/), "Clinic")
+    await pickAddressFromPlaces(user)
+    await waitFor(() => expect(screen.getByRole("button", { name: /Save/ })).toBeEnabled())
+
+    const saveButton = screen.getByRole("button", { name: /Save/ })
+    await user.click(saveButton)
+    await user.click(saveButton)
+
+    await waitFor(() => expect(toastSpies.success).toHaveBeenCalledWith("New address added"))
+    expect(postCount).toBe(1)
+  })
+
+  it("renders without a signed-in user", async () => {
+    const user = userEvent.setup()
+    useAuthStore.setState({ user: null, accessToken: null, isAuthenticated: false })
+    serveAddresses()
+
+    render(<AddressManagementShared />)
+
+    expect(await screen.findByText("Your delivery location.")).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Add your address" }))
+    expect(screen.getByLabelText("Full Name")).toHaveValue("")
+    expect(screen.getByLabelText("Phone Number")).toHaveValue("")
   })
 
   it("tells the buyer Google Places failed and lets them retry instead of getting stuck", async () => {
@@ -265,7 +422,7 @@ describe("AddressManagementShared", () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
 
     render(<AddressManagementShared />)
-    await user.click(await screen.findByRole("button", { name: /Add New Address/ }))
+    await user.click(await screen.findByRole("button", { name: "Add your address" }))
     await user.type(screen.getByLabelText("Search Address *"), "1600 Amphi")
 
     // The buyer sees why the form is stuck instead of a silent, unexplained dead end.
@@ -283,119 +440,34 @@ describe("AddressManagementShared", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
   })
 
-  it("renders a compact card when embedded in another settings page", async () => {
+  it("renders as a compact card section", async () => {
     serveAddresses(makeAddress({ id: "a-1", title: "Clinic" }))
 
-    render(<AddressManagementShared embedded />)
+    render(<AddressManagementShared />)
 
-    expect(await screen.findByRole("heading", { name: "Addresses" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /Add New/ })).toBeInTheDocument()
-    expect(screen.queryByRole("heading", { name: "My Addresses" })).not.toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: "Address" })).toBeInTheDocument()
   })
 
-  describe("singleAddress mode (buyer)", () => {
-    it("shows only the default address when several exist", async () => {
-      serveAddresses(
-        makeAddress({ id: "a-1", title: "Warehouse", defaultAddress: false }),
-        makeAddress({ id: "a-2", title: "Clinic", defaultAddress: true }),
-      )
-
-      render(<AddressManagementShared embedded singleAddress />)
-
-      expect(await screen.findByRole("heading", { name: "Clinic" })).toBeInTheDocument()
-      expect(screen.queryByRole("heading", { name: "Warehouse" })).not.toBeInTheDocument()
+  it("shows the vendor subtitle when the signed-in user is a vendor", async () => {
+    useAuthStore.setState({
+      user: { ...makeAccountUser({ name: "Serhat", surname: "Belen", roleName: "Vendor" }) },
+      accessToken: "access-token",
+      isAuthenticated: true,
     })
+    serveAddresses()
 
-    it("falls back to the first address when none is marked default", async () => {
-      serveAddresses(
-        makeAddress({ id: "a-1", title: "Warehouse", defaultAddress: false }),
-        makeAddress({ id: "a-2", title: "Clinic", defaultAddress: false }),
-      )
+    render(<AddressManagementShared />)
 
-      render(<AddressManagementShared embedded singleAddress />)
+    expect(
+      await screen.findByText("Orders ship from this address. It also determines local delivery availability."),
+    ).toBeInTheDocument()
+  })
 
-      expect(await screen.findByRole("heading", { name: "Warehouse" })).toBeInTheDocument()
-      expect(screen.queryByRole("heading", { name: "Clinic" })).not.toBeInTheDocument()
-    })
+  it("shows the buyer subtitle when the signed-in user is not a vendor", async () => {
+    serveAddresses()
 
-    it("hides Add New and Delete once an address exists", async () => {
-      serveAddresses(makeAddress({ id: "a-1", title: "Clinic", defaultAddress: true }))
+    render(<AddressManagementShared />)
 
-      render(<AddressManagementShared embedded singleAddress />)
-
-      await screen.findByRole("heading", { name: "Clinic" })
-      expect(screen.queryByRole("button", { name: /Add New/ })).not.toBeInTheDocument()
-      expect(screen.queryByRole("button", { name: /Delete/ })).not.toBeInTheDocument()
-      // The "Default" badge only means something next to other addresses.
-      expect(screen.queryByText("Default")).not.toBeInTheDocument()
-    })
-
-    it("hides the 'Set as default address' checkbox in the form", async () => {
-      const user = userEvent.setup()
-      serveAddresses()
-
-      render(<AddressManagementShared embedded singleAddress />)
-
-      await user.click(await screen.findByRole("button", { name: "Add your address" }))
-      expect(screen.queryByLabelText("Set as default address")).not.toBeInTheDocument()
-    })
-
-    it("always sends defaultAddress: true when creating an address", async () => {
-      const user = userEvent.setup()
-      serveAddresses()
-
-      let payload: Record<string, unknown> | null = null
-      server.use(
-        http.post("*/backend-api/address", async ({ request }) => {
-          payload = (await request.json()) as Record<string, unknown>
-          return HttpResponse.json(makeAddress())
-        }),
-      )
-
-      render(<AddressManagementShared embedded singleAddress />)
-      await user.click(await screen.findByRole("button", { name: "Add your address" }))
-
-      await user.type(screen.getByLabelText(/Address Title/), "Clinic")
-      await pickAddressFromPlaces(user)
-      await waitFor(() => expect(screen.getByRole("button", { name: /Save/ })).toBeEnabled())
-      await user.click(screen.getByRole("button", { name: /Save/ }))
-
-      await waitFor(() => expect(toastSpies.success).toHaveBeenCalledWith("New address added"))
-      expect(payload).toMatchObject({ defaultAddress: true })
-    })
-
-    it("always sends defaultAddress: true when updating an address", async () => {
-      const user = userEvent.setup()
-      serveAddresses(makeAddress({ id: "a-1", title: "Clinic", defaultAddress: false }))
-
-      let payload: Record<string, unknown> | null = null
-      server.use(
-        http.put("*/backend-api/address/:id", async ({ request, params }) => {
-          payload = (await request.json()) as Record<string, unknown>
-          return HttpResponse.json(makeAddress({ id: String(params.id) }))
-        }),
-      )
-
-      render(<AddressManagementShared embedded singleAddress />)
-
-      await user.click(await screen.findByRole("button", { name: /Edit/ }))
-      await user.click(screen.getByRole("button", { name: /Save/ }))
-
-      await waitFor(() => expect(toastSpies.success).toHaveBeenCalledWith("Address updated"))
-      expect(payload).toMatchObject({ defaultAddress: true })
-    })
-
-    it("regression: without singleAddress every address renders with its Delete button", async () => {
-      serveAddresses(
-        makeAddress({ id: "a-1", title: "Clinic", defaultAddress: true }),
-        makeAddress({ id: "a-2", title: "Warehouse", defaultAddress: false }),
-      )
-
-      render(<AddressManagementShared />)
-
-      expect(await screen.findByRole("heading", { name: "Clinic" })).toBeInTheDocument()
-      expect(screen.getByRole("heading", { name: "Warehouse" })).toBeInTheDocument()
-      expect(screen.getAllByRole("button", { name: /Delete/ })).toHaveLength(2)
-    })
+    expect(await screen.findByText("Your delivery location.")).toBeInTheDocument()
   })
 })

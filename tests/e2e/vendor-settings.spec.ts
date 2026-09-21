@@ -4,11 +4,11 @@ import { AccountSettingsPage } from "./pages/vendor-settings.page"
 
 /**
  * `/vendor-dashboard/settings` - `AccountSettingsShared` + `CompanyInfoCard` +
- * `AddressManagementShared` (embedded). F68/F106: `PUT /users/me` has no `email` field and
- * `POST/PUT /address` has no `state` field - both were silently dropped by the backend while
- * the frontend reported success. These specs assert the OUTGOING request body directly so a
- * regression (a stray `email`/`state` key creeping back in) fails loudly instead of passing
- * because the mock echoes back a plausible-looking 200.
+ * `AddressManagementShared` (a single address, same component the buyer settings page embeds).
+ * F68/F106: `PUT /users/me` has no `email` field and `POST/PUT /address` has no `state` field -
+ * both were silently dropped by the backend while the frontend reported success. These specs
+ * assert the OUTGOING request body directly so a regression (a stray `email`/`state` key creeping
+ * back in) fails loudly instead of passing because the mock echoes back a plausible-looking 200.
  */
 test.describe("vendor settings", () => {
   test("updates personal information via PUT /users/me without an email field", async ({ vendorPage, apiMock }) => {
@@ -101,6 +101,9 @@ test.describe("vendor settings", () => {
     vendorPage,
     apiMock,
   }) => {
+    // Add New only renders from the empty state now that AddressManagementShared shows a single
+    // address - override the seeded address list (registerAllMocks below normally returns one).
+    apiMock.on("GET", "/backend-api/address", () => ({ body: [] }))
     apiMock.on("GET", "/api/google-maps/autocomplete", () => ({
       body: {
         predictions: [
@@ -169,6 +172,8 @@ test.describe("vendor settings", () => {
     await page.goto()
 
     await expect(page.editAddressButton).toBeVisible()
+    // An address already exists, so the empty-state "Add New" button must not render.
+    await expect(page.addNewAddressButton).toHaveCount(0)
     await page.editAddressButton.click()
 
     await page.addressZipInput.fill("10022")

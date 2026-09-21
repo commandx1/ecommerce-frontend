@@ -27,9 +27,7 @@ vi.mock("@/components/dashboard-shared/AccountSettingsShared", () => ({
   ),
 }))
 vi.mock("@/components/dashboard-shared/AddressManagementShared", () => ({
-  default: ({ embedded }: { embedded?: boolean }) => (
-    <div data-testid={embedded ? "addresses-embedded" : "addresses"} />
-  ),
+  default: () => <div data-testid="addresses" />,
 }))
 vi.mock("@/features/notifications/NotificationsPage", () => ({
   default: () => <div data-testid="notifications-page" />,
@@ -76,6 +74,6 @@ describe("vendor dashboard routes", () => {
 
     expect(screen.getByRole("heading", { name: "Vendor Settings" })).toBeInTheDocument()
     expect(screen.getByText("Manage your vendor profile and security preferences.")).toBeInTheDocument()
-    expect(screen.getByTestId("addresses-embedded")).toBeInTheDocument()
+    expect(screen.getByTestId("addresses")).toBeInTheDocument()
   })
 })

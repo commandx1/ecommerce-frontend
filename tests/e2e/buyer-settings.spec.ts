@@ -1,18 +1,17 @@
 import { expect, test } from "./fixtures/auth.fixture"
 import { registerAllMocks } from "./mocks"
-import { AccountSettingsPage, BuyerAddressesPage } from "./pages/vendor-settings.page"
+import { AccountSettingsPage } from "./pages/vendor-settings.page"
 
 /**
  * `/buyer-dashboard/settings` renders the same `AccountSettingsShared` component as the vendor
  * side, but composed differently: no `CompanyInfoCard`/`StripeConnectCard` (isVendor is false),
- * the buyer page embeds `AddressManagementShared` with `singleAddress` as the shared component's
- * `children` (see src/app/buyer-dashboard/settings/page.tsx; the vendor page embeds the same
- * component without `singleAddress`), and the buyer page additionally renders
- * `LicenseManagementSection` as its own card directly below the address card (see
- * AccountSettingsShared.tsx: `{!isVendor && <LicenseManagementSection />}`, placed after the
- * `children` block and before Security). Account/address SAVE behaviour is already covered
- * end-to-end in vendor-settings.spec.ts against the identical shared components - this file only
- * verifies the buyer-side composition wires up correctly, per the task brief.
+ * both pages embed `AddressManagementShared` the same way - a single address, heading "Address"
+ * (see src/app/buyer-dashboard/settings/page.tsx and src/app/vendor-dashboard/settings/page.tsx)
+ * - and the buyer page additionally renders `LicenseManagementSection` as its own card directly
+ * below the address card (see AccountSettingsShared.tsx: `{!isVendor && <LicenseManagementSection
+ * />}`, placed after the `children` block and before Security). Account/address SAVE behaviour is
+ * already covered end-to-end in vendor-settings.spec.ts against the identical shared components -
+ * this file only verifies the buyer-side composition wires up correctly, per the task brief.
  *
  * `GET /backend-api/licenses` is NOT registered by account.mocks.ts (the handler wraps
  * `makeLicense()` in a `{ licenses, total }` literal with no exported factory - see that file's
@@ -53,22 +52,8 @@ test.describe("buyer settings composition", () => {
     await expect(page.emailInput).toBeDisabled()
     await expect(buyerPage.getByRole("heading", { name: "Professional Licenses", level: 2 })).toBeVisible()
 
-    // Buyers embed AddressManagementShared with `singleAddress`, whose heading is the singular
-    // "Address" - the plural vendor heading must not appear (see file header comment).
+    // AddressManagementShared's heading is the singular "Address" - the old plural "Addresses"
+    // heading from the removed multi-address mode must not appear (see file header comment).
     await expect(buyerPage.getByRole("heading", { name: "Addresses", exact: true })).toHaveCount(0)
-  })
-
-  test("addresses are managed on their own route, reusing the same shared component", async ({
-    buyerPage,
-    apiMock,
-  }) => {
-    registerAllMocks(apiMock)
-
-    const page = new BuyerAddressesPage(buyerPage)
-    await page.goto()
-
-    await expect(page.heading).toBeVisible()
-    await expect(page.addNewAddressButton).toBeVisible()
-    await expect(buyerPage.getByText("Home").first()).toBeVisible()
   })
 })

@@ -1,16 +1,13 @@
 "use client"
 
-import { BadgeCheck, Edit2, MapPin, Plus, Save, Trash2, X } from "lucide-react"
+import { Edit2, MapPin, Plus, Save } from "lucide-react"
 import { useCallback, useEffect, useId, useState } from "react"
 import AddressAutocomplete from "@/components/AddressAutocomplete"
-import ConfirmationModal from "@/components/feedback/ConfirmationModal"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { showToast } from "@/components/ui/Toast"
 import { type Address, addressAPI, type CreateAddressPayload, type UpdateAddressPayload } from "@/lib/api/address"
-import { cn } from "@/lib/utils"
 import type { ParsedAddress } from "@/lib/utils/google-maps"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -21,40 +18,29 @@ const formatAddressDetails = (address: Address) =>
     .filter((part, index, parts) => Boolean(part) && parts.indexOf(part) === index)
     .join(" · ")
 
-interface AddressManagementSharedProps {
-  /** Renders as a compact card section (for embedding inside another settings page) instead of a standalone page. */
-  embedded?: boolean
-  /** Buyers only get one address: hides the multi-address grid/Add New/Delete UI and forces `defaultAddress: true` on save. */
-  singleAddress?: boolean
-}
-
-export default function AddressManagementShared({
-  embedded = false,
-  singleAddress = false,
-}: AddressManagementSharedProps = {}) {
+export default function AddressManagementShared() {
   const { user } = useAuthStore()
+  const isVendor = user?.roleName === "Vendor"
   const idBase = useId()
   const addressTitleId = `${idBase}-address-title`
   const fullNameId = `${idBase}-full-name`
   const phoneNumberId = `${idBase}-phone-number`
   const zipCodeId = `${idBase}-zip-code`
-  const defaultAddressId = `${idBase}-default-address`
   const [addresses, setAddresses] = useState<Address[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [currentAddress, setCurrentAddress] = useState<Partial<Address> | null>(null)
   const [isSaving, setIsSaving] = useState(false)
-
-  // Deletion modal state
-  const [addressToDelete, setAddressToDelete] = useState<string | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
+  const [loadFailed, setLoadFailed] = useState(false)
 
   const fetchAddresses = useCallback(async () => {
     try {
       const data = await addressAPI.getAddresses()
       setAddresses(data)
+      setLoadFailed(false)
     } catch (_error) {
       showToast.error("An error occurred while loading addresses")
+      setLoadFailed(true)
     } finally {
       setIsLoading(false)
     }
@@ -74,25 +60,9 @@ export default function AddressManagementShared({
       title: "",
       fullName: `${user?.name || ""} ${user?.surname || ""}`.trim(),
       phoneNumber: user?.phoneNumber || "",
-      defaultAddress: singleAddress || addresses.length === 0,
+      defaultAddress: true,
     })
     setIsEditing(true)
-  }
-
-  const confirmDelete = async () => {
-    if (!addressToDelete) return
-
-    setIsDeleting(true)
-    try {
-      await addressAPI.deleteAddress(addressToDelete)
-      showToast.success("Address deleted successfully")
-      setAddressToDelete(null)
-      fetchAddresses()
-    } catch (_error) {
-      showToast.error("An error occurred while deleting the address")
-    } finally {
-      setIsDeleting(false)
-    }
   }
 
   const handleSave = async (e: React.FormEvent) => {
@@ -107,9 +77,10 @@ export default function AddressManagementShared({
     setIsSaving(true)
     try {
       const isUpdate = !!currentAddress.id
-      // Buyers only ever have one address, so it must always be the default: useAutoOrders'
-      // hasPrimaryAddress check reads this flag directly.
-      const addressPayload = singleAddress ? { ...currentAddress, defaultAddress: true } : currentAddress
+      // Only ever one address (buyer or vendor), so it must always be the default:
+      // useAutoOrders' hasPrimaryAddress check reads this flag directly for buyers, and the
+      // backend picks a vendor's ship-from / Uber pickup address via defaultAddress=true too.
+      const addressPayload = { ...currentAddress, defaultAddress: true }
 
       if (isUpdate) {
         const addressId = currentAddress.id
@@ -249,19 +220,6 @@ export default function AddressManagementShared({
         </div>
       )}
 
-      {!singleAddress && (
-        <div className="flex items-center space-x-2 py-2">
-          <Checkbox
-            id={defaultAddressId}
-            checked={currentAddress.defaultAddress || false}
-            onChange={(e) => setCurrentAddress({ ...currentAddress, defaultAddress: e.target.checked })}
-          />
-          <Label htmlFor={defaultAddressId} className="text-sm text-text-secondary">
-            Set as default address
-          </Label>
-        </div>
-      )}
-
       <div className="pt-4 flex space-x-3">
         <Button type="submit" disabled={isSaving || !currentAddress.placeId} className="rounded-lg">
           <Save className="w-4 h-4 mr-2" />
@@ -274,26 +232,18 @@ export default function AddressManagementShared({
     </form>
   )
 
-  // Buyers only ever see/manage one address; the rest stay in `addresses` untouched (not deleted).
-  const displayedAddress = singleAddress ? (addresses.find((a) => a.defaultAddress) ?? addresses[0] ?? null) : null
+  // Only one address is ever shown/managed; any others already in `addresses` stay untouched.
+  const displayedAddress = addresses.find((a) => a.defaultAddress) ?? addresses[0] ?? null
 
   const renderAddressCard = (address: Address) => (
     <div
       key={address.id}
-      className={cn(
-        "group relative overflow-hidden rounded-2xl border bg-surface-elevated p-6 shadow-soft transition-all duration-200 hover:-translate-y-0.5 hover:shadow-panel",
-        address.defaultAddress ? "border-brand/40" : "border-border-soft",
-      )}
+      className="group relative overflow-hidden rounded-2xl border border-brand/40 bg-surface-elevated p-6 shadow-soft transition-all duration-200 hover:-translate-y-0.5 hover:shadow-panel"
     >
-      {address.defaultAddress && <span className="absolute inset-y-0 left-0 w-1 bg-brand" />}
+      <span className="absolute inset-y-0 left-0 w-1 bg-brand" />
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <span
-            className={cn(
-              "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-              address.defaultAddress ? "bg-brand/10 text-brand" : "bg-surface-muted text-text-muted",
-            )}
-          >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
             <MapPin className="h-5 w-5" />
           </span>
           <div>
@@ -301,12 +251,6 @@ export default function AddressManagementShared({
             <p className="mt-0.5 text-sm text-text-secondary">{address.fullName}</p>
           </div>
         </div>
-        {!singleAddress && address.defaultAddress && (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-success">
-            <BadgeCheck className="h-3.5 w-3.5" />
-            Default
-          </span>
-        )}
       </div>
       <div className="mb-6 space-y-1 pl-[3.25rem] text-sm text-text-muted">
         <p>{address.formattedAddress || address.addressLine}</p>
@@ -324,18 +268,6 @@ export default function AddressManagementShared({
           <Edit2 className="w-4 h-4 mr-1" />
           Edit
         </Button>
-        {!singleAddress && (
-          <Button
-            type="button"
-            variant="link"
-            size="sm"
-            onClick={() => setAddressToDelete(address.id)}
-            className="h-auto p-0 text-sm font-medium text-danger"
-          >
-            <Trash2 className="w-4 h-4 mr-1" />
-            Delete
-          </Button>
-        )}
       </div>
     </div>
   )
@@ -345,107 +277,54 @@ export default function AddressManagementShared({
       <MapPin className="icon-float mx-auto mb-4 h-10 w-10 text-brand/60" />
       <p className="text-text-secondary">You haven't added an address yet.</p>
       <Button type="button" onClick={handleAddNew} variant="link" size="sm" className="mt-2 h-auto p-0">
-        {singleAddress ? "Add your address" : "Add your first address"}
+        Add your address
       </Button>
     </div>
   )
 
-  const addressList = singleAddress ? (
-    <div className="grid grid-cols-1 gap-5">{displayedAddress ? renderAddressCard(displayedAddress) : emptyState}</div>
-  ) : (
-    <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-      {addresses.length === 0 ? emptyState : addresses.map((address) => renderAddressCard(address))}
+  const loadFailedState = (
+    <div className="col-span-full rounded-2xl border border-dashed border-border-strong bg-surface-muted/40 p-12 text-center">
+      <MapPin className="mx-auto mb-4 h-10 w-10 text-brand/60" />
+      <p className="text-text-secondary">We couldn't load your address.</p>
+      <Button type="button" onClick={fetchAddresses} variant="link" size="sm" className="mt-2 h-auto p-0">
+        Try again
+      </Button>
     </div>
   )
 
-  const deleteModal = (
-    <ConfirmationModal
-      isOpen={!!addressToDelete}
-      onClose={() => setAddressToDelete(null)}
-      onConfirm={confirmDelete}
-      title="Delete Address"
-      description="Are you sure you want to delete this address? This action cannot be undone."
-      confirmText="Delete"
-      cancelText="Cancel"
-      isDanger={true}
-      isLoading={isDeleting}
-    />
+  const addressList = (
+    <div className="grid grid-cols-1 gap-5">
+      {loadFailed ? loadFailedState : displayedAddress ? renderAddressCard(displayedAddress) : emptyState}
+    </div>
   )
 
-  if (embedded) {
-    return (
-      <section
-        className="fade-up overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
-        style={{ animationDelay: "280ms" }}
-      >
-        <div className="flex items-center justify-between gap-3 border-b border-border-soft p-6">
-          <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand/10 text-brand">
-              <MapPin className="h-4 w-4" />
-            </span>
-            <div>
-              <h2 className="text-lg font-semibold text-text-primary">{singleAddress ? "Address" : "Addresses"}</h2>
-              <p className="text-sm text-text-muted">
-                {singleAddress ? "Your delivery location." : "Delivery locations for your shipments."}
-              </p>
-            </div>
-          </div>
-          {!isEditing && (!singleAddress || addresses.length === 0) && (
-            <Button onClick={handleAddNew} size="sm">
-              <Plus className="mr-1.5 h-4 w-4" />
-              Add New
-            </Button>
-          )}
-        </div>
-        {isEditing && currentAddress ? addressForm : <div className="p-6">{addressList}</div>}
-        {!singleAddress && deleteModal}
-      </section>
-    )
-  }
-
   return (
-    <div className="max-w-4xl space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary">My Addresses</h1>
-          <p className="mt-2 text-text-secondary">Manage your delivery addresses here.</p>
+    <section
+      className="fade-up overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
+      style={{ animationDelay: "280ms" }}
+    >
+      <div className="flex items-center justify-between gap-3 border-b border-border-soft p-6">
+        <div className="flex items-center gap-3">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand/10 text-brand">
+            <MapPin className="h-4 w-4" />
+          </span>
+          <div>
+            <h2 className="text-lg font-semibold text-text-primary">Address</h2>
+            <p className="text-sm text-text-muted">
+              {isVendor
+                ? "Orders ship from this address. It also determines local delivery availability."
+                : "Your delivery location."}
+            </p>
+          </div>
         </div>
-        {!isEditing && (
-          <Button onClick={handleAddNew} className="rounded-lg" size="sm">
-            <Plus className="w-4 h-4 mr-2" />
-            Add New Address
+        {!isEditing && !loadFailed && addresses.length === 0 && (
+          <Button onClick={handleAddNew} size="sm">
+            <Plus className="mr-1.5 h-4 w-4" />
+            Add New
           </Button>
         )}
       </div>
-
-      {isEditing && currentAddress ? (
-        <section className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
-          <div className="flex items-center justify-between border-b border-border-soft p-6">
-            <div className="flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand/10 text-brand">
-                <MapPin className="h-4 w-4" />
-              </span>
-              <h2 className="text-xl font-semibold text-text-primary">
-                {currentAddress.id ? "Edit Address" : "Add New Address"}
-              </h2>
-            </div>
-            <Button
-              type="button"
-              variant="quiet"
-              size="icon-sm"
-              onClick={() => setIsEditing(false)}
-              className="text-text-muted hover:text-text-primary"
-            >
-              <X className="w-6 h-6" />
-            </Button>
-          </div>
-          {addressForm}
-        </section>
-      ) : (
-        addressList
-      )}
-
-      {!singleAddress && deleteModal}
-    </div>
+      {isEditing && currentAddress ? addressForm : <div className="p-6">{addressList}</div>}
+    </section>
   )
 }
