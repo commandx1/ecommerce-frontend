@@ -300,7 +300,9 @@ export default function AddressManagementShared() {
 
   return (
     <section
-      className="fade-up overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
+      // No overflow-hidden: it clipped the address suggestions dropdown. z-10 lifts the dropdown
+      // over the later fade-up sections, whose leftover transform makes them stacking contexts.
+      className="fade-up relative z-10 rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
       style={{ animationDelay: "280ms" }}
     >
       <div className="flex items-center justify-between gap-3 border-b border-border-soft p-6">
