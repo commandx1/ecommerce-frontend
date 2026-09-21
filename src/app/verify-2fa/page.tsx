@@ -7,6 +7,7 @@ import { Suspense, useEffect, useId, useState } from "react"
 import ThemeToggle from "@/components/theme/ThemeToggle"
 import { showToast } from "@/components/ui/Toast"
 import { verifyTwoFactorLogin } from "@/lib/api/two-factor"
+import { safeRedirect } from "@/lib/utils/safe-redirect"
 import { useAuthStore } from "@/stores/authStore"
 
 function Verify2FAContent() {
@@ -14,6 +15,8 @@ function Verify2FAContent() {
   const searchParams = useSearchParams()
   const email = searchParams.get("email")
   const { setAuth } = useAuthStore()
+  const redirectTarget = safeRedirect(searchParams.get("redirect"))
+  const backToSignInHref = redirectTarget === "/" ? "/login" : `/login?redirect=${encodeURIComponent(redirectTarget)}`
 
   const [code, setCode] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -71,7 +74,7 @@ function Verify2FAContent() {
       }
 
       router.refresh()
-      router.push("/")
+      router.push(redirectTarget)
     } catch (error) {
       showToast.error((error as Error).message || "Verification failed. Please try again.")
     } finally {
@@ -140,7 +143,10 @@ function Verify2FAContent() {
               Resend Code
             </button>
           </p>
-          <Link href="/login" className="flex items-center justify-center text-sm text-text-secondary hover:text-brand">
+          <Link
+            href={backToSignInHref}
+            className="flex items-center justify-center text-sm text-text-secondary hover:text-brand"
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Sign In
           </Link>
