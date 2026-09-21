@@ -2,6 +2,7 @@
 
 import { ChevronDown, User } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
+import { cn } from "@/lib/utils"
 
 export type AccountMenuItem = {
   label: string
@@ -29,35 +30,43 @@ export default function AccountMenu({ displayName, email, items = [], className 
       }
     }
 
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false)
+    }
+
     window.addEventListener("pointerdown", onPointerDown)
-    return () => window.removeEventListener("pointerdown", onPointerDown)
+    window.addEventListener("keydown", onKeyDown)
+    return () => {
+      window.removeEventListener("pointerdown", onPointerDown)
+      window.removeEventListener("keydown", onKeyDown)
+    }
   }, [])
 
   return (
     <div ref={rootRef} className={`relative ${className ?? ""}`}>
       <button
         type="button"
-        className="flex items-center gap-3"
+        className="flex h-10 cursor-pointer items-center gap-3 rounded-full pl-1 pr-2.5 transition-colors duration-200 hover:bg-surface-muted"
         onClick={() => setOpen((prev) => !prev)}
+        aria-haspopup="menu"
         aria-expanded={open}
       >
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-inverse-foreground">
           <User className="w-4 h-4" />
         </div>
         <div className="hidden md:block">
-          <div className="text-sm font-semibold text-text-primary">My Account</div>
-          <div className="text-xs text-text-muted">{displayName}</div>
+          <div className="text-sm font-semibold text-text-primary">
+            <span className="sr-only">My Account</span>
+            {displayName}
+          </div>
         </div>
         <span className="text-text-muted transition-colors hover:text-brand">
-          <ChevronDown
-            className="w-4 h-4 transition-transform duration-200"
-            style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
-          />
+          <ChevronDown className={cn("w-4 h-4 transition-transform duration-200", open && "rotate-180")} />
         </span>
       </button>
 
       {open && (
-        <div className="absolute right-0 top-12 z-50 w-56 rounded-2xl border border-border-soft bg-surface-elevated/95 py-2 shadow-panel backdrop-blur-sm">
+        <div className="absolute right-0 top-full z-50 mt-3 w-56 rounded-2xl border border-border-soft bg-surface-elevated/95 py-2 shadow-panel backdrop-blur-sm">
           <div className="border-b border-border-soft px-4 py-3">
             <p className="text-sm font-semibold text-text-primary">{displayName}</p>
             {email && <p className="truncate text-xs text-text-muted">{email}</p>}

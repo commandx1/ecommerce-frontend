@@ -1,10 +1,12 @@
 "use client"
 
-import { ChevronDown, LogOut, Menu, Settings, ShoppingCart, User, X } from "lucide-react"
+import { LogOut, Menu, Settings, ShoppingCart, User, X } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import ThemeToggle from "@/components/theme/ThemeToggle"
+import { LiquidGlass, useLensFollow } from "@/components/ui/liquid-glass"
+import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
 import MainSearchbox from "../search/main-searchbox/MainSearchbox"
@@ -33,15 +35,26 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
   const router = useRouter()
   const pathname = usePathname()
   const cartCount = useCartStore((state) => state.cartCount)
-  const { logout, user: storeUser, isAuthenticated: storeIsAuthenticated } = useAuthStore()
+  const logout = useAuthStore((s) => s.logout)
+  const storeUser = useAuthStore((s) => s.user)
+  const storeIsAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const lens = useLensFollow<HTMLElement>()
 
   const [mounted, setMounted] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const headerId = "main-header"
   const mobileMenuId = "main-navbar-mobile-menu"
 
   useEffect(() => {
     setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    onScroll()
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally re-runs only when the route changes
@@ -65,44 +78,86 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
 
   const closeMobileMenu = () => setMobileMenuOpen(false)
 
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
+
+  const navLinkClass =
+    "relative z-10 inline-flex h-9 items-center rounded-full px-3.5 text-sm font-medium text-text-secondary transition-colors duration-200 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand cursor-pointer"
+
   return (
-    <header
-      id={headerId}
-      className="sticky top-0 z-40 border-b border-border-soft/80 bg-background/85 backdrop-blur-xl"
-    >
-      <div className="app-container mx-auto px-3 sm:px-6 lg:px-8 xl:px-10">
-        <div className="flex min-h-16 items-center justify-between gap-2 border-b border-border-soft/80 py-3 sm:min-h-18 sm:gap-4 sm:py-4 lg:min-h-20 lg:gap-6">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen((prev) => !prev)}
-              aria-expanded={mobileMenuOpen}
-              aria-controls={mobileMenuId}
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-soft bg-surface text-text-secondary transition-colors hover:text-brand lg:hidden"
+    <header id={headerId} className="pointer-events-none sticky top-0 z-40">
+      <div className="app-container mx-auto px-3 pt-3 pb-2 sm:px-4 lg:px-8 xl:px-10">
+        <div
+          data-scrolled={scrolled}
+          className="group/capsule pointer-events-auto relative isolate flex h-14 items-center gap-2 rounded-full px-2.5 sm:gap-3 sm:px-3 lg:h-16 lg:gap-5 lg:px-4"
+        >
+          <div
+            aria-hidden
+            className="absolute inset-0 -z-10 rounded-full border border-border-soft bg-surface-elevated/70 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-[background-color,box-shadow] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] group-data-[scrolled=true]/capsule:shadow-floating"
+          />
+
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            aria-expanded={mobileMenuOpen}
+            aria-controls={mobileMenuId}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-muted hover:text-brand lg:hidden"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+
+          <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <Logo />
+            <span className="truncate font-display text-lg font-semibold leading-none text-text-primary lg:text-xl">
+              DentyPro
+            </span>
+          </Link>
+
+          <nav ref={lens.frameRef} aria-label="Main" className="relative hidden items-center gap-1 lg:flex">
+            <LiquidGlass bounds={lens.bounds} visible={lens.active} className="z-0" />
+            <Link
+              href="/categories"
+              aria-current={isActive("/categories") ? "page" : undefined}
+              className={cn(navLinkClass, isActive("/categories") && "text-brand")}
+              {...lens.itemProps}
             >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-
-            <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
-              <Logo />
-              <div className="min-w-0">
-                <span className="block truncate font-display text-lg font-semibold leading-none text-text-primary sm:text-xl lg:text-[1.75rem]">
-                  DentyPro
-                </span>
-                <span className="mt-1 hidden text-[0.6rem] font-semibold uppercase tracking-[0.22em] text-text-muted sm:block lg:text-[0.65rem] lg:tracking-[0.28em]">
-                  Clinical Supply Network
-                </span>
-              </div>
+              <Menu className="mr-2 w-4 h-4" />
+              All Categories
             </Link>
-          </div>
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                aria-current={isActive(link.href) ? "page" : undefined}
+                className={cn(navLinkClass, isActive(link.href) && "text-brand")}
+                {...lens.itemProps}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
 
-          <div className="mx-0 hidden flex-1 lg:mx-8 lg:block">
+          <div className="hidden min-w-0 flex-1 lg:block">
             <MainSearchbox />
           </div>
 
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-3 md:gap-5">
+          <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 lg:gap-3">
             <ThemeToggle />
+
+            <Link
+              href="/cart"
+              aria-label="Cart"
+              className="relative flex h-10 cursor-pointer items-center gap-2 rounded-full px-3 text-text-secondary transition-colors duration-200 hover:bg-surface-muted hover:text-brand"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              <span className="hidden font-semibold xl:inline">Cart</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-2 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-accent-strong text-[10px] font-bold text-accent-foreground">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+
             {isAuthenticated && user ? (
               <AccountMenu
                 displayName={`${user.name} ${user.surname}`.trim() || user.email}
@@ -129,144 +184,108 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
             ) : (
               <button
                 type="button"
+                aria-label="Sign In"
                 onClick={() => router.push("/login")}
-                className="flex items-center gap-2 text-left text-text-secondary transition-colors hover:text-brand"
+                className="flex h-10 cursor-pointer items-center justify-center gap-2 rounded-full bg-brand px-3 text-sm font-semibold text-inverse-foreground transition-colors duration-200 hover:bg-brand/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 sm:px-5"
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-full border border-border-soft bg-surface sm:hidden">
-                  <User className="w-4 h-4" />
-                  {/* The visible "Hello, Sign In" label is `hidden sm:block`, so on mobile this
-                      button was icon-only with no accessible name at all. Scoped to the same
-                      `sm:hidden` wrapper so the desktop name still comes from the visible text
-                      (WCAG 2.5.3 Label in Name) instead of being duplicated. */}
-                  <span className="sr-only">Sign in</span>
-                </span>
-                <span className="hidden sm:block">
-                  <span className="block text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">
-                    Hello, Sign In
-                  </span>
-                  <span className="flex items-center gap-2 font-semibold">
-                    Account &amp; Lists <ChevronDown className="w-4 h-4" />
-                  </span>
-                </span>
+                <User className="h-4 w-4 sm:hidden" />
+                <span className="hidden sm:inline">Sign In</span>
               </button>
             )}
-
-            <Link
-              href="/cart"
-              aria-label="Cart"
-              className="relative flex items-center gap-2 rounded-full border border-border-soft bg-surface px-2.5 py-2 text-text-secondary shadow-soft transition-colors hover:text-brand sm:px-4"
-            >
-              <ShoppingCart className="w-4 h-4" />
-              <span className="hidden font-semibold sm:inline">Cart</span>
-              {cartCount > 0 && (
-                <span className="absolute -top-2 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-accent-strong text-[10px] font-bold text-accent-foreground">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
           </div>
         </div>
 
-        <div className="py-3 lg:hidden">
+        <div className="pointer-events-auto mt-2 lg:hidden">
           <MainSearchbox />
         </div>
 
-        <div className="hidden min-h-14 items-center justify-between gap-6 py-3 lg:flex">
-          <nav className="flex flex-wrap items-center gap-7">
+        <div
+          id={mobileMenuId}
+          className={cn(
+            "pointer-events-auto overflow-hidden rounded-2xl border bg-surface-elevated/90 backdrop-blur-xl transition-[max-height,opacity] duration-300 lg:hidden",
+            mobileMenuOpen
+              ? "mt-2 max-h-144 border-border-soft opacity-100 shadow-panel"
+              : "max-h-0 border-transparent opacity-0",
+          )}
+          inert={!mobileMenuOpen}
+        >
+          <nav aria-label="Mobile" className="app-container mx-auto flex flex-col gap-1 px-3 py-4 sm:px-6">
             <Link
               href="/categories"
-              className="flex items-center font-medium text-text-primary transition-colors hover:text-brand"
+              onClick={closeMobileMenu}
+              aria-current={isActive("/categories") ? "page" : undefined}
+              className={cn(
+                "flex items-center rounded-xl px-3 py-2.5 font-medium text-text-primary transition-colors hover:bg-surface-muted hover:text-brand",
+                isActive("/categories") && "text-brand",
+              )}
             >
-              <Menu className="mr-2 w-4 h-4" />
+              <Menu className="mr-3 w-4 h-4" />
               All Categories
             </Link>
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="font-medium text-text-secondary transition-colors hover:text-brand"
+                onClick={closeMobileMenu}
+                aria-current={isActive(link.href) ? "page" : undefined}
+                className={cn(
+                  "rounded-xl px-3 py-2.5 font-medium text-text-secondary transition-colors hover:bg-surface-muted hover:text-brand",
+                  isActive(link.href) && "text-brand",
+                )}
               >
                 {link.label}
               </Link>
             ))}
+
+            <div className="my-2 border-t border-border-soft/80" />
+
+            {isAuthenticated && user ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    router.push(getDashboardUrl())
+                    closeMobileMenu()
+                  }}
+                  className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left font-medium text-text-secondary transition-colors hover:bg-surface-muted hover:text-brand"
+                >
+                  <User className="w-4 h-4" /> Dashboard
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    router.push("/buyer-dashboard/settings")
+                    closeMobileMenu()
+                  }}
+                  className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left font-medium text-text-secondary transition-colors hover:bg-surface-muted hover:text-brand"
+                >
+                  <Settings className="w-4 h-4" /> Settings
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleLogout()
+                    closeMobileMenu()
+                  }}
+                  className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left font-medium text-danger transition-colors hover:bg-danger/10"
+                >
+                  <LogOut className="w-4 h-4" /> Sign Out
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  router.push("/login")
+                  closeMobileMenu()
+                }}
+                className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left font-semibold text-text-primary transition-colors hover:bg-surface-muted hover:text-brand"
+              >
+                <User className="w-4 h-4" /> Sign In
+              </button>
+            )}
           </nav>
         </div>
-      </div>
-
-      <div
-        id={mobileMenuId}
-        className={`overflow-hidden border-t border-border-soft/80 bg-background/95 backdrop-blur-xl transition-[max-height,opacity] duration-300 ease-in-out lg:hidden ${
-          mobileMenuOpen ? "max-h-144 opacity-100" : "max-h-0 opacity-0"
-        }`}
-      >
-        <nav className="app-container mx-auto flex flex-col gap-1 px-3 py-4 sm:px-6">
-          <Link
-            href="/categories"
-            onClick={closeMobileMenu}
-            className="flex items-center rounded-xl px-3 py-2.5 font-medium text-text-primary transition-colors hover:bg-surface-muted hover:text-brand"
-          >
-            <Menu className="mr-3 w-4 h-4" />
-            All Categories
-          </Link>
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={closeMobileMenu}
-              className="rounded-xl px-3 py-2.5 font-medium text-text-secondary transition-colors hover:bg-surface-muted hover:text-brand"
-            >
-              {link.label}
-            </Link>
-          ))}
-
-          <div className="my-2 border-t border-border-soft/80" />
-
-          {isAuthenticated && user ? (
-            <>
-              <button
-                type="button"
-                onClick={() => {
-                  router.push(getDashboardUrl())
-                  closeMobileMenu()
-                }}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left font-medium text-text-secondary transition-colors hover:bg-surface-muted hover:text-brand"
-              >
-                <User className="w-4 h-4" /> Dashboard
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  router.push("/buyer-dashboard/settings")
-                  closeMobileMenu()
-                }}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left font-medium text-text-secondary transition-colors hover:bg-surface-muted hover:text-brand"
-              >
-                <Settings className="w-4 h-4" /> Settings
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  handleLogout()
-                  closeMobileMenu()
-                }}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left font-medium text-danger transition-colors hover:bg-danger/10"
-              >
-                <LogOut className="w-4 h-4" /> Sign Out
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                router.push("/login")
-                closeMobileMenu()
-              }}
-              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left font-semibold text-text-primary transition-colors hover:bg-surface-muted hover:text-brand"
-            >
-              <User className="w-4 h-4" /> Sign In
-            </button>
-          )}
-        </nav>
       </div>
     </header>
   )

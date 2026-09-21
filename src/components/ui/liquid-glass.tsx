@@ -1,4 +1,6 @@
-import { type CSSProperties, useId } from "react"
+"use client"
+
+import { type CSSProperties, type FocusEvent, type MouseEvent, useId, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 
 export interface LiquidGlassBounds {
@@ -84,4 +86,27 @@ export function LiquidGlass({
       />
     </>
   )
+}
+
+/** One lens that glides to the hovered / focused item. Spread `itemProps` on each item, put `frameRef` on the positioned parent. */
+export function useLensFollow<T extends HTMLElement = HTMLDivElement>() {
+  const frameRef = useRef<T>(null)
+  const [bounds, setBounds] = useState<LiquidGlassBounds | null>(null)
+  const [active, setActive] = useState(false)
+
+  const follow = (event: MouseEvent<HTMLElement> | FocusEvent<HTMLElement>) => {
+    const frame = frameRef.current?.getBoundingClientRect()
+    if (!frame) return
+    const item = event.currentTarget.getBoundingClientRect()
+    setBounds({ top: item.top - frame.top, left: item.left - frame.left, width: item.width, height: item.height })
+    setActive(true)
+  }
+  const release = () => setActive(false)
+
+  return {
+    frameRef,
+    bounds,
+    active,
+    itemProps: { onMouseEnter: follow, onMouseLeave: release, onFocus: follow, onBlur: release },
+  }
 }

@@ -20,7 +20,7 @@ describe("Navbar", () => {
     const user = userEvent.setup()
     const { router } = render(<Navbar />, { route: "/" })
 
-    await user.click(screen.getByText("Account & Lists"))
+    await user.click(screen.getAllByRole("button", { name: "Sign In" })[0])
 
     expect(router.push).toHaveBeenCalledWith("/login")
     expect(screen.queryByText("My Account")).not.toBeInTheDocument()
