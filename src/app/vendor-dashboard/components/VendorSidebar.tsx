@@ -17,7 +17,6 @@ import {
 import { useMemo } from "react"
 import CommonDashboardSidebar, {
   type DashboardSidebarGroup,
-  type DashboardSidebarNavItem,
   type DashboardSidebarQuickAction,
 } from "@/components/layout/DashboardSidebar"
 import { useCompanyRole } from "../CompanyRoleContext"
@@ -63,9 +62,13 @@ const VENDOR_NAV_GROUPS: DashboardSidebarGroup[] = [
   },
 ]
 
-const VENDOR_FOOTER_ITEMS: DashboardSidebarNavItem[] = [
-  { href: "/vendor-dashboard/settings", label: "Settings", icon: Settings, matchMode: "startsWith" },
-]
+// Appended last in VendorSidebar so the owner-only Team link always sits above it.
+const SETTINGS_NAV_ITEM = {
+  href: "/vendor-dashboard/settings",
+  label: "Settings",
+  icon: Settings,
+  matchMode: "startsWith" as const,
+}
 
 const TEAM_NAV_ITEM = {
   href: "/vendor-dashboard/team",
@@ -78,17 +81,14 @@ const VendorSidebar = () => {
   const { companyRole, companyName } = useCompanyRole()
 
   const navGroups = useMemo<DashboardSidebarGroup[]>(() => {
-    if (companyRole !== "OWNER") {
-      return VENDOR_NAV_GROUPS
-    }
+    const tail = companyRole === "OWNER" ? [TEAM_NAV_ITEM, SETTINGS_NAV_ITEM] : [SETTINGS_NAV_ITEM]
 
-    return VENDOR_NAV_GROUPS.map((group) => ({ ...group, items: [...group.items, TEAM_NAV_ITEM] }))
+    return VENDOR_NAV_GROUPS.map((group) => ({ ...group, items: [...group.items, ...tail] }))
   }, [companyRole])
 
   return (
     <CommonDashboardSidebar
       brand={{ label: companyName ?? "Vendor Panel", icon: Store }}
-      footerItems={VENDOR_FOOTER_ITEMS}
       quickActions={VENDOR_QUICK_ACTIONS}
       quickActionSize="compact"
       groups={navGroups}

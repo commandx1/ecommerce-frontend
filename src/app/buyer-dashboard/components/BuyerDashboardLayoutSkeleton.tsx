@@ -17,11 +17,10 @@ export default function BuyerDashboardLayoutSkeleton() {
       </header>
 
       <div className="flex flex-1">
-        <aside className="hidden w-72 border-r border-border-soft bg-surface-elevated p-6 lg:block">
-          <div className="mb-8 h-6 w-36 rounded-md bg-surface-muted" />
-          <div className="space-y-3">
+        <aside className="hidden w-[3.05rem] shrink-0 border-r border-border-soft bg-surface-elevated p-2 md:block">
+          <div className="flex flex-col items-center gap-2">
             {navSkeletonIds.map((id) => (
-              <div key={id} className="h-10 w-full rounded-lg bg-surface-muted" />
+              <div key={id} className="h-8 w-8 rounded-md bg-surface-muted" />
             ))}
           </div>
         </aside>

@@ -16,7 +16,6 @@ import {
 } from "lucide-react"
 import CommonDashboardSidebar, {
   type DashboardSidebarGroup,
-  type DashboardSidebarNavItem,
   type DashboardSidebarQuickAction,
 } from "@/components/layout/DashboardSidebar"
 
@@ -33,12 +32,9 @@ const NAV_GROUPS: DashboardSidebarGroup[] = [
       { href: "/buyer-dashboard/invoices", label: "Invoices", icon: FileText },
       { href: "/buyer-dashboard/payment-methods", label: "Payment Methods", icon: CreditCard },
       { href: "/help-center", label: "Help Center", icon: HelpCircle },
+      { href: "/buyer-dashboard/settings", label: "Settings", icon: Settings, matchMode: "startsWith" },
     ],
   },
-]
-
-const BUYER_FOOTER_ITEMS: DashboardSidebarNavItem[] = [
-  { href: "/buyer-dashboard/settings", label: "Settings", icon: Settings, matchMode: "startsWith" },
 ]
 
 const BUYER_QUICK_ACTIONS: DashboardSidebarQuickAction[] = [
@@ -51,7 +47,6 @@ const DashboardSidebar = () => {
   return (
     <CommonDashboardSidebar
       brand={{ label: "Buyer Panel", icon: LayoutDashboard }}
-      footerItems={BUYER_FOOTER_ITEMS}
       quickActions={BUYER_QUICK_ACTIONS}
       groups={NAV_GROUPS}
       groupVariant="stacked"

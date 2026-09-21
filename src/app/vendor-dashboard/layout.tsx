@@ -1,9 +1,8 @@
 "use client"
 
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useEffect, useId, useState } from "react"
 import { DashboardMobileSidebarProvider } from "@/components/layout/DashboardMobileSidebarContext"
-import { showToast } from "@/components/ui/Toast"
 import NotificationSocketBridge from "@/features/notifications/components/NotificationSocketBridge"
 import { tabSessionStorage } from "@/lib/storage/tab-session-storage"
 import { useAuthStore } from "@/stores/authStore"
@@ -16,29 +15,8 @@ import VendorSidebar from "./components/VendorSidebar"
 export default function VendorDashboardLayout({ children }: { children: React.ReactNode }) {
   const mainContentId = useId()
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { user, isAuthenticated } = useAuthStore()
   const [isChecking, setIsChecking] = useState(true)
-
-  // Handle impersonation toast
-  useEffect(() => {
-    if (searchParams.get("impersonated") === "true") {
-      // Small delay to ensure Toaster is mounted and ready
-      const timer = setTimeout(() => {
-        showToast.success(
-          "Logged in as Vendor (Admin Impersonation)",
-          "You are currently viewing this account as an administrator.",
-          5000,
-        )
-      }, 1000)
-
-      // Clean up the URL without triggering a re-render/redirect
-      const newUrl = window.location.pathname
-      window.history.replaceState({}, "", newUrl)
-
-      return () => clearTimeout(timer)
-    }
-  }, [searchParams])
 
   useEffect(() => {
     // Check cookie directly first (before hydration completes)
