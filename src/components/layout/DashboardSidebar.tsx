@@ -52,7 +52,6 @@ export interface DashboardSidebarQuickAction {
 
 interface DashboardSidebarProps {
   brand: { label: string; icon: LucideIcon }
-  footerItems?: DashboardSidebarNavItem[]
   quickActions?: DashboardSidebarQuickAction[]
   quickActionSize?: SidebarItemSize
   groups: DashboardSidebarGroup[]
@@ -133,7 +132,7 @@ const SidebarNavItem = ({
       title={expanded ? undefined : item.label}
       onClick={onNavigate}
       className={cn(
-        "flex h-8 w-full items-center rounded-md px-2 py-1.5 text-sm font-medium transition",
+        "flex h-11 w-full items-center rounded-md px-2 py-1.5 text-sm font-medium transition md:h-8",
         !expanded ? "md:justify-center" : "",
         active
           ? "bg-brand/10 text-brand"
@@ -165,7 +164,6 @@ const SidebarNavItem = ({
 
 export default function DashboardSidebar({
   brand,
-  footerItems,
   quickActions,
   // Kept for API compatibility; the rail design uses one row size for quick actions.
   quickActionSize: _quickActionSize = "default",
@@ -179,16 +177,33 @@ export default function DashboardSidebar({
   const { isOpen: isMobileOpen, close: closeMobile } = useDashboardMobileSidebar()
 
   const isDesktop = useMediaQuery("(min-width: 768px)")
-  const canHover = useMediaQuery("(hover: hover)")
-  const [hovered, setHovered] = useState(false)
-  // Touch-only md+ devices (tablets) cannot hover, so they get an explicit toggle instead.
-  const [pinned, setPinned] = useState(false)
-  const showToggle = isDesktop && !canHover
-  const expanded = !isDesktop || hovered || pinned
+  const isWide = useMediaQuery("(min-width: 1024px)")
+  // Between 768-1023px the sidebar is always the icon rail; the stored preference is ignored there.
+  const [pinned, setPinned] = useState(() => {
+    if (typeof window === "undefined") return false
+    try {
+      return window.localStorage.getItem("dashboard-sidebar-pinned") === "1"
+    } catch {
+      return false
+    }
+  })
+  const showToggle = isWide
+  const expanded = !isDesktop || (isWide && pinned)
+
+  const togglePinned = () => {
+    setPinned((previous) => {
+      const next = !previous
+      try {
+        window.localStorage.setItem("dashboard-sidebar-pinned", next ? "1" : "0")
+      } catch {
+        // private mode / blocked storage - keep working without persistence
+      }
+      return next
+    })
+  }
 
   const handleNavigate = () => {
     closeMobile()
-    setPinned(false)
   }
 
   // Close the mobile drawer whenever the route changes
@@ -251,7 +266,7 @@ export default function DashboardSidebar({
           type="button"
           aria-label="Close menu overlay"
           onClick={closeMobile}
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          className="fixed inset-0 z-50 bg-black/50 md:hidden"
         />
       ) : null}
 
@@ -262,8 +277,8 @@ export default function DashboardSidebar({
         data-state={expanded ? "expanded" : "collapsed"}
         className={cn(
           "fixed inset-y-0 left-0 z-50 h-full w-72 shrink-0 transition-transform duration-200",
-          isMobileOpen ? "translate-x-0" : "-translate-x-full",
-          "md:sticky md:top-16 md:z-40 md:h-[calc(100vh-4rem)] md:w-[3.05rem] md:translate-x-0 md:overflow-visible md:transition-none",
+          isMobileOpen ? "translate-x-0 shadow-floating" : "-translate-x-full",
+          "md:sticky md:top-16 md:z-40 md:h-[calc(100vh-4rem)] md:w-auto md:translate-x-0 md:overflow-visible md:shadow-none md:transition-none",
         )}
       >
         <MotionConfig reducedMotion="user">
@@ -271,65 +286,37 @@ export default function DashboardSidebar({
             data-testid="dashboard-sidebar-panel"
             className={cn(
               "flex h-full w-full flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-text-secondary",
-              "md:absolute md:inset-y-0 md:left-0",
-              isDesktop && expanded ? "md:shadow-floating" : "",
+              "md:transition-[width] md:duration-200 md:ease-out",
+              expanded ? "md:w-60" : "md:w-[3.05rem]",
             )}
             initial={false}
-            variants={
-              isDesktop
-                ? {
-                    open: { width: "15rem" },
-                    closed: { width: "3.05rem" },
-                  }
-                : undefined
-            }
             animate={expanded ? "open" : "closed"}
-            transition={{ type: "tween", ease: "easeOut", duration: 0.2 }}
-            onPointerEnter={(e: React.PointerEvent) => {
-              if (e.pointerType === "mouse") setHovered(true)
-            }}
-            onPointerLeave={() => setHovered(false)}
-            onFocus={(e: React.FocusEvent) => {
-              // Only keyboard focus (:focus-visible) opens the rail. Focus that follows a mouse click or a
-              // touch tap must not, otherwise a tap on the toggle would keep the panel open forever.
-              let keyboardFocus = true
-              try {
-                keyboardFocus = (e.target as HTMLElement).matches(":focus-visible")
-              } catch {
-                // jsdom may not support :focus-visible - treat as keyboard focus
-              }
-              if (keyboardFocus) setHovered(true)
-            }}
-            onBlur={(e: React.FocusEvent) => {
-              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHovered(false)
-            }}
           >
-            <div className="flex items-center justify-between px-2 py-3 md:hidden">
-              <span className="text-lg font-semibold text-text-primary">Menu</span>
+            <div className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-sidebar-border px-2 md:h-[54px]">
+              <div className="flex min-w-0 items-center gap-2 px-2">
+                <BrandIcon className="h-5 w-5 shrink-0 text-brand md:h-4 md:w-4" />
+                <SidebarLabel
+                  expanded={expanded}
+                  className="text-base font-semibold text-text-primary md:text-sm md:font-medium"
+                >
+                  {brand.label}
+                </SidebarLabel>
+              </div>
               <button
                 type="button"
                 onClick={closeMobile}
                 aria-label="Close menu"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-sidebar-accent hover:text-brand"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-sidebar-accent hover:text-brand md:hidden"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="flex h-[54px] shrink-0 items-center border-b border-sidebar-border px-2">
-              <div className="flex items-center gap-2 px-2">
-                <BrandIcon className="h-4 w-4 shrink-0 text-brand" />
-                <SidebarLabel expanded={expanded} className="text-sm font-medium text-text-primary">
-                  {brand.label}
-                </SidebarLabel>
-              </div>
-            </div>
-
             {showToggle ? (
-              <div className="hidden border-b border-sidebar-border p-2 md:block">
+              <div className="hidden border-b border-sidebar-border p-2 lg:block">
                 <button
                   type="button"
-                  onClick={() => setPinned((previous) => !previous)}
+                  onClick={togglePinned}
                   aria-expanded={pinned}
                   aria-label={pinned ? "Collapse sidebar" : "Expand sidebar"}
                   className={cn(
@@ -343,7 +330,7 @@ export default function DashboardSidebar({
                     <PanelLeftOpen className="h-4 w-4 shrink-0 text-text-muted" />
                   )}
                   <SidebarLabel expanded={expanded} className="ml-2">
-                    Collapse menu
+                    {pinned ? "Collapse menu" : "Expand menu"}
                   </SidebarLabel>
                 </button>
               </div>
@@ -355,7 +342,7 @@ export default function DashboardSidebar({
                   const Icon = action.icon
                   const tone = action.tone ?? "brand"
                   const actionClassName = cn(
-                    "flex h-8 w-full items-center rounded-md px-2 py-1.5 text-sm font-medium transition",
+                    "flex h-11 w-full items-center rounded-md px-2 py-1.5 text-sm font-medium transition md:h-8",
                     quickActionToneClassMap[tone],
                     action.disabled ? "pointer-events-none opacity-50" : "",
                     !expanded ? "md:justify-center" : "",
@@ -437,21 +424,6 @@ export default function DashboardSidebar({
                 </div>
               ))}
             </motion.nav>
-
-            {footerItems?.length ? (
-              <div className="flex flex-col gap-1 border-t border-sidebar-border p-2">
-                {footerItems.map((item) => (
-                  <SidebarNavItem
-                    key={item.href}
-                    item={item}
-                    active={isItemActive(pathname, item)}
-                    defaultItemSize={defaultItemSize}
-                    expanded={expanded}
-                    onNavigate={handleNavigate}
-                  />
-                ))}
-              </div>
-            ) : null}
           </motion.div>
         </MotionConfig>
       </aside>

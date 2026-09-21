@@ -61,6 +61,10 @@ const renderSidebar = (props: Partial<React.ComponentProps<typeof DashboardSideb
   )
 
 describe("DashboardSidebar", () => {
+  afterEach(() => {
+    window.localStorage.clear()
+  })
+
   it("renders the buyer's navigation groups", () => {
     renderSidebar({}, "/buyer-dashboard")
 
@@ -141,13 +145,10 @@ describe("DashboardSidebar", () => {
     expect(screen.getByRole("dialog")).toHaveAttribute("aria-modal", "false")
   })
 
-  it("renders the brand label and footer items", () => {
-    renderSidebar({
-      footerItems: [{ href: "/buyer-dashboard/preferences", label: "Preferences", icon: Settings }],
-    })
+  it("renders the brand label", () => {
+    renderSidebar()
 
     expect(screen.getByText("Buyer Panel")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Preferences" })).toHaveAttribute("href", "/buyer-dashboard/preferences")
   })
 
   it("stays expanded on mobile when matchMedia is unavailable", () => {
@@ -157,56 +158,78 @@ describe("DashboardSidebar", () => {
     expect(screen.getByText("Orders").className).not.toContain("md:sr-only")
   })
 
-  describe("desktop hover behaviour", () => {
+  describe("desktop toggle behaviour", () => {
     afterEach(() => {
       vi.unstubAllGlobals()
+      window.localStorage.clear()
     })
 
-    it("collapses to an icon rail on desktop and expands on hover", () => {
-      if (typeof window.PointerEvent === "undefined") {
-        class PointerEventPolyfill extends MouseEvent {
-          pointerType: string
-          constructor(type: string, init?: PointerEventInit) {
-            super(type, init)
-            this.pointerType = init?.pointerType ?? ""
-          }
-        }
-        // @ts-expect-error - jsdom lacks PointerEvent, polyfill for this test only
-        window.PointerEvent = PointerEventPolyfill
-      }
-
-      const mql = {
-        matches: true,
-        media: "",
+    /** min-width:768 and min-width:1024 both match - a wide (lg+) desktop viewport. */
+    const stubWideDesktop = () => {
+      const mqlFor = (query: string) => ({
+        matches: query.includes("min-width"),
+        media: query,
         onchange: null,
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
         addListener: vi.fn(),
         removeListener: vi.fn(),
         dispatchEvent: vi.fn(),
-      }
-      vi.stubGlobal("matchMedia", vi.fn().mockReturnValue(mql))
+      })
+      vi.stubGlobal("matchMedia", vi.fn().mockImplementation(mqlFor))
+    }
 
+    it("starts collapsed on lg+ desktop and toggles open/closed on click", () => {
+      stubWideDesktop()
       renderSidebar()
 
       expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "collapsed")
-      expect(screen.getByText("Orders").className).toContain("md:sr-only")
-      expect(screen.getByRole("link", { name: "Orders" })).toBeInTheDocument()
+
+      fireEvent.click(screen.getByRole("button", { name: "Expand sidebar" }))
+      expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "expanded")
+      expect(screen.getByRole("button", { name: "Collapse sidebar" })).toHaveAttribute("aria-expanded", "true")
+
+      fireEvent.click(screen.getByRole("button", { name: "Collapse sidebar" }))
+      expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "collapsed")
+    })
+
+    it("does not expand on hover", () => {
+      stubWideDesktop()
+      renderSidebar()
 
       const panel = screen.getByTestId("dashboard-sidebar-panel")
-      fireEvent(panel, new PointerEvent("pointerover", { pointerType: "mouse", bubbles: true }))
-
-      expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "expanded")
-      expect(screen.getByText("Orders").className).not.toContain("md:sr-only")
-
-      fireEvent(panel, new PointerEvent("pointerout", { pointerType: "mouse", bubbles: true }))
+      fireEvent.pointerEnter(panel, { pointerType: "mouse" })
 
       expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "collapsed")
     })
 
-    it("offers a toggle on touch-only desktop widths and closes again after navigating", () => {
+    it("stays expanded after following a nav link", () => {
+      stubWideDesktop()
+      renderSidebar()
+
+      fireEvent.click(screen.getByRole("button", { name: "Expand sidebar" }))
+      expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "expanded")
+
+      fireEvent.click(screen.getByRole("link", { name: "Orders" }))
+      expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "expanded")
+    })
+
+    it("persists the open preference across renders", () => {
+      stubWideDesktop()
+      const { unmount } = renderSidebar()
+
+      fireEvent.click(screen.getByRole("button", { name: "Expand sidebar" }))
+      expect(window.localStorage.getItem("dashboard-sidebar-pinned")).toBe("1")
+      unmount()
+
+      renderSidebar()
+      expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "expanded")
+    })
+
+    it("stays the icon rail with no toggle on md-only widths, even with a stored preference", () => {
+      window.localStorage.setItem("dashboard-sidebar-pinned", "1")
       const mqlFor = (query: string) => ({
-        matches: query.includes("min-width"),
+        matches: query.includes("768"),
         media: query,
         onchange: null,
         addEventListener: vi.fn(),
@@ -220,59 +243,7 @@ describe("DashboardSidebar", () => {
       renderSidebar()
 
       expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "collapsed")
-
-      // fireEvent.click (not userEvent) so no synthetic mouse pointer events fire - a touch tap has none
-      fireEvent.click(screen.getByRole("button", { name: "Expand sidebar" }))
-      expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "expanded")
-      expect(screen.getByRole("button", { name: "Collapse sidebar" })).toHaveAttribute("aria-expanded", "true")
-
-      fireEvent.click(screen.getByRole("link", { name: "Orders" }))
-      expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "collapsed")
-    })
-
-    it("hides the toggle when the device can hover", () => {
-      const mql = {
-        matches: true,
-        media: "",
-        onchange: null,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        addListener: vi.fn(),
-        removeListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-      }
-      vi.stubGlobal("matchMedia", vi.fn().mockReturnValue(mql))
-
-      renderSidebar()
-
       expect(screen.queryByRole("button", { name: /sidebar/i })).not.toBeInTheDocument()
-    })
-
-    it("expands when a link inside receives keyboard focus", async () => {
-      const mql = {
-        matches: true,
-        media: "",
-        onchange: null,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        addListener: vi.fn(),
-        removeListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-      }
-      vi.stubGlobal("matchMedia", vi.fn().mockReturnValue(mql))
-
-      const user = userEvent.setup()
-      renderSidebar()
-
-      expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "collapsed")
-
-      let dialog = screen.getByRole("dialog")
-      for (let i = 0; i < 10 && dialog.getAttribute("data-state") !== "expanded"; i++) {
-        await user.tab()
-        dialog = screen.getByRole("dialog")
-      }
-
-      expect(dialog).toHaveAttribute("data-state", "expanded")
     })
   })
 })
