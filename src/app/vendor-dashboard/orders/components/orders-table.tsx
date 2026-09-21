@@ -243,6 +243,22 @@ export default function VendorOrdersTable({
 
         return (
           <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="unstyled"
+              onClick={() => onCallUber(order)}
+              disabled={!canCallUber || isUberProcessed || processingOrderId === order.orderId}
+              className="rounded-full truncate bg-brand px-4 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
+            >
+              {processingOrderId === order.orderId ? (
+                <span className="inline-flex items-center gap-1">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Processing...
+                </span>
+              ) : (
+                "Call Uber"
+              )}
+            </Button>
             {hasCancelableOrderItems ? (
               <Button
                 type="button"
@@ -267,22 +283,6 @@ export default function VendorOrdersTable({
                 )}
               </Button>
             ) : null}
-            <Button
-              type="button"
-              variant="unstyled"
-              onClick={() => onCallUber(order)}
-              disabled={!canCallUber || isUberProcessed || processingOrderId === order.orderId}
-              className="rounded-full truncate bg-brand px-4 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
-            >
-              {processingOrderId === order.orderId ? (
-                <span className="inline-flex items-center gap-1">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Processing...
-                </span>
-              ) : (
-                "Call Uber"
-              )}
-            </Button>
           </div>
         )
       },
