@@ -193,7 +193,7 @@ describe("SuppliersDirectorySection", () => {
     it("marks the vendors already favourited by the signed-in buyer", async () => {
       signIn()
       installVendorHandlers()
-      server.use(http.get("*/backend-api/vendors/favorite-ids", () => HttpResponse.json(["vendor-1"])))
+      server.use(http.get("*/backend-api/vendors/favorite-ids", () => HttpResponse.json(["company-1"])))
       render(<SuppliersDirectorySection />)
 
       expect(await screen.findByRole("button", { name: "Remove from favorites" })).toBeInTheDocument()
@@ -209,7 +209,7 @@ describe("SuppliersDirectorySection", () => {
       await user().click(screen.getByRole("button", { name: "Save to favorites" }))
 
       expect(await screen.findByRole("button", { name: "Remove from favorites" })).toBeInTheDocument()
-      await waitFor(() => expect(favoriteWrites).toEqual([{ method: "POST", vendorId: "vendor-1" }]))
+      await waitFor(() => expect(favoriteWrites).toEqual([{ method: "POST", vendorId: "company-1" }]))
     })
 
     it("rolls the heart back when the write fails", async () => {
@@ -230,13 +230,51 @@ describe("SuppliersDirectorySection", () => {
     it("removes an existing favourite with a DELETE", async () => {
       signIn()
       installVendorHandlers()
-      server.use(http.get("*/backend-api/vendors/favorite-ids", () => HttpResponse.json(["vendor-1"])))
+      server.use(http.get("*/backend-api/vendors/favorite-ids", () => HttpResponse.json(["company-1"])))
       render(<SuppliersDirectorySection />)
 
       await user().click(await screen.findByRole("button", { name: "Remove from favorites" }))
       await user().click(await screen.findByRole("button", { name: "Remove" }))
 
-      await waitFor(() => expect(favoriteWrites).toEqual([{ method: "DELETE", vendorId: "vendor-1" }]))
+      await waitFor(() => expect(favoriteWrites).toEqual([{ method: "DELETE", vendorId: "company-1" }]))
+    })
+  })
+
+  describe("company-per-card contract", () => {
+    // The backend used to return one row per Vendor-role USER, so two members of the
+    // same company (same companyName) produced two cards with an identical heading.
+    // It now returns one row per COMPANY, with `id` = company id, and the frontend
+    // carries that id through unchanged into the card link and the favorite call.
+    // This test documents that contract: distinct companies -> distinct card
+    // headings, each "View Products" link pointing at its own company id.
+    it("renders one card per company with the card's own company id in its link", async () => {
+      installVendorHandlers(
+        vendorPage(
+          [
+            makeVendorListItem({ id: "company-1", name: "Acme Dental Supplies", companyName: "Acme Dental Supplies" }),
+            makeVendorListItem({ id: "company-2", name: "Beta Ortho Supplies", companyName: "Beta Ortho Supplies" }),
+          ],
+          2,
+          1,
+        ),
+      )
+      render(<SuppliersDirectorySection />)
+
+      const acmeHeading = await screen.findByRole("heading", { name: "Acme Dental Supplies", level: 3 })
+      const betaHeading = await screen.findByRole("heading", { name: "Beta Ortho Supplies", level: 3 })
+      expect(screen.getAllByRole("heading", { name: "Acme Dental Supplies", level: 3 })).toHaveLength(1)
+      expect(screen.getAllByRole("heading", { name: "Beta Ortho Supplies", level: 3 })).toHaveLength(1)
+
+      const acmeCard = acmeHeading.closest("article") as HTMLElement
+      const betaCard = betaHeading.closest("article") as HTMLElement
+      expect(within(acmeCard).getByRole("link", { name: /Products$/ })).toHaveAttribute(
+        "href",
+        "/products?vendors=company-1",
+      )
+      expect(within(betaCard).getByRole("link", { name: /Products$/ })).toHaveAttribute(
+        "href",
+        "/products?vendors=company-2",
+      )
     })
   })
 })

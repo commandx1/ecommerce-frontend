@@ -5,7 +5,9 @@ import { render, screen } from "@/test/render"
 import SupplierDirectoryCard from "./SupplierDirectoryCard"
 
 const makeSupplier = (overrides: Partial<SupplierDirectoryItem> = {}): SupplierDirectoryItem => ({
-  id: "vendor-1",
+  // id is a company id (one card per company) - see SuppliersDirectorySection's
+  // "one card per company" regression test.
+  id: "company-1",
   name: "Acme Dental",
   slug: "acme-dental",
   rating: 4.6,
@@ -25,7 +27,7 @@ describe("SupplierDirectoryCard", () => {
     render(<SupplierDirectoryCard supplier={makeSupplier()} />)
 
     const link = screen.getByRole("link", { name: /View 3,400 Products/ })
-    expect(link).toHaveAttribute("href", "/products?vendors=vendor-1")
+    expect(link).toHaveAttribute("href", "/products?vendors=company-1")
   })
 
   it("drops the count from the link label for a vendor with no products", () => {

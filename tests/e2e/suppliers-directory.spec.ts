@@ -26,8 +26,18 @@ import { SuppliersDirectoryPage } from "./pages/suppliers-directory.page"
  * list) - both are registered per-test here.
  */
 
-const VENDOR_A = makeVendorListItem({ id: "vendor-a", name: "Alpha Dental", companyName: "Alpha Dental Supplies" })
-const VENDOR_B = makeVendorListItem({ id: "vendor-b", name: "Beta Ortho", companyName: "Beta Ortho Supplies" })
+// `id` is a company id (one card per company - backend returns one row per
+// company, not per vendor user), so name and companyName are the same value.
+const VENDOR_A = makeVendorListItem({
+  id: "company-a",
+  name: "Alpha Dental Supplies",
+  companyName: "Alpha Dental Supplies",
+})
+const VENDOR_B = makeVendorListItem({
+  id: "company-b",
+  name: "Beta Ortho Supplies",
+  companyName: "Beta Ortho Supplies",
+})
 
 test.describe("suppliers directory", () => {
   test("renders vendors from the default query (page 1, rating sort)", async ({ guestPage, apiMock }) => {

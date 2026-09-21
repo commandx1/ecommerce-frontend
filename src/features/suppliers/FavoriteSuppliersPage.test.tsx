@@ -17,9 +17,9 @@ vi.mock("@/components/ui/Toast", () => ({
 }))
 
 const favorites = [
-  makeVendorListItem({ id: "vendor-1", name: "Acme Dental", companyName: null }),
+  makeVendorListItem({ id: "company-1", name: "Acme Dental", companyName: null }),
   makeVendorListItem({
-    id: "vendor-2",
+    id: "company-2",
     name: "Beta Supplies",
     companyName: null,
     averageRating: 3.4,
@@ -92,7 +92,7 @@ describe("FavoriteSuppliersPage", () => {
     await waitFor(() =>
       expect(screen.queryByRole("heading", { name: "Acme Dental", level: 3 })).not.toBeInTheDocument(),
     )
-    expect(deletedId).toBe("vendor-1")
+    expect(deletedId).toBe("company-1")
     expect(screen.getByRole("heading", { name: "Beta Supplies", level: 3 })).toBeInTheDocument()
   })
 
@@ -111,7 +111,7 @@ describe("FavoriteSuppliersPage", () => {
 
   it("shows the vendor's company name and a mailto link, reusing the /vendors card mapper", async () => {
     server.use(
-      http.get("*/backend-api/vendors/favorites", () => HttpResponse.json([makeVendorListItem({ id: "vendor-3" })])),
+      http.get("*/backend-api/vendors/favorites", () => HttpResponse.json([makeVendorListItem({ id: "company-3" })])),
     )
     render(<FavoriteSuppliersPage />)
 
@@ -132,7 +132,7 @@ describe("FavoriteSuppliersPage", () => {
 
 describe("FavoriteSuppliersPage pagination", () => {
   const manyVendors = Array.from({ length: 13 }, (_, i) =>
-    makeVendorListItem({ id: `vendor-${i}`, name: `Vendor ${i}`, companyName: null }),
+    makeVendorListItem({ id: `company-${i}`, name: `Vendor ${i}`, companyName: null }),
   )
 
   beforeEach(() => {

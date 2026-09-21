@@ -9,9 +9,11 @@ import type {
 import type { CompanyListItem, VendorListItem } from "@/lib/api/vendors"
 
 export function makeVendorListItem(overrides: Partial<VendorListItem> = {}): VendorListItem {
+  // Backend now returns one row per company (id = company id), not per vendor user,
+  // so name and companyName default to the same value.
   return {
-    id: "vendor-1",
-    name: "Acme Dental",
+    id: "company-1",
+    name: "Acme Dental Supplies",
     slug: "acme-dental",
     averageRating: 4.6,
     reviewCount: 128,
