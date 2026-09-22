@@ -92,7 +92,7 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
         >
           <div
             aria-hidden
-            className="absolute inset-0 -z-10 rounded-full border border-border-soft bg-surface-elevated/70 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-[background-color,box-shadow] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] group-data-[scrolled=true]/capsule:shadow-floating"
+            className="absolute inset-0 -z-10 rounded-full border border-border-soft bg-surface-elevated/40 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-[background-color,box-shadow] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] group-data-[scrolled=true]/capsule:shadow-floating"
           />
 
           <button
