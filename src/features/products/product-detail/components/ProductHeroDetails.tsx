@@ -20,7 +20,7 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
   const formattedDiscount = Number.isInteger(discountPercent) ? `${discountPercent}` : discountPercent.toFixed(1)
 
   return (
-    <div className="space-y-6 rounded-4xl border border-border-soft bg-surface-elevated p-5 shadow-soft sm:p-7 md:p-8">
+    <div className="min-w-0 space-y-6 rounded-4xl border border-border-soft bg-surface-elevated p-5 shadow-soft sm:p-7 md:p-8">
       <div>
         <div className="mb-3 flex flex-wrap items-center gap-3">
           <span className="rounded-full border border-border-soft bg-surface px-3 py-1 text-sm font-medium text-brand">
@@ -33,7 +33,9 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
             Best Seller
           </span>
         </div>
-        <h1 className="mb-4 text-3xl font-semibold text-text-primary sm:text-4xl md:text-5xl">{product.title}</h1>
+        <h1 className="mb-4 break-words text-3xl font-semibold text-text-primary sm:text-4xl md:text-5xl">
+          {product.title}
+        </h1>
         <p className="text-base leading-7 text-text-secondary sm:text-lg sm:leading-8">{product.description}</p>
       </div>
 

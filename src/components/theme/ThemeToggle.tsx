@@ -5,12 +5,13 @@ import { useTheme } from "next-themes"
 import { type MouseEvent, useEffect, useState } from "react"
 import { flushSync } from "react-dom"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 interface ViewTransitionLike {
   ready: Promise<void>
 }
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ className }: { className?: string } = {}) {
   const { resolvedTheme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
@@ -75,7 +76,7 @@ export default function ThemeToggle() {
       size="icon"
       aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
       onClick={handleToggle}
-      className="rounded-full border border-border-soft/80 bg-surface/90 shadow-soft backdrop-blur"
+      className={cn("rounded-full border border-border-soft/80 bg-surface/90 shadow-soft backdrop-blur", className)}
     >
       {isDark ? <SunMedium className="h-4.5 w-4.5" /> : <MoonStar className="h-4.5 w-4.5" />}
     </Button>

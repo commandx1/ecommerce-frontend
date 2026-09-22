@@ -84,7 +84,7 @@ describe("Navbar", () => {
   it("links every primary nav entry", () => {
     render(<Navbar />, { route: "/" })
 
-    // The same links are rendered twice: once in the desktop bar and once in the mobile drawer.
+    // Desktop bar links; the mobile menu's copies are only mounted while that menu is open.
     for (const link of screen.getAllByRole("link", { name: "Vendors" })) {
       expect(link).toHaveAttribute("href", "/vendors")
     }
@@ -106,7 +106,7 @@ describe("Navbar", () => {
   it("links All Categories to the category directory", () => {
     render(<Navbar />, { route: "/" })
 
-    // Rendered once in the desktop bar and once in the mobile drawer.
+    // Desktop bar link; the mobile menu's copy is only mounted while that menu is open.
     for (const link of screen.getAllByRole("link", { name: /all categories/i })) {
       expect(link).toHaveAttribute("href", "/categories")
     }

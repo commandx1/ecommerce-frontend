@@ -134,7 +134,7 @@ export default function SuppliersDirectorySection() {
 
   return (
     <>
-      <section className="sticky top-(--header-height) z-30 border-y border-border-soft/80 bg-surface/90 py-5 backdrop-blur-xl">
+      <section className="border-y border-border-soft/80 bg-surface py-5">
         <PageSectionContainer>
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex flex-wrap items-center gap-3">

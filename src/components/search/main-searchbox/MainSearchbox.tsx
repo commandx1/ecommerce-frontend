@@ -1,5 +1,6 @@
 "use client"
 
+import { cn } from "@/lib/utils"
 import SearchActionButton from "./components/SearchActionButton"
 import SearchInput from "./components/SearchInput"
 import SearchResultsDropdown from "./components/SearchResultsDropdown"
@@ -9,7 +10,7 @@ interface MainSearchboxProps {
   className?: string
 }
 
-const MainSearchbox = ({ className = "" }: MainSearchboxProps) => {
+const MainSearchbox = ({ className }: MainSearchboxProps) => {
   const {
     dropdownRef,
     inputRef,
@@ -26,7 +27,10 @@ const MainSearchbox = ({ className = "" }: MainSearchboxProps) => {
 
   return (
     <div
-      className={`relative mx-auto flex w-full max-w-2xl rounded-full border border-border-soft bg-surface-elevated/95 shadow-soft backdrop-blur-sm transition-[border-color,box-shadow] focus-within:border-brand/40 focus-within:ring-3 focus-within:ring-ring/50 ${className}`}
+      className={cn(
+        "relative mx-auto flex w-full max-w-2xl rounded-full border border-border-soft bg-surface-elevated/95 shadow-soft backdrop-blur-sm transition-[border-color,box-shadow] focus-within:border-brand/40 focus-within:ring-3 focus-within:ring-ring/50",
+        className,
+      )}
     >
       <div className="relative flex-1">
         <SearchInput inputRef={inputRef} value={searchQuery} onChange={handleInputChange} onFocus={handleInputFocus} />

@@ -1,6 +1,6 @@
 "use client"
 
-import { type CSSProperties, type FocusEvent, type MouseEvent, useId, useRef, useState } from "react"
+import { type CSSProperties, type FocusEvent, type MouseEvent, type Ref, useId, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 
 export interface LiquidGlassBounds {
@@ -24,6 +24,7 @@ interface LiquidGlassProps {
   /** SVG displacement strength. Safari ignores the filter and falls back to plain frosted glass. */
   distortion?: number
   className?: string
+  ref?: Ref<HTMLDivElement>
 }
 
 /**
@@ -38,6 +39,7 @@ export function LiquidGlass({
   blur = 2,
   distortion = 24,
   className,
+  ref,
 }: LiquidGlassProps) {
   const filterId = useId()
 
@@ -59,12 +61,14 @@ export function LiquidGlass({
         </defs>
       </svg>
       <div
+        ref={ref}
         aria-hidden
         className={cn(
           "pointer-events-none absolute isolate rounded-(--lg-border-radius) shadow-lg [--lg-tint-opacity:0.38] dark:[--lg-tint-opacity:0.14]",
+          "[--lg-tint:rgba(255,255,255,var(--lg-tint-opacity))]",
           bounds === undefined && "inset-0",
           "transition-[top,left,width,height,opacity] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
-          "before:absolute before:inset-0 before:z-0 before:rounded-(--lg-border-radius) before:bg-[rgba(255,255,255,var(--lg-tint-opacity))] before:shadow-[inset_0_0_20px_-5px_rgba(255,255,255,0.7)] before:content-['']",
+          "before:absolute before:inset-0 before:z-0 before:rounded-(--lg-border-radius) before:bg-(--lg-tint) before:shadow-[inset_0_0_20px_-5px_rgba(255,255,255,0.7)] before:content-['']",
           "after:absolute after:inset-0 after:isolate after:-z-1 after:rounded-(--lg-border-radius) after:backdrop-blur-(--lg-blur) after:[filter:var(--lg-filter)] after:content-['']",
           className,
         )}

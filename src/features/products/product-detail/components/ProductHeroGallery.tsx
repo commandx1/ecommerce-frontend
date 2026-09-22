@@ -23,7 +23,7 @@ const ProductHeroGallery = ({ title, sku, mainImage, thumbnailImages, badge, pro
   const { isEnabled, position, toggleMagnifier, handleMouseMove, handleMouseLeave } = useImageMagnifier(imageRef)
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       {/* biome-ignore lint/a11y/noStaticElementInteractions: onMouseMove/onMouseLeave here only
           track cursor position for the hover magnifier - no keyboard equivalent is meaningful
           (there's nothing to "activate"), so no ARIA widget role fits. `role="img"` used to sit

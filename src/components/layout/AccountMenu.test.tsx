@@ -1,6 +1,6 @@
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { render, screen } from "@/test/render"
+import { render, screen, waitFor } from "@/test/render"
 import AccountMenu from "./AccountMenu"
 
 const items = [
@@ -42,7 +42,7 @@ describe("AccountMenu", () => {
     await user.click(screen.getByRole("button", { name: "Dashboard" }))
 
     expect(items[0].onClick).toHaveBeenCalledTimes(1)
-    expect(screen.queryByRole("button", { name: "Dashboard" })).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Dashboard" })).not.toBeInTheDocument())
   })
 
   it("closes when a pointer lands outside it", async () => {
@@ -57,7 +57,7 @@ describe("AccountMenu", () => {
     await user.click(screen.getByRole("button", { name: /My Account/ }))
     await user.click(screen.getByRole("button", { name: "elsewhere" }))
 
-    expect(screen.queryByRole("button", { name: "Dashboard" })).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Dashboard" })).not.toBeInTheDocument())
   })
 
   it("omits the email line when the account has none", async () => {
