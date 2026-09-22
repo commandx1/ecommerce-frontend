@@ -50,17 +50,13 @@ export class CheckoutPage extends BasePage {
 
   // -- Step 3: billing --
 
-  get cardPaymentOption(): Locator {
-    return this.page.getByRole("radio", { name: /Credit\/Debit Card/i }).or(this.page.getByLabel(/Credit\/Debit Card/i))
-  }
-
   /** Saved card radio, matched by its "BRAND •••• 1234" label text. */
   savedCardOption(brandLast4Text: string | RegExp): Locator {
     return this.page.locator("label", { has: this.page.getByText(brandLast4Text) })
   }
 
-  get useNewCardOption(): Locator {
-    return this.page.getByText("Use a new card")
+  get addNewMethodButton(): Locator {
+    return this.page.getByRole("button", { name: /Add new method/ })
   }
 
   get autoOrderCardConsentCheckbox(): Locator {

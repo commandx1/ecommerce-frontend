@@ -10,7 +10,7 @@ import { installFakeStripe } from "./support/fake-stripe"
 
 /**
  * Auto-order consent gate at checkout (src/features/checkout/hooks/useBillingInformation.ts's
- * `onSubmit` and FinalReviewPaymentSection.tsx's `needsSavedCardConsent`), then
+ * `onSubmit` and PaymentCardSection.tsx's `needsSavedCardConsent`), then
  * confirmation-screen auto-order registration
  * (src/features/checkout/hooks/useAutoOrderRegistration.ts polls
  * `GET /backend-api/auto-orders`), then the item actually listed on

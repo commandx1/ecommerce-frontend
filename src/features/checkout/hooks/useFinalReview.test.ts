@@ -125,7 +125,6 @@ beforeEach(() => {
   useCheckoutStore.setState({
     currentStep: 4,
     orderPayload: orderPayload(),
-    paymentMethod: { type: "card" },
     paymentMethodId: "pm_saved",
     selectedSavedCardId: "pm_saved",
     paymentMethodSummary: "VISA •••• 4242",
@@ -695,23 +694,6 @@ describe("useFinalReview — double submit", () => {
     expect(result.current.submitDisabled).toBe(true)
   })
 
-  it("does not disable submission for a non-card payment method even when Stripe never loaded", () => {
-    stripeState.loaded = false
-    useCheckoutStore.setState({ paymentMethod: { type: "net30" } })
-
-    const { result } = renderHook(() => useFinalReview())
-
-    expect(result.current.submitDisabled).toBe(false)
-  })
-
-  it("does not disable submission for a non-card payment method even when paymentMethodId is empty", () => {
-    useCheckoutStore.setState({ paymentMethod: { type: "net30" }, paymentMethodId: "" })
-
-    const { result } = renderHook(() => useFinalReview())
-
-    expect(result.current.submitDisabled).toBe(false)
-  })
-
   /**
    * KNOWN GAP: step 4 never re-checks `termsAgreed` — the only gate is step 3
    * (`useBillingInformation`). Reaching this hook with the flag cleared still places the order.
@@ -746,6 +728,15 @@ describe("useFinalReview — payload", () => {
     expect(payload).not.toHaveProperty("savedCardId")
     expect(payload).not.toHaveProperty("applyTaxExemption")
     expect(payload).not.toHaveProperty("taxExempt")
+  })
+
+  it("never re-saves a saved card, even if a leftover save-card intent is still set", async () => {
+    useCheckoutStore.setState({ selectedSavedCardId: "pm_saved", saveCard: true })
+
+    const { result } = renderHook(() => useFinalReview())
+    await placeAndSettle(result.current.onPlaceOrder)
+
+    expect(placeOrder.mock.calls[0][0]).toMatchObject({ cardSave: false, cardName: "" })
   })
 
   it("saves a new card with the buyer's off-session consent", async () => {
@@ -862,23 +853,6 @@ describe("useFinalReview — payload", () => {
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(placeOrder.mock.calls[0][0].cartId).toBe("")
-  })
-
-  it("skips every card-specific field for a non-card payment method", async () => {
-    useCheckoutStore.setState({ paymentMethod: { type: "net30" } })
-
-    const { result } = renderHook(() => useFinalReview())
-    await placeAndSettle(result.current.onPlaceOrder)
-
-    expect(fakeStripe().confirmCardPayment).not.toHaveBeenCalled()
-    expect(getPaymentStatus).not.toHaveBeenCalled()
-    expect(placeOrder.mock.calls[0][0]).not.toHaveProperty("cardSave")
-    expect(useCheckoutStore.getState().orderResult).toMatchObject({ status: "PENDING_PAYMENT" })
-    expect(useCheckoutStore.getState().currentStep).toBe(5)
-    // `isPaymentCanceled` only gets set inside the card-only confirmation block, so a non-card
-    // order must still take the success path off its untouched `false` initial value.
-    expect(successToast).toHaveBeenCalledWith("Order placed successfully. Order ID: order-1")
-    expect(errorToast).not.toHaveBeenCalled()
   })
 })
 

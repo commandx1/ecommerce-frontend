@@ -5,7 +5,7 @@ import { showToast } from "@/components/ui/Toast"
 import type { SavedCard } from "@/lib/api/orders"
 import { server } from "@/mocks/server"
 import { useCartStore } from "@/stores/cartStore"
-import { useCheckoutStore } from "@/stores/checkoutStore"
+import { type PendingNewCard, useCheckoutStore } from "@/stores/checkoutStore"
 import { makeApiSavedCard, makeCartItem, makeCartUserProduct } from "@/test/factories"
 import type { FakeStripe } from "@/test/mocks/stripe"
 import { stripeError, stripePaymentMethod } from "@/test/mocks/stripe"
@@ -14,6 +14,10 @@ import { useBillingInformation } from "./useBillingInformation"
 /**
  * Step 3: the card. Nothing here charges anything yet — it turns the buyer's input into a
  * `paymentMethodId` that `useFinalReview` later hands to Stripe.
+ *
+ * A tokenized-but-unsubmitted new card lives in the store as `pendingNewCard` — it survives a
+ * round trip to step 4 and back, so the buyer is never asked to re-enter card details they
+ * already typed once (`selectedSavedCardId === ""` still means "using a new card", pending or not).
  *
  * The Stripe SDK never throws for a bad card; it resolves with `{ error: {...} }`. Every
  * declined/invalid-card case below therefore asserts that the store is left untouched.
@@ -49,6 +53,15 @@ const serveSavedCardsError = (message: string, status = 400) => {
 
 const savedCard = (overrides: Partial<SavedCard> = {}): SavedCard =>
   ({ ...makeApiSavedCard(), ...overrides }) as unknown as SavedCard
+
+const pendingCard = (overrides: Partial<PendingNewCard> = {}): PendingNewCard => ({
+  paymentMethodId: "pm_pending",
+  brand: "visa",
+  last4: "4242",
+  expMonth: 9,
+  expYear: 2099,
+  ...overrides,
+})
 
 const autoOrderCartItem = () =>
   makeCartItem({ autoOrder: "ONE_MONTH", userProduct: makeCartUserProduct({ userProductId: "up-auto" }) })
@@ -87,6 +100,7 @@ describe("useBillingInformation — saved card loading", () => {
 
     expect(result.current.savedCards).toEqual([])
     expect(result.current.selectedSavedCardId).toBe("")
+    expect(result.current.showInlineNewCardForm).toBe(true)
   })
 
   it("exposes the saved cards, with the default one first as the backend ordered them", async () => {
@@ -130,7 +144,7 @@ describe("useBillingInformation — saved card loading", () => {
     expect(errorToast).toHaveBeenCalledWith("Failed to load saved cards.")
   })
 
-  it("does not look up cards for a non-card payment method", async () => {
+  it("looks up saved cards on mount", async () => {
     let requested = false
     server.use(
       http.get("*/backend-api/orders/saved-cards", () => {
@@ -138,30 +152,89 @@ describe("useBillingInformation — saved card loading", () => {
         return HttpResponse.json({ cards: [], total: 0 })
       }),
     )
-    useCheckoutStore.setState({ paymentMethod: { type: "wire" } })
 
-    const { result } = renderHook(() => useBillingInformation())
+    await mountHook()
 
-    await waitFor(() => expect(result.current.paymentType).toBe("wire"))
-    expect(requested).toBe(false)
+    expect(requested).toBe(true)
+  })
+})
+
+describe("useBillingInformation — initial card pre-selection", () => {
+  it("pre-selects the default card when it is still valid", async () => {
+    serveSavedCards([
+      savedCard({ stripeCardId: "pm_a", isDefault: false }),
+      savedCard({ stripeCardId: "pm_b", isDefault: true }),
+    ])
+
+    const { result } = await mountHook()
+
+    expect(result.current.selectedSavedCardId).toBe("pm_b")
   })
 
-  /**
-   * KNOWN GAP (checkoutStore): switching to a non-card payment method leaves
-   * `paymentMethodId` / `selectedSavedCardId` behind, and this hook does NOT compensate.
-   * Locked in so a future fix has to update this expectation deliberately.
-   */
-  it("leaves a stale card id in the store after switching away from card payment", async () => {
-    useCheckoutStore.setState({
-      paymentMethod: { type: "net30" },
-      paymentMethodId: "pm_leftover",
-      selectedSavedCardId: "pm_leftover",
-    })
+  it("skips an expired default and pre-selects the next usable card", async () => {
+    serveSavedCards([
+      savedCard({ stripeCardId: "pm_default", isDefault: true, expMonth: 1, expYear: 2000 }),
+      savedCard({ stripeCardId: "pm_b" }),
+    ])
 
+    const { result } = await mountHook()
+
+    expect(result.current.selectedSavedCardId).toBe("pm_b")
+  })
+
+  it("never overwrites a selection the buyer already made (e.g. stepping back from step 4)", async () => {
+    serveSavedCards([savedCard({ stripeCardId: "pm_a" }), savedCard({ stripeCardId: "pm_b", isDefault: true })])
+    useCheckoutStore.setState({ selectedSavedCardId: "pm_a" })
+
+    const { result } = await mountHook()
+
+    expect(result.current.selectedSavedCardId).toBe("pm_a")
+  })
+
+  it("does not pre-select a saved card while a new card is already pending", async () => {
+    serveSavedCards([savedCard({ stripeCardId: "pm_a", isDefault: true })])
+    useCheckoutStore.setState({ pendingNewCard: pendingCard() })
+
+    const { result } = await mountHook()
+
+    expect(result.current.selectedSavedCardId).toBe("")
+  })
+})
+
+describe("useBillingInformation — showInlineNewCardForm", () => {
+  it("is false while cards are still loading", () => {
     const { result } = renderHook(() => useBillingInformation())
 
-    expect(result.current.selectedSavedCardId).toBe("pm_leftover")
-    expect(useCheckoutStore.getState().paymentMethodId).toBe("pm_leftover")
+    expect(result.current.showInlineNewCardForm).toBe(false)
+  })
+
+  it("is true once loaded with no saved cards", async () => {
+    const { result } = await mountHook()
+
+    expect(result.current.showInlineNewCardForm).toBe(true)
+  })
+
+  it("is true when every saved card has expired", async () => {
+    serveSavedCards([savedCard({ expMonth: 1, expYear: 2000 })])
+
+    const { result } = await mountHook()
+
+    expect(result.current.showInlineNewCardForm).toBe(true)
+  })
+
+  it("is false when a usable saved card exists", async () => {
+    serveSavedCards([savedCard({ stripeCardId: "pm_a" })])
+
+    const { result } = await mountHook()
+
+    expect(result.current.showInlineNewCardForm).toBe(false)
+  })
+
+  it("is false once a new card has been tokenized", async () => {
+    useCheckoutStore.setState({ pendingNewCard: pendingCard() })
+    const { result } = await mountHook()
+
+    expect(result.current.showInlineNewCardForm).toBe(false)
   })
 })
 
@@ -187,20 +260,10 @@ describe("useBillingInformation — submit guards", () => {
     expect(useCheckoutStore.getState().paymentMethodId).toBe("")
     expect(useCheckoutStore.getState().currentStep).toBe(1)
   })
-
-  it("advances a non-card payment method without touching Stripe", async () => {
-    useCheckoutStore.setState({ paymentMethod: { type: "wire" } })
-    const { result } = renderHook(() => useBillingInformation())
-
-    await submit(result.current.onSubmit)
-
-    expect(fakeStripe().createPaymentMethod).not.toHaveBeenCalled()
-    expect(useCheckoutStore.getState().currentStep).toBe(2)
-  })
 })
 
-describe("useBillingInformation — new card", () => {
-  it("stores the payment method id and a readable summary on success", async () => {
+describe("useBillingInformation — new card (inline tokenize)", () => {
+  it("stores the payment method id, a readable summary, and the pending card on success", async () => {
     const { result } = await mountHook()
 
     await submit(result.current.onSubmit)
@@ -209,6 +272,13 @@ describe("useBillingInformation — new card", () => {
     expect(useCheckoutStore.getState().paymentMethodId).toBe("pm_new_card")
     expect(useCheckoutStore.getState().paymentMethodSummary).toBe("VISA •••• 4242")
     expect(useCheckoutStore.getState().currentStep).toBe(2)
+    expect(useCheckoutStore.getState().pendingNewCard).toEqual({
+      paymentMethodId: "pm_new_card",
+      brand: "visa",
+      last4: "4242",
+      expMonth: null,
+      expYear: null,
+    })
   })
 
   it("keeps the buyer on billing and stores nothing when the card is declined", async () => {
@@ -222,6 +292,7 @@ describe("useBillingInformation — new card", () => {
     expect(errorToast).toHaveBeenCalledWith("Your card was declined.")
     expect(useCheckoutStore.getState().paymentMethodId).toBe("")
     expect(useCheckoutStore.getState().paymentMethodSummary).toBe("")
+    expect(useCheckoutStore.getState().pendingNewCard).toBeNull()
     expect(useCheckoutStore.getState().currentStep).toBe(1)
   })
 
@@ -298,13 +369,14 @@ describe("useBillingInformation — new card", () => {
     expect(useCheckoutStore.getState().paymentMethodId).toBe("pm_new_card")
   })
 
-  it("requires a card name before a card may be saved", async () => {
+  it("requires a card name before saving, without ever calling Stripe", async () => {
     useCheckoutStore.setState({ saveCard: true, cardName: "   " })
     const { result } = await mountHook()
 
     await submit(result.current.onSubmit)
 
     expect(errorToast).toHaveBeenCalledWith("Please enter a card name to save this card.")
+    expect(fakeStripe().createPaymentMethod).not.toHaveBeenCalled()
     expect(useCheckoutStore.getState().paymentMethodId).toBe("")
     expect(useCheckoutStore.getState().currentStep).toBe(1)
   })
@@ -329,10 +401,62 @@ describe("useBillingInformation — new card", () => {
   })
 })
 
+describe("useBillingInformation — tokenizeNewCard", () => {
+  it("tokenizes, stores the pending card, and resolves true on success", async () => {
+    const { result } = await mountHook()
+
+    let ok = false
+    await act(async () => {
+      ok = await result.current.tokenizeNewCard()
+    })
+
+    expect(ok).toBe(true)
+    expect(useCheckoutStore.getState().pendingNewCard?.paymentMethodId).toBe("pm_new_card")
+  })
+
+  it("resolves false and leaves no pending card when the card is declined", async () => {
+    fakeStripe().createPaymentMethod.mockResolvedValue(stripeError("Your card was declined."))
+    const { result } = await mountHook()
+
+    let ok = true
+    await act(async () => {
+      ok = await result.current.tokenizeNewCard()
+    })
+
+    expect(ok).toBe(false)
+    expect(useCheckoutStore.getState().pendingNewCard).toBeNull()
+  })
+})
+
+describe("useBillingInformation — pending new card", () => {
+  it("continues with the pending card without calling Stripe again", async () => {
+    useCheckoutStore.setState({ pendingNewCard: pendingCard({ paymentMethodId: "pm_pending", last4: "9999" }) })
+    const { result } = await mountHook()
+
+    await submit(result.current.onSubmit)
+
+    expect(fakeStripe().createPaymentMethod).not.toHaveBeenCalled()
+    expect(useCheckoutStore.getState().paymentMethodId).toBe("pm_pending")
+    expect(useCheckoutStore.getState().paymentMethodSummary).toBe("VISA •••• 9999")
+    expect(useCheckoutStore.getState().currentStep).toBe(2)
+  })
+
+  it("still requires a card name for a pending card when the cart repeats", async () => {
+    useCartStore.setState({ items: [autoOrderCartItem()] })
+    useCheckoutStore.setState({ pendingNewCard: pendingCard(), cardName: "  " })
+    const { result } = await mountHook()
+
+    await submit(result.current.onSubmit)
+
+    expect(errorToast).toHaveBeenCalledWith("Please enter a card name to save this card.")
+    expect(useCheckoutStore.getState().currentStep).toBe(1)
+  })
+})
+
 describe("useBillingInformation — saved card", () => {
-  it("uses the saved card id as the payment method and stops offering to save it", async () => {
+  it("uses the saved card id as the payment method and advances", async () => {
     serveSavedCards([savedCard({ stripeCardId: "pm_saved", brand: "mastercard", last4: "0007" })])
-    useCheckoutStore.setState({ selectedSavedCardId: "pm_saved", saveCard: true })
+    useCheckoutStore.setState({ selectedSavedCardId: "pm_saved" })
     const { result } = await mountHook()
 
     await submit(result.current.onSubmit)
@@ -340,8 +464,29 @@ describe("useBillingInformation — saved card", () => {
     expect(fakeStripe().createPaymentMethod).not.toHaveBeenCalled()
     expect(useCheckoutStore.getState().paymentMethodId).toBe("pm_saved")
     expect(useCheckoutStore.getState().paymentMethodSummary).toBe("MASTERCARD •••• 0007")
-    expect(useCheckoutStore.getState().saveCard).toBe(false)
     expect(useCheckoutStore.getState().currentStep).toBe(2)
+  })
+
+  it("does not clear a leftover save-card intent — useFinalReview ignores it for a saved card anyway", async () => {
+    serveSavedCards([savedCard({ stripeCardId: "pm_saved" })])
+    useCheckoutStore.setState({ selectedSavedCardId: "pm_saved", saveCard: true })
+    const { result } = await mountHook()
+
+    await submit(result.current.onSubmit)
+
+    expect(useCheckoutStore.getState().saveCard).toBe(true)
+  })
+
+  it("refuses an expired saved card and does not advance", async () => {
+    serveSavedCards([savedCard({ stripeCardId: "pm_saved", expMonth: 1, expYear: 2000 })])
+    useCheckoutStore.setState({ selectedSavedCardId: "pm_saved" })
+    const { result } = await mountHook()
+
+    await submit(result.current.onSubmit)
+
+    expect(errorToast).toHaveBeenCalledWith("This card has expired. Please choose another card.")
+    expect(useCheckoutStore.getState().currentStep).toBe(1)
+    expect(useCheckoutStore.getState().paymentMethodId).toBe("")
   })
 
   it("blocks a repeat order on a card with no off-session mandate until consent is ticked", async () => {

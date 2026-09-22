@@ -15,10 +15,6 @@ export interface ShippingAddress {
   phone: string
 }
 
-export interface PaymentMethod {
-  type: "card" | "net30" | "wire" | "financing"
-}
-
 export interface VendorShippingSelection {
   sellerName: string
   methodText: string
@@ -31,10 +27,22 @@ export interface ExcludedSellerLines {
   itemNames: string[]
 }
 
+/**
+ * A card tokenized via `stripe.createPaymentMethod` in step 3 but not yet charged (that only
+ * happens in step 4). Kept in memory only — never persisted — so a buyer who backs out of step 4
+ * doesn't have to re-enter the card, but a page reload doesn't leave a stale `pm_...` id around.
+ */
+export interface PendingNewCard {
+  paymentMethodId: string
+  brand: string
+  last4: string
+  expMonth: number | null
+  expYear: number | null
+}
+
 interface CheckoutStore {
   currentStep: CheckoutStep
   shippingAddress: ShippingAddress
-  paymentMethod: PaymentMethod
   orderPayload: PlaceOrderPayload | null
   /**
    * Cart lines that will NOT be ordered because no shipping rate could be selected for their
@@ -54,6 +62,7 @@ interface CheckoutStore {
   saveCard: boolean
   cardName: string
   selectedSavedCardId: string
+  pendingNewCard: PendingNewCard | null
   paymentMethodId: string
   paymentMethodSummary: string
   /**
@@ -80,7 +89,6 @@ interface CheckoutStore {
   nextStep: () => void
   previousStep: () => void
   updateShippingAddress: (address: Partial<ShippingAddress>) => void
-  updatePaymentMethod: (method: Partial<PaymentMethod>) => void
   updatePONumber: (po: string) => void
   updateDepartment: (dept: string) => void
   updateSpecialInstructions: (instructions: string) => void
@@ -88,6 +96,7 @@ interface CheckoutStore {
   setSaveCard: (save: boolean) => void
   setCardName: (name: string) => void
   setSelectedSavedCardId: (cardId: string) => void
+  setPendingNewCard: (card: PendingNewCard | null) => void
   setPaymentMethodId: (paymentMethodId: string) => void
   setPaymentMethodSummary: (summary: string) => void
   setAutoOrderConsent: (consent: boolean) => void
@@ -143,10 +152,6 @@ const initialShippingAddress: ShippingAddress = {
   phone: "",
 }
 
-const initialPaymentMethod: PaymentMethod = {
-  type: "card",
-}
-
 /**
  * Single source of truth for the store's starting values. Both the store creator and `reset()`
  * spread this object, so the two can never drift apart again (Y7: `reset()` used to write a
@@ -156,7 +161,6 @@ const initialPaymentMethod: PaymentMethod = {
 const initialState = {
   currentStep: 1 as CheckoutStep,
   shippingAddress: initialShippingAddress,
-  paymentMethod: initialPaymentMethod,
   orderPayload: null as PlaceOrderPayload | null,
   excludedFromOrder: [] as ExcludedSellerLines[],
   orderResult: null as PlaceOrderResponse | null,
@@ -167,6 +171,7 @@ const initialState = {
   saveCard: false,
   cardName: "",
   selectedSavedCardId: "",
+  pendingNewCard: null as PendingNewCard | null,
   paymentMethodId: "",
   paymentMethodSummary: "",
   autoOrderConsent: false,
@@ -199,29 +204,12 @@ function withPatchedAutoOrder<T extends { products: { userProductId: string; aut
   })
 }
 
-const CARD_ONLY_FIELDS = {
-  selectedSavedCardId: "",
-  paymentMethodId: "",
-  paymentMethodSummary: "",
-} as const
-
 export const useCheckoutStore = create<CheckoutStore>((set) => ({
   ...initialState,
   setStep: (step) => set({ currentStep: step }),
   nextStep: () => set((state) => ({ currentStep: Math.min(5, state.currentStep + 1) as CheckoutStep })),
   previousStep: () => set((state) => ({ currentStep: Math.max(1, state.currentStep - 1) as CheckoutStep })),
   updateShippingAddress: (address) => set((state) => ({ shippingAddress: { ...state.shippingAddress, ...address } })),
-  updatePaymentMethod: (method) =>
-    set((state) => {
-      const nextPaymentMethod = { ...state.paymentMethod, ...method }
-      // Y8: whenever the selected payment method is not (or is no longer) card-based, drop the
-      // card-specific selection so a stale `paymentMethodId` can't ride along into the order
-      // payload for a payment method that no longer uses it (e.g. net30/wire/financing).
-      if (nextPaymentMethod.type !== "card") {
-        return { paymentMethod: nextPaymentMethod, ...CARD_ONLY_FIELDS }
-      }
-      return { paymentMethod: nextPaymentMethod }
-    }),
   updatePONumber: (po) => set({ poNumber: po }),
   updateDepartment: (dept) => set({ department: dept }),
   updateSpecialInstructions: (instructions) => set({ specialInstructions: instructions }),
@@ -229,6 +217,7 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
   setSaveCard: (save) => set({ saveCard: save }),
   setCardName: (name) => set({ cardName: name }),
   setSelectedSavedCardId: (cardId) => set({ selectedSavedCardId: cardId }),
+  setPendingNewCard: (card) => set({ pendingNewCard: card }),
   setPaymentMethodId: (paymentMethodId) => set({ paymentMethodId }),
   setPaymentMethodSummary: (summary) => set({ paymentMethodSummary: summary }),
   setAutoOrderConsent: (consent) => set({ autoOrderConsent: consent }),

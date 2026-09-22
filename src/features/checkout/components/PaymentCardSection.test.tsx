@@ -1,16 +1,22 @@
+import userEvent from "@testing-library/user-event"
 import type { ComponentProps } from "react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { SavedCard } from "@/lib/api/orders"
+import type { PendingNewCard } from "@/stores/checkoutStore"
 import { render, screen } from "@/test/render"
 
 vi.mock("@stripe/react-stripe-js", async () => {
   const { reactStripeMock } = await import("@/test/mocks/stripe")
   return reactStripeMock()
 })
+vi.mock("motion/react", async () => {
+  const { motionMock } = await import("@/test/mocks/motion")
+  return motionMock()
+})
 
-import FinalReviewPaymentSection from "./FinalReviewPaymentSection"
+import PaymentCardSection from "./PaymentCardSection"
 
-type FinalReviewPaymentSectionProps = ComponentProps<typeof FinalReviewPaymentSection>
+type PaymentCardSectionProps = ComponentProps<typeof PaymentCardSection>
 
 const baseCard = (overrides: Partial<SavedCard> = {}): SavedCard => ({
   id: "card-1",
@@ -27,13 +33,24 @@ const baseCard = (overrides: Partial<SavedCard> = {}): SavedCard => ({
   ...overrides,
 })
 
-const defaultProps = (): FinalReviewPaymentSectionProps => ({
+const pendingCard = (overrides: Partial<PendingNewCard> = {}): PendingNewCard => ({
+  paymentMethodId: "pm_new_1",
+  brand: "mastercard",
+  last4: "1881",
+  expMonth: 5,
+  expYear: 2030,
+  ...overrides,
+})
+
+const defaultProps = (): PaymentCardSectionProps => ({
   cardName: "",
   isLoadingCards: false,
-  paymentType: "card",
+  isSubmitting: false,
   saveCard: false,
   savedCards: [] as SavedCard[],
   selectedSavedCardId: "",
+  pendingNewCard: null,
+  showInlineNewCardForm: true,
   setCardName: vi.fn(),
   setSaveCard: vi.fn(),
   setSelectedSavedCardId: vi.fn(),
@@ -42,10 +59,11 @@ const defaultProps = (): FinalReviewPaymentSectionProps => ({
   setAutoOrderConsent: vi.fn(),
   newCardAutoPaymentConsent: false,
   setNewCardAutoPaymentConsent: vi.fn(),
+  setPendingNewCard: vi.fn(),
 })
 
-const renderSection = (overrides: Partial<FinalReviewPaymentSectionProps> = {}) =>
-  render(<FinalReviewPaymentSection {...defaultProps()} {...overrides} />)
+const renderSection = (overrides: Partial<PaymentCardSectionProps> = {}) =>
+  render(<PaymentCardSection {...defaultProps()} {...overrides} />)
 
 // Any string rendered onto the page as the literal word "null"/"undefined" is a bug (F101) — this
 // asserts the whole rendered tree never contains one, regardless of which field went bad. The
@@ -65,52 +83,51 @@ beforeEach(() => {
   vi.restoreAllMocks()
 })
 
-describe("FinalReviewPaymentSection", () => {
+describe("PaymentCardSection", () => {
   describe("B axis — renders the real fields", () => {
     it("shows a loading state instead of the card form while saved cards are loading", () => {
-      renderSection({ isLoadingCards: true })
+      renderSection({ isLoadingCards: true, showInlineNewCardForm: false })
 
       expect(screen.getByText("Loading saved cards...")).toBeInTheDocument()
       expect(screen.queryByLabelText("Card number")).not.toBeInTheDocument()
     })
 
-    it("shows the new-card Stripe form when there are no saved cards", () => {
-      renderSection({ savedCards: [] })
+    it("does not show the 'Add new method' button while loading", () => {
+      renderSection({ isLoadingCards: true, showInlineNewCardForm: false })
 
+      expect(screen.queryByRole("button", { name: /Add new method/ })).not.toBeInTheDocument()
+    })
+
+    it("shows the inline new-card Stripe form when there are no saved cards", () => {
+      renderSection({ savedCards: [], showInlineNewCardForm: true })
+
+      expect(screen.getByText("Add a card to continue.")).toBeInTheDocument()
       expect(screen.getByLabelText("Card number")).toBeInTheDocument()
       expect(screen.getByLabelText("Expiration date")).toBeInTheDocument()
       expect(screen.getByLabelText("CVC")).toBeInTheDocument()
+      expect(screen.queryByRole("button", { name: /Add new method/ })).not.toBeInTheDocument()
+    })
+
+    it("never renders the literal 'Use a new card' text", () => {
+      renderSection({ savedCards: [baseCard()], showInlineNewCardForm: false })
+
+      expect(screen.queryByText("Use a new card")).not.toBeInTheDocument()
     })
 
     it("shows the saved card's brand, last four digits and expiry", () => {
-      renderSection({ savedCards: [baseCard({ brand: "visa", last4: "4242", expMonth: 8, expYear: 2028 })] })
+      renderSection({
+        savedCards: [baseCard({ brand: "visa", last4: "4242", expMonth: 8, expYear: 2028 })],
+        showInlineNewCardForm: false,
+      })
 
       expect(screen.getByText(/VISA •••• 4242/)).toBeInTheDocument()
-      expect(screen.getByText("Expires 8/2028")).toBeInTheDocument()
-    })
-
-    it("hides the new-card Stripe form when a saved card is selected", () => {
-      renderSection({
-        savedCards: [baseCard({ stripeCardId: "pm_123" })],
-        selectedSavedCardId: "pm_123",
-      })
-
-      expect(screen.queryByLabelText("Card number")).not.toBeInTheDocument()
-    })
-
-    it("shows the new-card Stripe form when 'Use a new card' is selected among saved cards", () => {
-      renderSection({
-        savedCards: [baseCard({ stripeCardId: "pm_123" })],
-        selectedSavedCardId: "",
-      })
-
-      expect(screen.getByLabelText("Card number")).toBeInTheDocument()
-      expect(screen.getByRole("radio", { name: /Use a new card/ })).toBeChecked()
+      expect(screen.getByText(/Expires 8\/2028/)).toBeInTheDocument()
     })
 
     it("shows the default/auto-order-card/auto-payments-on badges when the card carries them", () => {
       renderSection({
         savedCards: [baseCard({ isDefault: true, autoOrderCard: true, openToAutoPayment: true })],
+        showInlineNewCardForm: false,
       })
 
       expect(screen.getByText("Default")).toBeInTheDocument()
@@ -118,20 +135,18 @@ describe("FinalReviewPaymentSection", () => {
       expect(screen.getByText("Auto payments on")).toBeInTheDocument()
     })
 
-    it("warns that only card payments are supported when a non-card payment type is selected", () => {
-      renderSection({ paymentType: "net30" })
+    it("shows an Expired badge and disables the radio for an expired card", () => {
+      renderSection({
+        savedCards: [baseCard({ expMonth: 1, expYear: 2000 })],
+        showInlineNewCardForm: false,
+      })
 
-      expect(screen.getByText(/Only card payments are supported/)).toBeInTheDocument()
-    })
-
-    it("does not show the non-card warning when card is selected", () => {
-      renderSection({ paymentType: "card" })
-
-      expect(screen.queryByText(/Only card payments are supported/)).not.toBeInTheDocument()
+      expect(screen.getByText("Expired")).toBeInTheDocument()
+      expect(screen.getByRole("radio")).toBeDisabled()
     })
 
     it("shows the repeat-items notice when the cart has auto order items", () => {
-      renderSection({ hasAutoOrderItems: true })
+      renderSection({ hasAutoOrderItems: true, showInlineNewCardForm: false })
 
       expect(screen.getByText(/This order includes auto order items/)).toBeInTheDocument()
     })
@@ -141,6 +156,7 @@ describe("FinalReviewPaymentSection", () => {
         hasAutoOrderItems: true,
         savedCards: [baseCard({ stripeCardId: "pm_123", openToAutoPayment: false })],
         selectedSavedCardId: "pm_123",
+        showInlineNewCardForm: false,
       })
 
       expect(screen.getByText(/Allow this card to be charged automatically/)).toBeInTheDocument()
@@ -151,14 +167,42 @@ describe("FinalReviewPaymentSection", () => {
         hasAutoOrderItems: true,
         savedCards: [baseCard({ stripeCardId: "pm_123", openToAutoPayment: true })],
         selectedSavedCardId: "pm_123",
+        showInlineNewCardForm: false,
       })
 
       expect(screen.getByText(/already set up for automatic payments/)).toBeInTheDocument()
       expect(screen.queryByText(/Allow this card to be charged automatically/)).not.toBeInTheDocument()
     })
 
+    it("selecting a saved card does not call setSaveCard", async () => {
+      const user = userEvent.setup()
+      const setSaveCard = vi.fn()
+      renderSection({
+        savedCards: [baseCard({ stripeCardId: "pm_123" })],
+        selectedSavedCardId: "",
+        setSaveCard,
+        showInlineNewCardForm: false,
+      })
+
+      await user.click(screen.getByText(/VISA •••• 4242/))
+
+      expect(setSaveCard).not.toHaveBeenCalled()
+    })
+
+    it("shows the pending new card row with a New badge and selects it via selectedSavedCardId === ''", () => {
+      renderSection({
+        savedCards: [baseCard({ stripeCardId: "pm_saved" })],
+        selectedSavedCardId: "",
+        pendingNewCard: pendingCard(),
+        showInlineNewCardForm: false,
+      })
+
+      expect(screen.getByText(/MASTERCARD •••• 1881/)).toBeInTheDocument()
+      expect(screen.getByText("New")).toBeInTheDocument()
+    })
+
     it("forces and locks 'save card' when the order has auto order items on a new card", () => {
-      renderSection({ hasAutoOrderItems: true, savedCards: [] })
+      renderSection({ hasAutoOrderItems: true, savedCards: [], showInlineNewCardForm: true })
 
       const saveCardCheckbox = screen.getByRole("checkbox", { name: /Save this card for future purchases/ })
       expect(saveCardCheckbox).toBeChecked()
@@ -166,15 +210,94 @@ describe("FinalReviewPaymentSection", () => {
     })
 
     it("shows the card-name field once 'save card' is checked for a non-auto-order new card", () => {
-      renderSection({ hasAutoOrderItems: false, savedCards: [], saveCard: true })
+      renderSection({ hasAutoOrderItems: false, savedCards: [], saveCard: true, showInlineNewCardForm: true })
 
       expect(screen.getByLabelText("Card Name")).toBeInTheDocument()
     })
+  })
 
-    it("offers the 'also allow auto orders' checkbox for a saved new card, separate from the required auto-order consent", () => {
-      renderSection({ hasAutoOrderItems: false, savedCards: [], saveCard: true })
+  describe("Add new method inline panel", () => {
+    it("opens the inline panel when 'Add new method' is clicked, and the button becomes Cancel", async () => {
+      const user = userEvent.setup()
+      const setSelectedSavedCardId = vi.fn()
+      const setPendingNewCard = vi.fn()
+      renderSection({
+        savedCards: [baseCard()],
+        showInlineNewCardForm: false,
+        setSelectedSavedCardId,
+        setPendingNewCard,
+      })
 
-      expect(screen.getByText(/Also allow this card for automatic orders/)).toBeInTheDocument()
+      const addButton = screen.getByRole("button", { name: /Add new method/ })
+      expect(addButton).toHaveAttribute("aria-expanded", "false")
+
+      await user.click(addButton)
+
+      expect(await screen.findByLabelText("Card number")).toBeInTheDocument()
+      const cancelButton = screen.getByRole("button", { name: "Cancel" })
+      expect(cancelButton).toHaveAttribute("aria-expanded", "true")
+      expect(setSelectedSavedCardId).toHaveBeenCalledWith("")
+      expect(setPendingNewCard).toHaveBeenCalledWith(null)
+    })
+
+    it("Cancel closes the panel and restores the default saved card selection", async () => {
+      const user = userEvent.setup()
+      const setSelectedSavedCardId = vi.fn()
+      const card = baseCard({ stripeCardId: "pm_123", isDefault: true })
+      renderSection({
+        savedCards: [card],
+        showInlineNewCardForm: false,
+        setSelectedSavedCardId,
+      })
+
+      await user.click(screen.getByRole("button", { name: /Add new method/ }))
+      await user.click(screen.getByRole("button", { name: "Cancel" }))
+
+      expect(screen.queryByLabelText("Card number")).not.toBeInTheDocument()
+      expect(setSelectedSavedCardId).toHaveBeenLastCalledWith("pm_123")
+    })
+
+    it("clicking a saved card while the panel is open closes the panel", async () => {
+      const user = userEvent.setup()
+      renderSection({ savedCards: [baseCard({ stripeCardId: "pm_123" })], showInlineNewCardForm: false })
+
+      await user.click(screen.getByRole("button", { name: /Add new method/ }))
+      expect(screen.getByLabelText("Card number")).toBeInTheDocument()
+
+      await user.click(screen.getByText(/VISA •••• 4242/))
+
+      expect(screen.queryByLabelText("Card number")).not.toBeInTheDocument()
+    })
+
+    it("shows no 'Add new method' button and keeps the panel open when there are no saved cards", () => {
+      renderSection({ savedCards: [], showInlineNewCardForm: true })
+
+      expect(screen.queryByRole("button", { name: /Add new method/ })).not.toBeInTheDocument()
+      expect(screen.getByLabelText("Card number")).toBeInTheDocument()
+    })
+
+    it("shows the 'Add new method' button (panel closed) when a pending new card already exists", () => {
+      renderSection({
+        savedCards: [baseCard()],
+        pendingNewCard: pendingCard(),
+        selectedSavedCardId: "",
+        showInlineNewCardForm: false,
+      })
+
+      expect(screen.getByRole("button", { name: /Add new method/ })).toBeInTheDocument()
+      expect(screen.queryByLabelText("Card number")).not.toBeInTheDocument()
+    })
+
+    it("never renders the old confirm button or a dialog role", async () => {
+      const user = userEvent.setup()
+      const removedConfirmButtonName = ["Use", "this", "card"].join(" ")
+      renderSection({ savedCards: [baseCard()], showInlineNewCardForm: false })
+
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+      await user.click(screen.getByRole("button", { name: /Add new method/ }))
+
+      expect(screen.queryByRole("button", { name: new RegExp(removedConfirmButtonName) })).not.toBeInTheDocument()
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
     })
   })
 
@@ -183,10 +306,10 @@ describe("FinalReviewPaymentSection", () => {
       { name: "null instead of an array", savedCards: null as unknown as SavedCard[] },
       { name: "undefined instead of an array", savedCards: undefined as unknown as SavedCard[] },
       { name: "an object instead of an array", savedCards: { length: 1 } as unknown as SavedCard[] },
-    ])("does not crash when savedCards is $name — falls back to the new-card form", ({ savedCards }) => {
+    ])("does not crash when savedCards is $name — falls back to the inline new-card form", ({ savedCards }) => {
       let container: HTMLElement | undefined
       expect(() => {
-        ;({ container } = renderSection({ savedCards }))
+        ;({ container } = renderSection({ savedCards, showInlineNewCardForm: true }))
       }).not.toThrow()
 
       expect(screen.getByLabelText("Card number")).toBeInTheDocument()
@@ -196,7 +319,7 @@ describe("FinalReviewPaymentSection", () => {
     it("drops null entries within the saved cards array instead of crashing (backend OrderMapper.toSavedCardResponse can emit null)", () => {
       const savedCards = [null, baseCard({ stripeCardId: "pm_good", last4: "9999" }), null] as unknown as SavedCard[]
 
-      expect(() => renderSection({ savedCards })).not.toThrow()
+      expect(() => renderSection({ savedCards, showInlineNewCardForm: false })).not.toThrow()
 
       expect(screen.getAllByText(/9999/)).toHaveLength(1)
     })
@@ -226,7 +349,7 @@ describe("FinalReviewPaymentSection", () => {
 
       let container: HTMLElement | undefined
       expect(() => {
-        ;({ container } = renderSection({ savedCards }))
+        ;({ container } = renderSection({ savedCards, showInlineNewCardForm: false }))
       }).not.toThrow()
 
       expectNoRawNullText(container as HTMLElement)
@@ -236,16 +359,13 @@ describe("FinalReviewPaymentSection", () => {
       const savedCards = [baseCard({ stripeCardId: "pm_real" })]
 
       expect(() =>
-        renderSection({ savedCards, selectedSavedCardId: "pm_does_not_exist", hasAutoOrderItems: true }),
+        renderSection({
+          savedCards,
+          selectedSavedCardId: "pm_does_not_exist",
+          hasAutoOrderItems: true,
+          showInlineNewCardForm: false,
+        }),
       ).not.toThrow()
-    })
-
-    it("does not crash for an unexpected paymentType value outside the known union", () => {
-      expect(() =>
-        renderSection({ paymentType: "crypto" as unknown as ReturnType<typeof defaultProps>["paymentType"] }),
-      ).not.toThrow()
-
-      expect(screen.getByText(/Only card payments are supported/)).toBeInTheDocument()
     })
 
     it("does not crash when every callback prop is a no-op and every value field is at its worst case together", () => {
@@ -267,6 +387,7 @@ describe("FinalReviewPaymentSection", () => {
           selectedSavedCardId: "",
           cardName: "",
           hasAutoOrderItems: true,
+          showInlineNewCardForm: false,
         }))
       }).not.toThrow()
 

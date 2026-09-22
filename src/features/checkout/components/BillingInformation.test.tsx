@@ -48,10 +48,6 @@ describe("BillingInformation — no Stripe key configured", () => {
 })
 
 describe("BillingInformation — Stripe key present", () => {
-  beforeEach(() => {
-    useCheckoutStore.setState({ paymentMethod: { type: "card" } })
-  })
-
   const renderWithKey = () =>
     render(
       <StripeConfigProvider publishableKey="pk_test_x">
@@ -59,11 +55,10 @@ describe("BillingInformation — Stripe key present", () => {
       </StripeConfigProvider>,
     )
 
-  it("renders the payment method section, the card section, agreements and navigation", async () => {
+  it("renders the card section, agreements and navigation", async () => {
     renderWithKey()
 
-    expect(await screen.findByRole("radio", { name: /Credit\/Debit Card/ })).toBeInTheDocument()
-    expect(screen.getByText("Use a new card")).toBeInTheDocument() // FinalReviewPaymentSection (card type)
+    expect(await screen.findByText("Add a card to continue.")).toBeInTheDocument() // PaymentCardSection
     expect(screen.getByLabelText(/I agree to the/)).toBeInTheDocument() // BillingAgreementsSection
     expect(screen.getByRole("button", { name: "Continue to Review" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Back to Shipping/ })).toBeInTheDocument()
@@ -93,19 +88,11 @@ describe("BillingInformation — Stripe key present", () => {
     expect(useCheckoutStore.getState().currentStep).toBe(2)
   })
 
-  it("does not render the card section for a non-card payment method", async () => {
-    useCheckoutStore.setState({ paymentMethod: { type: "wire" } })
-    renderWithKey()
-
-    await screen.findByRole("button", { name: "Continue to Review" })
-    expect(screen.queryByText("Use a new card")).not.toBeInTheDocument()
-    expect(screen.queryByText("Saved Cards")).not.toBeInTheDocument()
-  })
-
   it("shows the buyer's saved cards from the backend", async () => {
     serveSavedCards([makeApiSavedCard({ brand: "visa", last4: "4532" })])
     renderWithKey()
 
-    expect(await screen.findByText("VISA •••• 4532")).toBeInTheDocument()
+    expect(await screen.findByText(/VISA •••• 4532/)).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Add new method/ })).toBeInTheDocument()
   })
 })

@@ -47,7 +47,6 @@ function wait(ms: number): Promise<void> {
 
 export function useFinalReview(): UseFinalReviewResult {
   const {
-    paymentMethod,
     paymentMethodId,
     paymentMethodSummary,
     nextStep,
@@ -72,10 +71,10 @@ export function useFinalReview(): UseFinalReviewResult {
 
   const submitDisabled = useMemo(() => {
     if (isPlacingOrder) return true
-    if (paymentMethod.type === "card" && !stripe) return true
-    if (paymentMethod.type === "card" && !paymentMethodId) return true
+    if (!stripe) return true
+    if (!paymentMethodId) return true
     return false
-  }, [isPlacingOrder, paymentMethod.type, paymentMethodId, stripe])
+  }, [isPlacingOrder, paymentMethodId, stripe])
 
   const pollPaymentStatus = useCallback(async (paymentIntentId: string): Promise<string | null> => {
     for (let attempt = 1; attempt <= MAX_PAYMENT_STATUS_RETRIES; attempt += 1) {
@@ -120,16 +119,14 @@ export function useFinalReview(): UseFinalReviewResult {
 
       // Everything that decides whether the charge can happen at all is checked BEFORE the order
       // is created, so a missing SDK or card can never leave an unpaid order behind.
-      if (paymentMethod.type === "card") {
-        if (!paymentMethodId) {
-          showToast.error("Payment details are missing. Please go back to Billing and re-enter your card.")
-          return
-        }
+      if (!paymentMethodId) {
+        showToast.error("Payment details are missing. Please go back to Billing and re-enter your card.")
+        return
+      }
 
-        if (!stripe) {
-          showToast.error("Stripe is not ready. Please refresh and try again.")
-          return
-        }
+      if (!stripe) {
+        showToast.error("Stripe is not ready. Please refresh and try again.")
+        return
       }
 
       setIsPlacingOrder(true)
@@ -138,33 +135,33 @@ export function useFinalReview(): UseFinalReviewResult {
         cartId: cartId || "",
       }
 
-      if (paymentMethod.type === "card") {
-        payload.paymentMethodId = paymentMethodId
+      payload.paymentMethodId = paymentMethodId
 
-        const isNewCard = selectedSavedCardId === ""
-        // Repeat items can only be charged later from a saved card, so the
-        // backend refuses a new card that is not saved with an off-session mandate.
-        const mustSaveCard = saveCard || (isNewCard && hasAutoOrderItems)
+      const isNewCard = selectedSavedCardId === ""
+      // `saveCard` only means something for a new card - a saved card is already saved, so its
+      // checkbox state (or a leftover "save this pending new card" intent) must not save it again.
+      // Repeat items can only be charged later from a saved card, so the backend refuses a new
+      // card that is not saved with an off-session mandate.
+      const mustSaveCard = isNewCard && (saveCard || hasAutoOrderItems)
 
-        if (mustSaveCard) {
-          const trimmedCardName = cardName.trim()
-          if (!trimmedCardName) {
-            showToast.error("Please enter a card name to save this card.")
-            return
-          }
-          payload.cardSave = true
-          payload.cardName = trimmedCardName
-          payload.cardOpenToAutoPayment = hasAutoOrderItems || newCardAutoPaymentConsent
-          payload.cardAutoOrderCard = hasAutoOrderItems || newCardAutoPaymentConsent
-        } else {
-          payload.cardSave = false
-          payload.cardName = ""
+      if (mustSaveCard) {
+        const trimmedCardName = cardName.trim()
+        if (!trimmedCardName) {
+          showToast.error("Please enter a card name to save this card.")
+          return
         }
+        payload.cardSave = true
+        payload.cardName = trimmedCardName
+        payload.cardOpenToAutoPayment = hasAutoOrderItems || newCardAutoPaymentConsent
+        payload.cardAutoOrderCard = hasAutoOrderItems || newCardAutoPaymentConsent
+      } else {
+        payload.cardSave = false
+        payload.cardName = ""
+      }
 
-        // Only consulted for a saved card that is not open to auto payments yet.
-        if (!isNewCard && hasAutoOrderItems && autoOrderConsent) {
-          payload.openToAutoOrder = true
-        }
+      // Only consulted for a saved card that is not open to auto payments yet.
+      if (!isNewCard && hasAutoOrderItems && autoOrderConsent) {
+        payload.openToAutoOrder = true
       }
 
       const response = await ordersAPI.placeOrder(payload)
@@ -177,61 +174,59 @@ export function useFinalReview(): UseFinalReviewResult {
       let paymentStatus = response.status
       let isPaymentCanceled = false
 
-      if (paymentMethod.type === "card") {
-        if (!response.clientSecret) {
-          // Backend contract violation: the order row exists but no payment can be started.
-          // Say so plainly instead of a vague toast, and record the unpaid order.
-          showToast.error(
-            `Payment could not be initiated. Order ${response.orderId} was created but not paid — please contact support before trying again.`,
-          )
-          setOrderResult({ ...response, status: "PENDING_PAYMENT", paymentStatus: "PENDING_PAYMENT" })
-          return
-        }
-
-        // Both were verified before the order was created; kept as type guards.
-        if (!paymentMethodId || !stripe) {
-          showToast.error("Stripe is not ready. Please refresh and try again.")
-          return
-        }
-
-        const cardResult = await stripe.confirmCardPayment(response.clientSecret, {
-          payment_method: paymentMethodId,
-        })
-        if (cardResult.error) {
-          showToast.error(cardResult.error.message || "Payment failed. Please try again.")
-          return
-        }
-
-        if (!cardResult.paymentIntent) {
-          showToast.error("Payment could not be completed. Please use a different card and try again.")
-          return
-        }
-
-        const initialPaymentIntentStatus = cardResult.paymentIntent.status
-        const terminalPolledStatus = await pollPaymentStatus(cardResult.paymentIntent.id)
-
-        if (terminalPolledStatus === PAYMENT_STATUS_AUTH_FAILURE) {
-          showToast.error(
-            `Your session expired before the payment could be confirmed. Order ${response.orderId} is not confirmed — please sign in again and check it before paying twice.`,
-          )
-          setOrderResult({ ...response, status: "PENDING_PAYMENT", paymentStatus: "unknown" })
-          return
-        }
-
-        const resolvedPaymentIntentStatus = terminalPolledStatus ?? initialPaymentIntentStatus
-        paymentStatus = resolvedPaymentIntentStatus
-
-        if (
-          !SUCCESSFUL_PAYMENT_INTENT_STATUSES.has(resolvedPaymentIntentStatus) &&
-          resolvedPaymentIntentStatus !== "canceled"
-        ) {
-          finalOrderStatus = "PENDING_PAYMENT"
-        } else {
-          finalOrderStatus = mapPaymentIntentStatusToOrderStatus(resolvedPaymentIntentStatus)
-        }
-
-        isPaymentCanceled = resolvedPaymentIntentStatus === "canceled"
+      if (!response.clientSecret) {
+        // Backend contract violation: the order row exists but no payment can be started.
+        // Say so plainly instead of a vague toast, and record the unpaid order.
+        showToast.error(
+          `Payment could not be initiated. Order ${response.orderId} was created but not paid — please contact support before trying again.`,
+        )
+        setOrderResult({ ...response, status: "PENDING_PAYMENT", paymentStatus: "PENDING_PAYMENT" })
+        return
       }
+
+      // Both were verified before the order was created; kept as type guards.
+      if (!paymentMethodId || !stripe) {
+        showToast.error("Stripe is not ready. Please refresh and try again.")
+        return
+      }
+
+      const cardResult = await stripe.confirmCardPayment(response.clientSecret, {
+        payment_method: paymentMethodId,
+      })
+      if (cardResult.error) {
+        showToast.error(cardResult.error.message || "Payment failed. Please try again.")
+        return
+      }
+
+      if (!cardResult.paymentIntent) {
+        showToast.error("Payment could not be completed. Please use a different card and try again.")
+        return
+      }
+
+      const initialPaymentIntentStatus = cardResult.paymentIntent.status
+      const terminalPolledStatus = await pollPaymentStatus(cardResult.paymentIntent.id)
+
+      if (terminalPolledStatus === PAYMENT_STATUS_AUTH_FAILURE) {
+        showToast.error(
+          `Your session expired before the payment could be confirmed. Order ${response.orderId} is not confirmed — please sign in again and check it before paying twice.`,
+        )
+        setOrderResult({ ...response, status: "PENDING_PAYMENT", paymentStatus: "unknown" })
+        return
+      }
+
+      const resolvedPaymentIntentStatus = terminalPolledStatus ?? initialPaymentIntentStatus
+      paymentStatus = resolvedPaymentIntentStatus
+
+      if (
+        !SUCCESSFUL_PAYMENT_INTENT_STATUSES.has(resolvedPaymentIntentStatus) &&
+        resolvedPaymentIntentStatus !== "canceled"
+      ) {
+        finalOrderStatus = "PENDING_PAYMENT"
+      } else {
+        finalOrderStatus = mapPaymentIntentStatusToOrderStatus(resolvedPaymentIntentStatus)
+      }
+
+      isPaymentCanceled = resolvedPaymentIntentStatus === "canceled"
 
       // Auto-order schedules are only written once Stripe's `payment_intent.succeeded` webhook
       // lands, so snapshot the expected ids only when the payment actually went through. Doing it
@@ -266,7 +261,6 @@ export function useFinalReview(): UseFinalReviewResult {
     newCardAutoPaymentConsent,
     nextStep,
     orderPayload,
-    paymentMethod.type,
     paymentMethodId,
     pollPaymentStatus,
     saveCard,

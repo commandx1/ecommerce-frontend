@@ -69,7 +69,6 @@ describe("checkoutStore baseline state", () => {
 
   it("defaults every flag and free-text field to empty/false", () => {
     expect(store()).toMatchObject({
-      paymentMethod: { type: "card" },
       orderPayload: null,
       orderResult: null,
       poNumber: "",
@@ -165,49 +164,6 @@ describe("checkoutStore step navigation", () => {
 })
 
 describe("checkoutStore payment method", () => {
-  const types = ["card", "net30", "wire", "financing"] as const
-
-  it.each(types)("accepts the %s payment type", (type) => {
-    store().updatePaymentMethod({ type })
-
-    expect(store().paymentMethod.type).toBe(type)
-  })
-
-  // Y8 fix: switching away from "card" used to leave the card selection in place, so a later
-  // `placeOrder` could still send a stale `paymentMethodId` for a payment method that doesn't use
-  // it (e.g. net30). `updatePaymentMethod` now clears the card-only fields whenever the resulting
-  // type is not "card".
-  it("clears the saved card selection when switching away from card", () => {
-    store().setSelectedSavedCardId("card-123")
-    store().setPaymentMethodId("pm_123")
-    store().setPaymentMethodSummary("Visa •••• 4242")
-
-    store().updatePaymentMethod({ type: "net30" })
-
-    expect(store().selectedSavedCardId).toBe("")
-    expect(store().paymentMethodId).toBe("")
-    expect(store().paymentMethodSummary).toBe("")
-  })
-
-  it("keeps the card selection when the payment method stays card", () => {
-    store().setSelectedSavedCardId("card-123")
-    store().setPaymentMethodId("pm_123")
-    store().setPaymentMethodSummary("Visa •••• 4242")
-
-    store().updatePaymentMethod({ type: "card" })
-
-    expect(store().selectedSavedCardId).toBe("card-123")
-    expect(store().paymentMethodId).toBe("pm_123")
-    expect(store().paymentMethodSummary).toBe("Visa •••• 4242")
-  })
-
-  it("merges partial payment method updates instead of replacing the object", () => {
-    store().updatePaymentMethod({ type: "wire" })
-    store().updatePaymentMethod({})
-
-    expect(store().paymentMethod).toEqual({ type: "wire" })
-  })
-
   it("clears the card selection only through reset", () => {
     store().setSelectedSavedCardId("card-123")
     store().setPaymentMethodId("pm_123")
@@ -216,6 +172,24 @@ describe("checkoutStore payment method", () => {
 
     expect(store().selectedSavedCardId).toBe("")
     expect(store().paymentMethodId).toBe("")
+  })
+
+  it("tracks and clears a tokenized-but-not-yet-charged new card", () => {
+    const card = { paymentMethodId: "pm_new", brand: "visa", last4: "4242", expMonth: 9, expYear: 2030 }
+
+    store().setPendingNewCard(card)
+    expect(store().pendingNewCard).toEqual(card)
+
+    store().setPendingNewCard(null)
+    expect(store().pendingNewCard).toBeNull()
+  })
+
+  it("wipes the pending new card on reset", () => {
+    store().setPendingNewCard({ paymentMethodId: "pm_new", brand: "visa", last4: "4242", expMonth: 9, expYear: 2030 })
+
+    store().reset()
+
+    expect(store().pendingNewCard).toBeNull()
   })
 })
 
@@ -400,7 +374,7 @@ describe("checkoutStore shipping selections", () => {
   it("clearShippingSelection resets only the frozen shipping fields, leaving other fields untouched", () => {
     store().setStep(3)
     store().updatePONumber("PO-9001")
-    store().updatePaymentMethod({ type: "wire" })
+    store().setPaymentMethodId("pm_123")
     store().setSelectedVendorShippingMethods({
       "seller-1": { sellerName: "Acme Dental", methodText: "Ground", amount: 9.5 },
     })
@@ -418,7 +392,7 @@ describe("checkoutStore shipping selections", () => {
     expect(store().excludedFromOrder).toEqual([])
     expect(store().poNumber).toBe("PO-9001")
     expect(store().currentStep).toBe(3)
-    expect(store().paymentMethod).toEqual({ type: "wire" })
+    expect(store().paymentMethodId).toBe("pm_123")
   })
 })
 
@@ -499,6 +473,7 @@ describe("checkoutStore defaults", () => {
     expect(initial.specialInstructions).toBe("")
     expect(initial.applyTaxExemption).toBe(true)
     expect(initial.cardName).toBe("")
+    expect(initial.pendingNewCard).toBeNull()
     expect(initial.paymentMethodId).toBe("")
     expect(initial.paymentMethodSummary).toBe("")
     expect(initial.autoOrderConsent).toBe(false)

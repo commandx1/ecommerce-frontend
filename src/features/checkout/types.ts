@@ -26,17 +26,6 @@ export interface SellerGroup {
   items: SellerGroupItem[]
 }
 
-export interface PaymentMethodOption {
-  type: "card" | "net30" | "wire" | "financing"
-  title: string
-  description?: string
-  badge?: {
-    label: string
-    className: string
-  }
-  icon: "card" | "file" | "bank" | "finance"
-}
-
 export interface CheckoutProgressStep {
   number: 1 | 2 | 3 | 4 | 5
   title: string

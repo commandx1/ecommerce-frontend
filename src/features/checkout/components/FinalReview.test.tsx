@@ -50,7 +50,6 @@ const readyToPlaceOrder = () => {
   useCartStore.setState({ cartId: "cart-1", items: [makeCartItem()] })
   useCheckoutStore.setState({
     currentStep: 4,
-    paymentMethod: { type: "card" },
     paymentMethodId: "pm_stripe_1",
     paymentMethodSummary: "Visa •••• 4242",
     orderPayload: {
