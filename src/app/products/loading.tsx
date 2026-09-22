@@ -35,7 +35,8 @@ export default function ProductListingLoading() {
       </div>
 
       {/* Filter/sort bar */}
-      <div className="sticky top-(--header-height) z-40 border-b border-border-soft bg-surface py-4">
+      {/* z-30: must stay under the z-40 header so its dropdowns paint over this bar. */}
+      <div className="sticky top-(--header-height) z-30 border-b border-border-soft bg-surface py-4">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-4">
