@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Modal from "@/components/ui/Modal"
 import SurfaceCard from "@/components/ui/SurfaceCard"
+import Skeleton from "@/components/ui/skeleton"
 import { showToast } from "@/components/ui/Toast"
 import { useStripePromise } from "@/hooks/useStripePromise"
 import { paymentMethodsAPI } from "@/lib/api/payment-methods"
@@ -326,14 +327,6 @@ function PaymentMethodsContent() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-brand" />
-      </div>
-    )
-  }
-
   const sortedMethods = [...methods].sort((a, b) => {
     if (a.status === "default") return -1
     if (b.status === "default") return 1
@@ -358,35 +351,41 @@ function PaymentMethodsContent() {
         />
 
         <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <KpiCard
-            icon={<CreditCard className="h-5 w-5 text-brand" />}
-            label="Saved Cards"
-            value={String(methods.length)}
-            hint="Ready for payments"
-          />
-          <KpiCard
-            icon={<CheckCircle2 className="h-5 w-5 text-success" />}
-            label="Default Method"
-            value={defaultMethod ? `${defaultMethod.brandLabel} •••• ${defaultMethod.last4}` : "N/A"}
-            hint={defaultMethod?.nickname ?? "Not set"}
-          />
-          <KpiCard
-            icon={<Repeat className="h-5 w-5 text-brand" />}
-            label="Auto Order Card"
-            value={autoOrderMethod ? `${autoOrderMethod.brandLabel} •••• ${autoOrderMethod.last4}` : "Not set"}
-            hint={
-              autoOrderMethod ? (
-                <Link
-                  href="/buyer-dashboard/auto-orders"
-                  className="font-semibold text-brand underline underline-offset-2 hover:text-brand-strong"
-                >
-                  Manage auto orders
-                </Link>
-              ) : (
-                "Pick a card to run auto orders"
-              )
-            }
-          />
+          {isLoading ? (
+            [0, 1, 2].map((i) => <Skeleton key={i} className="h-[8.5rem] rounded-xl" />)
+          ) : (
+            <>
+              <KpiCard
+                icon={<CreditCard className="h-5 w-5 text-brand" />}
+                label="Saved Cards"
+                value={String(methods.length)}
+                hint="Ready for payments"
+              />
+              <KpiCard
+                icon={<CheckCircle2 className="h-5 w-5 text-success" />}
+                label="Default Method"
+                value={defaultMethod ? `${defaultMethod.brandLabel} •••• ${defaultMethod.last4}` : "N/A"}
+                hint={defaultMethod?.nickname ?? "Not set"}
+              />
+              <KpiCard
+                icon={<Repeat className="h-5 w-5 text-brand" />}
+                label="Auto Order Card"
+                value={autoOrderMethod ? `${autoOrderMethod.brandLabel} •••• ${autoOrderMethod.last4}` : "Not set"}
+                hint={
+                  autoOrderMethod ? (
+                    <Link
+                      href="/buyer-dashboard/auto-orders"
+                      className="font-semibold text-brand underline underline-offset-2 hover:text-brand-strong"
+                    >
+                      Manage auto orders
+                    </Link>
+                  ) : (
+                    "Pick a card to run auto orders"
+                  )
+                }
+              />
+            </>
+          )}
         </div>
       </SurfaceCard>
 
@@ -394,10 +393,44 @@ function PaymentMethodsContent() {
       <section className="rounded-[1.25rem] border border-border-soft bg-surface p-6 shadow-soft">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-text-primary">Saved Cards</h2>
-          <span className="text-sm text-text-muted">{methods.length} cards</span>
+          <span className="text-sm text-text-muted">
+            {isLoading ? <Skeleton className="h-4 w-14" /> : `${methods.length} cards`}
+          </span>
         </div>
 
-        {methods.length === 0 ? (
+        {isLoading ? (
+          <div aria-busy="true" className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <span className="sr-only">Loading payment methods...</span>
+            {[0, 1].map((i) => (
+              <article key={i} className="rounded-xl border border-border-soft bg-surface-elevated p-5">
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-8 w-8 rounded-lg" />
+                    <Skeleton className="h-8 w-8 rounded-lg" />
+                  </div>
+                </div>
+                <Skeleton className="h-6 w-40" />
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  {[0, 1, 2, 3].map((j) => (
+                    <div key={j} className="space-y-1">
+                      <Skeleton className="h-3 w-16" />
+                      <Skeleton className="h-4 w-24" />
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 flex gap-2">
+                  {[0, 1, 2].map((k) => (
+                    <Skeleton key={k} className="h-8 w-28 rounded-lg" />
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : methods.length === 0 ? (
           <p className="py-8 text-center text-sm text-text-muted">No saved cards yet. Add a card to get started.</p>
         ) : (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">

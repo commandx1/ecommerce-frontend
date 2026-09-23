@@ -4,6 +4,7 @@ import { BadgeCheck, CreditCard, ExternalLink, ShieldAlert } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import SurfaceCard from "@/components/ui/SurfaceCard"
+import Skeleton from "@/components/ui/skeleton"
 import { showToast } from "@/components/ui/Toast"
 import {
   createStripeAccountLink,
@@ -86,7 +87,19 @@ export default function StripeConnectCard() {
         )}
       </div>
 
-      {state.kind === "loading" && <p className="p-6 text-sm text-text-muted">Loading payout account...</p>}
+      {state.kind === "loading" && (
+        <div aria-busy="true" className="space-y-4 p-6">
+          <span className="sr-only">Loading payout account...</span>
+          <Skeleton className="h-4 w-3/4" />
+          <div className="flex flex-wrap items-center gap-2">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-4 w-40" />
+          </div>
+          <div className="border-t border-border-soft pt-4">
+            <Skeleton className="h-9 w-44 rounded-full" />
+          </div>
+        </div>
+      )}
 
       {state.kind === "unavailable" && (
         <p className="p-6 text-sm text-text-muted">Payout account information is not available for this account.</p>

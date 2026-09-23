@@ -5,6 +5,7 @@ import { Download, FileUp, ListChecks, Loader2, Trash2, Upload, X } from "lucide
 import { useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import Modal from "@/components/ui/Modal"
+import Skeleton from "@/components/ui/skeleton"
 import { showToast } from "@/components/ui/Toast"
 import {
   extractFileName,
@@ -485,8 +486,19 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
         ) : (
           <div>
             {isLoadingDocs ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-brand" />
+              <div aria-busy="true" className="space-y-3">
+                <span className="sr-only">Loading upload history...</span>
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="rounded-xl border border-border-soft bg-surface p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0 flex-1 space-y-2">
+                        <Skeleton className="h-4 w-2/3" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                      <Skeleton className="h-8 w-20 rounded-lg" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : documentsFailed ? (
               <div className="flex items-center justify-between gap-3 rounded-xl border border-danger/25 bg-danger/8 p-4">

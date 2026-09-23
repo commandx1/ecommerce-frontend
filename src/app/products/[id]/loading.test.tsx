@@ -19,16 +19,15 @@ describe("ProductDetailLoading", () => {
 
   // The root layout's persistent <Footer> renders its own <h3>s ("Products"/"Services"/"Support")
   // regardless of which page content is showing, including this skeleton. With nothing between
-  // this file's h1 and that footer, mobile-chrome's a11y scan (which lands on this skeleton, not
-  // the resolved page) saw a straight h1 -> h3 jump. The "Fetching product details..." status text
-  // is promoted to h2 to bridge that gap - same fix as F88's /products/loading.tsx ("Fetching
-  // Products" h3 -> h2). This only checks ordering/levels WITHIN the skeleton itself; the footer's
-  // h3 is a separate, persistent element the a11y-smoke e2e spec covers end-to-end.
+  // this file's h1 and that footer, an a11y scan landing on this skeleton would see a straight
+  // h1 -> h3 jump. A sr-only "Loading product details" h2 bridges that gap. This only checks
+  // ordering/levels WITHIN the skeleton itself; the footer's h3 is a separate, persistent element
+  // the a11y-smoke e2e spec covers end-to-end.
   it("keeps its own headings in order with no level skip (h1 then h2, no jump to h3+)", () => {
     render(<ProductDetailLoading />)
 
     const headings = screen.getAllByRole("heading")
     expect(headings.map((h) => Number(h.tagName[1]))).toEqual([1, 2])
-    expect(headings[1]).toHaveTextContent("Fetching product details...")
+    expect(headings[1]).toHaveTextContent("Loading product details")
   })
 })

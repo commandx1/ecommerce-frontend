@@ -391,7 +391,7 @@ export default function SuppliersDirectorySection() {
   )
 }
 
-function SupplierCardSkeleton() {
+export function SupplierCardSkeleton() {
   return (
     <div className="animate-pulse rounded-[1.75rem] bg-surface-elevated p-8 shadow-soft">
       <div className="mb-4 h-6 w-32 rounded-full bg-surface-muted" />

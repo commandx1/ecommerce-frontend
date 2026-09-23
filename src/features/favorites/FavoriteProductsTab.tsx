@@ -1,11 +1,11 @@
 "use client"
 
-import { Loader2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import { adaptProductCardData } from "@/features/products/listing/components/listing/adaptProductCardData"
 import ProductCard from "@/features/products/listing/components/listing/ProductCard"
+import ProductCardSkeleton from "@/features/products/listing/components/listing/ProductCardSkeleton"
 import { type FavoriteProductItem, getMyFavoriteProducts } from "@/lib/api/favorite-products"
 import { useFavoriteProductsStore } from "@/stores/favoriteProductsStore"
 
@@ -36,8 +36,13 @@ export default function FavoriteProductsTab() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-24 text-text-muted">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div aria-busy="true" className="@container">
+        <span className="sr-only">Loading favorite products...</span>
+        <div className="grid grid-cols-1 gap-5 @xl:grid-cols-2 @3xl:grid-cols-3 @min-[69rem]:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
+            <ProductCardSkeleton key={i} />
+          ))}
+        </div>
       </div>
     )
   }

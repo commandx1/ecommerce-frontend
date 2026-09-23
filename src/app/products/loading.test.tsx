@@ -22,9 +22,8 @@ describe("ProductListingLoading", () => {
   // A11y: this skeleton stays in the DOM (invisible, but still picked up by a
   // raw `querySelectorAll("h1,...,h6")` heading-level-skip check) even after
   // the real page has streamed in and replaced it, so ITS OWN heading order
-  // matters too. The sr-only h1 above used to be followed directly by this
-  // skeleton's only other heading, an h3 ("Fetching Products") - an h1 -> h3
-  // skip entirely self-inflicted by adding the h1. Promoted to h2.
+  // matters too. The sr-only h1 above is followed by this skeleton's only
+  // other heading, an sr-only h2 - no skip.
   it("has no forward heading-level skip within the skeleton itself", () => {
     render(<ProductListingLoading />)
 
@@ -32,16 +31,5 @@ describe("ProductListingLoading", () => {
     for (let i = 1; i < levels.length; i++) {
       expect(levels[i] - levels[i - 1]).toBeLessThanOrEqual(1)
     }
-  })
-
-  // A11y: `text-text-muted` (~4.8-5.3:1 on this card's `bg-surface`) is already
-  // WCAG AA's floor; putting the whole "Ready" step row at `opacity-40` blended
-  // it down to ~1.7:1 (axe `color-contrast`, 1 node on `/products`). The dimmed
-  // "not reached yet" look now lives on the step's icon only, not its text.
-  it("keeps the 'Ready' step's text at full, readable opacity", () => {
-    render(<ProductListingLoading />)
-
-    const readyText = screen.getByText("Ready")
-    expect(readyText.parentElement).not.toHaveClass("opacity-40")
   })
 })

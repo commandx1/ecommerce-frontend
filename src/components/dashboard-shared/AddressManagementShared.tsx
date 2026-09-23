@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import SurfaceCard from "@/components/ui/SurfaceCard"
+import Skeleton from "@/components/ui/skeleton"
 import { showToast } from "@/components/ui/Toast"
 import { type Address, addressAPI, type CreateAddressPayload, type UpdateAddressPayload } from "@/lib/api/address"
 import type { ParsedAddress } from "@/lib/utils/google-maps"
@@ -122,10 +123,6 @@ export default function AddressManagementShared() {
       placeId: parsedAddress.placeId,
       formattedAddress: parsedAddress.formattedAddress,
     }))
-  }
-
-  if (isLoading) {
-    return <div className="p-8 text-center text-text-secondary">Loading...</div>
   }
 
   const selectedAddress =
@@ -273,6 +270,27 @@ export default function AddressManagementShared() {
     </div>
   )
 
+  const addressSkeleton = (
+    <div aria-busy="true" className="rounded-2xl border border-brand/40 bg-surface-elevated p-6 shadow-soft">
+      <span className="sr-only">Loading address...</span>
+      <div className="mb-4 flex items-start gap-3">
+        <Skeleton className="h-10 w-10 rounded-xl" />
+        <div className="space-y-2">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-4 w-40" />
+        </div>
+      </div>
+      <div className="mb-6 space-y-2 pl-[3.25rem]">
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-4 w-1/3" />
+        <Skeleton className="h-4 w-1/2" />
+      </div>
+      <div className="border-t border-border-soft pt-4">
+        <Skeleton className="h-4 w-12" />
+      </div>
+    </div>
+  )
+
   const emptyState = (
     <div className="col-span-full rounded-2xl border border-dashed border-border-strong bg-surface-muted/40 p-12 text-center">
       <MapPin className="icon-float mx-auto mb-4 h-10 w-10 text-brand/60" />
@@ -322,14 +340,18 @@ export default function AddressManagementShared() {
             </p>
           </div>
         </div>
-        {!isEditing && !loadFailed && addresses.length === 0 && (
+        {!isLoading && !isEditing && !loadFailed && addresses.length === 0 && (
           <Button onClick={handleAddNew} size="sm">
             <Plus className="mr-1.5 h-4 w-4" />
             Add New
           </Button>
         )}
       </div>
-      {isEditing && currentAddress ? addressForm : <div className="p-6">{addressList}</div>}
+      {isEditing && currentAddress ? (
+        addressForm
+      ) : (
+        <div className="p-6">{isLoading ? addressSkeleton : addressList}</div>
+      )}
     </SurfaceCard>
   )
 }

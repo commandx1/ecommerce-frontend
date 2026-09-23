@@ -1,10 +1,10 @@
 "use client"
 
-import { Loader2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
 import { showToast } from "@/components/ui/Toast"
 import SupplierDirectoryCard from "@/features/suppliers/components/SupplierDirectoryCard"
+import { SupplierCardSkeleton } from "@/features/suppliers/components/SuppliersDirectorySection.client"
 import { vendorToSupplierItem } from "@/features/suppliers/suppliersPageData"
 import { addVendorFavorite, getMyFavoriteVendors, removeVendorFavorite, type VendorListItem } from "@/lib/api/vendors"
 
@@ -57,8 +57,11 @@ export default function FavoriteSuppliersPage({ embedded = false }: { embedded?:
       )}
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-24 text-text-muted">
-          <Loader2 className="h-8 w-8 animate-spin" />
+        <div aria-busy="true" className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <span className="sr-only">Loading favorite vendors...</span>
+          {[0, 1, 2].map((i) => (
+            <SupplierCardSkeleton key={i} />
+          ))}
         </div>
       ) : hasError ? (
         <div className="rounded-[1.25rem] border border-border-soft bg-surface-elevated p-6 text-sm text-text-secondary">

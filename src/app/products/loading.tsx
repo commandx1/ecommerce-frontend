@@ -5,13 +5,9 @@ export default function ProductListingLoading() {
           can land on while the real page (ProductListingHeader's `<h1>Dental
           Products</h1>`) is still streaming in. Same text, so there's never a
           moment with zero or a mismatched page heading. */}
-      {/* This skeleton's own only other heading ("Fetching Products" below) is
-          an h2, one level under this h1 - no skip within the skeleton itself. */}
+      {/* This skeleton's own only other heading (an sr-only h2 below) is one
+          level under this h1 - no skip within the skeleton itself. */}
       <h1 className="sr-only">Dental Products</h1>
-      {/* Top progress bar */}
-      <div className="h-1 w-full overflow-hidden bg-border-soft">
-        <div className="loading-progress-bar h-full rounded-r-full bg-steel-blue" />
-      </div>
 
       {/* Page header */}
       <div className="border-b border-border-soft bg-surface py-8">
@@ -156,127 +152,12 @@ export default function ProductListingLoading() {
                 </div>
               </div>
 
-              {/* Loading state indicator */}
-              <div className="mb-6 rounded-2xl border border-border-soft bg-surface p-8">
-                <div className="flex flex-col items-center justify-center">
-                  {/* Animated icon */}
-                  <div className="relative mb-6">
-                    <div className="icon-float flex h-20 w-20 items-center justify-center rounded-full border-4 border-surface-muted">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-steel-blue/10">
-                        <svg
-                          aria-hidden="true"
-                          className="h-8 w-8 animate-pulse text-steel-blue opacity-80"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M12 2C9.5 2 7.5 3.5 7 5.5c-.3 1-.2 2.1.2 3-.8.5-1.5 1.3-1.8 2.3-.5 1.5 0 3.1 1 4.1.2 3.2 1.8 7.1 5.6 7.1s5.4-3.9 5.6-7.1c1-.9 1.5-2.6 1-4.1-.3-1-.9-1.8-1.8-2.3.4-.9.5-2 .2-3C16.5 3.5 14.5 2 12 2z" />
-                        </svg>
-                      </div>
-                    </div>
-                    {/* Spinning ring */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div
-                        className="h-20 w-20 rounded-full border-4 border-transparent border-t-steel-blue"
-                        style={{ animation: "spin 1.2s linear infinite" }}
-                      />
-                    </div>
-                    {/* Orbiting dot */}
-                    <div className="absolute -right-0.5 -top-0.5 h-4 w-4 rounded-full bg-pale-lime ring-2 ring-surface" />
-                  </div>
-
-                  <h2 className="mb-2 text-xl font-bold text-steel-blue">Fetching Products</h2>
-                  <p className="mb-6 max-w-xs text-center text-sm text-text-muted">
-                    Searching verified products from trusted suppliers...
-                  </p>
-
-                  {/* Progress bar */}
-                  <div className="mb-4 w-full max-w-sm">
-                    <div className="mb-2 flex items-center justify-between text-xs text-text-muted">
-                      <span>Loading products...</span>
-                      <span className="font-semibold text-steel-blue">92%</span>
-                    </div>
-                    <div className="h-2.5 w-full overflow-hidden rounded-full bg-surface-muted">
-                      <div className="loading-progress-bar h-2.5 rounded-full bg-linear-to-r from-steel-blue to-pale-lime" />
-                    </div>
-                  </div>
-
-                  {/* Loading steps */}
-                  <div className="flex items-center gap-6 text-xs text-text-muted">
-                    <div className="flex items-center gap-1.5">
-                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-steel-blue/20">
-                        <svg
-                          aria-hidden="true"
-                          className="h-2.5 w-2.5 text-steel-blue"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z" />
-                          <path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z" />
-                          <path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z" />
-                        </svg>
-                      </div>
-                      <span>Fetching catalog</span>
-                    </div>
-                    <div className="h-px w-8 bg-border-soft" />
-                    <div className="flex items-center gap-1.5">
-                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-steel-blue/20">
-                        <svg
-                          aria-hidden="true"
-                          className="h-2.5 w-2.5 text-steel-blue"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.553.894l-4 2A1 1 0 016 17v-5.586L3.293 6.707A1 1 0 013 6V3z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </div>
-                      <span>Applying filters</span>
-                    </div>
-                    <div className="h-px w-8 bg-border-soft" />
-                    {/* a11y (F54-style contrast fix): the opacity-40 used to sit on this whole
-                        row, so its "Ready" text - already `text-text-muted` from the ancestor
-                        (~4.8-5.3:1 on its own) - got blended down to ~1.7:1 against `bg-surface`,
-                        well under WCAG AA's 4.5:1 (axe `color-contrast`, 1 node on /products - the
-                        loading skeleton, not the loaded page). The dimmed "not reached yet" look
-                        is still conveyed by the icon alone; the text stays at full, readable
-                        opacity. */}
-                    {/* a11y (F54-style contrast fix): the opacity-40 used to sit on this whole
-                        row, so its "Ready" text - already `text-text-muted` from the ancestor
-                        (~4.8-5.3:1 on its own) - got blended down to ~1.7:1 against `bg-surface`,
-                        well under WCAG AA's 4.5:1 (axe `color-contrast`, 1 node on /products - the
-                        loading skeleton, not the loaded page). The dimmed "not reached yet" look
-                        is still conveyed by the icon alone; the text stays at full, readable
-                        opacity. */}
-                    <div className="flex items-center gap-1.5">
-                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-steel-blue/20 opacity-40">
-                        <svg
-                          aria-hidden="true"
-                          className="h-2.5 w-2.5 text-steel-blue"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </div>
-                      <span>Ready</span>
-                    </div>
-                  </div>
-
-                  {/* Bouncing dots */}
-                  <div className="mt-5 flex items-center gap-1.5">
-                    <div className="dot-bounce-1 h-2 w-2 rounded-full bg-steel-blue" />
-                    <div className="dot-bounce-2 h-2 w-2 rounded-full bg-steel-blue" />
-                    <div className="dot-bounce-3 h-2 w-2 rounded-full bg-steel-blue" />
-                  </div>
-                </div>
-              </div>
+              {/* a11y: the root layout's persistent <Footer> renders its own <h3>s
+                  ("Products"/"Services"/"Support") regardless of which page content is showing,
+                  including this skeleton. With nothing between this file's sr-only h1 and that
+                  footer, an a11y scan landing on this skeleton would see a straight h1 -> h3
+                  jump. This sr-only h2 bridges that gap. */}
+              <h2 className="sr-only">Loading products</h2>
 
               {/* Product card skeletons */}
               <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">

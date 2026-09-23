@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import SurfaceCard from "@/components/ui/SurfaceCard"
+import Skeleton from "@/components/ui/skeleton"
 import { showToast } from "@/components/ui/Toast"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -163,7 +164,59 @@ export default function CompanyInfoCard() {
         )}
       </div>
 
-      {isLoading && <p className="p-6 text-sm text-text-muted">Loading company information...</p>}
+      {isLoading && (
+        <div aria-busy="true" className="space-y-4 p-6">
+          <span className="sr-only">Loading company information...</span>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-11 w-full rounded-2xl" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-11 w-full rounded-2xl" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-11 w-full rounded-2xl" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-11 w-full rounded-2xl" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-11 w-full rounded-2xl" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-11 w-full rounded-2xl" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-24 w-full rounded-2xl" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-24" />
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-12 w-12 shrink-0 rounded-xl" />
+              <Skeleton className="h-11 w-full rounded-2xl" />
+            </div>
+          </div>
+          <div className="flex items-center gap-3 border-t border-border-soft pt-4">
+            <Skeleton className="h-5 w-5 rounded" />
+            <Skeleton className="h-4 w-56" />
+          </div>
+          <div className="flex justify-end border-t border-border-soft pt-4">
+            <Skeleton className="h-9 w-32 rounded-full" />
+          </div>
+        </div>
+      )}
 
       {!isLoading && isUnavailable && (
         <p className="p-6 text-sm text-text-muted">No company information on file yet.</p>

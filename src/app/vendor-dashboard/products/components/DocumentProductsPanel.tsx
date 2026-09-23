@@ -3,11 +3,12 @@
 import { useQuery } from "@tanstack/react-query"
 import type { ColumnDef, ExpandedState, Row } from "@tanstack/react-table"
 import type { LucideIcon } from "lucide-react"
-import { ChevronDown, CircleAlert, CircleCheck, CircleX, Layers, Loader2 } from "lucide-react"
+import { ChevronDown, CircleAlert, CircleCheck, CircleX, Layers } from "lucide-react"
 import Image from "next/image"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import DataTable from "@/components/ui/data-table"
+import Skeleton from "@/components/ui/skeleton"
 import { getFullImageUrl } from "@/lib/api/products"
 import { type DocumentProductsResponse, documentProductsQueryKey, vendorDocumentsAPI } from "@/lib/api/vendor-documents"
 import formatCurrency from "@/lib/helpers/formatCurrency"
@@ -405,9 +406,18 @@ export default function DocumentProductsPanel({
   }
 
   if (isLoading) {
+    // Deliberately not DataTable's own `isLoading` skeleton: its sr-only loadingText row is a
+    // real (non aria-hidden) table row, which this file's tests count via getAllByRole("row")
+    // to detect "the real data has loaded" — that would resolve those waits prematurely.
     return (
-      <div className="flex items-center justify-center rounded-xl border border-border-soft bg-surface py-10">
-        <Loader2 className="h-6 w-6 animate-spin text-brand" />
+      <div
+        aria-busy="true"
+        className="max-h-[48vh] min-h-[12rem] space-y-2 overflow-y-auto rounded-xl border border-border-soft p-3"
+      >
+        <span className="sr-only">Loading imported products...</span>
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <Skeleton key={i} className="h-10 w-full rounded-md" />
+        ))}
       </div>
     )
   }

@@ -440,6 +440,18 @@ describe("AddressManagementShared", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
   })
 
+  it("shows a skeleton inside the section shell while loading, then swaps it for the address", async () => {
+    serveAddresses(makeAddress({ id: "a-1", title: "Clinic" }))
+
+    render(<AddressManagementShared />)
+
+    expect(screen.getByRole("heading", { name: "Address" })).toBeInTheDocument()
+    expect(screen.getByText("Loading address...")).toBeInTheDocument()
+
+    expect(await screen.findByRole("heading", { name: "Clinic" })).toBeInTheDocument()
+    expect(screen.queryByText("Loading address...")).not.toBeInTheDocument()
+  })
+
   it("renders as a compact card section", async () => {
     serveAddresses(makeAddress({ id: "a-1", title: "Clinic" }))
 
