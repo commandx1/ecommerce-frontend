@@ -193,7 +193,6 @@ describe("AccountSettingsShared", () => {
     signIn({ roleName: "BUYER" })
     const buyerView = renderSettings()
 
-    expect(screen.getByText("Buyer Account")).toBeInTheDocument()
     expect(screen.queryByRole("link", { name: /Company/ })).not.toBeInTheDocument()
     expect(screen.queryByRole("link", { name: /Payouts/ })).not.toBeInTheDocument()
     expect(screen.getByRole("link", { name: /Licenses/ })).toBeInTheDocument()
@@ -203,7 +202,6 @@ describe("AccountSettingsShared", () => {
     signIn({ roleName: "Vendor" })
     renderSettings()
 
-    expect(screen.getByText("Vendor Account")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /Company/ })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /Payouts/ })).toBeInTheDocument()
     expect(screen.queryByRole("link", { name: /Licenses/ })).not.toBeInTheDocument()

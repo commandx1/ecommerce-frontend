@@ -14,7 +14,6 @@ import {
   Save,
   Shield,
   ShieldAlert,
-  Sparkles,
   User,
 } from "lucide-react"
 import type { ReactNode } from "react"
@@ -146,12 +145,6 @@ export default function AccountSettingsShared({
         variant="technical"
         title={title}
         description={description}
-        kicker={
-          <>
-            <Sparkles className="mr-1.5 h-3 w-3" />
-            {isVendor ? "Vendor Account" : "Buyer Account"}
-          </>
-        }
         actions={
           <span className="glass-panel inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-text-secondary">
             Member since {memberSince}
