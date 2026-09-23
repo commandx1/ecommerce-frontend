@@ -19,7 +19,7 @@ export class VendorQuestionsPage extends BasePage {
 
   /** The card for one question, scoped by its question text. */
   questionCard(questionText: string): Locator {
-    return this.page.locator("div.overflow-hidden.rounded-2xl.border").filter({ hasText: questionText })
+    return this.page.locator('[data-testid="question-card"]').filter({ hasText: questionText })
   }
 
   writeAnswerButton(questionText: string): Locator {

@@ -23,7 +23,7 @@ const colorMap = {
   yellow: {
     bg: "bg-warning/10",
     border: "border-warning/20",
-    text: "text-warning",
+    text: "text-warning-strong",
     dot: DOT_TONE_CLASS_MAP.warning,
   },
   red: {
@@ -36,7 +36,7 @@ const colorMap = {
 
 const statusColorMap: Record<string, string> = {
   critical: "text-danger",
-  warning: "text-warning",
+  warning: "text-warning-strong",
 }
 
 const InventoryStatus = () => {

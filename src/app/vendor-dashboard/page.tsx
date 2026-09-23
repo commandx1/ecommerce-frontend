@@ -11,14 +11,22 @@ export default function VendorDashboardPage() {
     <>
       <DashboardHeader />
       <VendorMetricsCards />
-      <RevenueChart />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <TopSellingProducts />
-        <VendorRecentOrders />
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <InventoryStatus />
-        <GeographicDistribution />
+      <div className="grid grid-cols-12 gap-6">
+        <div className="col-span-12 *:h-full xl:col-span-8">
+          <RevenueChart />
+        </div>
+        <div className="col-span-12 *:h-full xl:col-span-4">
+          <InventoryStatus />
+        </div>
+        <div className="col-span-12 *:h-full xl:col-span-6">
+          <TopSellingProducts />
+        </div>
+        <div className="col-span-12 *:h-full xl:col-span-6">
+          <VendorRecentOrders />
+        </div>
+        <div className="col-span-12">
+          <GeographicDistribution />
+        </div>
       </div>
     </>
   )

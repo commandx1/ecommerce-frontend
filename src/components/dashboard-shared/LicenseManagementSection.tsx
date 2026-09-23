@@ -6,6 +6,7 @@ import ConfirmationModal from "@/components/feedback/ConfirmationModal"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
 import usStateList from "@/data/usstate-list.json"
@@ -249,9 +250,11 @@ export default function LicenseManagementSection() {
 
   return (
     // biome-ignore lint/correctness/useUniqueElementIds: static id is a deep-link anchor (#licenses) targeted from CartSummaryPanel/ProductHeroDetails.
-    <section
+    <SurfaceCard
+      as="section"
       id="licenses"
-      className="fade-up scroll-mt-24 overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
+      variant="glass"
+      className="fade-up scroll-mt-24 overflow-hidden"
       style={{ animationDelay: "300ms" }}
     >
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border-soft p-6">
@@ -488,6 +491,6 @@ export default function LicenseManagementSection() {
         isDanger={true}
         isLoading={isDeleting}
       />
-    </section>
+    </SurfaceCard>
   )
 }

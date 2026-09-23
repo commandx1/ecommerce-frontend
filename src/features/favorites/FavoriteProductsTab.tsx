@@ -3,6 +3,7 @@
 import { Loader2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import { adaptProductCardData } from "@/features/products/listing/components/listing/adaptProductCardData"
 import ProductCard from "@/features/products/listing/components/listing/ProductCard"
 import { type FavoriteProductItem, getMyFavoriteProducts } from "@/lib/api/favorite-products"
@@ -43,17 +44,17 @@ export default function FavoriteProductsTab() {
 
   if (hasError) {
     return (
-      <div className="rounded-[1.25rem] border border-border-soft bg-surface-elevated p-6 text-sm text-text-secondary">
+      <SurfaceCard variant="glass" className="p-6 text-sm text-text-secondary">
         Unable to load favorite products. Please try again later.
-      </div>
+      </SurfaceCard>
     )
   }
 
   if (visible.length === 0) {
     return (
-      <div className="rounded-[1.25rem] border border-border-soft bg-surface-elevated p-6 text-sm text-text-secondary">
+      <SurfaceCard variant="glass" className="p-6 text-sm text-text-secondary">
         No favorite products yet.
-      </div>
+      </SurfaceCard>
     )
   }
 

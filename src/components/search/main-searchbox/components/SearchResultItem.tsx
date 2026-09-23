@@ -17,6 +17,7 @@ const SearchResultItem = ({ product, imageSrc, onImageError, onClick }: SearchRe
   return (
     <Link
       href={`/products/${product.productId}`}
+      data-menu-item
       className="block px-3 py-2.5 transition-colors hover:bg-surface-muted/80 sm:px-4 sm:py-3"
       onClick={onClick}
     >

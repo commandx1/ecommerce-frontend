@@ -4,7 +4,8 @@ export default function VendorDashboardLayoutSkeleton() {
   const rowSkeletonIds = ["row-1", "row-2", "row-3", "row-4"] as const
 
   return (
-    <div className="flex min-h-screen flex-col bg-canvas animate-pulse">
+    <div data-theme-scope="dashboard" className="relative isolate flex min-h-screen flex-col animate-pulse">
+      <div className="dashboard-backdrop" aria-hidden />
       {/* sr-only: the real page's h1 ("Vendor Dashboard" in DashboardHeader) only
           mounts once auth-check/hydration finishes; this skeleton renders first,
           so without this the page has zero headings while it's up. Deliberately
@@ -12,7 +13,7 @@ export default function VendorDashboardLayoutSkeleton() {
           exact "Vendor Dashboard" accessible name can't resolve early against
           this transient node (see CartLoadingState for the same footgun). */}
       <h1 className="sr-only">Loading Vendor Dashboard</h1>
-      <header className="h-16 border-b border-border-soft bg-surface-elevated px-6">
+      <header className="h-16 glass-strip px-6">
         <div className="mx-auto flex h-full w-full max-w-screen-2xl items-center justify-between">
           <div className="h-8 w-48 rounded-md bg-surface-muted" />
           <div className="h-10 w-10 rounded-full bg-surface-muted" />
@@ -20,7 +21,7 @@ export default function VendorDashboardLayoutSkeleton() {
       </header>
 
       <div className="flex flex-1">
-        <aside className="hidden w-[3.05rem] shrink-0 border-r border-border-soft bg-surface-elevated p-2 md:block">
+        <aside className="hidden w-[3.05rem] shrink-0 md:mt-3 md:ml-3 md:block md:h-[calc(100vh-5.5rem)] glass-panel p-2">
           <div className="flex flex-col items-center gap-2">
             {navSkeletonIds.map((id) => (
               <div key={id} className="h-8 w-8 rounded-md bg-surface-muted" />
@@ -32,7 +33,7 @@ export default function VendorDashboardLayoutSkeleton() {
           <div className="mb-6 h-10 w-80 rounded-xl bg-surface-muted" />
           <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
             {metricSkeletonIds.map((id) => (
-              <div key={id} className="rounded-2xl border border-border-soft bg-surface-elevated p-5">
+              <div key={id} className="glass-panel p-5">
                 <div className="mb-3 h-3 w-24 rounded bg-surface-muted" />
                 <div className="h-7 w-20 rounded bg-surface-muted" />
                 <div className="mt-3 h-2 w-28 rounded bg-surface-muted" />
@@ -40,11 +41,11 @@ export default function VendorDashboardLayoutSkeleton() {
             ))}
           </div>
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            <div className="rounded-2xl border border-border-soft bg-surface-elevated p-6">
+            <div className="glass-panel p-6">
               <div className="mb-4 h-5 w-40 rounded bg-surface-muted" />
               <div className="h-56 w-full rounded-xl bg-surface-muted" />
             </div>
-            <div className="rounded-2xl border border-border-soft bg-surface-elevated p-6">
+            <div className="glass-panel p-6">
               <div className="mb-4 h-5 w-44 rounded bg-surface-muted" />
               <div className="space-y-3">
                 {rowSkeletonIds.map((id) => (

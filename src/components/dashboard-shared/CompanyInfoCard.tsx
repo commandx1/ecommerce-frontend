@@ -7,6 +7,7 @@ import { CheckboxField } from "@/components/form/CheckboxField"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import { showToast } from "@/components/ui/Toast"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -129,7 +130,7 @@ export default function CompanyInfoCard() {
     : null
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
+    <SurfaceCard as="section" variant="glass" className="overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-soft p-6">
         <div className="flex items-center gap-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand/10 text-brand">
@@ -357,6 +358,6 @@ export default function CompanyInfoCard() {
           </div>
         </form>
       )}
-    </section>
+    </SurfaceCard>
   )
 }

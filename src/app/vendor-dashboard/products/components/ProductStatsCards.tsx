@@ -80,10 +80,7 @@ const ProductStatsCards = ({ selectedFilter = "TOTAL", onFilterChange }: Product
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {["total", "active", "low-stock", "out-of-stock", "inactive"].map((type) => (
-          <div
-            key={`loading-${type}`}
-            className="animate-pulse rounded-xl border border-border-soft bg-surface-elevated p-4 shadow-soft"
-          >
+          <div key={`loading-${type}`} className="glass-panel h-24 animate-pulse p-4">
             <div className="flex items-center justify-between mb-2">
               <div className="h-10 w-10 rounded-lg bg-surface-muted"></div>
             </div>
@@ -112,8 +109,7 @@ const ProductStatsCards = ({ selectedFilter = "TOTAL", onFilterChange }: Product
   }
 
   const getCardClasses = (filter: FilterType) => {
-    const baseClasses =
-      "w-full cursor-pointer rounded-xl border bg-surface-elevated p-4 text-left shadow-soft transition-all hover:border-brand/35 hover:bg-surface-muted/60"
+    const baseClasses = "glass-panel w-full cursor-pointer p-4 text-left transition-all hover:border-brand/35"
     const selectedClasses = selectedFilter === filter ? "border-brand ring-2 ring-brand/20" : "border-border-soft"
     return `${baseClasses} ${selectedClasses}`
   }

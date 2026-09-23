@@ -15,7 +15,7 @@ import { Line } from "react-chartjs-2"
 import { Button } from "@/components/ui/button"
 import { vendorDashboardAPI } from "@/lib/api/vendor-dashboard"
 import { useAuthStore } from "@/stores/authStore"
-import { getVendorChartPalette } from "./shared/chartTheme"
+import { getVendorChartOptions, getVendorChartPalette } from "./shared/chartTheme"
 import DashboardPanel from "./shared/DashboardPanel"
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
@@ -89,53 +89,17 @@ const RevenueChart = () => {
     ],
   }
 
+  const base = getVendorChartOptions(palette)
   const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        backgroundColor: palette.surfaceMuted,
-        borderColor: palette.borderSoft,
-        borderWidth: 1,
-        titleColor: palette.textPrimary,
-        bodyColor: palette.textPrimary,
-        padding: 12,
-      },
-    },
+    ...base,
     scales: {
-      x: {
-        grid: {
-          display: false,
-        },
-        border: {
-          color: palette.borderSoft,
-        },
-        ticks: { color: palette.textSecondary },
-      },
-      y: {
-        grid: {
-          color: palette.surfaceMuted,
-        },
-        border: {
-          color: palette.borderSoft,
-        },
-        ticks: {
-          color: palette.textSecondary,
-        },
-        title: {
-          display: true,
-          text: "Revenue ($)",
-          color: palette.textSecondary,
-        },
-      },
+      ...base.scales,
+      y: { ...base.scales.y, title: { display: true, text: "Revenue ($)", color: palette.textSecondary } },
     },
   }
 
   return (
-    <section id={sectionId} className="mb-8">
+    <section id={sectionId} className="h-full">
       <DashboardPanel
         title="Revenue Analytics"
         description="Monthly revenue performance"

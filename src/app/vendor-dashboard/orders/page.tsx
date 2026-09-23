@@ -7,7 +7,9 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { extractApiErrorMessage } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
 import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
 import SingleOrderNotice from "@/components/dashboard-shared/SingleOrderNotice"
+import SectionHeading from "@/components/layout/SectionHeading"
 import Modal from "@/components/ui/Modal"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
 import { parseOrderIdParam } from "@/lib/api/orders"
@@ -428,19 +430,16 @@ export default function VendorOrdersPage() {
     <>
       {/* Page Header */}
       <section id={`${id}-page-header`} className="mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-text-primary">Orders</h1>
-            <p className="text-text-secondary mt-1">View and manage orders placed for your products</p>
-          </div>
-        </div>
+        <SectionHeading
+          titleAs="h1"
+          variant="technical"
+          title="Orders"
+          description="View and manage orders placed for your products"
+        />
       </section>
 
       {/* Orders Table */}
-      <section
-        id={`${id}-orders-table-section`}
-        className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
-      >
+      <SurfaceCard as="section" id={`${id}-orders-table-section`} variant="glass" className="overflow-hidden">
         <div className="border-b border-border-soft px-4 pt-4 sm:px-6">
           <div className="mb-4">
             <div className="no-scrollbar flex w-full items-center gap-1.5 overflow-x-auto rounded-sm border border-border-soft bg-surface p-1.5 shadow-soft sm:gap-2">
@@ -532,7 +531,7 @@ export default function VendorOrdersPage() {
           pageSize={pageSize}
           onPageChange={handlePageChange}
         />
-      </section>
+      </SurfaceCard>
       <Modal
         isOpen={Boolean(pendingCancelAction)}
         onClose={() => {
@@ -655,7 +654,7 @@ export default function VendorOrdersPage() {
       </Modal>
       {labelModalLinks && (labelModalLinks.shipping.length > 0 || labelModalLinks.tracking.length > 0) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-surface-elevated rounded-2xl shadow-xl max-w-4xl w-full mx-4">
+          <div className="glass-panel mx-4 w-full max-w-4xl shadow-xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-border-soft">
               <h2 className="text-lg font-semibold text-brand">Labels &amp; tracking</h2>
               <button
@@ -853,7 +852,7 @@ export default function VendorOrdersPage() {
       )}
       {uberResult && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="mx-4 w-full max-w-xl rounded-2xl bg-surface-elevated shadow-xl">
+          <div className="glass-panel mx-4 w-full max-w-xl shadow-xl">
             <div className="flex items-center justify-between border-b border-border-soft px-6 py-4">
               <h2 className="text-lg font-semibold text-brand">Uber Delivery Result</h2>
               <button

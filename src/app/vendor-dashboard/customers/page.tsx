@@ -1,6 +1,8 @@
 import { Download } from "lucide-react"
 import Link from "next/link"
+import SectionHeading from "@/components/layout/SectionHeading"
 import { Button } from "@/components/ui/button"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import CustomerAnalyticsChart from "../components/CustomerAnalyticsChart"
 import CustomerSegmentsCard from "./components/CustomerSegmentsCard"
@@ -27,27 +29,27 @@ export default function VendorCustomersPage() {
   return (
     <>
       <section className="mb-8">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-text-primary">Customers</h1>
-            <p className="mt-1 text-text-secondary">
-              Analyze customer behavior and act on key accounts from a single hybrid workspace.
-            </p>
-          </div>
-          <Button type="button" variant="default" className="rounded-xl px-4">
-            <Download className="mr-2 h-4 w-4" />
-            Export Customers
-          </Button>
-        </div>
+        <SectionHeading
+          titleAs="h1"
+          variant="technical"
+          title="Customers"
+          description="Analyze customer behavior and act on key accounts from a single hybrid workspace."
+          actions={
+            <Button type="button" variant="default" className="rounded-xl px-4">
+              <Download className="mr-2 h-4 w-4" />
+              Export Customers
+            </Button>
+          }
+        />
       </section>
 
       <section className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
         {kpis.map((kpi) => (
-          <div key={kpi.label} className="rounded-2xl border border-border-soft bg-surface-elevated p-5 shadow-soft">
+          <SurfaceCard key={kpi.label} variant="glass" className="p-5">
             <div className="text-sm text-text-secondary">{kpi.label}</div>
             <div className="mt-2 text-2xl font-bold text-text-primary">{kpi.value}</div>
             <div className="mt-1 text-xs text-text-muted">{kpi.hint}</div>
-          </div>
+          </SurfaceCard>
         ))}
       </section>
 

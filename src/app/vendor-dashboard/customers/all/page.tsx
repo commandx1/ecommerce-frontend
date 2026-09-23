@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Search } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useMemo } from "react"
+import SectionHeading from "@/components/layout/SectionHeading"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import TopCustomersTable from "../components/TopCustomersTable"
 import { CUSTOMER_HEALTH, CUSTOMER_SEGMENTS, VENDOR_CUSTOMERS, type VendorCustomer } from "../data"
@@ -81,10 +82,12 @@ export default function VendorCustomersAllPage() {
             Back to Customers
           </Link>
         </div>
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary">All Customers</h1>
-          <p className="mt-1 text-text-secondary">Filter, sort, and inspect customer accounts across segments.</p>
-        </div>
+        <SectionHeading
+          titleAs="h1"
+          variant="technical"
+          title="All Customers"
+          description="Filter, sort, and inspect customer accounts across segments."
+        />
       </section>
 
       <section className="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-5">

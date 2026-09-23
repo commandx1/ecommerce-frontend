@@ -22,7 +22,7 @@ export default function DashboardPanel({
   children,
 }: DashboardPanelProps) {
   return (
-    <SurfaceCard variant="technical" className={cn("p-6", className)}>
+    <SurfaceCard variant="glass" className={cn("p-6", className)}>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 className={cn("text-xl font-semibold text-text-primary", titleClassName)}>{title}</h2>

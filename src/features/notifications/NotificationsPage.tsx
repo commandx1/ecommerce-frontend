@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react"
 import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
 import EmptyStateCard from "@/components/feedback/EmptyStateCard"
+import SectionHeading from "@/components/layout/SectionHeading"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import { showToast } from "@/components/ui/Toast"
 import { useAuthStore } from "@/stores/authStore"
 import NotificationListItem from "./components/NotificationListItem"
@@ -60,22 +62,25 @@ export default function NotificationsPage() {
 
   return (
     <div data-testid="notifications-page">
-      <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary">Notifications</h1>
-          <p className="text-text-secondary">Updates about your orders and account.</p>
-        </div>
-        <button
-          type="button"
-          disabled={unreadCount === 0 || markAll.isPending}
-          onClick={() => markAll.mutate()}
-          className="flex items-center gap-1.5 rounded-xl border border-border-strong px-3.5 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Mark all as read
-        </button>
-      </div>
+      <SectionHeading
+        titleAs="h1"
+        variant="technical"
+        title="Notifications"
+        description="Updates about your orders and account."
+        actions={
+          <button
+            type="button"
+            disabled={unreadCount === 0 || markAll.isPending}
+            onClick={() => markAll.mutate()}
+            className="glass-panel flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-medium text-text-secondary transition-colors hover:border-brand/35 hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Mark all as read
+          </button>
+        }
+        className="mb-8"
+      />
 
-      <section className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
+      <SurfaceCard as="section" variant="glass" className="overflow-hidden">
         <div className="border-b border-border-soft px-6 py-4">
           <NotificationsTabs value={tab} onChange={handleTabChange} unreadCount={unreadCount} />
         </div>
@@ -117,7 +122,7 @@ export default function NotificationsPage() {
             />
           </div>
         ) : null}
-      </section>
+      </SurfaceCard>
     </div>
   )
 }

@@ -4,6 +4,8 @@ import { Loader2, MessageSquare, Pencil, Send, Trash2, X } from "lucide-react"
 import { useCallback, useEffect, useId, useState } from "react"
 import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
 import ConfirmationModal from "@/components/feedback/ConfirmationModal"
+import SectionHeading from "@/components/layout/SectionHeading"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import { showToast } from "@/components/ui/Toast"
 import {
   type ProductAnswerResponse,
@@ -119,7 +121,11 @@ function QuestionCard({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft transition-shadow hover:shadow-md">
+    <SurfaceCard
+      variant="glass"
+      data-testid="question-card"
+      className="overflow-hidden transition-shadow hover:shadow-panel"
+    >
       <div className="flex items-center gap-2 border-b border-border-soft bg-surface px-5 py-3">
         <div className="flex h-6 w-6 items-center justify-center rounded-md bg-brand/10">
           <MessageSquare className="h-3.5 w-3.5 text-brand" />
@@ -274,7 +280,7 @@ function QuestionCard({
         isDanger
         isLoading={isDeleting}
       />
-    </div>
+    </SurfaceCard>
   )
 }
 
@@ -374,21 +380,23 @@ export default function VendorQuestionsPage() {
   return (
     <>
       <section className="mb-8">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-text-primary">Product Questions</h1>
-            <p className="mt-1 text-text-secondary">Answer customer questions about your products</p>
-          </div>
-          {counts && counts.unanswered > 0 && (
-            <div className="flex items-center gap-2 rounded-2xl border border-warning/30 bg-warning/10 px-4 py-2.5">
-              <MessageSquare className="h-4 w-4 text-warning" />
-              <span className="text-sm font-semibold text-warning">{counts.unanswered} unanswered</span>
-            </div>
-          )}
-        </div>
+        <SectionHeading
+          titleAs="h1"
+          variant="technical"
+          title="Product Questions"
+          description="Answer customer questions about your products"
+          actions={
+            counts && counts.unanswered > 0 ? (
+              <div className="flex items-center gap-2 rounded-2xl border border-warning/30 bg-warning/10 px-4 py-2.5">
+                <MessageSquare className="h-4 w-4 text-warning" />
+                <span className="text-sm font-semibold text-warning-strong">{counts.unanswered} unanswered</span>
+              </div>
+            ) : undefined
+          }
+        />
       </section>
 
-      <section className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
+      <SurfaceCard as="section" variant="glass" className="overflow-hidden">
         <div className="flex flex-col gap-3 border-b border-border-soft px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex max-w-full flex-wrap items-center gap-1.5 rounded-sm border border-border-soft bg-surface p-1.5 shadow-soft">
             {FILTER_TABS.map(({ key, label }) => {
@@ -492,7 +500,7 @@ export default function VendorQuestionsPage() {
             onPageChange={setCurrentPage}
           />
         )}
-      </section>
+      </SurfaceCard>
     </>
   )
 }

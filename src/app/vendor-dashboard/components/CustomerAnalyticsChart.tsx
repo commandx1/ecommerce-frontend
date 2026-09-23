@@ -15,7 +15,7 @@ import { useMemo } from "react"
 import { Line } from "react-chartjs-2"
 import { Button } from "@/components/ui/button"
 import vendorCustomerAnalyticsData from "@/data/vendor-customer-analytics.json"
-import { getVendorChartPalette } from "./shared/chartTheme"
+import { getVendorChartOptions, getVendorChartPalette } from "./shared/chartTheme"
 import DashboardPanel from "./shared/DashboardPanel"
 import { STATUS_TONE_CLASS_MAP } from "./shared/dashboardToneMaps"
 
@@ -46,53 +46,21 @@ const CustomerAnalyticsChart = () => {
     ],
   }
 
+  const base = getVendorChartOptions(palette)
   const options = {
-    responsive: true,
-    maintainAspectRatio: false,
+    ...base,
     plugins: {
+      ...base.plugins,
       legend: {
         display: true,
         position: "bottom" as const,
         align: "center" as const,
-        labels: {
-          color: palette.textSecondary,
-        },
-      },
-      tooltip: {
-        backgroundColor: palette.surfaceMuted,
-        borderColor: palette.borderSoft,
-        borderWidth: 1,
-        titleColor: palette.textPrimary,
-        bodyColor: palette.textPrimary,
-        padding: 12,
+        labels: { color: palette.textSecondary },
       },
     },
     scales: {
-      x: {
-        grid: {
-          display: false,
-        },
-        border: {
-          color: palette.borderSoft,
-        },
-        ticks: { color: palette.textSecondary },
-      },
-      y: {
-        grid: {
-          color: palette.surfaceMuted,
-        },
-        border: {
-          color: palette.borderSoft,
-        },
-        ticks: {
-          color: palette.textSecondary,
-        },
-        title: {
-          display: true,
-          text: "Customers",
-          color: palette.textSecondary,
-        },
-      },
+      ...base.scales,
+      y: { ...base.scales.y, title: { display: true, text: "Customers", color: palette.textSecondary } },
     },
   }
 

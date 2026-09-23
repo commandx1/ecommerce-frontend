@@ -22,6 +22,7 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-warning-strong: var(--warning-strong);
+  --color-danger-strong: var(--danger-strong);
   --color-danger: var(--danger);
   --color-border-soft: var(--border-soft);
   --color-border-strong: var(--border-strong);
@@ -128,6 +129,8 @@
      pointing at the unchanged `--warning` rather than getting its own guessed value. */
   --warning-strong: oklch(46% 0.16 77);
   --danger: oklch(61% 0.2 24);
+  /* AA text on the danger/12 tint (61% measured 3.42:1); dark mode reuses --danger (5.5:1+). */
+  --danger-strong: oklch(47% 0.19 24);
   --background: var(--canvas);
   --foreground: var(--text-primary);
   --card: var(--surface);
@@ -188,6 +191,7 @@
      points at the unchanged `--warning` rather than a separately-guessed value. */
   --warning-strong: var(--warning);
   --danger: oklch(62% 0.16 24);
+  --danger-strong: oklch(72% 0.15 24);
   --background: var(--canvas);
   --foreground: var(--text-primary);
   --card: var(--surface);
@@ -226,6 +230,80 @@
   --shadow-floating: 0 32px 80px rgba(0, 0, 0, 0.32);
 }
 
+/* ── Dashboard scope (buyer/vendor). Same token names, warm-graphite values.
+   `body:has()` is required: Radix Dialog/Popover and sonner portal into <body>,
+   outside the layout root, and must inherit the same palette. ── */
+[data-theme-scope="dashboard"],
+body:has([data-theme-scope="dashboard"]) {
+  /* --background is resolved on :root; re-point it so <body> paints the scoped canvas. */
+  --background: var(--canvas);
+  --canvas: oklch(93.5% 0.012 80);
+  --surface: oklch(98.6% 0.005 80);
+  --surface-elevated: oklch(99.4% 0.003 80);
+  --surface-muted: oklch(92% 0.012 80);
+  --text-primary: oklch(26% 0.015 70);
+  --text-secondary: oklch(44% 0.014 70);
+  /* 50% keeps >= 4.5:1 on the 94.6% muted surface and on glass over the backdrop; verify with axe. */
+  --text-muted: oklch(50% 0.014 70);
+  --border-soft: oklch(86% 0.012 80);
+  --border-strong: oklch(76% 0.015 80);
+  --accent-strong: oklch(82% 0.15 118);
+  --sidebar: var(--surface);
+  --sidebar-border: var(--border-soft);
+  --sidebar-accent: color-mix(in oklab, var(--accent-strong) 18%, transparent);
+  --sidebar-accent-foreground: var(--text-primary);
+  --chart-1: var(--brand);
+  --chart-2: oklch(70% 0.15 120);
+  --chart-3: oklch(72% 0.11 75);
+  --chart-4: oklch(64% 0.17 28);
+  --chart-5: oklch(55% 0.11 300);
+  /* ponytail: single perf knob — drop to 8px if shell scroll FPS < 55 */
+  --glass-blur: 18px;
+  --glass-bg: color-mix(in oklab, var(--surface-elevated) 66%, transparent);
+  --glass-rim: oklch(100% 0 0 / 0.95);
+  --glass-edge: oklch(100% 0 0 / 0.55);
+  --glass-specular: linear-gradient(135deg, oklch(100% 0 0 / 0.45) 0%, oklch(100% 0 0 / 0.08) 38%, transparent 60%);
+  --glass-shadow: 0 18px 48px oklch(30% 0.02 70 / 0.14);
+  --glass-tile: color-mix(in oklab, var(--surface-muted) 70%, transparent);
+  /* Backdrop: one warm light top-left, edge vignette, film grain. Tune here only. */
+  --backdrop-light: oklch(100% 0 0 / 1);
+  --backdrop-vignette: oklch(30% 0.03 70 / 0.32);
+  --grain-opacity: 0.13;
+}
+
+.dark [data-theme-scope="dashboard"],
+.dark body:has([data-theme-scope="dashboard"]) {
+  --background: var(--canvas);
+  --canvas: oklch(17% 0.01 70);
+  --surface: oklch(22% 0.011 70);
+  --surface-elevated: oklch(26% 0.012 70);
+  --surface-muted: oklch(31% 0.012 70);
+  --text-primary: oklch(96% 0.006 85);
+  --text-secondary: oklch(85% 0.01 80);
+  --text-muted: oklch(73.2% 0.012 80);
+  --border-soft: oklch(100% 0 0 / 0.1);
+  --border-strong: oklch(100% 0 0 / 0.18);
+  --accent-strong: oklch(84% 0.16 120);
+  --sidebar: var(--surface);
+  --sidebar-border: var(--border-soft);
+  --sidebar-accent: oklch(100% 0 0 / 0.07);
+  --sidebar-accent-foreground: var(--text-primary);
+  --chart-1: oklch(74% 0.1 229);
+  --chart-2: oklch(84% 0.16 120);
+  --chart-3: oklch(78% 0.13 80);
+  --chart-4: oklch(68% 0.18 24);
+  --chart-5: oklch(74% 0.11 309);
+  --glass-bg: color-mix(in oklab, var(--surface-elevated) 45%, transparent);
+  --glass-rim: oklch(100% 0 0 / 0.22);
+  --glass-edge: oklch(100% 0 0 / 0.1);
+  --glass-specular: linear-gradient(135deg, oklch(100% 0 0 / 0.12) 0%, oklch(100% 0 0 / 0.03) 38%, transparent 60%);
+  --glass-shadow: 0 24px 60px oklch(0% 0 0 / 0.45);
+  --glass-tile: oklch(100% 0 0 / 0.05);
+  --backdrop-light: oklch(95% 0.01 80 / 0.2);
+  --backdrop-vignette: oklch(0% 0 0 / 0.65);
+  --grain-opacity: 0.12;
+}
+
 @media (min-width: 64rem) {
   :root {
     --header-height: 5.25rem;
@@ -238,6 +316,61 @@
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* ── Glass primitives. Single blur level: only outer panels/strips blur;
+   glass-tile is the blur-less inner surface for stat tiles, pills, rows. ── */
+@utility glass-panel {
+  border-radius: 1.5rem;
+  border: 1px solid var(--border-soft);
+  background: var(--glass-specular), var(--glass-bg);
+  box-shadow:
+    inset 0 1px 0 var(--glass-rim),
+    inset 0 0 0 1px var(--glass-edge),
+    var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  @supports not (backdrop-filter: blur(1px)) {
+    background: var(--surface-elevated);
+  }
+}
+
+@utility glass-strip {
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--glass-bg);
+  box-shadow: inset 0 -1px 0 var(--glass-rim);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  @supports not (backdrop-filter: blur(1px)) {
+    background: var(--surface-elevated);
+  }
+}
+
+@utility glass-tile {
+  border-radius: 1rem;
+  background: var(--glass-tile);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--glass-rim) 50%, transparent);
+}
+
+/* Fixed graphite backdrop behind the dashboard: single warm light source top-left, edge
+   vignette, and a static film-grain layer so the glass blur has texture to diffuse.
+   Nothing animates. */
+.dashboard-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(95vw 75vh at 8% -5%, var(--backdrop-light), transparent 62%),
+    radial-gradient(130vw 110vh at 50% 45%, transparent 55%, var(--backdrop-vignette) 100%), var(--canvas);
+}
+.dashboard-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size: 220px 220px;
 }
 
 @layer base {
@@ -629,6 +762,16 @@ button {
 
   /* The universal rule above loses to `.beam-border::before` on specificity; stop the beam explicitly. */
   .beam-border::before {
+    animation: none;
+  }
+
+  /* Class-level rules outrank the universal 0.01ms rule above; stop them explicitly. */
+  [data-theme-scope="dashboard"] .glass-panel,
+  [data-theme-scope="dashboard"] .glass-tile,
+  [data-theme-scope="dashboard"] [class*="transition"] {
+    transition: none;
+  }
+  .fade-up {
     animation: none;
   }
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import SectionHeading from "@/components/layout/SectionHeading"
 import AnimatedTabs from "@/components/ui/animated-tabs"
 import FavoriteProductsTab from "@/features/favorites/FavoriteProductsTab"
 import FavoriteSuppliersPage from "@/features/suppliers/FavoriteSuppliersPage"
@@ -33,10 +34,12 @@ export default function FavoritesPage() {
   return (
     <section>
       <div className="mb-8 flex flex-col gap-5">
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary">Favorites</h1>
-          <p className="mt-1 text-text-secondary">Products and vendors you have saved for quick access.</p>
-        </div>
+        <SectionHeading
+          titleAs="h1"
+          variant="technical"
+          title="Favorites"
+          description="Products and vendors you have saved for quick access."
+        />
 
         <AnimatedTabs<FavoritesTab>
           value={tab}

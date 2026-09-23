@@ -6,6 +6,7 @@ import AddressAutocomplete from "@/components/AddressAutocomplete"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import { showToast } from "@/components/ui/Toast"
 import { type Address, addressAPI, type CreateAddressPayload, type UpdateAddressPayload } from "@/lib/api/address"
 import type { ParsedAddress } from "@/lib/utils/google-maps"
@@ -299,10 +300,12 @@ export default function AddressManagementShared() {
   )
 
   return (
-    <section
+    <SurfaceCard
+      as="section"
+      variant="glass"
       // No overflow-hidden: it clipped the address suggestions dropdown. z-10 lifts the dropdown
       // over the later fade-up sections, whose leftover transform makes them stacking contexts.
-      className="fade-up relative z-10 rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
+      className="fade-up relative z-10"
       style={{ animationDelay: "280ms" }}
     >
       <div className="flex items-center justify-between gap-3 border-b border-border-soft p-6">
@@ -327,6 +330,6 @@ export default function AddressManagementShared() {
         )}
       </div>
       {isEditing && currentAddress ? addressForm : <div className="p-6">{addressList}</div>}
-    </section>
+    </SurfaceCard>
   )
 }

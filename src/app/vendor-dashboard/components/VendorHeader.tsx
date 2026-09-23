@@ -1,18 +1,9 @@
 "use client"
 
-import DashboardHeader, { type DashboardHeaderNavItem } from "@/components/layout/DashboardHeader"
+import DashboardHeader from "@/components/layout/DashboardHeader"
 import NotificationBell from "@/features/notifications/components/NotificationBell"
 
-const VENDOR_NAV_ITEMS: DashboardHeaderNavItem[] = [
-  { href: "/vendor-dashboard", label: "Dashboard", matchMode: "exact" },
-  { href: "/vendor-dashboard/products", label: "Products", matchMode: "startsWith" },
-  { href: "/vendor-dashboard/orders", label: "Orders", matchMode: "startsWith" },
-  { href: "/vendor-dashboard/analytics", label: "Analytics", matchMode: "startsWith" },
-  // "Marketing" pointed at /vendor-dashboard/marketing, which has no page - re-add it with the page.
-]
-
+// No top nav: the sidebar is the single navigation source.
 export default function VendorHeader() {
-  return (
-    <DashboardHeader navItems={VENDOR_NAV_ITEMS} accountFallbackName="Vendor" notificationBell={<NotificationBell />} />
-  )
+  return <DashboardHeader accountFallbackName="Vendor" notificationBell={<NotificationBell />} />
 }

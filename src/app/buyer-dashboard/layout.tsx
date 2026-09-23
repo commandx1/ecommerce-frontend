@@ -90,7 +90,8 @@ export default function BuyerDashboardLayout({ children }: { children: React.Rea
   return (
     <DashboardMobileSidebarProvider>
       <NotificationSocketBridge />
-      <div className="flex min-h-screen flex-col bg-canvas">
+      <div data-theme-scope="dashboard" className="relative isolate flex min-h-screen flex-col">
+        <div className="dashboard-backdrop" aria-hidden />
         <BuyerHeader />
         <div className="flex flex-1">
           <DashboardSidebar />

@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import ThemeToggle from "@/components/theme/ThemeToggle"
 import { GlassMorphMenu } from "@/components/ui/glass-morph-menu"
-import { LiquidGlass } from "@/components/ui/liquid-glass"
+import { glassDarkTintClass, LiquidGlass } from "@/components/ui/liquid-glass"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
@@ -38,7 +38,7 @@ const GlassPill = ({ className, children }: { className?: string; children: Reac
   <div className={cn("relative isolate flex shrink-0 items-center rounded-full", className)}>
     <LiquidGlass
       borderRadius={9999}
-      className="-z-10 after:hidden dark:[--lg-tint:color-mix(in_srgb,var(--color-surface-elevated)_65%,transparent)]"
+      className={cn("-z-10 after:hidden [&>[data-lg-rim]]:hidden!", glassDarkTintClass)}
     />
     {children}
   </div>
@@ -89,9 +89,6 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
 
-  // Inside a GlassPill the search box drops its own surface; the pill is the surface.
-  const searchInPillClass = "max-w-none border-0 bg-transparent shadow-none backdrop-blur-none"
-
   const navLinkClass =
     "relative z-10 inline-flex h-10 items-center rounded-full px-3.5 text-sm font-medium text-text-secondary transition-colors duration-200 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand cursor-pointer"
 
@@ -105,9 +102,13 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
           {/* 32px: a full pill on the 64px desktop row, soft corners on the two-row mobile capsule. */}
           <LiquidGlass
             blur={24}
-            distortion={8}
+            edge={999} // whole surface refracts, like the panels
+            rimBlur={6}
             borderRadius={32}
-            className="-z-10 shadow-none transition-shadow group-data-[scrolled=true]/capsule:shadow-floating dark:[--lg-tint:color-mix(in_srgb,var(--color-surface-elevated)_65%,transparent)]"
+            className={cn(
+              "-z-10 transition-shadow group-data-[scrolled=true]/capsule:shadow-floating",
+              glassDarkTintClass,
+            )}
           />
 
           {/* Row 1 on mobile; `lg:contents` flattens it so desktop stays a single row.
@@ -237,9 +238,7 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
               ))}
             </nav>
 
-            <GlassPill className="hidden min-w-0 flex-1 lg:flex">
-              <MainSearchbox className={searchInPillClass} />
-            </GlassPill>
+            <MainSearchbox className="hidden min-w-0 flex-1 max-w-none lg:block" />
 
             <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 lg:gap-3">
               <GlassPill>
@@ -300,9 +299,7 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
           </div>
 
           {/* Row 2, mobile only: the search box, inside the same capsule. */}
-          <GlassPill className="lg:hidden">
-            <MainSearchbox className={searchInPillClass} />
-          </GlassPill>
+          <MainSearchbox className="max-w-none lg:hidden" />
         </div>
       </div>
     </header>

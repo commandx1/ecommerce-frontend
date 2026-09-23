@@ -38,7 +38,7 @@ export default function TrackingLinksModal() {
       onClose={handleClose}
       title={title}
       maxWidthClassName="max-w-2xl"
-      contentClassName="rounded-2xl border border-border-soft bg-surface-elevated shadow-panel"
+      contentClassName="glass-panel"
     >
       <div>
         <div className="flex items-center justify-between border-b border-border-soft px-6 py-4">

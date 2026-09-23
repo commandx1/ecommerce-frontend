@@ -14,8 +14,10 @@ import {
   Trash2,
 } from "lucide-react"
 import { useMemo, useState } from "react"
+import SectionHeading from "@/components/layout/SectionHeading"
 import { Button } from "@/components/ui/button"
 import Modal from "@/components/ui/Modal"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
 import formatCurrency from "@/lib/helpers/formatCurrency"
@@ -324,26 +326,27 @@ export default function VendorPromotionsPage() {
 
   return (
     <>
-      <section className="mb-8 rounded-3xl border border-border-soft bg-linear-to-br from-brand/8 via-surface-elevated to-warning/8 p-6 shadow-soft">
-        <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-text-primary">Promotions</h1>
-            <p className="mt-1 text-text-secondary">
-              Campaign performance and operational control in one hybrid command center.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" className="rounded-xl px-4">
-              Export
-            </Button>
-            <Button type="button" onClick={openCreateModal} className="rounded-xl px-4">
-              <Plus className="mr-1 h-4 w-4" />
-              Create Campaign
-            </Button>
-          </div>
-        </div>
+      <SurfaceCard as="section" variant="glass" className="mb-8 rounded-3xl p-6">
+        <SectionHeading
+          className="mb-5"
+          titleAs="h1"
+          variant="technical"
+          title="Promotions"
+          description="Campaign performance and operational control in one hybrid command center."
+          actions={
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" className="rounded-xl px-4">
+                Export
+              </Button>
+              <Button type="button" onClick={openCreateModal} className="rounded-xl px-4">
+                <Plus className="mr-1 h-4 w-4" />
+                Create Campaign
+              </Button>
+            </div>
+          }
+        />
 
-        <div className="inline-flex rounded-xl border border-border-soft bg-surface-elevated p-1">
+        <div className="glass-tile inline-flex border border-border-soft p-1">
           {(["7D", "30D", "90D"] as const).map((item) => (
             <button
               key={item}
@@ -358,7 +361,7 @@ export default function VendorPromotionsPage() {
             </button>
           ))}
         </div>
-      </section>
+      </SurfaceCard>
 
       <section className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-6">
         <MetricCard
@@ -618,7 +621,7 @@ export default function VendorPromotionsPage() {
         onClose={() => setModalOpen(false)}
         title={modalMode === "create" ? "Create Campaign" : "Edit Campaign"}
         maxWidthClassName="max-w-2xl"
-        contentClassName="rounded-3xl border border-border-soft bg-surface-elevated"
+        contentClassName="glass-panel"
       >
         <div className="p-6">
           <h2 className="mb-1 text-2xl font-semibold text-text-primary">
@@ -735,7 +738,7 @@ export default function VendorPromotionsPage() {
         onClose={closeArchiveModal}
         title="Archive Campaign"
         maxWidthClassName="max-w-md"
-        contentClassName="rounded-2xl border border-border-soft bg-surface-elevated"
+        contentClassName="glass-panel"
       >
         <div className="p-6">
           <h3 className="mb-2 text-lg font-semibold text-text-primary">Archive this campaign?</h3>
@@ -774,7 +777,7 @@ function MetricCard({
     success: "border-success/20 bg-success/8",
     warning: "border-warning/24 bg-warning/8",
     info: "border-brand/20 bg-brand/8",
-    neutral: "border-border-soft bg-surface-elevated",
+    neutral: "border-border-soft bg-(--glass-tile)",
   }
 
   return (
@@ -823,11 +826,11 @@ function FeaturedCampaignCard({
         <>
           <h3 className="mt-3 font-semibold text-text-primary">{campaign.name}</h3>
           <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-            <div className="rounded-lg border border-border-soft bg-surface-elevated p-2">
+            <div className="glass-tile rounded-lg border border-border-soft p-2">
               <div className="text-xs text-text-secondary">ROAS</div>
               <div className="font-semibold text-text-primary">{getRoas(campaign).toFixed(2)}x</div>
             </div>
-            <div className="rounded-lg border border-border-soft bg-surface-elevated p-2">
+            <div className="glass-tile rounded-lg border border-border-soft p-2">
               <div className="text-xs text-text-secondary">CTR</div>
               <div className="font-semibold text-text-primary">{getCtr(campaign).toFixed(2)}%</div>
             </div>

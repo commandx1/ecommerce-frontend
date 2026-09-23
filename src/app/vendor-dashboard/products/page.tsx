@@ -23,10 +23,12 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useId, useRef, useState } from "react"
+import SectionHeading from "@/components/layout/SectionHeading"
 import AnimatedTabs from "@/components/ui/animated-tabs"
 import { Button } from "@/components/ui/button"
 import DataTable from "@/components/ui/data-table"
 import Modal from "@/components/ui/Modal"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -91,7 +93,7 @@ const ConfirmationModal = ({
       title={title}
       maxWidthClassName="max-w-md"
       overlayClassName="bg-brand-strong/40 backdrop-blur-[2px]"
-      contentClassName="rounded-2xl border border-border-soft bg-surface-elevated p-0"
+      contentClassName="glass-panel p-0"
     >
       <div className="p-6">
         <h3 className="mb-2 text-lg font-semibold text-text-primary">{title}</h3>
@@ -1271,32 +1273,34 @@ export default function ProductsPage() {
     <>
       {/* Page Header */}
       <section id={`${id}-page-header`} className="mb-8">
-        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-text-primary">Product Management</h1>
-            <p className="text-text-secondary mt-1">Manage your entire product catalog, inventory, and pricing</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              type="button"
-              variant="secondary"
-              className="rounded-lg px-4 font-medium dark:text-neutral-800"
-              onClick={() => setIsImportModalOpen(true)}
-            >
-              <Upload className="mr-2 w-4 h-4" />
-              Import Products
-            </Button>
-            <Button asChild className="rounded-lg px-4 font-medium">
-              <Link href="/vendor-dashboard/products/create">
-                <span className="mr-2">+</span>
-                Add New Product
-              </Link>
-            </Button>
-          </div>
-        </div>
+        <SectionHeading
+          titleAs="h1"
+          variant="technical"
+          title="Product Management"
+          description="Manage your entire product catalog, inventory, and pricing"
+          actions={
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                variant="secondary"
+                className="rounded-lg px-4 font-medium dark:text-neutral-800"
+                onClick={() => setIsImportModalOpen(true)}
+              >
+                <Upload className="mr-2 w-4 h-4" />
+                Import Products
+              </Button>
+              <Button asChild className="rounded-lg px-4 font-medium">
+                <Link href="/vendor-dashboard/products/create">
+                  <span className="mr-2">+</span>
+                  Add New Product
+                </Link>
+              </Button>
+            </div>
+          }
+        />
 
         {/* View Mode Tabs */}
-        <div className="mb-6">
+        <div className="mt-6 mb-6">
           <AnimatedTabs<ViewMode>
             value={viewMode}
             options={VIEW_MODE_TABS}
@@ -1313,10 +1317,7 @@ export default function ProductsPage() {
       </section>
 
       {/* Products Table + Filters */}
-      <section
-        id={`${id}-products-table-section`}
-        className="mb-6 overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
-      >
+      <SurfaceCard as="section" id={`${id}-products-table-section`} variant="glass" className="mb-6 overflow-hidden">
         <div className="border-b border-border-soft p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             {viewMode === "products" ? (
@@ -1533,7 +1534,7 @@ export default function ProductsPage() {
             </div>
           </div>
         </div>
-      </section>
+      </SurfaceCard>
 
       <ImportDocumentsModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
 
@@ -1543,7 +1544,7 @@ export default function ProductsPage() {
         title="Bulk Discount"
         maxWidthClassName="max-w-md"
         overlayClassName="bg-brand-strong/40 backdrop-blur-[2px]"
-        contentClassName="rounded-2xl border border-border-soft bg-surface-elevated p-0"
+        contentClassName="glass-panel p-0"
       >
         <div className="p-6">
           <div className="mb-4 flex items-center gap-3">

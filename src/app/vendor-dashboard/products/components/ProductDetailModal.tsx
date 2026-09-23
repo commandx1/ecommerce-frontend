@@ -87,7 +87,7 @@ export default function ProductDetailModal({
       title="Product details"
       maxWidthClassName="max-w-3xl"
       overlayClassName="bg-brand-strong/40 backdrop-blur-[2px]"
-      contentClassName="max-h-[88vh] rounded-2xl border border-border-soft bg-surface-elevated p-0"
+      contentClassName="glass-panel max-h-[88vh] p-0"
       bodyClassName="flex max-h-[88vh] flex-col"
     >
       {/* Header */}

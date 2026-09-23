@@ -3,6 +3,7 @@
 import { DollarSign, type LucideIcon, ShoppingBag, Star } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import { vendorDashboardAPI } from "@/lib/api/vendor-dashboard"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { cn } from "@/lib/utils"
@@ -138,12 +139,11 @@ const VendorMetricsCards = () => {
     return (
       <>
         {rangeSelector}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[0, 1, 2].map((placeholder) => (
-            <div
-              key={placeholder}
-              className="mb-6 h-40 animate-pulse rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
-            />
+            <SurfaceCard key={placeholder} variant="glass" className="h-40 animate-pulse">
+              {null}
+            </SurfaceCard>
           ))}
         </div>
       </>
@@ -154,12 +154,12 @@ const VendorMetricsCards = () => {
     return (
       <>
         {rangeSelector}
-        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-border-soft bg-surface-elevated px-6 py-16 text-center shadow-soft">
+        <SurfaceCard variant="glass" className="mb-6 flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
           <p className="text-sm font-medium text-danger">Couldn't load your metrics. Please try again.</p>
           <Button type="button" variant="outline" onClick={() => void fetchMetrics()} className="rounded-lg px-4">
             Retry
           </Button>
-        </div>
+        </SurfaceCard>
       </>
     )
   }
@@ -167,7 +167,7 @@ const VendorMetricsCards = () => {
   return (
     <>
       {rangeSelector}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {metrics.map((metric) => {
           const IconComponent = metric.icon
           const iconColorClass = colorMap[metric.iconColor] ?? RING_TONE_CLASS_MAP.neutral
@@ -175,10 +175,7 @@ const VendorMetricsCards = () => {
             metric.changeType === "positive" ? STATUS_TONE_CLASS_MAP.success : STATUS_TONE_CLASS_MAP.warning
 
           return (
-            <div
-              key={metric.id}
-              className="mb-6 rounded-2xl border border-border-soft bg-surface-elevated p-6 shadow-soft"
-            >
+            <SurfaceCard key={metric.id} variant="glass" className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className={cn("flex h-12 w-12 items-center justify-center rounded-xl border", iconColorClass)}>
                   <IconComponent className="text-xl w-6 h-6" />
@@ -195,7 +192,7 @@ const VendorMetricsCards = () => {
               {metric.footer ? (
                 <div className="mt-2 border-t border-border-soft pt-2 text-xs text-text-muted">{metric.footer}</div>
               ) : null}
-            </div>
+            </SurfaceCard>
           )
         })}
       </div>

@@ -5,6 +5,7 @@ import AutoOrderBadge from "@/app/buyer-dashboard/orders/components/auto-order-b
 import { formatDateOnly, formatTimeOnly } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
 import { Button } from "@/components/ui/button"
 import { Collapse, CollapseContent, CollapseTrigger } from "@/components/ui/collapse"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import type { VendorOrder, VendorOrderItem } from "@/lib/api/vendor-orders"
 import { isCancelableOrderItemStatus } from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
@@ -79,7 +80,7 @@ function SortButton({
 
 function OrderCardSkeleton() {
   return (
-    <div className="animate-pulse rounded-2xl border border-border-soft bg-surface-elevated p-4 sm:p-5">
+    <SurfaceCard variant="glass" className="animate-pulse p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between">
         <div className="space-y-2">
           <div className="h-4 w-28 rounded-full bg-surface-muted" />
@@ -91,7 +92,7 @@ function OrderCardSkeleton() {
         <div className="h-4 w-24 rounded-full bg-surface-muted" />
         <div className="h-5 w-20 rounded-full bg-surface-muted" />
       </div>
-    </div>
+    </SurfaceCard>
   )
 }
 
@@ -128,9 +129,9 @@ export default function VendorOrdersMobileList({
 
   if (orders.length === 0) {
     return (
-      <div className="rounded-2xl border border-border-soft bg-surface-elevated p-8 text-center text-sm text-text-muted">
+      <SurfaceCard variant="glass" className="p-8 text-center text-sm text-text-muted">
         No orders found.
-      </div>
+      </SurfaceCard>
     )
   }
 
@@ -173,7 +174,7 @@ export default function VendorOrdersMobileList({
             key={order.orderId}
             open={isOpen}
             onOpenChange={(next) => onExpandedOrderChange(next ? order.orderId : null)}
-            className={`overflow-hidden rounded-2xl border bg-surface-elevated transition-colors ${
+            className={`glass-panel overflow-hidden transition-colors ${
               isOpen ? "border-brand/30 bg-surface-muted/40" : "border-border-soft"
             }`}
           >

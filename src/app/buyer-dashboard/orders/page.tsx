@@ -1,6 +1,8 @@
 "use client"
 
 import SingleOrderNotice from "@/components/dashboard-shared/SingleOrderNotice"
+import SectionHeading from "@/components/layout/SectionHeading"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import CancelConfirmModal from "./components/cancel-confirm-modal"
 import OrdersMobileList from "./components/orders-mobile-list"
 import OrdersPagination from "./components/orders-pagination"
@@ -30,18 +32,19 @@ function BuyerOrdersPageContent() {
 
   return (
     <>
-      <section className="mb-6 md:mb-8">
-        <div className="mb-4 flex items-center justify-between md:mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-text-primary sm:text-3xl">Your Orders</h1>
-            <p className="mt-1 text-sm text-text-secondary sm:text-base">
-              Track and review all orders placed from your account
-            </p>
-          </div>
-        </div>
-      </section>
+      <SectionHeading
+        titleAs="h1"
+        variant="technical"
+        title="Your Orders"
+        description="Track and review all orders placed from your account"
+        className="mb-6 md:mb-8"
+      />
 
-      <section className="overflow-hidden border-border-soft bg-surface-elevated max-md:border-y max-md:-mx-4 md:rounded-2xl md:border md:shadow-soft">
+      <SurfaceCard
+        as="section"
+        variant="glass"
+        className="overflow-hidden max-md:-mx-4 max-md:rounded-none max-md:border-x-0"
+      >
         <div className="border-b border-border-soft px-4 pt-4 sm:px-6">
           <OrdersStatusTabs />
         </div>
@@ -59,7 +62,7 @@ function BuyerOrdersPageContent() {
         <div className="px-4 md:px-0">
           <OrdersPagination />
         </div>
-      </section>
+      </SurfaceCard>
 
       <CancelConfirmModal />
 

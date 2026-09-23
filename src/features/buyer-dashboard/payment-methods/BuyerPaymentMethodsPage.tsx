@@ -7,9 +7,11 @@ import { useTheme } from "next-themes"
 import type React from "react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import ConfirmationModal from "@/components/feedback/ConfirmationModal"
+import SectionHeading from "@/components/layout/SectionHeading"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Modal from "@/components/ui/Modal"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import { showToast } from "@/components/ui/Toast"
 import { useStripePromise } from "@/hooks/useStripePromise"
 import { paymentMethodsAPI } from "@/lib/api/payment-methods"
@@ -341,20 +343,19 @@ function PaymentMethodsContent() {
   return (
     <div className="space-y-6">
       {/* Header + KPIs */}
-      <section className="rounded-[1.25rem] border border-border-soft bg-surface-elevated p-6 shadow-soft">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-text-primary">Payment Methods</h1>
-            <p className="mt-2 max-w-3xl text-text-secondary">
-              Manage cards used for invoice settlement. Cards are stored securely by Stripe — we only hold the last 4
-              digits and expiry.
-            </p>
-          </div>
-          <Button type="button" onClick={openAddModal}>
-            <Plus className="h-4 w-4" />
-            Add New Card
-          </Button>
-        </div>
+      <SurfaceCard as="section" variant="glass" className="p-6">
+        <SectionHeading
+          titleAs="h1"
+          variant="technical"
+          title="Payment Methods"
+          description="Manage cards used for invoice settlement. Cards are stored securely by Stripe — we only hold the last 4 digits and expiry."
+          actions={
+            <Button type="button" onClick={openAddModal}>
+              <Plus className="h-4 w-4" />
+              Add New Card
+            </Button>
+          }
+        />
 
         <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
           <KpiCard
@@ -387,7 +388,7 @@ function PaymentMethodsContent() {
             }
           />
         </div>
-      </section>
+      </SurfaceCard>
 
       {/* Card list */}
       <section className="rounded-[1.25rem] border border-border-soft bg-surface p-6 shadow-soft">
@@ -514,9 +515,9 @@ export default function BuyerPaymentMethodsPage() {
 
   if (!stripePromise) {
     return (
-      <div className="rounded-[1.25rem] border border-border-soft bg-surface-elevated p-8 text-center text-sm text-text-secondary shadow-soft">
+      <SurfaceCard variant="glass" className="p-8 text-center text-sm text-text-secondary">
         Stripe publishable key is missing. Set <code>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code>.
-      </div>
+      </SurfaceCard>
     )
   }
 

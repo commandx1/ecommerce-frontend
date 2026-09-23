@@ -1,25 +1,9 @@
 "use client"
 
-import DashboardHeader, { type DashboardHeaderNavItem } from "@/components/layout/DashboardHeader"
+import DashboardHeader from "@/components/layout/DashboardHeader"
 import NotificationBell from "@/features/notifications/components/NotificationBell"
 
-// Üst navigasyon kaldırıldı - tek navigasyon kaynağı sol sidebar.
-const BUYER_NAV_ITEMS: DashboardHeaderNavItem[] = [
-  // { href: "/buyer-dashboard", label: "Dashboard" },
-  // { href: "/buyer-dashboard/orders", label: "Orders" },
-  // { href: "/buyer-dashboard/vendors", label: "Vendors" },
-  // { href: "/buyer-dashboard/invoices", label: "Invoices" },
-  // "Reports" pointed at /buyer-dashboard/reports, which has no page - re-add it with the page.
-]
-
+// No top nav: the sidebar is the single navigation source.
 export default function BuyerHeader() {
-  return (
-    <DashboardHeader
-      navItems={BUYER_NAV_ITEMS}
-      accountFallbackName="Account"
-      showCart
-      showSearch
-      notificationBell={<NotificationBell />}
-    />
-  )
+  return <DashboardHeader accountFallbackName="Account" showCart showSearch notificationBell={<NotificationBell />} />
 }

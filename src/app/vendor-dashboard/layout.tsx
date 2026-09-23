@@ -96,11 +96,12 @@ export default function VendorDashboardLayout({ children }: { children: React.Re
       <DashboardMobileSidebarProvider>
         <ImpersonationTabTitle />
         <NotificationSocketBridge />
-        <div className="flex min-h-screen flex-col bg-canvas">
+        <div data-theme-scope="dashboard" className="relative isolate flex min-h-screen flex-col">
+          <div className="dashboard-backdrop" aria-hidden />
           <VendorHeader />
           <div className="flex flex-1">
             <VendorSidebar />
-            <main id={mainContentId} className="min-w-0 flex-1 p-4 md:p-8">
+            <main id={mainContentId} className="min-w-0 flex-1 p-4 md:p-6">
               {children}
             </main>
           </div>

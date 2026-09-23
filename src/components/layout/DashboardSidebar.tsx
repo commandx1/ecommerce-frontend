@@ -278,14 +278,14 @@ export default function DashboardSidebar({
         className={cn(
           "fixed inset-y-0 left-0 z-50 h-full w-72 shrink-0 transition-transform duration-200",
           isMobileOpen ? "translate-x-0 shadow-floating" : "-translate-x-full",
-          "md:sticky md:top-16 md:z-40 md:h-[calc(100vh-4rem)] md:w-auto md:translate-x-0 md:overflow-visible md:shadow-none md:transition-none",
+          "md:sticky md:top-[4.75rem] md:mt-3 md:ml-3 md:z-40 md:h-[calc(100vh-5.5rem)] md:w-auto md:translate-x-0 md:overflow-visible md:shadow-none md:transition-none",
         )}
       >
         <MotionConfig reducedMotion="user">
           <motion.div
             data-testid="dashboard-sidebar-panel"
             className={cn(
-              "flex h-full w-full flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-text-secondary",
+              "flex h-full w-full flex-col overflow-hidden glass-panel rounded-none rounded-r-3xl md:rounded-3xl text-text-secondary",
               "md:transition-[width] md:duration-200 md:ease-out",
               expanded ? "md:w-60" : "md:w-[3.05rem]",
             )}

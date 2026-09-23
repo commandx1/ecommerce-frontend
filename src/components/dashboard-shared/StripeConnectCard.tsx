@@ -3,6 +3,7 @@
 import { BadgeCheck, CreditCard, ExternalLink, ShieldAlert } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import { showToast } from "@/components/ui/Toast"
 import {
   createStripeAccountLink,
@@ -63,7 +64,7 @@ export default function StripeConnectCard() {
   const isIncomplete = Boolean(status?.connected) && !isEnabled
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
+    <SurfaceCard as="section" variant="glass" className="overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-soft p-6">
         <div className="flex items-center gap-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand/10 text-brand">
@@ -123,6 +124,6 @@ export default function StripeConnectCard() {
           </div>
         </div>
       )}
-    </section>
+    </SurfaceCard>
   )
 }

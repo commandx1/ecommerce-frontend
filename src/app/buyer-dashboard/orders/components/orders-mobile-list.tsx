@@ -2,6 +2,7 @@
 
 import { ChevronDown, ChevronsUpDown, ChevronUp, Package, Store } from "lucide-react"
 import { Collapse, CollapseContent, CollapseTrigger } from "@/components/ui/collapse"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import type { BuyerOrder } from "@/lib/api/buyer-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useBuyerOrdersTableActions, useBuyerOrdersTableSelector } from "../context/buyer-orders-context"
@@ -79,7 +80,7 @@ function SortButton({
 
 function OrderCardSkeleton() {
   return (
-    <div className="animate-pulse rounded-2xl border border-border-soft bg-surface-elevated p-4 sm:p-5">
+    <SurfaceCard variant="glass" className="animate-pulse p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between">
         <div className="space-y-2">
           <div className="h-3 w-16 rounded-full bg-surface-muted" />
@@ -92,7 +93,7 @@ function OrderCardSkeleton() {
         <div className="h-4 w-24 rounded-full bg-surface-muted" />
         <div className="h-5 w-20 rounded-full bg-surface-muted" />
       </div>
-    </div>
+    </SurfaceCard>
   )
 }
 
@@ -132,9 +133,9 @@ export default function OrdersMobileList() {
 
   if (filteredOrders.length === 0) {
     return (
-      <div className="rounded-2xl border border-border-soft bg-surface-elevated p-8 text-center text-sm text-text-muted">
+      <SurfaceCard variant="glass" className="p-8 text-center text-sm text-text-muted">
         No orders found.
-      </div>
+      </SurfaceCard>
     )
   }
 
@@ -165,8 +166,8 @@ export default function OrdersMobileList() {
             key={order.orderId}
             open={isOpen}
             onOpenChange={(next) => handleExpandedChange({ [order.orderId]: next })}
-            className={`overflow-hidden rounded-2xl border bg-surface-elevated transition-colors ${
-              isOpen ? "border-brand/30 bg-surface-muted/40" : "border-border-soft"
+            className={`glass-panel overflow-hidden transition-colors ${
+              isOpen ? "border-brand/30 bg-surface-muted/40" : ""
             }`}
           >
             <CollapseTrigger className="flex w-full flex-col gap-4 p-2 md:p-4 text-left sm:p-5">

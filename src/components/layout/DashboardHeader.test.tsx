@@ -6,13 +6,8 @@ import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
 import { makeAccountUser, makeCart, makeCartItem } from "@/test/factories"
 import { render, screen, waitFor } from "@/test/render"
-import DashboardHeader, { type DashboardHeaderNavItem } from "./DashboardHeader"
+import DashboardHeader from "./DashboardHeader"
 import { DashboardMobileSidebarProvider, useDashboardMobileSidebar } from "./DashboardMobileSidebarContext"
-
-const navItems: DashboardHeaderNavItem[] = [
-  { href: "/buyer-dashboard", label: "Dashboard" },
-  { href: "/buyer-dashboard/orders", label: "Orders", matchMode: "startsWith" },
-]
 
 function DrawerState() {
   const { isOpen } = useDashboardMobileSidebar()
@@ -23,7 +18,7 @@ const renderHeader = (props: Partial<React.ComponentProps<typeof DashboardHeader
   render(
     <DashboardMobileSidebarProvider>
       <DrawerState />
-      <DashboardHeader navItems={navItems} {...props} />
+      <DashboardHeader {...props} />
     </DashboardMobileSidebarProvider>,
     { route },
   )
@@ -41,15 +36,6 @@ beforeEach(() => {
 })
 
 describe("DashboardHeader", () => {
-  it("renders the nav items and marks the current route", () => {
-    signIn()
-    renderHeader({}, "/buyer-dashboard/orders/ord-1")
-
-    // Only styling distinguishes the active tab — no `aria-current` is emitted.
-    expect(screen.getByRole("link", { name: "Orders" }).className).toContain("text-brand")
-    expect(screen.getByRole("link", { name: "Dashboard" }).className).toContain("border-transparent")
-  })
-
   it("shows the signed-in user's full name", () => {
     signIn({ name: "Serhat", surname: "Belen" })
     renderHeader()

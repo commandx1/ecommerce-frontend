@@ -1,6 +1,8 @@
 import { ArrowLeft, Mail, MapPin, PhoneCall } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import SectionHeading from "@/components/layout/SectionHeading"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import DashboardPanel from "../../components/shared/DashboardPanel"
 import { STATUS_TONE_CLASS_MAP } from "../../components/shared/dashboardToneMaps"
@@ -55,39 +57,41 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
             Back to all customers
           </Link>
         </div>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-text-primary">{customer.name}</h1>
-            <p className="mt-1 text-text-secondary">{customer.clinicName}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className={`inline-flex rounded-full border px-2 py-1 text-xs ${segmentToneMap[customer.segment]}`}>
-              {customer.segment}
-            </span>
-            <span className={`inline-flex rounded-full border px-2 py-1 text-xs ${healthToneMap[customer.health]}`}>
-              {customer.health}
-            </span>
-          </div>
-        </div>
+        <SectionHeading
+          titleAs="h1"
+          variant="technical"
+          title={customer.name}
+          description={customer.clinicName}
+          actions={
+            <div className="flex items-center gap-2">
+              <span className={`inline-flex rounded-full border px-2 py-1 text-xs ${segmentToneMap[customer.segment]}`}>
+                {customer.segment}
+              </span>
+              <span className={`inline-flex rounded-full border px-2 py-1 text-xs ${healthToneMap[customer.health]}`}>
+                {customer.health}
+              </span>
+            </div>
+          }
+        />
       </section>
 
       <section className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border border-border-soft bg-surface-elevated p-5 shadow-soft">
+        <SurfaceCard variant="glass" className="p-5">
           <div className="text-sm text-text-secondary">Total Spend</div>
           <div className="mt-2 text-2xl font-bold text-text-primary">{formatCurrency(customer.totalSpend)}</div>
-        </div>
-        <div className="rounded-2xl border border-border-soft bg-surface-elevated p-5 shadow-soft">
+        </SurfaceCard>
+        <SurfaceCard variant="glass" className="p-5">
           <div className="text-sm text-text-secondary">Average Order Value</div>
           <div className="mt-2 text-2xl font-bold text-text-primary">{formatCurrency(customer.averageOrderValue)}</div>
-        </div>
-        <div className="rounded-2xl border border-border-soft bg-surface-elevated p-5 shadow-soft">
+        </SurfaceCard>
+        <SurfaceCard variant="glass" className="p-5">
           <div className="text-sm text-text-secondary">Return Rate</div>
           <div className="mt-2 text-2xl font-bold text-text-primary">{customer.returnRate}%</div>
-        </div>
-        <div className="rounded-2xl border border-border-soft bg-surface-elevated p-5 shadow-soft">
+        </SurfaceCard>
+        <SurfaceCard variant="glass" className="p-5">
           <div className="text-sm text-text-secondary">Expected Lifetime Value</div>
           <div className="mt-2 text-2xl font-bold text-text-primary">{formatCurrency(expectedLtv)}</div>
-        </div>
+        </SurfaceCard>
       </section>
 
       <div className="mb-8 grid grid-cols-1 gap-8 lg:grid-cols-3">

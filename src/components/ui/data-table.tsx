@@ -71,7 +71,7 @@ export default function DataTable<TData>({
         {table.getHeaderGroups().map((headerGroup) => (
           <tr
             key={headerGroup.id}
-            className="border-b border-border-soft bg-surface-elevated text-xs font-semibold tracking-wider text-text-muted uppercase"
+            className="border-b border-border-soft bg-transparent text-xs font-semibold tracking-wider text-text-muted uppercase"
           >
             {headerGroup.headers.map((header) => {
               const meta = header.column.columnDef.meta as DataTableColumnMeta | undefined
@@ -102,11 +102,11 @@ export default function DataTable<TData>({
                       className={cn("p-4", meta?.cellClassName)}
                     >
                       {lastColumnSkeletonCircle && colIndex === visibleColumnCount - 1 ? (
-                        <div className="mx-auto h-7 w-7 animate-pulse rounded-full bg-surface-muted" />
+                        <div className="mx-auto h-7 w-7 animate-pulse rounded-full bg-(--glass-tile)" />
                       ) : (
                         <div
                           className={cn(
-                            "h-4 animate-pulse rounded-md bg-surface-muted",
+                            "h-4 animate-pulse rounded-md bg-(--glass-tile)",
                             colIndex === 0 ? "w-14" : colIndex === visibleColumnCount - 1 ? "ml-auto w-20" : "w-full",
                           )}
                         />
@@ -134,7 +134,11 @@ export default function DataTable<TData>({
               <Fragment key={row.id}>
                 <tr
                   key={row.id}
-                  className={cn("border-b border-border-soft", onRowClick && "cursor-pointer", getRowClassName?.(row))}
+                  className={cn(
+                    "border-b border-border-soft transition-colors hover:bg-(--glass-tile)",
+                    onRowClick && "cursor-pointer",
+                    getRowClassName?.(row),
+                  )}
                   onClick={onRowClick ? (event) => onRowClick(row, event) : undefined}
                 >
                   {row.getVisibleCells().map((cell) => {

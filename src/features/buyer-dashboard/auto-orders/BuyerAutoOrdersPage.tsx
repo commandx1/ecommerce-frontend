@@ -6,6 +6,8 @@ import { useMemo, useState } from "react"
 import { formatDateOnly } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
 import ConfirmationModal from "@/components/feedback/ConfirmationModal"
 import EmptyStateCard from "@/components/feedback/EmptyStateCard"
+import SectionHeading from "@/components/layout/SectionHeading"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import { showToast } from "@/components/ui/Toast"
 import type { AutoOrder } from "@/lib/api/auto-orders"
 import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
@@ -78,16 +80,13 @@ export default function BuyerAutoOrdersPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[1.25rem] border border-border-soft bg-surface-elevated p-6 shadow-soft">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-text-primary">Auto Orders</h1>
-            <p className="mt-2 max-w-3xl text-text-secondary">
-              Supplies you buy on a schedule. We place the order for you and charge your auto order card, then ship to
-              your primary address.
-            </p>
-          </div>
-        </div>
+      <SurfaceCard as="section" variant="glass" className="p-6">
+        <SectionHeading
+          titleAs="h1"
+          variant="technical"
+          title="Auto Orders"
+          description="Supplies you buy on a schedule. We place the order for you and charge your auto order card, then ship to your primary address."
+        />
 
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
           <article className="rounded-xl border border-border-soft bg-surface p-4">
@@ -111,7 +110,7 @@ export default function BuyerAutoOrdersPage() {
             </p>
           </article>
         </div>
-      </section>
+      </SurfaceCard>
 
       <AutoOrderReadinessBanner readiness={readiness} />
 

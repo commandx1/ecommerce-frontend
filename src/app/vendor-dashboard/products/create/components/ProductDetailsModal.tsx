@@ -350,7 +350,7 @@ export default function ProductDetailsModal({ product, isOpen, onClose, onSucces
       onClose={onClose}
       title={product.title || "Product Details"}
       maxWidthClassName="max-w-7xl"
-      contentClassName="rounded-2xl border border-border-soft bg-surface-elevated p-0"
+      contentClassName="glass-panel p-0"
     >
       <div className="flex items-center justify-between border-b border-border-soft px-6 py-4">
         <div className="min-w-0">

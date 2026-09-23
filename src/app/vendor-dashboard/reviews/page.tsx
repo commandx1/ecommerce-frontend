@@ -2,6 +2,8 @@
 
 import { MessageSquare, Star } from "lucide-react"
 import { useEffect, useState } from "react"
+import SectionHeading from "@/components/layout/SectionHeading"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import StarRating from "@/features/products/product-detail/components/StarRating"
 import { formatRelativeDate } from "@/features/products/product-detail/utils/relativeDate"
 import { getVendorReviewDashboard, type VendorReviewDashboard } from "@/lib/api/vendor-reviews"
@@ -62,12 +64,12 @@ export default function VendorReviewsPage() {
   return (
     <>
       <section className="mb-8">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-text-primary">Reviews</h1>
-            <p className="mt-1 text-text-secondary">Customer feedback for your listed products.</p>
-          </div>
-        </div>
+        <SectionHeading
+          titleAs="h1"
+          variant="technical"
+          title="Reviews"
+          description="Customer feedback for your listed products."
+        />
       </section>
 
       {error && !loading && (
@@ -78,13 +80,13 @@ export default function VendorReviewsPage() {
 
       <section className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
         {kpis.map((kpi) => (
-          <div key={kpi.label} className="rounded-2xl border border-border-soft bg-surface-elevated p-5 shadow-soft">
+          <SurfaceCard key={kpi.label} variant="glass" className="p-5">
             <div className="text-sm text-text-secondary">{kpi.label}</div>
             <div className="mt-2 text-2xl font-bold text-text-primary">
               {loading ? <span className="inline-block h-7 w-12 animate-pulse rounded bg-surface-muted" /> : kpi.value}
             </div>
             <div className="mt-1 text-xs text-text-muted">{kpi.hint}</div>
-          </div>
+          </SurfaceCard>
         ))}
       </section>
 

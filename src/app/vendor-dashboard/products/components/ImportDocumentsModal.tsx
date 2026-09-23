@@ -368,7 +368,7 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
       title="Import Products"
       maxWidthClassName="max-w-5xl"
       overlayClassName="bg-brand-strong/40 backdrop-blur-[2px]"
-      contentClassName="rounded-2xl border border-border-soft bg-surface-elevated p-0"
+      contentClassName="glass-panel p-0"
     >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border-soft px-6 py-4">

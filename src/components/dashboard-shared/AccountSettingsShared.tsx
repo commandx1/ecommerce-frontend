@@ -22,9 +22,11 @@ import { useEffect, useId, useState } from "react"
 import CompanyInfoCard from "@/components/dashboard-shared/CompanyInfoCard"
 import LicenseManagementSection from "@/components/dashboard-shared/LicenseManagementSection"
 import StripeConnectCard from "@/components/dashboard-shared/StripeConnectCard"
+import SectionHeading from "@/components/layout/SectionHeading"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import { showToast } from "@/components/ui/Toast"
 import { updateMe } from "@/lib/api/account"
 import { cn } from "@/lib/utils"
@@ -80,9 +82,6 @@ export default function AccountSettingsShared({
         year: "numeric",
       })
     : "-"
-
-  const initials =
-    `${user?.name?.[0] || ""}${user?.surname?.[0] || ""}`.toUpperCase() || user?.email?.[0]?.toUpperCase() || "?"
 
   // Sync with store if user changes
   useEffect(() => {
@@ -142,31 +141,23 @@ export default function AccountSettingsShared({
 
   return (
     <div className="max-w-7xl space-y-6">
-      {/* Hero */}
-      <div className="spotlight-border fade-up relative overflow-hidden rounded-3xl border border-border-soft bg-surface-elevated p-6 shadow-panel sm:p-8">
-        <div className="mesh-panel pointer-events-none absolute inset-0 opacity-80" />
-        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-5">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-brand-strong font-display text-2xl text-inverse-foreground shadow-panel">
-              {initials}
-            </div>
-            <div>
-              <span className="section-kicker">
-                <Sparkles className="mr-1.5 h-3 w-3" />
-                {isVendor ? "Vendor Account" : "Buyer Account"}
-              </span>
-              <h1 className="mt-3 font-display text-3xl leading-tight text-text-primary sm:text-4xl">{title}</h1>
-              <p className="mt-2 max-w-md text-text-secondary">{description}</p>
-            </div>
-          </div>
-
-          <div className="flex shrink-0 flex-wrap items-center gap-2 lg:flex-col lg:items-end">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface/80 px-3 py-1.5 text-xs font-medium text-text-secondary backdrop-blur-sm">
-              Member since {memberSince}
-            </span>
-          </div>
-        </div>
-      </div>
+      <SectionHeading
+        titleAs="h1"
+        variant="technical"
+        title={title}
+        description={description}
+        kicker={
+          <>
+            <Sparkles className="mr-1.5 h-3 w-3" />
+            {isVendor ? "Vendor Account" : "Buyer Account"}
+          </>
+        }
+        actions={
+          <span className="glass-panel inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-text-secondary">
+            Member since {memberSince}
+          </span>
+        }
+      />
 
       {isLockedOut && lockedUntil && (
         <div className="fade-up flex items-start gap-3 rounded-2xl border border-danger/30 bg-danger/10 p-4">
@@ -248,8 +239,10 @@ export default function AccountSettingsShared({
 
       <div className="space-y-6">
         <div id={profileSectionId} className="scroll-mt-24">
-          <section
-            className="fade-up overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
+          <SurfaceCard
+            as="section"
+            variant="glass"
+            className="fade-up overflow-hidden"
             style={{ animationDelay: "120ms" }}
           >
             <div className="flex items-center gap-3 border-b border-border-soft p-6">
@@ -345,7 +338,7 @@ export default function AccountSettingsShared({
                 </Button>
               </div>
             </form>
-          </section>
+          </SurfaceCard>
         </div>
 
         {children && (
@@ -370,8 +363,10 @@ export default function AccountSettingsShared({
 
         {/* Security Section */}
         <div id={securitySectionId} className="scroll-mt-24">
-          <section
-            className="fade-up overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
+          <SurfaceCard
+            as="section"
+            variant="glass"
+            className="fade-up overflow-hidden"
             style={{ animationDelay: "200ms" }}
           >
             <div className="flex items-center gap-3 border-b border-border-soft p-6">
@@ -433,7 +428,7 @@ export default function AccountSettingsShared({
                 </Button>
               </div>
             </div>
-          </section>
+          </SurfaceCard>
         </div>
       </div>
     </div>

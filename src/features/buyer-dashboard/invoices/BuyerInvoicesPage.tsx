@@ -17,7 +17,9 @@ import {
   X,
 } from "lucide-react"
 import { useMemo, useState } from "react"
+import SectionHeading from "@/components/layout/SectionHeading"
 import { Button } from "@/components/ui/button"
+import SurfaceCard from "@/components/ui/SurfaceCard"
 import { cn } from "@/lib/utils"
 import { type BuyerInvoice, buyerInvoices, type InvoiceStatus } from "./invoicesData"
 
@@ -193,17 +195,14 @@ export default function BuyerInvoicesPage() {
   }
 
   return (
-    <div className="overflow-hidden rounded-[1.25rem] border border-border-soft bg-surface shadow-soft">
-      <section className="border-b border-border-soft bg-surface-elevated px-6 py-8">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="rounded-xl bg-brand p-3 text-white">
-            <FileText className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-text-primary">Invoice Management</h1>
-            <p className="mt-1 text-text-secondary">View, download, and manage your invoices and payment status.</p>
-          </div>
-        </div>
+    <SurfaceCard variant="glass" className="overflow-hidden">
+      <section className="border-b border-border-soft bg-transparent px-6 py-8">
+        <SectionHeading
+          titleAs="h1"
+          variant="technical"
+          title="Invoice Management"
+          description="View, download, and manage your invoices and payment status."
+        />
 
         <div className="mt-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-wrap items-center gap-3">
@@ -227,7 +226,7 @@ export default function BuyerInvoicesPage() {
         </div>
       </section>
 
-      <section className="border-b border-border-soft bg-surface-elevated px-6 py-6">
+      <section className="border-b border-border-soft bg-transparent px-6 py-6">
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
           <div className="lg:col-span-3">
             <Label>Select Date Range</Label>
@@ -299,7 +298,7 @@ export default function BuyerInvoicesPage() {
         </div>
       </section>
 
-      <section className="border-b border-border-soft bg-surface-elevated px-6 py-6">
+      <section className="border-b border-border-soft bg-transparent px-6 py-6">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StatsCard
             icon={<CheckCircle2 className="h-5 w-5 text-success" />}
@@ -336,7 +335,7 @@ export default function BuyerInvoicesPage() {
         </div>
       </section>
 
-      <section className="border-b border-border-soft bg-surface-elevated px-6 py-4">
+      <section className="border-b border-border-soft bg-transparent px-6 py-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <label className="inline-flex items-center gap-3 text-sm text-text-secondary">
             <input
@@ -370,14 +369,14 @@ export default function BuyerInvoicesPage() {
             />
           ))}
           {pagedInvoices.length === 0 ? (
-            <div className="rounded-xl border border-border-soft bg-surface-elevated p-6 text-sm text-text-secondary">
+            <SurfaceCard variant="glass" className="p-6 text-sm text-text-secondary">
               No invoices match the selected filters.
-            </div>
+            </SurfaceCard>
           ) : null}
         </div>
       </section>
 
-      <section className="border-t border-border-soft bg-surface-elevated px-6 py-6">
+      <section className="border-t border-border-soft bg-transparent px-6 py-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <p className="text-sm text-text-secondary">
             Showing {filteredInvoices.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}-
@@ -441,7 +440,7 @@ export default function BuyerInvoicesPage() {
           </div>
         </section>
       ) : null}
-    </div>
+    </SurfaceCard>
   )
 }
 
@@ -527,7 +526,7 @@ function InvoiceCard({
   onToggleSelect: () => void
 }) {
   return (
-    <article className="rounded-xl border border-border-soft bg-surface-elevated p-5 shadow-soft transition-shadow hover:shadow-panel">
+    <SurfaceCard as="article" variant="glass" className="rounded-xl p-5 transition-shadow hover:shadow-panel">
       <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex gap-4">
           <input
@@ -571,7 +570,7 @@ function InvoiceCard({
           </div>
         </div>
       </div>
-    </article>
+    </SurfaceCard>
   )
 }
 
