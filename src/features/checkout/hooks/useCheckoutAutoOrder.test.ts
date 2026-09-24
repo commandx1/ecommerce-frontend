@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { showToast } from "@/components/ui/Toast"
 import { cartCommands } from "@/features/cart/api/cart-queries"
 import type { CartItem } from "@/lib/api/cart"
-import { queryKeys } from "@/lib/query/keys"
 import { useCheckoutStore } from "@/stores/checkoutStore"
+import { seedCart } from "@/test/cart"
 import { makeCartItem, makeCartProductInfo, makeCartUserProduct } from "@/test/factories"
 import { createQueryWrapper } from "@/test/render"
 import { useCheckoutAutoOrder } from "./useCheckoutAutoOrder"
@@ -32,7 +32,7 @@ const autoOrderItem = (userProductId: string, period: "TWO_WEEKS" | "ONE_MONTH" 
 /** Seeds the cart cache with `items` (a disabled-reader hook, so no fetch/wait is involved) and mounts the hook. */
 const renderAutoOrder = (items: CartItem[]) => {
   const { wrapper, client } = createQueryWrapper()
-  client.setQueryData(queryKeys.cart.detail(), { cartId: "cart-1", cartItems: items })
+  seedCart(client, { cartId: "cart-1", cartItems: items })
   return renderHook(() => useCheckoutAutoOrder(), { wrapper })
 }
 
@@ -96,12 +96,12 @@ describe("useCheckoutAutoOrder", () => {
 
   it("reacts when the buyer's recurring selection changes in the cart", () => {
     const { wrapper, client } = createQueryWrapper()
-    client.setQueryData(queryKeys.cart.detail(), { cartId: "cart-1", cartItems: [autoOrderItem("up-a", "ONE_MONTH")] })
+    seedCart(client, { cartId: "cart-1", cartItems: [autoOrderItem("up-a", "ONE_MONTH")] })
     const { result, rerender } = renderHook(() => useCheckoutAutoOrder(), { wrapper })
     expect(result.current.hasAutoOrderItems).toBe(true)
 
     act(() => {
-      client.setQueryData(queryKeys.cart.detail(), { cartId: "cart-1", cartItems: [makeCartItem({ autoOrder: null })] })
+      seedCart(client, { cartId: "cart-1", cartItems: [makeCartItem({ autoOrder: null })] })
     })
     rerender()
 

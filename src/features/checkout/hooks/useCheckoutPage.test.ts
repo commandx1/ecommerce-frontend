@@ -4,9 +4,9 @@ import { beforeEach, describe, expect, it } from "vitest"
 import { EMPTY_CART } from "@/features/cart/api/cart-queries"
 import type { Cart } from "@/lib/api/cart"
 import type { License } from "@/lib/api/licenses"
-import { queryKeys } from "@/lib/query/keys"
 import { server } from "@/mocks/server"
 import { type CheckoutStep, useCheckoutStore } from "@/stores/checkoutStore"
+import { seedCart } from "@/test/cart"
 import { makeCart, makeCartItem, makeCartProductInfo, makeCartUserProduct, makeLicense } from "@/test/factories"
 import { getRouterMock } from "@/test/mocks/next-navigation"
 import { createQueryWrapper } from "@/test/render"
@@ -67,7 +67,7 @@ const setStep = (step: CheckoutStep) => {
 const renderCheckoutPage = (warmCart?: Cart) => {
   const { wrapper, client } = createQueryWrapper()
   if (warmCart) {
-    client.setQueryData(queryKeys.cart.detail(), warmCart, { updatedAt: Date.now() - SEED_STALE_MS })
+    seedCart(client, warmCart, { updatedAt: Date.now() - SEED_STALE_MS })
   }
   const rendered = renderHook(() => useCheckoutPage(), { wrapper })
   return { ...rendered, client }
@@ -144,7 +144,7 @@ describe("useCheckoutPage", () => {
     // reset nor the empty-cart guard may fire here.
     act(() => {
       setStep(5)
-      client.setQueryData(queryKeys.cart.detail(), EMPTY_CART)
+      seedCart(client, EMPTY_CART)
     })
     rerender()
 
@@ -210,7 +210,7 @@ describe("useCheckoutPage", () => {
     expect(getRouterMock().push).not.toHaveBeenCalled()
 
     act(() => {
-      client.setQueryData(queryKeys.cart.detail(), EMPTY_CART)
+      seedCart(client, EMPTY_CART)
     })
     rerender()
 

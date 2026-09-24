@@ -599,7 +599,7 @@ describe("useFinalReview — double submit", () => {
     const { result, rerender, client } = renderFinalReview()
 
     act(() => {
-      client.setQueryData(queryKeys.cart.detail(), { cartId: "cart-2", cartItems: [makeCartItem()] })
+      seedCart(client, { cartId: "cart-2", cartItems: [makeCartItem()] })
     })
     rerender()
 

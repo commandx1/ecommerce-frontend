@@ -3,10 +3,10 @@ import userEvent from "@testing-library/user-event"
 import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { cartCommands, refreshCart } from "@/features/cart/api/cart-queries"
-import { queryKeys } from "@/lib/query/keys"
 import QuerySessionBoundary from "@/lib/query/QuerySessionBoundary"
 import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
+import { seedCart } from "@/test/cart"
 import { makeAccountUser, makeCart, makeCartItem, makeCartUserProduct } from "@/test/factories"
 import { render, screen, waitFor } from "@/test/render"
 import Footer from "./Footer"
@@ -79,7 +79,7 @@ describe("Navbar", () => {
     const cartLink = screen.getByRole("link", { name: "Cart" })
     expect(cartLink.textContent).toBe("Cart")
 
-    queryClient.setQueryData(queryKeys.cart.detail(), makeCart({ cartItems: [makeCartItem({ quantity: 3 })] }))
+    seedCart(queryClient, makeCart({ cartItems: [makeCartItem({ quantity: 3 })] }))
 
     await waitFor(() => expect(screen.getByRole("link", { name: "Cart" }).textContent).toContain("3"))
   })
@@ -115,7 +115,7 @@ describe("Navbar", () => {
       http.post("*/backend-api/cart/items", () => new HttpResponse(null, { status: 200 })),
     )
     const { queryClient } = render(<Navbar />, { route: "/" })
-    queryClient.setQueryData(queryKeys.cart.detail(), cart)
+    seedCart(queryClient, cart)
 
     const cartLink = screen.getByRole("link", { name: "Cart" })
     expect(cartLink.textContent).toBe("Cart")
@@ -133,7 +133,7 @@ describe("Navbar", () => {
     const { queryClient } = render(<Navbar />, { route: "/" })
     rtlRender(<QuerySessionBoundary queryClient={queryClient}>boundary</QuerySessionBoundary>)
 
-    queryClient.setQueryData(queryKeys.cart.detail(), makeCart({ cartItems: [makeCartItem({ quantity: 3 })] }))
+    seedCart(queryClient, makeCart({ cartItems: [makeCartItem({ quantity: 3 })] }))
     await waitFor(() => expect(screen.getByRole("link", { name: "Cart" }).textContent).toContain("3"))
 
     server.use(http.post("*/backend-api/auth/logout", () => new HttpResponse(null, { status: 200 })))

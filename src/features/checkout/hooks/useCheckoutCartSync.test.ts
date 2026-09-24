@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { showToast } from "@/components/ui/Toast"
 import type { CartItem } from "@/lib/api/cart"
 import type { PlaceOrderPayload } from "@/lib/api/orders"
-import { queryKeys } from "@/lib/query/keys"
 import { useCheckoutStore } from "@/stores/checkoutStore"
+import { seedCart } from "@/test/cart"
 import { makeCartItem, makeCartUserProduct } from "@/test/factories"
 import { createQueryWrapper } from "@/test/render"
 import { useCheckoutCartSync } from "./useCheckoutCartSync"
@@ -16,7 +16,7 @@ import { useCheckoutCartSync } from "./useCheckoutCartSync"
  * page (removing a vendor, browser back/forward to /cart, another tab).
  *
  * `useCheckoutCartSync` is a pure reader of the `cart.detail` query cache (`useCartItems`, design
- * doc §7 step 5) - it never fetches, so every test seeds the cache directly via `setQueryData`
+ * doc §7 step 5) - it never fetches, so every test seeds the cache directly via `seedCart`
  * before mounting.
  */
 
@@ -41,7 +41,7 @@ const payloadFor = (lines: { userProductId: string; quantity: number; autoOrder?
 /** Seeds the cart cache with `items` (a disabled-reader hook, so no fetch/wait is involved) and mounts the hook. */
 const renderCartSync = (items: CartItem[]) => {
   const { wrapper, client } = createQueryWrapper()
-  client.setQueryData(queryKeys.cart.detail(), { cartId: "cart-1", cartItems: items })
+  seedCart(client, { cartId: "cart-1", cartItems: items })
   return renderHook(() => useCheckoutCartSync(), { wrapper })
 }
 
