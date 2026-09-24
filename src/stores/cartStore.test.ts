@@ -1,6 +1,7 @@
 import { HttpResponse, http } from "msw"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { type Cart, cartAPI } from "@/lib/api/cart"
+import { getQueryClient } from "@/lib/query/query-client"
 import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
 import { makeAccountUser, makeCart, makeCartItem, makeCartUserProduct } from "@/test/factories"
@@ -217,10 +218,17 @@ describe("cartStore fetchCart in-flight de-duplication", () => {
     expect(store().error).toBeNull()
   })
 
-  it("clears the in-flight guard on resetCart so the next fetch is not swallowed", async () => {
+  it("a session teardown (resetCart + cache clear) drops the in-flight request so the next fetch is not swallowed", async () => {
     const { release } = gateGetCart()
 
     const first = store().fetchCart()
+    // Phase 2: the in-flight request now lives in the query cache, not in a module-level
+    // `inFlightCartFetch` that resetCart could null. On logout the cache is cleared by
+    // QuerySessionBoundary (cancelQueries + clear) right before clearLocalSession's resetCart;
+    // simulate exactly that pair here.
+    const client = getQueryClient()
+    void client.cancelQueries()
+    client.clear()
     store().resetCart()
     const second = store().fetchCart()
     release()

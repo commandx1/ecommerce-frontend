@@ -1,45 +1,53 @@
+import {
+  isCancelledError,
+  isServer,
+  type MutationCacheNotifyEvent,
+  matchQuery,
+  type Query,
+  type QueryCacheNotifyEvent,
+  type QueryClient,
+} from "@tanstack/react-query"
 import { create } from "zustand"
+import {
+  type AutoOrderWrite,
+  type CartCommandName,
+  type CartData,
+  cartWriteInFlightFilters,
+  createCartCommands,
+  getCartCommandName,
+  type RefreshCartOptions,
+  refreshCart,
+} from "@/features/cart/api/cart-queries"
 import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
-import { type CartItem, cartAPI } from "@/lib/api/cart"
-import { redirectToLogin } from "@/lib/api/client"
+import type { CartItem } from "@/lib/api/cart"
 import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
-import { useAuthStore } from "@/stores/authStore"
-
-const FETCH_DEDUP_WINDOW_MS = 1000
-let inFlightCartFetch: Promise<void> | null = null
-
-interface FetchCartOptions {
-  force?: boolean
-}
+import { queryKeys } from "@/lib/query/keys"
+import { subscribeBrowserQueryClient } from "@/lib/query/query-client"
 
 /**
- * The backend overwrites `cart_item.auto_order` with whatever the request body
- * carries, so a write that does not mention the schedule would wipe it. Passing
- * `undefined` means "keep whatever is on the item"; pass `null` to clear it.
+ * Legacy facade over the cart query cache (Phase 2 strangler, design doc §5 / §7 step 2).
+ *
+ * The query-cache entry `queryKeys.cart.detail()` is the single source of truth for server cart
+ * data; every action here delegates to `refreshCart` / the cart commands in
+ * `features/cart/api/cart-queries.ts`. The state fields below are a strictly ONE-WAY projection:
+ * they are written only by the QueryCache / MutationCache subscription at the bottom of this file
+ * (plus `resetCart`), never pushed back into the cache. Public shape and observable behaviour are
+ * kept identical for the existing consumers until the store is deleted (step 7).
  */
-type AutoOrderWrite = AutoOrderPeriod | null | undefined
-
-function findItem(items: CartItem[], userProductId: string): CartItem | undefined {
-  return items.find((item) => item.userProduct.userProductId === userProductId)
-}
-
-function resolveAutoOrder(items: CartItem[], userProductId: string, requested: AutoOrderWrite): AutoOrderPeriod | null {
-  if (requested !== undefined) {
-    return requested
-  }
-
-  return findItem(items, userProductId)?.autoOrder ?? null
-}
-
 interface CartStore {
   cartId: string | null
   items: CartItem[]
   cartCount: number
   isLoading: boolean
   error: string | null
+  /**
+   * Informational only (kept for API shape): when the cart was last fetched - successfully or
+   * not - `0` after `resetCart`/`clearCart`. It no longer drives de-duplication; the query
+   * cache's `staleTime` and `refreshCart`'s failure window do.
+   */
   lastFetchedAt: number
   resetCart: () => void
-  fetchCart: (options?: FetchCartOptions) => Promise<void>
+  fetchCart: (options?: RefreshCartOptions) => Promise<void>
   addToCart: (userProductId: string, quantity?: number, autoOrder?: AutoOrderWrite) => Promise<void>
   removeFromCart: (userProductId: string) => Promise<void>
   updateQuantity: (userProductId: string, quantity: number, autoOrder?: AutoOrderWrite) => Promise<void>
@@ -47,202 +55,295 @@ interface CartStore {
   clearCart: () => Promise<void>
 }
 
-export const useCartStore = create<CartStore>((set, get) => ({
+type CartProjection = Pick<CartStore, "cartId" | "items" | "cartCount" | "isLoading" | "error" | "lastFetchedAt">
+
+const INITIAL_PROJECTION: CartProjection = {
   cartId: null,
   items: [],
   cartCount: 0,
   isLoading: false,
   error: null,
   lastFetchedAt: 0,
+}
 
+/**
+ * The commands resolve `autoOrder`, the item for `setItemAutoOrder` and the `cartId` for
+ * `clearCart` against this store's own state - exactly what the old actions read via `get()`. In
+ * the app that state IS the cache entry (synchronous projection); reading it here additionally
+ * keeps tests that seed `useCartStore` directly behaving as before.
+ */
+const storeCommands = createCartCommands(() => {
+  const { cartId, items } = useCartStore.getState()
+  return { cartId, cartItems: items }
+})
+
+export const useCartStore = create<CartStore>((set) => ({
+  ...INITIAL_PROJECTION,
+
+  /**
+   * Resets the projection. Clearing the cache itself on logout / account switch is
+   * `QuerySessionBoundary`'s job (it runs first: `clearLocalSession` clears the auth user before
+   * calling this). The cart entry is additionally marked stale - the old `lastFetchedAt = 0` - so
+   * the next `fetchCart` goes to the network instead of being answered by the dedup window.
+   */
   resetCart: () => {
-    inFlightCartFetch = null
-    set({
-      cartId: null,
-      items: [],
-      cartCount: 0,
-      isLoading: false,
-      error: null,
-      lastFetchedAt: 0,
-    })
+    void binding?.client.invalidateQueries({ queryKey: queryKeys.cart.detail(), refetchType: "none" })
+    set({ ...INITIAL_PROJECTION })
   },
 
   fetchCart: async (options = {}) => {
-    const force = options.force ?? false
-    const now = Date.now()
-    const { lastFetchedAt } = get()
-
-    if (inFlightCartFetch) {
-      return inFlightCartFetch
-    }
-
-    if (!force && now - lastFetchedAt < FETCH_DEDUP_WINDOW_MS) {
-      return
-    }
-
-    const fetchTask = async () => {
-      set({ isLoading: true, error: null })
-      try {
-        const cart = await cartAPI.getCart()
-        set({
-          cartId: cart.cartId,
-          items: cart.cartItems,
-          cartCount: cart.cartItems.reduce((acc, item) => acc + item.quantity, 0),
-          isLoading: false,
-          lastFetchedAt: Date.now(),
-        })
-      } catch (error: unknown) {
-        if (isAuthHandledError(error)) {
-          // Don't stamp `lastFetchedAt` here: the auth interceptor already ran `resetCart()`
-          // (zeroing it) before this rejection reached us. Re-stamping "now" would re-open the
-          // dedup window and leave the user staring at an empty cart for ~1s right after login.
-          set({ isLoading: false })
-          return
-        }
-
-        const status = extractErrorStatus(error)
-
-        // If 400 or 404, it might mean no cart exists yet
-        if (status === 400 || status === 404) {
-          set({ items: [], cartCount: 0, cartId: null, isLoading: false, lastFetchedAt: Date.now() })
-        } else {
-          const message = error instanceof Error ? error.message : "Failed to fetch cart"
-          // Still stamp `lastFetchedAt` on failure so the dedup window is actually established -
-          // otherwise a downed backend gets hammered with an uninterrupted stream of retries.
-          set({ error: message, isLoading: false, lastFetchedAt: Date.now() })
-        }
-      }
-    }
-
-    inFlightCartFetch = fetchTask()
-    try {
-      await inFlightCartFetch
-    } finally {
-      inFlightCartFetch = null
-    }
+    if (isServer) return
+    await refreshCart(options)
   },
 
   addToCart: async (userProductId, quantity = 1, autoOrder) => {
-    // Backend has no guest cart (`/api/cart/**` requires auth) - a guest is sent to /login before
-    // any request goes out. `authHandled` mirrors the axios interceptor's flag so every existing
-    // caller's `isAuthHandledError` check already exits silently instead of showing an error toast.
-    if (!useAuthStore.getState().isAuthenticated) {
-      redirectToLogin("login-required")
-      throw Object.assign(new Error("Login required"), { authHandled: true })
-    }
-
-    set({ isLoading: true, error: null })
-    try {
-      await cartAPI.addItem(userProductId, quantity, resolveAutoOrder(get().items, userProductId, autoOrder))
-      await get().fetchCart({ force: true })
-    } catch (error: unknown) {
-      set({ isLoading: false })
-      if (isAuthHandledError(error)) {
-        throw error
-      }
-
-      const status = extractErrorStatus(error)
-      if (isAuthErrorStatus(status)) {
-        throw error
-      }
-
-      const message = error instanceof Error ? error.message : "Failed to add item"
-      set({ error: message })
-      // Rethrown so the caller's catch block actually runs. Swallowing it here left the UI
-      // showing a finished spinner and no warning at all while the item never entered the cart.
-      throw error
-    }
+    if (isServer) return
+    await storeCommands.addItem(userProductId, quantity, autoOrder)
   },
 
   removeFromCart: async (userProductId) => {
-    set({ isLoading: true, error: null })
-    try {
-      await cartAPI.removeItem(userProductId)
-      await get().fetchCart({ force: true })
-    } catch (error: unknown) {
-      if (isAuthHandledError(error)) {
-        set({ isLoading: false })
-        return
-      }
-
-      const message = error instanceof Error ? error.message : "Failed to remove item"
-      set({ error: message, isLoading: false })
-    }
+    if (isServer) return
+    await storeCommands.removeItem(userProductId)
   },
 
   updateQuantity: async (userProductId, quantity, autoOrder) => {
-    if (quantity <= 0) {
-      await get().removeFromCart(userProductId)
-      return
-    }
-    set({ isLoading: true, error: null })
-    try {
-      await cartAPI.updateItemQuantity(userProductId, quantity, resolveAutoOrder(get().items, userProductId, autoOrder))
-      await get().fetchCart({ force: true })
-    } catch (error: unknown) {
-      if (isAuthHandledError(error)) {
-        set({ isLoading: false })
-        return
-      }
-
-      const message = error instanceof Error ? error.message : "Failed to update quantity"
-      set({ error: message, isLoading: false })
-    }
+    if (isServer) return
+    await storeCommands.updateQuantity(userProductId, quantity, autoOrder)
   },
 
   /**
-   * Quantity and schedule share one endpoint, so an explicit `quantity` lets the
-   * caller flush a still-debounced quantity edit in the same write.
+   * Quantity and schedule share one endpoint, so an explicit `quantity` lets the caller flush a
+   * still-debounced quantity edit in the same write. A non-auth failure rethrows but deliberately
+   * does NOT write the shared `error` (see WRITE_ERROR_FALLBACK below): useCartPage shows its own
+   * "Could not update auto-reorder" toast off the rethrow AND a generic "Cart unavailable" toast
+   * whenever `error` changes - setting both would fire two toasts for one failure.
    */
   setItemAutoOrder: async (userProductId, autoOrder, quantity) => {
-    const item = findItem(get().items, userProductId)
-    if (!item) return
-
-    const nextQuantity = quantity ?? item.quantity
-    if (nextQuantity <= 0) {
-      await get().removeFromCart(userProductId)
-      return
-    }
-
-    set({ isLoading: true, error: null })
-    try {
-      await cartAPI.updateItemQuantity(userProductId, nextQuantity, autoOrder)
-      await get().fetchCart({ force: true })
-    } catch (error: unknown) {
-      if (isAuthHandledError(error)) {
-        set({ isLoading: false })
-        return
-      }
-
-      // Deliberately does NOT write the shared `error` state, unlike addToCart. The only caller
-      // (useCartPage) already shows its own "Could not update auto-reorder" toast from the
-      // rethrow below, and it ALSO renders a generic "Cart unavailable" toast whenever `error`
-      // changes - setting it here fires both toasts for one failure. The wider inconsistency
-      // (addToCart/setItemAutoOrder throw, removeFromCart/updateQuantity return silently) is a
-      // contract decision tracked in TEST-FINDINGS.md, not something to fix one function at a time.
-      set({ isLoading: false })
-      throw error
-    }
+    if (isServer) return
+    await storeCommands.setItemAutoOrder(userProductId, autoOrder, quantity)
   },
 
   clearCart: async () => {
-    const { cartId } = get()
-    if (!cartId) return
-    set({ isLoading: true, error: null })
-    try {
-      await cartAPI.clearCart(cartId)
-      // Reset `lastFetchedAt` (not a self-triggered refetch) so the dedup window doesn't shadow
-      // the next `fetchCart` with now-stale pre-clear data.
-      set({ items: [], cartCount: 0, cartId: null, isLoading: false, lastFetchedAt: 0 })
-    } catch (error: unknown) {
-      if (isAuthHandledError(error)) {
-        set({ isLoading: false })
-        return
-      }
-
-      const message = error instanceof Error ? error.message : "Failed to clear cart"
-      set({ error: message, isLoading: false })
-    }
+    if (isServer) return
+    await storeCommands.clearCart()
   },
 }))
+
+// ---------------------------------------------------------------------------------------------
+// Projection: QueryCache / MutationCache -> store state
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * `error` message the old store recorded for a failed write, or `null` where it recorded none.
+ * The old store cleared `error` at the start of every write, then set this on a non-auth failure.
+ */
+const WRITE_ERROR_FALLBACK: Record<CartCommandName, string | null> = {
+  addItem: "Failed to add item",
+  removeItem: "Failed to remove item",
+  updateQuantity: "Failed to update quantity",
+  setItemAutoOrder: null,
+  clearCart: "Failed to clear cart",
+}
+
+/** `undefined` = leave `error` as it is. */
+function writeErrorMessage(command: CartCommandName, error: unknown): string | undefined {
+  const fallback = WRITE_ERROR_FALLBACK[command]
+  if (fallback === null || isAuthHandledError(error)) {
+    return undefined
+  }
+
+  // addToCart alone also treated a bare 401 status (not flagged by the interceptor) as auth.
+  if (command === "addItem" && isAuthErrorStatus(extractErrorStatus(error))) {
+    return undefined
+  }
+
+  return error instanceof Error ? error.message : fallback
+}
+
+/** `undefined` = leave `error` (and `lastFetchedAt`) as they are. */
+function fetchErrorMessage(error: unknown): string | undefined {
+  if (isCancelledError(error) || isAuthHandledError(error)) {
+    return undefined
+  }
+
+  return error instanceof Error ? error.message : "Failed to fetch cart"
+}
+
+function projectData(data: CartData): Pick<CartProjection, "cartId" | "items" | "cartCount"> {
+  return {
+    cartId: data.cartId,
+    items: data.cartItems,
+    cartCount: data.cartItems.reduce((acc, item) => acc + item.quantity, 0),
+  }
+}
+
+const CART_DETAIL_FILTER = { queryKey: queryKeys.cart.detail(), exact: true } as const
+
+function liveCartQuery(client: QueryClient): Query | undefined {
+  return client.getQueryCache().find(CART_DETAIL_FILTER)
+}
+
+/** Old `isLoading`: true while the cart GET or a cart write request is in flight. */
+function computeIsLoading(client: QueryClient): boolean {
+  const query = liveCartQuery(client)
+  if (query !== undefined && query.state.fetchStatus !== "idle") {
+    return true
+  }
+
+  return client.getMutationCache().findAll(cartWriteInFlightFilters).length > 0
+}
+
+/** Writes only the fields that actually changed, so whole-store subscribers don't re-render for nothing. */
+function patch(partial: Partial<CartProjection>): void {
+  const current = useCartStore.getState()
+  const changed = (Object.keys(partial) as (keyof CartProjection)[]).some(
+    (key) => !Object.is(current[key], partial[key]),
+  )
+  if (changed) {
+    useCartStore.setState(partial)
+  }
+}
+
+function onQueryCacheEvent(client: QueryClient, event: QueryCacheNotifyEvent): void {
+  if (binding?.client !== client || !matchQuery(CART_DETAIL_FILTER, event.query)) {
+    return
+  }
+
+  const live = liveCartQuery(client)
+
+  if (event.type === "removed") {
+    // Cache cleared (QuerySessionBoundary on logout / account switch) or the entry removed:
+    // nothing may survive in the projection. `gcTime: Infinity` on the cart query means this is
+    // never a silent idle-GC.
+    if (live === undefined) {
+      patch({ ...INITIAL_PROJECTION, isLoading: computeIsLoading(client) })
+    }
+    return
+  }
+
+  // Events from a query that is no longer the live cache entry (a cancelled / cleared fetch
+  // settling late) must never reach the store - this is what keeps a logged-out account's
+  // in-flight cart response from resurrecting after the session was torn down.
+  if (event.query !== live) {
+    return
+  }
+
+  const isLoading = computeIsLoading(client)
+  if (event.type !== "updated") {
+    patch({ isLoading })
+    return
+  }
+
+  const { action } = event
+  const { state } = live
+  switch (action.type) {
+    case "fetch":
+      // Old fetchCart: `set({ isLoading: true, error: null })` when a request actually went out.
+      patch({ isLoading, error: null })
+      return
+    case "success":
+      patch({
+        ...projectData(state.data as CartData),
+        // A manual `setQueryData` is only ever clearCart's EMPTY_CART write, which the old store
+        // paired with `lastFetchedAt: 0`.
+        lastFetchedAt: action.manual ? 0 : state.dataUpdatedAt,
+        isLoading,
+      })
+      return
+    case "error": {
+      const message = fetchErrorMessage(action.error)
+      patch({ isLoading, ...(message !== undefined && { error: message, lastFetchedAt: state.errorUpdatedAt }) })
+      return
+    }
+    case "setState":
+      // Cancel-with-revert restores the pre-fetch state; re-project it only when it has data.
+      patch({ isLoading, ...(state.data !== undefined && projectData(state.data as CartData)) })
+      return
+    default:
+      patch({ isLoading })
+  }
+}
+
+function onMutationCacheEvent(client: QueryClient, event: MutationCacheNotifyEvent): void {
+  if (binding?.client !== client) {
+    return
+  }
+
+  const command = getCartCommandName(event.mutation?.meta)
+  if (command === undefined) {
+    return
+  }
+
+  const isLoading = computeIsLoading(client)
+  // A write removed from the cache (cleared on logout) keeps running, but its outcome must not
+  // touch the projection any more.
+  const isLive = event.mutation !== undefined && client.getMutationCache().getAll().includes(event.mutation)
+  if (event.type !== "updated" || !isLive) {
+    patch({ isLoading })
+    return
+  }
+
+  const { action } = event
+  if (action.type === "pending") {
+    // Old write actions: `set({ isLoading: true, error: null })` as their first statement.
+    patch({ isLoading, error: null })
+    return
+  }
+
+  if (action.type === "error") {
+    const message = writeErrorMessage(command, action.error)
+    patch({ isLoading, ...(message !== undefined && { error: message }) })
+    return
+  }
+
+  patch({ isLoading })
+}
+
+/** Seeds the projection from whatever the newly bound client already holds. */
+function syncFromCache(client: QueryClient): void {
+  const query = liveCartQuery(client)
+  const isLoading = computeIsLoading(client)
+  if (query?.state.data !== undefined) {
+    patch({ ...projectData(query.state.data as CartData), lastFetchedAt: query.state.dataUpdatedAt, isLoading })
+  } else if (isLoading) {
+    patch({ isLoading })
+  }
+}
+
+let binding: { client: QueryClient; unsubscribe: () => void } | null = null
+
+/**
+ * Follows the browser QueryClient singleton: subscribes to the current client's caches and drops
+ * the previous client's subscription whenever it is created or replaced (tests swap it via
+ * `__setBrowserQueryClient`), so a stale client can never write into the store.
+ */
+function bindProjection(client: QueryClient | undefined): void {
+  if (binding?.client === client) {
+    return
+  }
+
+  binding?.unsubscribe()
+  binding = null
+  if (!client) {
+    return
+  }
+
+  const unsubscribeQueries = client.getQueryCache().subscribe((event) => onQueryCacheEvent(client, event))
+  const unsubscribeMutations = client.getMutationCache().subscribe((event) => onMutationCacheEvent(client, event))
+  binding = {
+    client,
+    unsubscribe: () => {
+      unsubscribeQueries()
+      unsubscribeMutations()
+    },
+  }
+  syncFromCache(client)
+}
+
+// Server: never touch the query client (getQueryClient() is per-request there, and no store
+// action runs during SSR). Browser: bind now and follow every later client change.
+if (!isServer) {
+  subscribeBrowserQueryClient(bindProjection)
+}
+
 export type { CartItem }
