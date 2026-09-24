@@ -20,6 +20,7 @@ import Modal from "@/components/ui/Modal"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
+import { formatNumber } from "@/lib/helpers/format"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { cn } from "@/lib/utils"
 import DashboardPanel from "../components/shared/DashboardPanel"
@@ -810,7 +811,7 @@ function FunnelRow({ label, value, width, color }: { label: string; value: numbe
     <div>
       <div className="mb-1 flex items-center justify-between text-sm">
         <span className="text-text-secondary">{label}</span>
-        <span className="font-medium text-text-primary">{value.toLocaleString("en-US")}</span>
+        <span className="font-medium text-text-primary">{formatNumber(value)}</span>
       </div>
       <div className="h-2 w-full rounded-full bg-surface-muted">
         <div className={cn("h-2 rounded-full", color)} style={{ width: `${safeWidth}%` }}></div>

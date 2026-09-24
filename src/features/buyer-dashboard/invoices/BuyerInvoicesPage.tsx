@@ -20,11 +20,12 @@ import { useMemo, useState } from "react"
 import SectionHeading from "@/components/layout/SectionHeading"
 import { Button } from "@/components/ui/button"
 import SurfaceCard from "@/components/ui/SurfaceCard"
+import { formatLongDate } from "@/lib/helpers/format"
+import formatCurrency from "@/lib/helpers/formatCurrency"
 import { cn } from "@/lib/utils"
 import { type BuyerInvoice, buyerInvoices, type InvoiceStatus } from "./invoicesData"
 
 const PAGE_SIZE = 6
-const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" })
 
 const dateRangeOptions = ["Last 30 days", "Last 60 days", "Last 90 days", "This Year"] as const
 const statusOptions = ["All Statuses", "Paid", "Pending", "Overdue", "Disputed"] as const
@@ -62,14 +63,6 @@ const rangeDaysMap: Record<DateRangeOption, number> = {
   "Last 60 days": 60,
   "Last 90 days": 90,
   "This Year": 365,
-}
-
-function formatDate(value: string): string {
-  return new Date(value).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  })
 }
 
 function getSupplierOptions(invoices: ReadonlyArray<BuyerInvoice>): string[] {
@@ -211,10 +204,10 @@ export default function BuyerInvoicesPage() {
           <div className="flex flex-wrap items-center gap-3">
             <StatChip
               label="Total Outstanding"
-              value={currency.format(totalOutstanding)}
+              value={formatCurrency(totalOutstanding)}
               valueClassName="text-danger-strong"
             />
-            <StatChip label="Paid This Month" value={currency.format(paidThisMonth)} valueClassName="text-success" />
+            <StatChip label="Paid This Month" value={formatCurrency(paidThisMonth)} valueClassName="text-success" />
           </div>
           <div className="flex flex-wrap gap-3">
             <Button type="button" variant="outline">
@@ -332,7 +325,7 @@ export default function BuyerInvoicesPage() {
           <StatsCard
             icon={<FileText className="h-5 w-5 text-brand" />}
             iconSurface="bg-brand/15"
-            value={currency.format(avgInvoiceAmount)}
+            value={formatCurrency(avgInvoiceAmount)}
             label="Average Invoice Amount"
             caption="+8% vs last month"
             captionClassName="text-brand"
@@ -555,19 +548,19 @@ function InvoiceCard({
               </span>
             </div>
             <p className="mt-1 text-sm text-text-secondary">
-              {invoice.supplier} • {formatDate(invoice.issueDate)}
+              {invoice.supplier} • {formatLongDate(invoice.issueDate)}
             </p>
             <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3">
               <InvoiceMeta label="Items" value={invoice.itemsSummary} />
               <InvoiceMeta label="Payment Method" value={invoice.paymentMethod} />
-              <InvoiceMeta label="Due Date" value={formatDate(invoice.dueDate)} />
+              <InvoiceMeta label="Due Date" value={formatLongDate(invoice.dueDate)} />
             </div>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-4 xl:justify-end">
           <div className="text-left xl:text-right">
-            <p className="text-2xl font-bold text-text-primary">{currency.format(invoice.amount)}</p>
+            <p className="text-2xl font-bold text-text-primary">{formatCurrency(invoice.amount)}</p>
             <p className={cn("text-sm", statusNoteMap[invoice.status])}>{invoice.statusNote}</p>
           </div>
           <div className="flex items-center gap-2">

@@ -6,6 +6,8 @@ import { useEffect, useState } from "react"
 import Modal from "@/components/ui/Modal"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getFullImageUrl, type Product, productsAPI, type UserProductDetailResponse } from "@/lib/api/products"
+import { formatShortDate } from "@/lib/helpers/format"
+import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useAuthStore } from "@/stores/authStore"
 
 interface ProductDetailModalProps {
@@ -288,11 +290,7 @@ export default function ProductDetailModal({
                 {product.createdDate && (
                   <div>
                     <span className="font-medium text-text-secondary">Created:</span>{" "}
-                    {new Date(product.createdDate).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
+                    {formatShortDate(product.createdDate)}
                   </div>
                 )}
               </div>
@@ -370,9 +368,6 @@ const MetricCard = ({ icon, label, value }: { icon: React.ReactNode; label: stri
 
 const formatMetric = (value: number | undefined, unit: string | undefined): string =>
   value ? `${value} ${unit ?? ""}`.trim() : "—"
-
-const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value)
 
 const SKELETON_SPEC_KEYS = Array.from({ length: 8 }, (_, i) => `spec-skeleton-${i}`)
 

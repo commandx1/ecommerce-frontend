@@ -13,6 +13,7 @@ import { showToast } from "@/components/ui/Toast"
 import usStateList from "@/data/usstate-list.json"
 import { type CreateLicensePayload, type License, type LicenseType, licenseAPI } from "@/lib/api/licenses"
 import { resolveDentalLicenseStatus } from "@/lib/helpers/dentalLicense"
+import { formatPaddedDate } from "@/lib/helpers/format"
 import { cn } from "@/lib/utils"
 
 const US_STATES = usStateList.slice(
@@ -32,7 +33,7 @@ function formatStateOfLicense(abbreviation: string) {
 
 function formatExpiration(license: License) {
   const date = new Date(license.year, license.month - 1, license.day)
-  return date.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })
+  return formatPaddedDate(date)
 }
 
 function StatusBadge({ license }: { license: License }) {

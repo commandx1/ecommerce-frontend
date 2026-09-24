@@ -28,6 +28,7 @@ import { Label } from "@/components/ui/label"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import { showToast } from "@/components/ui/Toast"
 import { updateMe } from "@/lib/api/account"
+import { formatPaddedDate, formatPaddedDateTime, parseApiDate } from "@/lib/helpers/format"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -72,15 +73,9 @@ export default function AccountSettingsShared({
   const [isUpdating2FA, setIsUpdating2FA] = useState(false)
 
   const isEmailVerified = Boolean(user?.emailConfirmed)
-  const lockedUntil = user?.lockoutEnd ? new Date(user.lockoutEnd) : null
+  const lockedUntil = user?.lockoutEnd ? parseApiDate(user.lockoutEnd) : null
   const isLockedOut = lockedUntil !== null && lockedUntil.getTime() > Date.now()
-  const memberSince = user?.createdDate
-    ? new Date(user.createdDate).toLocaleDateString("en-US", {
-        month: "short",
-        day: "2-digit",
-        year: "numeric",
-      })
-    : "-"
+  const memberSince = user?.createdDate ? formatPaddedDate(user.createdDate) : "-"
 
   // Sync with store if user changes
   useEffect(() => {
@@ -159,13 +154,7 @@ export default function AccountSettingsShared({
             <h2 className="font-medium text-text-primary">Account temporarily locked</h2>
             <p className="text-sm text-text-secondary">
               Too many failed sign-in attempts. Access is restored on{" "}
-              {lockedUntil.toLocaleString("en-US", {
-                month: "short",
-                day: "2-digit",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              {formatPaddedDateTime(lockedUntil)}
               .
             </p>
           </div>

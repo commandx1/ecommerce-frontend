@@ -5,6 +5,7 @@ import { SpotlightCard } from "@/components/ui/spotlight-card"
 import SubcategoryChips from "@/features/categories/components/SubcategoryChips.client"
 import { type CategoryDirectoryEntry, categoryHref } from "@/features/categories/lib/build-category-directory"
 import { getFeaturedCategoryAsset } from "@/features/home/data/featured-category-assets"
+import { formatNumber } from "@/lib/helpers/format"
 
 interface CategoryTileProps {
   entry: CategoryDirectoryEntry
@@ -43,7 +44,7 @@ export default function CategoryTile({ entry, priority = false }: CategoryTilePr
           >
             {inStock
               ? // Singular for exactly one product ("1 product"); the plural "products" otherwise.
-                `${entry.count.toLocaleString("en-US")} product${entry.count > 1 ? "s" : ""}`
+                `${formatNumber(entry.count)} product${entry.count > 1 ? "s" : ""}`
               : "Coming soon"}
           </span>
           {/* Light: photo and card are both near-white, so a short linear fade is invisible. Dark: the

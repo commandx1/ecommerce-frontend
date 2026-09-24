@@ -1,6 +1,8 @@
+import { parseApiDate } from "@/lib/helpers/format"
+
 export const formatRelativeDate = (dateString: string): string => {
   try {
-    const date = new Date(dateString)
+    const date = parseApiDate(dateString)
     // `new Date(...)` never throws — a malformed/missing createdDate (hostile 200 body, or a
     // legacy row with no timestamp) silently produces an Invalid Date, and the arithmetic below
     // used to render "NaN years ago" to the user instead of catching it here.

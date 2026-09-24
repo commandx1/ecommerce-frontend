@@ -863,14 +863,14 @@ describe("formatRefundStatus (real RefundStatus values)", () => {
 })
 
 // ---------------------------------------------------------------------------
-// Priority 4: date/time formatting + the timezone-inference regex.
-// Rule: don't hardcode machine-timezone-dependent wall-clock strings. Instead verify the
-// regex's classification of "has timezone info" via INSTANT EQUIVALENCE - two input strings
-// that represent the same real-world instant must render identically, no matter what timezone
-// the test machine is in, because both sides go through the same `toLocaleString` call in the
+// Priority 4: date/time formatting + `parseApiDate`'s timezone inference.
+// Rule: don't hardcode machine-timezone-dependent wall-clock strings. Instead verify
+// `parseApiDate`'s classification of "has timezone info" via INSTANT EQUIVALENCE - two input
+// strings that represent the same real-world instant must render identically, no matter what
+// timezone the test machine is in, because both sides go through the same formatter call in the
 // same process. Y6/Y7-style backend timezone-shift bugs are explicitly out of scope; this only
-// locks the regex's own classification (`/[zZ]|[+-]\d{2}:\d{2}$/`), not whether that classification
-// is "correct" for any particular backend field.
+// locks `parseApiDate`'s own classification (see src/lib/helpers/format.ts), not whether that
+// classification is "correct" for any particular backend field.
 // ---------------------------------------------------------------------------
 describe("formatDateTime / formatDateOnly / formatTimeOnly - timezone regex behaviour", () => {
   const baselineZ = "2026-05-20T10:30:00Z"
@@ -901,8 +901,13 @@ describe("formatDateTime / formatDateOnly / formatTimeOnly - timezone regex beha
     expect(formatDateTime("2026-05-20T10:30:00-05:00")).toBe(formatDateTime("2026-05-20T15:30:00Z"))
   })
 
-  it("a date-only value with no time component normalizes to UTC midnight", () => {
-    expect(formatDateOnly("2026-05-20")).toBe(formatDateOnly("2026-05-20T00:00:00Z"))
+  it("a date-only value with no time component is read as a LOCAL calendar date, not UTC midnight", () => {
+    // Was: normalized to UTC midnight, same as "2026-05-20T00:00:00Z" - which rendered as the
+    // previous day ("May 19, 2026") on any machine west of UTC (all of the US). A calendar date
+    // like an order date must never shift days depending on the viewer's timezone, so this now
+    // goes through `parseApiDate`'s date-only branch (`new Date(y, m-1, d)`) instead, and the two
+    // no longer produce the same output on a US machine.
+    expect(formatDateOnly("2026-05-20")).toBe("May 20, 2026")
   })
 
   it("a malformed single-digit offset (+2:00) fails the regex, gets 'Z' appended onto an already-offset string, and becomes an invalid date", () => {

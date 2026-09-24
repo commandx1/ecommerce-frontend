@@ -15,6 +15,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Line } from "react-chartjs-2"
 import { Button } from "@/components/ui/button"
 import dashboardChartData from "@/data/dashboard-chart.json"
+import { formatNumber } from "@/lib/helpers/format"
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
 
@@ -89,7 +90,7 @@ const SpendingChart = () => {
             label(tooltipItem: TooltipItem<"line">) {
               const value = tooltipItem.parsed.y
               if (value === null || value === undefined) return ""
-              return `$${value.toLocaleString()}`
+              return `$${formatNumber(value)}`
             },
           },
         },

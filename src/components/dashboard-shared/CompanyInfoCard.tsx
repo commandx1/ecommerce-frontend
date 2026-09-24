@@ -21,6 +21,7 @@ import {
   updateMyCompany,
 } from "@/lib/api/company"
 import { ApiRequestError } from "@/lib/api/request"
+import { formatPaddedDate } from "@/lib/helpers/format"
 import { cn, isHttpUrl } from "@/lib/utils"
 
 /** Statuses that mean "no company data to show" rather than a real failure. */
@@ -122,13 +123,7 @@ export default function CompanyInfoCard() {
     }
   }
 
-  const createdOn = company?.createdDate
-    ? new Date(company.createdDate).toLocaleDateString("en-US", {
-        month: "short",
-        day: "2-digit",
-        year: "numeric",
-      })
-    : null
+  const createdOn = company?.createdDate ? formatPaddedDate(company.createdDate) : null
 
   return (
     <SurfaceCard as="section" variant="glass" className="overflow-hidden">

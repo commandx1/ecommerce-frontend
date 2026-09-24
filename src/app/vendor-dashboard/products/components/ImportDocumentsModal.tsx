@@ -14,6 +14,7 @@ import {
   vendorDocumentsAPI,
   vendorDocumentsQueryKey,
 } from "@/lib/api/vendor-documents"
+import { formatShortDate } from "@/lib/helpers/format"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
 import DocumentProductsPanel from "./DocumentProductsPanel"
@@ -96,14 +97,6 @@ function ExpandableText({ text, className }: { text: string; className?: string 
       )}
     </p>
   )
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  })
 }
 
 // Backend message format: "<summary>\n\nDetails:\n- Row 2: ...\n- Row 3: ..."
@@ -532,7 +525,7 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
                         >
                           {extractFileName(doc.filePath)}
                         </p>
-                        <p className="mt-0.5 text-xs text-text-muted">{formatDate(doc.createdDate)}</p>
+                        <p className="mt-0.5 text-xs text-text-muted">{formatShortDate(doc.createdDate)}</p>
                         {doc.revisionRequested && (
                           <>
                             {doc.revisedFilePath && doc.revisionApproved === null ? (

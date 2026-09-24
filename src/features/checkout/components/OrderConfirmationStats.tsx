@@ -1,4 +1,5 @@
 import type { PlaceOrderResponse } from "@/lib/api/orders"
+import { formatNumericDate } from "@/lib/helpers/format"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 
 interface OrderConfirmationStatsProps {
@@ -22,7 +23,7 @@ function getStatusToneClass(status: string): string {
 
 export default function OrderConfirmationStats({ orderResult }: OrderConfirmationStatsProps) {
   const paymentStatus = (orderResult.paymentStatus || orderResult.status || "unknown").toLowerCase()
-  const today = new Date().toLocaleDateString()
+  const today = formatNumericDate(new Date())
 
   return (
     <div className="h-full rounded-xl border border-border-soft bg-surface p-6">

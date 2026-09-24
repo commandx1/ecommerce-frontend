@@ -5,6 +5,7 @@ import type {
   BuyerOrderSellerGroup,
   BuyerOrderTrackingLink,
 } from "@/lib/api/buyer-orders"
+import { formatPaddedDate, formatPaddedDateTime, formatTime, parseApiDate } from "@/lib/helpers/format"
 import type { BuyerOrderViewModel, FulfillmentStepState, OrderViewStatus, PaymentViewStatus } from "../types"
 
 interface FulfillmentTimelineStateItem {
@@ -37,25 +38,15 @@ export function resolveOrderItemProductId(item: BuyerOrderItem): string | null {
 
 export function formatDateTime(value?: string | null): string {
   if (!value) return "-"
-  const hasTimeZoneInfo = /[zZ]|[+-]\d{2}:\d{2}$/.test(value)
-  const normalizedValue = hasTimeZoneInfo ? value : `${value.replace(" ", "T")}Z`
-  const parsed = new Date(normalizedValue)
+  const parsed = parseApiDate(value)
   if (Number.isNaN(parsed.getTime())) return "-"
 
-  return parsed.toLocaleString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
+  return formatPaddedDateTime(parsed)
 }
 
 export function formatDateOnly(value?: string | null): string {
   if (!value) return "-"
-  const hasTimeZoneInfo = /[zZ]|[+-]\d{2}:\d{2}$/.test(value)
-  const normalizedValue = hasTimeZoneInfo ? value : `${value.replace(" ", "T")}Z`
-  const parsed = new Date(normalizedValue)
+  const parsed = parseApiDate(value)
   if (Number.isNaN(parsed.getTime())) return "-"
 
   // "en-US", not the viewer's locale: every other date in the app is pinned to it
@@ -63,26 +54,17 @@ export function formatDateOnly(value?: string | null): string {
   // ImportDocumentsModal, vendor questions), and the UI itself is English-only. Left on the
   // runtime default, these two formatters were the sole outliers - on a tr-TR machine an order
   // rendered "22 May 2026" in the timeline and "May 22, 2026" everywhere else on the same screen.
-  return parsed.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-  })
+  return formatPaddedDate(parsed)
 }
 
 export function formatTimeOnly(value?: string | null): string {
   if (!value) return "-"
-  const hasTimeZoneInfo = /[zZ]|[+-]\d{2}:\d{2}$/.test(value)
-  const normalizedValue = hasTimeZoneInfo ? value : `${value.replace(" ", "T")}Z`
-  const parsed = new Date(normalizedValue)
+  const parsed = parseApiDate(value)
   if (Number.isNaN(parsed.getTime())) return "-"
 
   // Pinned for the same reason as formatDateOnly above: the runtime default gave a 24-hour clock
   // on a tr-TR machine while the rest of the app showed 12-hour times.
-  return parsed.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  })
+  return formatTime(parsed)
 }
 
 export function getAddressSummary(

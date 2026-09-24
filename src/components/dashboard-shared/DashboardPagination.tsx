@@ -9,6 +9,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import { formatNumber } from "@/lib/helpers/format"
 import { cn } from "@/lib/utils"
 
 interface DashboardPaginationProps {
@@ -63,7 +64,7 @@ export default function DashboardPagination({
     >
       <span>
         {totalElements > 0
-          ? `Showing ${from} to ${to} of ${totalElements.toLocaleString()} results`
+          ? `Showing ${from} to ${to} of ${formatNumber(totalElements)} results`
           : "Showing 0 results"}
       </span>
 

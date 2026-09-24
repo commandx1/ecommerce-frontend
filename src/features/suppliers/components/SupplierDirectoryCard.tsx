@@ -8,9 +8,8 @@ import { SpotlightCard } from "@/components/ui/spotlight-card"
 import SupplierAboutText from "@/features/suppliers/components/SupplierAboutText"
 import type { SupplierDirectoryItem } from "@/features/suppliers/suppliersPageData"
 import { SHIPMENT_POLICY_DAYS, shipmentPolicyLabel } from "@/lib/api/company"
+import { formatNumber } from "@/lib/helpers/format"
 import { cn, isHttpUrl } from "@/lib/utils"
-
-const numericFormatter = new Intl.NumberFormat("en-US")
 
 export default function SupplierDirectoryCard({
   supplier,
@@ -94,7 +93,7 @@ export default function SupplierDirectoryCard({
               </div>
               <span className="text-sm font-semibold text-text-primary">{supplier.rating.toFixed(1)}</span>
               <span className="whitespace-nowrap text-sm text-text-secondary">
-                ({numericFormatter.format(supplier.reviewCount)} ratings)
+                ({formatNumber(supplier.reviewCount)} ratings)
               </span>
             </div>
           </div>
@@ -106,7 +105,7 @@ export default function SupplierDirectoryCard({
               <div className="flex items-center text-sm text-text-secondary">
                 <CheckCircle className="mr-2 h-4 w-4 text-success" aria-hidden="true" />
                 <span>
-                  {numericFormatter.format(supplier.productCount)}{" "}
+                  {formatNumber(supplier.productCount)}{" "}
                   {supplier.productCount === 1 ? "Product" : "Products"} Available
                 </span>
               </div>

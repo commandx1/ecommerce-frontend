@@ -1,13 +1,10 @@
 "use client"
 
+import { formatLongDate } from "@/lib/helpers/format"
 import { useAuthStore } from "@/stores/authStore"
 
 const WelcomeSection = () => {
-  const today = new Date().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  })
+  const today = formatLongDate(new Date())
 
   const user = useAuthStore((state) => state.user)
   const capitalize = (value: string) =>

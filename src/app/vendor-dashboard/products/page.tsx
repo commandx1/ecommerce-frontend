@@ -43,6 +43,8 @@ import {
   type VendorProductReviewItem,
 } from "@/lib/api/products"
 import { vendorProductStatsQueryKey } from "@/lib/api/vendor-products"
+import { formatNumber } from "@/lib/helpers/format"
+import formatCurrency from "@/lib/helpers/formatCurrency"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
 import ImportDocumentsModal from "./components/ImportDocumentsModal"
@@ -909,15 +911,6 @@ export default function ProductsPage() {
     return "text-success"
   }
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(value)
-  }
-
   const productColumns: Array<ColumnDef<ProductWithDetails, unknown>> = [
     {
       id: "product",
@@ -1067,7 +1060,7 @@ export default function ProductsPage() {
       ),
       cell: ({ row }) => (
         <span className="text-sm text-text-secondary">
-          {row.original.periodicSellCount?.toLocaleString("en-US") ?? 0}
+          {row.original.periodicSellCount != null ? formatNumber(row.original.periodicSellCount) : 0}
         </span>
       ),
       meta: {

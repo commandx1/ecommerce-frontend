@@ -15,6 +15,7 @@ import {
   type SellerQuestionCounts,
   vendorQuestionsAPI,
 } from "@/lib/api/vendor-questions"
+import { formatShortDate, parseApiDate } from "@/lib/helpers/format"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -28,14 +29,14 @@ const FILTER_TABS: { key: QuestionFilter; label: string }[] = [
 
 function formatRelativeDate(dateStr: string | null): string {
   if (!dateStr) return ""
-  const date = new Date(dateStr)
+  const date = parseApiDate(dateStr)
   const now = new Date()
   const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
   if (diffDays === 0) return "Today"
   if (diffDays === 1) return "Yesterday"
   if (diffDays < 7) return `${diffDays} days ago`
   if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+  return formatShortDate(date)
 }
 
 interface QuestionCardProps {

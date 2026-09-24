@@ -22,6 +22,7 @@ import {
   removeVendorFavorite,
   type VendorListParams,
 } from "@/lib/api/vendors"
+import { formatNumber } from "@/lib/helpers/format"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -32,8 +33,6 @@ const sortOptions = ["Highest Rated", "Most Reviews", "A-Z"] as const
 
 type RatingOption = (typeof ratingOptions)[number]
 type SortOption = (typeof sortOptions)[number]
-
-const numericFormatter = new Intl.NumberFormat("en-US")
 
 function toApiSort(sort: SortOption): VendorListParams["sort"] {
   if (sort === "Most Reviews") return "reviewCount"
@@ -189,7 +188,7 @@ export default function SuppliersDirectorySection() {
           <p className="mt-3 text-base text-text-secondary">
             {isLoading
               ? "Loading vendors…"
-              : `Showing ${numericFormatter.format(totalCount)} verified vendors from a curated network.`}
+              : `Showing ${formatNumber(totalCount)} verified vendors from a curated network.`}
           </p>
         </div>
 
