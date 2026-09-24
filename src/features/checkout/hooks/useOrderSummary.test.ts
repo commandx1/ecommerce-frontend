@@ -232,6 +232,30 @@ describe("useOrderSummary", () => {
     expect(bodies[1]).toEqual({ addressId: "address-1", shippingAmount: 25 })
   })
 
+  // Fix (design doc §10.3): `linesSignature` used to be `String(items.length)`, so a quantity
+  // edit at an unchanged line count never re-keyed the tax-estimate query. It now uses the same
+  // `userProductId:quantity` signature as the cart page.
+  it("re-estimates tax when a line's quantity changes even though the line count stays the same", async () => {
+    const bodies = captureTaxRequests()
+    seedCart(client, {
+      cartItems: [makeCartItem({ id: "a", quantity: 1, userProduct: makeCartUserProduct({ price: 100 }) })],
+    })
+    useCheckoutStore.setState({ orderPayload: orderPayload(), selectedShippingCost: 10 })
+
+    const { rerender } = renderOrderSummary()
+    await waitFor(() => expect(bodies).toHaveLength(1))
+
+    act(() => {
+      seedCart(client, {
+        cartItems: [makeCartItem({ id: "a", quantity: 2, userProduct: makeCartUserProduct({ price: 100 }) })],
+      })
+    })
+    rerender()
+
+    await waitFor(() => expect(bodies).toHaveLength(2))
+    expect(bodies[1]).toEqual({ addressId: "address-1", shippingAmount: 10 })
+  })
+
   // A malformed 200 can carry `taxAmount` as a non-number. Storing it would skip the
   // "Calculated at checkout" fallback and string-concatenate into the total, which
   // formatCurrency then floors to $0.00 - the buyer reads a wrong number either way.

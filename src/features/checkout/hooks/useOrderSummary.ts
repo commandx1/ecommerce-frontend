@@ -2,6 +2,7 @@
 
 import { useMemo } from "react"
 import { useCartItems, useTaxEstimateQuery } from "@/features/cart/hooks/useCartQueries"
+import { cartLinesSignature } from "@/features/cart/utils/cart-lines-signature"
 import type { CartItem } from "@/lib/api/cart"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
@@ -52,14 +53,15 @@ export function useOrderSummary(): UseOrderSummaryResult {
   const shippingAmountForTax = shipping + heavyShipmentFee
 
   // `enabled`/finite/non-negative guards, the keepPreviousData behaviour and the malformed-200
-  // (`Number.isFinite`) fallback all live in `useTaxEstimateQuery` now. `linesSignature` is kept
-  // as `String(items.length)` — today's dependency, quantity changes at an equal line count don't
-  // re-estimate (Phase 2 design doc §10.3, preserved deliberately; fixed separately later).
+  // (`Number.isFinite`) fallback all live in `useTaxEstimateQuery` now. `linesSignature` uses the
+  // same `userProductId:quantity` signature as the cart page (design doc §10.3, fixed): keying on
+  // `items.length` alone let a quantity change at an unchanged line count skip re-estimation.
+  const linesSignature = useMemo(() => cartLinesSignature(items), [items])
   const { tax, isTaxLoading } = useTaxEstimateQuery({
     addressId,
     shippingAmount: shippingAmountForTax,
     itemCount: items.length,
-    linesSignature: String(items.length),
+    linesSignature,
   })
 
   // The real charge is computed and collected server-side (OrderCreationService.computeTaxes),

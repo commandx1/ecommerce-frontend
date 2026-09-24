@@ -14,6 +14,7 @@ import {
 } from "@/features/cart/api/cart-queries"
 import type { CartSellerGroup, CartTotals } from "@/features/cart/types"
 import { getBlockingCartItems } from "@/features/cart/utils/cart-alerts"
+import { cartLinesSignature } from "@/features/cart/utils/cart-lines-signature"
 import { cartRequiresDentalLicense } from "@/features/cart/utils/license-check"
 import { useAddressesQuery } from "@/features/checkout/hooks/useAddressesQuery"
 import type { CartItem } from "@/lib/api/cart"
@@ -196,7 +197,7 @@ export function useCartPage(): UseCartPageResult {
   }, [itemsWithPendingQuantity])
 
   const linesSignature = useMemo(() => {
-    return itemsWithPendingQuantity.map((item) => `${item.userProduct.userProductId}:${item.quantity}`).join(",")
+    return cartLinesSignature(itemsWithPendingQuantity)
   }, [itemsWithPendingQuantity])
 
   const addressesQuery = useAddressesQuery()
