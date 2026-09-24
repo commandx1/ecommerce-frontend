@@ -11,7 +11,7 @@ import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
 import { makeAccountUser } from "@/test/factories"
 import { render, screen, waitFor, within } from "@/test/render"
-import VendorQuestionsPage from "./page"
+import VendorQuestionsPage from "./VendorQuestionsPage"
 
 const toastSpies = vi.hoisted(() => ({
   success: vi.fn(),
