@@ -6,7 +6,7 @@ import { server } from "@/mocks/server"
 import { makeCompanyProfile } from "@/test/factories"
 import { installRadixPointerPolyfills } from "@/test/radix"
 import { render, screen, waitFor } from "@/test/render"
-import VendorTeamPage from "./page"
+import VendorTeamPage from "./VendorTeamPage"
 
 installRadixPointerPolyfills()
 
