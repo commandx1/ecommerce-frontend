@@ -90,3 +90,28 @@ describe("useCartItems / useCartCount / useCartId", () => {
     expect(client.getQueryData(queryKeys.cart.detail())).toBeDefined()
   })
 })
+
+describe("useCartCount at 10,000 lines", () => {
+  it("sums 10,000 varied quantities, not the line count, and reports fetch+aggregate time", async () => {
+    const cartItems = Array.from({ length: 10_000 }, (_, i) =>
+      makeCartItem({
+        id: `ci-${i}`,
+        quantity: (i % 5) + 1,
+        userProduct: makeCartUserProduct({ userProductId: `up-${i}` }),
+      }),
+    )
+    cartResponse = makeCart({ cartId: "cart-big", cartItems })
+    const expectedCount = cartItems.reduce((sum, item) => sum + item.quantity, 0)
+    const { wrapper } = createQueryWrapper()
+
+    const start = performance.now()
+    await refreshCart({ force: true })
+    const { result } = renderHook(() => ({ items: useCartItems(), count: useCartCount() }), { wrapper })
+    const elapsedMs = performance.now() - start
+
+    expect(result.current.items).toHaveLength(10_000)
+    expect(result.current.count).toBe(expectedCount)
+    // biome-ignore lint/suspicious/noConsole: scale-test timing report, not app code.
+    console.info(`[scale] refreshCart + useCartCount over 10000 items: ${elapsedMs.toFixed(2)}ms`)
+  })
+})

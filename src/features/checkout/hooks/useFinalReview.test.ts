@@ -2,12 +2,13 @@ import type { QueryClient } from "@tanstack/react-query"
 import { act, renderHook } from "@testing-library/react"
 import { afterAll, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest"
 import { showToast } from "@/components/ui/Toast"
+import { type CartData, cartCommands } from "@/features/cart/api/cart-queries"
 import { useCheckoutAutoOrder } from "@/features/checkout/hooks/useCheckoutAutoOrder"
 import type { GetPaymentStatusResponse, PlaceOrderPayload, PlaceOrderResponse } from "@/lib/api/orders"
 import { ordersAPI } from "@/lib/api/orders"
 import { queryKeys } from "@/lib/query/keys"
-import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
+import { cachedCart, seedCart } from "@/test/cart"
 import { makeCartItem, makeCartUserProduct } from "@/test/factories"
 import type { FakeStripe } from "@/test/mocks/stripe"
 import { stripeError, stripePaymentIntent } from "@/test/mocks/stripe"
@@ -101,30 +102,26 @@ const placeAndSettle = async (onPlaceOrder: () => Promise<void>) => {
   })
 }
 
-/**
- * `useFinalReview` reads `cartId` (`useCartId`) and `hasAutoOrderItems`/`autoOrderLines`
- * (`useCheckoutAutoOrder`) off disabled readers on the `cart.detail` query cache (design doc §7
- * steps 5-6) - so every mount needs a `QueryClientProvider`, seeded with whatever
- * `items`/`cartId` the test already put into `cartStore` (always set before render in this file).
- */
+/** The cart every render seeds into its fresh query cache; tests adjust it before rendering. */
+let cart: CartData
+
+/** `cartId` and the auto-order lines come from cart query readers, so every render needs a seeded provider. */
 const renderFinalReview = () => {
   const { wrapper, client } = createQueryWrapper()
-  const { cartId, items } = useCartStore.getState()
-  client.setQueryData(queryKeys.cart.detail(), { cartId, cartItems: items })
+  seedCart(client, cart)
   return { ...renderHook(() => useFinalReview(), { wrapper }), client }
 }
 
 /** Same as `renderFinalReview`, but also mounts `useCheckoutAutoOrder` in the same tree/cache. */
 const renderFinalReviewWithAutoOrder = () => {
   const { wrapper, client } = createQueryWrapper()
-  const { cartId, items } = useCartStore.getState()
-  client.setQueryData(queryKeys.cart.detail(), { cartId, cartItems: items })
+  seedCart(client, cart)
   return renderHook(() => ({ autoOrder: useCheckoutAutoOrder(), finalReview: useFinalReview() }), { wrapper })
 }
 
 let errorToast: ReturnType<typeof vi.spyOn>
 let successToast: ReturnType<typeof vi.spyOn>
-let clearCart: ReturnType<typeof vi.fn>
+let clearCart: ReturnType<typeof vi.spyOn>
 
 beforeEach(() => {
   vi.restoreAllMocks()
@@ -144,8 +141,8 @@ beforeEach(() => {
   errorToast = vi.spyOn(showToast, "error").mockImplementation(() => undefined)
   successToast = vi.spyOn(showToast, "success").mockImplementation(() => undefined)
 
-  clearCart = vi.fn().mockResolvedValue(undefined)
-  useCartStore.setState({ cartId: "cart-1", items: [makeCartItem()], clearCart })
+  clearCart = vi.spyOn(cartCommands, "clearCart").mockResolvedValue(undefined)
+  cart = { cartId: "cart-1", cartItems: [makeCartItem()] }
   useCheckoutStore.setState({
     currentStep: 4,
     orderPayload: orderPayload(),
@@ -180,8 +177,8 @@ describe("useFinalReview — happy path", () => {
   })
 
   it("snapshots the repeat lines before handing the buyer to the confirmation screen", async () => {
-    useCartStore.setState({ items: [autoOrderCartItem(), makeCartItem({ id: "ci-plain" })] })
-    const { result } = renderFinalReview()
+    cart.cartItems = [autoOrderCartItem(), makeCartItem({ id: "ci-plain" })]
+    const { result, client } = renderFinalReview()
 
     await placeAndSettle(result.current.onPlaceOrder)
 
@@ -189,7 +186,7 @@ describe("useFinalReview — happy path", () => {
     // The cart is emptied by the confirmation screen, never by this hook — so a failed payment
     // (see below) cannot lose the buyer's basket.
     expect(clearCart).not.toHaveBeenCalled()
-    expect(useCartStore.getState().items).toHaveLength(2)
+    expect(cachedCart(client)?.cartItems).toHaveLength(2)
   })
 
   it("exposes the payment method summary the review screen prints", () => {
@@ -244,7 +241,7 @@ describe("useFinalReview — 3D Secure", () => {
       }),
     )
 
-    const { result } = renderFinalReview()
+    const { result, client } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(errorToast).toHaveBeenCalledWith("We are unable to authenticate your payment method.")
@@ -253,8 +250,8 @@ describe("useFinalReview — 3D Secure", () => {
     expect(useCheckoutStore.getState().currentStep).toBe(4)
     // ...and above all, the basket survives so they can retry with another card.
     expect(clearCart).not.toHaveBeenCalled()
-    expect(useCartStore.getState().items).toHaveLength(1)
-    expect(useCartStore.getState().cartId).toBe("cart-1")
+    expect(cachedCart(client)?.cartItems).toHaveLength(1)
+    expect(cachedCart(client)?.cartId).toBe("cart-1")
     expect(getPaymentStatus).not.toHaveBeenCalled()
   })
 
@@ -267,7 +264,7 @@ describe("useFinalReview — 3D Secure", () => {
    */
   it("does not snapshot the repeat lines when the payment was abandoned", async () => {
     useCheckoutStore.setState({ autoOrderUserProductIds: ["up-stale"] })
-    useCartStore.setState({ items: [autoOrderCartItem()] })
+    cart.cartItems = [autoOrderCartItem()]
     fakeStripe().confirmCardPayment.mockResolvedValue(stripeError("3DS abandoned"))
 
     const { result } = renderFinalReview()
@@ -375,7 +372,7 @@ describe("useFinalReview — declines and failures", () => {
   })
 
   it("stops before creating the order when a card that must be saved has no name", async () => {
-    useCartStore.setState({ items: [autoOrderCartItem()] })
+    cart.cartItems = [autoOrderCartItem()]
     useCheckoutStore.setState({ selectedSavedCardId: "", paymentMethodId: "pm_new", cardName: "  " })
 
     const { result } = renderFinalReview()
@@ -785,7 +782,7 @@ describe("useFinalReview — payload", () => {
   })
 
   it("forces a new card to be saved with an off-session mandate when the cart repeats", async () => {
-    useCartStore.setState({ items: [autoOrderCartItem()] })
+    cart.cartItems = [autoOrderCartItem()]
     useCheckoutStore.setState({
       selectedSavedCardId: "",
       paymentMethodId: "pm_new",
@@ -824,7 +821,7 @@ describe("useFinalReview — payload", () => {
   })
 
   it("upgrades a saved card to off-session only when the buyer consented", async () => {
-    useCartStore.setState({ items: [autoOrderCartItem()] })
+    cart.cartItems = [autoOrderCartItem()]
     useCheckoutStore.setState({ selectedSavedCardId: "pm_saved", autoOrderConsent: true })
 
     const { result } = renderFinalReview()
@@ -834,7 +831,7 @@ describe("useFinalReview — payload", () => {
   })
 
   it("omits the off-session upgrade when consent was not given", async () => {
-    useCartStore.setState({ items: [autoOrderCartItem()] })
+    cart.cartItems = [autoOrderCartItem()]
     useCheckoutStore.setState({ selectedSavedCardId: "pm_saved", autoOrderConsent: false })
 
     const { result } = renderFinalReview()
@@ -846,7 +843,7 @@ describe("useFinalReview — payload", () => {
   it("never sets the off-session upgrade flag for a brand-new card, even with auto-order consent", async () => {
     // `openToAutoOrder` upgrades an EXISTING saved card; a brand-new card already gets its
     // off-session mandate through `cardOpenToAutoPayment` above, so this must stay unset.
-    useCartStore.setState({ items: [autoOrderCartItem()] })
+    cart.cartItems = [autoOrderCartItem()]
     useCheckoutStore.setState({
       selectedSavedCardId: "",
       paymentMethodId: "pm_new",
@@ -871,7 +868,7 @@ describe("useFinalReview — payload", () => {
   })
 
   it("sends an empty cart id rather than undefined when the cart id is missing", async () => {
-    useCartStore.setState({ cartId: null })
+    cart.cartId = null
 
     const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
@@ -891,7 +888,7 @@ describe("useFinalReview — stale payload regression (Final Review schedule edi
    * `useCheckoutAutoOrder`, then assert the NEW value is what reaches `ordersAPI.placeOrder`.
    */
   it("sends the new period to placeOrder after a Final Review schedule change, not the frozen one", async () => {
-    useCartStore.setState({ items: [autoOrderCartItem()] })
+    cart.cartItems = [autoOrderCartItem()]
     useCheckoutStore.setState({
       orderPayload: orderPayload({
         shippoRateOrders: [
@@ -916,7 +913,7 @@ describe("useFinalReview — stale payload regression (Final Review schedule edi
   })
 
   it("sends autoOrder: null to placeOrder after cancelling the repeat on Final Review", async () => {
-    useCartStore.setState({ items: [autoOrderCartItem()] })
+    cart.cartItems = [autoOrderCartItem()]
     useCheckoutStore.setState({
       orderPayload: orderPayload({
         shippoRateOrders: [
@@ -1054,7 +1051,7 @@ describe("useFinalReview — cache invalidation after the order is created", () 
   })
 
   it("invalidates auto orders when a payment with repeat lines went through", async () => {
-    useCartStore.setState({ items: [autoOrderCartItem()] })
+    cart.cartItems = [autoOrderCartItem()]
     useCheckoutStore.setState({ selectedSavedCardId: "pm_saved", autoOrderConsent: true })
     const { result, invalidate } = renderWithInvalidationSpy()
 
@@ -1068,7 +1065,7 @@ describe("useFinalReview — cache invalidation after the order is created", () 
   })
 
   it("does not invalidate auto orders when the payment with repeat lines was abandoned", async () => {
-    useCartStore.setState({ items: [autoOrderCartItem()] })
+    cart.cartItems = [autoOrderCartItem()]
     useCheckoutStore.setState({ selectedSavedCardId: "pm_saved", autoOrderConsent: true })
     fakeStripe().confirmCardPayment.mockResolvedValue(stripeError("3DS abandoned"))
     const { result, invalidate } = renderWithInvalidationSpy()

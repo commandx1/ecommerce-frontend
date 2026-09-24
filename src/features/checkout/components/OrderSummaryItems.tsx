@@ -1,8 +1,8 @@
 import Link from "next/link"
 import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
+import type { CartItem } from "@/lib/api/cart"
 import { getFullImageUrl } from "@/lib/api/products"
 import formatCurrency from "@/lib/helpers/formatCurrency"
-import type { CartItem } from "@/stores/cartStore"
 
 interface UserProductSellerMeta {
   sellerName?: string

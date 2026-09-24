@@ -3,11 +3,12 @@ import { act, renderHook, waitFor } from "@testing-library/react"
 import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { showToast } from "@/components/ui/Toast"
+import type { CartData } from "@/features/cart/api/cart-queries"
 import type { SavedCard } from "@/lib/api/orders"
 import { queryKeys } from "@/lib/query/keys"
 import { server } from "@/mocks/server"
-import { useCartStore } from "@/stores/cartStore"
 import { type PendingNewCard, useCheckoutStore } from "@/stores/checkoutStore"
+import { seedCart } from "@/test/cart"
 import { makeApiSavedCard, makeCartItem, makeCartUserProduct } from "@/test/factories"
 import type { FakeStripe } from "@/test/mocks/stripe"
 import { stripeError, stripePaymentMethod } from "@/test/mocks/stripe"
@@ -71,17 +72,13 @@ const autoOrderCartItem = () =>
 
 const submitEvent = () => ({ preventDefault: vi.fn() }) as unknown as React.FormEvent
 
-/**
- * `useBillingInformation` reads `hasAutoOrderItems` off `useCheckoutAutoOrder`, which is a
- * disabled reader on the `cart.detail` query cache (design doc §7 step 5) - so every mount needs
- * a `QueryClientProvider`, and the cache has to carry whatever `items` the test already put into
- * `cartStore` (read synchronously here, right before render, so a test's own
- * `useCartStore.setState({ items })` - always called before `mountHook()` - lands in both places).
- */
+/** The cart every `mountHook()` seeds into its fresh query cache; tests adjust it before mounting. */
+let cart: CartData
+
+/** `hasAutoOrderItems` comes from a cart query reader, so every mount needs a seeded provider. */
 const mountHook = async () => {
   const { wrapper, client } = createQueryWrapper()
-  const { cartId, items } = useCartStore.getState()
-  client.setQueryData(queryKeys.cart.detail(), { cartId, cartItems: items })
+  seedCart(client, cart)
   const rendered = renderHook(() => useBillingInformation(), { wrapper })
   await waitFor(() => expect(rendered.result.current.isLoadingCards).toBe(false))
   return { ...rendered, client }
@@ -108,7 +105,7 @@ beforeEach(() => {
   stripe.createPaymentMethod.mockReset()
   stripe.createPaymentMethod.mockResolvedValue(stripePaymentMethod("pm_new_card"))
   errorToast = vi.spyOn(showToast, "error").mockImplementation(() => undefined)
-  useCartStore.setState({ cartId: "cart-1", items: [makeCartItem()] })
+  cart = { cartId: "cart-1", cartItems: [makeCartItem()] }
   useCheckoutStore.setState({ termsAgreed: true })
   serveSavedCards([])
 })
@@ -453,7 +450,7 @@ describe("useBillingInformation — new card (inline tokenize)", () => {
   })
 
   it("forces the card to be saved when the cart contains repeat items", async () => {
-    useCartStore.setState({ items: [autoOrderCartItem()] })
+    cart.cartItems = [autoOrderCartItem()]
     useCheckoutStore.setState({ saveCard: false, cardName: "Clinic Amex" })
     const { result } = await mountHook()
 
@@ -513,7 +510,7 @@ describe("useBillingInformation — pending new card", () => {
   })
 
   it("still requires a card name for a pending card when the cart repeats", async () => {
-    useCartStore.setState({ items: [autoOrderCartItem()] })
+    cart.cartItems = [autoOrderCartItem()]
     useCheckoutStore.setState({ pendingNewCard: pendingCard(), cardName: "  " })
     const { result } = await mountHook()
 
@@ -562,7 +559,7 @@ describe("useBillingInformation — saved card", () => {
 
   it("blocks a repeat order on a card with no off-session mandate until consent is ticked", async () => {
     serveSavedCards([savedCard({ stripeCardId: "pm_saved", openToAutoPayment: false })])
-    useCartStore.setState({ items: [autoOrderCartItem()] })
+    cart.cartItems = [autoOrderCartItem()]
     useCheckoutStore.setState({ selectedSavedCardId: "pm_saved", autoOrderConsent: false })
     const { result } = await mountHook()
 
@@ -578,7 +575,7 @@ describe("useBillingInformation — saved card", () => {
 
   it("lets the same order through once the buyer consents", async () => {
     serveSavedCards([savedCard({ stripeCardId: "pm_saved", openToAutoPayment: false })])
-    useCartStore.setState({ items: [autoOrderCartItem()] })
+    cart.cartItems = [autoOrderCartItem()]
     useCheckoutStore.setState({ selectedSavedCardId: "pm_saved", autoOrderConsent: true })
     const { result } = await mountHook()
 
@@ -590,7 +587,7 @@ describe("useBillingInformation — saved card", () => {
 
   it("asks for nothing extra when the saved card is already open to auto payments", async () => {
     serveSavedCards([savedCard({ stripeCardId: "pm_saved", openToAutoPayment: true })])
-    useCartStore.setState({ items: [autoOrderCartItem()] })
+    cart.cartItems = [autoOrderCartItem()]
     useCheckoutStore.setState({ selectedSavedCardId: "pm_saved", autoOrderConsent: false })
     const { result } = await mountHook()
 

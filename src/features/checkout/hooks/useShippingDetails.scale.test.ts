@@ -2,7 +2,7 @@ import { renderHook, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { addressAPI } from "@/lib/api/address"
 import { useAuthStore } from "@/stores/authStore"
-import { useCartStore } from "@/stores/cartStore"
+import { seedCart } from "@/test/cart"
 import { makeAddress, makeCartItem, makeCartProductInfo, makeCartUserProduct } from "@/test/factories"
 import { createQueryWrapper } from "@/test/render"
 import { useShippingDetails } from "./useShippingDetails"
@@ -45,10 +45,10 @@ describe("useShippingDetails at 200 vendors", () => {
   it("groups 200 one-line-each vendors into 200 distinct seller groups", async () => {
     const N = 200
     const items = Array.from({ length: N }, (_, i) => itemFor(`seller-${i}`, `Vendor ${i}`, `up-${i}`))
-    useCartStore.setState({ cartId: "cart-1", items })
+    const { wrapper, client } = createQueryWrapper()
+    seedCart(client, { cartId: "cart-1", cartItems: items })
 
     const start = performance.now()
-    const { wrapper } = createQueryWrapper()
     const { result } = renderHook(() => useShippingDetails(), { wrapper })
     await waitFor(() => expect(result.current.isLoadingAddresses).toBe(false))
     const elapsedMs = performance.now() - start
@@ -69,10 +69,10 @@ describe("useShippingDetails at 200 vendors", () => {
       const vendorIndex = i % vendorCount
       return itemFor(`seller-${vendorIndex}`, `Vendor ${vendorIndex}`, `up-${i}`)
     })
-    useCartStore.setState({ cartId: "cart-1", items })
+    const { wrapper, client } = createQueryWrapper()
+    seedCart(client, { cartId: "cart-1", cartItems: items })
 
     const start = performance.now()
-    const { wrapper } = createQueryWrapper()
     const { result } = renderHook(() => useShippingDetails(), { wrapper })
     await waitFor(() => expect(result.current.isLoadingAddresses).toBe(false))
     const elapsedMs = performance.now() - start

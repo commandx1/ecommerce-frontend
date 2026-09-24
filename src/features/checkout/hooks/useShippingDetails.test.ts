@@ -1,3 +1,4 @@
+import type { QueryClient } from "@tanstack/react-query"
 import { act, renderHook, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { showToast } from "@/components/ui/Toast"
@@ -5,10 +6,10 @@ import type { ShippingRate } from "@/features/checkout/types"
 import { addressAPI } from "@/lib/api/address"
 import type { ShipmentRate, UberQuote } from "@/lib/api/shipment"
 import { useAuthStore } from "@/stores/authStore"
-import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
+import { seedCart } from "@/test/cart"
 import { makeAddress, makeCartItem, makeCartProductInfo, makeCartUserProduct } from "@/test/factories"
-import { createQueryWrapper } from "@/test/render"
+import { createQueryWrapper, type QueryWrapperResult } from "@/test/render"
 import { useShippingDetails } from "./useShippingDetails"
 
 /**
@@ -81,11 +82,13 @@ const itemFor = (sellerId: string, sellerName: string, userProductId: string, au
     product: makeCartProductInfo({ id: `p-${userProductId}`, name: `Product ${userProductId}` }),
   })
 
+let client: QueryClient
+let wrapper: QueryWrapperResult["wrapper"]
+
 const submitEvent = () => ({ preventDefault: vi.fn() }) as unknown as React.FormEvent
 
 /** Mounts the hook (inside a `QueryClientProvider` - `useShippingDetails` now reads addresses via `useAddressesQuery`) and waits for the address fetch to have settled. */
 const mountHook = async () => {
-  const { wrapper } = createQueryWrapper()
   const rendered = renderHook(() => useShippingDetails(), { wrapper })
   await waitFor(() => expect(rendered.result.current.isLoadingAddresses).toBe(false))
   return rendered
@@ -97,7 +100,10 @@ beforeEach(() => {
   vi.restoreAllMocks()
   getAddresses.mockReset()
   getAddresses.mockResolvedValue([makeAddress()])
-  useCartStore.setState({ cartId: "cart-1", items: [itemFor("seller-1", "Acme Dental", "up-1")] })
+  const query = createQueryWrapper()
+  client = query.client
+  wrapper = query.wrapper
+  seedCart(client, { cartId: "cart-1", cartItems: [itemFor("seller-1", "Acme Dental", "up-1")] })
   useAuthStore.setState({ user: { id: "user-1" } as never })
 })
 
@@ -179,8 +185,8 @@ describe("useShippingDetails — address selection", () => {
 
 describe("useShippingDetails — vendor grouping", () => {
   it("groups the cart lines by seller", async () => {
-    useCartStore.setState({
-      items: [
+    seedCart(client, {
+      cartItems: [
         itemFor("seller-1", "Acme Dental", "up-1"),
         itemFor("seller-2", "Beta Supply", "up-2"),
         itemFor("seller-1", "Acme Dental", "up-3"),
@@ -195,8 +201,8 @@ describe("useShippingDetails — vendor grouping", () => {
   })
 
   it("falls back to a standard seller label when the line carries no seller", async () => {
-    useCartStore.setState({
-      items: [
+    seedCart(client, {
+      cartItems: [
         makeCartItem({
           userProduct: makeCartUserProduct({ userProductId: "up-1", sellerId: "", sellerName: "" }),
         }),
@@ -209,8 +215,8 @@ describe("useShippingDetails — vendor grouping", () => {
   })
 
   it("carries the per-unit product shipment fee through onto each seller group item", async () => {
-    useCartStore.setState({
-      items: [
+    seedCart(client, {
+      cartItems: [
         makeCartItem({
           userProduct: makeCartUserProduct({ userProductId: "up-1", sellerId: "seller-1", shipmentFee: 12.5 }),
         }),
@@ -223,8 +229,8 @@ describe("useShippingDetails — vendor grouping", () => {
   })
 
   it("treats a missing product shipment fee as zero rather than undefined", async () => {
-    useCartStore.setState({
-      items: [
+    seedCart(client, {
+      cartItems: [
         makeCartItem({
           userProduct: makeCartUserProduct({
             userProductId: "up-1",
@@ -274,8 +280,8 @@ describe("useShippingDetails — rate selection", () => {
   })
 
   it("adds up a mixed Shippo + Uber basket, and leaves a rate-less vendor out of the total", async () => {
-    useCartStore.setState({
-      items: [
+    seedCart(client, {
+      cartItems: [
         itemFor("seller-1", "Acme Dental", "up-1"),
         itemFor("seller-2", "Beta Supply", "up-2"),
         // seller-3's rate lookup failed in VendorShipmentRates, so no rate ever reaches the hook
@@ -385,8 +391,8 @@ describe("useShippingDetails — submit", () => {
   })
 
   it("builds separate shippo and uber orders, carrying the recurrence per line", async () => {
-    useCartStore.setState({
-      items: [itemFor("seller-1", "Acme Dental", "up-1", "ONE_MONTH"), itemFor("seller-2", "Beta Supply", "up-2")],
+    seedCart(client, {
+      cartItems: [itemFor("seller-1", "Acme Dental", "up-1", "ONE_MONTH"), itemFor("seller-2", "Beta Supply", "up-2")],
     })
     const { result } = await mountHook()
 
@@ -421,8 +427,8 @@ describe("useShippingDetails — submit", () => {
   })
 
   it("submits only the vendors that actually have a rate", async () => {
-    useCartStore.setState({
-      items: [itemFor("seller-1", "Acme Dental", "up-1"), itemFor("seller-2", "Beta Supply", "up-2")],
+    seedCart(client, {
+      cartItems: [itemFor("seller-1", "Acme Dental", "up-1"), itemFor("seller-2", "Beta Supply", "up-2")],
     })
     const { result } = await mountHook()
 
@@ -447,8 +453,8 @@ describe("useShippingDetails — submit", () => {
    * `userId` field, or the entire order (every vendor, not just this one) would 400.
    */
   it("omits userId instead of sending the display-name grouping fallback when the line has no seller id", async () => {
-    useCartStore.setState({
-      items: [
+    seedCart(client, {
+      cartItems: [
         makeCartItem({
           userProduct: makeCartUserProduct({ userProductId: "up-1", sellerId: "", sellerName: "" }),
         }),
@@ -475,8 +481,8 @@ describe("useShippingDetails — submit", () => {
   // soft-deletes the WHOLE cart on payment success (CartService:189-204), so those lines are
   // ordered by nobody AND gone from the cart. Final Review has to be able to name them.
   it("records the sellers it could not ship so Final Review can warn about the dropped items", async () => {
-    useCartStore.setState({
-      items: [itemFor("seller-1", "Acme Dental", "up-1"), itemFor("seller-2", "Nordic Dental", "up-2")],
+    seedCart(client, {
+      cartItems: [itemFor("seller-1", "Acme Dental", "up-1"), itemFor("seller-2", "Nordic Dental", "up-2")],
     })
     const { result } = await mountHook()
 
@@ -495,7 +501,7 @@ describe("useShippingDetails — submit", () => {
   })
 
   it("records no exclusions when every seller has a shipping rate", async () => {
-    useCartStore.setState({ items: [itemFor("seller-1", "Acme Dental", "up-1")] })
+    seedCart(client, { cartItems: [itemFor("seller-1", "Acme Dental", "up-1")] })
     const { result } = await mountHook()
 
     act(() => {
@@ -509,7 +515,7 @@ describe("useShippingDetails — submit", () => {
   })
 
   it("still sends the real seller id as userId when the cart line has one", async () => {
-    useCartStore.setState({ items: [itemFor("seller-1", "Acme Dental", "up-1")] })
+    seedCart(client, { cartItems: [itemFor("seller-1", "Acme Dental", "up-1")] })
     const { result } = await mountHook()
 
     act(() => {
@@ -532,7 +538,7 @@ describe("useShippingDetails — auto order address notice", () => {
   })
 
   it("stays quiet when the repeat order ships to the primary address", async () => {
-    useCartStore.setState({ items: [itemFor("seller-1", "Acme Dental", "up-1", "ONE_MONTH")] })
+    seedCart(client, { cartItems: [itemFor("seller-1", "Acme Dental", "up-1", "ONE_MONTH")] })
     getAddresses.mockResolvedValue([makeAddress({ id: "address-1", defaultAddress: true })])
 
     const { result } = await mountHook()
@@ -541,7 +547,7 @@ describe("useShippingDetails — auto order address notice", () => {
   })
 
   it("warns when a repeat order is being sent to a non-primary address", async () => {
-    useCartStore.setState({ items: [itemFor("seller-1", "Acme Dental", "up-1", "ONE_MONTH")] })
+    seedCart(client, { cartItems: [itemFor("seller-1", "Acme Dental", "up-1", "ONE_MONTH")] })
     getAddresses.mockResolvedValue([
       makeAddress({ id: "address-primary", defaultAddress: true }),
       makeAddress({ id: "address-other", defaultAddress: false }),
@@ -556,7 +562,7 @@ describe("useShippingDetails — auto order address notice", () => {
   })
 
   it("warns when there is no primary address at all", async () => {
-    useCartStore.setState({ items: [itemFor("seller-1", "Acme Dental", "up-1", "ONE_MONTH")] })
+    seedCart(client, { cartItems: [itemFor("seller-1", "Acme Dental", "up-1", "ONE_MONTH")] })
     getAddresses.mockResolvedValue([makeAddress({ id: "address-only", defaultAddress: false })])
 
     const { result } = await mountHook()

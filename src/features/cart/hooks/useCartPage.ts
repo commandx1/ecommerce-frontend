@@ -1,13 +1,12 @@
 "use client"
 
-import { useIsMutating, useQuery } from "@tanstack/react-query"
+import { useIsMutating, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import {
   cartCommands,
   cartQueryOptions,
-  cartWriteInFlightFilters,
   fetchErrorMessage,
   getCartCommandName,
   refreshCart,
@@ -22,7 +21,7 @@ import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
 import type { DentalLicenseStatus } from "@/lib/helpers/dentalLicense"
 import { useDebouncedPerKeyCallback } from "@/lib/hooks/useDebouncedPerKeyCallback"
 import { useDentalLicenseGate } from "@/lib/hooks/useDentalLicenseGate"
-import { getQueryClient } from "@/lib/query/query-client"
+import { mutationKeys } from "@/lib/query/keys"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 import { useTaxEstimateQuery } from "./useCartQueries"
 
@@ -90,12 +89,11 @@ interface UseCartPageResult {
 
 export function useCartPage(): UseCartPageResult {
   const router = useRouter()
-  // Fetch owner (design doc §5): mounts a disabled reader on the shared `cart.detail` query so it
-  // tracks fetch/mutation status without ever fetching on its own, then owns the mount fetch via
-  // `refreshCart()` below - same split as `useCartQueries`' reader hooks.
+  // Fetch owner (design doc §5): a disabled observer on `cart.detail` plus an explicit
+  // `refreshCart()` on mount - see `useCartQueries` for why readers never fetch on their own.
   const cartQuery = useQuery({ ...cartQueryOptions(), enabled: false })
-  const pendingWritesCount = useIsMutating(cartWriteInFlightFilters)
-  // Old `cartStore.isLoading`: true while the cart GET or a cart write request is in flight.
+  const pendingWritesCount = useIsMutating({ mutationKey: mutationKeys.cart.all })
+  // Loading = the cart GET or a cart write request is in flight.
   const isLoading = cartQuery.isFetching || pendingWritesCount > 0
   const items = cartQuery.data?.cartItems ?? []
   const cartId = cartQuery.data?.cartId ?? null
@@ -131,9 +129,8 @@ export function useCartPage(): UseCartPageResult {
   }, [])
 
   // Fetch-error toast: keyed on `errorUpdatedAt` so a persisting error does not re-toast on every
-  // unrelated re-render, only when a new failure actually lands. `fetchErrorMessage` (shared with
-  // `cartStore`'s query-cache projection) is what turns a cancelled/auth-handled error into
-  // silence. Intentionally keyed on `errorUpdatedAt` only, not `cartQuery.error` too.
+  // unrelated re-render, only when a new failure actually lands. `fetchErrorMessage` turns a
+  // cancelled/auth-handled error into silence. Intentionally keyed on `errorUpdatedAt` only.
   // biome-ignore lint/correctness/useExhaustiveDependencies: see comment above
   useEffect(() => {
     if (!cartQuery.error) {
@@ -149,11 +146,10 @@ export function useCartPage(): UseCartPageResult {
   }, [cartQuery.errorUpdatedAt])
 
   // Write-error toast: every cart write failure surfaces this generic toast except the ones
-  // `writeErrorMessage` (shared with `cartStore`'s mutation-cache projection) stays silent for -
-  // `setItemAutoOrder` (its only caller, `onAutoOrderChange` below, shows its own specific toast
-  // off the rethrow instead) and any auth-handled failure.
+  // `writeErrorMessage` stays silent for - `setItemAutoOrder` (`onAutoOrderChange` below shows its
+  // own specific toast off the rethrow instead) and any auth-handled failure.
+  const queryClient = useQueryClient()
   useEffect(() => {
-    const queryClient = getQueryClient()
     return queryClient.getMutationCache().subscribe((event) => {
       const command = getCartCommandName(event.mutation?.meta)
       if (command === undefined || event.type !== "updated" || event.action.type !== "error") {
@@ -167,7 +163,7 @@ export function useCartPage(): UseCartPageResult {
 
       showToast.error("Cart unavailable", message)
     })
-  }, [])
+  }, [queryClient])
 
   const itemsWithPendingQuantity = useMemo<CartItem[]>(() => {
     return items.map((item) => {

@@ -6,8 +6,8 @@ import { ProductListingPage } from "./pages/product-listing.page"
 
 /**
  * Guest add-to-cart -> /login redirect -> return-to-page feature (see
- * src/lib/api/client.ts buildLoginUrl/redirectToLogin, src/stores/cartStore.ts
- * addToCart's guest guard, src/features/login/hooks/useLoginForm.ts,
+ * src/lib/api/client.ts buildLoginUrl/redirectToLogin, src/features/cart/api/cart-queries.ts
+ * addItem's guest guard, src/features/login/hooks/useLoginForm.ts,
  * src/lib/utils/safe-redirect.ts, src/app/verify-2fa/page.tsx).
  *
  * Desktop-only: the login form / product purchase panel layout is not

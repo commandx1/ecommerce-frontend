@@ -4,6 +4,7 @@ import type { ExpandedState, OnChangeFn } from "@tanstack/react-table"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
+import { cartCommands } from "@/features/cart/api/cart-queries"
 import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
 import {
   type BuyerOrder,
@@ -16,7 +17,6 @@ import {
 import { parseOrderIdParam } from "@/lib/api/orders"
 import { OrderItemStatus } from "@/lib/constants/order-item-status"
 import { useAuthStore } from "@/stores/authStore"
-import { useCartStore } from "@/stores/cartStore"
 import {
   buildBuyerOrderViewModel,
   extractApiErrorMessage,
@@ -46,7 +46,6 @@ export function useBuyerOrdersPage() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const { isAuthenticated } = useAuthStore()
-  const addToCart = useCartStore((state) => state.addToCart)
 
   const [orders, setOrders] = useState<BuyerOrder[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -174,7 +173,7 @@ export function useBuyerOrdersPage() {
       setReorderingItemId(userProductId)
 
       try {
-        await addToCart(userProductId, quantity)
+        await cartCommands.addItem(userProductId, quantity)
         showToast.success("Added to cart", `${productName} was added to your cart.`)
       } catch (error: unknown) {
         if (isAuthHandledError(error)) {
@@ -193,7 +192,7 @@ export function useBuyerOrdersPage() {
         setReorderingItemId(null)
       }
     },
-    [addToCart, router],
+    [router],
   )
 
   const handleCancelDuringDelivery = useCallback(

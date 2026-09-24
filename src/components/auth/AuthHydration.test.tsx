@@ -4,7 +4,6 @@ import { waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { __resetTabSessionStorageForTests } from "@/lib/storage/tab-session-storage"
 import { useAuthStore } from "@/stores/authStore"
-import { useCartStore } from "@/stores/cartStore"
 import { renderWithProviders } from "@/test/render"
 import AuthHydration from "./AuthHydration"
 
@@ -53,7 +52,6 @@ beforeEach(() => {
   // `tabSessionStorage` only inherits the cookie into a fresh sessionStorage once per page load;
   // each test below simulates a separate page load, so reset the gate.
   __resetTabSessionStorageForTests()
-  useCartStore.setState({ fetchCart: vi.fn(async () => {}) })
 })
 
 describe("AuthHydration", () => {

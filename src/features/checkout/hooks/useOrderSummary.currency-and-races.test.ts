@@ -1,18 +1,19 @@
+import type { QueryClient } from "@tanstack/react-query"
 import { act, renderHook, waitFor } from "@testing-library/react"
 import { delay, HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { server } from "@/mocks/server"
-import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
+import { seedCart } from "@/test/cart"
 import { makeCartItem, makeCartUserProduct, makeTaxEstimate } from "@/test/factories"
-import { createQueryWrapper } from "@/test/render"
+import { createQueryWrapper, type QueryWrapperResult } from "@/test/render"
 import { useOrderSummary } from "./useOrderSummary"
 
-/** `useOrderSummary` now estimates tax via `useTaxEstimateQuery`, so every render needs a `QueryClientProvider`. */
-const renderOrderSummary = () => {
-  const { wrapper } = createQueryWrapper()
-  return renderHook(() => useOrderSummary(), { wrapper })
-}
+let client: QueryClient
+let wrapper: QueryWrapperResult["wrapper"]
+
+/** `useOrderSummary` reads the cart query cache and estimates tax via a query: every render needs the provider. */
+const renderOrderSummary = () => renderHook(() => useOrderSummary(), { wrapper })
 
 /**
  * Two things `useOrderSummary.test.ts` does not cover:
@@ -31,7 +32,10 @@ const renderOrderSummary = () => {
 const orderPayload = (addressId = "address-1") => ({ addressId, shippoRateOrders: [], uberRateOrders: [] })
 
 beforeEach(() => {
-  useCartStore.setState({ items: [], cartId: "cart-1" })
+  const query = createQueryWrapper()
+  client = query.client
+  wrapper = query.wrapper
+  seedCart(client, { cartItems: [], cartId: "cart-1" })
   useCheckoutStore.setState({ orderPayload: null, selectedShippingCost: 0 })
 })
 
@@ -42,8 +46,8 @@ describe("useOrderSummary — FINDING: backend currency is carried but never use
         HttpResponse.json(makeTaxEstimate({ taxAmount: 9.99, currency: "EUR" })),
       ),
     )
-    useCartStore.setState({
-      items: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 100 }) })],
+    seedCart(client, {
+      cartItems: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 100 }) })],
     })
     useCheckoutStore.setState({ orderPayload: orderPayload(), selectedShippingCost: 5 })
 
@@ -104,8 +108,8 @@ describe("useOrderSummary — FINDING/regression-lock: out-of-order tax response
       }),
     )
 
-    useCartStore.setState({
-      items: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 100 }) })],
+    seedCart(client, {
+      cartItems: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 100 }) })],
     })
     useCheckoutStore.setState({ orderPayload: orderPayload(), selectedShippingCost: 10 })
 
@@ -142,8 +146,8 @@ describe("useOrderSummary — FINDING/regression-lock: unmounting mid-request do
       }),
     )
 
-    useCartStore.setState({
-      items: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 100 }) })],
+    seedCart(client, {
+      cartItems: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 100 }) })],
     })
     useCheckoutStore.setState({ orderPayload: orderPayload(), selectedShippingCost: 10 })
 

@@ -17,7 +17,7 @@ import { useCheckoutCartSync } from "./useCheckoutCartSync"
  *
  * `useCheckoutCartSync` is a pure reader of the `cart.detail` query cache (`useCartItems`, design
  * doc §7 step 5) - it never fetches, so every test seeds the cache directly via `setQueryData`
- * before mounting, instead of the old `useCartStore.setState({ items })`.
+ * before mounting.
  */
 
 const cartItem = (userProductId: string, quantity: number, sellerId = "seller-1", sellerName = "Acme Dental") =>

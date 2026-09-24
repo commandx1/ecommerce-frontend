@@ -1,10 +1,9 @@
 import userEvent from "@testing-library/user-event"
 import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { queryKeys } from "@/lib/query/keys"
 import { server } from "@/mocks/server"
-import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
+import { seedCart } from "@/test/cart"
 import { makeCartItem, makeCartUserProduct } from "@/test/factories"
 import { createFakeStripe, stripeError } from "@/test/mocks/stripe"
 import { createTestQueryClient, render, screen, waitFor } from "@/test/render"
@@ -47,8 +46,10 @@ const orderResponse = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 })
 
-const readyToPlaceOrder = () => {
-  useCartStore.setState({ cartId: "cart-1", items: [makeCartItem()] })
+/** Seeds a query client with the cart and the checkout store with a complete step-4 state; render with the returned client. */
+const readyToPlaceOrder = (cartItems = [makeCartItem()]) => {
+  const queryClient = createTestQueryClient()
+  seedCart(queryClient, { cartId: "cart-1", cartItems })
   useCheckoutStore.setState({
     currentStep: 4,
     paymentMethodId: "pm_stripe_1",
@@ -61,6 +62,7 @@ const readyToPlaceOrder = () => {
       uberRateOrders: [],
     },
   })
+  return queryClient
 }
 
 beforeEach(() => {
@@ -86,8 +88,8 @@ beforeEach(() => {
 
 describe("FinalReview", () => {
   it("summarises the shipping address and the chosen payment method", () => {
-    readyToPlaceOrder()
-    render(<FinalReview />)
+    const queryClient = readyToPlaceOrder()
+    render(<FinalReview />, { queryClient })
 
     expect(screen.getByRole("heading", { name: "Final Review" })).toBeInTheDocument()
     expect(screen.getByText("Visa •••• 4242")).toBeInTheDocument()
@@ -95,28 +97,28 @@ describe("FinalReview", () => {
   })
 
   it("blocks Place Order while no Stripe payment method has been captured", () => {
-    readyToPlaceOrder()
+    const queryClient = readyToPlaceOrder()
     useCheckoutStore.setState({ paymentMethodId: "" })
 
-    render(<FinalReview />)
+    render(<FinalReview />, { queryClient })
 
     expect(screen.getByRole("button", { name: /Place Order/ })).toBeDisabled()
   })
 
   it("blocks Place Order while the Stripe SDK has not loaded", () => {
-    readyToPlaceOrder()
+    const queryClient = readyToPlaceOrder()
     stripeRef.current = null as unknown as ReturnType<typeof createFakeStripe>
 
-    render(<FinalReview />)
+    render(<FinalReview />, { queryClient })
 
     expect(screen.getByRole("button", { name: /Place Order/ })).toBeDisabled()
   })
 
   it("places the order, confirms the card and advances to the confirmation step", async () => {
     const user = userEvent.setup()
-    readyToPlaceOrder()
+    const queryClient = readyToPlaceOrder()
 
-    render(<FinalReview />)
+    render(<FinalReview />, { queryClient })
 
     await user.click(screen.getByRole("button", { name: /Place Order/ }))
 
@@ -130,7 +132,7 @@ describe("FinalReview", () => {
 
   it("shows a 'Placing Order...' state while the charge is in flight", async () => {
     const user = userEvent.setup()
-    readyToPlaceOrder()
+    const queryClient = readyToPlaceOrder()
     let releaseOrder: (() => void) | undefined
     server.use(
       http.post("*/backend-api/orders", async () => {
@@ -141,7 +143,7 @@ describe("FinalReview", () => {
       }),
     )
 
-    render(<FinalReview />)
+    render(<FinalReview />, { queryClient })
 
     await user.click(screen.getByRole("button", { name: /Place Order/ }))
 
@@ -154,10 +156,10 @@ describe("FinalReview", () => {
 
   it("keeps the buyer on step 4 when the card is declined", async () => {
     const user = userEvent.setup()
-    readyToPlaceOrder()
+    const queryClient = readyToPlaceOrder()
     stripeRef.current.confirmCardPayment.mockResolvedValue(stripeError("Your card was declined."))
 
-    render(<FinalReview />)
+    render(<FinalReview />, { queryClient })
 
     await user.click(screen.getByRole("button", { name: /Place Order/ }))
 
@@ -173,7 +175,7 @@ describe("FinalReview", () => {
 
   it("does not double-submit while a placement is already running", async () => {
     const user = userEvent.setup()
-    readyToPlaceOrder()
+    const queryClient = readyToPlaceOrder()
     let orderRequests = 0
     let releaseOrder: (() => void) | undefined
     server.use(
@@ -186,7 +188,7 @@ describe("FinalReview", () => {
       }),
     )
 
-    render(<FinalReview />)
+    render(<FinalReview />, { queryClient })
 
     const button = screen.getByRole("button", { name: /Place Order/ })
     await user.click(button)
@@ -199,10 +201,10 @@ describe("FinalReview", () => {
 
   it("records an unpaid order when the backend returns no client secret", async () => {
     const user = userEvent.setup()
-    readyToPlaceOrder()
+    const queryClient = readyToPlaceOrder()
     server.use(http.post("*/backend-api/orders", () => HttpResponse.json(orderResponse({ clientSecret: undefined }))))
 
-    render(<FinalReview />)
+    render(<FinalReview />, { queryClient })
 
     await user.click(screen.getByRole("button", { name: /Place Order/ }))
 
@@ -213,14 +215,14 @@ describe("FinalReview", () => {
 
   it("surfaces the backend's own message when the order cannot be created", async () => {
     const user = userEvent.setup()
-    readyToPlaceOrder()
+    const queryClient = readyToPlaceOrder()
     server.use(
       http.post("*/backend-api/orders", () =>
         HttpResponse.json({ message: "One of the items is out of stock." }, { status: 409 }),
       ),
     )
 
-    render(<FinalReview />)
+    render(<FinalReview />, { queryClient })
 
     await user.click(screen.getByRole("button", { name: /Place Order/ }))
 
@@ -229,18 +231,13 @@ describe("FinalReview", () => {
   })
 
   it("lists the repeat schedules the buyer is about to commit to", () => {
-    readyToPlaceOrder()
     const autoOrderItems = [
       makeCartItem({
         autoOrder: "ONE_MONTH",
         userProduct: makeCartUserProduct({ userProductId: "up-auto" }),
       }),
     ]
-    useCartStore.setState({ items: autoOrderItems })
-    // `useCheckoutAutoOrder` (design doc §7 step 5) reads the recurring lines off the `cart.detail`
-    // query cache, not `cartStore` - seed both so the "Auto orders" panel actually renders.
-    const queryClient = createTestQueryClient()
-    queryClient.setQueryData(queryKeys.cart.detail(), { cartId: "cart-1", cartItems: autoOrderItems })
+    const queryClient = readyToPlaceOrder(autoOrderItems)
 
     render(<FinalReview />, { queryClient })
 

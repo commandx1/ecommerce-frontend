@@ -1,5 +1,5 @@
+import type { CartItem } from "@/lib/api/cart"
 import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
-import type { CartItem } from "@/stores/cartStore"
 
 export interface CartTotals {
   subtotal: number

@@ -1,8 +1,8 @@
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { cartCommands } from "@/features/cart/api/cart-queries"
 import { getProductWithOffers } from "@/lib/api/product-offers"
 import { useAuthStore } from "@/stores/authStore"
-import { useCartStore } from "@/stores/cartStore"
 import { makeAccountUser } from "@/test/factories"
 import { fireEvent, render, screen, waitFor } from "@/test/render"
 import ProductCard, { type ProductCardData } from "./ProductCard"
@@ -172,7 +172,7 @@ describe("ProductCard", () => {
         ],
       } as never)
       const mockAddToCart = vi.fn().mockResolvedValue(undefined)
-      useCartStore.setState({ addToCart: mockAddToCart })
+      vi.spyOn(cartCommands, "addItem").mockImplementation(mockAddToCart)
 
       render(<ProductCard data={makeData({ id: "p-1", name: "Intra Oral Mixing Tips" })} />)
       await userEvent.setup().click(screen.getByRole("button", { name: "Add to Cart" }))
@@ -188,7 +188,7 @@ describe("ProductCard", () => {
         userProducts: [{ id: "up-best", price: 5, stock: 5 }],
       } as never)
       const mockAddToCart = vi.fn().mockResolvedValue(undefined)
-      useCartStore.setState({ addToCart: mockAddToCart })
+      vi.spyOn(cartCommands, "addItem").mockImplementation(mockAddToCart)
 
       const user = userEvent.setup()
       render(<ProductCard data={makeData({ id: "p-1", name: "Intra Oral Mixing Tips" })} />)
@@ -217,7 +217,7 @@ describe("ProductCard", () => {
         userProducts: [{ id: "up-best", price: 5, stock: 5 }],
       } as never)
       const mockAddToCart = vi.fn().mockResolvedValue(undefined)
-      useCartStore.setState({ addToCart: mockAddToCart })
+      vi.spyOn(cartCommands, "addItem").mockImplementation(mockAddToCart)
 
       const user = userEvent.setup()
       render(<ProductCard data={makeData({ id: "p-1", name: "Intra Oral Mixing Tips" })} />)
@@ -243,7 +243,7 @@ describe("ProductCard", () => {
         userProducts: [{ id: "up-best", price: 5, stock: 5 }],
       } as never)
       const mockAddToCart = vi.fn().mockResolvedValue(undefined)
-      useCartStore.setState({ addToCart: mockAddToCart })
+      vi.spyOn(cartCommands, "addItem").mockImplementation(mockAddToCart)
 
       const user = userEvent.setup()
       render(<ProductCard data={makeData({ id: "p-1", name: "Intra Oral Mixing Tips" })} />)
@@ -270,7 +270,7 @@ describe("ProductCard", () => {
         userProducts: [],
       } as never)
       const mockAddToCart = vi.fn().mockResolvedValue(undefined)
-      useCartStore.setState({ addToCart: mockAddToCart })
+      vi.spyOn(cartCommands, "addItem").mockImplementation(mockAddToCart)
 
       render(<ProductCard data={makeData()} />)
       await userEvent.setup().click(screen.getByRole("button", { name: "Add to Cart" }))
@@ -286,7 +286,7 @@ describe("ProductCard", () => {
         userProducts: [],
       } as never)
       const mockAddToCart = vi.fn().mockRejectedValue(new Error("boom"))
-      useCartStore.setState({ addToCart: mockAddToCart })
+      vi.spyOn(cartCommands, "addItem").mockImplementation(mockAddToCart)
 
       render(<ProductCard data={makeData()} />)
       await userEvent.setup().click(screen.getByRole("button", { name: "Add to Cart" }))

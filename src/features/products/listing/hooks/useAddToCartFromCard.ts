@@ -2,16 +2,15 @@
 
 import { useState } from "react"
 import { showToast } from "@/components/ui/Toast"
+import { cartCommands } from "@/features/cart/api/cart-queries"
 import { resolveBestPriceVendorUserProductId } from "@/features/products/product-detail/utils/productDetailTransforms"
 import { isAuthHandledError } from "@/lib/api/auth-error"
 import { redirectToLogin } from "@/lib/api/client"
 import { getProductWithOffers } from "@/lib/api/product-offers"
 import { useAuthStore } from "@/stores/authStore"
-import { useCartStore } from "@/stores/cartStore"
 
 export function useAddToCartFromCard() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const addToCartInStore = useCartStore((s) => s.addToCart)
   const [pendingProductId, setPendingProductId] = useState<string | null>(null)
 
   const addToCart = async (productId: string, productName: string, quantity: number): Promise<boolean> => {
@@ -35,7 +34,7 @@ export function useAddToCartFromCard() {
         return false
       }
 
-      await addToCartInStore(bestUserProductId, qty)
+      await cartCommands.addItem(bestUserProductId, qty)
       showToast.success("Added to cart", `${qty} × ${productName} added to your cart.`)
       return true
     } catch (err: unknown) {

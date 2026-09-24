@@ -135,9 +135,9 @@ test.describe("browse to cart", () => {
     expect(typeof body.userProductId).toBe("string")
     expect(body.quantity).toBe(1)
 
-    // cartAPI.addItem resolves -> fetchCart() runs -> cartCount comes from
+    // cartAPI.addItem resolves -> refreshCart({ force: true }) runs -> the badge comes from
     // the mocked GET /backend-api/cart (registerCartMocks -> makeCart()).
-    // cartStore sums cartItems[].quantity (src/stores/cartStore.ts), and
+    // useCartCount sums cartItems[].quantity (src/features/cart/hooks/useCartQueries.ts), and
     // makeCartItem()'s default quantity is 2 (src/test/factories/cart.factory.ts) -
     // NOT the number of distinct line items, so the badge reads "2".
     await expect(detail.cartBadge).toContainText("2")

@@ -1,8 +1,8 @@
 import { act, renderHook } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { cartCommands } from "@/features/cart/api/cart-queries"
 import { getProductWithOffers } from "@/lib/api/product-offers"
 import { useAuthStore } from "@/stores/authStore"
-import { useCartStore } from "@/stores/cartStore"
 import { makeAccountUser } from "@/test/factories"
 import { useAddToCartFromCard } from "./useAddToCartFromCard"
 
@@ -23,18 +23,15 @@ vi.mock("@/lib/api/product-offers", () => ({
 
 const product = { id: "p-1", name: "Intra Oral Mixing Tips", price: 56 }
 
-const originalAddToCart = useCartStore.getState().addToCart
-
 beforeEach(() => {
   vi.mocked(getProductWithOffers).mockReset()
   mockToastError.mockClear()
   mockToastSuccess.mockClear()
   useAuthStore.getState().clearAuth()
-  useCartStore.setState({ addToCart: originalAddToCart })
 })
 
 afterEach(() => {
-  useCartStore.setState({ addToCart: originalAddToCart })
+  vi.restoreAllMocks()
 })
 
 describe("useAddToCartFromCard guest guard", () => {
@@ -63,7 +60,7 @@ describe("useAddToCartFromCard authenticated happy path", () => {
     useAuthStore.getState().setAuth(makeAccountUser(), "token-1", "refresh-1")
   })
 
-  it("adds the best-price offer to the store and shows a success toast", async () => {
+  it("adds the best-price offer to the cart and shows a success toast", async () => {
     vi.mocked(getProductWithOffers).mockResolvedValue({
       product,
       userProducts: [
@@ -72,7 +69,7 @@ describe("useAddToCartFromCard authenticated happy path", () => {
       ],
     } as never)
     const mockAddToCart = vi.fn().mockResolvedValue(undefined)
-    useCartStore.setState({ addToCart: mockAddToCart })
+    vi.spyOn(cartCommands, "addItem").mockImplementation(mockAddToCart)
 
     const { result } = renderHook(() => useAddToCartFromCard())
 
@@ -86,14 +83,14 @@ describe("useAddToCartFromCard authenticated happy path", () => {
     expect(returned).toBe(true)
   })
 
-  it("returns false with no error toast when the store throws an auth-handled error", async () => {
+  it("returns false with no error toast when the cart write throws an auth-handled error", async () => {
     vi.mocked(getProductWithOffers).mockResolvedValue({
       product,
       userProducts: [{ id: "up-best", price: 5, stock: 5 }],
     } as never)
     const authHandledError = Object.assign(new Error("Login required"), { authHandled: true })
     const mockAddToCart = vi.fn().mockRejectedValue(authHandledError)
-    useCartStore.setState({ addToCart: mockAddToCart })
+    vi.spyOn(cartCommands, "addItem").mockImplementation(mockAddToCart)
 
     const { result } = renderHook(() => useAddToCartFromCard())
 
@@ -112,7 +109,7 @@ describe("useAddToCartFromCard authenticated happy path", () => {
       userProducts: [{ id: "up-best", price: 5, stock: 5 }],
     } as never)
     const mockAddToCart = vi.fn().mockRejectedValue(new Error("boom"))
-    useCartStore.setState({ addToCart: mockAddToCart })
+    vi.spyOn(cartCommands, "addItem").mockImplementation(mockAddToCart)
 
     const { result } = renderHook(() => useAddToCartFromCard())
 

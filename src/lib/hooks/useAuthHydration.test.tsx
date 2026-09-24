@@ -10,8 +10,8 @@ import { renderWithProviders } from "@/test/render"
 import { useAuthHydration } from "./useAuthHydration"
 
 /**
- * `useAuthHydration`'s cart bootstrap effect calls `refreshCart` directly (Phase 2 step 3) rather
- * than going through `cartStore`, so it is mocked here at the module boundary.
+ * `useAuthHydration`'s cart bootstrap effect calls `refreshCart`, so it is mocked here at the
+ * module boundary.
  */
 vi.mock("@/features/cart/api/cart-queries", () => ({ refreshCart: vi.fn(async () => {}) }))
 

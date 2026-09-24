@@ -3,13 +3,13 @@
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
+import { useCartId, useCartItems } from "@/features/cart/hooks/useCartQueries"
 import { useAddressesQuery } from "@/features/checkout/hooks/useAddressesQuery"
 import type { SellerGroup, ShippingRate } from "@/features/checkout/types"
 import { getSellerGroupKey } from "@/features/checkout/utils/seller-group-key"
 import type { Address } from "@/lib/api/address"
 import type { ShippoRateOrder, UberRateOrder } from "@/lib/api/orders"
 import { useAuthStore } from "@/stores/authStore"
-import { useCartStore } from "@/stores/cartStore"
 import { type ExcludedSellerLines, useCheckoutStore } from "@/stores/checkoutStore"
 
 interface SelectedRateInfo {
@@ -48,7 +48,8 @@ export function useShippingDetails(): UseShippingDetailsResult {
     setSelectedShippingCost,
     setSelectedVendorShippingMethods,
   } = useCheckoutStore()
-  const { items, cartId } = useCartStore()
+  const items = useCartItems()
+  const cartId = useCartId()
   const { user } = useAuthStore()
 
   const [selectedAddressId, setSelectedAddressId] = useState("")

@@ -161,7 +161,7 @@ describe("PurchaseOptions", () => {
     await waitFor(() => expect(body).toEqual({ userProductId: "up-1", quantity: 2, autoOrder: null }))
   })
 
-  // The store's own guest guard (cartStore.addToCart) now redirects before any request goes out,
+  // The cart command's own guest guard (cartCommands.addItem) redirects before any request goes out,
   // so a logged-out shopper never reaches the backend at all - unlike an actual session expiring
   // mid-visit, which is still the axios interceptor's job.
   it("redirects an anonymous shopper to /login instead of writing to the cart", async () => {
@@ -186,7 +186,7 @@ describe("PurchaseOptions", () => {
     expect(mockToastError).not.toHaveBeenCalled()
   })
 
-  // REGRESSION GUARD (K11): `cartStore.addToCart` used to swallow non-auth failures, so this
+  // REGRESSION GUARD (K11): the cart add used to swallow non-auth failures, so this
   // component's catch block never ran — a 500 left the shopper with a button that finished its
   // spinner and said nothing while the item was not in the cart. It now rethrows.
   it("warns the shopper when the cart write fails with a 500", async () => {

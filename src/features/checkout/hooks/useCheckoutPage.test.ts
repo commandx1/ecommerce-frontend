@@ -17,8 +17,8 @@ import { useCheckoutPage } from "./useCheckoutPage"
  * §5/§7 step 5 - a fetch owner, same as `useCartPage`), bounces the buyer back to /cart when
  * there is nothing left to pay for, and maps the numeric step onto the view the page renders.
  *
- * Cart data comes from the query cache now, so every test drives it through the `GET /cart` msw
- * handler (like `useCartPage.test.ts`) instead of seeding `cartStore` directly.
+ * Cart data comes from the query cache, so every test drives it through the `GET /cart` msw
+ * handler (like `useCartPage.test.ts`).
  *
  * A buyer who clicks through from `/cart` arrives with the `cart.detail` entry already warm
  * (populated moments earlier by `useCartPage`'s own mount fetch) - `SEED_STALE_MS` seeds that
@@ -291,7 +291,7 @@ describe("useCheckoutPage", () => {
     })
 
     // PRE-EXISTING BEHAVIOUR on HEAD (a81f6f4), not introduced by this migration - confirmed by
-    // instrumenting the old cartStore-backed hook directly: a cold mount at step 5 always resets
+    // instrumenting the pre-query (Zustand-backed) hook directly: a cold mount at step 5 always resets
     // to step 1 first ("resets a stale confirmation..." above). Once there, the license guard's
     // effect re-runs like any ordinary step-1 mount and, if the (still cart-resident) item needs
     // a license that isn't valid, DOES bounce the buyer to /cart - "confirmation step" no longer

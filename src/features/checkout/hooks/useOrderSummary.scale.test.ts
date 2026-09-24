@@ -1,67 +1,19 @@
 import { renderHook } from "@testing-library/react"
-import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it } from "vitest"
-import { useOrderSummary } from "@/features/checkout/hooks/useOrderSummary"
-import type { Cart, CartItem } from "@/lib/api/cart"
-import { server } from "@/mocks/server"
 import { useCheckoutStore } from "@/stores/checkoutStore"
-import { makeCart, makeCartItem, makeCartUserProduct } from "@/test/factories"
+import { seedCart } from "@/test/cart"
+import { makeCartItem, makeCartUserProduct } from "@/test/factories"
 import { createQueryWrapper } from "@/test/render"
-import { useCartStore } from "./cartStore"
-
-/** `useOrderSummary` now estimates tax via `useTaxEstimateQuery`, so every render needs a `QueryClientProvider`. */
-const renderOrderSummary = () => {
-  const { wrapper } = createQueryWrapper()
-  return renderHook(() => useOrderSummary(), { wrapper })
-}
+import { useOrderSummary } from "./useOrderSummary"
 
 /**
  * Scale checks for the money-math path: a 10,000-line cart. These assert CORRECTNESS, not speed
- * — per the brief we measure and report elapsed time via `performance.now()` but do not assert a
- * hard ceiling (CI hardware varies and a flaky perf assertion is worse than none).
+ * — elapsed time is measured and reported via `performance.now()` but never asserted (CI hardware
+ * varies and a flaky perf assertion is worse than none).
  */
 
-function buildLargeCart(count: number, priceEach: number): Cart {
-  const cartItems: CartItem[] = Array.from({ length: count }, (_, i) =>
-    makeCartItem({
-      id: `ci-${i}`,
-      quantity: 1,
-      userProduct: makeCartUserProduct({
-        userProductId: `up-${i}`,
-        price: priceEach,
-        shipmentFee: 0,
-        heavyShippingSurcharge: 0,
-      }),
-    }),
-  )
-  return makeCart({ cartItems })
-}
-
 beforeEach(() => {
-  useCartStore.setState({ items: [], cartId: null, cartCount: 0, lastFetchedAt: 0 })
   useCheckoutStore.setState({ orderPayload: null, selectedShippingCost: 0 })
-})
-
-describe("cartStore at 10,000 lines — cartCount aggregation", () => {
-  it("sums 10,000 quantities correctly and reports fetch+aggregate time", async () => {
-    const N = 10_000
-    const cart = buildLargeCart(N, 12.5)
-    // Vary quantity so the sum is not just N*1.
-    cart.cartItems = cart.cartItems.map((item, i) => ({ ...item, quantity: (i % 5) + 1 }))
-    const expectedCount = cart.cartItems.reduce((sum, item) => sum + item.quantity, 0)
-
-    server.use(http.get("*/backend-api/cart", () => HttpResponse.json(cart)))
-
-    const start = performance.now()
-    await useCartStore.getState().fetchCart({ force: true })
-    const elapsedMs = performance.now() - start
-
-    expect(useCartStore.getState().items).toHaveLength(N)
-    expect(useCartStore.getState().cartCount).toBe(expectedCount)
-    // Not asserted, only surfaced for the report:
-    // biome-ignore lint/suspicious/noConsole: scale-test timing report, not app code.
-    console.info(`[scale] cartStore.fetchCart + cartCount reduce over ${N} items: ${elapsedMs.toFixed(2)}ms`)
-  })
 })
 
 describe("useOrderSummary at 10,000 lines — totals and floating-point accumulation", () => {
@@ -75,10 +27,11 @@ describe("useOrderSummary at 10,000 lines — totals and floating-point accumula
         userProduct: makeCartUserProduct({ userProductId: `up-${i}`, price: priceEach }),
       }),
     )
-    useCartStore.setState({ items })
+    const { wrapper, client } = createQueryWrapper()
+    seedCart(client, { cartItems: items })
 
     const start = performance.now()
-    const { result } = renderOrderSummary()
+    const { result } = renderHook(() => useOrderSummary(), { wrapper })
     const elapsedMs = performance.now() - start
 
     // FINDING: `useOrderSummary`'s subtotal is a plain `reduce` accumulating IEEE-754 doubles
@@ -114,10 +67,11 @@ describe("useOrderSummary at 10,000 lines — totals and floating-point accumula
         }),
       }),
     )
-    useCartStore.setState({ items })
+    const { wrapper, client } = createQueryWrapper()
+    seedCart(client, { cartItems: items })
 
     const start = performance.now()
-    const { result } = renderOrderSummary()
+    const { result } = renderHook(() => useOrderSummary(), { wrapper })
     const elapsedMs = performance.now() - start
 
     const expectedSubtotal = items.reduce((sum, item) => sum + item.userProduct.price * item.quantity, 0)

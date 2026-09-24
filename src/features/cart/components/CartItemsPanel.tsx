@@ -4,8 +4,8 @@ import SectionHeading from "@/components/layout/SectionHeading"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import CartItemCard from "@/features/cart/components/CartItemCard"
 import type { CartSellerGroup } from "@/features/cart/types"
+import type { CartItem } from "@/lib/api/cart"
 import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
-import type { CartItem } from "@/stores/cartStore"
 
 interface CartItemsPanelProps {
   cartId: string | null

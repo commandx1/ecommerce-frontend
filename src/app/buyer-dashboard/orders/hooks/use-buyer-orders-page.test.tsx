@@ -48,9 +48,8 @@ vi.mock("@/stores/authStore", () => ({
   useAuthStore: () => ({ isAuthenticated: mockIsAuthenticated }),
 }))
 
-vi.mock("@/stores/cartStore", () => ({
-  useCartStore: (selector: (state: { addToCart: typeof mockAddToCart }) => unknown) =>
-    selector({ addToCart: mockAddToCart }),
+vi.mock("@/features/cart/api/cart-queries", () => ({
+  cartCommands: { addItem: (...args: unknown[]) => mockAddToCart(...args) },
 }))
 
 const baseOrder: BuyerOrder = {

@@ -352,7 +352,7 @@ describe("useCartPage", () => {
   describe("auto-order flush", () => {
     // Quantity and schedule share one endpoint and the backend replaces the schedule on every
     // write, so a still-debounced quantity edit must ride along in the auto-order write. This is
-    // exactly why `cartStore.setItemAutoOrder` accepts a `quantity` argument.
+    // exactly why `cartCommands.setItemAutoOrder` accepts a `quantity` argument.
     it("flushes the pending quantity into the auto-order write instead of racing it", async () => {
       const { result } = await renderReadyCartPage()
 
@@ -398,12 +398,11 @@ describe("useCartPage", () => {
       expect(recorder.puts[0].autoOrder).toBeNull()
     })
 
-    // `cartStore.setItemAutoOrder` rethrows on failure, so the hook is still the only thing
+    // `cartCommands.setItemAutoOrder` rethrows on failure, so the hook is still the only thing
     // standing between a failed write and an unhandled rejection - it toasts its own specific
     // message and then rethrows, callers MUST await/catch `onAutoOrderChange` or the rejection
-    // escapes. Exactly ONE toast must appear: `setItemAutoOrder` deliberately leaves the store's
-    // shared `error` untouched, because this hook also renders a generic "Cart unavailable" toast
-    // whenever `error` changes - writing it there would surface two toasts for one failure.
+    // escapes. Exactly ONE toast must appear: `writeErrorMessage` is silent for
+    // `setItemAutoOrder`, so the generic write-error toast does not fire for it as well.
     it("toasts once and rethrows when the auto-order write fails", async () => {
       putStatus = 500
       const { result } = await renderReadyCartPage()
@@ -1113,10 +1112,9 @@ describe("useCartPage", () => {
   })
 
   describe("write in-flight state", () => {
-    // Ports the design doc's `refreshingWrites` guarantee (cart-queries.ts) through the hook:
-    // the write's own "in flight" state and the cart query's refresh must settle as ONE update,
-    // never two - otherwise the page would flash "loading" for a frame right as the last item
-    // leaves, between the write settling and the refreshed (now empty) cart landing.
+    // `runCartWrite` (cart-queries.ts) only counts the request itself as the mutation, so the
+    // refreshed (now empty) cart lands with nothing left "in flight" - a write still pending
+    // after the refresh would flash "loading" for a frame right as the last item leaves.
     it("moves straight from ready to empty when the last item is removed - no loading flash in between", async () => {
       const viewStateHistory: string[] = []
       const { wrapper } = createQueryWrapper()

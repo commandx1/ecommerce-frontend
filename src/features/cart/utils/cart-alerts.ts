@@ -1,4 +1,4 @@
-import type { CartItem } from "@/stores/cartStore"
+import type { CartItem } from "@/lib/api/cart"
 
 export interface CartItemAlerts {
   productAlert: string | null

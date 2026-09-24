@@ -1,6 +1,6 @@
+import type { CartItem } from "@/lib/api/cart"
 import type { License } from "@/lib/api/licenses"
 import { isDentalLicenseRequiredValue, resolveDentalLicenseStatus } from "@/lib/helpers/dentalLicense"
-import type { CartItem } from "@/stores/cartStore"
 
 export const cartRequiresDentalLicense = (items: CartItem[]): boolean => {
   return items.some((item) => isDentalLicenseRequiredValue(item.product.dentalLicenseRequired))

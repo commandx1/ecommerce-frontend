@@ -17,8 +17,7 @@ import { useCheckoutAutoOrder } from "./useCheckoutAutoOrder"
  *
  * `useCheckoutAutoOrder` reads the cart through `useCartItems` (a disabled reader, design doc §7
  * step 5) and writes through `cartCommands.setItemAutoOrder`, so every test seeds the query cache
- * directly instead of `useCartStore.setState`, and spies on `cartCommands.setItemAutoOrder`
- * instead of swapping out a store action.
+ * directly and spies on `cartCommands.setItemAutoOrder`.
  */
 
 const autoOrderItem = (userProductId: string, period: "TWO_WEEKS" | "ONE_MONTH" | "TWO_MONTHS", quantity = 1) =>

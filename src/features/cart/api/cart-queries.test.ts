@@ -2,7 +2,7 @@ import { CancelledError, type QueryClient } from "@tanstack/react-query"
 import { HttpResponse, http } from "msw"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { type Cart, cartAPI } from "@/lib/api/cart"
-import { queryKeys } from "@/lib/query/keys"
+import { mutationKeys, queryKeys } from "@/lib/query/keys"
 import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
 import { makeAccountUser, makeCart, makeCartItem, makeCartUserProduct } from "@/test/factories"
@@ -13,13 +13,14 @@ import {
   cartQueryOptions,
   EMPTY_CART,
   fetchErrorMessage,
+  getCartCommandName,
   refreshCart,
   writeErrorMessage,
 } from "./cart-queries"
 
 /**
- * Port of `src/stores/cartStore.test.ts` / `cartStore.scale.test.ts` onto the query-cache core.
- * These suites still assert HTTP call counts, not just cache state: the 1s dedup window and
+ * Characterization of the cart query core (`refreshCart`, `cartQueryOptions`, `cartCommands`).
+ * These suites assert HTTP call counts, not just cache state: the 1s dedup window and
  * in-flight collapsing are invisible in the cached data (every path ends with the same items),
  * so a regression that silently fires a second request would pass a data-only assertion.
  */
@@ -109,7 +110,7 @@ function gateGetCart(): { release: () => void } {
 }
 
 // ---------------------------------------------------------------------------
-// old: "cartStore fetchCart de-duplication window" -> refreshCart 1s staleTime window
+// refreshCart 1s staleTime window
 // ---------------------------------------------------------------------------
 describe("refreshCart de-duplication window", () => {
   /**
@@ -149,9 +150,8 @@ describe("refreshCart de-duplication window", () => {
   it("fires at exactly 1000ms because the cache treats the boundary as stale", async () => {
     await refreshCart()
 
-    // Boundary lock: matches the old store's strict `now - lastFetchedAt < 1000` guard, which
-    // let the request go out at exactly 1000ms. Native `staleTime` freshness math agrees: at
-    // 1000ms remaining-until-stale hits exactly 0, which counts as stale.
+    // Boundary lock: the request goes out at exactly 1000ms. Native `staleTime` freshness math:
+    // at 1000ms remaining-until-stale hits exactly 0, which counts as stale.
     vi.setSystemTime(new Date(baseTime + 1000))
     await refreshCart()
 
@@ -179,13 +179,11 @@ describe("refreshCart de-duplication window", () => {
 })
 
 // ---------------------------------------------------------------------------
-// old: "cartStore fetchCart error matrix > does not retry within the dedup window after a 500 -
-// force is required" -> refreshCart also arms the dedup window on a FAILED fetch, mirroring
-// `cartStore.ts:110-112` stamping `lastFetchedAt` on failure too ("a downed backend doesn't get
+// refreshCart also arms the dedup window on a FAILED fetch ("a downed backend doesn't get
 // hammered"). A query that only ever errored has no successful `dataUpdatedAt` for TanStack's own
 // staleTime check to key off, so `refreshCart` tracks `errorUpdatedAt` itself for this case.
 // ---------------------------------------------------------------------------
-describe("refreshCart failure-side dedup window (mirrors cartStore.ts stamping lastFetchedAt on failure)", () => {
+describe("refreshCart failure-side dedup window", () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ["Date"] })
     vi.setSystemTime(new Date("2026-08-22T10:00:00.000Z"))
@@ -246,7 +244,7 @@ describe("refreshCart failure-side dedup window (mirrors cartStore.ts stamping l
 })
 
 // ---------------------------------------------------------------------------
-// old: "cartStore fetchCart in-flight de-duplication" -> native QueryClient in-flight collapsing
+// native QueryClient in-flight collapsing
 // ---------------------------------------------------------------------------
 describe("refreshCart in-flight de-duplication", () => {
   it("collapses two same-tick refreshes into a single request", async () => {
@@ -305,17 +303,14 @@ describe("refreshCart in-flight de-duplication", () => {
   })
 
   /**
-   * NOT PORTED: old "does not leave a stale in-flight guard after a failed request" and "clears
-   * the in-flight guard on resetCart so the next fetch is not swallowed" asserted on
-   * `cartStore`'s module-level `inFlightCartFetch` flag, which no longer exists - the in-flight
-   * promise now lives entirely inside `QueryClient`'s own `Query` instance and is not a piece of
-   * state this file can leak or reset independently. The closest surviving behaviour (a failed
-   * refresh does not wedge later refreshes) is covered by the test above.
+   * The in-flight promise lives inside the `Query` instance, so there is no module-level guard
+   * that could leak: a failed refresh does not wedge later refreshes (above), and a session clear
+   * drops the in-flight request with the entry (`cart-session.test.tsx`).
    */
 })
 
 // ---------------------------------------------------------------------------
-// old: "cartStore fetchCart error matrix" -> cartQueryOptions()/refreshCart() error handling
+// cartQueryOptions()/refreshCart() error handling
 // ---------------------------------------------------------------------------
 describe("cartQueryOptions error matrix", () => {
   it("treats 404 as an empty cart without an error", async () => {
@@ -364,10 +359,9 @@ describe("cartQueryOptions error matrix", () => {
   })
 
   /**
-   * Mirrors `cartStore.ts:95-101`: unlike a 400/404/500, an auth-handled 401 must NOT arm the
-   * failure-side dedup window - the old store's comment explains why (re-stamping the window
-   * "would re-open the dedup window and leave the user staring at an empty cart for ~1s right
-   * after login"). A plain refresh immediately after one must still go to the network.
+   * Unlike a 400/404/500, an auth-handled 401 must NOT arm the failure-side dedup window:
+   * re-stamping it would leave the user staring at an empty cart for ~1s right after the next
+   * login. A plain refresh immediately after one must still go to the network.
    */
   it("does not arm the failure-side dedup window on an auth-handled 401", async () => {
     let getCartCount = 0
@@ -387,7 +381,7 @@ describe("cartQueryOptions error matrix", () => {
 })
 
 // ---------------------------------------------------------------------------
-// old: "cartStore fetchCart success state" -> cartQueryOptions()/refreshCart() success state
+// cartQueryOptions()/refreshCart() success state
 // ---------------------------------------------------------------------------
 describe("refreshCart success state", () => {
   it("caches items and cartId as returned by the API", async () => {
@@ -430,7 +424,7 @@ describe("refreshCart success state", () => {
 })
 
 // ---------------------------------------------------------------------------
-// old: "cartStore resolveAutoOrder" -> cartCommands.updateQuantity/addItem reading the cache
+// cartCommands.updateQuantity/addItem reading the cache
 // ---------------------------------------------------------------------------
 describe("resolveAutoOrder (read from the query cache)", () => {
   it("resends the schedule already on the cached item when autoOrder is omitted", async () => {
@@ -470,7 +464,7 @@ describe("resolveAutoOrder (read from the query cache)", () => {
 })
 
 // ---------------------------------------------------------------------------
-// old: "cartStore setItemAutoOrder" -> cartCommands.setItemAutoOrder
+// cartCommands.setItemAutoOrder
 // ---------------------------------------------------------------------------
 describe("cartCommands.setItemAutoOrder", () => {
   beforeEach(async () => {
@@ -535,7 +529,7 @@ describe("cartCommands.setItemAutoOrder", () => {
 })
 
 // ---------------------------------------------------------------------------
-// old: "cartStore addToCart error contract" -> cartCommands.addItem
+// cartCommands.addItem
 // ---------------------------------------------------------------------------
 describe("cartCommands.addItem error contract", () => {
   it("refreshes the cache after a successful add", async () => {
@@ -585,7 +579,7 @@ describe("cartCommands.addItem error contract", () => {
 })
 
 // ---------------------------------------------------------------------------
-// old: "cartStore removeFromCart error contract" -> cartCommands.removeItem
+// cartCommands.removeItem
 // ---------------------------------------------------------------------------
 describe("cartCommands.removeItem error contract", () => {
   it("refreshes the cache after a successful remove", async () => {
@@ -610,7 +604,7 @@ describe("cartCommands.removeItem error contract", () => {
 })
 
 // ---------------------------------------------------------------------------
-// old: "cartStore updateQuantity error contract" -> cartCommands.updateQuantity
+// cartCommands.updateQuantity
 // ---------------------------------------------------------------------------
 describe("cartCommands.updateQuantity error contract", () => {
   it("delegates to removeItem (DELETE) at quantity 0", async () => {
@@ -642,7 +636,7 @@ describe("cartCommands.updateQuantity error contract", () => {
 })
 
 // ---------------------------------------------------------------------------
-// old: "cartStore clearCart" -> cartCommands.clearCart
+// cartCommands.clearCart
 // ---------------------------------------------------------------------------
 describe("cartCommands.clearCart", () => {
   it("is a no-op while there is no cached cartId", async () => {
@@ -665,8 +659,7 @@ describe("cartCommands.clearCart", () => {
     expect(counts.getCart).toBe(1)
 
     // The query is invalidated (refetchType "none"), so the *next* plain refreshCart still goes
-    // to the network instead of serving stale pre-clear data, mirroring the old
-    // `lastFetchedAt = 0` reset.
+    // to the network instead of serving stale pre-clear data.
     await refreshCart()
     expect(counts.getCart).toBe(2)
   })
@@ -689,23 +682,101 @@ describe("cartCommands.clearCart", () => {
 })
 
 // ---------------------------------------------------------------------------
-// old: "cartStore defaults" / "cartStore resetCart"
-// NOT PORTED: both assert on `useCartStore`'s own Zustand defaults/reset, which are store
-// internals this file has no equivalent of - the query cache simply has no entry until the
-// first `refreshCart()`/write (`cached()` is `undefined`, asserted inline above), and clearing
-// the whole cache on identity change is `QuerySessionBoundary`'s job (Step 0), not this file's.
+// Write observability: what `useCartPage` derives its loading state and write-error toast from
 // ---------------------------------------------------------------------------
+describe("cart writes in the MutationCache", () => {
+  const writesInFlight = () => client.isMutating({ mutationKey: mutationKeys.cart.all })
+  const cartFetching = () => client.isFetching({ queryKey: queryKeys.cart.detail() })
+
+  /** Registers a handler that parks each request until released, and resolves `seen` on arrival. */
+  function gate(method: "get" | "put" | "delete", path: string, respond: () => Response) {
+    let release: () => void = () => undefined
+    let arrived: () => void = () => undefined
+    const released = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const seen = new Promise<void>((resolve) => {
+      arrived = resolve
+    })
+    server.use(
+      http[method](path, async () => {
+        arrived()
+        await released
+        return respond()
+      }),
+    )
+    return { release, seen }
+  }
+
+  it("counts a write as in flight only during its request; the refresh then shows as the cart fetch", async () => {
+    await refreshCart()
+    const put = gate("put", "*/backend-api/cart/items", () => new HttpResponse(null, { status: 200 }))
+    const get = gate("get", "*/backend-api/cart", jsonCart)
+
+    const pending = cartCommands.updateQuantity("up-1", 4)
+    // Pending synchronously, before the first await - no idle gap at the start of a write.
+    expect(writesInFlight()).toBe(1)
+
+    await put.seen
+    expect([writesInFlight(), cartFetching()]).toEqual([1, 0])
+    put.release()
+
+    // Handover: the write has settled and the forced refresh is the cart query's own fetch -
+    // exactly one of the two is "loading", never neither, never both.
+    await get.seen
+    expect([writesInFlight(), cartFetching()]).toEqual([0, 1])
+    get.release()
+
+    await pending
+    expect([writesInFlight(), cartFetching()]).toEqual([0, 0])
+  })
+
+  it("clearCart is in flight during its request and settles together with the emptied cart", async () => {
+    await refreshCart()
+    const del = gate("delete", "*/backend-api/cart", () => new HttpResponse(null, { status: 200 }))
+
+    const pending = cartCommands.clearCart()
+    await del.seen
+    expect(writesInFlight()).toBe(1)
+    del.release()
+    await pending
+
+    expect(writesInFlight()).toBe(0)
+    expect(cached()).toEqual(EMPTY_CART)
+  })
+
+  it("tags every write with its command name, so a failure can be attributed without the command rethrowing it", async () => {
+    await refreshCart()
+    server.use(http.delete("*/backend-api/cart/items", () => new HttpResponse(null, { status: 500 })))
+
+    await cartCommands.removeItem("up-1")
+
+    const [failed] = client.getMutationCache().findAll({ mutationKey: mutationKeys.cart.all, status: "error" })
+    expect(getCartCommandName(failed?.meta)).toBe("removeItem")
+    expect(getCartCommandName({ cartCommand: "somethingElse" })).toBeUndefined()
+    expect(getCartCommandName(undefined)).toBeUndefined()
+  })
+
+  it.each([
+    ["removeItem", () => cartCommands.removeItem("up-1"), "delete", "*/backend-api/cart/items"],
+    ["updateQuantity", () => cartCommands.updateQuantity("up-1", 3), "put", "*/backend-api/cart/items"],
+    ["setItemAutoOrder", () => cartCommands.setItemAutoOrder("up-1", null), "put", "*/backend-api/cart/items"],
+    ["clearCart", () => cartCommands.clearCart(), "delete", "*/backend-api/cart"],
+  ] as const)(
+    "%s: an auth-handled failure settles the write on its own, independent of the logout cascade",
+    async (_name, run, method, path) => {
+      await refreshCart()
+      server.use(http[method](path, () => new HttpResponse(null, { status: 401 })))
+
+      await run()
+
+      expect(writesInFlight()).toBe(0)
+    },
+  )
+})
 
 // ---------------------------------------------------------------------------
-// old: "cartStore transient isLoading/error at the start of a write"
-// NOT PORTED: asserted on the store's synchronous `set({ isLoading: true, error: null })` before
-// the first `await`. `cartCommands` carry no such local state in Step 1 - `isLoading` becomes
-// `isFetching || useIsMutating(...)` off the query/mutation cache once a hook wraps these
-// commands (§5/§7 Step 4), which is outside this file's scope.
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// old: "cartStore post-write refetch bypasses the de-dup window" -> commands force refreshCart
+// commands force refreshCart
 // ---------------------------------------------------------------------------
 describe("cartCommands post-write refresh bypasses the staleTime window", () => {
   beforeEach(() => {
@@ -768,7 +839,6 @@ describe("refreshCart force joins the shared in-flight fetch", () => {
 })
 
 /**
- * old: "cartStore addToCart auth checks are each independently load-bearing"
  * `isAuthErrorStatus` only ever returns true for a 401, and the axios interceptor in
  * `lib/api/client.ts` sets `error.authHandled = true` on every 401 before the rejection reaches
  * this command - so in real traffic both conditions always agree. In `cartCommands.addItem` this
@@ -794,20 +864,9 @@ describe("cartCommands.addItem always rethrows, independent of the interceptor",
 })
 
 /**
- * old: "cartStore auth-handled branches reset isLoading on their own, independent of the logout
- * cascade" - NOT PORTED: asserted `store().isLoading === false`, which has no equivalent here
- * (no local loading state in Step 1). The auth-handled swallow/rethrow behaviour itself is still
- * covered above (`removeItem`/`updateQuantity` resolve silently, `setItemAutoOrder` swallows,
- * `clearCart` resolves silently) via `cartAPI` spies where relevant.
- */
-
-/**
- * old: "cartStore generic error message fallback for a non-Error rejection" - the query cache
- * stores whatever `queryFn`/the command rejects with verbatim (there is no
- * `error instanceof Error ? error.message : "<generic>"` fallback message to construct anymore,
- * since Step 1 carries no local `error: string | null` field for a hook to read). Ported as: the
- * cache/command still handle a non-Error rejection without crashing, and (for `addItem`, which
- * rethrows) hand the original value back to the caller unchanged.
+ * The query cache and the commands keep whatever a request rejects with verbatim (the generic
+ * toast fallback lives in `writeErrorMessage`/`fetchErrorMessage`, tested below): a non-Error
+ * rejection must not crash anything, and `addItem` hands it back to the caller unchanged.
  */
 describe("non-Error rejections are handled without a message fallback", () => {
   it("refreshCart: a query error surfaces on the query state and refreshCart still does not throw", async () => {
@@ -845,7 +904,7 @@ describe("non-Error rejections are handled without a message fallback", () => {
 })
 
 // ---------------------------------------------------------------------------
-// old: "cartStore addToCart guest guard" -> cartCommands.addItem guest guard
+// cartCommands.addItem guest guard
 // ---------------------------------------------------------------------------
 describe("cartCommands.addItem guest guard", () => {
   const assignMock = window.location.assign as unknown as ReturnType<typeof vi.fn>
@@ -882,7 +941,6 @@ describe("cartCommands.addItem guest guard", () => {
 })
 
 /**
- * old: "cartStore addToCart guest guard reads live auth state, not a stale snapshot"
  * The guard in `addItem` reads `useAuthStore.getState().isAuthenticated` live, not a value
  * captured earlier - a shopper who was signed in and then loses the session (token expiry,
  * cross-tab logout) must still be bounced on their very next `addItem` call, with no stale
@@ -926,21 +984,42 @@ describe("cartCommands.addItem guest guard reads live auth state, not a stale sn
 })
 
 // ---------------------------------------------------------------------------
-// cartQueryOptions() itself - the queryOptions() factory used by future hooks (§5)
+// cartQueryOptions() - the one definition every reader, owner and command shares
 // ---------------------------------------------------------------------------
 describe("cartQueryOptions", () => {
+  const cartQuery = () => client.getQueryCache().find({ queryKey: queryKeys.cart.detail(), exact: true })
+
   it("uses the shared cart.detail() query key and a 1s staleTime", () => {
     const options = cartQueryOptions()
 
     expect(options.queryKey).toEqual(queryKeys.cart.detail())
     expect(options.staleTime).toBe(1_000)
   })
+
+  it("keeps the cart entry from ever being garbage-collected, also after clearCart rewrote it", async () => {
+    await refreshCart()
+    expect(cartQuery()?.gcTime).toBe(Number.POSITIVE_INFINITY)
+
+    await cartCommands.clearCart()
+
+    expect(cached()).toEqual(EMPTY_CART)
+    expect(cartQuery()?.gcTime).toBe(Number.POSITIVE_INFINITY)
+  })
+
+  it("hands out a fresh cartItems array on every refetch (no structural sharing)", async () => {
+    await refreshCart()
+    const first = cached()?.cartItems
+
+    await refreshCart({ force: true })
+
+    expect(cached()?.cartItems).not.toBe(first)
+    expect(cached()?.cartItems).toEqual(first)
+  })
 })
 
 // ---------------------------------------------------------------------------
-// writeErrorMessage / fetchErrorMessage - the shared toast-message helpers behind cartStore's
-// mutation/query-cache projection AND useCartPage's own toasts (design doc §7 step 4 revision:
-// moved here from cartStore.ts so neither consumer re-implements the fallback/skip rules).
+// writeErrorMessage / fetchErrorMessage - the toast-message rules behind useCartPage's
+// fetch-error and write-error toasts.
 // ---------------------------------------------------------------------------
 describe("writeErrorMessage", () => {
   it.each([

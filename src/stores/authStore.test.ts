@@ -1,9 +1,7 @@
 import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it } from "vitest"
 import { server } from "@/mocks/server"
-import { makeCart } from "@/test/factories"
 import { useAuthStore } from "./authStore"
-import { useCartStore } from "./cartStore"
 import { useFavoriteProductsStore } from "./favoriteProductsStore"
 
 const COOKIE_NAME = "auth-storage"
@@ -54,7 +52,6 @@ beforeEach(() => {
       })
       return new HttpResponse(null, { status: 200 })
     }),
-    http.get("*/backend-api/cart", () => HttpResponse.json(makeCart())),
   )
 })
 
@@ -248,16 +245,6 @@ describe("authStore logout", () => {
       isAdminImpersonating: false,
       error: null,
     })
-  })
-
-  it("resets the cart store so the next user never sees the previous cart", async () => {
-    store().setAuth(user, "access-1", "refresh-1")
-    await useCartStore.getState().fetchCart({ force: true })
-    expect(useCartStore.getState().cartCount).toBeGreaterThan(0)
-
-    await store().logout()
-
-    expect(useCartStore.getState()).toMatchObject({ items: [], cartCount: 0, cartId: null, lastFetchedAt: 0 })
   })
 
   it("resets the favorite products store on logout", async () => {

@@ -6,12 +6,12 @@ import { type CartItem, cartAPI } from "@/lib/api/cart"
 import { queryKeys } from "@/lib/query/keys"
 
 /**
- * Reader hooks for the `cart.detail` query cache entry (design doc §5). Every one of them is a
- * disabled observer (`enabled: false`): it subscribes to the cache and re-renders when the entry
- * changes, but never triggers a fetch of its own - that stays the job of the fetch *owners*
- * (`refreshCart` on `useCartPage`/`useCheckoutPage`/`DashboardHeader` mount and
- * `useAuthHydration`) and the write commands in `cart-queries.ts`. Mounting a badge or any other
- * reader must not add a `GET /cart`.
+ * Reader hooks for the `cart.detail` entry (design doc §5). Each is a disabled observer: it
+ * re-renders on cache changes but never fetches. Fetching belongs to the explicit owners
+ * (`refreshCart()` on useCartPage / useCheckoutPage / DashboardHeader mount, useAuthHydration)
+ * and to the write commands. Deliberately not enabled observers with the 1 s staleTime: every
+ * reader mount (checkout steps, badges) would then refetch a stale cart, adding GET /cart calls
+ * and a mid-checkout "cart changed" bounce path in useCheckoutCartSync.
  */
 
 export function useCartItems(): CartItem[] {
@@ -24,7 +24,7 @@ export function useCartItems(): CartItem[] {
   return data ?? EMPTY_CART.cartItems
 }
 
-/** Sum of item quantities - same definition as the old `cartStore.cartCount`. */
+/** Badge count: the sum of item quantities, not the number of lines. */
 export function useCartCount(): number {
   const { data } = useQuery({
     ...cartQueryOptions(),

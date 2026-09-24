@@ -1,8 +1,8 @@
 "use client"
 
 import { useMemo } from "react"
-import { useTaxEstimateQuery } from "@/features/cart/hooks/useCartQueries"
-import { useCartStore } from "@/stores/cartStore"
+import { useCartItems, useTaxEstimateQuery } from "@/features/cart/hooks/useCartQueries"
+import type { CartItem } from "@/lib/api/cart"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
 interface UseOrderSummaryResult {
@@ -10,7 +10,7 @@ interface UseOrderSummaryResult {
   selectedShippingEtaText: string
   selectedVendorShippingMethods: ReturnType<typeof useCheckoutStore.getState>["selectedVendorShippingMethods"]
   shippingAddress: ReturnType<typeof useCheckoutStore.getState>["shippingAddress"]
-  items: ReturnType<typeof useCartStore.getState>["items"]
+  items: CartItem[]
   subtotal: number
   shipping: number
   heavyShipmentFee: number
@@ -24,7 +24,7 @@ interface UseOrderSummaryResult {
 }
 
 export function useOrderSummary(): UseOrderSummaryResult {
-  const { items } = useCartStore()
+  const items = useCartItems()
   const {
     shippingAddress,
     currentStep,

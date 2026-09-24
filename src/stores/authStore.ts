@@ -94,10 +94,7 @@ export const useAuthStore = create<AuthState>()(
         get().clearAuth()
         // persist only rewrote an empty state; delete it so proxy.ts sees no cookie at all.
         useAuthStore.persist.clearStorage()
-
-        // Clear cart state
-        const { useCartStore } = await import("./cartStore")
-        useCartStore.getState().resetCart()
+        // Cached server data (cart included) is dropped by QuerySessionBoundary on the user change above.
 
         // Clear favorite products state
         const { useFavoriteProductsStore } = await import("./favoriteProductsStore")

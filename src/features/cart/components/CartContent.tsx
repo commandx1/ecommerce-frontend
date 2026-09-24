@@ -3,9 +3,9 @@ import SectionHeading from "@/components/layout/SectionHeading"
 import CartItemsPanel from "@/features/cart/components/CartItemsPanel"
 import CartSummaryPanel from "@/features/cart/components/CartSummaryPanel"
 import type { CartSellerGroup, CartTotals } from "@/features/cart/types"
+import type { CartItem } from "@/lib/api/cart"
 import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
 import type { DentalLicenseStatus } from "@/lib/helpers/dentalLicense"
-import type { CartItem } from "@/stores/cartStore"
 
 interface CartContentProps {
   cartId: string | null

@@ -7,9 +7,9 @@ import { CartPage } from "./pages/cart.page"
 
 /**
  * src/features/cart/**. All writes go through the SAME endpoint pair
- * (PUT/DELETE `/backend-api/cart/items`) - see cartStore.ts: quantity changes,
- * auto-order changes, and removal-via-zero-quantity all funnel through
- * `updateQuantity`/`setItemAutoOrder`/`removeFromCart`.
+ * (PUT/DELETE `/backend-api/cart/items`) - see src/features/cart/api/cart-queries.ts: quantity
+ * changes, auto-order changes, and removal-via-zero-quantity all funnel through
+ * `cartCommands.updateQuantity`/`setItemAutoOrder`/`removeItem`.
  */
 
 /**

@@ -1,19 +1,20 @@
+import type { QueryClient } from "@tanstack/react-query"
 import { act, renderHook, waitFor } from "@testing-library/react"
 import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it } from "vitest"
 import type { PlaceOrderPayload } from "@/lib/api/orders"
 import { server } from "@/mocks/server"
-import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
+import { seedCart } from "@/test/cart"
 import { makeCartItem, makeCartUserProduct, makeTaxEstimate } from "@/test/factories"
-import { createQueryWrapper } from "@/test/render"
+import { createQueryWrapper, type QueryWrapperResult } from "@/test/render"
 import { useOrderSummary } from "./useOrderSummary"
 
-/** `useOrderSummary` now estimates tax via `useTaxEstimateQuery`, so every render needs a `QueryClientProvider`. */
-const renderOrderSummary = () => {
-  const { wrapper } = createQueryWrapper()
-  return renderHook(() => useOrderSummary(), { wrapper })
-}
+let client: QueryClient
+let wrapper: QueryWrapperResult["wrapper"]
+
+/** `useOrderSummary` reads the cart query cache and estimates tax via a query: every render needs the provider. */
+const renderOrderSummary = () => renderHook(() => useOrderSummary(), { wrapper })
 
 /**
  * `useOrderSummary` is the money panel. Every number the buyer sees before they authorise a
@@ -40,13 +41,16 @@ const captureTaxRequests = (taxAmount = 8.5) => {
 }
 
 beforeEach(() => {
-  useCartStore.setState({ items: [], cartId: "cart-1" })
+  const query = createQueryWrapper()
+  client = query.client
+  wrapper = query.wrapper
+  seedCart(client, { cartItems: [], cartId: "cart-1" })
 })
 
 describe("useOrderSummary", () => {
   it("sums the line prices into the subtotal", () => {
-    useCartStore.setState({
-      items: [
+    seedCart(client, {
+      cartItems: [
         makeCartItem({ id: "a", quantity: 2, userProduct: makeCartUserProduct({ price: 50 }) }),
         makeCartItem({ id: "b", quantity: 3, userProduct: makeCartUserProduct({ price: 10 }) }),
       ],
@@ -58,8 +62,8 @@ describe("useOrderSummary", () => {
   })
 
   it("gives no volume discount at or below the $2000 threshold", () => {
-    useCartStore.setState({
-      items: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 2000 }) })],
+    seedCart(client, {
+      cartItems: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 2000 }) })],
     })
 
     const { result } = renderOrderSummary()
@@ -68,8 +72,8 @@ describe("useOrderSummary", () => {
   })
 
   it("applies a 5% volume discount above $2000", () => {
-    useCartStore.setState({
-      items: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 2400 }) })],
+    seedCart(client, {
+      cartItems: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 2400 }) })],
     })
 
     const { result } = renderOrderSummary()
@@ -78,8 +82,8 @@ describe("useOrderSummary", () => {
   })
 
   it("sums the heavy shipping surcharge across items", () => {
-    useCartStore.setState({
-      items: [
+    seedCart(client, {
+      cartItems: [
         makeCartItem({
           id: "a",
           quantity: 2,
@@ -99,8 +103,8 @@ describe("useOrderSummary", () => {
   })
 
   it("treats a missing heavy surcharge field as zero rather than NaN", () => {
-    useCartStore.setState({
-      items: [
+    seedCart(client, {
+      cartItems: [
         makeCartItem({
           quantity: 2,
           userProduct: makeCartUserProduct({
@@ -137,8 +141,8 @@ describe("useOrderSummary", () => {
 
   it("adds the heavy surcharge into the total and folds it into the tax estimate's shippingAmount (total = subtotal - discount + shipping + heavy + tax)", async () => {
     const bodies = captureTaxRequests(1.5)
-    useCartStore.setState({
-      items: [
+    seedCart(client, {
+      cartItems: [
         makeCartItem({
           quantity: 1,
           userProduct: makeCartUserProduct({ price: 100, shipmentFee: 5, heavyShippingSurcharge: 20 }),
@@ -157,8 +161,8 @@ describe("useOrderSummary", () => {
 
   it("sends the heavy surcharge as shippingAmount and adds it to the total even before a shipping method is selected", async () => {
     const bodies = captureTaxRequests(0)
-    useCartStore.setState({
-      items: [
+    seedCart(client, {
+      cartItems: [
         makeCartItem({
           quantity: 1,
           userProduct: makeCartUserProduct({ price: 100, shipmentFee: 5, heavyShippingSurcharge: 20 }),
@@ -177,7 +181,7 @@ describe("useOrderSummary", () => {
 
   it("leaves tax unestimated (null) and never calls the backend without an address", async () => {
     const bodies = captureTaxRequests()
-    useCartStore.setState({ items: [makeCartItem()] })
+    seedCart(client, { cartItems: [makeCartItem()] })
 
     const { result } = renderOrderSummary()
 
@@ -199,7 +203,7 @@ describe("useOrderSummary", () => {
 
   it("estimates tax from the address and the selected shipping cost", async () => {
     const bodies = captureTaxRequests(12.34)
-    useCartStore.setState({ items: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 100 }) })] })
+    seedCart(client, { cartItems: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 100 }) })] })
     useCheckoutStore.setState({ orderPayload: orderPayload(), selectedShippingCost: 15 })
 
     const { result } = renderOrderSummary()
@@ -213,7 +217,7 @@ describe("useOrderSummary", () => {
 
   it("re-estimates tax when the shipping cost changes, so a stale tax is never charged", async () => {
     const bodies = captureTaxRequests()
-    useCartStore.setState({ items: [makeCartItem()] })
+    seedCart(client, { cartItems: [makeCartItem()] })
     useCheckoutStore.setState({ orderPayload: orderPayload(), selectedShippingCost: 10 })
 
     const { rerender } = renderOrderSummary()
@@ -236,7 +240,7 @@ describe("useOrderSummary", () => {
     ["null", null],
     ["an object", {}],
   ])("treats a non-numeric taxAmount (%s) as unestimated, not as a value", async (_label, taxAmount) => {
-    useCartStore.setState({ items: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 100 }) })] })
+    seedCart(client, { cartItems: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 100 }) })] })
     useCheckoutStore.setState({ orderPayload: orderPayload(), selectedShippingCost: 15 })
     server.use(
       http.post("*/backend-api/cart/tax-estimate", () =>
@@ -254,7 +258,7 @@ describe("useOrderSummary", () => {
 
   it("leaves tax unestimated (null), not zero, when the estimate call fails", async () => {
     server.use(http.post("*/backend-api/cart/tax-estimate", () => new HttpResponse(null, { status: 500 })))
-    useCartStore.setState({ items: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 100 }) })] })
+    seedCart(client, { cartItems: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 100 }) })] })
     useCheckoutStore.setState({ orderPayload: orderPayload(), selectedShippingCost: 5 })
 
     const { result } = renderOrderSummary()

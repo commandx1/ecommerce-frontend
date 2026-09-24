@@ -5,8 +5,8 @@ import { useMemo, useState } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import { showToast } from "@/components/ui/Toast"
+import { cartCommands } from "@/features/cart/api/cart-queries"
 import { isAuthHandledError } from "@/lib/api/auth-error"
-import { useCartStore } from "@/stores/cartStore"
 import { usePurchaseCalculator } from "../hooks/usePurchaseCalculator"
 import type { SupplierViewModel } from "../types"
 import BulkPricingGrid from "./purchase/BulkPricingGrid"
@@ -44,7 +44,6 @@ const PurchaseOptions = ({
   bestPriceVendorUserProductId,
 }: PurchaseOptionsProps) => {
   const searchParams = useSearchParams()
-  const addToCart = useCartStore((state) => state.addToCart)
   const selectedVendorId = searchParams.get("vendorId")
   const selectedSupplier = useMemo(() => {
     if (selectedVendorId) {
@@ -87,7 +86,7 @@ const PurchaseOptions = ({
     }
     setIsAddingToCart(true)
     try {
-      await addToCart(userProductId, quantity)
+      await cartCommands.addItem(userProductId, quantity)
     } catch (err: unknown) {
       if (isAuthHandledError(err)) {
         return
