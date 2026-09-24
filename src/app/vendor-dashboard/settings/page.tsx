@@ -1,12 +1,5 @@
-"use client"
+import VendorSettingsPage from "@/features/vendor-dashboard/settings/VendorSettingsPage"
 
-import AccountSettingsShared from "@/components/dashboard-shared/AccountSettingsShared"
-import AddressManagementShared from "@/components/dashboard-shared/AddressManagementShared"
-
-export default function VendorSettingsPage() {
-  return (
-    <AccountSettingsShared title="Vendor Settings" description="Manage your vendor profile and security preferences.">
-      <AddressManagementShared />
-    </AccountSettingsShared>
-  )
+export default function Page() {
+  return <VendorSettingsPage />
 }
