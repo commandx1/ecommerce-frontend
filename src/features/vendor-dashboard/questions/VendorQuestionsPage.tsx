@@ -1,375 +1,33 @@
 "use client"
 
-import { Loader2, MessageSquare, Pencil, Send, Trash2, X } from "lucide-react"
-import { useCallback, useEffect, useId, useState } from "react"
+import { MessageSquare } from "lucide-react"
 import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
-import ConfirmationModal from "@/components/feedback/ConfirmationModal"
 import SectionHeading from "@/components/layout/SectionHeading"
-import { Skeleton } from "@/components/ui/skeleton"
 import SurfaceCard from "@/components/ui/SurfaceCard"
-import { showToast } from "@/components/ui/Toast"
-import {
-  type ProductAnswerResponse,
-  type ProductQuestionResponse,
-  type QuestionFilter,
-  type SellerQuestionCounts,
-  vendorQuestionsAPI,
-} from "@/lib/api/vendor-questions"
-import { formatShortDate, parseApiDate } from "@/lib/helpers/format"
-import { cn } from "@/lib/utils"
-import { useAuthStore } from "@/stores/authStore"
+import { Skeleton } from "@/components/ui/skeleton"
+import QuestionCard from "./components/QuestionCard"
+import QuestionFilterTabs from "./components/QuestionFilterTabs"
+import { useAnswerMutations } from "./hooks/useAnswerMutations"
+import { QUESTIONS_PAGE_SIZE, useVendorQuestionsPage } from "./hooks/useVendorQuestionsPage"
 
-const PAGE_SIZE = 10
-
-const FILTER_TABS: { key: QuestionFilter; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "unanswered", label: "Unanswered" },
-  { key: "answered", label: "Answered" },
-]
-
-function formatRelativeDate(dateStr: string | null): string {
-  if (!dateStr) return ""
-  const date = parseApiDate(dateStr)
-  const now = new Date()
-  const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
-  if (diffDays === 0) return "Today"
-  if (diffDays === 1) return "Yesterday"
-  if (diffDays < 7) return `${diffDays} days ago`
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`
-  return formatShortDate(date)
-}
-
-interface QuestionCardProps {
-  question: ProductQuestionResponse
-  currentUserId: string | null
-  onAnswerCreated: (questionId: string, answer: ProductAnswerResponse) => void
-  onAnswerUpdated: (questionId: string, answer: ProductAnswerResponse) => void
-  onAnswerDeleted: (questionId: string, answerId: string) => void
-}
-
-function QuestionCard({
-  question,
-  currentUserId,
-  onAnswerCreated,
-  onAnswerUpdated,
-  onAnswerDeleted,
-}: QuestionCardProps) {
-  const cardId = useId()
-  // A vendor writes at most one answer per question; find theirs (if any) among however many
-  // other vendors/answerers have also weighed in, instead of assuming it is always first.
-  const myAnswer = question.answers.find((answer) => answer.answererUserId === currentUserId) ?? null
-
-  const [mode, setMode] = useState<"view" | "composing" | "editing">("view")
-  const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null)
-  const [draftText, setDraftText] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [deletingAnswerId, setDeletingAnswerId] = useState<string | null>(null)
-
-  const startCompose = () => {
-    setDraftText("")
-    setMode("composing")
-  }
-  const startEdit = (answer: ProductAnswerResponse) => {
-    setEditingAnswerId(answer.id)
-    setDraftText(answer.answer)
-    setMode("editing")
-  }
-  const cancelEdit = () => {
-    setDraftText("")
-    setEditingAnswerId(null)
-    setMode("view")
-  }
-
-  const handleSubmit = async () => {
-    const trimmed = draftText.trim()
-    if (!trimmed) return
-    setIsSubmitting(true)
-    try {
-      if (mode === "composing") {
-        const created = await vendorQuestionsAPI.createAnswer({ productQuestionId: question.id, answer: trimmed })
-        onAnswerCreated(question.id, created)
-      } else {
-        if (!editingAnswerId) return
-        const updated = await vendorQuestionsAPI.updateAnswer(editingAnswerId, { answer: trimmed })
-        onAnswerUpdated(question.id, updated)
-      }
-      setMode("view")
-      setDraftText("")
-      setEditingAnswerId(null)
-    } catch {
-      showToast.error("Failed to save answer", "Please try again.")
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const handleDeleteConfirmed = async () => {
-    if (!deletingAnswerId) return
-    setIsDeleting(true)
-    try {
-      await vendorQuestionsAPI.deleteAnswer(deletingAnswerId)
-      onAnswerDeleted(question.id, deletingAnswerId)
-      if (editingAnswerId === deletingAnswerId) {
-        setMode("view")
-        setEditingAnswerId(null)
-      }
-      setDeletingAnswerId(null)
-    } catch {
-      showToast.error("Failed to delete answer", "Please try again.")
-    } finally {
-      setIsDeleting(false)
-    }
-  }
-
-  return (
-    <SurfaceCard
-      variant="glass"
-      data-testid="question-card"
-      className="overflow-hidden transition-shadow hover:shadow-panel"
-    >
-      <div className="flex items-center gap-2 border-b border-border-soft bg-surface px-5 py-3">
-        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-brand/10">
-          <MessageSquare className="h-3.5 w-3.5 text-brand" />
-        </div>
-        <span className="text-xs font-semibold text-brand">{question.productName ?? "Product"}</span>
-        <span className="ml-auto text-xs text-text-muted">{formatRelativeDate(question.createdDate)}</span>
-      </div>
-
-      <div className="space-y-4 px-5 py-4">
-        <div className="space-y-1.5">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Question</p>
-          <p className="text-sm leading-relaxed text-text-primary">{question.question}</p>
-          <p className="text-xs text-text-muted">
-            Asked by <span className="font-medium text-text-secondary capitalize">{question.questionerName}</span>
-          </p>
-        </div>
-
-        <div className="border-t border-border-soft pt-4 space-y-4">
-          {question.answers.map((answer) => {
-            const isMine = answer.answererUserId === currentUserId
-            const isEditingThisAnswer = mode === "editing" && editingAnswerId === answer.id
-
-            if (isEditingThisAnswer) {
-              return (
-                <div key={answer.id} className="space-y-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Edit answer</p>
-                  <textarea
-                    rows={3}
-                    value={draftText}
-                    onChange={(e) => setDraftText(e.target.value)}
-                    placeholder="Type your answer here..."
-                    className="w-full resize-none rounded-xl border border-border-strong bg-surface px-3.5 py-2.5 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand/50 focus:ring-2 focus:ring-brand/20"
-                  />
-                  <div className="flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={cancelEdit}
-                      disabled={isSubmitting}
-                      className="flex items-center gap-1.5 rounded-xl border border-border-strong px-3.5 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-muted disabled:opacity-50"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleSubmit()}
-                      disabled={isSubmitting || !draftText.trim()}
-                      className="flex items-center gap-1.5 rounded-xl bg-brand px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {isSubmitting ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Send className="h-3.5 w-3.5" />
-                      )}
-                      {isSubmitting ? "Saving…" : "Save changes"}
-                    </button>
-                  </div>
-                </div>
-              )
-            }
-
-            return (
-              <div key={answer.id} className="space-y-2">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-success">Answer</p>
-                  {isMine && (
-                    <div className="flex items-center gap-1">
-                      {/* Icon-only controls need an accessible name of their own - the icon carries
-                          no text, so without this a screen-reader user hears only "button" (same
-                          class as F91/F112). Several answers can sit on one question, so the name
-                          says WHICH answer it acts on. */}
-                      <button
-                        type="button"
-                        aria-label="Edit your answer"
-                        onClick={() => startEdit(answer)}
-                        className="rounded-lg p-1.5 text-text-muted transition-colors hover:bg-surface-muted hover:text-text-secondary"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Delete your answer"
-                        onClick={() => setDeletingAnswerId(answer.id)}
-                        className="rounded-lg p-1.5 text-text-muted transition-colors hover:bg-danger/10 hover:text-danger"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-                <p className="text-sm leading-relaxed text-text-primary">{answer.answer}</p>
-                <p className="text-xs text-text-muted">
-                  By <span className="font-medium text-text-secondary capitalize">{answer.answererName}</span>
-                  {answer.createdDate && <> · {formatRelativeDate(answer.createdDate)}</>}
-                </p>
-              </div>
-            )
-          })}
-
-          {mode === "composing" ? (
-            <div className="space-y-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Your answer</p>
-              <textarea
-                rows={3}
-                value={draftText}
-                onChange={(e) => setDraftText(e.target.value)}
-                placeholder="Type your answer here..."
-                className="w-full resize-none rounded-xl border border-border-strong bg-surface px-3.5 py-2.5 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-brand/50 focus:ring-2 focus:ring-brand/20"
-              />
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={cancelEdit}
-                  disabled={isSubmitting}
-                  className="flex items-center gap-1.5 rounded-xl border border-border-strong px-3.5 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-muted disabled:opacity-50"
-                >
-                  <X className="h-3.5 w-3.5" />
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void handleSubmit()}
-                  disabled={isSubmitting || !draftText.trim()}
-                  className="flex items-center gap-1.5 rounded-xl bg-brand px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-                  {isSubmitting ? "Saving…" : "Submit answer"}
-                </button>
-              </div>
-            </div>
-          ) : mode === "view" && !myAnswer ? (
-            <button
-              id={`${cardId}-answer-btn`}
-              type="button"
-              onClick={startCompose}
-              className="flex items-center gap-2 rounded-xl border border-dashed border-border-strong px-4 py-2.5 text-sm font-medium text-text-muted transition-colors hover:border-brand/50 hover:bg-brand/5 hover:text-brand"
-            >
-              <Send className="h-3.5 w-3.5" />
-              Write an answer
-            </button>
-          ) : null}
-        </div>
-      </div>
-      <ConfirmationModal
-        isOpen={deletingAnswerId !== null}
-        onClose={() => setDeletingAnswerId(null)}
-        onConfirm={() => void handleDeleteConfirmed()}
-        title="Delete answer"
-        description="Are you sure you want to delete this answer? This action cannot be undone."
-        confirmText="Delete"
-        cancelText="Keep it"
-        isDanger
-        isLoading={isDeleting}
-      />
-    </SurfaceCard>
-  )
-}
+const SKELETON_CARD_IDS = ["card-1", "card-2", "card-3", "card-4"] as const
 
 export default function VendorQuestionsPage() {
-  const { isAuthenticated, user } = useAuthStore()
-  const [questions, setQuestions] = useState<ProductQuestionResponse[]>([])
-  const [counts, setCounts] = useState<SellerQuestionCounts | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [currentPage, setCurrentPage] = useState(0)
-  const [totalPages, setTotalPages] = useState(1)
-  const [totalElements, setTotalElements] = useState(0)
-  const [activeFilter, setActiveFilter] = useState<QuestionFilter>("all")
+  const {
+    isAuthenticated,
+    currentUserId,
+    questions,
+    counts,
+    isLoading,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    totalElements,
+    activeFilter,
+    handleFilterChange,
+  } = useVendorQuestionsPage()
 
-  const fetchCounts = useCallback(async () => {
-    if (!isAuthenticated) return
-    try {
-      const data = await vendorQuestionsAPI.getSellerCounts()
-      setCounts(data)
-    } catch {
-      // non-critical, silently ignore
-    }
-  }, [isAuthenticated])
-
-  const fetchQuestions = useCallback(
-    async (page: number, filter: QuestionFilter) => {
-      if (!isAuthenticated) return
-      setIsLoading(true)
-      try {
-        const response = await vendorQuestionsAPI.getSellerQuestions(page, PAGE_SIZE, filter)
-        // A broken 200 body (missing/null/non-array `content`, or a question with a missing/
-        // non-array `answers`) must not white-screen the page - same class of bug as the vendor
-        // orders/brand-filter fixes (F77/F83). QuestionCard unconditionally calls
-        // `question.answers.find(...)` and `.map(...)`.
-        const content = Array.isArray(response.content) ? response.content : []
-        setQuestions(content.map((q) => ({ ...q, answers: Array.isArray(q.answers) ? q.answers : [] })))
-        setTotalPages(Number.isFinite(response.totalPages) ? response.totalPages : 0)
-        setTotalElements(Number.isFinite(response.totalElements) ? response.totalElements : 0)
-      } catch {
-        showToast.error("Failed to load questions", "Please refresh the page.")
-        setQuestions([])
-        setTotalPages(0)
-        setTotalElements(0)
-      } finally {
-        setIsLoading(false)
-      }
-    },
-    [isAuthenticated],
-  )
-
-  useEffect(() => {
-    void fetchQuestions(currentPage, activeFilter)
-  }, [fetchQuestions, currentPage, activeFilter])
-
-  useEffect(() => {
-    void fetchCounts()
-  }, [fetchCounts])
-
-  const handleFilterChange = (filter: QuestionFilter) => {
-    setActiveFilter(filter)
-    setCurrentPage(0)
-  }
-
-  const handleAnswerCreated = useCallback(
-    (questionId: string, answer: ProductAnswerResponse) => {
-      setQuestions((prev) => prev.map((q) => (q.id === questionId ? { ...q, answers: [answer, ...q.answers] } : q)))
-      void fetchCounts()
-    },
-    [fetchCounts],
-  )
-
-  const handleAnswerUpdated = useCallback((questionId: string, answer: ProductAnswerResponse) => {
-    setQuestions((prev) =>
-      prev.map((q) =>
-        q.id === questionId ? { ...q, answers: q.answers.map((a) => (a.id === answer.id ? answer : a)) } : q,
-      ),
-    )
-  }, [])
-
-  const handleAnswerDeleted = useCallback(
-    (questionId: string, answerId: string) => {
-      setQuestions((prev) =>
-        prev.map((q) => (q.id === questionId ? { ...q, answers: q.answers.filter((a) => a.id !== answerId) } : q)),
-      )
-      void fetchCounts()
-    },
-    [fetchCounts],
-  )
+  const mutations = useAnswerMutations({ page: currentPage, size: QUESTIONS_PAGE_SIZE, filter: activeFilter })
 
   if (!isAuthenticated) {
     return (
@@ -408,58 +66,14 @@ export default function VendorQuestionsPage() {
 
       <SurfaceCard as="section" variant="glass" className="overflow-hidden">
         <div className="flex flex-col gap-3 border-b border-border-soft px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex max-w-full flex-wrap items-center gap-1.5 rounded-sm border border-border-soft bg-surface p-1.5 shadow-soft">
-            {FILTER_TABS.map(({ key, label }) => {
-              const count = counts
-                ? key === "all"
-                  ? counts.total
-                  : key === "answered"
-                    ? counts.answered
-                    : counts.unanswered
-                : null
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => handleFilterChange(key)}
-                  className={cn(
-                    "flex items-center gap-2 rounded-sm px-4 py-2 text-sm font-medium transition-colors",
-                    activeFilter === key
-                      ? "bg-brand text-muted shadow-soft"
-                      : "text-text-secondary hover:bg-surface-muted hover:text-text-primary",
-                  )}
-                  aria-pressed={activeFilter === key}
-                >
-                  {label}
-                  {/* The count pill is reserved, not omitted: without it each tab was narrower
-                      until the counts landed, and on mobile the row re-wrapped when they did -
-                      the remaining 42px of this route's shift after the header badge was fixed. */}
-                  {count === null && <Skeleton className="h-4 w-5 rounded-full" />}
-                  {count !== null && (
-                    <span
-                      className={cn(
-                        "rounded-full px-1.5 py-0.5 text-[11px] font-bold",
-                        activeFilter === key
-                          ? "bg-white/20 text-white"
-                          : key === "unanswered" && count > 0
-                            ? "bg-warning/20 text-warning"
-                            : "bg-surface-muted text-text-muted",
-                      )}
-                    >
-                      {count}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
+          <QuestionFilterTabs activeFilter={activeFilter} counts={counts} onFilterChange={handleFilterChange} />
         </div>
 
         <div className="p-6">
           {isLoading ? (
             <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
-              {Array.from({ length: 4 }, (_, i) => (
-                <div key={i} className="overflow-hidden rounded-2xl border border-border-soft">
+              {SKELETON_CARD_IDS.map((id) => (
+                <div key={id} className="overflow-hidden rounded-2xl border border-border-soft">
                   <Skeleton className="h-11 rounded-none" />
                   <div className="space-y-3 p-5">
                     <Skeleton className="h-3 w-16 rounded" />
@@ -495,10 +109,8 @@ export default function VendorQuestionsPage() {
                 <QuestionCard
                   key={question.id}
                   question={question}
-                  currentUserId={user?.id ?? null}
-                  onAnswerCreated={handleAnswerCreated}
-                  onAnswerUpdated={handleAnswerUpdated}
-                  onAnswerDeleted={handleAnswerDeleted}
+                  currentUserId={currentUserId}
+                  mutations={mutations}
                 />
               ))}
             </div>
@@ -522,7 +134,7 @@ export default function VendorQuestionsPage() {
             currentPage={currentPage}
             totalPages={totalPages}
             totalElements={totalElements}
-            pageSize={PAGE_SIZE}
+            pageSize={QUESTIONS_PAGE_SIZE}
             onPageChange={setCurrentPage}
           />
         ) : null}
