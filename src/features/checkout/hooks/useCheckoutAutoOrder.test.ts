@@ -1,9 +1,12 @@
 import { act, renderHook, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { showToast } from "@/components/ui/Toast"
-import { useCartStore } from "@/stores/cartStore"
+import { cartCommands } from "@/features/cart/api/cart-queries"
+import type { CartItem } from "@/lib/api/cart"
+import { queryKeys } from "@/lib/query/keys"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 import { makeCartItem, makeCartProductInfo, makeCartUserProduct } from "@/test/factories"
+import { createQueryWrapper } from "@/test/render"
 import { useCheckoutAutoOrder } from "./useCheckoutAutoOrder"
 
 /**
@@ -11,6 +14,11 @@ import { useCheckoutAutoOrder } from "./useCheckoutAutoOrder"
  * controls on Final Review landed — can also change or cancel a schedule. The pure
  * `savedCardNeedsAutoOrderConsent` helper exported from the same module is covered in
  * `saved-card-consent.test.ts` and deliberately not repeated here.
+ *
+ * `useCheckoutAutoOrder` reads the cart through `useCartItems` (a disabled reader, design doc §7
+ * step 5) and writes through `cartCommands.setItemAutoOrder`, so every test seeds the query cache
+ * directly instead of `useCartStore.setState`, and spies on `cartCommands.setItemAutoOrder`
+ * instead of swapping out a store action.
  */
 
 const autoOrderItem = (userProductId: string, period: "TWO_WEEKS" | "ONE_MONTH" | "TWO_MONTHS", quantity = 1) =>
@@ -22,35 +30,38 @@ const autoOrderItem = (userProductId: string, period: "TWO_WEEKS" | "ONE_MONTH" 
     product: makeCartProductInfo({ id: `p-${userProductId}`, name: `Product ${userProductId}` }),
   })
 
+/** Seeds the cart cache with `items` (a disabled-reader hook, so no fetch/wait is involved) and mounts the hook. */
+const renderAutoOrder = (items: CartItem[]) => {
+  const { wrapper, client } = createQueryWrapper()
+  client.setQueryData(queryKeys.cart.detail(), { cartId: "cart-1", cartItems: items })
+  return renderHook(() => useCheckoutAutoOrder(), { wrapper })
+}
+
 beforeEach(() => {
   vi.restoreAllMocks()
-  useCartStore.setState({ items: [], cartId: "cart-1", setItemAutoOrder: vi.fn().mockResolvedValue(undefined) })
   useCheckoutStore.getState().reset()
 })
 
 describe("useCheckoutAutoOrder", () => {
   it("reports no auto order items for an empty cart", () => {
-    const { result } = renderHook(() => useCheckoutAutoOrder())
+    const { result } = renderAutoOrder([])
 
     expect(result.current.hasAutoOrderItems).toBe(false)
     expect(result.current.autoOrderLines).toEqual([])
   })
 
   it("ignores one-off lines", () => {
-    useCartStore.setState({ items: [makeCartItem({ autoOrder: null })] })
-
-    const { result } = renderHook(() => useCheckoutAutoOrder())
+    const { result } = renderAutoOrder([makeCartItem({ autoOrder: null })])
 
     expect(result.current.hasAutoOrderItems).toBe(false)
     expect(result.current.autoOrderLines).toEqual([])
   })
 
   it("maps each recurring line onto its product, quantity and human readable period", () => {
-    useCartStore.setState({
-      items: [autoOrderItem("up-a", "TWO_WEEKS", 3), makeCartItem({ id: "ci-plain", autoOrder: null })],
-    })
-
-    const { result } = renderHook(() => useCheckoutAutoOrder())
+    const { result } = renderAutoOrder([
+      autoOrderItem("up-a", "TWO_WEEKS", 3),
+      makeCartItem({ id: "ci-plain", autoOrder: null }),
+    ])
 
     expect(result.current.hasAutoOrderItems).toBe(true)
     expect(result.current.autoOrderLines).toEqual([
@@ -69,30 +80,29 @@ describe("useCheckoutAutoOrder", () => {
     ["ONE_MONTH", "Every 30 days"],
     ["TWO_MONTHS", "Every 60 days"],
   ] as const)("labels the %s period as %s", (period, label) => {
-    useCartStore.setState({ items: [autoOrderItem("up-a", period)] })
-
-    const { result } = renderHook(() => useCheckoutAutoOrder())
+    const { result } = renderAutoOrder([autoOrderItem("up-a", period)])
 
     expect(result.current.autoOrderLines[0].periodLabel).toBe(label)
   })
 
   it("keeps every recurring line, in cart order", () => {
-    useCartStore.setState({
-      items: [autoOrderItem("up-a", "ONE_MONTH"), makeCartItem({ id: "ci-x" }), autoOrderItem("up-b", "TWO_MONTHS")],
-    })
-
-    const { result } = renderHook(() => useCheckoutAutoOrder())
+    const { result } = renderAutoOrder([
+      autoOrderItem("up-a", "ONE_MONTH"),
+      makeCartItem({ id: "ci-x" }),
+      autoOrderItem("up-b", "TWO_MONTHS"),
+    ])
 
     expect(result.current.autoOrderLines.map((line) => line.userProductId)).toEqual(["up-a", "up-b"])
   })
 
   it("reacts when the buyer's recurring selection changes in the cart", () => {
-    useCartStore.setState({ items: [autoOrderItem("up-a", "ONE_MONTH")] })
-    const { result, rerender } = renderHook(() => useCheckoutAutoOrder())
+    const { wrapper, client } = createQueryWrapper()
+    client.setQueryData(queryKeys.cart.detail(), { cartId: "cart-1", cartItems: [autoOrderItem("up-a", "ONE_MONTH")] })
+    const { result, rerender } = renderHook(() => useCheckoutAutoOrder(), { wrapper })
     expect(result.current.hasAutoOrderItems).toBe(true)
 
     act(() => {
-      useCartStore.setState({ items: [makeCartItem({ autoOrder: null })] })
+      client.setQueryData(queryKeys.cart.detail(), { cartId: "cart-1", cartItems: [makeCartItem({ autoOrder: null })] })
     })
     rerender()
 
@@ -102,7 +112,7 @@ describe("useCheckoutAutoOrder", () => {
 
 describe("useCheckoutAutoOrder — schedule mutations", () => {
   it("changes a period by writing the cart first, then patching the frozen orderPayload snapshot", async () => {
-    useCartStore.setState({ items: [autoOrderItem("up-a", "ONE_MONTH")] })
+    const setItemAutoOrder = vi.spyOn(cartCommands, "setItemAutoOrder").mockResolvedValue(undefined)
     useCheckoutStore.getState().setOrderPayload({
       addressId: "address-1",
       shippoRateOrders: [
@@ -110,18 +120,18 @@ describe("useCheckoutAutoOrder — schedule mutations", () => {
       ],
       uberRateOrders: [],
     })
-    const { result } = renderHook(() => useCheckoutAutoOrder())
+    const { result } = renderAutoOrder([autoOrderItem("up-a", "ONE_MONTH")])
 
     await act(async () => {
       await result.current.onPeriodChange("up-a", "TWO_MONTHS")
     })
 
-    expect(useCartStore.getState().setItemAutoOrder).toHaveBeenCalledWith("up-a", "TWO_MONTHS")
+    expect(setItemAutoOrder).toHaveBeenCalledWith("up-a", "TWO_MONTHS")
     expect(useCheckoutStore.getState().orderPayload?.shippoRateOrders[0].products[0].autoOrder).toBe("TWO_MONTHS")
   })
 
   it("cancels a repeat by writing null to both the cart and the frozen payload", async () => {
-    useCartStore.setState({ items: [autoOrderItem("up-a", "ONE_MONTH")] })
+    const setItemAutoOrder = vi.spyOn(cartCommands, "setItemAutoOrder").mockResolvedValue(undefined)
     useCheckoutStore.getState().setOrderPayload({
       addressId: "address-1",
       shippoRateOrders: [
@@ -129,19 +139,18 @@ describe("useCheckoutAutoOrder — schedule mutations", () => {
       ],
       uberRateOrders: [],
     })
-    const { result } = renderHook(() => useCheckoutAutoOrder())
+    const { result } = renderAutoOrder([autoOrderItem("up-a", "ONE_MONTH")])
 
     await act(async () => {
       await result.current.onCancelRecurrence("up-a")
     })
 
-    expect(useCartStore.getState().setItemAutoOrder).toHaveBeenCalledWith("up-a", null)
+    expect(setItemAutoOrder).toHaveBeenCalledWith("up-a", null)
     expect(useCheckoutStore.getState().orderPayload?.shippoRateOrders[0].products[0].autoOrder).toBeNull()
   })
 
   it("toasts and leaves the payload untouched when the cart write fails", async () => {
-    const failingSetItemAutoOrder = vi.fn().mockRejectedValue(new Error("network down"))
-    useCartStore.setState({ items: [autoOrderItem("up-a", "ONE_MONTH")], setItemAutoOrder: failingSetItemAutoOrder })
+    vi.spyOn(cartCommands, "setItemAutoOrder").mockRejectedValue(new Error("network down"))
     useCheckoutStore.getState().setOrderPayload({
       addressId: "address-1",
       shippoRateOrders: [
@@ -150,7 +159,7 @@ describe("useCheckoutAutoOrder — schedule mutations", () => {
       uberRateOrders: [],
     })
     const errorToast = vi.spyOn(showToast, "error").mockImplementation(() => undefined)
-    const { result } = renderHook(() => useCheckoutAutoOrder())
+    const { result } = renderAutoOrder([autoOrderItem("up-a", "ONE_MONTH")])
 
     await act(async () => {
       await result.current.onCancelRecurrence("up-a")
@@ -165,11 +174,8 @@ describe("useCheckoutAutoOrder — schedule mutations", () => {
     const pendingWrite = new Promise<void>((resolve) => {
       resolveWrite = resolve
     })
-    useCartStore.setState({
-      items: [autoOrderItem("up-a", "ONE_MONTH")],
-      setItemAutoOrder: vi.fn().mockReturnValue(pendingWrite),
-    })
-    const { result } = renderHook(() => useCheckoutAutoOrder())
+    vi.spyOn(cartCommands, "setItemAutoOrder").mockReturnValue(pendingWrite)
+    const { result } = renderAutoOrder([autoOrderItem("up-a", "ONE_MONTH")])
 
     let writePromise!: Promise<void>
     act(() => {

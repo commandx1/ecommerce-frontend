@@ -6,7 +6,14 @@ import { server } from "@/mocks/server"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 import { makeCartItem, makeCartUserProduct, makeTaxEstimate } from "@/test/factories"
+import { createQueryWrapper } from "@/test/render"
 import { useOrderSummary } from "./useOrderSummary"
+
+/** `useOrderSummary` now estimates tax via `useTaxEstimateQuery`, so every render needs a `QueryClientProvider`. */
+const renderOrderSummary = () => {
+  const { wrapper } = createQueryWrapper()
+  return renderHook(() => useOrderSummary(), { wrapper })
+}
 
 /**
  * `useOrderSummary` is the money panel. Every number the buyer sees before they authorise a
@@ -45,7 +52,7 @@ describe("useOrderSummary", () => {
       ],
     })
 
-    const { result } = renderHook(() => useOrderSummary())
+    const { result } = renderOrderSummary()
 
     expect(result.current.subtotal).toBe(130)
   })
@@ -55,7 +62,7 @@ describe("useOrderSummary", () => {
       items: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 2000 }) })],
     })
 
-    const { result } = renderHook(() => useOrderSummary())
+    const { result } = renderOrderSummary()
 
     expect(result.current.volumeDiscount).toBe(0)
   })
@@ -65,7 +72,7 @@ describe("useOrderSummary", () => {
       items: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 2400 }) })],
     })
 
-    const { result } = renderHook(() => useOrderSummary())
+    const { result } = renderOrderSummary()
 
     expect(result.current.volumeDiscount).toBe(120)
   })
@@ -86,7 +93,7 @@ describe("useOrderSummary", () => {
       ],
     })
 
-    const { result } = renderHook(() => useOrderSummary())
+    const { result } = renderOrderSummary()
 
     expect(result.current.heavyShipmentFee).toBe(40)
   })
@@ -105,13 +112,13 @@ describe("useOrderSummary", () => {
       ],
     })
 
-    const { result } = renderHook(() => useOrderSummary())
+    const { result } = renderOrderSummary()
 
     expect(result.current.heavyShipmentFee).toBe(0)
   })
 
   it("has no selected shipping method until selectedVendorShippingMethods is populated", () => {
-    const { result } = renderHook(() => useOrderSummary())
+    const { result } = renderOrderSummary()
 
     expect(result.current.hasSelectedShipping).toBe(false)
   })
@@ -123,7 +130,7 @@ describe("useOrderSummary", () => {
       },
     })
 
-    const { result } = renderHook(() => useOrderSummary())
+    const { result } = renderOrderSummary()
 
     expect(result.current.hasSelectedShipping).toBe(true)
   })
@@ -140,7 +147,7 @@ describe("useOrderSummary", () => {
     })
     useCheckoutStore.setState({ orderPayload: orderPayload(), selectedShippingCost: 15 })
 
-    const { result } = renderHook(() => useOrderSummary())
+    const { result } = renderOrderSummary()
 
     await waitFor(() => expect(bodies).toHaveLength(1))
     await waitFor(() => expect(result.current.tax).toBe(1.5))
@@ -160,7 +167,7 @@ describe("useOrderSummary", () => {
     })
     useCheckoutStore.setState({ orderPayload: orderPayload(), selectedShippingCost: 0 })
 
-    const { result } = renderHook(() => useOrderSummary())
+    const { result } = renderOrderSummary()
 
     await waitFor(() => expect(bodies).toHaveLength(1))
     expect(bodies).toEqual([{ addressId: "address-1", shippingAmount: 20 }])
@@ -172,7 +179,7 @@ describe("useOrderSummary", () => {
     const bodies = captureTaxRequests()
     useCartStore.setState({ items: [makeCartItem()] })
 
-    const { result } = renderHook(() => useOrderSummary())
+    const { result } = renderOrderSummary()
 
     await waitFor(() => expect(result.current.isTaxLoading).toBe(false))
     expect(result.current.tax).toBeNull()
@@ -183,7 +190,7 @@ describe("useOrderSummary", () => {
     const bodies = captureTaxRequests()
     useCheckoutStore.setState({ orderPayload: orderPayload() })
 
-    const { result } = renderHook(() => useOrderSummary())
+    const { result } = renderOrderSummary()
 
     await waitFor(() => expect(result.current.isTaxLoading).toBe(false))
     expect(bodies).toHaveLength(0)
@@ -195,7 +202,7 @@ describe("useOrderSummary", () => {
     useCartStore.setState({ items: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 100 }) })] })
     useCheckoutStore.setState({ orderPayload: orderPayload(), selectedShippingCost: 15 })
 
-    const { result } = renderHook(() => useOrderSummary())
+    const { result } = renderOrderSummary()
 
     await waitFor(() => expect(result.current.tax).toBe(12.34))
     // Backend: CartTaxEstimateRequest.shippingAmount is a Double, not a string.
@@ -209,7 +216,7 @@ describe("useOrderSummary", () => {
     useCartStore.setState({ items: [makeCartItem()] })
     useCheckoutStore.setState({ orderPayload: orderPayload(), selectedShippingCost: 10 })
 
-    const { rerender } = renderHook(() => useOrderSummary())
+    const { rerender } = renderOrderSummary()
     await waitFor(() => expect(bodies).toHaveLength(1))
 
     act(() => {
@@ -237,7 +244,7 @@ describe("useOrderSummary", () => {
       ),
     )
 
-    const { result } = renderHook(() => useOrderSummary())
+    const { result } = renderOrderSummary()
 
     await waitFor(() => expect(result.current.isTaxLoading).toBe(false))
     expect(result.current.tax).toBeNull()
@@ -250,7 +257,7 @@ describe("useOrderSummary", () => {
     useCartStore.setState({ items: [makeCartItem({ quantity: 1, userProduct: makeCartUserProduct({ price: 100 }) })] })
     useCheckoutStore.setState({ orderPayload: orderPayload(), selectedShippingCost: 5 })
 
-    const { result } = renderHook(() => useOrderSummary())
+    const { result } = renderOrderSummary()
 
     await waitFor(() => expect(result.current.isTaxLoading).toBe(false))
     // Not 0 — a real $0 estimate and "we couldn't estimate it" must stay distinguishable so the
@@ -273,7 +280,7 @@ describe("useOrderSummary", () => {
       shippingAddress: { ...useCheckoutStore.getState().shippingAddress, city: "San Francisco" },
     })
 
-    const { result } = renderHook(() => useOrderSummary())
+    const { result } = renderOrderSummary()
 
     expect(result.current.currentStep).toBe(4)
     expect(result.current.selectedShippingEtaText).toBe("Priority Mail - 2 business days")

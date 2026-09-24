@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
-import { cartAPI } from "@/lib/api/cart"
+import { useMemo } from "react"
+import { useTaxEstimateQuery } from "@/features/cart/hooks/useCartQueries"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
@@ -34,9 +34,6 @@ export function useOrderSummary(): UseOrderSummaryResult {
     orderPayload,
   } = useCheckoutStore()
 
-  const [tax, setTax] = useState<number | null>(null)
-  const [isTaxLoading, setIsTaxLoading] = useState(false)
-
   const subtotal = useMemo(() => {
     return items.reduce((sum, item) => sum + item.userProduct.price * item.quantity, 0)
   }, [items])
@@ -46,69 +43,31 @@ export function useOrderSummary(): UseOrderSummaryResult {
   const heavyShipmentFee = useMemo(() => {
     return items.reduce((sum, item) => sum + (item.userProduct.heavyShippingSurcharge ?? 0) * item.quantity, 0)
   }, [items])
+
+  const hasSelectedShipping = Object.keys(selectedVendorShippingMethods).length > 0
+
+  const addressId = orderPayload?.addressId ?? null
+  // The backend counts heavy as shipping for tax purposes and does not add it itself, so we must
+  // fold heavyShipmentFee into the shippingAmount we send.
+  const shippingAmountForTax = shipping + heavyShipmentFee
+
+  // `enabled`/finite/non-negative guards, the keepPreviousData behaviour and the malformed-200
+  // (`Number.isFinite`) fallback all live in `useTaxEstimateQuery` now. `linesSignature` is kept
+  // as `String(items.length)` — today's dependency, quantity changes at an equal line count don't
+  // re-estimate (Phase 2 design doc §10.3, preserved deliberately; fixed separately later).
+  const { tax, isTaxLoading } = useTaxEstimateQuery({
+    addressId,
+    shippingAmount: shippingAmountForTax,
+    itemCount: items.length,
+    linesSignature: String(items.length),
+  })
+
   // The real charge is computed and collected server-side (OrderCreationService.computeTaxes),
   // so this total is a display-only estimate mirroring items + shipping + heavy + tax. Treating
   // an unknown tax as 0 here (rather than blocking the number entirely) matches that: the buyer
   // sees an untaxed subtotal+shipping+heavy total, and the UI below is responsible for making
   // clear that tax is still to be added.
   const total = subtotal - volumeDiscount + shipping + heavyShipmentFee + (tax ?? 0)
-
-  const hasSelectedShipping = Object.keys(selectedVendorShippingMethods).length > 0
-
-  const addressId = orderPayload?.addressId
-
-  useEffect(() => {
-    if (!addressId || items.length === 0) {
-      setTax(null)
-      setIsTaxLoading(false)
-      return
-    }
-
-    // The backend counts heavy as shipping for tax purposes and does not add it itself, so we
-    // must fold heavyShipmentFee into the shippingAmount we send.
-    const shippingAmountForTax = shipping + heavyShipmentFee
-
-    // Backend: CartTaxEstimateRequest.shippingAmount is a Double (@NotNull @PositiveOrZero) — an
-    // unserializable shipping figure (NaN/Infinity) or a negative one can never be estimated, so
-    // skip the request instead of sending a value the backend would 400 on.
-    if (!Number.isFinite(shippingAmountForTax) || shippingAmountForTax < 0) {
-      setTax(null)
-      setIsTaxLoading(false)
-      return
-    }
-
-    let isCancelled = false
-    const fetchTaxEstimate = async () => {
-      setIsTaxLoading(true)
-      try {
-        const estimate = await cartAPI.getTaxEstimate({
-          addressId,
-          shippingAmount: shippingAmountForTax,
-        })
-        if (!isCancelled) {
-          // The estimate is money the buyer reads: a non-numeric `taxAmount` from a malformed 200
-          // must fall through to "Calculated at checkout" rather than being stored, where it would
-          // string-concatenate into the total (100 + 5 + "5" -> "1055") and then be floored to
-          // $0.00 by formatCurrency (infra note #26, numeric form).
-          setTax(Number.isFinite(estimate.taxAmount) ? estimate.taxAmount : null)
-        }
-      } catch (_error) {
-        if (!isCancelled) {
-          setTax(null)
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsTaxLoading(false)
-        }
-      }
-    }
-
-    void fetchTaxEstimate()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [addressId, items.length, shipping, heavyShipmentFee])
 
   return {
     currentStep,

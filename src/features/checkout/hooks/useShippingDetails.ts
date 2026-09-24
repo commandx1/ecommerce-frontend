@@ -1,11 +1,12 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
+import { useAddressesQuery } from "@/features/checkout/hooks/useAddressesQuery"
 import type { SellerGroup, ShippingRate } from "@/features/checkout/types"
 import { getSellerGroupKey } from "@/features/checkout/utils/seller-group-key"
-import { type Address, addressAPI } from "@/lib/api/address"
+import type { Address } from "@/lib/api/address"
 import type { ShippoRateOrder, UberRateOrder } from "@/lib/api/orders"
 import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
@@ -50,9 +51,7 @@ export function useShippingDetails(): UseShippingDetailsResult {
   const { items, cartId } = useCartStore()
   const { user } = useAuthStore()
 
-  const [addresses, setAddresses] = useState<Address[]>([])
   const [selectedAddressId, setSelectedAddressId] = useState("")
-  const [isLoadingAddresses, setIsLoadingAddresses] = useState(true)
   const [selectedRates, setSelectedRates] = useState<Record<string, SelectedRateInfo>>({})
 
   const onAddressChange = useCallback(
@@ -76,24 +75,34 @@ export function useShippingDetails(): UseShippingDetailsResult {
     [updateShippingAddress],
   )
 
+  const addressesQuery = useAddressesQuery()
+  const addresses = addressesQuery.data ?? []
+  const isLoadingAddresses = addressesQuery.isFetching
+  // Default-address selection runs once per mount, off the first settled fetch - never re-picked
+  // on a later background refetch (matches today's mount-only effect; same pattern as
+  // `useCartPage`'s default-address selection).
+  const hasSelectedDefaultAddressRef = useRef(false)
+
   useEffect(() => {
-    const fetchAddresses = async () => {
-      try {
-        const data = await addressAPI.getAddresses()
-        setAddresses(data)
-        const defaultAddress = data.find((address) => address.defaultAddress) || data[0]
-        if (defaultAddress) {
-          onAddressChange(defaultAddress)
-        }
-      } catch (_error) {
-        showToast.error("Failed to load addresses")
-      } finally {
-        setIsLoadingAddresses(false)
-      }
+    if (hasSelectedDefaultAddressRef.current) {
+      return
     }
 
-    void fetchAddresses()
-  }, [onAddressChange])
+    if (addressesQuery.isSuccess) {
+      const data = addressesQuery.data
+      const defaultAddress = data.find((address) => address.defaultAddress) || data[0]
+      if (defaultAddress) {
+        onAddressChange(defaultAddress)
+      }
+      hasSelectedDefaultAddressRef.current = true
+      return
+    }
+
+    if (addressesQuery.isError) {
+      showToast.error("Failed to load addresses")
+      hasSelectedDefaultAddressRef.current = true
+    }
+  }, [addressesQuery.isSuccess, addressesQuery.isError, addressesQuery.data, onAddressChange])
 
   const sellerGroups = useMemo<Record<string, SellerGroup>>(() => {
     return items.reduce<Record<string, SellerGroup>>((groups, item) => {

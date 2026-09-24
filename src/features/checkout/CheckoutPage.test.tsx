@@ -2,11 +2,12 @@ import { act } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { queryKeys } from "@/lib/query/keys"
 import { server } from "@/mocks/server"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 import { makeAddress, makeCart, makeCartItem } from "@/test/factories"
-import { render, screen, waitFor } from "@/test/render"
+import { createTestQueryClient, render, screen, waitFor } from "@/test/render"
 import CheckoutPage from "./CheckoutPage"
 
 const toastSpies = vi.hoisted(() => ({
@@ -103,7 +104,17 @@ describe("CheckoutPage", () => {
     useCheckoutStore.setState({ currentStep: 4 })
     useCartStore.setState({ items: [makeCartItem()] })
 
-    const { router } = render(<CheckoutPage />)
+    // Seed the cart query cache like a buyer arriving straight from /cart (already warm, just
+    // past the 1s dedup window) - otherwise the reader's cold-mount fallback (`items: []`) trips
+    // useCheckoutPage's empty-cart guard for one tick before the mount `GET /cart` resolves (the
+    // same pre-existing characterization as useCheckoutPage.test.ts's "redirects while the cart
+    // is still loading" case), and this test is about Continue Shopping, not that quirk.
+    const queryClient = createTestQueryClient()
+    queryClient.setQueryData(queryKeys.cart.detail(), makeCart({ cartItems: [makeCartItem()] }), {
+      updatedAt: Date.now() - 2_000,
+    })
+
+    const { router } = render(<CheckoutPage />, { queryClient })
 
     act(() => {
       useCheckoutStore.setState({

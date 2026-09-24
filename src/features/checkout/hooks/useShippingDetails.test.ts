@@ -8,6 +8,7 @@ import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 import { makeAddress, makeCartItem, makeCartProductInfo, makeCartUserProduct } from "@/test/factories"
+import { createQueryWrapper } from "@/test/render"
 import { useShippingDetails } from "./useShippingDetails"
 
 /**
@@ -82,9 +83,10 @@ const itemFor = (sellerId: string, sellerName: string, userProductId: string, au
 
 const submitEvent = () => ({ preventDefault: vi.fn() }) as unknown as React.FormEvent
 
-/** Mounts the hook and waits for the address fetch to have settled. */
+/** Mounts the hook (inside a `QueryClientProvider` - `useShippingDetails` now reads addresses via `useAddressesQuery`) and waits for the address fetch to have settled. */
 const mountHook = async () => {
-  const rendered = renderHook(() => useShippingDetails())
+  const { wrapper } = createQueryWrapper()
+  const rendered = renderHook(() => useShippingDetails(), { wrapper })
   await waitFor(() => expect(rendered.result.current.isLoadingAddresses).toBe(false))
   return rendered
 }

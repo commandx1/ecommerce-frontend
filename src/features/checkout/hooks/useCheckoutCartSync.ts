@@ -2,8 +2,8 @@
 
 import { useEffect } from "react"
 import { showToast } from "@/components/ui/Toast"
+import { useCartItems } from "@/features/cart/hooks/useCartQueries"
 import { getSellerGroupKey } from "@/features/checkout/utils/seller-group-key"
-import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
 /**
@@ -19,7 +19,7 @@ import { useCheckoutStore } from "@/stores/checkoutStore"
  *    point would order the wrong thing.
  */
 export function useCheckoutCartSync(): void {
-  const items = useCartStore((state) => state.items)
+  const items = useCartItems()
   const currentStep = useCheckoutStore((state) => state.currentStep)
   const orderPayload = useCheckoutStore((state) => state.orderPayload)
   const selectedVendorShippingMethods = useCheckoutStore((state) => state.selectedVendorShippingMethods)

@@ -1,10 +1,12 @@
 import { renderHook } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { showToast } from "@/components/ui/Toast"
+import type { CartItem } from "@/lib/api/cart"
 import type { PlaceOrderPayload } from "@/lib/api/orders"
-import { useCartStore } from "@/stores/cartStore"
+import { queryKeys } from "@/lib/query/keys"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 import { makeCartItem, makeCartUserProduct } from "@/test/factories"
+import { createQueryWrapper } from "@/test/render"
 import { useCheckoutCartSync } from "./useCheckoutCartSync"
 
 /**
@@ -12,6 +14,10 @@ import { useCheckoutCartSync } from "./useCheckoutCartSync"
  * shipping-method map (`selectedVendorShippingMethods`) and the `orderPayload` snapshot taken at
  * the step 2→3 transition. Both can go stale if the cart changes underneath a mounted checkout
  * page (removing a vendor, browser back/forward to /cart, another tab).
+ *
+ * `useCheckoutCartSync` is a pure reader of the `cart.detail` query cache (`useCartItems`, design
+ * doc §7 step 5) - it never fetches, so every test seeds the cache directly via `setQueryData`
+ * before mounting, instead of the old `useCartStore.setState({ items })`.
  */
 
 const cartItem = (userProductId: string, quantity: number, sellerId = "seller-1", sellerName = "Acme Dental") =>
@@ -32,6 +38,13 @@ const payloadFor = (lines: { userProductId: string; quantity: number; autoOrder?
   uberRateOrders: [],
 })
 
+/** Seeds the cart cache with `items` (a disabled-reader hook, so no fetch/wait is involved) and mounts the hook. */
+const renderCartSync = (items: CartItem[]) => {
+  const { wrapper, client } = createQueryWrapper()
+  client.setQueryData(queryKeys.cart.detail(), { cartId: "cart-1", cartItems: items })
+  return renderHook(() => useCheckoutCartSync(), { wrapper })
+}
+
 beforeEach(() => {
   vi.restoreAllMocks()
 })
@@ -46,9 +59,8 @@ describe("useCheckoutCartSync — vendor map pruning", () => {
         "seller-2": { sellerName: "Beta Supply", methodText: "Express - 1 day", amount: 32 },
       },
     })
-    useCartStore.setState({ items: [cartItem("up-1", 2, "seller-1", "Acme Dental")] })
 
-    renderHook(() => useCheckoutCartSync())
+    renderCartSync([cartItem("up-1", 2, "seller-1", "Acme Dental")])
 
     expect(Object.keys(useCheckoutStore.getState().selectedVendorShippingMethods)).toEqual(["seller-1"])
     expect(useCheckoutStore.getState().selectedShippingCost).toBe(42)
@@ -59,9 +71,8 @@ describe("useCheckoutCartSync — vendor map pruning", () => {
       "seller-1": { sellerName: "Acme Dental", methodText: "Standard - 3 days", amount: 10 },
     }
     useCheckoutStore.setState({ currentStep: 2, selectedVendorShippingMethods: map })
-    useCartStore.setState({ items: [cartItem("up-1", 2, "seller-1", "Acme Dental")] })
 
-    renderHook(() => useCheckoutCartSync())
+    renderCartSync([cartItem("up-1", 2, "seller-1", "Acme Dental")])
 
     expect(useCheckoutStore.getState().selectedVendorShippingMethods).toBe(map)
   })
@@ -71,15 +82,12 @@ describe("useCheckoutCartSync — vendor map pruning", () => {
       "No Id Seller": { sellerName: "No Id Seller", methodText: "Standard - 3 days", amount: 10 },
     }
     useCheckoutStore.setState({ currentStep: 2, selectedVendorShippingMethods: map })
-    useCartStore.setState({
-      items: [
-        makeCartItem({
-          userProduct: makeCartUserProduct({ userProductId: "up-1", sellerId: "", sellerName: "No Id Seller" }),
-        }),
-      ],
-    })
 
-    renderHook(() => useCheckoutCartSync())
+    renderCartSync([
+      makeCartItem({
+        userProduct: makeCartUserProduct({ userProductId: "up-1", sellerId: "", sellerName: "No Id Seller" }),
+      }),
+    ])
 
     expect(useCheckoutStore.getState().selectedVendorShippingMethods).toBe(map)
   })
@@ -95,19 +103,16 @@ describe("useCheckoutCartSync — frozen payload vs. cart", () => {
         { userProductId: "p2", quantity: 1 },
       ]),
     })
-    useCartStore.setState({
-      items: [
-        makeCartItem({
-          id: "ci-p1",
-          quantity: 2,
-          autoOrder: "ONE_MONTH",
-          userProduct: makeCartUserProduct({ userProductId: "p1" }),
-        }),
-        makeCartItem({ id: "ci-p2", quantity: 1, userProduct: makeCartUserProduct({ userProductId: "p2" }) }),
-      ],
-    })
 
-    renderHook(() => useCheckoutCartSync())
+    renderCartSync([
+      makeCartItem({
+        id: "ci-p1",
+        quantity: 2,
+        autoOrder: "ONE_MONTH",
+        userProduct: makeCartUserProduct({ userProductId: "p1" }),
+      }),
+      makeCartItem({ id: "ci-p2", quantity: 1, userProduct: makeCartUserProduct({ userProductId: "p2" }) }),
+    ])
 
     expect(useCheckoutStore.getState().currentStep).toBe(3)
     expect(useCheckoutStore.getState().orderPayload).not.toBeNull()
@@ -129,14 +134,11 @@ describe("useCheckoutCartSync — frozen payload vs. cart", () => {
       selectedShippingEtaText: "Standard - 3 days",
       excludedFromOrder: [{ sellerName: "Beta Supply", itemNames: ["Widget"] }],
     })
-    useCartStore.setState({
-      items: [
-        cartItem("p1", 3),
-        makeCartItem({ id: "ci-p2", quantity: 1, userProduct: makeCartUserProduct({ userProductId: "p2" }) }),
-      ],
-    })
 
-    renderHook(() => useCheckoutCartSync())
+    renderCartSync([
+      cartItem("p1", 3),
+      makeCartItem({ id: "ci-p2", quantity: 1, userProduct: makeCartUserProduct({ userProductId: "p2" }) }),
+    ])
 
     const state = useCheckoutStore.getState()
     expect(state.orderPayload).toBeNull()
@@ -158,9 +160,8 @@ describe("useCheckoutCartSync — frozen payload vs. cart", () => {
         { userProductId: "p2", quantity: 1 },
       ]),
     })
-    useCartStore.setState({ items: [cartItem("p1", 2)] })
 
-    renderHook(() => useCheckoutCartSync())
+    renderCartSync([cartItem("p1", 2)])
 
     const state = useCheckoutStore.getState()
     expect(state.orderPayload).toBeNull()
@@ -175,9 +176,8 @@ describe("useCheckoutCartSync — frozen payload vs. cart", () => {
     }
     const warningToast = vi.spyOn(showToast, "warning").mockImplementation(() => undefined)
     useCheckoutStore.setState({ currentStep: 5, selectedVendorShippingMethods: map })
-    useCartStore.setState({ items: [] })
 
-    renderHook(() => useCheckoutCartSync())
+    renderCartSync([])
 
     expect(useCheckoutStore.getState().selectedVendorShippingMethods).toBe(map)
     expect(useCheckoutStore.getState().currentStep).toBe(5)
@@ -190,9 +190,8 @@ describe("useCheckoutCartSync — frozen payload vs. cart", () => {
       currentStep: 3,
       orderPayload: payloadFor([{ userProductId: "p1", quantity: 2 }]),
     })
-    useCartStore.setState({ items: [] })
 
-    renderHook(() => useCheckoutCartSync())
+    renderCartSync([])
 
     const state = useCheckoutStore.getState()
     expect(state.orderPayload).not.toBeNull()
@@ -210,11 +209,8 @@ describe("useCheckoutCartSync — excluded sellers (no selected rate)", () => {
       orderPayload: payload,
       excludedFromOrder: [{ sellerName: "B name", itemNames: ["Widget B"] }],
     })
-    useCartStore.setState({
-      items: [cartItem("p1", 2, "seller-1", "Acme Dental"), cartItem("p3", 1, "seller-2", "B name")],
-    })
 
-    renderHook(() => useCheckoutCartSync())
+    renderCartSync([cartItem("p1", 2, "seller-1", "Acme Dental"), cartItem("p3", 1, "seller-2", "B name")])
 
     const state = useCheckoutStore.getState()
     expect(state.currentStep).toBe(3)
@@ -229,11 +225,8 @@ describe("useCheckoutCartSync — excluded sellers (no selected rate)", () => {
       orderPayload: payloadFor([{ userProductId: "p1", quantity: 2 }]),
       excludedFromOrder: [],
     })
-    useCartStore.setState({
-      items: [cartItem("p1", 2, "seller-1", "Acme Dental"), cartItem("p3", 1, "seller-2", "B name")],
-    })
 
-    renderHook(() => useCheckoutCartSync())
+    renderCartSync([cartItem("p1", 2, "seller-1", "Acme Dental"), cartItem("p3", 1, "seller-2", "B name")])
 
     const state = useCheckoutStore.getState()
     expect(state.orderPayload).toBeNull()
@@ -249,11 +242,8 @@ describe("useCheckoutCartSync — excluded sellers (no selected rate)", () => {
       orderPayload: payload,
       excludedFromOrder: [{ sellerName: "B name", itemNames: ["Widget B"] }],
     })
-    useCartStore.setState({
-      items: [cartItem("p1", 2, "seller-1", "Acme Dental"), cartItem("p3", 5, "seller-2", "B name")],
-    })
 
-    renderHook(() => useCheckoutCartSync())
+    renderCartSync([cartItem("p1", 2, "seller-1", "Acme Dental"), cartItem("p3", 5, "seller-2", "B name")])
 
     const state = useCheckoutStore.getState()
     expect(state.currentStep).toBe(3)
@@ -268,11 +258,8 @@ describe("useCheckoutCartSync — excluded sellers (no selected rate)", () => {
       orderPayload: payloadFor([{ userProductId: "p1", quantity: 2 }]),
       excludedFromOrder: [],
     })
-    useCartStore.setState({
-      items: [cartItem("p1", 2, "seller-1", "Acme Dental"), cartItem("p2", 1, "seller-1", "Acme Dental")],
-    })
 
-    renderHook(() => useCheckoutCartSync())
+    renderCartSync([cartItem("p1", 2, "seller-1", "Acme Dental"), cartItem("p2", 1, "seller-1", "Acme Dental")])
 
     const state = useCheckoutStore.getState()
     expect(state.orderPayload).toBeNull()

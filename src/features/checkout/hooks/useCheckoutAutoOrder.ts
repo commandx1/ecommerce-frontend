@@ -2,9 +2,10 @@
 
 import { useCallback, useMemo, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
+import { cartCommands } from "@/features/cart/api/cart-queries"
+import { useCartItems } from "@/features/cart/hooks/useCartQueries"
 import type { SavedCard } from "@/lib/api/orders"
 import { AUTO_ORDER_PERIOD_LABELS, type AutoOrderPeriod } from "@/lib/constants/auto-order"
-import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
 export interface AutoOrderLine {
@@ -33,8 +34,7 @@ export interface CheckoutAutoOrderState {
  * is never re-derived from the cart before `placeOrder`.
  */
 export function useCheckoutAutoOrder(): CheckoutAutoOrderState {
-  const items = useCartStore((state) => state.items)
-  const setItemAutoOrder = useCartStore((state) => state.setItemAutoOrder)
+  const items = useCartItems()
   const setPayloadAutoOrder = useCheckoutStore((state) => state.setPayloadAutoOrder)
 
   const [pendingUserProductIds, setPendingUserProductIds] = useState<Set<string>>(new Set())
@@ -72,7 +72,7 @@ export function useCheckoutAutoOrder(): CheckoutAutoOrderState {
       try {
         // The cart write must succeed BEFORE the frozen payload is patched — a failed write must
         // never desync the request `placeOrder` will send from what the server actually has.
-        await setItemAutoOrder(userProductId, value)
+        await cartCommands.setItemAutoOrder(userProductId, value)
         setPayloadAutoOrder(userProductId, value)
       } catch {
         showToast.error("Could not update the auto-order schedule. Please try again.")
@@ -85,7 +85,7 @@ export function useCheckoutAutoOrder(): CheckoutAutoOrderState {
         })
       }
     },
-    [setItemAutoOrder, setPayloadAutoOrder],
+    [setPayloadAutoOrder],
   )
 
   const onPeriodChange = useCallback(

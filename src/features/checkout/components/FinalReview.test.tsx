@@ -1,12 +1,13 @@
 import userEvent from "@testing-library/user-event"
 import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { queryKeys } from "@/lib/query/keys"
 import { server } from "@/mocks/server"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 import { makeCartItem, makeCartUserProduct } from "@/test/factories"
 import { createFakeStripe, stripeError } from "@/test/mocks/stripe"
-import { render, screen, waitFor } from "@/test/render"
+import { createTestQueryClient, render, screen, waitFor } from "@/test/render"
 
 const { toastSpies, stripeRef } = vi.hoisted(() => {
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = "pk_test_dentypro"
@@ -229,16 +230,19 @@ describe("FinalReview", () => {
 
   it("lists the repeat schedules the buyer is about to commit to", () => {
     readyToPlaceOrder()
-    useCartStore.setState({
-      items: [
-        makeCartItem({
-          autoOrder: "ONE_MONTH",
-          userProduct: makeCartUserProduct({ userProductId: "up-auto" }),
-        }),
-      ],
-    })
+    const autoOrderItems = [
+      makeCartItem({
+        autoOrder: "ONE_MONTH",
+        userProduct: makeCartUserProduct({ userProductId: "up-auto" }),
+      }),
+    ]
+    useCartStore.setState({ items: autoOrderItems })
+    // `useCheckoutAutoOrder` (design doc §7 step 5) reads the recurring lines off the `cart.detail`
+    // query cache, not `cartStore` - seed both so the "Auto orders" panel actually renders.
+    const queryClient = createTestQueryClient()
+    queryClient.setQueryData(queryKeys.cart.detail(), { cartId: "cart-1", cartItems: autoOrderItems })
 
-    render(<FinalReview />)
+    render(<FinalReview />, { queryClient })
 
     expect(screen.getByRole("heading", { name: "Auto orders" })).toBeInTheDocument()
     expect(screen.getByText("Every 30 days")).toBeInTheDocument()

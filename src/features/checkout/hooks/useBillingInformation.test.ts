@@ -3,12 +3,14 @@ import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { showToast } from "@/components/ui/Toast"
 import type { SavedCard } from "@/lib/api/orders"
+import { queryKeys } from "@/lib/query/keys"
 import { server } from "@/mocks/server"
 import { useCartStore } from "@/stores/cartStore"
 import { type PendingNewCard, useCheckoutStore } from "@/stores/checkoutStore"
 import { makeApiSavedCard, makeCartItem, makeCartUserProduct } from "@/test/factories"
 import type { FakeStripe } from "@/test/mocks/stripe"
 import { stripeError, stripePaymentMethod } from "@/test/mocks/stripe"
+import { createQueryWrapper } from "@/test/render"
 import { useBillingInformation } from "./useBillingInformation"
 
 /**
@@ -68,8 +70,18 @@ const autoOrderCartItem = () =>
 
 const submitEvent = () => ({ preventDefault: vi.fn() }) as unknown as React.FormEvent
 
+/**
+ * `useBillingInformation` reads `hasAutoOrderItems` off `useCheckoutAutoOrder`, which is a
+ * disabled reader on the `cart.detail` query cache (design doc §7 step 5) - so every mount needs
+ * a `QueryClientProvider`, and the cache has to carry whatever `items` the test already put into
+ * `cartStore` (read synchronously here, right before render, so a test's own
+ * `useCartStore.setState({ items })` - always called before `mountHook()` - lands in both places).
+ */
 const mountHook = async () => {
-  const rendered = renderHook(() => useBillingInformation())
+  const { wrapper, client } = createQueryWrapper()
+  const { cartId, items } = useCartStore.getState()
+  client.setQueryData(queryKeys.cart.detail(), { cartId, cartItems: items })
+  const rendered = renderHook(() => useBillingInformation(), { wrapper })
   await waitFor(() => expect(rendered.result.current.isLoadingCards).toBe(false))
   return rendered
 }
@@ -203,7 +215,8 @@ describe("useBillingInformation — initial card pre-selection", () => {
 
 describe("useBillingInformation — showInlineNewCardForm", () => {
   it("is false while cards are still loading", () => {
-    const { result } = renderHook(() => useBillingInformation())
+    const { wrapper } = createQueryWrapper()
+    const { result } = renderHook(() => useBillingInformation(), { wrapper })
 
     expect(result.current.showInlineNewCardForm).toBe(false)
   })

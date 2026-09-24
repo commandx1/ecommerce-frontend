@@ -5,7 +5,14 @@ import { server } from "@/mocks/server"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 import { makeCartItem, makeCartUserProduct, makeTaxEstimate } from "@/test/factories"
+import { createQueryWrapper } from "@/test/render"
 import { useOrderSummary } from "./useOrderSummary"
+
+/** `useOrderSummary` now estimates tax via `useTaxEstimateQuery`, so every render needs a `QueryClientProvider`. */
+const renderOrderSummary = () => {
+  const { wrapper } = createQueryWrapper()
+  return renderHook(() => useOrderSummary(), { wrapper })
+}
 
 /**
  * Two things `useOrderSummary.test.ts` does not cover:
@@ -40,7 +47,7 @@ describe("useOrderSummary — FINDING: backend currency is carried but never use
     })
     useCheckoutStore.setState({ orderPayload: orderPayload(), selectedShippingCost: 5 })
 
-    const { result } = renderHook(() => useOrderSummary())
+    const { result } = renderOrderSummary()
 
     // The hook happily adopts the euro-denominated number as-is...
     await waitFor(() => expect(result.current.tax).toBe(9.99))
@@ -102,7 +109,7 @@ describe("useOrderSummary — FINDING/regression-lock: out-of-order tax response
     })
     useCheckoutStore.setState({ orderPayload: orderPayload(), selectedShippingCost: 10 })
 
-    const { result, rerender } = renderHook(() => useOrderSummary())
+    const { result, rerender } = renderOrderSummary()
 
     // Give the first (slow) request time to start, then change the dependency so the second
     // (fast) request fires and races ahead of it.
@@ -140,7 +147,7 @@ describe("useOrderSummary — FINDING/regression-lock: unmounting mid-request do
     })
     useCheckoutStore.setState({ orderPayload: orderPayload(), selectedShippingCost: 10 })
 
-    const { unmount } = renderHook(() => useOrderSummary())
+    const { unmount } = renderOrderSummary()
 
     // Unmount well before the 100ms response resolves.
     unmount()

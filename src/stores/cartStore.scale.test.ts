@@ -6,7 +6,14 @@ import type { Cart, CartItem } from "@/lib/api/cart"
 import { server } from "@/mocks/server"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 import { makeCart, makeCartItem, makeCartUserProduct } from "@/test/factories"
+import { createQueryWrapper } from "@/test/render"
 import { useCartStore } from "./cartStore"
+
+/** `useOrderSummary` now estimates tax via `useTaxEstimateQuery`, so every render needs a `QueryClientProvider`. */
+const renderOrderSummary = () => {
+  const { wrapper } = createQueryWrapper()
+  return renderHook(() => useOrderSummary(), { wrapper })
+}
 
 /**
  * Scale checks for the money-math path: a 10,000-line cart. These assert CORRECTNESS, not speed
@@ -71,7 +78,7 @@ describe("useOrderSummary at 10,000 lines — totals and floating-point accumula
     useCartStore.setState({ items })
 
     const start = performance.now()
-    const { result } = renderHook(() => useOrderSummary())
+    const { result } = renderOrderSummary()
     const elapsedMs = performance.now() - start
 
     // FINDING: `useOrderSummary`'s subtotal is a plain `reduce` accumulating IEEE-754 doubles
@@ -110,7 +117,7 @@ describe("useOrderSummary at 10,000 lines — totals and floating-point accumula
     useCartStore.setState({ items })
 
     const start = performance.now()
-    const { result } = renderHook(() => useOrderSummary())
+    const { result } = renderOrderSummary()
     const elapsedMs = performance.now() - start
 
     const expectedSubtotal = items.reduce((sum, item) => sum + item.userProduct.price * item.quantity, 0)

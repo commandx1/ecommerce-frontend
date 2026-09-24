@@ -4,11 +4,13 @@ import { showToast } from "@/components/ui/Toast"
 import { useCheckoutAutoOrder } from "@/features/checkout/hooks/useCheckoutAutoOrder"
 import type { GetPaymentStatusResponse, PlaceOrderPayload, PlaceOrderResponse } from "@/lib/api/orders"
 import { ordersAPI } from "@/lib/api/orders"
+import { queryKeys } from "@/lib/query/keys"
 import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 import { makeCartItem, makeCartUserProduct } from "@/test/factories"
 import type { FakeStripe } from "@/test/mocks/stripe"
 import { stripeError, stripePaymentIntent } from "@/test/mocks/stripe"
+import { createQueryWrapper } from "@/test/render"
 import { useFinalReview } from "./useFinalReview"
 
 /**
@@ -98,6 +100,28 @@ const placeAndSettle = async (onPlaceOrder: () => Promise<void>) => {
   })
 }
 
+/**
+ * `useFinalReview` reads `hasAutoOrderItems`/`autoOrderLines` off `useCheckoutAutoOrder`, a
+ * disabled reader on the `cart.detail` query cache (design doc §7 step 5) - so every mount needs
+ * a `QueryClientProvider`, seeded with whatever `items`/`cartId` the test already put into
+ * `cartStore` (always set before render in this file - `cartId` itself still comes straight from
+ * `cartStore` inside the hook, unmigrated until step 6).
+ */
+const renderFinalReview = () => {
+  const { wrapper, client } = createQueryWrapper()
+  const { cartId, items } = useCartStore.getState()
+  client.setQueryData(queryKeys.cart.detail(), { cartId, cartItems: items })
+  return renderHook(() => useFinalReview(), { wrapper })
+}
+
+/** Same as `renderFinalReview`, but also mounts `useCheckoutAutoOrder` in the same tree/cache. */
+const renderFinalReviewWithAutoOrder = () => {
+  const { wrapper, client } = createQueryWrapper()
+  const { cartId, items } = useCartStore.getState()
+  client.setQueryData(queryKeys.cart.detail(), { cartId, cartItems: items })
+  return renderHook(() => ({ autoOrder: useCheckoutAutoOrder(), finalReview: useFinalReview() }), { wrapper })
+}
+
 let errorToast: ReturnType<typeof vi.spyOn>
 let successToast: ReturnType<typeof vi.spyOn>
 let clearCart: ReturnType<typeof vi.fn>
@@ -138,7 +162,7 @@ afterAll(() => {
 
 describe("useFinalReview — happy path", () => {
   it("charges the card, resolves the status and moves to the confirmation step", async () => {
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
 
     await placeAndSettle(result.current.onPlaceOrder)
 
@@ -157,7 +181,7 @@ describe("useFinalReview — happy path", () => {
 
   it("snapshots the repeat lines before handing the buyer to the confirmation screen", async () => {
     useCartStore.setState({ items: [autoOrderCartItem(), makeCartItem({ id: "ci-plain" })] })
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
 
     await placeAndSettle(result.current.onPlaceOrder)
 
@@ -169,7 +193,7 @@ describe("useFinalReview — happy path", () => {
   })
 
   it("exposes the payment method summary the review screen prints", () => {
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
 
     expect(result.current.paymentMethodSummary).toBe("VISA •••• 4242")
   })
@@ -182,7 +206,7 @@ describe("useFinalReview — happy path", () => {
     fakeStripe().confirmCardPayment.mockResolvedValue(stripePaymentIntent("requires_capture", "pi_1"))
     getPaymentStatus.mockResolvedValue(paymentStatus("requires_capture"))
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(getPaymentStatus).toHaveBeenCalledTimes(MAX_PAYMENT_STATUS_RETRIES)
@@ -203,7 +227,7 @@ describe("useFinalReview — 3D Secure", () => {
       .mockResolvedValueOnce(paymentStatus("processing"))
       .mockResolvedValue(paymentStatus("succeeded"))
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     // PENDING → PENDING → SUCCEEDED: exactly three attempts, and only one order.
@@ -220,7 +244,7 @@ describe("useFinalReview — 3D Secure", () => {
       }),
     )
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(errorToast).toHaveBeenCalledWith("We are unable to authenticate your payment method.")
@@ -246,7 +270,7 @@ describe("useFinalReview — 3D Secure", () => {
     useCartStore.setState({ items: [autoOrderCartItem()] })
     fakeStripe().confirmCardPayment.mockResolvedValue(stripeError("3DS abandoned"))
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(useCheckoutStore.getState().autoOrderUserProductIds).toEqual([])
@@ -255,7 +279,7 @@ describe("useFinalReview — 3D Secure", () => {
   it("creates no order at all when the Stripe SDK never loaded", async () => {
     stripeState.loaded = false
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     expect(result.current.submitDisabled).toBe(true)
 
     await placeAndSettle(result.current.onPlaceOrder)
@@ -271,7 +295,7 @@ describe("useFinalReview — 3D Secure", () => {
   it("creates no order when the card payment method is missing", async () => {
     useCheckoutStore.setState({ paymentMethodId: "" })
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(errorToast).toHaveBeenCalledWith(
@@ -286,7 +310,7 @@ describe("useFinalReview — declines and failures", () => {
   it("keeps the buyer on step 4 with a message when the card is declined", async () => {
     fakeStripe().confirmCardPayment.mockResolvedValue(stripeError("Your card was declined.", { code: "card_declined" }))
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(errorToast).toHaveBeenCalledWith("Your card was declined.")
@@ -298,7 +322,7 @@ describe("useFinalReview — declines and failures", () => {
   it("falls back to a generic message when Stripe gives no reason", async () => {
     fakeStripe().confirmCardPayment.mockResolvedValue({ error: {} })
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(errorToast).toHaveBeenCalledWith("Payment failed. Please try again.")
@@ -307,7 +331,7 @@ describe("useFinalReview — declines and failures", () => {
   it("creates no order and never touches Stripe when the backend rejects with 409", async () => {
     placeOrder.mockRejectedValue(apiError("One or more items are out of stock"))
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(errorToast).toHaveBeenCalledWith("One or more items are out of stock")
@@ -321,7 +345,7 @@ describe("useFinalReview — declines and failures", () => {
   it("uses a generic message when the backend failure carries no body", async () => {
     placeOrder.mockRejectedValue(new Error("Network Error"))
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(errorToast).toHaveBeenCalledWith("Failed to place order. Please try again.")
@@ -332,7 +356,7 @@ describe("useFinalReview — declines and failures", () => {
     // so only the SECOND `?.` (before `.message`) is what stands between this and a crash.
     placeOrder.mockRejectedValue({ response: { status: 500 } })
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(errorToast).toHaveBeenCalledWith("Failed to place order. Please try again.")
@@ -341,7 +365,7 @@ describe("useFinalReview — declines and failures", () => {
   it("refuses to start without an order payload", async () => {
     useCheckoutStore.setState({ orderPayload: null })
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(errorToast).toHaveBeenCalledWith(
@@ -354,7 +378,7 @@ describe("useFinalReview — declines and failures", () => {
     useCartStore.setState({ items: [autoOrderCartItem()] })
     useCheckoutStore.setState({ selectedSavedCardId: "", paymentMethodId: "pm_new", cardName: "  " })
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(errorToast).toHaveBeenCalledWith("Please enter a card name to save this card.")
@@ -369,7 +393,7 @@ describe("useFinalReview — declines and failures", () => {
   it("tells the buyer the order is unpaid when the backend returns no client secret", async () => {
     placeOrder.mockResolvedValue(orderResponse({ clientSecret: undefined }))
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(errorToast).toHaveBeenCalledWith(
@@ -388,7 +412,7 @@ describe("useFinalReview — declines and failures", () => {
   it("bails out when Stripe returns neither an error nor a payment intent", async () => {
     fakeStripe().confirmCardPayment.mockResolvedValue({})
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(errorToast).toHaveBeenCalledWith(
@@ -400,7 +424,7 @@ describe("useFinalReview — declines and failures", () => {
   it("still reaches the confirmation screen, flagged as failed, when the intent is canceled", async () => {
     getPaymentStatus.mockResolvedValue(paymentStatus("canceled"))
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(errorToast).toHaveBeenCalledWith("Order placed but payment was canceled. Order ID: order-1")
@@ -416,7 +440,7 @@ describe("useFinalReview — status polling", () => {
   it("stops polling as soon as a terminal status arrives", async () => {
     getPaymentStatus.mockResolvedValue(paymentStatus("succeeded"))
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(getPaymentStatus).toHaveBeenCalledTimes(1)
@@ -425,7 +449,7 @@ describe("useFinalReview — status polling", () => {
   it("normalises the backend's casing before deciding a status is terminal", async () => {
     getPaymentStatus.mockResolvedValue(paymentStatus("SUCCEEDED"))
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(getPaymentStatus).toHaveBeenCalledTimes(1)
@@ -436,7 +460,7 @@ describe("useFinalReview — status polling", () => {
     getPaymentStatus.mockResolvedValue(paymentStatus("requires_confirmation"))
     fakeStripe().confirmCardPayment.mockResolvedValue(stripePaymentIntent("processing", "pi_1"))
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(getPaymentStatus).toHaveBeenCalledTimes(MAX_PAYMENT_STATUS_RETRIES)
@@ -452,7 +476,7 @@ describe("useFinalReview — status polling", () => {
   it("waits for a real timer between attempts instead of retrying immediately", async () => {
     getPaymentStatus.mockResolvedValue(paymentStatus("requires_confirmation"))
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     let pending: Promise<void> | undefined
     await act(async () => {
       pending = result.current.onPlaceOrder()
@@ -474,7 +498,7 @@ describe("useFinalReview — status polling", () => {
     getPaymentStatus.mockResolvedValue(paymentStatus("requires_confirmation"))
     fakeStripe().confirmCardPayment.mockResolvedValue(stripePaymentIntent("processing", "pi_1"))
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     let pending: Promise<void> | undefined
     act(() => {
       pending = result.current.onPlaceOrder()
@@ -498,7 +522,7 @@ describe("useFinalReview — status polling", () => {
     getPaymentStatus.mockResolvedValue(paymentStatus("requires_confirmation"))
     fakeStripe().confirmCardPayment.mockResolvedValue(stripePaymentIntent("requires_payment_method", "pi_1"))
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(useCheckoutStore.getState().orderResult).toMatchObject({ status: "PENDING_PAYMENT" })
@@ -513,7 +537,7 @@ describe("useFinalReview — status polling", () => {
     getPaymentStatus.mockRejectedValue(apiError("Unauthorized", 401))
     fakeStripe().confirmCardPayment.mockResolvedValue(stripePaymentIntent("succeeded", "pi_1"))
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(getPaymentStatus).toHaveBeenCalledTimes(1)
@@ -533,7 +557,7 @@ describe("useFinalReview — status polling", () => {
   it("stops polling the same way when the interceptor already handled the auth error", async () => {
     getPaymentStatus.mockRejectedValue(Object.assign(new Error("Unauthorized"), { authHandled: true }))
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(getPaymentStatus).toHaveBeenCalledTimes(1)
@@ -543,7 +567,7 @@ describe("useFinalReview — status polling", () => {
   it("recovers when only the first poll fails", async () => {
     getPaymentStatus.mockRejectedValueOnce(apiError("Bad gateway", 502)).mockResolvedValue(paymentStatus("succeeded"))
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(getPaymentStatus).toHaveBeenCalledTimes(2)
@@ -565,7 +589,7 @@ describe("useFinalReview — double submit", () => {
   }
 
   it("allows a fresh order after a previous one fully completed", async () => {
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
 
     await placeAndSettle(result.current.onPlaceOrder)
     expect(placeOrder).toHaveBeenCalledTimes(1)
@@ -575,7 +599,7 @@ describe("useFinalReview — double submit", () => {
   })
 
   it("uses the current cartId instead of a stale one captured on the first render", async () => {
-    const { result, rerender } = renderHook(() => useFinalReview())
+    const { result, rerender } = renderFinalReview()
 
     act(() => {
       useCartStore.setState({ cartId: "cart-2" })
@@ -591,7 +615,7 @@ describe("useFinalReview — double submit", () => {
     const inFlight = deferred()
     placeOrder.mockReturnValue(inFlight.promise)
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     expect(result.current.submitDisabled).toBe(false)
 
     let pending: Promise<void> | undefined
@@ -616,7 +640,7 @@ describe("useFinalReview — double submit", () => {
     const inFlight = deferred()
     placeOrder.mockReturnValue(inFlight.promise)
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
 
     let pending: Promise<void> | undefined
     await act(async () => {
@@ -644,7 +668,7 @@ describe("useFinalReview — double submit", () => {
    * order and a second charge. The request still carries no idempotency key, hence the ref guard.
    */
   it("ignores a direct re-entrant call instead of placing a second order", async () => {
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
 
     await act(async () => {
       const first = result.current.onPlaceOrder()
@@ -661,7 +685,7 @@ describe("useFinalReview — double submit", () => {
     const inFlight = deferred()
     placeOrder.mockReturnValueOnce(inFlight.promise).mockResolvedValue(orderResponse({ orderId: "order-2" }))
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
 
     let pending: Promise<void> | undefined
     await act(async () => {
@@ -689,7 +713,7 @@ describe("useFinalReview — double submit", () => {
   it("blocks submission while the card details are missing", () => {
     useCheckoutStore.setState({ paymentMethodId: "" })
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
 
     expect(result.current.submitDisabled).toBe(true)
   })
@@ -701,7 +725,7 @@ describe("useFinalReview — double submit", () => {
   it("does not re-check the terms checkbox at the review step", async () => {
     useCheckoutStore.setState({ termsAgreed: false })
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     expect(result.current.submitDisabled).toBe(false)
 
     await placeAndSettle(result.current.onPlaceOrder)
@@ -712,7 +736,7 @@ describe("useFinalReview — double submit", () => {
 
 describe("useFinalReview — payload", () => {
   it("sends the cart id and the saved card as a plain paymentMethodId", async () => {
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     const payload = placeOrder.mock.calls[0][0]
@@ -733,7 +757,7 @@ describe("useFinalReview — payload", () => {
   it("never re-saves a saved card, even if a leftover save-card intent is still set", async () => {
     useCheckoutStore.setState({ selectedSavedCardId: "pm_saved", saveCard: true })
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(placeOrder.mock.calls[0][0]).toMatchObject({ cardSave: false, cardName: "" })
@@ -748,7 +772,7 @@ describe("useFinalReview — payload", () => {
       newCardAutoPaymentConsent: true,
     })
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(placeOrder.mock.calls[0][0]).toMatchObject({
@@ -770,7 +794,7 @@ describe("useFinalReview — payload", () => {
       newCardAutoPaymentConsent: false,
     })
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(placeOrder.mock.calls[0][0]).toMatchObject({
@@ -790,7 +814,7 @@ describe("useFinalReview — payload", () => {
       newCardAutoPaymentConsent: false,
     })
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(placeOrder.mock.calls[0][0]).toMatchObject({
@@ -803,7 +827,7 @@ describe("useFinalReview — payload", () => {
     useCartStore.setState({ items: [autoOrderCartItem()] })
     useCheckoutStore.setState({ selectedSavedCardId: "pm_saved", autoOrderConsent: true })
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(placeOrder.mock.calls[0][0]).toMatchObject({ openToAutoOrder: true, cardSave: false })
@@ -813,7 +837,7 @@ describe("useFinalReview — payload", () => {
     useCartStore.setState({ items: [autoOrderCartItem()] })
     useCheckoutStore.setState({ selectedSavedCardId: "pm_saved", autoOrderConsent: false })
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(placeOrder.mock.calls[0][0]).not.toHaveProperty("openToAutoOrder")
@@ -830,7 +854,7 @@ describe("useFinalReview — payload", () => {
       autoOrderConsent: true,
     })
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(placeOrder.mock.calls[0][0]).not.toHaveProperty("openToAutoOrder")
@@ -840,7 +864,7 @@ describe("useFinalReview — payload", () => {
     // Default cart (from beforeEach) has no auto-order items.
     useCheckoutStore.setState({ selectedSavedCardId: "pm_saved", autoOrderConsent: true })
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(placeOrder.mock.calls[0][0]).not.toHaveProperty("openToAutoOrder")
@@ -849,7 +873,7 @@ describe("useFinalReview — payload", () => {
   it("sends an empty cart id rather than undefined when the cart id is missing", async () => {
     useCartStore.setState({ cartId: null })
 
-    const { result } = renderHook(() => useFinalReview())
+    const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(placeOrder.mock.calls[0][0].cartId).toBe("")
@@ -867,7 +891,7 @@ describe("useFinalReview — stale payload regression (Final Review schedule edi
    * `useCheckoutAutoOrder`, then assert the NEW value is what reaches `ordersAPI.placeOrder`.
    */
   it("sends the new period to placeOrder after a Final Review schedule change, not the frozen one", async () => {
-    useCartStore.setState({ items: [autoOrderCartItem()], setItemAutoOrder: vi.fn().mockResolvedValue(undefined) })
+    useCartStore.setState({ items: [autoOrderCartItem()] })
     useCheckoutStore.setState({
       orderPayload: orderPayload({
         shippoRateOrders: [
@@ -880,10 +904,7 @@ describe("useFinalReview — stale payload regression (Final Review schedule edi
       }),
     })
 
-    const { result } = renderHook(() => ({
-      autoOrder: useCheckoutAutoOrder(),
-      finalReview: useFinalReview(),
-    }))
+    const { result } = renderFinalReviewWithAutoOrder()
 
     await act(async () => {
       await result.current.autoOrder.onPeriodChange("up-auto", "TWO_MONTHS")
@@ -895,7 +916,7 @@ describe("useFinalReview — stale payload regression (Final Review schedule edi
   })
 
   it("sends autoOrder: null to placeOrder after cancelling the repeat on Final Review", async () => {
-    useCartStore.setState({ items: [autoOrderCartItem()], setItemAutoOrder: vi.fn().mockResolvedValue(undefined) })
+    useCartStore.setState({ items: [autoOrderCartItem()] })
     useCheckoutStore.setState({
       orderPayload: orderPayload({
         shippoRateOrders: [
@@ -908,10 +929,7 @@ describe("useFinalReview — stale payload regression (Final Review schedule edi
       }),
     })
 
-    const { result } = renderHook(() => ({
-      autoOrder: useCheckoutAutoOrder(),
-      finalReview: useFinalReview(),
-    }))
+    const { result } = renderFinalReviewWithAutoOrder()
 
     await act(async () => {
       await result.current.autoOrder.onCancelRecurrence("up-auto")

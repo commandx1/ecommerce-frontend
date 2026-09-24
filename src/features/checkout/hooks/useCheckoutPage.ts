@@ -2,10 +2,11 @@
 
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useRef } from "react"
+import { refreshCart } from "@/features/cart/api/cart-queries"
+import { useCartItems } from "@/features/cart/hooks/useCartQueries"
 import { cartRequiresDentalLicense } from "@/features/cart/utils/license-check"
 import { useCheckoutCartSync } from "@/features/checkout/hooks/useCheckoutCartSync"
 import { useDentalLicenseGate } from "@/lib/hooks/useDentalLicenseGate"
-import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
 type CheckoutView = "shipping" | "billing" | "review" | "confirmation" | "empty"
@@ -18,13 +19,15 @@ interface UseCheckoutPageResult {
 
 export function useCheckoutPage(): UseCheckoutPageResult {
   const router = useRouter()
-  const { items, fetchCart } = useCartStore()
+  // Fetch owner (design doc §5): a disabled reader tracks the shared `cart.detail` query while
+  // `refreshCart()` below owns the mount fetch - same split as `useCartPage`.
+  const items = useCartItems()
   const { currentStep, reset } = useCheckoutStore()
   const licenseGate = useDentalLicenseGate()
 
   useEffect(() => {
-    void fetchCart()
-  }, [fetchCart])
+    void refreshCart()
+  }, [])
 
   // A confirmation left in the store by a previous order must not greet the buyer on the next
   // visit. OrderConfirmation deliberately does not reset on "Continue Shopping": resetting to step

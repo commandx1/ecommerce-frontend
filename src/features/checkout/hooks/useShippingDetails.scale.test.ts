@@ -4,6 +4,7 @@ import { addressAPI } from "@/lib/api/address"
 import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
 import { makeAddress, makeCartItem, makeCartProductInfo, makeCartUserProduct } from "@/test/factories"
+import { createQueryWrapper } from "@/test/render"
 import { useShippingDetails } from "./useShippingDetails"
 
 /**
@@ -47,7 +48,8 @@ describe("useShippingDetails at 200 vendors", () => {
     useCartStore.setState({ cartId: "cart-1", items })
 
     const start = performance.now()
-    const { result } = renderHook(() => useShippingDetails())
+    const { wrapper } = createQueryWrapper()
+    const { result } = renderHook(() => useShippingDetails(), { wrapper })
     await waitFor(() => expect(result.current.isLoadingAddresses).toBe(false))
     const elapsedMs = performance.now() - start
 
@@ -70,7 +72,8 @@ describe("useShippingDetails at 200 vendors", () => {
     useCartStore.setState({ cartId: "cart-1", items })
 
     const start = performance.now()
-    const { result } = renderHook(() => useShippingDetails())
+    const { wrapper } = createQueryWrapper()
+    const { result } = renderHook(() => useShippingDetails(), { wrapper })
     await waitFor(() => expect(result.current.isLoadingAddresses).toBe(false))
     const elapsedMs = performance.now() - start
 
