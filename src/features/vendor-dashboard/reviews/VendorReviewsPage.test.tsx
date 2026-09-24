@@ -6,7 +6,7 @@ import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
 import { makeAccountUser } from "@/test/factories"
 import { render, screen, waitFor } from "@/test/render"
-import VendorReviewsPage from "./page"
+import VendorReviewsPage from "./VendorReviewsPage"
 
 const review = (overrides: Partial<VendorReviewItem> = {}): VendorReviewItem => ({
   id: "r-1",
