@@ -156,6 +156,14 @@ export function useCartPage(): UseCartPageResult {
         return
       }
 
+      // A mutation removed from the cache (cleared on logout/account switch, design doc §1.3)
+      // keeps running in the background, but its outcome must not toast into a session it no
+      // longer belongs to - same guard the old store's projection used before this hook existed.
+      const isLive = event.mutation !== undefined && queryClient.getMutationCache().getAll().includes(event.mutation)
+      if (!isLive) {
+        return
+      }
+
       const message = writeErrorMessage(command, event.action.error)
       if (message === undefined) {
         return

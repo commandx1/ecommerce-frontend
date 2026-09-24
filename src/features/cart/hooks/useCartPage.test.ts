@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react"
-import { HttpResponse, http } from "msw"
+import { delay, HttpResponse, http } from "msw"
 import { createElement, type ReactNode, StrictMode } from "react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { Address } from "@/lib/api/address"
@@ -145,6 +145,15 @@ const settleDebounceWindow = async () => {
 /** Waits until the mount fetch has landed and the hook has left its loading state. */
 const renderReadyCartPage = async () => {
   const rendered = renderCartPage()
+  await waitFor(() => {
+    expect(rendered.result.current.viewState).not.toBe("loading")
+  })
+  return rendered
+}
+
+/** Same as `renderReadyCartPage`, but also hands back the `QueryClient` for direct cache control. */
+const renderReadyCartPageWithClient = async () => {
+  const rendered = renderCartPageWithClient()
   await waitFor(() => {
     expect(rendered.result.current.viewState).not.toBe("loading")
   })
@@ -1105,6 +1114,33 @@ describe("useCartPage", () => {
       })
       await act(async () => {
         await new Promise((resolve) => setTimeout(resolve, 0))
+      })
+
+      expect(mockToastError).not.toHaveBeenCalled()
+    })
+
+    // Fix (design doc §10, cleanup D): `QuerySessionBoundary` clears the whole `QueryClient` on
+    // logout/account switch while a write is still in flight. The request keeps running in the
+    // background, but by the time it settles its mutation is no longer in the client's
+    // MutationCache - the old store's projection had the same "only handle live mutations" guard.
+    it("does not toast for a write whose mutation was cleared from the cache before it settled (logout/account switch mid-write)", async () => {
+      server.use(
+        http.delete("*/backend-api/cart/items", async () => {
+          await delay(50)
+          return new HttpResponse(null, { status: 500 })
+        }),
+      )
+      const { result, client } = await renderReadyCartPageWithClient()
+
+      act(() => {
+        result.current.onRemoveItem("up-1")
+      })
+
+      // Simulates the session boundary's `queryClient.clear()` firing mid-write.
+      client.clear()
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 100))
       })
 
       expect(mockToastError).not.toHaveBeenCalled()
