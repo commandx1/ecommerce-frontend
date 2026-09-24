@@ -7,14 +7,9 @@ import { Button } from "@/components/ui/button"
 import Modal from "@/components/ui/Modal"
 import { Skeleton } from "@/components/ui/skeleton"
 import { showToast } from "@/components/ui/Toast"
-import {
-  extractFileName,
-  type ImportResult,
-  type VendorDocument,
-  vendorDocumentsAPI,
-  vendorDocumentsQueryKey,
-} from "@/lib/api/vendor-documents"
+import { extractFileName, type ImportResult, type VendorDocument, vendorDocumentsAPI } from "@/lib/api/vendor-documents"
 import { formatShortDate } from "@/lib/helpers/format"
+import { queryKeys } from "@/lib/query/keys"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
 import DocumentProductsPanel from "./DocumentProductsPanel"
@@ -197,7 +192,7 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
     isPending: isLoadingDocs,
     isError: documentsFailed,
   } = useQuery({
-    queryKey: vendorDocumentsQueryKey(currentPage),
+    queryKey: queryKeys.vendor.documents.list(currentPage),
     queryFn: () =>
       vendorDocumentsAPI.getDocuments({ page: currentPage, size: 10, sort: "desc" }, accessToken as string),
     enabled: isOpen && Boolean(accessToken),
@@ -209,7 +204,7 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
   const documents: VendorDocument[] = Array.isArray(documentsPage?.content) ? documentsPage.content : []
   const totalPages = documentsPage?.totalPages ?? 1
 
-  const refreshDocuments = () => queryClient.invalidateQueries({ queryKey: vendorDocumentsQueryKey() })
+  const refreshDocuments = () => queryClient.invalidateQueries({ queryKey: queryKeys.vendor.documents.all })
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]

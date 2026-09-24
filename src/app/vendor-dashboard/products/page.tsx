@@ -39,12 +39,11 @@ import {
   productsAPI,
   type UserProduct,
   type UserProductSortBy,
-  userProductBrandsQueryKey,
   type VendorProductReviewItem,
 } from "@/lib/api/products"
-import { vendorProductStatsQueryKey } from "@/lib/api/vendor-products"
 import { formatNumber } from "@/lib/helpers/format"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { queryKeys } from "@/lib/query/keys"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
 import ImportDocumentsModal from "./components/ImportDocumentsModal"
@@ -514,13 +513,13 @@ export default function ProductsPage() {
 
   // The stat cards are cached, so any change to a product's stock or active flag —
   // or a deletion — has to knock them down explicitly.
-  const invalidateProductStats = () => queryClient.invalidateQueries({ queryKey: vendorProductStatsQueryKey() })
+  const invalidateProductStats = () => queryClient.invalidateQueries({ queryKey: queryKeys.vendor.products.stats() })
 
   // The vendor's brand list barely moves and the filter needs it on every visit,
   // so it is cached across mounts. A failure degrades to an empty option list
   // rather than blocking the page.
   const { data: brandOptions = [] } = useQuery({
-    queryKey: userProductBrandsQueryKey(),
+    queryKey: queryKeys.vendor.products.brands(),
     queryFn: async ({ signal }) => {
       const brands = await productsAPI.getUserProductBrands(accessToken as string, signal)
       return Array.isArray(brands) ? brands.filter(Boolean) : []

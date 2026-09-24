@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button"
 import DataTable from "@/components/ui/data-table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getFullImageUrl } from "@/lib/api/products"
-import { type DocumentProductsResponse, documentProductsQueryKey, vendorDocumentsAPI } from "@/lib/api/vendor-documents"
+import { type DocumentProductsResponse, vendorDocumentsAPI } from "@/lib/api/vendor-documents"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { queryKeys } from "@/lib/query/keys"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -250,7 +251,7 @@ export default function DocumentProductsPanel({
   // than infinite because the rows carry live UserProduct fields (price, stock)
   // that the vendor can edit elsewhere.
   const { data, isPending, error, refetch } = useQuery({
-    queryKey: documentProductsQueryKey(documentId),
+    queryKey: queryKeys.vendor.documents.products(documentId),
     queryFn: () => vendorDocumentsAPI.getDocumentProducts(documentId, accessToken as string),
     enabled: Boolean(accessToken),
     staleTime: 5 * 60_000,

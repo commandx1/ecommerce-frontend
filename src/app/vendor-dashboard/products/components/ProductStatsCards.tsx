@@ -3,7 +3,8 @@
 import { useQuery } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { Skeleton } from "@/components/ui/skeleton"
-import { fetchUserProductStats, vendorProductStatsQueryKey } from "@/lib/api/vendor-products"
+import { fetchUserProductStats } from "@/lib/api/vendor-products"
+import { queryKeys } from "@/lib/query/keys"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
 import { RING_TONE_CLASS_MAP } from "../../components/shared/dashboardToneMaps"
@@ -66,7 +67,7 @@ const ProductStatsCards = ({ selectedFilter = "TOTAL", onFilterChange }: Product
     isPending,
     error: queryError,
   } = useQuery({
-    queryKey: vendorProductStatsQueryKey(),
+    queryKey: queryKeys.vendor.products.stats(),
     queryFn: () => fetchUserProductStats({ accessToken: accessToken as string, router }),
     enabled: isAuthenticated && Boolean(accessToken),
     staleTime: 60_000,

@@ -35,9 +35,7 @@ import {
   type ProductAttribute,
   type ProductVendorRequestData,
   productsAPI,
-  userProductBrandsQueryKey,
 } from "@/lib/api/products"
-import { vendorProductStatsQueryKey } from "@/lib/api/vendor-products"
 import {
   type CategoryPath,
   categoryPathToLevels,
@@ -46,6 +44,7 @@ import {
   levelsToCategoryPath,
 } from "@/lib/category-tree"
 import { useDebounce } from "@/lib/hooks/useDebounce"
+import { queryKeys } from "@/lib/query/keys"
 import { useAuthStore } from "@/stores/authStore"
 
 const SEARCH_PAGE_SIZE = 10
@@ -231,8 +230,8 @@ function CreateProductPageContent() {
   // editing a listing here has to knock both down before navigating back to it.
   const invalidateProductsPageCaches = () =>
     Promise.all([
-      queryClient.invalidateQueries({ queryKey: userProductBrandsQueryKey() }),
-      queryClient.invalidateQueries({ queryKey: vendorProductStatsQueryKey() }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.vendor.products.brands() }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.vendor.products.stats() }),
     ])
   const searchParams = useSearchParams()
   const { accessToken, isAuthenticated, user } = useAuthStore()
