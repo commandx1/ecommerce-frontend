@@ -2,6 +2,7 @@
 
 import Image, { type ImageProps } from "next/image"
 import { forwardRef, useEffect, useState } from "react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 
 interface LoadableImageProps extends Omit<ImageProps, "src"> {
@@ -36,7 +37,7 @@ const LoadableImage = forwardRef<HTMLImageElement, LoadableImageProps>(
     return (
       <>
         {showSkeleton && isLoading && (
-          <div className={cn("absolute inset-0 animate-pulse bg-gray-200/70", skeletonClassName)} />
+          <Skeleton aria-hidden="true" className={cn("absolute inset-0", skeletonClassName)} />
         )}
         <Image
           ref={ref}

@@ -30,7 +30,7 @@ describe("InventoryStatus", () => {
     serveStockSummary(makeVendorStockSummaryResponse())
     const { container } = render(<InventoryStatus />)
 
-    expect(container.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0)
+    expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(0)
   })
 
   it("renders the in-stock, low-stock and out-of-stock counts and percentages from the backend", async () => {
@@ -78,6 +78,14 @@ describe("InventoryStatus", () => {
 
     expect(await screen.findByText("Sterile Gauze Pads")).toBeInTheDocument()
     expect(screen.getByText("2 left")).toBeInTheDocument()
+  })
+
+  it("shows an empty-state line under the heading instead of blank space when there are no alerts", async () => {
+    serveStockSummary(makeVendorStockSummaryResponse())
+    render(<InventoryStatus />)
+
+    expect(await screen.findByText("Critical Stock Alerts")).toBeInTheDocument()
+    expect(screen.getByText("No critical stock alerts right now.")).toBeInTheDocument()
   })
 
   it("shows an error message and a Retry button instead of the stock rows when the request fails", async () => {

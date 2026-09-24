@@ -147,7 +147,7 @@ export default function AutoOrderCard({
           size="sm"
           disabled={isPending}
           onClick={() => onRequestDelete(autoOrder)}
-          className="text-danger hover:text-danger"
+          className="text-danger-strong hover:text-danger-strong"
         >
           <Trash2 className="h-4 w-4" />
           Remove

@@ -8,7 +8,7 @@ import Image from "next/image"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import DataTable from "@/components/ui/data-table"
-import Skeleton from "@/components/ui/skeleton"
+import { Skeleton } from "@/components/ui/skeleton"
 import { getFullImageUrl } from "@/lib/api/products"
 import { type DocumentProductsResponse, documentProductsQueryKey, vendorDocumentsAPI } from "@/lib/api/vendor-documents"
 import formatCurrency from "@/lib/helpers/formatCurrency"
@@ -406,9 +406,10 @@ export default function DocumentProductsPanel({
   }
 
   if (isLoading) {
-    // Deliberately not DataTable's own `isLoading` skeleton: its sr-only loadingText row is a
-    // real (non aria-hidden) table row, which this file's tests count via getAllByRole("row")
-    // to detect "the real data has loaded" — that would resolve those waits prematurely.
+    // Not DataTable's own `isLoading` skeleton: this panel is a scrollable list, not a table.
+    // (It also used to be a correctness issue — DataTable announced loading through a real body
+    // <tr>, which this file's getAllByRole("row") waits counted as data. That row is a <caption>
+    // now, so the hazard is gone; the list shape is the only reason left.)
     return (
       <div
         aria-busy="true"

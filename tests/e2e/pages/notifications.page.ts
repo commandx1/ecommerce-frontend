@@ -31,15 +31,17 @@ export class NotificationsPage extends BasePage {
   }
 
   /**
-   * Radix Popover.Content renders `role="dialog"` (verified against
-   * node_modules/@radix-ui/react-popover), but the mobile sidebar `<aside>`
-   * ALSO renders `role="dialog"` (Radix Dialog/Sheet) and is present in the
-   * DOM at the same time - `data-side` is set by Popover.Content (via
-   * `data-side="bottom"|"top"`, from its `side` prop) and not by the sidebar,
-   * so it disambiguates the two.
+   * The bell popup is no longer a Radix Popover. NotificationBell renders through
+   * `GlassMorphMenu`, whose panel is a plain `<div id={panelId}>` with no role at all - so the
+   * old `getByRole("dialog").and(locator("[data-side]"))` matched nothing and every spec that
+   * opened the bell failed on a missing locator rather than on the behaviour it was testing.
+   *
+   * `[data-menu-head]` is the hook GlassMorphMenu animates its panel content by, so it is stable.
+   * AccountMenu uses the same hook, hence the text filter: this panel's head is the only one
+   * titled "Notifications". `xpath=..` steps up from the head to the panel itself.
    */
   get popover(): Locator {
-    return this.page.getByRole("dialog").and(this.page.locator("[data-side]"))
+    return this.page.locator("[data-menu-head]").filter({ hasText: "Notifications" }).locator("xpath=..")
   }
 
   /** "Mark all as read" exists both on the bell popover and the full page - pass the scope you mean. */

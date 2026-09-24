@@ -163,7 +163,7 @@ test.describe("checkout happy path", () => {
 
     // Step 2: shipping - default address auto-selected by useShippingDetails,
     // both vendors' cheapest rate auto-selected by VendorShipmentRates.
-    await expect(buyerPage.getByRole("heading", { name: "Select Shipping Address" })).toBeVisible()
+    await expect(buyerPage.getByRole("heading", { name: "Shipping Address", level: 2 })).toBeVisible()
     await expect(buyerPage.getByText("Shipping from:").first()).toBeVisible()
     await expect(buyerPage.getByText("Acme Dental Supply", { exact: true })).toBeVisible()
     await expect(buyerPage.getByText("Bright Smile Wholesale", { exact: true })).toBeVisible()
@@ -205,8 +205,11 @@ test.describe("checkout happy path", () => {
       .locator("span")
       .last()
       .textContent()
+    // OrderSummaryTotals renders this row as "Shipment fee" - 74d87f9 dropped the redundant
+    // "Total shipment fee" line, so the old label matched nothing and this read timed out.
+    // `exact` keeps it off the sibling "Heavy shipment fee" row.
     const totalShipmentText = await buyerPage
-      .getByText("Total shipment fee")
+      .getByText("Shipment fee", { exact: true })
       .locator("..")
       .locator("span")
       .last()

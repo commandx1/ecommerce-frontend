@@ -3,6 +3,7 @@
 import { DollarSign, type LucideIcon, ShoppingBag, Star } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import { vendorDashboardAPI } from "@/lib/api/vendor-dashboard"
 import formatCurrency from "@/lib/helpers/formatCurrency"
@@ -139,10 +140,21 @@ const VendorMetricsCards = () => {
     return (
       <>
         {rangeSelector}
-        <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div aria-busy="true" className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <span className="sr-only">Loading metrics</span>
+          {/* Keeps the real card's glass shell and mirrors its contents - icon tile, change pill,
+              value, title, description - so the shell never pops in and the text lines land where
+              the placeholders were. The previous version pulsed an empty card, which meant the
+              whole metric block re-laid-out the moment data arrived. */}
           {[0, 1, 2].map((placeholder) => (
-            <SurfaceCard key={placeholder} variant="glass" className="h-40 animate-pulse">
-              {null}
+            <SurfaceCard key={placeholder} variant="glass" className="p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <Skeleton className="h-12 w-12 rounded-xl" />
+                <Skeleton className="h-7 w-16 rounded-full" />
+              </div>
+              <Skeleton className="mb-1 h-8 w-28" />
+              <Skeleton className="h-5 w-36" />
+              <Skeleton className="mt-2 h-4 w-44" />
             </SurfaceCard>
           ))}
         </div>

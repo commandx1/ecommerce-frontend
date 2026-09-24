@@ -7,6 +7,7 @@ import { useState } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
 import { showToast } from "@/components/ui/Toast"
 import { fetchReviewsByProduct } from "@/lib/api/product-reviews"
 import { useAuthStore } from "@/stores/authStore"
@@ -194,12 +195,10 @@ export default function ProductReviews({
 
         {/* Individual Reviews */}
         {isLoading ? (
-          <div className="space-y-6">
+          <div className="space-y-6" aria-busy="true">
+            <span className="sr-only">Loading reviews…</span>
             {Array.from({ length: 3 }, (_, index) => (
-              <div
-                key={`review-skeleton-${index + 1}`}
-                className="h-36 animate-pulse rounded-[1.75rem] bg-surface-muted"
-              />
+              <Skeleton key={`review-skeleton-${index + 1}`} className="h-36 rounded-[1.75rem]" />
             ))}
           </div>
         ) : reviews.length > 0 ? (

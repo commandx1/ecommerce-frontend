@@ -83,7 +83,15 @@ function ShippingCell({
 export default function ShippingMethodsTable() {
   return (
     <div className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-panel sm:rounded-3xl">
-      <div className="overflow-x-auto">
+      {/* The table is `min-w-160`, so below that this scrolls sideways. A scroll container with no
+          focusable child cannot be reached by keyboard at all - axe `scrollable-region-focusable`
+          (serious), which only fires at phone width where the overflow actually happens. Making it
+          a focusable, named region is the standard fix: arrow keys scroll it once it has focus. */}
+      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: a scroll container is exactly the case
+          where a non-interactive element must be focusable - WAI-ARIA APG's own guidance - or
+          keyboard users cannot scroll it. A named <section> is the region; tabIndex makes it
+          reachable. */}
+      <section className="overflow-x-auto" tabIndex={0} aria-label="Shipping methods comparison">
         <table className="w-full min-w-160">
           <thead className="bg-brand-surface text-inverse-foreground">
             <tr>
@@ -121,7 +129,7 @@ export default function ShippingMethodsTable() {
             ))}
           </tbody>
         </table>
-      </div>
+      </section>
     </div>
   )
 }

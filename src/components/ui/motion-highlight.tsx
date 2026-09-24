@@ -417,7 +417,11 @@ function MotionHighlightItem({
 
   const dataAttributes = {
     "data-active": isActive ? "true" : "false",
-    "aria-selected": isActive,
+    // No `aria-selected` here. This wrapper is a presentational animation container with no role,
+    // and `aria-selected` is only allowed on option/tab/row/gridcell/treeitem - axe flags it as
+    // `aria-allowed-attr` (critical). The real selected state belongs to the control inside.
+    // Same lesson already written down in SupplierComparisonRow.tsx; it survived here because no
+    // scan ever covered these routes (see a11y-smoke.spec.ts's own note about that gap).
     "data-disabled": isDisabled,
     "data-value": childValue,
     "data-highlight": true,

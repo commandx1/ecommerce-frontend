@@ -43,14 +43,17 @@ type SortOption = (typeof sortOptions)[number]
 const statusPillMap: Record<InvoiceStatus, string> = {
   Paid: "bg-success/15 text-success border border-success/30",
   Pending: "bg-warning/15 text-warning border border-warning/30",
-  Overdue: "bg-danger/15 text-danger border border-danger/30",
+  // Text on the danger tint - the exact case `--danger-strong` was measured and added for.
+  Overdue: "bg-danger/15 text-danger-strong border border-danger/30",
   Disputed: "bg-brand/15 text-brand border border-brand/30",
 }
 
 const statusNoteMap: Record<InvoiceStatus, string> = {
   Paid: "text-success",
   Pending: "text-warning",
-  Overdue: "text-danger",
+  // Body text, so it needs `--danger-strong`; `--danger` is the fill/icon red and measures
+  // 3.42:1 as text (globals.css:146, which added `--danger-strong` for exactly this).
+  Overdue: "text-danger-strong",
   Disputed: "text-brand",
 }
 
@@ -209,7 +212,7 @@ export default function BuyerInvoicesPage() {
             <StatChip
               label="Total Outstanding"
               value={currency.format(totalOutstanding)}
-              valueClassName="text-danger"
+              valueClassName="text-danger-strong"
             />
             <StatChip label="Paid This Month" value={currency.format(paidThisMonth)} valueClassName="text-success" />
           </div>
@@ -231,6 +234,7 @@ export default function BuyerInvoicesPage() {
           <div className="lg:col-span-3">
             <Label>Select Date Range</Label>
             <SelectField
+              label="Select Date Range"
               value={dateRange}
               onChange={(value) => setDateRange(value as DateRangeOption)}
               options={dateRangeOptions}
@@ -239,6 +243,7 @@ export default function BuyerInvoicesPage() {
           <div className="lg:col-span-2">
             <Label>Status</Label>
             <SelectField
+              label="Status"
               value={status}
               onChange={(value) => setStatus(value as StatusOption)}
               options={statusOptions}
@@ -246,7 +251,7 @@ export default function BuyerInvoicesPage() {
           </div>
           <div className="lg:col-span-2">
             <Label>Vendor</Label>
-            <SelectField value={supplier} onChange={setSupplier} options={supplierOptions} />
+            <SelectField label="Vendor" value={supplier} onChange={setSupplier} options={supplierOptions} />
           </div>
           <div className="lg:col-span-3">
             <Label>Search</Label>
@@ -314,7 +319,7 @@ export default function BuyerInvoicesPage() {
             value={String(pendingCount)}
             label="Pending Invoices"
             caption="2 due this week"
-            captionClassName="text-warning"
+            captionClassName="text-warning-strong"
           />
           <StatsCard
             icon={<AlertTriangle className="h-5 w-5 text-danger" />}
@@ -322,7 +327,7 @@ export default function BuyerInvoicesPage() {
             value={String(overdueCount)}
             label="Overdue Invoices"
             caption="Action required"
-            captionClassName="text-danger"
+            captionClassName="text-danger-strong"
           />
           <StatsCard
             icon={<FileText className="h-5 w-5 text-brand" />}
@@ -349,6 +354,7 @@ export default function BuyerInvoicesPage() {
           <div className="flex items-center gap-3">
             <span className="text-sm text-text-secondary">Sort by:</span>
             <SelectField
+              label="Sort by"
               value={sortBy}
               onChange={(value) => setSortBy(value as SortOption)}
               options={sortOptions}
@@ -385,6 +391,7 @@ export default function BuyerInvoicesPage() {
           <div className="flex items-center gap-2">
             <button
               type="button"
+              aria-label="Previous page"
               onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
               disabled={currentPage === 1}
               className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border-soft text-text-secondary transition-colors hover:text-brand disabled:opacity-45"
@@ -408,6 +415,7 @@ export default function BuyerInvoicesPage() {
             ))}
             <button
               type="button"
+              aria-label="Next page"
               onClick={() => setCurrentPage((page) => Math.min(pageCount, page + 1))}
               disabled={currentPage === pageCount}
               className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border-soft text-text-secondary transition-colors hover:text-brand disabled:opacity-45"
@@ -449,11 +457,13 @@ function Label({ children }: { children: React.ReactNode }) {
 }
 
 function SelectField({
+  label,
   value,
   onChange,
   options,
   compact = false,
 }: {
+  label: string
   value: string
   onChange: (value: string) => void
   options: ReadonlyArray<string>
@@ -462,6 +472,7 @@ function SelectField({
   return (
     <div className="relative">
       <select
+        aria-label={label}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className={cn(
@@ -531,6 +542,7 @@ function InvoiceCard({
         <div className="flex gap-4">
           <input
             type="checkbox"
+            aria-label={`Select invoice ${invoice.id}`}
             className="mt-1 h-4 w-4 rounded border-border-soft text-brand focus:ring-0"
             checked={selected}
             onChange={onToggleSelect}

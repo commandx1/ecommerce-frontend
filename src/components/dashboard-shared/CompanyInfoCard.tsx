@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import SurfaceCard from "@/components/ui/SurfaceCard"
-import Skeleton from "@/components/ui/skeleton"
+import { Skeleton } from "@/components/ui/skeleton"
 import { showToast } from "@/components/ui/Toast"
 import { Textarea } from "@/components/ui/textarea"
 import {

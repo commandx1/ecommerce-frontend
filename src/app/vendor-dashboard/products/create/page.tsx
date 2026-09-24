@@ -1140,6 +1140,7 @@ function CreateProductPageContent() {
         <div className="flex items-center space-x-4">
           <Link
             href="/vendor-dashboard/products"
+            aria-label="Back to products"
             className="w-10 h-10 bg-surface-elevated rounded-lg shadow flex items-center justify-center hover:bg-surface-muted transition-colors"
           >
             <ArrowLeft className="w-5 h-5 text-text-secondary" />

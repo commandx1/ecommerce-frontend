@@ -379,6 +379,21 @@ describe("OrdersTable", () => {
     expect(onRequestRefund).toHaveBeenCalledWith(order, order.sellerGroups?.[0]?.orderItems[1])
   })
 
+  it("labels the row expander so it has an accessible name that flips with its state", async () => {
+    const user = userEvent.setup()
+    render(<OrdersTableHarness testOrders={[order, secondOrder]} />)
+
+    const firstRow = getPrimaryDataRowBySeller("Acme Store")
+    expect(firstRow).not.toBeNull()
+    const expandButton = within(firstRow as HTMLTableRowElement).getByRole("button", { name: "Expand order details" })
+    await user.click(expandButton)
+
+    const firstRowAfterExpand = getPrimaryDataRowBySeller("Acme Store")
+    expect(
+      within(firstRowAfterExpand as HTMLTableRowElement).getByRole("button", { name: "Collapse order details" }),
+    ).toBeInTheDocument()
+  })
+
   it("collapses when same row expander is clicked twice", async () => {
     const user = userEvent.setup()
     render(<OrdersTableHarness testOrders={[order, secondOrder]} />)

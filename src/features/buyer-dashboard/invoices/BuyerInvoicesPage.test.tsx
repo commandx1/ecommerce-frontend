@@ -149,4 +149,26 @@ describe("BuyerInvoicesPage", () => {
     expect(within(firstCard).getByRole("button", { name: "View Details" })).toBeInTheDocument()
     expect(within(firstCard).getByRole("button", { name: "More Actions" })).toBeInTheDocument()
   })
+
+  it("exposes accessible names for the filter selects and row checkbox", () => {
+    render(<BuyerInvoicesPage />)
+
+    expect(screen.getByRole("combobox", { name: "Select Date Range" })).toBeInTheDocument()
+    expect(screen.getByRole("combobox", { name: "Status" })).toBeInTheDocument()
+    expect(screen.getByRole("combobox", { name: "Vendor" })).toBeInTheDocument()
+    expect(screen.getByRole("combobox", { name: "Sort by" })).toBeInTheDocument()
+
+    const firstCard = screen.getByText("Invoice #INV-2026-0156").closest("article") as HTMLElement
+    expect(within(firstCard).getByRole("checkbox", { name: "Select invoice INV-2026-0156" })).toBeInTheDocument()
+  })
+
+  it("exposes accessible names for pagination controls", async () => {
+    const user = userEvent.setup()
+    render(<BuyerInvoicesPage />)
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Select Date Range" }), "This Year")
+
+    expect(screen.getByRole("button", { name: "Previous page" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Next page" })).toBeInTheDocument()
+  })
 })

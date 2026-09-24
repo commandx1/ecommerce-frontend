@@ -15,4 +15,14 @@ describe("CartEmptyState", () => {
     expect(screen.getByRole("heading", { level: 2, name: "Your Cart is Empty" })).toBeInTheDocument()
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
   })
+
+  it("renders a main landmark, like the loaded and loading cart views do", () => {
+    render(<CartEmptyState onContinueShopping={vi.fn()} />)
+
+    // Same finding class as the h1 above, caught later: this was the ONE /cart state without a
+    // main landmark (CartContent and CartLoadingState both use PageSectionContainer as="main",
+    // this one used as="div"), leaving a screen-reader user with no "skip to main content"
+    // target on an empty cart. a11y-smoke only sees it on a run where the cart is actually empty.
+    expect(screen.getByRole("main")).toBeInTheDocument()
+  })
 })

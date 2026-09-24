@@ -153,6 +153,17 @@ describe("Vendor ProductsPage — filters, sorting and paging", () => {
     await waitFor(() => expect(calls.paramsOf(calls.last()).brand).toBeUndefined())
   })
 
+  it("labels the brand filter and page size selects so they have an accessible name", async () => {
+    serveBrands(["MARK3"])
+    serveFilter([makeVendorUserProduct()], { totalElements: 60, totalPages: 3 })
+
+    render(<ProductsPage />)
+    await screen.findByRole("table")
+
+    expect(screen.getByRole("combobox", { name: "Brand" })).toBeInTheDocument()
+    expect(screen.getByRole("combobox", { name: "Rows per page" })).toBeInTheDocument()
+  })
+
   it("defaults to ascending stock order and flips direction when the same header is clicked twice", async () => {
     const user = setupUser()
     const calls = serveFilter()
@@ -292,6 +303,18 @@ describe("Vendor ProductsPage — filters, sorting and paging", () => {
     await user.click(await screen.findByRole("option", { name: "Rejected" }))
 
     await waitFor(() => expect(reviewUrls[reviewUrls.length - 1]?.searchParams.get("approved")).toBe("FALSE"))
+  })
+
+  it("labels the review status select so it has an accessible name", async () => {
+    const user = setupUser()
+    serveFilter()
+    serveReviewQueue([{ name: "Waiting Product", approved: null }])
+
+    render(<ProductsPage />)
+    await screen.findByRole("table")
+    await switchToReviewQueue(user)
+
+    expect(screen.getByRole("combobox", { name: "Status" })).toBeInTheDocument()
   })
 
   /**

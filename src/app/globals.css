@@ -10,6 +10,8 @@
   --color-surface: var(--surface);
   --color-surface-elevated: var(--surface-elevated);
   --color-surface-muted: var(--surface-muted);
+  --color-skeleton-base: var(--skeleton-base);
+  --color-skeleton-highlight: var(--skeleton-highlight);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
@@ -83,6 +85,18 @@
   --surface: oklch(99.5% 0.004 84);
   --surface-elevated: oklch(100% 0.002 84);
   --surface-muted: oklch(96.9% 0.011 84);
+  /* Skeletons need their own base: --surface-muted (96.9%) sits only 1.5-3.1% below the surfaces
+     it renders on, so placeholder bars washed out on /cart and /products. Measured (oklch->sRGB,
+     script not guessed) against the surfaces a skeleton actually lands on - canvas / surface /
+     surface-elevated: --surface-muted gave 1.045 / 1.078 / 1.093:1; 92.5% gives 1.192 / 1.230 /
+     1.246:1. The highlight is the sweeping band, and its contrast against the base is what decides
+     whether the shimmer reads at all: the old .skeleton-white pair managed 1.093:1 in light and
+     1.146:1 in dark; this pair measures 1.213:1 and 1.445:1. Both are deliberately far below the
+     3:1 non-text threshold - a placeholder at 3:1 reads as a solid dark block, and these are
+     decorative, backed by aria-busy plus sr-only text. The target is "visible", not "compliant".
+     Note the highlight is lighter than the base in BOTH themes; the old pair inverted in dark. */
+  --skeleton-base: oklch(92.5% 0.008 84);
+  --skeleton-highlight: oklch(99% 0.004 84);
   --text-primary: oklch(28.5% 0.02 250);
   --text-secondary: oklch(46.2% 0.016 246);
   /* WCAG AA (4.5:1). At the previous 59.8% this token measured 3.63:1 on --surface-muted,
@@ -175,6 +189,8 @@
   --surface: oklch(23% 0.019 250);
   --surface-elevated: oklch(27% 0.02 250);
   --surface-muted: oklch(31% 0.02 248);
+  --skeleton-base: oklch(33% 0.02 248);
+  --skeleton-highlight: oklch(42% 0.022 248);
   --text-primary: oklch(95.7% 0.004 90);
   --text-secondary: oklch(84.3% 0.009 80);
   --text-muted: oklch(73.2% 0.012 80);
@@ -776,27 +792,31 @@ button {
   }
 }
 
-/* ── Product detail loading skeleton ── */
+/* ── Skeleton shimmer ──
+   Drives the `Skeleton` primitive in src/components/ui/skeleton.tsx; nothing else should use it.
+   Replaces the old .skeleton-mint/.skeleton-white pair, which animated `background-position` on a
+   fixed 1000px gradient: that repaints every frame instead of compositing, and the fixed width
+   meant the band barely moved across small elements, so the sweep vanished on short bars.
+   translateX on a full-size ::after composites and is width-independent.
+   The reduced-motion block above already collapses every animation to 0.01ms/1 iteration; the
+   band then rests off-element at either end of the sweep, leaving a plain --skeleton-base block. */
 
-@keyframes shimmer-sweep {
-  0% {
-    background-position: -1000px 0;
+@keyframes skeleton-sweep {
+  from {
+    transform: translateX(-100%);
   }
-  100% {
-    background-position: 1000px 0;
+  to {
+    transform: translateX(100%);
   }
 }
 
-.skeleton-mint {
-  background: linear-gradient(90deg, var(--surface-muted) 25%, var(--surface) 50%, var(--surface-muted) 75%);
-  background-size: 1000px 100%;
-  animation: shimmer-sweep 2s infinite linear;
-}
-
-.skeleton-white {
-  background: linear-gradient(90deg, var(--surface-muted) 25%, var(--surface-elevated) 50%, var(--surface-muted) 75%);
-  background-size: 1000px 100%;
-  animation: shimmer-sweep 2s infinite linear;
+.skeleton-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent 0%, var(--skeleton-highlight) 50%, transparent 100%);
+  animation: skeleton-sweep 1.6s infinite linear;
 }
 
 @keyframes icon-float {

@@ -181,7 +181,10 @@ export default function NotFound() {
                 </p>
                 <div className="space-y-4 mb-8">
                   {[
-                    { icon: Phone, title: "Call Us", desc: "1-800-DENTAL-HUB", detail: "Mon-Fri: 8AM - 8PM EST" },
+                    // Was "1-800-DENTAL-HUB": a previous-brand leftover that is not even dialable -
+                    // DENTALHUB is 9 keypad digits where a 1-800 number takes 7. The help centre's
+                    // number is the real one (DENTAL1 -> 336-8251, spelled out there in full).
+                    { icon: Phone, title: "Call Us", desc: "1-800-DENTAL-1", detail: "Mon-Fri: 8AM - 8PM EST" },
                     { icon: Mail, title: "Email Us", desc: "support@dentypro.com", detail: "Response within 2 hours" },
                     {
                       icon: MessageSquare,

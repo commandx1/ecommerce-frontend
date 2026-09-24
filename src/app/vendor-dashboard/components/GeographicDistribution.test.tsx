@@ -37,7 +37,7 @@ describe("GeographicDistribution", () => {
     serveGeo(makeVendorGeographicDistributionResponse())
     const { container } = render(<GeographicDistribution />)
 
-    expect(container.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0)
+    expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(0)
   })
 
   it("renders each city's name and rounded percentage from the backend", async () => {

@@ -112,6 +112,7 @@ export function Toast({ id, type, title, message, duration = 4000 }: ToastProps)
         <button
           type="button"
           onClick={() => toast.dismiss(id)}
+          aria-label="Dismiss notification"
           className="ml-4 shrink-0 text-text-muted transition-colors hover:text-text-primary"
         >
           <X size={16} />

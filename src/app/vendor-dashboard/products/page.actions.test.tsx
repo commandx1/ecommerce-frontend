@@ -90,6 +90,16 @@ describe("Vendor ProductsPage — inline editing", () => {
     await waitFor(() => expect(row.queryByRole("spinbutton")).not.toBeInTheDocument())
   })
 
+  it("labels the inline status select with the product it belongs to", async () => {
+    const user = setupUser()
+    serveFilter([makeVendorUserProduct({ id: "up-7", productName: "Editable Product" })])
+
+    render(<ProductsPage />)
+    const row = await startEditing(user, "Editable Product")
+
+    expect(row.getByRole("combobox", { name: "Status for Editable Product" })).toBeInTheDocument()
+  })
+
   /**
    * The backend rejects a price and discount update in the same call and wipes the discount when
    * the price moves, so untouched fields must go back byte-identical — including the float noise

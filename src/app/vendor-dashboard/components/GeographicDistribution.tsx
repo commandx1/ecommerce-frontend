@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { type VendorGeographicDistributionResponse, vendorDashboardAPI } from "@/lib/api/vendor-dashboard"
 import { useAuthStore } from "@/stores/authStore"
 import DashboardPanel from "./shared/DashboardPanel"
@@ -96,7 +97,7 @@ const GeographicDistribution = () => {
       {isLoading ? (
         <div className="space-y-4">
           {[0, 1, 2].map((placeholder) => (
-            <div key={placeholder} className="h-6 animate-pulse rounded-full bg-surface-muted" />
+            <Skeleton key={placeholder} className="h-6 rounded-full" />
           ))}
         </div>
       ) : fetchError ? (

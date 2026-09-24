@@ -13,6 +13,7 @@ import {
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { Line } from "react-chartjs-2"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { vendorDashboardAPI } from "@/lib/api/vendor-dashboard"
 import { useAuthStore } from "@/stores/authStore"
 import { getVendorChartOptions, getVendorChartPalette } from "./shared/chartTheme"
@@ -137,7 +138,7 @@ const RevenueChart = () => {
       >
         <div className="h-80">
           {isLoading ? (
-            <div className="h-full w-full animate-pulse rounded-xl bg-surface-muted" />
+            <Skeleton className="h-full w-full rounded-xl" />
           ) : fetchError ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
               <p className="text-sm font-medium text-danger">Couldn't load revenue. Please try again.</p>
@@ -146,7 +147,9 @@ const RevenueChart = () => {
               </Button>
             </div>
           ) : (
-            <Line data={data} options={options} />
+            // react-chartjs-2 forwards unknown props straight to the underlying <canvas role="img">,
+            // which is otherwise nameless to assistive tech.
+            <Line data={data} options={options} aria-label="Monthly revenue performance" />
           )}
         </div>
       </DashboardPanel>

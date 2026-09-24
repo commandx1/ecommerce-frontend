@@ -53,6 +53,13 @@ describe("CartSummaryPanel", () => {
     expect(screen.getByText("$8.50")).toBeInTheDocument()
   })
 
+  it('labels a single-item subtotal "1 item", not "1 items"', () => {
+    renderPanel({ itemsCount: 1 })
+
+    expect(screen.getByText("Subtotal (1 item)")).toBeInTheDocument()
+    expect(screen.queryByText("Subtotal (1 items)")).not.toBeInTheDocument()
+  })
+
   it('labels a zero shipment fee as "Free" rather than $0.00', () => {
     renderPanel({ totals: makeTotals({ shipmentFee: 0, heavyShipmentFee: 0, totalShipmentFee: 0 }) })
 

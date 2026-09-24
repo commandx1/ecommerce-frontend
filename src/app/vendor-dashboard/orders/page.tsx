@@ -513,7 +513,12 @@ export default function VendorOrdersPage() {
         <div className="flex items-center gap-2 border-t border-border-soft bg-surface-muted px-6 py-3">
           <span className="text-sm text-text-secondary">Show</span>
           <Select value={String(pageSize)} onValueChange={(value) => handlePageSizeChange(Number(value))}>
-            <SelectTrigger className="h-9 w-20 rounded-lg border-border-strong bg-surface-elevated px-3 py-1 text-sm text-text-secondary shadow-none focus-visible:ring-2 focus-visible:ring-brand/50">
+            {/* The visible "Show" / "per page" text sits outside the trigger, so the control
+                itself had no accessible name - axe `button-name` (critical). */}
+            <SelectTrigger
+              aria-label="Orders per page"
+              className="h-9 w-20 rounded-lg border-border-strong bg-surface-elevated px-3 py-1 text-sm text-text-secondary shadow-none focus-visible:ring-2 focus-visible:ring-brand/50"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -660,6 +665,7 @@ export default function VendorOrdersPage() {
               <button
                 type="button"
                 onClick={() => setLabelModalLinks(null)}
+                aria-label="Close labels and tracking"
                 className="p-1 rounded-full text-text-muted hover:text-text-secondary hover:bg-surface-muted"
               >
                 <X className="w-4 h-4" />
@@ -858,6 +864,7 @@ export default function VendorOrdersPage() {
               <button
                 type="button"
                 onClick={() => setUberResult(null)}
+                aria-label="Close Uber delivery result"
                 className="rounded-full p-1 text-text-muted hover:bg-surface-muted hover:text-text-secondary"
               >
                 <X className="h-4 w-4" />

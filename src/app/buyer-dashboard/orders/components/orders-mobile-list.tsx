@@ -2,6 +2,7 @@
 
 import { ChevronDown, ChevronsUpDown, ChevronUp, Package, Store } from "lucide-react"
 import { Collapse, CollapseContent, CollapseTrigger } from "@/components/ui/collapse"
+import { Skeleton } from "@/components/ui/skeleton"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import type { BuyerOrder } from "@/lib/api/buyer-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
@@ -80,18 +81,18 @@ function SortButton({
 
 function OrderCardSkeleton() {
   return (
-    <SurfaceCard variant="glass" className="animate-pulse p-4 sm:p-5">
+    <SurfaceCard variant="glass" className="p-4 sm:p-5" data-testid="order-card-skeleton">
       <div className="mb-4 flex items-center justify-between">
         <div className="space-y-2">
-          <div className="h-3 w-16 rounded-full bg-surface-muted" />
-          <div className="h-4 w-28 rounded-full bg-surface-muted" />
+          <Skeleton className="h-3 w-16 rounded-full" />
+          <Skeleton className="h-4 w-28 rounded-full" />
         </div>
-        <div className="h-6 w-20 rounded-full bg-surface-muted" />
+        <Skeleton className="h-6 w-20 rounded-full" />
       </div>
-      <div className="mb-4 h-4 w-40 rounded-full bg-surface-muted" />
+      <Skeleton className="mb-4 h-4 w-40 rounded-full" />
       <div className="flex items-center justify-between border-t border-border-soft pt-3">
-        <div className="h-4 w-24 rounded-full bg-surface-muted" />
-        <div className="h-5 w-20 rounded-full bg-surface-muted" />
+        <Skeleton className="h-4 w-24 rounded-full" />
+        <Skeleton className="h-5 w-20 rounded-full" />
       </div>
     </SurfaceCard>
   )
@@ -122,7 +123,8 @@ export default function OrdersMobileList() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3" aria-busy="true">
+        <span className="sr-only">Loading orders…</span>
         {Array.from({ length: 4 }).map((_, index) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list
           <OrderCardSkeleton key={index} />

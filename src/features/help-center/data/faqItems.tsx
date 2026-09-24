@@ -188,7 +188,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   },
   {
     id: "faq10",
-    question: "How do I become a supplier on DentalHub?",
+    question: "How do I become a supplier on DentyPro?",
     answer: (
       <>
         <p className="mb-3">Join our network of verified suppliers:</p>
@@ -199,7 +199,10 @@ export const FAQ_ITEMS: FaqItem[] = [
           <li>Pass our quality and compliance review</li>
           <li>Complete onboarding and training process</li>
         </ol>
-        <p className="mt-3">Contact our partner team at partners@dentalhub.com to get started.</p>
+        {/* Was partners@dentalhub.com - previous-brand domain, so it reached nobody. Confirmed
+            with the product owner that no `partners@` mailbox exists, so the app's one real
+            support address is the correct destination here, not a stand-in. */}
+        <p className="mt-3">Contact our partner team at support@dentypro.com to get started.</p>
       </>
     ),
   },

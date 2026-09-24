@@ -144,7 +144,7 @@ test.describe("checkout payment failure", () => {
     await cart.checkoutButton.click()
     await checkout.expectUrl(/\/checkout$/)
 
-    await expect(buyerPage.getByRole("heading", { name: "Select Shipping Address" })).toBeVisible()
+    await expect(buyerPage.getByRole("heading", { name: "Shipping Address", level: 2 })).toBeVisible()
     await expect(checkout.continueToBillingButton).toBeEnabled()
     await checkout.continueToBillingButton.click()
 

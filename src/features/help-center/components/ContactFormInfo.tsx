@@ -11,7 +11,9 @@ const CONTACT_INFO_ITEMS = [
   },
   {
     title: "Email Support",
-    details: "support@dentalhub.com",
+    // The app's own support address, as used on not-found.tsx and the forgot-password panel.
+    // This one read "support@dentalhub.com" - a leftover from the previous brand.
+    details: "support@dentypro.com",
     descriptionLines: ["Response within 2 hours during business hours"],
     icon: Mail,
   },

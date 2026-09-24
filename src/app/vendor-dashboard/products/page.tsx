@@ -1127,7 +1127,10 @@ export default function ProductsPage() {
             }
             disabled={isSaving}
           >
-            <SelectTrigger className="h-9 w-32 rounded-lg border-border-strong bg-surface-elevated px-3 text-sm shadow-none focus:ring-2 focus:ring-brand/40">
+            <SelectTrigger
+              aria-label={`Status for ${product.productName}`}
+              className="h-9 w-32 rounded-lg border-border-strong bg-surface-elevated px-3 text-sm shadow-none focus:ring-2 focus:ring-brand/40"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -1347,7 +1350,10 @@ export default function ProductsPage() {
                   className="self-start sm:self-auto"
                 />
                 <Select value={selectedBrand} onValueChange={handleBrandChange} disabled={brandOptions.length === 0}>
-                  <SelectTrigger className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft sm:w-56">
+                  <SelectTrigger
+                    aria-label="Brand"
+                    className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft sm:w-56"
+                  >
                     <SelectValue placeholder="All Brands" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1365,7 +1371,10 @@ export default function ProductsPage() {
                 value={reviewApprovedFilter}
                 onValueChange={(value) => handleReviewApprovedFilterChange(value as ReviewApprovedFilter)}
               >
-                <SelectTrigger className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft lg:w-48">
+                <SelectTrigger
+                  aria-label="Status"
+                  className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft lg:w-48"
+                >
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1458,7 +1467,10 @@ export default function ProductsPage() {
             <div className="flex items-center space-x-2">
               <span className="text-sm text-text-secondary">Show</span>
               <Select value={String(pageSize)} onValueChange={(value) => handlePageSizeChange(Number(value))}>
-                <SelectTrigger className="h-9 w-24 rounded-lg border-border-strong bg-surface-elevated px-3 py-1 text-sm text-text-secondary shadow-none focus-visible:ring-2 focus-visible:ring-brand/40">
+                <SelectTrigger
+                  aria-label="Rows per page"
+                  className="h-9 w-24 rounded-lg border-border-strong bg-surface-elevated px-3 py-1 text-sm text-text-secondary shadow-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1476,6 +1488,9 @@ export default function ProductsPage() {
                 type="button"
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 0}
+                // Icon-only, so without this the button has no accessible name at all
+                // (axe `button-name`, critical).
+                aria-label="Previous page"
                 className="px-3 py-2 border border-border-strong rounded-lg hover:bg-surface-elevated text-sm font-medium text-text-secondary disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -1527,6 +1542,7 @@ export default function ProductsPage() {
                 type="button"
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages - 1}
+                aria-label="Next page"
                 className="px-3 py-2 border border-border-strong rounded-lg hover:bg-surface-elevated text-sm font-medium text-text-secondary disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronRight className="w-4 h-4" />

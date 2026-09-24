@@ -47,6 +47,25 @@ describe("DataTable", () => {
     expect(screen.queryByRole("cell", { name: "No rows found." })).not.toBeInTheDocument()
   })
 
+  // Regression: the loading announcement used to be a body <tr>. It was not aria-hidden, so it
+  // counted as a row — callers that wait for `getAllByRole("row").length > 1` to mean "data
+  // arrived" resolved while the table was still loading, and DocumentProductsPanel hand-rolled
+  // its own skeleton to avoid it. It is a <caption> now: still announced, no longer a row.
+  it("exposes no data rows while loading, so row-count waits cannot resolve early", () => {
+    render(<DataTable columns={columns} data={[]} isLoading loadingText="Loading orders..." />)
+
+    // Header row only — the skeleton rows are aria-hidden and the announcement is not a row.
+    expect(screen.getAllByRole("row")).toHaveLength(1)
+    expect(screen.getByRole("table")).toHaveAttribute("aria-busy", "true")
+  })
+
+  it("drops the loading announcement and the busy flag once data is in", () => {
+    render(<DataTable columns={columns} data={rows} loadingText="Loading orders..." />)
+
+    expect(screen.queryByText("Loading orders...")).not.toBeInTheDocument()
+    expect(screen.getByRole("table")).not.toHaveAttribute("aria-busy")
+  })
+
   it("reports a clicked row to its owner", async () => {
     const user = userEvent.setup()
     const onRowClick = vi.fn()

@@ -30,9 +30,13 @@ const SearchResultsDropdown = ({
   }
 
   return (
+    // The panel carried no background and no shadow, so results rendered straight on top of the
+    // page behind them and were unreadable - measured on /: backgroundColor rgba(0,0,0,0),
+    // boxShadow none, with a 602x92 result sitting inside it. A floating overlay needs its own
+    // opaque surface; these are the tokens the app's other floating panels already use.
     <div
       ref={dropdownRef}
-      className="absolute left-0 z-10 mt-1 max-h-[70vh] w-full overflow-y-auto border-t border-border-soft/60 px-1 sm:max-h-96"
+      className="absolute left-0 z-10 mt-1 max-h-[70vh] w-full overflow-y-auto rounded-2xl border border-border-soft bg-surface-elevated px-1 shadow-panel sm:max-h-96"
     >
       {results.length > 0 ? (
         <div className="py-2">

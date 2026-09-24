@@ -18,16 +18,25 @@ const SupportTeamMemberCard = ({ name, role, bio, avatar }: SupportTeamMemberCar
       <h3 className="mb-1 text-lg font-semibold text-text-primary">{name}</h3>
       <p className="mb-2 text-text-secondary">{role}</p>
       <p className="mb-4 text-sm text-text-muted">{bio}</p>
+      {/* Both buttons are icon-only with no accessible name - axe `button-name` (critical), four
+          cards on /help-center meaning eight anonymous "button"s for a screen reader. They also
+          have no onClick and never had one, so naming them without disabling them would just make
+          dead controls accessibly misleading. Give them a real mailto:/profile link or drop them
+          - see skeleton.md. The names come from the member, so they stay distinct per card. */}
       <div className="flex justify-center space-x-3">
         <button
           type="button"
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-primary-foreground hover:bg-brand-strong"
+          aria-label={`Email ${name}`}
+          disabled
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-primary-foreground hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Mail className="h-3 w-3" />
         </button>
         <button
           type="button"
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-primary-foreground hover:bg-brand-strong"
+          aria-label={`${name} on LinkedIn`}
+          disabled
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-primary-foreground hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Linkedin className="h-3 w-3" />
         </button>

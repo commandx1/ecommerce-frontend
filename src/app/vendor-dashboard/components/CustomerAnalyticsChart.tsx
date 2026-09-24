@@ -83,7 +83,8 @@ const CustomerAnalyticsChart = () => {
       }
     >
       <div className="h-64">
-        <Line data={data} options={options} />
+        {/* aria-label reaches the underlying <canvas role="img">, which react-chartjs-2 renders nameless otherwise. */}
+        <Line data={data} options={options} aria-label="New and returning customers over time" />
       </div>
       <div className="mt-6 grid grid-cols-2 gap-4 xl:grid-cols-4">
         {vendorCustomerAnalyticsData.stats.map((stat) => (

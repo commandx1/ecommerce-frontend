@@ -4,6 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { getFullImageUrl } from "@/lib/api/products"
 import { type VendorTopSellingProduct, vendorDashboardAPI } from "@/lib/api/vendor-dashboard"
 import { useAuthStore } from "@/stores/authStore"
@@ -67,7 +68,7 @@ const TopSellingProducts = () => {
       {isLoading ? (
         <div className="space-y-4">
           {[0, 1, 2, 3].map((placeholder) => (
-            <div key={placeholder} className="h-16 animate-pulse rounded-xl bg-surface-muted" />
+            <Skeleton key={placeholder} className="h-16 rounded-xl" />
           ))}
         </div>
       ) : fetchError ? (

@@ -12,6 +12,7 @@ import {
 } from "@tanstack/react-table"
 import { AnimatePresence, motion } from "motion/react"
 import { Fragment, type ReactNode } from "react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 
 export interface DataTableColumnMeta {
@@ -66,7 +67,15 @@ export default function DataTable<TData>({
   const visibleColumnCount = table.getVisibleLeafColumns().length
 
   return (
-    <table className={cn("w-full border-collapse text-center", minTableWidthClassName, tableClassName)}>
+    <table
+      aria-busy={isLoading || undefined}
+      className={cn("w-full border-collapse text-center", minTableWidthClassName, tableClassName)}
+    >
+      {/* The loading announcement lives in a <caption>, not a body <tr>. As a row it was a real,
+          non-aria-hidden row, so every caller counting rows with getAllByRole("row") to wait for
+          real data resolved one row early - DocumentProductsPanel had to hand-roll its own
+          skeleton to dodge exactly that. A caption is still announced but is not a row. */}
+      {isLoading ? <caption className="sr-only">{loadingText}</caption> : null}
       <thead>
         {table.getHeaderGroups().map((headerGroup) => (
           <tr
@@ -90,8 +99,7 @@ export default function DataTable<TData>({
       </thead>
       <tbody className="text-sm text-text-secondary">
         {isLoading ? (
-          <>
-            {Array.from({ length: 6 }, (_, rowIndex) => (
+          Array.from({ length: 6 }, (_, rowIndex) => (
               // biome-ignore lint/a11y/noAriaHiddenOnFocusable: a <tr> is not focusable; this hides placeholder skeleton rows
               <tr key={`loading-skeleton-row-${rowIndex}`} className="border-b border-border-soft" aria-hidden="true">
                 {table.getVisibleLeafColumns().map((column, colIndex) => {
@@ -101,12 +109,14 @@ export default function DataTable<TData>({
                       key={`loading-skeleton-cell-${rowIndex}-${column.id}`}
                       className={cn("p-4", meta?.cellClassName)}
                     >
+                      {/* Keeps --glass-tile rather than the primitive's --skeleton-base: these rows
+                          sit on the dashboard's glass panels, where that token is what matches. */}
                       {lastColumnSkeletonCircle && colIndex === visibleColumnCount - 1 ? (
-                        <div className="mx-auto h-7 w-7 animate-pulse rounded-full bg-(--glass-tile)" />
+                        <Skeleton className="mx-auto h-7 w-7 rounded-full bg-(--glass-tile)" />
                       ) : (
-                        <div
+                        <Skeleton
                           className={cn(
-                            "h-4 animate-pulse rounded-md bg-(--glass-tile)",
+                            "h-4 bg-(--glass-tile)",
                             colIndex === 0 ? "w-14" : colIndex === visibleColumnCount - 1 ? "ml-auto w-20" : "w-full",
                           )}
                         />
@@ -115,13 +125,7 @@ export default function DataTable<TData>({
                   )
                 })}
               </tr>
-            ))}
-            <tr>
-              <td colSpan={visibleColumnCount} className="sr-only">
-                {loadingText}
-              </td>
-            </tr>
-          </>
+          ))
         ) : table.getRowModel().rows.length === 0 ? (
           <tr>
             <td colSpan={visibleColumnCount} className="p-4 text-center text-text-muted">

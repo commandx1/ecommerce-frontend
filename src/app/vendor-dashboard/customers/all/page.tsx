@@ -108,7 +108,10 @@ export default function VendorCustomersAllPage() {
         <div>
           <p className="mb-1 text-xs font-medium uppercase tracking-wider text-text-secondary">Segment</p>
           <Select value={segment} onValueChange={(value) => updateParams({ segment: value, page: "1" })}>
-            <SelectTrigger className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
+            <SelectTrigger
+              aria-label="Segment"
+              className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
+            >
               <SelectValue placeholder="All segments" />
             </SelectTrigger>
             <SelectContent>
@@ -125,7 +128,10 @@ export default function VendorCustomersAllPage() {
         <div>
           <p className="mb-1 text-xs font-medium uppercase tracking-wider text-text-secondary">Status</p>
           <Select value={status} onValueChange={(value) => updateParams({ status: value, page: "1" })}>
-            <SelectTrigger className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
+            <SelectTrigger
+              aria-label="Status"
+              className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
+            >
               <SelectValue placeholder="All status" />
             </SelectTrigger>
             <SelectContent>
@@ -143,7 +149,10 @@ export default function VendorCustomersAllPage() {
           <p className="mb-1 text-xs font-medium uppercase tracking-wider text-text-secondary">Sort</p>
           <div className="grid grid-cols-2 gap-2">
             <Select value={sortBy} onValueChange={(value) => updateParams({ sort: value, page: "1" })}>
-              <SelectTrigger className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
+              <SelectTrigger
+                aria-label="Sort By"
+                className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -155,7 +164,10 @@ export default function VendorCustomersAllPage() {
               </SelectContent>
             </Select>
             <Select value={sortDir} onValueChange={(value) => updateParams({ dir: value, page: "1" })}>
-              <SelectTrigger className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
+              <SelectTrigger
+                aria-label="Sort Direction"
+                className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

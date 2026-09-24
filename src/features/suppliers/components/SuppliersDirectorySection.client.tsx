@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
 import { showToast } from "@/components/ui/Toast"
 import SupplierDirectoryCard from "@/features/suppliers/components/SupplierDirectoryCard"
 import {
@@ -372,7 +373,12 @@ export default function SuppliersDirectorySection() {
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
                 href="/register"
-                className="rounded-full px-8 py-3 text-sm font-semibold bg-accent-strong text-neutral-100 transition-transform hover:-translate-y-0.5"
+                // `text-neutral-100` is raw Tailwind, not a token, and it put near-white text on
+                // `--accent-strong` - a 77.9% lightness lime. axe flagged it as `color-contrast`
+                // (serious) on /vendors and /suppliers. `text-accent-foreground` is the pairing
+                // this palette defines for that background (it resolves to `--brand-strong`), and
+                // it is what QuickReorder and not-found.tsx already use with `bg-accent-strong`.
+                className="rounded-full px-8 py-3 text-sm font-semibold bg-accent-strong text-accent-foreground transition-transform hover:-translate-y-0.5"
               >
                 Create Free Account
               </Link>
@@ -393,22 +399,29 @@ export default function SuppliersDirectorySection() {
 
 export function SupplierCardSkeleton() {
   return (
-    <div className="animate-pulse rounded-[1.75rem] bg-surface-elevated p-8 shadow-soft">
-      <div className="mb-4 h-6 w-32 rounded-full bg-surface-muted" />
+    <div className="rounded-[1.75rem] bg-surface-elevated p-8 shadow-soft">
+      <Skeleton className="mb-4 h-6 w-32 rounded-full" />
       <div className="mb-6 flex items-center gap-4">
-        <div className="h-16 w-16 shrink-0 rounded-[1.25rem] bg-surface-muted" />
+        <Skeleton className="h-16 w-16 shrink-0 rounded-[1.25rem]" />
         <div className="flex-1">
-          <div className="h-6 w-2/3 rounded-full bg-surface-muted" />
-          <div className="mt-2 h-4 w-1/2 rounded-full bg-surface-muted" />
+          <Skeleton className="h-6 w-2/3 rounded-full" />
+          <Skeleton className="mt-2 h-4 w-1/2 rounded-full" />
         </div>
       </div>
-      <div className="mb-3 h-4 w-1/2 rounded-full bg-surface-muted" />
-      <div className="mb-6 h-4 w-2/5 rounded-full bg-surface-muted" />
-      <div className="mb-5 h-20 rounded-[1.1rem] bg-surface-muted" />
+      <Skeleton className="mb-3 h-4 w-1/2 rounded-full" />
+      <Skeleton className="mb-6 h-4 w-2/5 rounded-full" />
+      {/* The About box, not a slab: SupplierDirectoryCard renders it as a bordered panel with a
+          heading and two reserved lines of copy, so the border and those baselines are in place
+          before the text arrives instead of one flat block resolving into structure. */}
+      <div className="mb-5 rounded-[1.1rem] border border-border-soft bg-surface p-4">
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="mt-2 h-4 w-full" />
+        <Skeleton className="mt-1.5 h-4 w-3/5" />
+      </div>
       <div className="flex items-center gap-3">
-        <div className="h-11 flex-1 rounded-full bg-surface-muted" />
-        <div className="h-11 w-11 rounded-full bg-surface-muted" />
-        <div className="h-11 w-11 rounded-full bg-surface-muted" />
+        <Skeleton className="h-11 flex-1 rounded-full" />
+        <Skeleton className="h-11 w-11 rounded-full" />
+        <Skeleton className="h-11 w-11 rounded-full" />
       </div>
     </div>
   )

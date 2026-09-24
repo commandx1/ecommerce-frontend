@@ -1,5 +1,6 @@
 "use client"
 
+import { Skeleton } from "@/components/ui/skeleton"
 import { useVariantAttributes } from "../../hooks/useVariantAttributes"
 import VariantChoiceChip from "./VariantChoiceChip"
 
@@ -19,10 +20,10 @@ export default function VariantAttributeSelector({ productId, currentProductName
   if (status === "loading") {
     return (
       <div aria-hidden className="space-y-2">
-        <div className="h-3 w-20 animate-pulse rounded-full bg-surface-muted" />
+        <Skeleton className="h-3 w-20 rounded-full" />
         <div className="flex gap-2">
-          <div className="h-8 w-16 animate-pulse rounded-full bg-surface-muted" />
-          <div className="h-8 w-16 animate-pulse rounded-full bg-surface-muted" />
+          <Skeleton className="h-8 w-16 rounded-full" />
+          <Skeleton className="h-8 w-16 rounded-full" />
         </div>
       </div>
     )

@@ -148,6 +148,17 @@ beforeEach(() => {
   })
 })
 
+describe("CreateProductPage — header", () => {
+  it("labels the icon-only back link so it has an accessible name", () => {
+    render(<CreateProductPage />)
+
+    expect(screen.getByRole("link", { name: "Back to products" })).toHaveAttribute(
+      "href",
+      "/vendor-dashboard/products",
+    )
+  })
+})
+
 describe("CreateProductPage — cover photo edge cases", () => {
   it("shows a preview and the new-cover badge after uploading a file", async () => {
     const user = userEvent.setup()

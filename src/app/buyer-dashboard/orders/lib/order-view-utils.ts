@@ -58,7 +58,12 @@ export function formatDateOnly(value?: string | null): string {
   const parsed = new Date(normalizedValue)
   if (Number.isNaN(parsed.getTime())) return "-"
 
-  return parsed.toLocaleDateString(undefined, {
+  // "en-US", not the viewer's locale: every other date in the app is pinned to it
+  // (WelcomeSection, CompanyInfoCard, AccountSettingsShared, ProductDetailModal,
+  // ImportDocumentsModal, vendor questions), and the UI itself is English-only. Left on the
+  // runtime default, these two formatters were the sole outliers - on a tr-TR machine an order
+  // rendered "22 May 2026" in the timeline and "May 22, 2026" everywhere else on the same screen.
+  return parsed.toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
     day: "2-digit",
@@ -72,7 +77,9 @@ export function formatTimeOnly(value?: string | null): string {
   const parsed = new Date(normalizedValue)
   if (Number.isNaN(parsed.getTime())) return "-"
 
-  return parsed.toLocaleTimeString(undefined, {
+  // Pinned for the same reason as formatDateOnly above: the runtime default gave a 24-hour clock
+  // on a tr-TR machine while the rest of the app showed 12-hour times.
+  return parsed.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
   })

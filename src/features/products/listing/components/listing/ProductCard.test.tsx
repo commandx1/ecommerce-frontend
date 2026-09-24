@@ -44,6 +44,12 @@ describe("ProductCard", () => {
     vi.restoreAllMocks()
   })
 
+  // NOTE: the title <Link> carries `prefetch={false}` and that must not be removed - see the
+  // comment on it in ProductCard.tsx. It cannot be asserted here because this suite's next/link
+  // mock (src/test/mocks/next-image.tsx) deliberately strips Next-only routing props, so the DOM
+  // never sees it. It is locked by `tests/e2e/product-card-prefetch.spec.ts` instead, which
+  // measures the real behaviour: no `?_rsc=` prefetch is issued for the detail route.
+
   it("links the title to the product detail page", () => {
     render(<ProductCard data={makeData({ href: "/products/p-9" })} />)
 

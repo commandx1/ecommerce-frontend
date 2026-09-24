@@ -3,6 +3,7 @@
 import { MessageSquare, Star } from "lucide-react"
 import { useEffect, useState } from "react"
 import SectionHeading from "@/components/layout/SectionHeading"
+import { Skeleton } from "@/components/ui/skeleton"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import StarRating from "@/features/products/product-detail/components/StarRating"
 import { formatRelativeDate } from "@/features/products/product-detail/utils/relativeDate"
@@ -83,7 +84,7 @@ export default function VendorReviewsPage() {
           <SurfaceCard key={kpi.label} variant="glass" className="p-5">
             <div className="text-sm text-text-secondary">{kpi.label}</div>
             <div className="mt-2 text-2xl font-bold text-text-primary">
-              {loading ? <span className="inline-block h-7 w-12 animate-pulse rounded bg-surface-muted" /> : kpi.value}
+              {loading ? <Skeleton className="inline-block h-7 w-12 rounded" /> : kpi.value}
             </div>
             <div className="mt-1 text-xs text-text-muted">{kpi.hint}</div>
           </SurfaceCard>
@@ -97,8 +98,8 @@ export default function VendorReviewsPage() {
               ? STAR_STEPS.map((stars) => (
                   <div key={stars} className="flex items-center gap-3">
                     <div className="w-10 text-sm font-medium text-text-primary">{stars}★</div>
-                    <div className="h-2 flex-1 animate-pulse rounded-full bg-surface-muted" />
-                    <div className="h-4 w-6 animate-pulse rounded bg-surface-muted" />
+                    <Skeleton className="h-2 flex-1 rounded-full" />
+                    <Skeleton className="h-4 w-6 rounded" />
                   </div>
                 ))
               : ratingBreakdown.map((item) => {
@@ -145,7 +146,7 @@ export default function VendorReviewsPage() {
               </div>
               <div className="flex items-end gap-2">
                 {loading ? (
-                  <span className="inline-block h-9 w-16 animate-pulse rounded bg-surface-muted" />
+                  <Skeleton className="inline-block h-9 w-16 rounded" />
                 ) : (
                   <>
                     <span className="text-3xl font-bold text-text-primary">{averageRating.toFixed(1)}</span>
@@ -155,7 +156,7 @@ export default function VendorReviewsPage() {
               </div>
             </div>
             {loading ? (
-              <span className="inline-block h-6 w-48 animate-pulse rounded-full bg-surface-muted" />
+              <Skeleton className="inline-block h-6 w-48 rounded-full" />
             ) : (
               <div
                 className={cn(
@@ -196,7 +197,7 @@ export default function VendorReviewsPage() {
         {loading ? (
           <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-28 animate-pulse rounded-xl bg-surface-muted" />
+              <Skeleton key={i} className="h-28 rounded-xl" />
             ))}
           </div>
         ) : reviews.length === 0 ? (

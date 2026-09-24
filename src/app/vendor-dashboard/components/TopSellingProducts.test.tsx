@@ -42,7 +42,7 @@ describe("TopSellingProducts", () => {
     serveTopSelling(pageOf([makeVendorTopSellingProduct()]))
     const { container } = render(<TopSellingProducts />)
 
-    expect(container.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0)
+    expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(0)
   })
 
   it("renders each product's name, SKU and sell count from the backend page", async () => {

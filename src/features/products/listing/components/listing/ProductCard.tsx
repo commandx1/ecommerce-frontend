@@ -102,6 +102,17 @@ const ProductCard = ({ data }: ProductCardProps) => {
               <TooltipTrigger asChild>
                 <Link
                   href={data.href}
+                  // MITIGATION, not a root fix - do not remove without re-measuring.
+                  // /products/[id] intermittently committed a completely EMPTY page segment on a
+                  // soft navigation from here: header + footer, no content, no loading.tsx
+                  // fallback, no error boundary, for 15s+. Nothing threw - the RSC payloads
+                  // returned 200 in tens of ms - so it is the router committing an empty segment,
+                  // not the page failing. The route is `force-dynamic`, so its prefetch can only
+                  // ever cache the loading shell anyway; disabling it costs ~nothing and made the
+                  // failure disappear: 1/108 runs before, 0/324 after (expected ~3 by chance,
+                  // p~0.05). The same router behaviour can still bite other links into dynamic
+                  // routes - see skeleton.md.
+                  prefetch={false}
                   className="outline-none after:absolute after:inset-0 after:rounded-[1.75rem] after:content-['']"
                 >
                   {data.name}
@@ -184,10 +195,14 @@ const ProductCard = ({ data }: ProductCardProps) => {
                 }}
                 disabled={disabled}
                 aria-busy={isPending}
-                className="inline-flex h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-full bg-brand px-4 text-sm font-semibold text-white transition-colors duration-200 hover:bg-brand-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                // `min-w-0` let this flex-1 button shrink below its label's width on narrow
+                // cards, truncating "Add to Cart" to "Add t...". Dropping it keeps flex-1's fill
+                // behaviour (button still stretches over the row's spare width) while the label's
+                // own width becomes the floor, so the text is never clipped.
+                className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-full bg-brand px-4 text-sm font-semibold text-white transition-colors duration-200 hover:bg-brand-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {!isOutOfStock && <ShoppingCart aria-hidden className="h-4 w-4 shrink-0" />}
-                <span className="truncate">
+                <span className="whitespace-nowrap">
                   {isOutOfStock ? "Out of Stock" : isPending ? "Adding..." : "Add to Cart"}
                 </span>
               </button>

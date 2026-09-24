@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
+import { Skeleton } from "@/components/ui/skeleton"
 import { fetchUserProductStats, vendorProductStatsQueryKey } from "@/lib/api/vendor-products"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
@@ -80,12 +81,12 @@ const ProductStatsCards = ({ selectedFilter = "TOTAL", onFilterChange }: Product
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {["total", "active", "low-stock", "out-of-stock", "inactive"].map((type) => (
-          <div key={`loading-${type}`} className="glass-panel h-24 animate-pulse p-4">
+          <div key={`loading-${type}`} className="glass-panel h-24 p-4">
             <div className="flex items-center justify-between mb-2">
-              <div className="h-10 w-10 rounded-lg bg-surface-muted"></div>
+              <Skeleton className="h-10 w-10 rounded-lg" />
             </div>
-            <div className="mb-2 h-8 rounded bg-surface-muted"></div>
-            <div className="h-4 rounded bg-surface-muted"></div>
+            <Skeleton className="mb-2 h-8 rounded" />
+            <Skeleton className="h-4 rounded" />
           </div>
         ))}
       </div>

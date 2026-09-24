@@ -12,7 +12,15 @@ export default function VerifyEmailHeader({ email }: VerifyEmailHeaderProps) {
       </div>
       <h1 className="text-2xl sm:text-3xl font-bold text-brand mb-3">Email Verification</h1>
       <p className="text-text-secondary">
-        Enter the 6-digit verification code sent to <span className="font-medium">{email}</span>
+        {email ? (
+          <>
+            Enter the 6-digit verification code sent to <span className="font-medium">{email}</span>
+          </>
+        ) : (
+          // No `email` query param on this load: fall back to a complete sentence instead of
+          // trailing off with "...sent to".
+          "Enter the 6-digit verification code sent to your email address."
+        )}
       </p>
     </div>
   )

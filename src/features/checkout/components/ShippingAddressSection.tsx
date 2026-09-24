@@ -1,5 +1,6 @@
 import { MapPin, Pencil } from "lucide-react"
 import SurfaceCard from "@/components/ui/SurfaceCard"
+import { Skeleton } from "@/components/ui/skeleton"
 import type { Address } from "@/lib/api/address"
 import AddressContactInfo from "./AddressContactInfo"
 
@@ -47,7 +48,12 @@ export default function ShippingAddressSection({
         ) : null}
       </div>
 
-      {isLoading ? <div className="h-32 animate-pulse rounded-2xl bg-surface-muted" /> : null}
+      {isLoading ? (
+        <div aria-busy="true">
+          <span className="sr-only">Loading shipping address…</span>
+          <Skeleton className="h-32 rounded-2xl" />
+        </div>
+      ) : null}
 
       {!isLoading && !shippingAddress ? (
         <div className="rounded-2xl border-2 border-dashed border-border-soft bg-surface-muted px-6 py-12 text-center">

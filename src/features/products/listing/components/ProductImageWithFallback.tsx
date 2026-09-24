@@ -2,6 +2,7 @@
 
 import Image, { type ImageProps } from "next/image"
 import { useState } from "react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const PLACEHOLDER = "/dentypro-product-placeholder.png"
 
@@ -16,7 +17,7 @@ const ProductImageWithFallback = ({ src, alt, ...rest }: ProductImageWithFallbac
 
   return (
     <>
-      {rest.fill && isLoading && <div className="absolute inset-0 animate-pulse bg-gray-200/70" />}
+      {rest.fill && isLoading && <Skeleton aria-hidden="true" className="absolute inset-0" />}
       <Image
         {...rest}
         src={resolvedSrc}

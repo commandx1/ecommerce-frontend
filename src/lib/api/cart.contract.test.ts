@@ -1,8 +1,9 @@
 import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it } from "vitest"
 import { server } from "@/mocks/server"
+import { useAuthStore } from "@/stores/authStore"
 import { useCartStore } from "@/stores/cartStore"
-import { makeCart, makeCartItem, makeCartUserProduct, makeTaxEstimate } from "@/test/factories"
+import { makeAccountUser, makeCart, makeCartItem, makeCartUserProduct, makeTaxEstimate } from "@/test/factories"
 import { cartAPI } from "./cart"
 
 const cartWithSchedule = makeCart({ cartItems: [makeCartItem({ autoOrder: "TWO_WEEKS" })] })
@@ -60,6 +61,11 @@ describe("cartStore auto order preservation", () => {
   })
 
   it("keeps the existing schedule when the same product is added again", async () => {
+    // Unlike updateQuantity/setItemAutoOrder, addToCart gates on auth and throws "Login required"
+    // before it ever reaches the wire, and the global afterEach clears the store between cases.
+    // This test is about the POST body, so it needs a signed-in cart to get that far.
+    useAuthStore.setState({ user: makeAccountUser(), accessToken: "token", isAuthenticated: true })
+
     await useCartStore.getState().fetchCart({ force: true })
 
     await useCartStore.getState().addToCart("up-1", 1)

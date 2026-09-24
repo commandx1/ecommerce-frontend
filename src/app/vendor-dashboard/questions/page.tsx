@@ -5,6 +5,7 @@ import { useCallback, useEffect, useId, useState } from "react"
 import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
 import ConfirmationModal from "@/components/feedback/ConfirmationModal"
 import SectionHeading from "@/components/layout/SectionHeading"
+import { Skeleton } from "@/components/ui/skeleton"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import { showToast } from "@/components/ui/Toast"
 import {
@@ -386,7 +387,15 @@ export default function VendorQuestionsPage() {
           title="Product Questions"
           description="Answer customer questions about your products"
           actions={
-            counts && counts.unanswered > 0 ? (
+            // Reserved while the counts are in flight. On mobile SectionHeading stacks its
+            // actions under the description, so the "N unanswered" badge appearing after the
+            // fetch pushed the whole questions panel down ~62px - measured as the single source
+            // of this route's 0.176 mobile CLS (desktop keeps actions inline, so it read 0.0005).
+            // The trade is deliberate: a vendor with nothing unanswered now sees the placeholder
+            // collapse instead, and this page exists for the unanswered case.
+            isLoading ? (
+              <Skeleton className="h-11 w-40 rounded-2xl" />
+            ) : counts && counts.unanswered > 0 ? (
               <div className="flex items-center gap-2 rounded-2xl border border-warning/30 bg-warning/10 px-4 py-2.5">
                 <MessageSquare className="h-4 w-4 text-warning" />
                 <span className="text-sm font-semibold text-warning-strong">{counts.unanswered} unanswered</span>
@@ -421,6 +430,10 @@ export default function VendorQuestionsPage() {
                   aria-pressed={activeFilter === key}
                 >
                   {label}
+                  {/* The count pill is reserved, not omitted: without it each tab was narrower
+                      until the counts landed, and on mobile the row re-wrapped when they did -
+                      the remaining 42px of this route's shift after the header badge was fixed. */}
+                  {count === null && <Skeleton className="h-4 w-5 rounded-full" />}
                   {count !== null && (
                     <span
                       className={cn(
@@ -445,14 +458,14 @@ export default function VendorQuestionsPage() {
           {isLoading ? (
             <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
               {Array.from({ length: 4 }, (_, i) => (
-                <div key={i} className="animate-pulse overflow-hidden rounded-2xl border border-border-soft">
-                  <div className="h-11 bg-surface" />
+                <div key={i} className="overflow-hidden rounded-2xl border border-border-soft">
+                  <Skeleton className="h-11 rounded-none" />
                   <div className="space-y-3 p-5">
-                    <div className="h-3 w-16 rounded bg-surface-muted" />
-                    <div className="h-4 w-3/4 rounded bg-surface-muted" />
-                    <div className="h-3 w-32 rounded bg-surface-muted" />
-                    <div className="h-px bg-border-soft" />
-                    <div className="h-9 w-36 rounded-xl bg-surface-muted" />
+                    <Skeleton className="h-3 w-16 rounded" />
+                    <Skeleton className="h-4 w-3/4 rounded" />
+                    <Skeleton className="h-3 w-32 rounded" />
+                    <Skeleton className="h-px rounded-none" />
+                    <Skeleton className="h-9 w-36 rounded-xl" />
                   </div>
                 </div>
               ))}
@@ -491,7 +504,19 @@ export default function VendorQuestionsPage() {
           )}
         </div>
 
-        {!isLoading && totalPages > 0 && (
+        {/* The pagination row is reserved while loading instead of being left out entirely.
+            Rendering nothing here meant the bar popped in underneath the results once the fetch
+            landed and pushed everything below it down - a layout shift that had nothing to do
+            with how many results came back. Mirrors DashboardPagination's own border-t + p-4. */}
+        {isLoading ? (
+          <div
+            aria-hidden="true"
+            className="flex flex-wrap items-center justify-between gap-3 border-t border-border-soft p-4"
+          >
+            <Skeleton className="h-5 w-48" />
+            <Skeleton className="h-9 w-40 rounded-lg" />
+          </div>
+        ) : totalPages > 0 ? (
           <DashboardPagination
             currentPage={currentPage}
             totalPages={totalPages}
@@ -499,7 +524,7 @@ export default function VendorQuestionsPage() {
             pageSize={PAGE_SIZE}
             onPageChange={setCurrentPage}
           />
-        )}
+        ) : null}
       </SurfaceCard>
     </>
   )

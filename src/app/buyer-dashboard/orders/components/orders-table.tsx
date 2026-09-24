@@ -149,6 +149,7 @@ export default function OrdersTable() {
           type="button"
           variant="unstyled"
           onClick={() => row.toggleExpanded()}
+          aria-label={row.getIsExpanded() ? "Collapse order details" : "Expand order details"}
           className="inline-flex items-center rounded-full border border-border-soft p-1.5! text-text-muted hover:bg-surface-muted hover:text-text-secondary"
         >
           {row.getIsExpanded() ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}

@@ -4,6 +4,7 @@ import { Plus, Repeat, X } from "lucide-react"
 import { AnimatePresence, MotionConfig, motion } from "motion/react"
 import { useState } from "react"
 import CardBrandIcon from "@/components/payments/CardBrandIcon"
+import { Skeleton } from "@/components/ui/skeleton"
 import NewCardForm from "@/features/checkout/components/NewCardForm"
 import { isCardExpired, pickInitialCardId } from "@/features/checkout/lib/saved-card-utils"
 import type { SavedCard } from "@/lib/api/orders"
@@ -65,7 +66,7 @@ const itemVariants = {
 
 // Mirrors the anatomy of a real card row (brand chip · title + badge · expiry line · selection
 // dot) so the list doesn't jump when the data lands. Shimmer comes from the shared
-// `.skeleton-white` utility; the global reduced-motion rule already freezes it.
+// `Skeleton` primitive; the global reduced-motion rule already freezes it.
 function CardListSkeleton() {
   return (
     <output aria-busy="true" aria-live="polite" className="block space-y-3">
@@ -77,13 +78,13 @@ function CardListSkeleton() {
           className="flex items-center gap-4 rounded-lg border border-border-soft p-4"
           style={{ opacity: row === 0 ? 1 : 0.55 }}
         >
-          <div className="skeleton-white h-8 w-12 shrink-0 rounded-md" />
+          <Skeleton className="h-8 w-12 shrink-0 rounded-md" />
           <div className="min-w-0 flex-1 space-y-2">
             <div className="flex items-center gap-2">
-              <div className="skeleton-white h-4 w-36 max-w-[55%] rounded" />
-              <div className="skeleton-white h-4 w-14 rounded-full" />
+              <Skeleton className="h-4 w-36 max-w-[55%] rounded" />
+              <Skeleton className="h-4 w-14 rounded-full" />
             </div>
-            <div className="skeleton-white h-3.5 w-44 max-w-[70%] rounded" />
+            <Skeleton className="h-3.5 w-44 max-w-[70%] rounded" />
           </div>
           <div className="h-6 w-6 shrink-0 rounded-full border-2 border-border-soft" />
         </div>

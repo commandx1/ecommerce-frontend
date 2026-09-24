@@ -89,8 +89,22 @@ test.describe("vendor settings", () => {
     const request = await putRequest
     const body = request.postDataJSON()
 
+    // `shipmentPolicy` is legitimate, not a leak: CompanyUpdateRequest.java in ecommerce-api
+    // declares it alongside the other eight, so the backend does accept it. This list had simply
+    // not been updated when the field was added, and the whole point of this assertion is to
+    // stay in step with that DTO.
     expect(Object.keys(body).sort()).toEqual(
-      ["name", "companyPhoto", "taxNumber", "email", "phoneNumber", "website", "description", "uberEnabled"].sort(),
+      [
+        "name",
+        "companyPhoto",
+        "taxNumber",
+        "email",
+        "phoneNumber",
+        "website",
+        "description",
+        "shipmentPolicy",
+        "uberEnabled",
+      ].sort(),
     )
     expect(body.name).toBe("Acme Dental Supplies Co.")
 

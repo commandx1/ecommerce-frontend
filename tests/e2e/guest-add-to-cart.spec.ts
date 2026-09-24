@@ -54,9 +54,27 @@ test.describe("guest add-to-cart -> login redirect -> return", () => {
     // LoginFormFields.tsx sets id="email"/"password" on the TextField/PasswordField inputs -
     // getByLabel("Password") ambiguously also matches the "Show password" reveal button's
     // aria-label, and the FormField's required-asterisk ("Password *") breaks an exact match.
-    await page.locator("#email").fill(email)
-    await page.locator("#password").fill(password)
-    await page.getByRole("button", { name: "Sign In" }).click()
+    const submit = page.getByRole("button", { name: "Sign In" })
+
+    const enterCredentials = async () => {
+      await page.locator("#email").fill(email)
+      await page.locator("#password").fill(password)
+    }
+
+    await enterCredentials()
+
+    // AsyncSubmitButton is `disabled={!isFormValid}`, and isFormValid comes from React state. A
+    // fill that lands before hydration writes the DOM values but React never sees them, so the
+    // button stays disabled FOREVER - not a transient - and `click()` times out on "enabled".
+    // That is what made this spec fail under suite load while passing 3/3 on its own. Re-entering
+    // once after hydration is what actually unblocks it; if the button still will not enable, the
+    // test fails as it should rather than being papered over.
+    await submit.waitFor({ state: "attached" })
+    if (await submit.isDisabled()) {
+      await enterCredentials()
+    }
+    await expect(submit).toBeEnabled({ timeout: 10_000 })
+    await submit.click()
   }
 
   const submitTwoFactorCode = async (page: Page, code = "123456") => {

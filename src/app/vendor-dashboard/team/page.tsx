@@ -7,6 +7,7 @@ import SectionHeading from "@/components/layout/SectionHeading"
 import AsyncSubmitButton from "@/components/ui/AsyncSubmitButton"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Skeleton } from "@/components/ui/skeleton"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
@@ -66,16 +67,16 @@ export default function VendorTeamPage() {
 
   if (isLoading) {
     return (
-      <div className="animate-pulse space-y-6">
+      <div className="space-y-6">
         <div className="space-y-2">
-          <div className="h-8 w-48 rounded bg-surface-muted" />
-          <div className="h-4 w-72 rounded bg-surface-muted" />
+          <Skeleton className="h-8 w-48 rounded" />
+          <Skeleton className="h-4 w-72 rounded" />
         </div>
         <SurfaceCard variant="glass" className="p-6">
           <div className="space-y-4">
-            <div className="h-11 w-full rounded-2xl bg-surface-muted" />
-            <div className="h-11 w-full rounded-2xl bg-surface-muted" />
-            <div className="h-11 w-40 rounded-full bg-surface-muted" />
+            <Skeleton className="h-11 w-full rounded-2xl" />
+            <Skeleton className="h-11 w-full rounded-2xl" />
+            <Skeleton className="h-11 w-40 rounded-full" />
           </div>
         </SurfaceCard>
       </div>

@@ -89,14 +89,6 @@ export class VendorCreateProductPage extends BasePage {
     return this.page.getByLabel("Manufacturer Site Product Page *")
   }
 
-  get reorderIdInput(): Locator {
-    return this.page.getByLabel("Reorder ID *")
-  }
-
-  get referenceNumberInput(): Locator {
-    return this.page.getByLabel("Reference Number *")
-  }
-
   get weightInput(): Locator {
     return this.page.getByLabel("Weight *")
   }
@@ -151,7 +143,10 @@ export class VendorCreateProductPage extends BasePage {
     await this.stockInput.fill("7")
     await this.shipmentFeeInput.fill("5")
     await this.heavyShippingFeeInput.fill("3")
-    await this.fulfillmentPolicyInput.fill("Ships within 2 business days")
+    // Fulfillment policy is a <select> of fixed day counts now, not free text. The option's label
+    // is just the number; its value is the sentence getFulfillmentPolicyValue() builds, which is
+    // what the form submits - so select by value, not by label.
+    await this.fulfillmentPolicyInput.selectOption({ value: "Ships within 2 days" })
   }
 
   /**
@@ -168,8 +163,8 @@ export class VendorCreateProductPage extends BasePage {
     await this.page.getByRole("button", { name: "Acme Dental" }).click()
     await this.selectCategory()
     await this.manufacturerSiteInput.fill("https://example.com/products/item")
-    await this.reorderIdInput.fill("RO-1001")
-    await this.referenceNumberInput.fill("REF-2024-01")
+    // Reorder ID and Reference Number were dropped from this form; neither label exists any
+    // more, so filling them timed out before the tab was ever complete.
     await this.weightInput.fill("1.5")
   }
 

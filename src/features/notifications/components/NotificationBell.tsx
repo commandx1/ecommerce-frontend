@@ -4,6 +4,7 @@ import { Bell } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 import { GlassMorphMenu } from "@/components/ui/glass-morph-menu"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useAuthStore } from "@/stores/authStore"
 import { useMarkAllNotificationsRead, useMarkNotificationRead } from "../hooks/useNotificationMutations"
 import { useRecentNotifications, useUnreadNotificationCount } from "../hooks/useNotificationQueries"
@@ -66,10 +67,11 @@ export default function NotificationBell() {
           </div>
 
           {recent.isPending ? (
-            <div data-menu-item className="space-y-3 px-4 py-3">
-              <div className="h-10 animate-pulse rounded-md bg-surface-muted" />
-              <div className="h-10 animate-pulse rounded-md bg-surface-muted" />
-              <div className="h-10 animate-pulse rounded-md bg-surface-muted" />
+            <div data-menu-item className="space-y-3 px-4 py-3" aria-busy="true">
+              <span className="sr-only">Loading notifications…</span>
+              <Skeleton className="h-10 rounded-md" />
+              <Skeleton className="h-10 rounded-md" />
+              <Skeleton className="h-10 rounded-md" />
             </div>
           ) : recent.isError ? (
             <div data-menu-item className="px-4 py-6 text-center">

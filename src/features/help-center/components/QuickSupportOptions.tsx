@@ -24,7 +24,8 @@ const options = [
     icon: Mail,
     title: "Email Support",
     description: "Send us your questions via email",
-    badge: "support@dentalhub.com",
+    // Same address as ContactFormInfo / not-found.tsx; was a "dentalhub.com" brand leftover.
+    badge: "support@dentypro.com",
     badgeTone: "steel",
   },
   {

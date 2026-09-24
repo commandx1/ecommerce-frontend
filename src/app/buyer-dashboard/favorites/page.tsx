@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import Skeleton from "@/components/ui/skeleton"
+import { Skeleton } from "@/components/ui/skeleton"
 import FavoritesPage from "@/features/favorites/FavoritesPage"
 import ProductCardSkeleton from "@/features/products/listing/components/listing/ProductCardSkeleton"
 

@@ -115,10 +115,21 @@ export class CheckoutPage extends BasePage {
     return this.page.getByRole("link", { name: /View Orders/ })
   }
 
+  /**
+   * The badge OrderConfirmationItemRow puts in its `<summary>` for a repeating line. The
+   * schedule wording itself ("Every 30 days" / "Setting up your repeat order") lives in the
+   * `<details>` body and is therefore hidden until the row is expanded - see
+   * `expandedScheduleLabel`. This locator used to spell pre-rename copy ("will be reordered
+   * automatically") that exists nowhere any more, so it resolved to nothing.
+   */
   get autoOrderNotice(): Locator {
-    return this.page.getByText(
-      /will be reordered automatically|Setting up automatic reordering|still being set up for automatic reordering/,
-    )
+    return this.page.getByText("Auto order", { exact: true })
+  }
+
+  /** Opens the first confirmation line and returns its resolved schedule wording. */
+  async expandedScheduleLabel(): Promise<Locator> {
+    await this.page.locator("details").first().locator("summary").click()
+    return this.page.getByText(/Every \d+ days|Setting up your repeat order|Repeats automatically/)
   }
 
   // -- Order summary sidebar (visible on steps 1-4) --

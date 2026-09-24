@@ -90,6 +90,15 @@ describe("VendorCustomersAllPage", () => {
     expect(screen.getByText("0 matched accounts")).toBeInTheDocument()
     expect(screen.getByText("Showing 0-0 of 0")).toBeInTheDocument()
   })
+
+  it("labels every filter select so it has an accessible name", () => {
+    render(<VendorCustomersAllPage />, { route: "/vendor-dashboard/customers/all" })
+
+    expect(screen.getByRole("combobox", { name: "Segment" })).toBeInTheDocument()
+    expect(screen.getByRole("combobox", { name: "Status" })).toBeInTheDocument()
+    expect(screen.getByRole("combobox", { name: "Sort By" })).toBeInTheDocument()
+    expect(screen.getByRole("combobox", { name: "Sort Direction" })).toBeInTheDocument()
+  })
 })
 
 describe("CustomerProfilePage", () => {

@@ -78,6 +78,13 @@ export default defineConfig({
       env: {
         BACKEND_URL: MOCK_BACKEND_URL,
         PORT: "3100",
+        // Without a key, useStripePromise() returns null and both BuyerPaymentMethodsPage and
+        // checkout's BillingInformation short-circuit to "Stripe publishable key is missing" -
+        // the page never renders, so every spec against it fails on a missing locator rather
+        // than on the behaviour it meant to test. Same throwaway value the unit tests use
+        // (BuyerPaymentMethodsPage.test.tsx); Stripe.js itself is stubbed per-spec by
+        // tests/e2e/support/fake-stripe.ts, so this only has to be non-empty.
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_dentypro",
       },
     },
   ],

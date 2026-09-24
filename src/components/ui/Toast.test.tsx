@@ -65,7 +65,7 @@ describe("Toast", () => {
     const user = userEvent.setup()
     render(<Toast id="toast-9" type="success" title="Saved" message="All good" />)
 
-    await user.click(screen.getByRole("button"))
+    await user.click(screen.getByRole("button", { name: "Dismiss notification" }))
 
     expect(toast.dismiss).toHaveBeenCalledWith("toast-9")
   })

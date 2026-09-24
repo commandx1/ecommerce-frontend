@@ -88,7 +88,24 @@ function registerCheckoutMocks(apiMock: import("./fixtures/api-mock.fixture").Ap
       paymentStatus: "PENDING_PAYMENT",
       createdDate: "2026-05-20T10:30:00Z",
       clientSecret: "pi_test_auto_secret_test",
-      orderItems: [],
+      // OrderConfirmationItems renders straight off this list, and OrderConfirmationItemRow only
+      // shows the repeat-order badge when `autoOrderPeriods[item.userProductId]` resolves. With
+      // the list empty the confirmation had no rows at all, so the auto-order assertions below
+      // could never pass whatever the order actually did. The id matches the cart line the spec
+      // schedules ("up-auto") so the period from the sent payload maps onto it.
+      orderItems: [
+        {
+          id: "order-item-auto-1",
+          userProductId: "up-auto",
+          productName: "Auto Order Composite",
+          price: 50.5,
+          quantity: 1,
+          status: "PENDING_PAYMENT",
+          shippingLink: [],
+          trackingLink: [],
+          updatedDate: null,
+        },
+      ],
     },
   }))
   apiMock.on("GET", "/backend-api/orders/payment/:paymentIntentId", () => ({
@@ -144,7 +161,7 @@ test.describe("checkout auto-order consent and registration", () => {
     await cart.checkoutButton.click()
     await checkout.expectUrl(/\/checkout$/)
 
-    await expect(buyerPage.getByRole("heading", { name: "Select Shipping Address" })).toBeVisible()
+    await expect(buyerPage.getByRole("heading", { name: "Shipping Address", level: 2 })).toBeVisible()
     // Repeat items ship to the primary address by default in this spec's
     // mocked address list (account.mocks.ts's default `defaultAddress: true`
     // item), so the "primary address" auto-order notice should NOT appear here.
@@ -188,12 +205,17 @@ test.describe("checkout auto-order consent and registration", () => {
 
     await expect(checkout.orderConfirmedHeading).toBeVisible({ timeout: 15000 })
     await expect(checkout.autoOrderNotice).toBeVisible({ timeout: 15000 })
-    // Poll settles to "ready" once GET /auto-orders reports the userProductId.
-    await expect(buyerPage.getByText(/will be reordered automatically/)).toBeVisible({ timeout: 15000 })
+    // Poll settles once GET /auto-orders reports the userProductId: the row stops saying it is
+    // still being set up and names the schedule it was placed with. That wording sits in the
+    // collapsed <details> body, so the row has to be opened to see it.
+    await expect(await checkout.expandedScheduleLabel()).toHaveText("Every 30 days", { timeout: 15000 })
 
-    // Follow the confirmation screen's own link into Auto Orders.
+    // The confirmation screen's only navigation is "My Orders" (OrderConfirmationActions); the
+    // "Auto Orders" link this used to click lives on FinalReviewAutoOrderSummary, one step back,
+    // and is gone by the time the order is placed. What this is really checking is that the
+    // schedule landed, so go straight there.
     const autoOrders = new BuyerAutoOrdersPage(buyerPage)
-    await buyerPage.getByRole("link", { name: "Auto Orders" }).click()
+    await buyerPage.goto("/buyer-dashboard/auto-orders")
     await autoOrders.expectUrl(/\/buyer-dashboard\/auto-orders/)
     await expect(autoOrders.card("Nitrile Exam Gloves - Case")).toBeVisible()
   })

@@ -268,6 +268,14 @@ export function toggleCategorySelection(tree: CategoryFacetNode[], selected: str
   return result
 }
 
+/** Higher count first; ties broken alphabetically by label. */
+export function compareByCountThenLabel<T extends { count: number; label: string }>(a: T, b: T): number {
+  if (b.count !== a.count) {
+    return b.count - a.count
+  }
+  return a.label.localeCompare(b.label, "en")
+}
+
 /** fullPaths of every node in `tree` that has at least one child (used to compute "expand all matches"). */
 export function collectBranchPaths(tree: CategoryFacetNode[]): string[] {
   const paths: string[] = []

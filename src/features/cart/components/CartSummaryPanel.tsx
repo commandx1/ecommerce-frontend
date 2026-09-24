@@ -49,7 +49,7 @@ export default function CartSummaryPanel({
   const taxValue = totals.tax === null ? "Calculated at checkout" : formatCurrency(totals.tax)
 
   const summaryRows: SummaryRow[] = [
-    { label: `Subtotal (${itemsCount} items)`, value: formatCurrency(totals.subtotal) },
+    { label: `Subtotal (${itemsCount} item${itemsCount > 1 ? "s" : ""})`, value: formatCurrency(totals.subtotal) },
     { label: "Shipment fee", value: totals.shipmentFee === 0 ? "Free" : formatCurrency(totals.shipmentFee) },
     ...(totals.heavyShipmentFee > 0
       ? [{ label: "Heavy shipment fee", value: formatCurrency(totals.heavyShipmentFee) }]

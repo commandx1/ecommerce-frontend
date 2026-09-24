@@ -462,7 +462,10 @@ export default function VendorPromotionsPage() {
             </div>
           </div>
           <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as CampaignStatus | "All")}>
-            <SelectTrigger className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
+            <SelectTrigger
+              aria-label="Status"
+              className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
+            >
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -474,7 +477,10 @@ export default function VendorPromotionsPage() {
             </SelectContent>
           </Select>
           <Select value={channelFilter} onValueChange={(value) => setChannelFilter(value as CampaignChannel | "All")}>
-            <SelectTrigger className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
+            <SelectTrigger
+              aria-label="Channel"
+              className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
+            >
               <SelectValue placeholder="Channel" />
             </SelectTrigger>
             <SelectContent>
@@ -487,7 +493,10 @@ export default function VendorPromotionsPage() {
           </Select>
           <div className="grid grid-cols-2 gap-2">
             <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortKey)}>
-              <SelectTrigger className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
+              <SelectTrigger
+                aria-label="Sort By"
+                className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -499,7 +508,10 @@ export default function VendorPromotionsPage() {
               </SelectContent>
             </Select>
             <Select value={sortDir} onValueChange={(value) => setSortDir(value as SortDir)}>
-              <SelectTrigger className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
+              <SelectTrigger
+                aria-label="Sort Direction"
+                className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

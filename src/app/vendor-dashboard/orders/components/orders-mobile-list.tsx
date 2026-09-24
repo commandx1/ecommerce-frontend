@@ -5,6 +5,7 @@ import AutoOrderBadge from "@/app/buyer-dashboard/orders/components/auto-order-b
 import { formatDateOnly, formatTimeOnly } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
 import { Button } from "@/components/ui/button"
 import { Collapse, CollapseContent, CollapseTrigger } from "@/components/ui/collapse"
+import { Skeleton } from "@/components/ui/skeleton"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import type { VendorOrder, VendorOrderItem } from "@/lib/api/vendor-orders"
 import { isCancelableOrderItemStatus } from "@/lib/constants/order-item-status"
@@ -80,17 +81,17 @@ function SortButton({
 
 function OrderCardSkeleton() {
   return (
-    <SurfaceCard variant="glass" className="animate-pulse p-4 sm:p-5">
+    <SurfaceCard variant="glass" className="p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between">
         <div className="space-y-2">
-          <div className="h-4 w-28 rounded-full bg-surface-muted" />
-          <div className="h-3 w-20 rounded-full bg-surface-muted" />
+          <Skeleton className="h-4 w-28 rounded-full" />
+          <Skeleton className="h-3 w-20 rounded-full" />
         </div>
-        <div className="h-6 w-24 rounded-full bg-surface-muted" />
+        <Skeleton className="h-6 w-24 rounded-full" />
       </div>
       <div className="flex items-center justify-between border-t border-border-soft pt-3">
-        <div className="h-4 w-24 rounded-full bg-surface-muted" />
-        <div className="h-5 w-20 rounded-full bg-surface-muted" />
+        <Skeleton className="h-4 w-24 rounded-full" />
+        <Skeleton className="h-5 w-20 rounded-full" />
       </div>
     </SurfaceCard>
   )

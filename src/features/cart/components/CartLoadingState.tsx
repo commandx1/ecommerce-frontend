@@ -1,5 +1,5 @@
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
-import Skeleton from "@/components/ui/skeleton"
+import { Skeleton } from "@/components/ui/skeleton"
 
 // Mirrors CartContent's two-column layout (items panel + summary panel) so the initial
 // cart/license fetch doesn't flash a blank page or an unrelated full-screen spinner.

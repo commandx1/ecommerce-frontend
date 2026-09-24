@@ -4,7 +4,7 @@ import { BadgeCheck, CreditCard, ExternalLink, ShieldAlert } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import SurfaceCard from "@/components/ui/SurfaceCard"
-import Skeleton from "@/components/ui/skeleton"
+import { Skeleton } from "@/components/ui/skeleton"
 import { showToast } from "@/components/ui/Toast"
 import {
   createStripeAccountLink,

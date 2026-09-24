@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { type VendorOrder, vendorOrdersAPI } from "@/lib/api/vendor-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useAuthStore } from "@/stores/authStore"
@@ -79,7 +80,7 @@ const VendorRecentOrders = () => {
       {isLoading ? (
         <div className="space-y-4">
           {[0, 1, 2, 3].map((placeholder) => (
-            <div key={placeholder} className="h-16 animate-pulse rounded-xl bg-surface-muted" />
+            <Skeleton key={placeholder} className="h-16 rounded-xl" />
           ))}
         </div>
       ) : fetchError ? (

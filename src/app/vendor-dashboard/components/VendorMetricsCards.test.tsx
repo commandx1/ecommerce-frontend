@@ -52,7 +52,7 @@ describe("VendorMetricsCards", () => {
     serveDashboard()
     const { container } = render(<VendorMetricsCards />)
 
-    expect(container.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0)
+    expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(0)
   })
 
   it("does not request dashboard data for an unauthenticated visitor", async () => {

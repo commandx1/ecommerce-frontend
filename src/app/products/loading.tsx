@@ -1,3 +1,5 @@
+import { Skeleton } from "@/components/ui/skeleton"
+
 export default function ProductListingLoading() {
   return (
     <div>
@@ -14,17 +16,17 @@ export default function ProductListingLoading() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-3">
-              <div className="skeleton-white h-10 w-64 rounded-xl" />
-              <div className="skeleton-white h-5 w-96 rounded-full" />
+              <Skeleton className="h-10 w-64 rounded-xl" />
+              <Skeleton className="h-5 w-96 rounded-full" />
               <div className="mt-2 flex flex-wrap items-center gap-6">
-                <div className="skeleton-white h-4 w-36 rounded-full" />
-                <div className="skeleton-white h-4 w-40 rounded-full" />
-                <div className="skeleton-white h-4 w-32 rounded-full" />
+                <Skeleton className="h-4 w-36 rounded-full" />
+                <Skeleton className="h-4 w-40 rounded-full" />
+                <Skeleton className="h-4 w-32 rounded-full" />
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="skeleton-white h-11 w-36 rounded-lg" />
-              <div className="skeleton-white h-11 w-36 rounded-lg" />
+              <Skeleton className="h-11 w-36 rounded-lg" />
+              <Skeleton className="h-11 w-36 rounded-lg" />
             </div>
           </div>
         </div>
@@ -36,21 +38,21 @@ export default function ProductListingLoading() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-4">
-              <div className="skeleton-white h-9 w-24 rounded-lg lg:hidden" />
+              <Skeleton className="h-9 w-24 rounded-lg lg:hidden" />
               <div className="flex items-center gap-2">
-                <div className="skeleton-white h-4 w-10 rounded-full" />
-                <div className="skeleton-white h-8 w-8 rounded" />
-                <div className="skeleton-white h-8 w-8 rounded" />
+                <Skeleton className="h-4 w-10 rounded-full" />
+                <Skeleton className="h-8 w-8 rounded" />
+                <Skeleton className="h-8 w-8 rounded" />
               </div>
               <div className="flex items-center gap-2">
-                <div className="skeleton-white h-4 w-24 rounded-full" />
-                <div className="skeleton-white h-8 w-16 rounded" />
+                <Skeleton className="h-4 w-24 rounded-full" />
+                <Skeleton className="h-8 w-16 rounded" />
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <div className="skeleton-white h-4 w-14 rounded-full" />
-              <div className="skeleton-white h-9 w-40 rounded" />
-              <div className="skeleton-white h-4 w-24 rounded-full" />
+              <Skeleton className="h-4 w-14 rounded-full" />
+              <Skeleton className="h-9 w-40 rounded" />
+              <Skeleton className="h-4 w-24 rounded-full" />
             </div>
           </div>
         </div>
@@ -65,26 +67,26 @@ export default function ProductListingLoading() {
               <div className="rounded-2xl border border-border-soft bg-surface p-6">
                 {/* Active filters */}
                 <div className="mb-6 border-b border-border-soft pb-6">
-                  <div className="skeleton-white mb-4 h-5 w-32 rounded-lg" />
+                  <Skeleton className="mb-4 h-5 w-32 rounded-lg" />
                   <div className="flex flex-wrap gap-2">
-                    <div className="skeleton-white h-7 w-20 rounded-full" />
-                    <div className="skeleton-white h-7 w-24 rounded-full" />
-                    <div className="skeleton-white h-7 w-16 rounded-full" />
+                    <Skeleton className="h-7 w-20 rounded-full" />
+                    <Skeleton className="h-7 w-24 rounded-full" />
+                    <Skeleton className="h-7 w-16 rounded-full" />
                   </div>
                 </div>
 
                 {/* Brand filter */}
                 <div className="mb-6 border-b border-border-soft pb-6">
-                  <div className="skeleton-white mb-4 h-5 w-16 rounded-lg" />
-                  <div className="skeleton-white mb-4 h-9 w-full rounded-lg" />
+                  <Skeleton className="mb-4 h-5 w-16 rounded-lg" />
+                  <Skeleton className="mb-4 h-9 w-full rounded-lg" />
                   <div className="space-y-3">
                     {[28, 32, 20, 24, 28].map((w, i) => (
                       <div key={i} className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="skeleton-white h-4 w-4 rounded" />
-                          <div className={`skeleton-white h-4 rounded`} style={{ width: `${w * 4}px` }} />
+                          <Skeleton className="h-4 w-4 rounded" />
+                          <Skeleton className={`h-4 rounded`} style={{ width: `${w * 4}px` }} />
                         </div>
-                        <div className="skeleton-white h-3 w-8 rounded" />
+                        <Skeleton className="h-3 w-8 rounded" />
                       </div>
                     ))}
                   </div>
@@ -92,15 +94,15 @@ export default function ProductListingLoading() {
 
                 {/* Category filter */}
                 <div className="mb-6 border-b border-border-soft pb-6">
-                  <div className="skeleton-white mb-4 h-5 w-20 rounded-lg" />
+                  <Skeleton className="mb-4 h-5 w-20 rounded-lg" />
                   <div className="space-y-3">
                     {[36, 28, 32, 24].map((w, i) => (
                       <div key={i} className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="skeleton-white h-4 w-4 rounded" />
-                          <div className={`skeleton-white h-4 rounded`} style={{ width: `${w * 4}px` }} />
+                          <Skeleton className="h-4 w-4 rounded" />
+                          <Skeleton className={`h-4 rounded`} style={{ width: `${w * 4}px` }} />
                         </div>
-                        <div className="skeleton-white h-3 w-8 rounded" />
+                        <Skeleton className="h-3 w-8 rounded" />
                       </div>
                     ))}
                   </div>
@@ -108,26 +110,26 @@ export default function ProductListingLoading() {
 
                 {/* Price range */}
                 <div className="mb-6 border-b border-border-soft pb-6">
-                  <div className="skeleton-white mb-4 h-5 w-24 rounded-lg" />
+                  <Skeleton className="mb-4 h-5 w-24 rounded-lg" />
                   <div className="mb-4 flex gap-3">
-                    <div className="skeleton-white h-10 flex-1 rounded-lg" />
-                    <div className="skeleton-white h-10 flex-1 rounded-lg" />
+                    <Skeleton className="h-10 flex-1 rounded-lg" />
+                    <Skeleton className="h-10 flex-1 rounded-lg" />
                   </div>
                   <div className="space-y-3">
                     {[24, 28, 20, 32].map((w, i) => (
-                      <div key={i} className={`skeleton-white h-4 rounded`} style={{ width: `${w * 4}px` }} />
+                      <Skeleton key={i} className={`h-4 rounded`} style={{ width: `${w * 4}px` }} />
                     ))}
                   </div>
                 </div>
 
                 {/* Rating */}
                 <div>
-                  <div className="skeleton-white mb-4 h-5 w-28 rounded-lg" />
+                  <Skeleton className="mb-4 h-5 w-28 rounded-lg" />
                   <div className="space-y-3">
                     {[28, 24, 24].map((w, i) => (
                       <div key={i} className="flex items-center gap-3">
-                        <div className="skeleton-white h-4 w-4 rounded" />
-                        <div className={`skeleton-white h-4 rounded`} style={{ width: `${w * 4}px` }} />
+                        <Skeleton className="h-4 w-4 rounded" />
+                        <Skeleton className={`h-4 rounded`} style={{ width: `${w * 4}px` }} />
                       </div>
                     ))}
                   </div>
@@ -141,13 +143,13 @@ export default function ProductListingLoading() {
               <div className="mb-6 rounded-2xl border border-border-soft bg-surface p-6">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div className="space-y-2">
-                    <div className="skeleton-white h-7 w-48 rounded-lg" />
-                    <div className="skeleton-white h-4 w-72 rounded-lg" />
+                    <Skeleton className="h-7 w-48 rounded-lg" />
+                    <Skeleton className="h-4 w-72 rounded-lg" />
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="skeleton-white h-9 w-28 rounded-lg" />
-                    <div className="skeleton-white h-9 w-28 rounded-lg" />
-                    <div className="skeleton-white h-9 w-32 rounded-lg" />
+                    <Skeleton className="h-9 w-28 rounded-lg" />
+                    <Skeleton className="h-9 w-28 rounded-lg" />
+                    <Skeleton className="h-9 w-32 rounded-lg" />
                   </div>
                 </div>
               </div>
@@ -163,25 +165,25 @@ export default function ProductListingLoading() {
               <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <div key={i} className="overflow-hidden rounded-2xl border border-border-soft bg-surface">
-                    <div className="skeleton-mint h-64 w-full" />
+                    <Skeleton className="h-64 w-full" />
                     <div className="space-y-3 p-6">
-                      <div className="skeleton-white h-5 w-24 rounded" />
-                      <div className="skeleton-white h-6 w-3/4 rounded-lg" />
-                      <div className="skeleton-white h-4 w-full rounded" />
-                      <div className="skeleton-white h-4 w-2/3 rounded" />
+                      <Skeleton className="h-5 w-24 rounded" />
+                      <Skeleton className="h-6 w-3/4 rounded-lg" />
+                      <Skeleton className="h-4 w-full rounded" />
+                      <Skeleton className="h-4 w-2/3 rounded" />
                       <div className="flex items-center gap-2">
-                        <div className="skeleton-white h-4 w-24 rounded" />
-                        <div className="skeleton-white h-4 w-16 rounded" />
+                        <Skeleton className="h-4 w-24 rounded" />
+                        <Skeleton className="h-4 w-16 rounded" />
                       </div>
                       <div className="flex items-center justify-between">
-                        <div className="skeleton-white h-8 w-24 rounded-lg" />
-                        <div className="skeleton-white h-5 w-16 rounded" />
+                        <Skeleton className="h-8 w-24 rounded-lg" />
+                        <Skeleton className="h-5 w-16 rounded" />
                       </div>
-                      <div className="skeleton-white h-4 w-40 rounded" />
+                      <Skeleton className="h-4 w-40 rounded" />
                       <div className="flex gap-2">
-                        <div className="skeleton-white h-10 flex-1 rounded-lg" />
-                        <div className="skeleton-white h-10 w-10 rounded-lg" />
-                        <div className="skeleton-white h-10 w-10 rounded-lg" />
+                        <Skeleton className="h-10 flex-1 rounded-lg" />
+                        <Skeleton className="h-10 w-10 rounded-lg" />
+                        <Skeleton className="h-10 w-10 rounded-lg" />
                       </div>
                     </div>
                   </div>
@@ -191,13 +193,13 @@ export default function ProductListingLoading() {
               {/* Pagination skeleton */}
               <div className="rounded-2xl border border-border-soft bg-surface p-6">
                 <div className="flex flex-col items-center gap-4 lg:flex-row lg:justify-between">
-                  <div className="skeleton-white h-4 w-48 rounded" />
+                  <Skeleton className="h-4 w-48 rounded" />
                   <div className="flex items-center gap-2">
-                    <div className="skeleton-white h-9 w-24 rounded-lg" />
+                    <Skeleton className="h-9 w-24 rounded-lg" />
                     {[1, 2, 3, 4, 5].map((i) => (
-                      <div key={i} className="skeleton-white h-9 w-9 rounded-lg" />
+                      <Skeleton key={i} className="h-9 w-9 rounded-lg" />
                     ))}
-                    <div className="skeleton-white h-9 w-24 rounded-lg" />
+                    <Skeleton className="h-9 w-24 rounded-lg" />
                   </div>
                 </div>
               </div>

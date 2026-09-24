@@ -65,7 +65,7 @@ export default function CartItemsPanel({
                 Shipping from: <span className="ml-1 text-brand">{group.name}</span>
               </h3>
               <span className="rounded-full bg-surface-muted px-2 py-1 text-xs font-medium text-text-muted">
-                {group.items.length} items
+                {group.items.length} item{group.items.length > 1 ? "s" : ""}
               </span>
             </div>
 

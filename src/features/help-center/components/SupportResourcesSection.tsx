@@ -37,7 +37,7 @@ export default function SupportResourcesSection() {
     <PageSectionContainer as="section" className="bg-canvas py-16">
       <SectionHeading
         title="Additional Support Resources"
-        description="Explore our comprehensive library of resources designed to help you get the most out of DentalHub"
+        description="Explore our comprehensive library of resources designed to help you get the most out of DentyPro"
         className="mb-12 justify-center"
         titleClassName="text-4xl text-center mb-4"
         descriptionClassName="text-xl max-w-3xl mx-auto text-center"

@@ -98,6 +98,12 @@ export function CollapseContent({ children, className, ...props }: CollapseConte
       id={contentId}
       data-state={open ? "open" : "closed"}
       aria-hidden={!open}
+      // `aria-hidden` alone hid this from screen readers but left its buttons and links in the tab
+      // order, so a keyboard user tabbed into content they cannot see - axe `aria-hidden-focus`
+      // (critical), found on /buyer-dashboard/orders at phone width where the order cards
+      // collapse. `inert` is what actually takes the subtree out of focus and interaction; the
+      // rows stay mounted so the grid-rows transition still animates.
+      inert={!open}
       className={cn(
         "grid overflow-hidden transition-[grid-template-rows,opacity] duration-200 ease-out",
         open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",

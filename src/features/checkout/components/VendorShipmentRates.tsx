@@ -1,5 +1,6 @@
 import { Check, Info, Truck } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { type ShipmentRate, shipmentAPI, type UberQuote } from "@/lib/api/shipment"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 
@@ -142,11 +143,12 @@ function getUberQuoteAmount(quote: UberQuote): number {
 
 function ShippingRatesSkeleton() {
   return (
-    <div className="animate-pulse rounded-xl border border-border-soft bg-surface-muted p-4">
-      <div className="mb-4 h-4 w-1/4 rounded bg-surface-elevated" />
+    <div className="rounded-xl border border-border-soft bg-surface-muted p-4" aria-busy="true">
+      <span className="sr-only">Loading shipping rates…</span>
+      <Skeleton className="mb-4 h-4 w-1/4" />
       <div className="space-y-3">
-        <div className="h-12 rounded bg-surface-elevated" />
-        <div className="h-12 rounded bg-surface-elevated" />
+        <Skeleton className="h-12" />
+        <Skeleton className="h-12" />
       </div>
     </div>
   )

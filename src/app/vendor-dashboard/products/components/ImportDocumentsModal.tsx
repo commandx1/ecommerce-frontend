@@ -5,7 +5,7 @@ import { Download, FileUp, ListChecks, Loader2, Trash2, Upload, X } from "lucide
 import { useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import Modal from "@/components/ui/Modal"
-import Skeleton from "@/components/ui/skeleton"
+import { Skeleton } from "@/components/ui/skeleton"
 import { showToast } from "@/components/ui/Toast"
 import {
   extractFileName,

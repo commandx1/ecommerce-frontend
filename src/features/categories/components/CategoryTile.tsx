@@ -41,7 +41,10 @@ export default function CategoryTile({ entry, priority = false }: CategoryTilePr
               inStock ? "bg-white/85 text-[#0F172A]" : "bg-[#0F172A]/80 text-white"
             }`}
           >
-            {inStock ? `${entry.count.toLocaleString("en-US")} products` : "Coming soon"}
+            {inStock
+              ? // Singular for exactly one product ("1 product"); the plural "products" otherwise.
+                `${entry.count.toLocaleString("en-US")} product${entry.count > 1 ? "s" : ""}`
+              : "Coming soon"}
           </span>
           {/* Light: photo and card are both near-white, so a short linear fade is invisible. Dark: the
               same fade crosses ~75% luminance; `.dark .category-tile-fade` (globals.css) swaps in a

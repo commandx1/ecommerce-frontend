@@ -120,14 +120,39 @@ describe("DashboardSidebar", () => {
       </DashboardMobileSidebarProvider>,
     )
 
-    expect(screen.getByRole("dialog")).toHaveAttribute("aria-modal", "false")
+    expect(screen.getByTestId("dashboard-sidebar")).not.toHaveAttribute("aria-modal")
 
     await user.click(screen.getByRole("button", { name: "open drawer" }))
-    expect(screen.getByRole("dialog")).toHaveAttribute("aria-modal", "true")
+    expect(screen.getByTestId("dashboard-sidebar")).toHaveAttribute("aria-modal", "true")
     expect(document.body.style.overflow).toBe("hidden")
 
     await user.click(screen.getByRole("button", { name: "Close menu overlay" }))
-    expect(screen.getByRole("dialog")).toHaveAttribute("aria-modal", "false")
+    expect(screen.getByTestId("dashboard-sidebar")).not.toHaveAttribute("aria-modal")
+  })
+
+  it("is only a dialog while the mobile drawer is open, and is always named", async () => {
+    // axe `aria-dialog-name` (serious) fired on 19 dashboard routes: this carried an unnamed
+    // `role="dialog"`. Permanent side navigation is not a dialog - it is always on screen and
+    // traps nothing - so the role belongs to the mobile drawer only. Keeping it unconditionally
+    // also meant `getByRole("dialog")` matched the sidebar on every dashboard page that opens a
+    // real modal.
+    const user = userEvent.setup()
+    render(
+      <DashboardMobileSidebarProvider>
+        <MobileOpener />
+        <DashboardSidebar groups={buyerGroups} brand={defaultBrand} />
+      </DashboardMobileSidebarProvider>,
+    )
+
+    const sidebar = screen.getByTestId("dashboard-sidebar")
+    expect(sidebar).toHaveAttribute("aria-label", "Dashboard menu")
+    expect(sidebar).not.toHaveAttribute("role")
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "open drawer" }))
+    expect(screen.getByTestId("dashboard-sidebar")).toHaveAttribute("role", "dialog")
+    // Named even as a dialog, which is the violation axe reported.
+    expect(screen.getByRole("dialog", { name: "Dashboard menu" })).toBeInTheDocument()
   })
 
   it("closes the mobile drawer when a nav link is followed", async () => {
@@ -142,7 +167,7 @@ describe("DashboardSidebar", () => {
     await user.click(screen.getByRole("button", { name: "open drawer" }))
     await user.click(screen.getByRole("link", { name: "Orders" }))
 
-    expect(screen.getByRole("dialog")).toHaveAttribute("aria-modal", "false")
+    expect(screen.getByTestId("dashboard-sidebar")).not.toHaveAttribute("aria-modal")
   })
 
   it("renders the brand label", () => {
@@ -154,7 +179,7 @@ describe("DashboardSidebar", () => {
   it("stays expanded on mobile when matchMedia is unavailable", () => {
     renderSidebar()
 
-    expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "expanded")
+    expect(screen.getByTestId("dashboard-sidebar")).toHaveAttribute("data-state", "expanded")
     expect(screen.getByText("Orders").className).not.toContain("md:sr-only")
   })
 
@@ -183,14 +208,14 @@ describe("DashboardSidebar", () => {
       stubWideDesktop()
       renderSidebar()
 
-      expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "collapsed")
+      expect(screen.getByTestId("dashboard-sidebar")).toHaveAttribute("data-state", "collapsed")
 
       fireEvent.click(screen.getByRole("button", { name: "Expand sidebar" }))
-      expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "expanded")
+      expect(screen.getByTestId("dashboard-sidebar")).toHaveAttribute("data-state", "expanded")
       expect(screen.getByRole("button", { name: "Collapse sidebar" })).toHaveAttribute("aria-expanded", "true")
 
       fireEvent.click(screen.getByRole("button", { name: "Collapse sidebar" }))
-      expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "collapsed")
+      expect(screen.getByTestId("dashboard-sidebar")).toHaveAttribute("data-state", "collapsed")
     })
 
     it("does not expand on hover", () => {
@@ -200,7 +225,7 @@ describe("DashboardSidebar", () => {
       const panel = screen.getByTestId("dashboard-sidebar-panel")
       fireEvent.pointerEnter(panel, { pointerType: "mouse" })
 
-      expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "collapsed")
+      expect(screen.getByTestId("dashboard-sidebar")).toHaveAttribute("data-state", "collapsed")
     })
 
     it("stays expanded after following a nav link", () => {
@@ -208,10 +233,10 @@ describe("DashboardSidebar", () => {
       renderSidebar()
 
       fireEvent.click(screen.getByRole("button", { name: "Expand sidebar" }))
-      expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "expanded")
+      expect(screen.getByTestId("dashboard-sidebar")).toHaveAttribute("data-state", "expanded")
 
       fireEvent.click(screen.getByRole("link", { name: "Orders" }))
-      expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "expanded")
+      expect(screen.getByTestId("dashboard-sidebar")).toHaveAttribute("data-state", "expanded")
     })
 
     it("persists the open preference across renders", () => {
@@ -223,7 +248,7 @@ describe("DashboardSidebar", () => {
       unmount()
 
       renderSidebar()
-      expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "expanded")
+      expect(screen.getByTestId("dashboard-sidebar")).toHaveAttribute("data-state", "expanded")
     })
 
     it("stays the icon rail with no toggle on md-only widths, even with a stored preference", () => {
@@ -242,7 +267,7 @@ describe("DashboardSidebar", () => {
 
       renderSidebar()
 
-      expect(screen.getByRole("dialog")).toHaveAttribute("data-state", "collapsed")
+      expect(screen.getByTestId("dashboard-sidebar")).toHaveAttribute("data-state", "collapsed")
       expect(screen.queryByRole("button", { name: /sidebar/i })).not.toBeInTheDocument()
     })
   })

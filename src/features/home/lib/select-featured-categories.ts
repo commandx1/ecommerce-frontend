@@ -1,4 +1,4 @@
-import { buildCategoryFacetTree } from "@/features/products/listing/lib/category-facet-tree"
+import { buildCategoryFacetTree, compareByCountThenLabel } from "@/features/products/listing/lib/category-facet-tree"
 import type { FilterOption } from "@/lib/api/public-products"
 
 export interface FeaturedCategory {
@@ -8,13 +8,6 @@ export interface FeaturedCategory {
 }
 
 export const FEATURED_CATEGORY_LIMIT = 8
-
-function compareByCountThenLabel<T extends { count: number; label: string }>(a: T, b: T): number {
-  if (b.count !== a.count) {
-    return b.count - a.count
-  }
-  return a.label.localeCompare(b.label, "en")
-}
 
 export function selectFeaturedCategories(options: FilterOption[], limit = FEATURED_CATEGORY_LIMIT): FeaturedCategory[] {
   const roots = buildCategoryFacetTree(options)

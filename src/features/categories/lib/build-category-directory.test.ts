@@ -48,15 +48,44 @@ describe("buildCategoryDirectory", () => {
   })
 
   it("caps children at the directory limit", () => {
+    const entries = buildCategoryDirectory([
+      { name: "Disposables > Patient bibs, napkins & aprons", count: 6 },
+      { name: "Disposables > Air-Water syringe tips", count: 5 },
+      { name: "Disposables > Folded towels", count: 4 },
+      { name: "Disposables > Cotton tip applicators & Swabs", count: 3 },
+      { name: "Disposables > Patient bibs & napkin holders", count: 2 },
+      { name: "Disposables > Cotton roll substitutes", count: 1 },
+    ])
+    const disposables = entries.find((entry) => entry.name === "Disposables")
+    expect(disposables?.children).toHaveLength(DIRECTORY_CHILD_LIMIT)
+  })
+
+  it("excludes a zero-stock subcategory from children", () => {
+    const entries = buildCategoryDirectory([{ name: "Instruments > Diagnostic instruments", count: 5 }])
+    const instruments = entries.find((entry) => entry.name === "Instruments")
+    expect(instruments?.children).toEqual(["Diagnostic instruments"])
+    expect(instruments?.children).not.toContain("Hygiene instruments")
+  })
+
+  it("orders children by count desc, ties alphabetical", () => {
+    const entries = buildCategoryDirectory([
+      { name: "Instruments > Surgical instruments", count: 2 },
+      { name: "Instruments > Accessories", count: 5 },
+      { name: "Instruments > Spatulas", count: 2 },
+    ])
+    const instruments = entries.find((entry) => entry.name === "Instruments")
+    expect(instruments?.children).toEqual(["Accessories", "Spatulas", "Surgical instruments"])
+  })
+
+  it("gives a root with no stock an empty children list", () => {
     const entries = buildCategoryDirectory([])
-    for (const entry of entries) {
-      expect(entry.children.length).toBeLessThanOrEqual(DIRECTORY_CHILD_LIMIT)
-    }
+    const instruments = entries.find((entry) => entry.name === "Instruments")
+    expect(instruments?.children).toEqual([])
   })
 })
 
 describe("filterEntries", () => {
-  const entries = buildCategoryDirectory([])
+  const entries = buildCategoryDirectory([{ name: "Instruments > Forceps", count: 3 }])
 
   it("returns all entries for a blank query", () => {
     expect(filterEntries(entries, "   ")).toEqual(entries)

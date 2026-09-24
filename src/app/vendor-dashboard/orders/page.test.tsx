@@ -165,6 +165,19 @@ describe("VendorOrdersPage", () => {
     expect(await screen.findByText("Showing 1 to 1 of 1 results")).toBeInTheDocument()
   })
 
+  it("labels the row expander so it has an accessible name that flips with its state", async () => {
+    const user = userEvent.setup()
+    serveOrders(makeVendorOrder({ orderId: "vorder-1" }))
+
+    render(<VendorOrdersPage />)
+    const table = await desktopTable()
+
+    const expandButton = await table.findByRole("button", { name: "Expand order details" })
+    await user.click(expandButton)
+
+    expect(table.getByRole("button", { name: "Collapse order details" })).toBeInTheDocument()
+  })
+
   it("filters by status tab through the query string", async () => {
     const user = userEvent.setup()
     serveOrders(makeVendorOrder())
@@ -1107,8 +1120,8 @@ describe("VendorOrdersPage", () => {
       render(<VendorOrdersPage />)
       const table = await desktopTable()
       await user.click((await table.findAllByRole("button", { name: "Call Uber" }))[0] as HTMLElement)
-      const heading = await screen.findByText("Uber Delivery Result")
-      const closeButton = heading.closest("div")?.querySelector("button") as HTMLElement
+      await screen.findByText("Uber Delivery Result")
+      const closeButton = screen.getByRole("button", { name: "Close Uber delivery result" })
       await user.click(closeButton)
 
       await waitFor(() => expect(screen.queryByText("Uber Delivery Result")).not.toBeInTheDocument())
@@ -1220,8 +1233,8 @@ describe("VendorOrdersPage", () => {
       await user.click(
         (await (await desktopTable()).findAllByRole("button", { name: /Track \/ Labels/ }))[0] as HTMLElement,
       )
-      const heading = await screen.findByText("Labels & tracking")
-      const xButton = heading.closest("div")?.parentElement?.querySelector("button") as HTMLElement
+      await screen.findByText("Labels & tracking")
+      const xButton = screen.getByRole("button", { name: "Close labels and tracking" })
       await user.click(xButton)
       await waitFor(() => expect(screen.queryByText("Labels & tracking")).not.toBeInTheDocument())
 
@@ -1977,7 +1990,9 @@ describe("VendorOrdersPage", () => {
       )
 
       render(<VendorOrdersPage />)
-      await waitFor(() => expect(mobileContainer().querySelectorAll(".animate-pulse").length).toBeGreaterThan(0))
+      await waitFor(() =>
+        expect(mobileContainer().querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(0),
+      )
 
       deferred.resolve(new Response())
       await waitFor(() => expect(mobileList().getByText("No orders found.")).toBeInTheDocument())

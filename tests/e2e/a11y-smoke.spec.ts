@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright"
 import type { Page } from "@playwright/test"
 import { makeLicense } from "@/test/factories/user.factory"
-import { makeVendorTopSellingProduct } from "@/test/factories/vendor.factory"
+import { makeVendorListItem, makeVendorTopSellingProduct } from "@/test/factories/vendor.factory"
 import type { ApiMock } from "./fixtures/api-mock.fixture"
 import { expect, test } from "./fixtures/auth.fixture"
 import { registerAllMocks } from "./mocks"
@@ -25,6 +25,60 @@ const BUYER_ROUTE = "/buyer-dashboard"
 const VENDOR_ROUTE = "/vendor-dashboard"
 
 /**
+ * The dashboard sub-pages, added after a one-off sweep found that NONE of them had ever been
+ * scanned: this spec covered 6 public routes plus the two dashboard roots, out of ~46. That blind
+ * spot was expensive - it was hiding 87 violating nodes, including an unnamed `role="dialog"` on
+ * the sidebar (19 routes), an invalid `aria-selected` in `motion-highlight`, thirteen unnamed
+ * icon buttons on /help-center that also did nothing, and text set in fill-only colour tokens.
+ * The file's own note above about `aria-selected` surviving "for months" because "the route was
+ * simply not scanned" describes the same gap.
+ *
+ * All of these are clean as of this change, so the list is safe to keep green. Each route costs
+ * an axe run, which is why they are scanned but not also heading/landmark-checked - the roots
+ * above cover that shape, and axe is where the density of real findings was.
+ */
+// NOTE: /buyer-dashboard/auto-orders and /buyer-dashboard/payment-methods are NOT here. Both hit
+// an endpoint registerAllMocks does not cover, so they fail this spec's strict apiMock before
+// axe even runs. They were scanned in the one-off sweep and were clean; add them here once their
+// mocks exist rather than weakening apiMockStrict for the whole block.
+const BUYER_SCAN_ROUTES = [
+  "/checkout",
+  "/buyer-dashboard/orders",
+  "/buyer-dashboard/invoices",
+  "/buyer-dashboard/favorites",
+  "/buyer-dashboard/settings",
+  "/buyer-dashboard/notifications",
+  "/buyer-dashboard/vendors",
+]
+
+const VENDOR_SCAN_ROUTES = [
+  "/vendor-dashboard/analytics",
+  "/vendor-dashboard/customers",
+  "/vendor-dashboard/customers/all",
+  "/vendor-dashboard/notifications",
+  "/vendor-dashboard/orders",
+  "/vendor-dashboard/products",
+  "/vendor-dashboard/products/create",
+  "/vendor-dashboard/promotions",
+  "/vendor-dashboard/questions",
+  "/vendor-dashboard/reviews",
+  "/vendor-dashboard/settings",
+  "/vendor-dashboard/team",
+]
+
+/** Public routes that were never scanned either - same reason, same fix. */
+const EXTRA_PUBLIC_SCAN_ROUTES = [
+  "/vendors",
+  "/suppliers",
+  "/help-center",
+  "/legal",
+  "/shipping-information",
+  "/register",
+  "/forgot-password",
+  "/verify-email",
+]
+
+/**
  * `/cart` needs `GET /backend-api/licenses` (useCartPage.ts, not registered
  * by account.mocks.ts - handler-literal wrapper, see that file's header) and
  * `/vendor-dashboard` needs `GET /backend-api/dashboard/vendor/top-selling-products`
@@ -32,6 +86,20 @@ const VENDOR_ROUTE = "/vendor-dashboard"
  */
 function registerA11ySmokeMocks(apiMock: ApiMock) {
   apiMock.on("GET", "/backend-api/licenses", () => ({ body: { licenses: [makeLicense()], total: 1 } }))
+  // `/vendors` and `/suppliers` need this; vendor.mocks.ts deliberately leaves it out (see its
+  // header - the real handler's body is a literal it will not copy by hand). Six populated
+  // vendors, so the cards render their optional blocks rather than an empty state.
+  apiMock.on("GET", "/backend-api/vendors", () => ({
+    body: {
+      content: Array.from({ length: 6 }, (_, i) =>
+        makeVendorListItem({ id: `company-${i + 1}`, name: `Vendor ${i + 1} Dental Supplies` }),
+      ),
+      totalElements: 6,
+      totalPages: 1,
+      page: 0,
+      size: 12,
+    },
+  }))
   apiMock.on("GET", "/backend-api/dashboard/vendor/top-selling-products", () => ({
     body: { content: [makeVendorTopSellingProduct()], totalElements: 1, totalPages: 1, page: 0, size: 4 },
   }))
@@ -173,4 +241,40 @@ test.describe("a11y smoke - dashboards", () => {
     await checkSingleH1(vendorPage, VENDOR_ROUTE)
     await checkMainLandmark(vendorPage, VENDOR_ROUTE)
   })
+})
+
+/**
+ * The routes that used to go unscanned. See the note on BUYER_SCAN_ROUTES for why this matters:
+ * everything found in the one-off sweep lived here, not on the six routes that were covered.
+ */
+test.describe("a11y smoke - previously unscanned routes", () => {
+  for (const route of EXTRA_PUBLIC_SCAN_ROUTES) {
+    test(`${route}: no serious/critical axe violations`, async ({ guestPage, apiMock }) => {
+      registerA11ySmokeMocks(apiMock)
+      await gotoRoute(guestPage, route)
+      const violations = await runAxe(guestPage)
+      const summaries = violations.map((v) => `${v.id} - ${v.help} (${v.nodes.length} node(s))`)
+      expect(summaries, `serious/critical axe violations on ${route}`).toEqual([])
+    })
+  }
+
+  for (const route of BUYER_SCAN_ROUTES) {
+    test(`${route}: no serious/critical axe violations`, async ({ buyerPage, apiMock }) => {
+      registerA11ySmokeMocks(apiMock)
+      await gotoRoute(buyerPage, route)
+      const violations = await runAxe(buyerPage)
+      const summaries = violations.map((v) => `${v.id} - ${v.help} (${v.nodes.length} node(s))`)
+      expect(summaries, `serious/critical axe violations on ${route}`).toEqual([])
+    })
+  }
+
+  for (const route of VENDOR_SCAN_ROUTES) {
+    test(`${route}: no serious/critical axe violations`, async ({ vendorPage, apiMock }) => {
+      registerA11ySmokeMocks(apiMock)
+      await gotoRoute(vendorPage, route)
+      const violations = await runAxe(vendorPage)
+      const summaries = violations.map((v) => `${v.id} - ${v.help} (${v.nodes.length} node(s))`)
+      expect(summaries, `serious/critical axe violations on ${route}`).toEqual([])
+    })
+  }
 })

@@ -4,6 +4,7 @@ import { ChevronRight, ExternalLink, Package, RefreshCw, Ruler, ScanBarcode, Tag
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import Modal from "@/components/ui/Modal"
+import { Skeleton } from "@/components/ui/skeleton"
 import { getFullImageUrl, type Product, productsAPI, type UserProductDetailResponse } from "@/lib/api/products"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -376,18 +377,18 @@ const formatCurrency = (value: number): string =>
 const SKELETON_SPEC_KEYS = Array.from({ length: 8 }, (_, i) => `spec-skeleton-${i}`)
 
 const DetailSkeleton = () => (
-  <div className="animate-pulse space-y-6">
+  <div className="space-y-6">
     <div className="grid gap-5 sm:grid-cols-[240px_1fr]">
-      <div className="aspect-square rounded-xl bg-surface-muted" />
+      <Skeleton className="aspect-square rounded-xl" />
       <div className="space-y-4">
-        <div className="h-3 w-2/3 rounded bg-surface-muted" />
+        <Skeleton className="h-3 w-2/3 rounded" />
         <div className="grid grid-cols-2 gap-3">
           {SKELETON_SPEC_KEYS.map((key) => (
-            <div key={key} className="h-8 rounded bg-surface-muted" />
+            <Skeleton key={key} className="h-8 rounded" />
           ))}
         </div>
       </div>
     </div>
-    <div className="h-20 rounded-xl bg-surface-muted" />
+    <Skeleton className="h-20 rounded-xl" />
   </div>
 )

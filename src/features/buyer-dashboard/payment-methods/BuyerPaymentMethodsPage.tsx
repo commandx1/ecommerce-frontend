@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Modal from "@/components/ui/Modal"
 import SurfaceCard from "@/components/ui/SurfaceCard"
-import Skeleton from "@/components/ui/skeleton"
+import { Skeleton } from "@/components/ui/skeleton"
 import { showToast } from "@/components/ui/Toast"
 import { useStripePromise } from "@/hooks/useStripePromise"
 import { paymentMethodsAPI } from "@/lib/api/payment-methods"
@@ -352,7 +352,17 @@ function PaymentMethodsContent() {
 
         <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
           {isLoading ? (
-            [0, 1, 2].map((i) => <Skeleton key={i} className="h-[8.5rem] rounded-xl" />)
+            // Mirrors KpiCard's shell and its four rows (icon tile, label, value, hint) rather
+            // than standing in as one flat block: the card border and the text baselines are
+            // already in place when the numbers land, so nothing jumps.
+            [0, 1, 2].map((i) => (
+              <article key={i} className="rounded-xl border border-border-soft bg-surface p-4">
+                <Skeleton className="mb-3 h-10 w-10 rounded-lg" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="mt-1 h-7 w-32" />
+                <Skeleton className="mt-1 h-4 w-28" />
+              </article>
+            ))
           ) : (
             <>
               <KpiCard

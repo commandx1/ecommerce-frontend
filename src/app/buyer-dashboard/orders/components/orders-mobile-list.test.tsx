@@ -54,7 +54,8 @@ describe("OrdersMobileList — rendering", () => {
 
     const { container } = render(<OrdersMobileList />)
 
-    expect(container.querySelectorAll(".animate-pulse")).toHaveLength(4)
+    // 4 order card skeletons, one per placeholder row.
+    expect(container.querySelectorAll('[data-testid="order-card-skeleton"]')).toHaveLength(4)
     expect(screen.queryByText("No orders found.")).not.toBeInTheDocument()
   })
 

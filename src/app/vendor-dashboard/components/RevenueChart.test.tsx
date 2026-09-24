@@ -16,11 +16,19 @@ import RevenueChart from "./RevenueChart"
  * asserted without touching pixels.
  */
 vi.mock("react-chartjs-2", () => ({
-  Line: ({ data }: { data: { labels: string[]; datasets: { data: number[] }[] } }) => (
+  Line: ({
+    data,
+    "aria-label": ariaLabel,
+  }: {
+    data: { labels: string[]; datasets: { data: number[] }[] }
+    "aria-label"?: string
+  }) => (
     <div
       data-testid="revenue-line"
       data-labels={JSON.stringify(data.labels)}
       data-values={JSON.stringify(data.datasets[0]?.data ?? [])}
+      aria-label={ariaLabel}
+      role="img"
     />
   ),
 }))
@@ -57,7 +65,7 @@ describe("RevenueChart", () => {
     serveRevenue(makeVendorPeriodicRevenueResponse())
     const { container } = render(<RevenueChart />)
 
-    expect(container.querySelector(".animate-pulse")).toBeInTheDocument()
+    expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument()
     expect(screen.queryByTestId("revenue-line")).not.toBeInTheDocument()
   })
 
@@ -91,6 +99,13 @@ describe("RevenueChart", () => {
     const line = await readLine()
     expect(JSON.parse(line.dataset.labels ?? "[]")).toEqual(["2026-06", "2026-07"])
     expect(JSON.parse(line.dataset.values ?? "[]")).toEqual([1000, 4200])
+  })
+
+  it("passes an accessible name through to the underlying canvas", async () => {
+    serveRevenue(makeVendorPeriodicRevenueResponse())
+    render(<RevenueChart />)
+
+    expect(await screen.findByRole("img", { name: "Monthly revenue performance" })).toBeInTheDocument()
   })
 
   it("requests a new range and updates the chart when a range button is clicked", async () => {

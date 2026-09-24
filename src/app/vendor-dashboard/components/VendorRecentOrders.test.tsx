@@ -45,7 +45,7 @@ describe("VendorRecentOrders", () => {
     serveOrders(ordersResponse([makeVendorOrder()]))
     const { container } = render(<VendorRecentOrders />)
 
-    expect(container.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0)
+    expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(0)
   })
 
   it("requests the four most recent orders across all statuses", async () => {

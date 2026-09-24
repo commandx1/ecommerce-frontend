@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
 import { showToast } from "@/components/ui/Toast"
 import usStateList from "@/data/usstate-list.json"
 import { type CreateLicensePayload, type License, type LicenseType, licenseAPI } from "@/lib/api/licenses"
@@ -282,8 +283,8 @@ export default function LicenseManagementSection() {
         {isLoading ? (
           // biome-ignore lint/a11y/useSemanticElements: a <fieldset> here would imply form controls; this is a non-interactive loading placeholder.
           <div role="group" aria-busy="true" aria-label="Loading licenses" className="space-y-3">
-            <div className="h-16 animate-pulse rounded-xl bg-surface-muted" />
-            <div className="h-16 animate-pulse rounded-xl bg-surface-muted" />
+            <Skeleton className="h-16 rounded-xl" />
+            <Skeleton className="h-16 rounded-xl" />
           </div>
         ) : licenses.length === 0 && !isFormOpen ? (
           <div className="rounded-xl border border-dashed border-border-strong p-8 text-center">

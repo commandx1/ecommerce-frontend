@@ -1,4 +1,4 @@
-import Skeleton from "@/components/ui/skeleton"
+import { Skeleton } from "@/components/ui/skeleton"
 
 // Mirrors ProductCard's outer shell (rounded mat, photo aspect, body slots) so the initial
 // load doesn't jump in size once real cards replace it.

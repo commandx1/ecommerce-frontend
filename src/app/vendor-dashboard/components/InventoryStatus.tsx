@@ -4,6 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { getFullImageUrl } from "@/lib/api/products"
 import { type VendorStockSummaryResponse, vendorDashboardAPI } from "@/lib/api/vendor-dashboard"
 import { useAuthStore } from "@/stores/authStore"
@@ -119,7 +120,7 @@ const InventoryStatus = () => {
       {isLoading ? (
         <div className="space-y-4">
           {[0, 1, 2].map((placeholder) => (
-            <div key={placeholder} className="h-16 animate-pulse rounded-xl bg-surface-muted" />
+            <Skeleton key={placeholder} className="h-16 rounded-xl" />
           ))}
         </div>
       ) : fetchError ? (
@@ -145,7 +146,10 @@ const InventoryStatus = () => {
                     <div className={`w-3 h-3 ${colors.dot} rounded-full mr-3`}></div>
                     <div>
                       <div className="font-medium text-text-primary">{row.label}</div>
-                      <div className="text-sm text-text-secondary">{row.bucket.count} products</div>
+                      {/* Singular only for exactly one; "0 products" is the correct English. */}
+                      <div className="text-sm text-text-secondary">
+                        {row.bucket.count} product{row.bucket.count === 1 ? "" : "s"}
+                      </div>
                     </div>
                   </div>
                   <div className={`text-2xl font-bold ${colors.text}`}>{Math.round(row.bucket.percentage)}%</div>
@@ -159,8 +163,16 @@ const InventoryStatus = () => {
             <div className="space-y-2">
               {/* `summary?.criticStockAlerts.content` only guarded `summary`: a response without
                   `criticStockAlerts` threw on `.content` and blanked the dashboard (infra note #26). */}
-              {(Array.isArray(summary?.criticStockAlerts?.content) ? summary.criticStockAlerts.content : []).map(
-                (alert) => {
+              {(() => {
+                const alerts = Array.isArray(summary?.criticStockAlerts?.content)
+                  ? summary.criticStockAlerts.content
+                  : []
+                // An empty list under the heading used to render as blank space, which reads like
+                // the panel failed to load rather than "there is nothing to report".
+                if (alerts.length === 0) {
+                  return <p className="text-sm text-text-secondary">No critical stock alerts right now.</p>
+                }
+                return alerts.map((alert) => {
                   const status = alert.stock <= CRITICAL_STOCK_THRESHOLD ? "critical" : "warning"
                   const imageSrc = imageFallbacks[alert.userProductId]
                     ? PLACEHOLDER_IMAGE
@@ -188,8 +200,8 @@ const InventoryStatus = () => {
                       </span>
                     </Link>
                   )
-                },
-              )}
+                })
+              })()}
             </div>
           </div>
         </>
