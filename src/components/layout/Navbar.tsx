@@ -7,9 +7,9 @@ import { useEffect, useState } from "react"
 import ThemeToggle from "@/components/theme/ThemeToggle"
 import { GlassMorphMenu } from "@/components/ui/glass-morph-menu"
 import { glassDarkTintClass, LiquidGlass } from "@/components/ui/liquid-glass"
+import { useCartCount } from "@/features/cart/hooks/useCartQueries"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
-import { useCartStore } from "@/stores/cartStore"
 import MainSearchbox from "../search/main-searchbox/MainSearchbox"
 import AccountMenu from "./AccountMenu"
 import Logo from "./Logo"
@@ -47,7 +47,7 @@ const GlassPill = ({ className, children }: { className?: string; children: Reac
 const Navbar = ({ initialAuthState }: NavbarProps) => {
   const router = useRouter()
   const pathname = usePathname()
-  const cartCount = useCartStore((state) => state.cartCount)
+  const cartCount = useCartCount()
   const logout = useAuthStore((s) => s.logout)
   const storeUser = useAuthStore((s) => s.user)
   const storeIsAuthenticated = useAuthStore((s) => s.isAuthenticated)

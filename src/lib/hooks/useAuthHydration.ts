@@ -1,10 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { refreshCart } from "@/features/cart/api/cart-queries"
 import { onLogoutBroadcast } from "@/lib/storage/session-events"
 import { bindActiveTabSync, tabSessionStorage } from "@/lib/storage/tab-session-storage"
 import { useAuthStore } from "@/stores/authStore"
-import { useCartStore } from "@/stores/cartStore"
 
 /**
  * Hook to ensure auth state is properly hydrated from cookies
@@ -18,7 +18,6 @@ export function useAuthHydration() {
   const accessToken = useAuthStore((state) => state.accessToken)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const isAdminImpersonating = useAuthStore((state) => state.isAdminImpersonating)
-  const fetchCart = useCartStore((state) => state.fetchCart)
 
   // Mount-only: this is a one-shot restore after a hard refresh. Re-running on every auth change
   // would re-read storage right after a cross-tab `clearLocalSession()` and could undo the clear.
@@ -64,9 +63,9 @@ export function useAuthHydration() {
   // Fetch cart once authenticated (only for non-impersonating users)
   useEffect(() => {
     if (isAuthenticated && accessToken && !isAdminImpersonating) {
-      fetchCart()
+      refreshCart()
     }
-  }, [isAuthenticated, accessToken, isAdminImpersonating, fetchCart])
+  }, [isAuthenticated, accessToken, isAdminImpersonating])
 
   // Keep the shared cookie pointed at this tab while it's focused, and drop this tab's session
   // locally (without touching the server or sibling tabs) if the same account logs out elsewhere.

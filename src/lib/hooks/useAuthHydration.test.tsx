@@ -2,12 +2,18 @@
 
 import { waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { refreshCart } from "@/features/cart/api/cart-queries"
 import { LOGOUT_EVENT_KEY } from "@/lib/storage/session-events"
 import { __resetTabSessionStorageForTests, tabSessionStorage } from "@/lib/storage/tab-session-storage"
 import { useAuthStore } from "@/stores/authStore"
-import { useCartStore } from "@/stores/cartStore"
 import { renderWithProviders } from "@/test/render"
 import { useAuthHydration } from "./useAuthHydration"
+
+/**
+ * `useAuthHydration`'s cart bootstrap effect calls `refreshCart` directly (Phase 2 step 3) rather
+ * than going through `cartStore`, so it is mocked here at the module boundary.
+ */
+vi.mock("@/features/cart/api/cart-queries", () => ({ refreshCart: vi.fn(async () => {}) }))
 
 /**
  * `useAuthHydration` is the bridge that survives a hard refresh: React state starts empty, the
@@ -53,13 +59,8 @@ function Probe() {
   return <span data-testid="hydrated">{String(isHydrated)}</span>
 }
 
-let fetchCart: ReturnType<typeof vi.fn>
+const mockedRefreshCart = vi.mocked(refreshCart)
 
-/**
- * The cart action is swapped in `beforeEach`, never in `afterEach`: this file's `afterEach` runs
- * BEFORE the global one in `src/test/setup.ts` unmounts the tree, so a store write there would
- * re-render a still-mounted component outside `act()`.
- */
 beforeEach(() => {
   renders.length = 0
   clearAllCookies()
@@ -68,8 +69,7 @@ beforeEach(() => {
   // `tabSessionStorage` only inherits the cookie into a fresh sessionStorage once per page load;
   // each test below simulates a separate page load, so reset the gate.
   __resetTabSessionStorageForTests()
-  fetchCart = vi.fn(async () => {})
-  useCartStore.setState({ fetchCart })
+  mockedRefreshCart.mockClear()
 })
 
 afterEach(() => {
@@ -199,28 +199,28 @@ describe("useAuthHydration bootstrap + real restore (persist's module-eval read 
 })
 
 describe("useAuthHydration cart bootstrap", () => {
-  it("fetches the cart once the session is authenticated", async () => {
+  it("refreshes the cart once the session is authenticated", async () => {
     writeAuthCookie({ user: USER, accessToken: "at", refreshToken: "rt", isAuthenticated: true })
 
     renderWithProviders(<Probe />)
 
-    await waitFor(() => expect(fetchCart).toHaveBeenCalled())
+    await waitFor(() => expect(mockedRefreshCart).toHaveBeenCalled())
   })
 
-  it("does not fetch the cart while an admin is impersonating", async () => {
+  it("does not refresh the cart while an admin is impersonating", async () => {
     useAuthStore.getState().setAuth(USER, "at", "rt", true)
 
     const { getByTestId } = renderWithProviders(<Probe />)
 
     await waitFor(() => expect(getByTestId("hydrated")).toHaveTextContent("true"))
-    expect(fetchCart).not.toHaveBeenCalled()
+    expect(mockedRefreshCart).not.toHaveBeenCalled()
   })
 
-  it("does not fetch the cart for an anonymous visitor", async () => {
+  it("does not refresh the cart for an anonymous visitor", async () => {
     const { getByTestId } = renderWithProviders(<Probe />)
 
     await waitFor(() => expect(getByTestId("hydrated")).toHaveTextContent("true"))
-    expect(fetchCart).not.toHaveBeenCalled()
+    expect(mockedRefreshCart).not.toHaveBeenCalled()
   })
 })
 

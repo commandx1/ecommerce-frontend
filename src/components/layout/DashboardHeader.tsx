@@ -6,8 +6,9 @@ import { useRouter } from "next/navigation"
 import { type ReactNode, useEffect, useId } from "react"
 import MainSearchbox from "@/components/search/main-searchbox/MainSearchbox"
 import ThemeToggle from "@/components/theme/ThemeToggle"
+import { refreshCart } from "@/features/cart/api/cart-queries"
+import { useCartCount } from "@/features/cart/hooks/useCartQueries"
 import { useAuthStore } from "@/stores/authStore"
-import { useCartStore } from "@/stores/cartStore"
 import AccountMenu from "./AccountMenu"
 import { useDashboardMobileSidebar } from "./DashboardMobileSidebarContext"
 import Logo from "./Logo"
@@ -30,16 +31,15 @@ export default function DashboardHeader({
   const headerId = useId()
   const router = useRouter()
   const { user, logout } = useAuthStore()
-  const cartCount = useCartStore((state) => state.cartCount)
-  const fetchCart = useCartStore((state) => state.fetchCart)
+  const cartCount = useCartCount()
   const { isOpen: isMobileSidebarOpen, toggle: toggleMobileSidebar } = useDashboardMobileSidebar()
 
   const displayName = user ? `${user.name} ${user.surname}`.trim() || user.email : accountFallbackName
 
   useEffect(() => {
     if (!showCart || !user) return
-    void fetchCart()
-  }, [showCart, user, fetchCart])
+    void refreshCart()
+  }, [showCart, user])
 
   const handleLogout = async () => {
     await logout()

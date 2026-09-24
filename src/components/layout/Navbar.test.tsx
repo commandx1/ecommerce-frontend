@@ -1,10 +1,13 @@
+import { render as rtlRender } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { cartCommands, refreshCart } from "@/features/cart/api/cart-queries"
+import { queryKeys } from "@/lib/query/keys"
+import QuerySessionBoundary from "@/lib/query/QuerySessionBoundary"
 import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
-import { useCartStore } from "@/stores/cartStore"
-import { makeAccountUser } from "@/test/factories"
+import { makeAccountUser, makeCart, makeCartItem, makeCartUserProduct } from "@/test/factories"
 import { render, screen, waitFor } from "@/test/render"
 import Footer from "./Footer"
 import Navbar from "./Navbar"
@@ -70,15 +73,73 @@ describe("Navbar", () => {
     expect(useAuthStore.getState().isAuthenticated).toBe(false)
   })
 
-  it("hides the cart badge while the cart is empty and shows the count once it is not", async () => {
-    render(<Navbar />, { route: "/" })
+  it("hides the cart badge while the cart is empty and shows the count from the cache once it is not", async () => {
+    const { queryClient } = render(<Navbar />, { route: "/" })
 
     const cartLink = screen.getByRole("link", { name: "Cart" })
     expect(cartLink.textContent).toBe("Cart")
 
-    useCartStore.setState({ cartCount: 3 })
+    queryClient.setQueryData(queryKeys.cart.detail(), makeCart({ cartItems: [makeCartItem({ quantity: 3 })] }))
 
     await waitFor(() => expect(screen.getByRole("link", { name: "Cart" }).textContent).toContain("3"))
+  })
+
+  it("reads a count an owner already fetched from the backend (msw cart), without fetching itself", async () => {
+    let getCartCount = 0
+    server.use(
+      http.get("*/backend-api/cart", () => {
+        getCartCount += 1
+        return HttpResponse.json(makeCart({ cartItems: [makeCartItem({ quantity: 5 })] }))
+      }),
+    )
+    signIn()
+    // Renders first, so the singleton browser client this test's `refreshCart` call below writes
+    // into is the same one Navbar reads from (`render` installs a fresh client as that singleton).
+    render(<Navbar />, { route: "/" })
+
+    // Simulates an owner (DashboardHeader mount / useAuthHydration) having already populated the
+    // cache before Navbar's own render commits its badge.
+    await refreshCart()
+    expect(getCartCount).toBe(1)
+
+    expect(await screen.findByRole("link", { name: "Cart" })).toHaveTextContent("5")
+    // Mounting the badge reader must not cause a second GET /cart.
+    expect(getCartCount).toBe(1)
+  })
+
+  it("updates the badge after an add goes through cartCommands.addItem", async () => {
+    signIn()
+    let cart = makeCart({ cartItems: [] })
+    server.use(
+      http.get("*/backend-api/cart", () => HttpResponse.json(cart)),
+      http.post("*/backend-api/cart/items", () => new HttpResponse(null, { status: 200 })),
+    )
+    const { queryClient } = render(<Navbar />, { route: "/" })
+    queryClient.setQueryData(queryKeys.cart.detail(), cart)
+
+    const cartLink = screen.getByRole("link", { name: "Cart" })
+    expect(cartLink.textContent).toBe("Cart")
+
+    cart = makeCart({
+      cartItems: [makeCartItem({ quantity: 2, userProduct: makeCartUserProduct({ userProductId: "up-1" }) })],
+    })
+    await cartCommands.addItem("up-1", 2)
+
+    await waitFor(() => expect(screen.getByRole("link", { name: "Cart" }).textContent).toContain("2"))
+  })
+
+  it("empties the badge once the cache is cleared on logout (QuerySessionBoundary)", async () => {
+    signIn()
+    const { queryClient } = render(<Navbar />, { route: "/" })
+    rtlRender(<QuerySessionBoundary queryClient={queryClient}>boundary</QuerySessionBoundary>)
+
+    queryClient.setQueryData(queryKeys.cart.detail(), makeCart({ cartItems: [makeCartItem({ quantity: 3 })] }))
+    await waitFor(() => expect(screen.getByRole("link", { name: "Cart" }).textContent).toContain("3"))
+
+    server.use(http.post("*/backend-api/auth/logout", () => new HttpResponse(null, { status: 200 })))
+    await useAuthStore.getState().logout()
+
+    await waitFor(() => expect(screen.getByRole("link", { name: "Cart" }).textContent).toBe("Cart"))
   })
 
   it("links every primary nav entry", () => {

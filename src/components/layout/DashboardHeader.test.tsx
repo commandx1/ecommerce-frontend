@@ -1,10 +1,13 @@
+import { render as rtlRender } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { cartCommands } from "@/features/cart/api/cart-queries"
+import { queryKeys } from "@/lib/query/keys"
+import QuerySessionBoundary from "@/lib/query/QuerySessionBoundary"
 import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
-import { useCartStore } from "@/stores/cartStore"
-import { makeAccountUser, makeCart, makeCartItem } from "@/test/factories"
+import { makeAccountUser, makeCart, makeCartItem, makeCartUserProduct } from "@/test/factories"
 import { render, screen, waitFor } from "@/test/render"
 import DashboardHeader from "./DashboardHeader"
 import { DashboardMobileSidebarProvider, useDashboardMobileSidebar } from "./DashboardMobileSidebarContext"
@@ -58,17 +61,60 @@ describe("DashboardHeader", () => {
 
   it("shows the live cart count when the cart is enabled", async () => {
     signIn()
+    let getCartCount = 0
     server.use(
-      http.get("*/backend-api/cart", () =>
-        HttpResponse.json(makeCart({ cartItems: [makeCartItem({ id: "ci-1", quantity: 4 })] })),
-      ),
+      http.get("*/backend-api/cart", () => {
+        getCartCount += 1
+        return HttpResponse.json(makeCart({ cartItems: [makeCartItem({ id: "ci-1", quantity: 4 })] }))
+      }),
+    )
+
+    const { queryClient } = renderHeader({ showCart: true })
+
+    expect(screen.getByRole("link", { name: /Cart/ })).toHaveAttribute("href", "/cart")
+    await waitFor(() =>
+      expect(queryClient.getQueryData(queryKeys.cart.detail())).toMatchObject({ cartId: expect.any(String) }),
+    )
+    expect(await screen.findByText("4")).toBeInTheDocument()
+    // The mount effect (refreshCart) is the single fetch owner here: exactly one GET.
+    expect(getCartCount).toBe(1)
+  })
+
+  it("updates the badge after an add goes through cartCommands.addItem", async () => {
+    signIn()
+    let cart = makeCart({ cartItems: [] })
+    server.use(
+      http.get("*/backend-api/cart", () => HttpResponse.json(cart)),
+      http.post("*/backend-api/cart/items", () => new HttpResponse(null, { status: 200 })),
     )
 
     renderHeader({ showCart: true })
+    await waitFor(() => expect(screen.getByRole("link", { name: /Cart/ })).toBeInTheDocument())
+    expect(screen.queryByText("2")).not.toBeInTheDocument()
 
-    expect(screen.getByRole("link", { name: /Cart/ })).toHaveAttribute("href", "/cart")
-    await waitFor(() => expect(useCartStore.getState().cartCount).toBe(4))
-    expect(await screen.findByText("4")).toBeInTheDocument()
+    cart = makeCart({
+      cartItems: [makeCartItem({ quantity: 2, userProduct: makeCartUserProduct({ userProductId: "up-1" }) })],
+    })
+    await cartCommands.addItem("up-1", 2)
+
+    expect(await screen.findByText("2")).toBeInTheDocument()
+  })
+
+  it("empties the badge once the cache is cleared on logout (QuerySessionBoundary)", async () => {
+    signIn()
+    server.use(
+      http.get("*/backend-api/cart", () => HttpResponse.json(makeCart({ cartItems: [makeCartItem({ quantity: 3 })] }))),
+      http.post("*/backend-api/auth/logout", () => new HttpResponse(null, { status: 200 })),
+    )
+
+    const { queryClient } = renderHeader({ showCart: true })
+    rtlRender(<QuerySessionBoundary queryClient={queryClient}>boundary</QuerySessionBoundary>)
+
+    expect(await screen.findByText("3")).toBeInTheDocument()
+
+    await useAuthStore.getState().logout()
+
+    await waitFor(() => expect(screen.queryByText("3")).not.toBeInTheDocument())
   })
 
   it("hides the search box unless the header is configured to show it", () => {
