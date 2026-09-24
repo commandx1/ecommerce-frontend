@@ -1,28 +1,23 @@
 "use client"
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { useState } from "react"
+import { QueryClientProvider } from "@tanstack/react-query"
+import QuerySessionBoundary from "@/lib/query/QuerySessionBoundary"
+import { getQueryClient } from "@/lib/query/query-client"
 
 /**
- * Holds the app's React Query cache. The client is created inside state so that a
- * re-render never swaps it out, and so each SSR request gets its own instance
- * instead of sharing one across users.
+ * Holds the app's React Query cache. `getQueryClient()` returns a fresh client per call on
+ * the server (so one request can never share a cache with another) and a browser-wide
+ * singleton on the client (so imperative code - store facades, interceptors, command
+ * functions - reaches the same cache as component hooks). `QuerySessionBoundary` clears that
+ * cache whenever the signed-in identity changes, so one account's data cannot leak into the
+ * next account's session on the same tab.
  */
 export default function QueryProvider({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            // Data the user just navigated away from is usually still good; refetching
-            // on every window focus is noise for a dashboard that is mostly forms.
-            refetchOnWindowFocus: false,
-            staleTime: 30_000,
-            retry: 1,
-          },
-        },
-      }),
-  )
+  const queryClient = getQueryClient()
 
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  return (
+    <QueryClientProvider client={queryClient}>
+      <QuerySessionBoundary queryClient={queryClient}>{children}</QuerySessionBoundary>
+    </QueryClientProvider>
+  )
 }

@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query"
 import { render, screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
+import { getQueryClient, shouldRetryQuery } from "@/lib/query/query-client"
 import QueryProvider from "./QueryProvider"
 
 /**
@@ -61,10 +62,12 @@ describe("QueryProvider", () => {
     // repeated mounts of the same vendor screen reuse one request instead of re-issuing it.
     expect(defaults?.refetchOnWindowFocus).toBe(false)
     expect(defaults?.staleTime).toBe(30_000)
-    expect(defaults?.retry).toBe(1)
+    // Status-aware policy (no retry on 4xx / auth-handled), not a flat count - see query-client.test.ts.
+    expect(defaults?.retry).toBe(shouldRetryQuery)
   })
 
-  it("gives each provider instance its own client so SSR requests cannot share a cache", () => {
+  it("shares the browser singleton client so imperative cache code sees the same cache as hooks", () => {
+    // Per-request isolation on the server is covered by query-client.test.ts (getQueryClient server path).
     seen = []
     render(
       <QueryProvider>
@@ -77,6 +80,7 @@ describe("QueryProvider", () => {
       </QueryProvider>,
     )
 
-    expect(seen[1]).not.toBe(seen[0])
+    expect(seen[1]).toBe(seen[0])
+    expect(seen[0]).toBe(getQueryClient())
   })
 })
