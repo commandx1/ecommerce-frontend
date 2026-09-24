@@ -5,6 +5,7 @@ import { type Cart, cartAPI } from "@/lib/api/cart"
 import { mutationKeys, queryKeys } from "@/lib/query/keys"
 import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
+import { seedCart } from "@/test/cart"
 import { makeAccountUser, makeCart, makeCartItem, makeCartUserProduct } from "@/test/factories"
 import { createQueryWrapper } from "@/test/render"
 import {
@@ -454,11 +455,62 @@ describe("resolveAutoOrder (read from the query cache)", () => {
     expect(lastPutBody).toEqual({ userProductId: "up-1", quantity: 4, autoOrder: null })
   })
 
-  it("falls back to null when the cart has not been cached yet (write-before-first-load)", async () => {
-    // Preserved quirk (design doc §10.4): a write before the first cart load resolves autoOrder
-    // against an empty item list, same as the old store's initial `items: []`.
+  it("fetches the cart first when it has not been cached yet, so a write-before-first-load does not wipe the schedule (design doc §10.4, fixed)", async () => {
+    // Was: resolved autoOrder against an empty item list (same as the old store's initial
+    // `items: []`), silently clearing whatever schedule the server already had for this item. Now
+    // it ensures the cart is loaded before resolving, so the schedule already on the item survives
+    // - at the cost of one extra GET (the ensure-fetch) alongside the usual post-write refresh.
+    // This only happens on a genuinely cold cache (nothing fetched yet) - see the "warm-but-stale"
+    // test below for the (far more common) case where the fix costs no extra request at all.
+    cartResponse = makeCart({ cartItems: [makeCartItem({ autoOrder: "TWO_WEEKS" })] })
+
     await cartCommands.addItem("up-1", 1)
 
+    expect(counts.getCart).toBe(2) // ensure-fetch (cold cache) + forced refresh after the write
+    expect(lastPostBody).toEqual({ userProductId: "up-1", quantity: 1, autoOrder: "TWO_WEEKS" })
+  })
+
+  it("preserves the schedule for updateQuantity on a cold cache too", async () => {
+    cartResponse = makeCart({ cartItems: [makeCartItem({ autoOrder: "ONE_MONTH" })] })
+
+    await cartCommands.updateQuantity("up-1", 5)
+
+    expect(counts.getCart).toBe(2) // ensure-fetch (cold cache) + forced refresh after the write
+    expect(lastPutBody).toEqual({ userProductId: "up-1", quantity: 5, autoOrder: "ONE_MONTH" })
+  })
+
+  it("does not fetch before an addItem write when the cache is warm but stale (past the 1s dedup window)", async () => {
+    cartResponse = makeCart({ cartItems: [makeCartItem({ autoOrder: "TWO_WEEKS" })] })
+    // Seeds an entry well outside the 1s staleTime window, without counting as a GET - the real
+    // `GET /cart` is multiple seconds, so this is the realistic steady state for most of a
+    // session (a mount fetch happened once; the 1s window lapses almost immediately after).
+    seedCart(client, cartResponse, { updatedAt: Date.now() - 60_000 })
+    expect(counts.getCart).toBe(0)
+
+    await cartCommands.addItem("up-1", 1)
+
+    expect(counts.getCart).toBe(1) // only the forced refresh after the write - no ensure-fetch
+    expect(lastPostBody).toEqual({ userProductId: "up-1", quantity: 1, autoOrder: "TWO_WEEKS" })
+  })
+
+  it("does not fetch before an updateQuantity write when the cache is warm but stale", async () => {
+    cartResponse = makeCart({ cartItems: [makeCartItem({ autoOrder: "TWO_WEEKS" })] })
+    seedCart(client, cartResponse, { updatedAt: Date.now() - 60_000 })
+    expect(counts.getCart).toBe(0)
+
+    await cartCommands.updateQuantity("up-1", 5)
+
+    expect(counts.getCart).toBe(1) // only the forced refresh after the write - no ensure-fetch
+    expect(lastPutBody).toEqual({ userProductId: "up-1", quantity: 5, autoOrder: "TWO_WEEKS" })
+  })
+
+  it("proceeds with autoOrder null, without throwing, when the cold-cache ensure-fetch itself fails", async () => {
+    server.use(http.get("*/backend-api/cart", () => new HttpResponse(null, { status: 500 })))
+
+    await expect(cartCommands.addItem("up-1", 1)).resolves.toBeUndefined()
+
+    // Same fallback a cold cache produced before the fix - just reached via a failed fetch
+    // instead of an absent one.
     expect(lastPostBody).toEqual({ userProductId: "up-1", quantity: 1, autoOrder: null })
   })
 })
@@ -533,10 +585,15 @@ describe("cartCommands.setItemAutoOrder", () => {
 // ---------------------------------------------------------------------------
 describe("cartCommands.addItem error contract", () => {
   it("refreshes the cache after a successful add", async () => {
+    // Warm, not cold: matches the realistic case (an owner has already fetched the cart at least
+    // once), so `resolveAutoOrder`'s ensure-fetch (design doc §10.4) has nothing to do here - see
+    // the "resolveAutoOrder" describe block above for the cold- and stale-cache cases on their own.
+    seedCart(client, cartResponse)
+
     await cartCommands.addItem("up-1", 2)
 
     expect(counts.addItem).toBe(1)
-    expect(counts.getCart).toBe(1)
+    expect(counts.getCart).toBe(1) // just the post-write refresh
     expect(cached()?.cartItems).toHaveLength(1)
   })
 
@@ -564,6 +621,8 @@ describe("cartCommands.addItem error contract", () => {
   })
 
   it("does not refresh the cache when the add itself failed", async () => {
+    // Warm, not cold - see the note on "refreshes the cache after a successful add" above.
+    seedCart(client, cartResponse)
     server.use(http.post("*/backend-api/cart/items", () => new HttpResponse(null, { status: 500 })))
 
     await expect(cartCommands.addItem("up-1", 1)).rejects.toThrow()
@@ -628,6 +687,8 @@ describe("cartCommands.updateQuantity error contract", () => {
   })
 
   it("resolves silently on a 500 too, without throwing", async () => {
+    // Warm, not cold - see the note on "refreshes the cache after a successful add" above.
+    seedCart(client, cartResponse)
     server.use(http.put("*/backend-api/cart/items", () => new HttpResponse(null, { status: 500 })))
 
     await expect(cartCommands.updateQuantity("up-1", 3)).resolves.toBeUndefined()
@@ -715,6 +776,8 @@ describe("cart writes in the MutationCache", () => {
 
     const pending = cartCommands.updateQuantity("up-1", 4)
     // Pending synchronously, before the first await - no idle gap at the start of a write.
+    // `resolveAutoOrder`'s ensure-fetch step (fix, design doc §10.4) returns a plain value (not a
+    // promise) when the cache is already warm, as it is here, so it costs no microtask either.
     expect(writesInFlight()).toBe(1)
 
     await put.seen

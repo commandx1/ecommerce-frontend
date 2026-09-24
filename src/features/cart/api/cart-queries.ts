@@ -153,9 +153,43 @@ function findItem(userProductId: string): CartItem | undefined {
   return readCachedCart().cartItems.find((item) => item.userProduct.userProductId === userProductId)
 }
 
-/** Resolved synchronously at call time, before a concurrent refresh can land. */
-function resolveAutoOrder(userProductId: string, requested: AutoOrderWrite): AutoOrderPeriod | null {
-  return requested !== undefined ? requested : (findItem(userProductId)?.autoOrder ?? null)
+function autoOrderFromCart(cart: CartData, userProductId: string): AutoOrderPeriod | null {
+  return cart.cartItems.find((item) => item.userProduct.userProductId === userProductId)?.autoOrder ?? null
+}
+
+/**
+ * An explicit `requested` value is returned as-is, synchronously - no cache lookup. Otherwise the
+ * schedule already on the cached item must be read. Whatever is cached is used AS IS, stale or
+ * not: staleness doesn't matter for this read, only whether a cart exists in the cache at all, so
+ * this deliberately does not go through `refreshCart()`/its 1s dedup window - the real `GET /cart`
+ * is multiple seconds, and every write on the hottest path (add/update quantity without an
+ * explicit schedule) would otherwise pay that latency the instant the 1s window lapses, which is
+ * effectively always. Only a genuinely cold cache - nothing fetched yet, a write racing ahead of
+ * the cart's first load (design doc §10.4) - awaits an ensure-fetch, and that fetch is
+ * best-effort: on failure this falls back to `null`, exactly like a cold cache did before the
+ * fix, rather than ever rejecting the write. Returns a plain value (not a promise) on the common,
+ * already-cached path so callers can skip `await` entirely there - an `await` defers by a
+ * microtask tick even for an already-resolved value, which would otherwise delay every write's
+ * mutation from registering as "in flight" for no reason.
+ */
+function resolveAutoOrder(
+  userProductId: string,
+  requested: AutoOrderWrite,
+): AutoOrderPeriod | null | Promise<AutoOrderPeriod | null> {
+  if (requested !== undefined) {
+    return requested
+  }
+
+  const queryClient = getQueryClient()
+  const cached = queryClient.getQueryData<CartData>(queryKeys.cart.detail())
+  if (cached !== undefined) {
+    return autoOrderFromCart(cached, userProductId)
+  }
+
+  return queryClient
+    .ensureQueryData(cartQueryOptions())
+    .then((cart) => autoOrderFromCart(cart, userProductId))
+    .catch(() => null)
 }
 
 /**
@@ -169,7 +203,8 @@ async function addItem(userProductId: string, quantity = 1, autoOrder?: AutoOrde
     throw Object.assign(new Error("Login required"), { authHandled: true })
   }
 
-  const resolvedAutoOrder = resolveAutoOrder(userProductId, autoOrder)
+  const resolving = resolveAutoOrder(userProductId, autoOrder)
+  const resolvedAutoOrder = resolving instanceof Promise ? await resolving : resolving
   await runCartWrite("addItem", () => cartAPI.addItem(userProductId, quantity, resolvedAutoOrder))
   await refreshAfterWrite()
 }
@@ -192,7 +227,8 @@ async function updateQuantity(userProductId: string, quantity: number, autoOrder
     return
   }
 
-  const resolvedAutoOrder = resolveAutoOrder(userProductId, autoOrder)
+  const resolving = resolveAutoOrder(userProductId, autoOrder)
+  const resolvedAutoOrder = resolving instanceof Promise ? await resolving : resolving
   try {
     await runCartWrite("updateQuantity", () => cartAPI.updateItemQuantity(userProductId, quantity, resolvedAutoOrder))
   } catch {
