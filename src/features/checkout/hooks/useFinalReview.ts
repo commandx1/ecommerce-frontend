@@ -1,12 +1,14 @@
 "use client"
 
 import { useStripe } from "@stripe/react-stripe-js"
+import { useQueryClient } from "@tanstack/react-query"
 import { useCallback, useMemo, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
+import { useCartId } from "@/features/cart/hooks/useCartQueries"
 import { useCheckoutAutoOrder } from "@/features/checkout/hooks/useCheckoutAutoOrder"
 import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
 import { ordersAPI } from "@/lib/api/orders"
-import { useCartStore } from "@/stores/cartStore"
+import { queryKeys } from "@/lib/query/keys"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
 interface UseFinalReviewResult {
@@ -59,9 +61,10 @@ export function useFinalReview(): UseFinalReviewResult {
     selectedSavedCardId,
     setAutoOrderUserProductIds,
   } = useCheckoutStore()
-  const { cartId } = useCartStore()
+  const cartId = useCartId()
   const { hasAutoOrderItems, autoOrderLines } = useCheckoutAutoOrder()
   const stripe = useStripe()
+  const queryClient = useQueryClient()
 
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
   // Re-entrancy guard: a ref, because a state update is asynchronous and would not close the
@@ -110,6 +113,11 @@ export function useFinalReview(): UseFinalReviewResult {
       return
     }
     isPlacingOrderRef.current = true
+    // Set once `placeOrder` has resolved (the order row exists) - only then can anything cached
+    // about orders, the cart, saved cards or schedules have changed server-side.
+    let orderCreated = false
+    let cardSaved = false
+    let autoOrdersScheduled = false
 
     try {
       if (!orderPayload) {
@@ -165,6 +173,8 @@ export function useFinalReview(): UseFinalReviewResult {
       }
 
       const response = await ordersAPI.placeOrder(payload)
+      orderCreated = true
+      cardSaved = payload.cardSave === true
 
       // Cleared up front so a failed attempt cannot leave the previous checkout's
       // expectations behind for the confirmation screen to poll for.
@@ -234,6 +244,7 @@ export function useFinalReview(): UseFinalReviewResult {
       // canceled or unconfirmed payment never creates.
       if (!isPaymentCanceled && finalOrderStatus !== "PENDING_PAYMENT") {
         setAutoOrderUserProductIds(autoOrderLines.map((line) => line.userProductId))
+        autoOrdersScheduled = autoOrderLines.length > 0
       }
 
       if (isPaymentCanceled) {
@@ -250,6 +261,19 @@ export function useFinalReview(): UseFinalReviewResult {
     } finally {
       isPlacingOrderRef.current = false
       setIsPlacingOrder(false)
+
+      // Design doc §4. The cart is only marked stale (no refetch): the badge keeps its count until
+      // "Continue shopping" clears the cart, as before.
+      if (orderCreated) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.orders.all })
+        void queryClient.invalidateQueries({ queryKey: queryKeys.cart.detail(), refetchType: "none" })
+        if (cardSaved) {
+          void queryClient.invalidateQueries({ queryKey: queryKeys.paymentMethods.all })
+        }
+        if (autoOrdersScheduled) {
+          void queryClient.invalidateQueries({ queryKey: queryKeys.autoOrders.all })
+        }
+      }
     }
   }, [
     autoOrderConsent,
@@ -263,6 +287,7 @@ export function useFinalReview(): UseFinalReviewResult {
     orderPayload,
     paymentMethodId,
     pollPaymentStatus,
+    queryClient,
     saveCard,
     selectedSavedCardId,
     setOrderResult,

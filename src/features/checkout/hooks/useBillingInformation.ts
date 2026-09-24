@@ -1,12 +1,15 @@
 "use client"
 
 import { CardNumberElement, useElements, useStripe } from "@stripe/react-stripe-js"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import { useCheckoutAutoOrder } from "@/features/checkout/hooks/useCheckoutAutoOrder"
+import { useCheckoutSavedCardsQuery } from "@/features/checkout/hooks/useCheckoutSavedCardsQuery"
 import { isCardExpired, pickInitialCardId } from "@/features/checkout/lib/saved-card-utils"
-import { ordersAPI, type SavedCard } from "@/lib/api/orders"
+import type { SavedCard } from "@/lib/api/orders"
 import { type PendingNewCard, useCheckoutStore } from "@/stores/checkoutStore"
+
+const NO_SAVED_CARDS: SavedCard[] = []
 
 interface UseBillingInformationResult {
   cardName: string
@@ -52,53 +55,37 @@ export function useBillingInformation(): UseBillingInformationResult {
     termsAgreed,
   } = useCheckoutStore()
   const { hasAutoOrderItems } = useCheckoutAutoOrder()
-  const [savedCards, setSavedCards] = useState<SavedCard[]>([])
-  // Starts true: the fetch effect only runs after the first paint, and a false first render would
-  // flash the inline new-card form (mounting Stripe's iframes) for buyers who do have saved cards.
-  const [isLoadingCards, setIsLoadingCards] = useState(true)
+  const savedCardsQuery = useCheckoutSavedCardsQuery()
+  const savedCards = savedCardsQuery.data ?? NO_SAVED_CARDS
+  // `isPending`, so it starts true: a false first render would flash the inline new-card form
+  // (mounting Stripe's iframes) for buyers who do have saved cards.
+  const isLoadingCards = savedCardsQuery.isPending
   const [isSubmitting, setIsSubmitting] = useState(false)
+  // The initial pre-selection / error toast runs once per mount, off the first settled fetch -
+  // never again on a later background refetch.
+  const hasSettledInitialCardsRef = useRef(false)
 
   useEffect(() => {
-    let isMounted = true
-    setIsLoadingCards(true)
-
-    ordersAPI
-      .getSavedCards()
-      .then((response) => {
-        if (!isMounted) return
-        // Array.isArray, not `|| []`: a malformed 200 with a non-array `cards` would reach
-        // .map() in the saved-card picker and blank the payment step (infra note #26).
-        const cards = Array.isArray(response.cards) ? response.cards : []
-        setSavedCards(cards)
-
-        // Only pre-select on first load: a returning buyer's own choice (from stepping back from
-        // step 4) or an already-tokenized pending card must never be overwritten by this effect.
-        const state = useCheckoutStore.getState()
-        if (state.selectedSavedCardId === "" && state.pendingNewCard === null) {
-          setSelectedSavedCardId(pickInitialCardId(cards))
-        }
-      })
-      .catch((error: unknown) => {
-        if (!isMounted) return
-        const maybeError = error as { response?: { data?: { message?: string } } }
-        const message = maybeError.response?.data?.message
-        if (message?.includes("No active cards")) {
-          setSavedCards([])
-          return
-        }
-        showToast.error("Failed to load saved cards.")
-      })
-      .finally(() => {
-        if (isMounted) {
-          setIsLoadingCards(false)
-        }
-      })
-
-    return () => {
-      isMounted = false
+    if (hasSettledInitialCardsRef.current) {
+      return
     }
-    // Zustand setters are stable across renders, so this still only runs once on mount.
-  }, [setSelectedSavedCardId])
+
+    if (savedCardsQuery.isSuccess) {
+      hasSettledInitialCardsRef.current = true
+      // Only pre-select on first load: a returning buyer's own choice (from stepping back from
+      // step 4) or an already-tokenized pending card must never be overwritten by this effect.
+      const state = useCheckoutStore.getState()
+      if (state.selectedSavedCardId === "" && state.pendingNewCard === null) {
+        setSelectedSavedCardId(pickInitialCardId(savedCardsQuery.data))
+      }
+      return
+    }
+
+    if (savedCardsQuery.isError) {
+      hasSettledInitialCardsRef.current = true
+      showToast.error("Failed to load saved cards.")
+    }
+  }, [savedCardsQuery.isSuccess, savedCardsQuery.isError, savedCardsQuery.data, setSelectedSavedCardId])
 
   // True when there is no card the buyer could just pick: no saved cards, or all of them expired,
   // and no pending new card already tokenized. The inline form then has to stay on screen instead

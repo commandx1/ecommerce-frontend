@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useRef } from "react"
 import SurfaceCard from "@/components/ui/SurfaceCard"
+import { cartCommands } from "@/features/cart/api/cart-queries"
 import OrderConfirmationActions from "@/features/checkout/components/OrderConfirmationActions"
 import OrderConfirmationHeader from "@/features/checkout/components/OrderConfirmationHeader"
 import OrderConfirmationItems from "@/features/checkout/components/OrderConfirmationItems"
@@ -10,12 +11,10 @@ import OrderConfirmationShipping from "@/features/checkout/components/OrderConfi
 import OrderConfirmationStats from "@/features/checkout/components/OrderConfirmationStats"
 import { useAutoOrderRegistration } from "@/features/checkout/hooks/useAutoOrderRegistration"
 import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
-import { useCartStore } from "@/stores/cartStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
 export default function OrderConfirmation() {
   const router = useRouter()
-  const { clearCart } = useCartStore()
   const { orderResult, orderPayload, autoOrderUserProductIds, selectedVendorShippingMethods, selectedShippingCost } =
     useCheckoutStore()
   const { status: autoOrderStatus } = useAutoOrderRegistration()
@@ -52,7 +51,7 @@ export default function OrderConfirmation() {
   // currentStep !== 5 and bounces the buyer to /cart instead of /products. The store is cleared
   // lazily on the next /checkout mount instead (see useCheckoutPage).
   const onContinueShopping = () => {
-    void clearCart()
+    void cartCommands.clearCart()
     router.push("/products")
   }
 

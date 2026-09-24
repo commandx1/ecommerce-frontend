@@ -1,5 +1,6 @@
+import type { QueryClient } from "@tanstack/react-query"
 import { act, renderHook } from "@testing-library/react"
-import { afterAll, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterAll, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest"
 import { showToast } from "@/components/ui/Toast"
 import { useCheckoutAutoOrder } from "@/features/checkout/hooks/useCheckoutAutoOrder"
 import type { GetPaymentStatusResponse, PlaceOrderPayload, PlaceOrderResponse } from "@/lib/api/orders"
@@ -101,17 +102,16 @@ const placeAndSettle = async (onPlaceOrder: () => Promise<void>) => {
 }
 
 /**
- * `useFinalReview` reads `hasAutoOrderItems`/`autoOrderLines` off `useCheckoutAutoOrder`, a
- * disabled reader on the `cart.detail` query cache (design doc §7 step 5) - so every mount needs
- * a `QueryClientProvider`, seeded with whatever `items`/`cartId` the test already put into
- * `cartStore` (always set before render in this file - `cartId` itself still comes straight from
- * `cartStore` inside the hook, unmigrated until step 6).
+ * `useFinalReview` reads `cartId` (`useCartId`) and `hasAutoOrderItems`/`autoOrderLines`
+ * (`useCheckoutAutoOrder`) off disabled readers on the `cart.detail` query cache (design doc §7
+ * steps 5-6) - so every mount needs a `QueryClientProvider`, seeded with whatever
+ * `items`/`cartId` the test already put into `cartStore` (always set before render in this file).
  */
 const renderFinalReview = () => {
   const { wrapper, client } = createQueryWrapper()
   const { cartId, items } = useCartStore.getState()
   client.setQueryData(queryKeys.cart.detail(), { cartId, cartItems: items })
-  return renderHook(() => useFinalReview(), { wrapper })
+  return { ...renderHook(() => useFinalReview(), { wrapper }), client }
 }
 
 /** Same as `renderFinalReview`, but also mounts `useCheckoutAutoOrder` in the same tree/cache. */
@@ -599,10 +599,10 @@ describe("useFinalReview — double submit", () => {
   })
 
   it("uses the current cartId instead of a stale one captured on the first render", async () => {
-    const { result, rerender } = renderFinalReview()
+    const { result, rerender, client } = renderFinalReview()
 
     act(() => {
-      useCartStore.setState({ cartId: "cart-2" })
+      client.setQueryData(queryKeys.cart.detail(), { cartId: "cart-2", cartItems: [makeCartItem()] })
     })
     rerender()
 
@@ -940,5 +940,149 @@ describe("useFinalReview — stale payload regression (Final Review schedule edi
     expect(placeOrder.mock.calls[0][0].shippoRateOrders[0].products[0].autoOrder).toBeNull()
     // Cancelling a repeat never removes the line or touches its quantity.
     expect(placeOrder.mock.calls[0][0].shippoRateOrders[0].products[0].quantity).toBe(1)
+  })
+})
+
+/**
+ * Design doc §4: once `POST /orders` has resolved the order row exists, so cached orders and the
+ * cart are stale (the cart only marked stale - no refetch, the badge keeps its count until
+ * "Continue shopping"), a saved card must show up in payment methods, and a paid order with repeat
+ * lines creates schedules. Nothing is invalidated when the order was never created.
+ */
+describe("useFinalReview — cache invalidation after the order is created", () => {
+  const invalidatedKeys = (spy: MockInstance<QueryClient["invalidateQueries"]>) =>
+    spy.mock.calls.map(([filters]) => filters?.queryKey)
+
+  const renderWithInvalidationSpy = () => {
+    const rendered = renderFinalReview()
+    return { ...rendered, invalidate: vi.spyOn(rendered.client, "invalidateQueries") }
+  }
+
+  it("invalidates orders and marks the cart stale without refetching it, only after placeOrder resolved", async () => {
+    let resolveOrder!: (value: PlaceOrderResponse) => void
+    placeOrder.mockReturnValue(
+      new Promise<PlaceOrderResponse>((resolve) => {
+        resolveOrder = resolve
+      }),
+    )
+    const { result, client, invalidate } = renderWithInvalidationSpy()
+
+    let pending: Promise<void> | undefined
+    await act(async () => {
+      pending = result.current.onPlaceOrder()
+    })
+    expect(placeOrder).toHaveBeenCalledTimes(1)
+    expect(invalidate).not.toHaveBeenCalled()
+
+    await act(async () => {
+      resolveOrder(orderResponse())
+      await vi.advanceTimersByTimeAsync(POLLING_BUDGET_MS)
+      await pending
+    })
+
+    expect(invalidatedKeys(invalidate)).toEqual([queryKeys.orders.all, queryKeys.cart.detail()])
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: queryKeys.cart.detail(), refetchType: "none" })
+    const cartState = client.getQueryState(queryKeys.cart.detail())
+    expect(cartState?.isInvalidated).toBe(true)
+    expect(cartState?.fetchStatus).toBe("idle")
+    // The basket itself is untouched until the confirmation screen clears it.
+    expect(client.getQueryData(queryKeys.cart.detail())).toMatchObject({ cartId: "cart-1" })
+  })
+
+  it("still invalidates when the order was created but the card was declined", async () => {
+    fakeStripe().confirmCardPayment.mockResolvedValue(stripeError("Your card was declined."))
+    const { result, invalidate } = renderWithInvalidationSpy()
+
+    await placeAndSettle(result.current.onPlaceOrder)
+
+    expect(invalidatedKeys(invalidate)).toEqual([queryKeys.orders.all, queryKeys.cart.detail()])
+  })
+
+  it("invalidates nothing when the backend rejects the order before creating it", async () => {
+    placeOrder.mockRejectedValue(apiError("One or more items are out of stock"))
+    const { result, client, invalidate } = renderWithInvalidationSpy()
+
+    await placeAndSettle(result.current.onPlaceOrder)
+
+    expect(invalidate).not.toHaveBeenCalled()
+    expect(client.getQueryState(queryKeys.cart.detail())?.isInvalidated).toBe(false)
+  })
+
+  it.each([
+    ["the payment method is missing", () => useCheckoutStore.setState({ paymentMethodId: "" })],
+    ["the order payload is missing", () => useCheckoutStore.setState({ orderPayload: null })],
+    [
+      "Stripe has not loaded",
+      () => {
+        stripeState.loaded = false
+      },
+    ],
+    [
+      "a card that must be saved has no name",
+      () => useCheckoutStore.setState({ selectedSavedCardId: "", paymentMethodId: "pm_new", saveCard: true }),
+    ],
+  ])("invalidates nothing and places no order when %s", async (_label, arrange) => {
+    arrange()
+    const { result, invalidate } = renderWithInvalidationSpy()
+
+    await placeAndSettle(result.current.onPlaceOrder)
+
+    expect(placeOrder).not.toHaveBeenCalled()
+    expect(invalidate).not.toHaveBeenCalled()
+  })
+
+  it("invalidates payment methods when the order saved a new card", async () => {
+    useCheckoutStore.setState({ selectedSavedCardId: "", paymentMethodId: "pm_new", saveCard: true, cardName: "Visa" })
+    const { result, invalidate } = renderWithInvalidationSpy()
+
+    await placeAndSettle(result.current.onPlaceOrder)
+
+    expect(placeOrder.mock.calls[0][0].cardSave).toBe(true)
+    expect(invalidatedKeys(invalidate)).toEqual([
+      queryKeys.orders.all,
+      queryKeys.cart.detail(),
+      queryKeys.paymentMethods.all,
+    ])
+  })
+
+  it("does not invalidate payment methods when paying with an already saved card", async () => {
+    const { result, invalidate } = renderWithInvalidationSpy()
+
+    await placeAndSettle(result.current.onPlaceOrder)
+
+    expect(invalidatedKeys(invalidate)).not.toContainEqual(queryKeys.paymentMethods.all)
+  })
+
+  it("invalidates auto orders when a payment with repeat lines went through", async () => {
+    useCartStore.setState({ items: [autoOrderCartItem()] })
+    useCheckoutStore.setState({ selectedSavedCardId: "pm_saved", autoOrderConsent: true })
+    const { result, invalidate } = renderWithInvalidationSpy()
+
+    await placeAndSettle(result.current.onPlaceOrder)
+
+    expect(invalidatedKeys(invalidate)).toEqual([
+      queryKeys.orders.all,
+      queryKeys.cart.detail(),
+      queryKeys.autoOrders.all,
+    ])
+  })
+
+  it("does not invalidate auto orders when the payment with repeat lines was abandoned", async () => {
+    useCartStore.setState({ items: [autoOrderCartItem()] })
+    useCheckoutStore.setState({ selectedSavedCardId: "pm_saved", autoOrderConsent: true })
+    fakeStripe().confirmCardPayment.mockResolvedValue(stripeError("3DS abandoned"))
+    const { result, invalidate } = renderWithInvalidationSpy()
+
+    await placeAndSettle(result.current.onPlaceOrder)
+
+    expect(invalidatedKeys(invalidate)).toEqual([queryKeys.orders.all, queryKeys.cart.detail()])
+  })
+
+  it("does not invalidate auto orders when the cart has no repeat lines", async () => {
+    const { result, invalidate } = renderWithInvalidationSpy()
+
+    await placeAndSettle(result.current.onPlaceOrder)
+
+    expect(invalidatedKeys(invalidate)).not.toContainEqual(queryKeys.autoOrders.all)
   })
 })

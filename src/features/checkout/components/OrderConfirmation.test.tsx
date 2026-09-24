@@ -1,8 +1,12 @@
 import userEvent from "@testing-library/user-event"
+import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { useCartStore } from "@/stores/cartStore"
+import { type CartData, cartQueryOptions } from "@/features/cart/api/cart-queries"
+import { queryKeys } from "@/lib/query/keys"
+import { server } from "@/mocks/server"
 import { useCheckoutStore } from "@/stores/checkoutStore"
-import { render, screen, waitFor } from "@/test/render"
+import { makeCartItem } from "@/test/factories"
+import { createTestQueryClient, render, screen, waitFor } from "@/test/render"
 import OrderConfirmation from "./OrderConfirmation"
 
 const orderResult = (overrides: Record<string, unknown> = {}) => ({
@@ -83,14 +87,25 @@ describe("OrderConfirmation", () => {
   it("clears the cart and opens product listing on Continue Shopping without resetting the checkout step", async () => {
     const user = userEvent.setup()
     useCheckoutStore.setState({ currentStep: 5, orderResult: orderResult() as never })
-    useCartStore.setState({ cartId: "cart-1" })
+    const clearRequests: unknown[] = []
+    server.use(
+      http.get("*/backend-api/cart", () => HttpResponse.json({ cartId: "cart-1", cartItems: [makeCartItem()] })),
+      http.delete("*/backend-api/cart", async ({ request }) => {
+        clearRequests.push(await request.json())
+        return new HttpResponse(null, { status: 200 })
+      }),
+    )
 
-    const { router } = render(<OrderConfirmation />)
+    const queryClient = createTestQueryClient()
+    await queryClient.fetchQuery(cartQueryOptions())
+
+    const { router } = render(<OrderConfirmation />, { queryClient })
 
     await user.click(screen.getByRole("button", { name: /Continue Shopping/ }))
 
     expect(router.push).toHaveBeenCalledWith("/products")
-    await waitFor(() => expect(useCartStore.getState().cartId).toBeNull())
+    await waitFor(() => expect(queryClient.getQueryData<CartData>(queryKeys.cart.detail())?.cartId).toBeNull())
+    expect(clearRequests).toEqual([{ cartId: "cart-1" }])
     expect(useCheckoutStore.getState().currentStep).toBe(5)
   })
 

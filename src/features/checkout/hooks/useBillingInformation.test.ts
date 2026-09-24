@@ -1,3 +1,4 @@
+import type { QueryClient } from "@tanstack/react-query"
 import { act, renderHook, waitFor } from "@testing-library/react"
 import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -83,7 +84,13 @@ const mountHook = async () => {
   client.setQueryData(queryKeys.cart.detail(), { cartId, cartItems: items })
   const rendered = renderHook(() => useBillingInformation(), { wrapper })
   await waitFor(() => expect(rendered.result.current.isLoadingCards).toBe(false))
-  return rendered
+  return { ...rendered, client }
+}
+
+const refetchSavedCards = async (client: QueryClient) => {
+  await act(async () => {
+    await client.refetchQueries({ queryKey: queryKeys.paymentMethods.checkoutSavedCards() })
+  })
 }
 
 const submit = async (onSubmit: (event: React.FormEvent) => void) => {
@@ -156,6 +163,40 @@ describe("useBillingInformation — saved card loading", () => {
     expect(errorToast).toHaveBeenCalledWith("Failed to load saved cards.")
   })
 
+  it("reports a failure only once per mount, even if a later refetch fails again", async () => {
+    serveSavedCardsError("Internal error", 500)
+    const { client } = await mountHook()
+
+    await refetchSavedCards(client)
+    expect(client.getQueryState(queryKeys.paymentMethods.checkoutSavedCards())?.errorUpdateCount).toBe(2)
+
+    expect(errorToast).toHaveBeenCalledTimes(1)
+  })
+
+  it("starts out loading, before the lookup has even been sent", () => {
+    const { wrapper } = createQueryWrapper()
+    const { result } = renderHook(() => useBillingInformation(), { wrapper })
+
+    expect(result.current.isLoadingCards).toBe(true)
+  })
+
+  it("looks up saved cards exactly once per mount", async () => {
+    let requests = 0
+    server.use(
+      http.get("*/backend-api/orders/saved-cards", () => {
+        requests += 1
+        return HttpResponse.json({ cards: [], total: 0 })
+      }),
+    )
+
+    const { unmount } = await mountHook()
+    expect(requests).toBe(1)
+
+    unmount()
+    await mountHook()
+    expect(requests).toBe(2)
+  })
+
   it("looks up saved cards on mount", async () => {
     let requested = false
     server.use(
@@ -201,6 +242,23 @@ describe("useBillingInformation — initial card pre-selection", () => {
     const { result } = await mountHook()
 
     expect(result.current.selectedSavedCardId).toBe("pm_a")
+  })
+
+  it("pre-selects only once per mount, never again when the cards are refetched", async () => {
+    serveSavedCards([savedCard({ stripeCardId: "pm_a", isDefault: true })])
+    const { result, client } = await mountHook()
+    expect(result.current.selectedSavedCardId).toBe("pm_a")
+
+    // The buyer switches to "use a new card" (clears the saved-card choice)...
+    act(() => {
+      result.current.setSelectedSavedCardId("")
+    })
+    serveSavedCards([savedCard({ stripeCardId: "pm_a", isDefault: true }), savedCard({ stripeCardId: "pm_b" })])
+    await refetchSavedCards(client)
+
+    // ...and a background refetch (with a changed list) must not pick a saved card for them again.
+    await waitFor(() => expect(result.current.savedCards).toHaveLength(2))
+    expect(result.current.selectedSavedCardId).toBe("")
   })
 
   it("does not pre-select a saved card while a new card is already pending", async () => {
