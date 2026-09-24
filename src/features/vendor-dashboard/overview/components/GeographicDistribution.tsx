@@ -1,12 +1,12 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import DashboardPanel from "@/app/vendor-dashboard/components/shared/DashboardPanel"
+import { DOT_TONE_CLASS_MAP } from "@/app/vendor-dashboard/components/shared/dashboardToneMaps"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { type VendorGeographicDistributionResponse, vendorDashboardAPI } from "@/lib/api/vendor-dashboard"
 import { useAuthStore } from "@/stores/authStore"
-import DashboardPanel from "./shared/DashboardPanel"
-import { DOT_TONE_CLASS_MAP } from "./shared/dashboardToneMaps"
 
 const COLOR_PALETTE = [
   DOT_TONE_CLASS_MAP.info,

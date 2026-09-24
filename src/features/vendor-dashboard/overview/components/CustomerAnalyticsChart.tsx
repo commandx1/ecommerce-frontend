@@ -13,11 +13,11 @@ import {
 } from "chart.js"
 import { useMemo } from "react"
 import { Line } from "react-chartjs-2"
+import DashboardPanel from "@/app/vendor-dashboard/components/shared/DashboardPanel"
+import { STATUS_TONE_CLASS_MAP } from "@/app/vendor-dashboard/components/shared/dashboardToneMaps"
 import { Button } from "@/components/ui/button"
 import vendorCustomerAnalyticsData from "@/data/vendor-customer-analytics.json"
-import { getVendorChartOptions, getVendorChartPalette } from "./shared/chartTheme"
-import DashboardPanel from "./shared/DashboardPanel"
-import { STATUS_TONE_CLASS_MAP } from "./shared/dashboardToneMaps"
+import { getVendorChartOptions, getVendorChartPalette } from "@/features/vendor-dashboard/shared/lib/chartTheme"
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)
 

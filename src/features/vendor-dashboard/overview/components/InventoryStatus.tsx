@@ -3,13 +3,13 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useCallback, useEffect, useRef, useState } from "react"
+import DashboardPanel from "@/app/vendor-dashboard/components/shared/DashboardPanel"
+import { DOT_TONE_CLASS_MAP } from "@/app/vendor-dashboard/components/shared/dashboardToneMaps"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getFullImageUrl } from "@/lib/api/products"
 import { type VendorStockSummaryResponse, vendorDashboardAPI } from "@/lib/api/vendor-dashboard"
 import { useAuthStore } from "@/stores/authStore"
-import DashboardPanel from "./shared/DashboardPanel"
-import { DOT_TONE_CLASS_MAP } from "./shared/dashboardToneMaps"
 
 const CRITICAL_STOCK_THRESHOLD = 5
 const PLACEHOLDER_IMAGE = "/dentypro-product-placeholder.png"

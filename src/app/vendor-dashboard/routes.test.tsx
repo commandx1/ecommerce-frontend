@@ -9,14 +9,16 @@ import { render, screen } from "@/test/render"
 const stub = (testId: string) => ({ default: () => <div data-testid={testId} /> })
 
 vi.mock("@/features/vendor-dashboard/shell/VendorWelcomeHeader", () => stub("vendor-dashboard-header"))
-vi.mock("./components/VendorMetricsCards", () => stub("vendor-metrics"))
-vi.mock("./components/RevenueChart", () => stub("revenue-chart"))
-vi.mock("./components/TopSellingProducts", () => stub("top-selling-products"))
-vi.mock("./components/VendorRecentOrders", () => stub("vendor-recent-orders"))
-vi.mock("./components/InventoryStatus", () => stub("inventory-status"))
-vi.mock("./components/GeographicDistribution", () => stub("geographic-distribution"))
-vi.mock("./components/CustomerAnalyticsChart", () => stub("customer-analytics-chart"))
-vi.mock("./components/MarketingPerformance", () => stub("marketing-performance"))
+vi.mock("@/features/vendor-dashboard/overview/components/VendorMetricsCards", () => stub("vendor-metrics"))
+vi.mock("@/features/vendor-dashboard/overview/components/RevenueChart", () => stub("revenue-chart"))
+vi.mock("@/features/vendor-dashboard/overview/components/TopSellingProducts", () => stub("top-selling-products"))
+vi.mock("@/features/vendor-dashboard/overview/components/VendorRecentOrders", () => stub("vendor-recent-orders"))
+vi.mock("@/features/vendor-dashboard/overview/components/InventoryStatus", () => stub("inventory-status"))
+vi.mock("@/features/vendor-dashboard/overview/components/GeographicDistribution", () => stub("geographic-distribution"))
+vi.mock("@/features/vendor-dashboard/overview/components/CustomerAnalyticsChart", () =>
+  stub("customer-analytics-chart"),
+)
+vi.mock("@/features/vendor-dashboard/overview/components/MarketingPerformance", () => stub("marketing-performance"))
 vi.mock("@/components/dashboard-shared/AccountSettingsShared", () => ({
   default: ({ title, description, children }: { title: string; description: string; children?: React.ReactNode }) => (
     <div>

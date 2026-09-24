@@ -3,12 +3,12 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useCallback, useEffect, useRef, useState } from "react"
+import DashboardPanel from "@/app/vendor-dashboard/components/shared/DashboardPanel"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getFullImageUrl } from "@/lib/api/products"
 import { type VendorTopSellingProduct, vendorDashboardAPI } from "@/lib/api/vendor-dashboard"
 import { useAuthStore } from "@/stores/authStore"
-import DashboardPanel from "./shared/DashboardPanel"
 
 const PLACEHOLDER_IMAGE = "/dentypro-product-placeholder.png"
 

@@ -1,8 +1,12 @@
+import DashboardPanel from "@/app/vendor-dashboard/components/shared/DashboardPanel"
+import {
+  DOT_TONE_CLASS_MAP,
+  RING_TONE_CLASS_MAP,
+  STATUS_TONE_CLASS_MAP,
+} from "@/app/vendor-dashboard/components/shared/dashboardToneMaps"
 import { Button } from "@/components/ui/button"
 import vendorMarketingData from "@/data/vendor-marketing.json"
 import { cn } from "@/lib/utils"
-import DashboardPanel from "./shared/DashboardPanel"
-import { DOT_TONE_CLASS_MAP, RING_TONE_CLASS_MAP, STATUS_TONE_CLASS_MAP } from "./shared/dashboardToneMaps"
 
 const campaignToneMap: Record<string, { container: string; status: string; progress: string }> = {
   blue: {

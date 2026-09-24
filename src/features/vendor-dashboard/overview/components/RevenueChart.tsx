@@ -12,12 +12,12 @@ import {
 } from "chart.js"
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { Line } from "react-chartjs-2"
+import DashboardPanel from "@/app/vendor-dashboard/components/shared/DashboardPanel"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { getVendorChartOptions, getVendorChartPalette } from "@/features/vendor-dashboard/shared/lib/chartTheme"
 import { vendorDashboardAPI } from "@/lib/api/vendor-dashboard"
 import { useAuthStore } from "@/stores/authStore"
-import { getVendorChartOptions, getVendorChartPalette } from "./shared/chartTheme"
-import DashboardPanel from "./shared/DashboardPanel"
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
 

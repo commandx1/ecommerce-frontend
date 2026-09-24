@@ -2,14 +2,14 @@
 
 import { DollarSign, type LucideIcon, ShoppingBag, Star } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { RING_TONE_CLASS_MAP, STATUS_TONE_CLASS_MAP } from "@/app/vendor-dashboard/components/shared/dashboardToneMaps"
 import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
 import SurfaceCard from "@/components/ui/SurfaceCard"
+import { Skeleton } from "@/components/ui/skeleton"
 import { vendorDashboardAPI } from "@/lib/api/vendor-dashboard"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
-import { RING_TONE_CLASS_MAP, STATUS_TONE_CLASS_MAP } from "./shared/dashboardToneMaps"
 
 interface MetricCard {
   id: string
@@ -166,7 +166,10 @@ const VendorMetricsCards = () => {
     return (
       <>
         {rangeSelector}
-        <SurfaceCard variant="glass" className="mb-6 flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
+        <SurfaceCard
+          variant="glass"
+          className="mb-6 flex flex-col items-center justify-center gap-3 px-6 py-16 text-center"
+        >
           <p className="text-sm font-medium text-danger">Couldn't load your metrics. Please try again.</p>
           <Button type="button" variant="outline" onClick={() => void fetchMetrics()} className="rounded-lg px-4">
             Retry

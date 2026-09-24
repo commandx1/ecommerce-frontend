@@ -2,13 +2,13 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useRef, useState } from "react"
+import DashboardPanel from "@/app/vendor-dashboard/components/shared/DashboardPanel"
+import { STATUS_TONE_CLASS_MAP } from "@/app/vendor-dashboard/components/shared/dashboardToneMaps"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { type VendorOrder, vendorOrdersAPI } from "@/lib/api/vendor-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useAuthStore } from "@/stores/authStore"
-import DashboardPanel from "./shared/DashboardPanel"
-import { STATUS_TONE_CLASS_MAP } from "./shared/dashboardToneMaps"
 
 function getStatusTone(status: string): keyof typeof STATUS_TONE_CLASS_MAP {
   if (status.includes("CANCEL")) return "danger"

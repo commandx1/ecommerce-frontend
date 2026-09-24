@@ -7,7 +7,9 @@ import VendorCustomersAllPage from "./all/page"
 import { VENDOR_CUSTOMERS } from "./data"
 import VendorCustomersPage from "./page"
 
-vi.mock("../components/CustomerAnalyticsChart", () => ({ default: () => <div data-testid="customer-analytics" /> }))
+vi.mock("@/features/vendor-dashboard/overview/components/CustomerAnalyticsChart", () => ({
+  default: () => <div data-testid="customer-analytics" />,
+}))
 vi.mock("./components/CustomerSegmentsCard", () => ({ default: () => <div data-testid="customer-segments" /> }))
 vi.mock("./components/CustomerRevenueTrend", () => ({ default: () => <div data-testid="customer-revenue-trend" /> }))
 
