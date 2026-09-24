@@ -19,7 +19,7 @@ import CommonDashboardSidebar, {
   type DashboardSidebarGroup,
   type DashboardSidebarQuickAction,
 } from "@/components/layout/DashboardSidebar"
-import { useCompanyRole } from "../CompanyRoleContext"
+import { useCompanyRole } from "./CompanyRoleContext"
 
 const VENDOR_QUICK_ACTIONS: DashboardSidebarQuickAction[] = [
   { href: "/vendor-dashboard/products/create", label: "Add Product", icon: Plus, tone: "brand" },

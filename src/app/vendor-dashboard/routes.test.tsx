@@ -8,7 +8,7 @@ import { render, screen } from "@/test/render"
  */
 const stub = (testId: string) => ({ default: () => <div data-testid={testId} /> })
 
-vi.mock("./components/DashboardHeader", () => stub("vendor-dashboard-header"))
+vi.mock("@/features/vendor-dashboard/shell/VendorWelcomeHeader", () => stub("vendor-dashboard-header"))
 vi.mock("./components/VendorMetricsCards", () => stub("vendor-metrics"))
 vi.mock("./components/RevenueChart", () => stub("revenue-chart"))
 vi.mock("./components/TopSellingProducts", () => stub("top-selling-products"))

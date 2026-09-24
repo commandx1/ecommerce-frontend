@@ -5,7 +5,7 @@ import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
 import { makeAccountUser, makeCompanyProfile } from "@/test/factories/user.factory"
 import { render } from "@/test/render"
-import { CompanyRoleProvider } from "../CompanyRoleContext"
+import { CompanyRoleProvider } from "./CompanyRoleContext"
 import ImpersonationTabTitle from "./ImpersonationTabTitle"
 
 const renderTitle = (route = "/vendor-dashboard") =>

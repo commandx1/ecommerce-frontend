@@ -1,11 +1,11 @@
 import userEvent from "@testing-library/user-event"
 import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { CompanyRoleProvider } from "@/features/vendor-dashboard/shell/CompanyRoleContext"
 import { server } from "@/mocks/server"
 import { makeCompanyProfile } from "@/test/factories"
 import { installRadixPointerPolyfills } from "@/test/radix"
 import { render, screen, waitFor } from "@/test/render"
-import { CompanyRoleProvider } from "../CompanyRoleContext"
 import VendorTeamPage from "./page"
 
 installRadixPointerPolyfills()

@@ -8,7 +8,7 @@ describe("VendorDashboardLayoutSkeleton", () => {
 
     // Regression guard for the a11y-smoke FINDING "expected exactly 1 <h1> on
     // /vendor-dashboard, found 0": VendorDashboardLayout renders this
-    // skeleton (isChecking === true, ~100ms) before DashboardHeader's h1
+    // skeleton (isChecking === true, ~100ms) before VendorWelcomeHeader's h1
     // mounts, so it must carry its own (sr-only) h1 or the page has zero
     // headings until the auth check settles.
     expect(screen.getByRole("heading", { level: 1, name: "Loading Vendor Dashboard" })).toBeInTheDocument()

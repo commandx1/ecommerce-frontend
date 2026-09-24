@@ -3,9 +3,9 @@
 import { useId } from "react"
 import SectionHeading from "@/components/layout/SectionHeading"
 import { useAuthStore } from "@/stores/authStore"
-import { useCompanyRole } from "../CompanyRoleContext"
+import { useCompanyRole } from "./CompanyRoleContext"
 
-const DashboardHeader = () => {
+const VendorWelcomeHeader = () => {
   const sectionId = useId()
   const { companyName } = useCompanyRole()
   const user = useAuthStore((state) => state.user)
@@ -36,4 +36,4 @@ const DashboardHeader = () => {
   )
 }
 
-export default DashboardHeader
+export default VendorWelcomeHeader

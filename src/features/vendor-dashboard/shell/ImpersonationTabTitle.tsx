@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation"
 import { useEffect } from "react"
 import { useAuthStore } from "@/stores/authStore"
-import { useCompanyRole } from "../CompanyRoleContext"
+import { useCompanyRole } from "./CompanyRoleContext"
 
 export default function ImpersonationTabTitle() {
   const { companyName } = useCompanyRole()

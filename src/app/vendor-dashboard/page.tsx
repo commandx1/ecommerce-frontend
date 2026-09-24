@@ -1,4 +1,4 @@
-import DashboardHeader from "./components/DashboardHeader"
+import VendorWelcomeHeader from "@/features/vendor-dashboard/shell/VendorWelcomeHeader"
 import GeographicDistribution from "./components/GeographicDistribution"
 import InventoryStatus from "./components/InventoryStatus"
 import RevenueChart from "./components/RevenueChart"
@@ -9,7 +9,7 @@ import VendorRecentOrders from "./components/VendorRecentOrders"
 export default function VendorDashboardPage() {
   return (
     <>
-      <DashboardHeader />
+      <VendorWelcomeHeader />
       <VendorMetricsCards />
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-12 *:h-full xl:col-span-8">

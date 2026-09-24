@@ -8,7 +8,7 @@ export default function VendorDashboardLayoutSkeleton() {
   return (
     <div data-theme-scope="dashboard" className="relative isolate flex min-h-screen flex-col">
       <div className="dashboard-backdrop" aria-hidden />
-      {/* sr-only: the real page's h1 ("Vendor Dashboard" in DashboardHeader) only
+      {/* sr-only: the real page's h1 ("Vendor Dashboard" in VendorWelcomeHeader) only
           mounts once auth-check/hydration finishes; this skeleton renders first,
           so without this the page has zero headings while it's up. Deliberately
           worded differently from that final heading so a test waiting for the

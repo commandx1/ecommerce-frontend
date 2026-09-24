@@ -9,13 +9,13 @@ import { useRouter } from "next/navigation"
 import { useEffect, useId, useState } from "react"
 import { DashboardMobileSidebarProvider } from "@/components/layout/DashboardMobileSidebarContext"
 import NotificationSocketBridge from "@/features/notifications/components/NotificationSocketBridge"
+import { CompanyRoleProvider } from "@/features/vendor-dashboard/shell/CompanyRoleContext"
+import ImpersonationTabTitle from "@/features/vendor-dashboard/shell/ImpersonationTabTitle"
+import VendorDashboardLayoutSkeleton from "@/features/vendor-dashboard/shell/VendorDashboardLayoutSkeleton"
+import VendorHeader from "@/features/vendor-dashboard/shell/VendorHeader"
+import VendorSidebar from "@/features/vendor-dashboard/shell/VendorSidebar"
 import { tabSessionStorage } from "@/lib/storage/tab-session-storage"
 import { useAuthStore } from "@/stores/authStore"
-import { CompanyRoleProvider } from "./CompanyRoleContext"
-import ImpersonationTabTitle from "./components/ImpersonationTabTitle"
-import VendorDashboardLayoutSkeleton from "./components/VendorDashboardLayoutSkeleton"
-import VendorHeader from "./components/VendorHeader"
-import VendorSidebar from "./components/VendorSidebar"
 
 export default function VendorDashboardLayout({ children }: { children: React.ReactNode }) {
   const mainContentId = useId()

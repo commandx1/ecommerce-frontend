@@ -11,9 +11,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
+import { useCompanyRole } from "@/features/vendor-dashboard/shell/CompanyRoleContext"
 import { type InvitableCompanyRole, inviteCompanyUser } from "@/lib/api/company"
 import { ApiRequestError } from "@/lib/api/request"
-import { useCompanyRole } from "../CompanyRoleContext"
 
 const ROLE_DESCRIPTIONS: Record<InvitableCompanyRole, string> = {
   MANAGER: "Can manage products, orders, and promotions on behalf of the company.",
