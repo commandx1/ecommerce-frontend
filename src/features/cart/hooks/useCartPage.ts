@@ -1,20 +1,30 @@
 "use client"
 
+import { useIsMutating, useQuery } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
+import {
+  cartCommands,
+  cartQueryOptions,
+  cartWriteInFlightFilters,
+  fetchErrorMessage,
+  getCartCommandName,
+  refreshCart,
+  writeErrorMessage,
+} from "@/features/cart/api/cart-queries"
 import type { CartSellerGroup, CartTotals } from "@/features/cart/types"
 import { getBlockingCartItems } from "@/features/cart/utils/cart-alerts"
 import { cartRequiresDentalLicense } from "@/features/cart/utils/license-check"
-import { addressAPI } from "@/lib/api/address"
-import { cartAPI } from "@/lib/api/cart"
+import { useAddressesQuery } from "@/features/checkout/hooks/useAddressesQuery"
+import type { CartItem } from "@/lib/api/cart"
 import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
 import type { DentalLicenseStatus } from "@/lib/helpers/dentalLicense"
 import { useDebouncedPerKeyCallback } from "@/lib/hooks/useDebouncedPerKeyCallback"
 import { useDentalLicenseGate } from "@/lib/hooks/useDentalLicenseGate"
-import type { CartItem } from "@/stores/cartStore"
-import { useCartStore } from "@/stores/cartStore"
+import { getQueryClient } from "@/lib/query/query-client"
 import { useCheckoutStore } from "@/stores/checkoutStore"
+import { useTaxEstimateQuery } from "./useCartQueries"
 
 type CartViewState = "loading" | "empty" | "ready"
 const QUANTITY_DEBOUNCE_MS = 450
@@ -80,17 +90,19 @@ interface UseCartPageResult {
 
 export function useCartPage(): UseCartPageResult {
   const router = useRouter()
-  const { cartId, items, fetchCart, isLoading, clearCart, updateQuantity, setItemAutoOrder, removeFromCart, error } =
-    useCartStore()
+  // Fetch owner (design doc §5): mounts a disabled reader on the shared `cart.detail` query so it
+  // tracks fetch/mutation status without ever fetching on its own, then owns the mount fetch via
+  // `refreshCart()` below - same split as `useCartQueries`' reader hooks.
+  const cartQuery = useQuery({ ...cartQueryOptions(), enabled: false })
+  const pendingWritesCount = useIsMutating(cartWriteInFlightFilters)
+  // Old `cartStore.isLoading`: true while the cart GET or a cart write request is in flight.
+  const isLoading = cartQuery.isFetching || pendingWritesCount > 0
+  const items = cartQuery.data?.cartItems ?? []
+  const cartId = cartQuery.data?.cartId ?? null
+
   const { setStep } = useCheckoutStore()
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false)
   const [pendingQuantities, setPendingQuantities] = useState<Record<string, number>>({})
-  const [defaultAddressId, setDefaultAddressId] = useState<string | null>(null)
-  // null = not yet estimated (no address/items) or the estimate call failed — distinct from a
-  // real $0 estimate the backend returned. `totals.tax` carries this through unchanged so the
-  // panel can render "calculated at checkout" instead of a misleading $0.00.
-  const [taxAmount, setTaxAmount] = useState<number | null>(null)
-  const [isTaxLoading, setIsTaxLoading] = useState(false)
   const licenseGate = useDentalLicenseGate()
   // Distinguishes the click-time await inside `onCheckout` (guards a double-click and drives the
   // button spinner) from `licenseGate.isChecking`, which only covers the initial background fetch.
@@ -102,7 +114,7 @@ export function useCartPage(): UseCartPageResult {
   const { schedule, cancel, cancelAll } = useDebouncedPerKeyCallback<string, number>({
     delayMs: QUANTITY_DEBOUNCE_MS,
     callback: async (nextQuantity, context) => {
-      await updateQuantity(context.key, nextQuantity)
+      await cartCommands.updateQuantity(context.key, nextQuantity)
       if (!context.isLatest()) {
         return
       }
@@ -115,14 +127,47 @@ export function useCartPage(): UseCartPageResult {
   })
 
   useEffect(() => {
-    void fetchCart()
-  }, [fetchCart])
+    void refreshCart()
+  }, [])
 
+  // Fetch-error toast: keyed on `errorUpdatedAt` so a persisting error does not re-toast on every
+  // unrelated re-render, only when a new failure actually lands. `fetchErrorMessage` (shared with
+  // `cartStore`'s query-cache projection) is what turns a cancelled/auth-handled error into
+  // silence. Intentionally keyed on `errorUpdatedAt` only, not `cartQuery.error` too.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: see comment above
   useEffect(() => {
-    if (error) {
-      showToast.error("Cart unavailable", error)
+    if (!cartQuery.error) {
+      return
     }
-  }, [error])
+
+    const message = fetchErrorMessage(cartQuery.error)
+    if (message === undefined) {
+      return
+    }
+
+    showToast.error("Cart unavailable", message)
+  }, [cartQuery.errorUpdatedAt])
+
+  // Write-error toast: every cart write failure surfaces this generic toast except the ones
+  // `writeErrorMessage` (shared with `cartStore`'s mutation-cache projection) stays silent for -
+  // `setItemAutoOrder` (its only caller, `onAutoOrderChange` below, shows its own specific toast
+  // off the rethrow instead) and any auth-handled failure.
+  useEffect(() => {
+    const queryClient = getQueryClient()
+    return queryClient.getMutationCache().subscribe((event) => {
+      const command = getCartCommandName(event.mutation?.meta)
+      if (command === undefined || event.type !== "updated" || event.action.type !== "error") {
+        return
+      }
+
+      const message = writeErrorMessage(command, event.action.error)
+      if (message === undefined) {
+        return
+      }
+
+      showToast.error("Cart unavailable", message)
+    })
+  }, [])
 
   const itemsWithPendingQuantity = useMemo<CartItem[]>(() => {
     return items.map((item) => {
@@ -137,6 +182,50 @@ export function useCartPage(): UseCartPageResult {
       }
     })
   }, [items, pendingQuantities])
+
+  const shippingAmount = useMemo(() => {
+    return itemsWithPendingQuantity.reduce(
+      (sum, item) =>
+        sum + ((item.userProduct.shipmentFee ?? 0) + (item.userProduct.heavyShippingSurcharge ?? 0)) * item.quantity,
+      0,
+    )
+  }, [itemsWithPendingQuantity])
+
+  const linesSignature = useMemo(() => {
+    return itemsWithPendingQuantity.map((item) => `${item.userProduct.userProductId}:${item.quantity}`).join(",")
+  }, [itemsWithPendingQuantity])
+
+  const addressesQuery = useAddressesQuery()
+  const [defaultAddressId, setDefaultAddressId] = useState<string | null>(null)
+  // Selection runs once per mount, off the first settled fetch - never re-picked on a later
+  // background refetch (matches today's mount-only effect).
+  const hasSelectedDefaultAddressRef = useRef(false)
+
+  useEffect(() => {
+    if (hasSelectedDefaultAddressRef.current) {
+      return
+    }
+
+    if (addressesQuery.isSuccess) {
+      const addresses = addressesQuery.data
+      const defaultAddress = addresses.find((address) => address.defaultAddress) || addresses[0]
+      setDefaultAddressId(defaultAddress?.id ?? null)
+      hasSelectedDefaultAddressRef.current = true
+      return
+    }
+
+    if (addressesQuery.isError) {
+      setDefaultAddressId(null)
+      hasSelectedDefaultAddressRef.current = true
+    }
+  }, [addressesQuery.isSuccess, addressesQuery.isError, addressesQuery.data])
+
+  const { tax: taxAmount, isTaxLoading } = useTaxEstimateQuery({
+    addressId: defaultAddressId,
+    shippingAmount,
+    itemCount: itemsWithPendingQuantity.length,
+    linesSignature,
+  })
 
   const totals = useMemo<CartTotals>(() => {
     const subtotal = itemsWithPendingQuantity.reduce((sum, item) => sum + item.userProduct.price * item.quantity, 0)
@@ -162,75 +251,6 @@ export function useCartPage(): UseCartPageResult {
       total: subtotal + totalShipmentFee + (taxAmount ?? 0),
     }
   }, [itemsWithPendingQuantity, taxAmount])
-
-  useEffect(() => {
-    const fetchDefaultAddress = async () => {
-      try {
-        const addresses = await addressAPI.getAddresses()
-        const defaultAddress = addresses.find((address) => address.defaultAddress) || addresses[0]
-        setDefaultAddressId(defaultAddress?.id ?? null)
-      } catch (_error) {
-        setDefaultAddressId(null)
-      }
-    }
-
-    void fetchDefaultAddress()
-  }, [])
-
-  useEffect(() => {
-    if (!defaultAddressId || itemsWithPendingQuantity.length === 0) {
-      setTaxAmount(null)
-      setIsTaxLoading(false)
-      return
-    }
-
-    const shipping = itemsWithPendingQuantity.reduce(
-      (sum, item) =>
-        sum + ((item.userProduct.shipmentFee ?? 0) + (item.userProduct.heavyShippingSurcharge ?? 0)) * item.quantity,
-      0,
-    )
-
-    // Backend: CartTaxEstimateRequest.shippingAmount is a Double (@NotNull @PositiveOrZero) — an
-    // unserializable shipping figure (NaN/Infinity) or a negative one can never be estimated, so
-    // skip the request instead of sending a value the backend would 400 on.
-    if (!Number.isFinite(shipping) || shipping < 0) {
-      setTaxAmount(null)
-      setIsTaxLoading(false)
-      return
-    }
-
-    let isCancelled = false
-    const fetchTaxEstimate = async () => {
-      setIsTaxLoading(true)
-      try {
-        const estimate = await cartAPI.getTaxEstimate({
-          addressId: defaultAddressId,
-          shippingAmount: shipping,
-        })
-        if (!isCancelled) {
-          // The estimate is money the buyer reads: a non-numeric `taxAmount` from a malformed 200
-          // must fall through to "Calculated at checkout" rather than being stored, where it would
-          // string-concatenate into the total (100 + 5 + "5" -> "1055") and then be floored to
-          // $0.00 by formatCurrency (infra note #26, numeric form).
-          setTaxAmount(Number.isFinite(estimate.taxAmount) ? estimate.taxAmount : null)
-        }
-      } catch (_error) {
-        if (!isCancelled) {
-          setTaxAmount(null)
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsTaxLoading(false)
-        }
-      }
-    }
-
-    void fetchTaxEstimate()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [defaultAddressId, itemsWithPendingQuantity])
 
   const sellerGroups = useMemo<Record<string, CartSellerGroup>>(() => {
     return itemsWithPendingQuantity.reduce<Record<string, CartSellerGroup>>((groups, item) => {
@@ -367,7 +387,7 @@ export function useCartPage(): UseCartPageResult {
       const pendingQuantity = pendingQuantities[userProductId]
 
       try {
-        await setItemAutoOrder(userProductId, period, pendingQuantity)
+        await cartCommands.setItemAutoOrder(userProductId, period, pendingQuantity)
         if (pendingQuantity !== undefined) {
           setPendingQuantities((prev) => {
             const { [userProductId]: _removed, ...rest } = prev
@@ -379,7 +399,7 @@ export function useCartPage(): UseCartPageResult {
         throw error
       }
     },
-    [cancel, pendingQuantities, setItemAutoOrder],
+    [cancel, pendingQuantities],
   )
 
   const onRemoveItem = useCallback(
@@ -390,9 +410,9 @@ export function useCartPage(): UseCartPageResult {
         const { [userProductId]: _removed, ...rest } = prev
         return rest
       })
-      void removeFromCart(userProductId)
+      void cartCommands.removeItem(userProductId)
     },
-    [cancel, removeFromCart],
+    [cancel],
   )
 
   const onOpenClearConfirm = useCallback(() => {
@@ -407,9 +427,9 @@ export function useCartPage(): UseCartPageResult {
     cancelAll()
     setPendingQuantities({})
 
-    await clearCart()
+    await cartCommands.clearCart()
     setIsClearConfirmOpen(false)
-  }, [cancelAll, clearCart])
+  }, [cancelAll])
 
   return {
     cartId,

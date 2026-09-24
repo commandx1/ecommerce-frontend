@@ -1,5 +1,4 @@
 import {
-  isCancelledError,
   isServer,
   type MutationCacheNotifyEvent,
   matchQuery,
@@ -10,15 +9,15 @@ import {
 import { create } from "zustand"
 import {
   type AutoOrderWrite,
-  type CartCommandName,
   type CartData,
   cartWriteInFlightFilters,
   createCartCommands,
+  fetchErrorMessage,
   getCartCommandName,
   type RefreshCartOptions,
   refreshCart,
+  writeErrorMessage,
 } from "@/features/cart/api/cart-queries"
-import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
 import type { CartItem } from "@/lib/api/cart"
 import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
 import { queryKeys } from "@/lib/query/keys"
@@ -114,9 +113,10 @@ export const useCartStore = create<CartStore>((set) => ({
   /**
    * Quantity and schedule share one endpoint, so an explicit `quantity` lets the caller flush a
    * still-debounced quantity edit in the same write. A non-auth failure rethrows but deliberately
-   * does NOT write the shared `error` (see WRITE_ERROR_FALLBACK below): useCartPage shows its own
-   * "Could not update auto-reorder" toast off the rethrow AND a generic "Cart unavailable" toast
-   * whenever `error` changes - setting both would fire two toasts for one failure.
+   * does NOT write the shared `error` (see `writeErrorMessage` in `cart-queries.ts`): useCartPage
+   * shows its own "Could not update auto-reorder" toast off the rethrow AND a generic "Cart
+   * unavailable" toast whenever `error` changes - setting both would fire two toasts for one
+   * failure.
    */
   setItemAutoOrder: async (userProductId, autoOrder, quantity) => {
     if (isServer) return
@@ -132,42 +132,6 @@ export const useCartStore = create<CartStore>((set) => ({
 // ---------------------------------------------------------------------------------------------
 // Projection: QueryCache / MutationCache -> store state
 // ---------------------------------------------------------------------------------------------
-
-/**
- * `error` message the old store recorded for a failed write, or `null` where it recorded none.
- * The old store cleared `error` at the start of every write, then set this on a non-auth failure.
- */
-const WRITE_ERROR_FALLBACK: Record<CartCommandName, string | null> = {
-  addItem: "Failed to add item",
-  removeItem: "Failed to remove item",
-  updateQuantity: "Failed to update quantity",
-  setItemAutoOrder: null,
-  clearCart: "Failed to clear cart",
-}
-
-/** `undefined` = leave `error` as it is. */
-function writeErrorMessage(command: CartCommandName, error: unknown): string | undefined {
-  const fallback = WRITE_ERROR_FALLBACK[command]
-  if (fallback === null || isAuthHandledError(error)) {
-    return undefined
-  }
-
-  // addToCart alone also treated a bare 401 status (not flagged by the interceptor) as auth.
-  if (command === "addItem" && isAuthErrorStatus(extractErrorStatus(error))) {
-    return undefined
-  }
-
-  return error instanceof Error ? error.message : fallback
-}
-
-/** `undefined` = leave `error` (and `lastFetchedAt`) as they are. */
-function fetchErrorMessage(error: unknown): string | undefined {
-  if (isCancelledError(error) || isAuthHandledError(error)) {
-    return undefined
-  }
-
-  return error instanceof Error ? error.message : "Failed to fetch cart"
-}
 
 function projectData(data: CartData): Pick<CartProjection, "cartId" | "items" | "cartCount"> {
   return {

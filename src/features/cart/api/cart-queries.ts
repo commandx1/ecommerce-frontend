@@ -1,5 +1,5 @@
-import { type MutationFilters, queryOptions } from "@tanstack/react-query"
-import { extractErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
+import { isCancelledError, type MutationFilters, queryOptions } from "@tanstack/react-query"
+import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
 import { type Cart, type CartItem, cartAPI } from "@/lib/api/cart"
 import { redirectToLogin } from "@/lib/api/client"
 import type { AutoOrderPeriod } from "@/lib/constants/auto-order"
@@ -139,6 +139,54 @@ const CART_COMMAND_NAMES: readonly CartCommandName[] = [
 export function getCartCommandName(meta: Record<string, unknown> | undefined): CartCommandName | undefined {
   const name = meta?.cartCommand
   return CART_COMMAND_NAMES.find((candidate) => candidate === name)
+}
+
+/**
+ * Fallback toast description per write command, or `null` for a command that never toasts here.
+ * `setItemAutoOrder` is `null`: its only caller (`useCartPage.onAutoOrderChange`) shows its own
+ * "Could not update auto-reorder" toast off the rethrow instead - writing a message here too
+ * would fire two toasts for one failure.
+ */
+const WRITE_ERROR_FALLBACK: Record<CartCommandName, string | null> = {
+  addItem: "Failed to add item",
+  removeItem: "Failed to remove item",
+  updateQuantity: "Failed to update quantity",
+  setItemAutoOrder: null,
+  clearCart: "Failed to clear cart",
+}
+
+/**
+ * Toast description for a failed cart write, or `undefined` when the caller must stay silent
+ * (no fallback configured for `command`, or the failure was already handled elsewhere: the auth
+ * interceptor's `authHandled` flag, or - `addItem` only - a bare 401 status the interceptor
+ * didn't get a chance to flag). Shared by `cartStore`'s mutation-cache projection and
+ * `useCartPage`'s write-error toast so both key off the exact same fallback/skip rules.
+ */
+export function writeErrorMessage(command: CartCommandName, error: unknown): string | undefined {
+  const fallback = WRITE_ERROR_FALLBACK[command]
+  if (fallback === null || isAuthHandledError(error)) {
+    return undefined
+  }
+
+  // addToCart alone also treated a bare 401 status (not flagged by the interceptor) as auth.
+  if (command === "addItem" && isAuthErrorStatus(extractErrorStatus(error))) {
+    return undefined
+  }
+
+  return error instanceof Error ? error.message : fallback
+}
+
+/**
+ * Toast description for a failed cart fetch, or `undefined` when the caller must stay silent (a
+ * cancelled request, or one the auth interceptor already handled). Shared by `cartStore`'s
+ * query-cache projection and `useCartPage`'s fetch-error toast.
+ */
+export function fetchErrorMessage(error: unknown): string | undefined {
+  if (isCancelledError(error) || isAuthHandledError(error)) {
+    return undefined
+  }
+
+  return error instanceof Error ? error.message : "Failed to fetch cart"
 }
 
 /**

@@ -1,12 +1,17 @@
 import { act, renderHook, waitFor } from "@testing-library/react"
 import { HttpResponse, http } from "msw"
-import { StrictMode } from "react"
+import { createElement, type ReactNode, StrictMode } from "react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import type { Address } from "@/lib/api/address"
 import type { Cart } from "@/lib/api/cart"
 import type { License } from "@/lib/api/licenses"
+import { queryKeys } from "@/lib/query/keys"
 import { server } from "@/mocks/server"
+import { useAuthStore } from "@/stores/authStore"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 import {
+  makeAccountUser,
+  makeAddress,
   makeCart,
   makeCartItem,
   makeCartProductInfo,
@@ -15,6 +20,7 @@ import {
   makeTaxEstimate,
 } from "@/test/factories"
 import { getRouterMock } from "@/test/mocks/next-navigation"
+import { createQueryWrapper } from "@/test/render"
 import { useCartPage } from "./useCartPage"
 
 const mockToastError = vi.fn()
@@ -43,6 +49,7 @@ interface Recorder {
   deleteItems: unknown[]
   cartDeletes: number
   licenseGets: number
+  addressGets: number
 }
 
 let recorder: Recorder
@@ -50,6 +57,8 @@ let recorder: Recorder
 let cartResponse: Cart
 let licenseResponse: { status: number; licenses: License[] }
 let putStatus: number
+/** Response (or HTTP status) the mocked `GET /address` hands back. */
+let addressResponse: { status: number; addresses: Address[] }
 
 /**
  * Registers the cart/license/address/tax handlers this suite drives. Everything the hook touches
@@ -84,6 +93,13 @@ const installHandlers = () => {
       }
       return HttpResponse.json({ licenses: licenseResponse.licenses, total: licenseResponse.licenses.length })
     }),
+    http.get("*/backend-api/address", () => {
+      recorder.addressGets += 1
+      if (addressResponse.status >= 400) {
+        return new HttpResponse(null, { status: addressResponse.status })
+      }
+      return HttpResponse.json(addressResponse.addresses)
+    }),
   )
 }
 
@@ -99,7 +115,25 @@ const blockedItem = () =>
     userProduct: makeCartUserProduct({ userProductId: "up-blocked", stockAlert: "Out of stock" }),
   })
 
-const renderCartPage = () => renderHook(() => useCartPage())
+/** Wraps a hook tree the same way the app does: one `QueryClient` per render. */
+const renderCartPage = () => {
+  const { wrapper } = createQueryWrapper()
+  return renderHook(() => useCartPage(), { wrapper })
+}
+
+/** Same as `renderCartPage`, but also hands back the `QueryClient` for direct cache control. */
+const renderCartPageWithClient = () => {
+  const { wrapper, client } = createQueryWrapper()
+  const rendered = renderHook(() => useCartPage(), { wrapper })
+  return { ...rendered, client }
+}
+
+/** Same as `renderCartPage`, but also mounted under `StrictMode` (double mount/unmount). */
+const renderCartPageStrictMode = () => {
+  const { wrapper: queryWrapper } = createQueryWrapper()
+  const wrapper = ({ children }: { children: ReactNode }) => createElement(StrictMode, null, queryWrapper({ children }))
+  return renderHook(() => useCartPage(), { wrapper })
+}
 
 /** Lets the real 450ms debounce window elapse (and any resulting state update settle). */
 const settleDebounceWindow = async () => {
@@ -120,11 +154,23 @@ const renderReadyCartPage = async () => {
 describe("useCartPage", () => {
   // Store setup lives in `beforeEach`: a file-local `afterEach` would run before the global
   // `cleanup()` and tear state down while the hook is still mounted.
+  //
+  // `src/lib/api/address.ts` memoises `GET /address` responses in module scope with no reset
+  // hook (2s dedup window keyed on `Date.now()`), so a fast-running test right after another
+  // would otherwise see the previous test's cached address list. Faking "now" forward per test
+  // keeps one test's address data out of the next (same fix as `CheckoutPage.test.tsx`).
+  let clockOffset = 0
   beforeEach(() => {
-    recorder = { cartGets: 0, puts: [], deleteItems: [], cartDeletes: 0, licenseGets: 0 }
+    vi.restoreAllMocks()
+    clockOffset += 60_000
+    const realNow = Date.now.bind(Date)
+    vi.spyOn(Date, "now").mockImplementation(() => realNow() + clockOffset)
+
+    recorder = { cartGets: 0, puts: [], deleteItems: [], cartDeletes: 0, licenseGets: 0, addressGets: 0 }
     cartResponse = makeCart()
     licenseResponse = { status: 200, licenses: [makeLicense()] }
     putStatus = 200
+    addressResponse = { status: 200, addresses: [makeAddress()] }
     mockToastError.mockClear()
     mockToastWarning.mockClear()
     installHandlers()
@@ -143,7 +189,7 @@ describe("useCartPage", () => {
     // StrictMode mounts, unmounts and remounts every effect, so `fetchCart` runs twice. The
     // store's in-flight/dedup window must collapse that into a single HTTP request.
     it("issues only one HTTP request under StrictMode's double mount", async () => {
-      const { result } = renderHook(() => useCartPage(), { wrapper: StrictMode })
+      const { result } = renderCartPageStrictMode()
 
       await waitFor(() => {
         expect(result.current.viewState).toBe("ready")
@@ -864,6 +910,241 @@ describe("useCartPage", () => {
       // panel can show "calculated at checkout" instead of a misleading $0.00 tax line.
       expect(result.current.totals.tax).toBeNull()
       expect(result.current.totals.total).toBe(result.current.totals.subtotal + result.current.totals.totalShipmentFee)
+    })
+
+    it("never estimates tax when there is no address on file", async () => {
+      addressResponse = { status: 200, addresses: [] }
+      let taxCalls = 0
+      server.use(
+        http.post("*/backend-api/cart/tax-estimate", () => {
+          taxCalls += 1
+          return HttpResponse.json(makeTaxEstimate())
+        }),
+      )
+      const { result } = await renderReadyCartPage()
+
+      await waitFor(() => {
+        expect(recorder.addressGets).toBe(1)
+      })
+
+      expect(result.current.totals.tax).toBeNull()
+      expect(result.current.isTaxLoading).toBe(false)
+      expect(taxCalls).toBe(0)
+    })
+
+    // design doc §6: `placeholderData: keepPreviousData` - a new estimate (triggered here by a
+    // quantity change, which shifts `linesSignature`) must not flash the tax line back to
+    // "calculated at checkout" while the new number is in flight.
+    it("keeps the previous tax estimate on screen while a new one is in flight", async () => {
+      let call = 0
+      let releaseSecondCall: (() => void) | undefined
+      const secondCallGate = new Promise<void>((resolve) => {
+        releaseSecondCall = resolve
+      })
+      server.use(
+        http.post("*/backend-api/cart/tax-estimate", async () => {
+          call += 1
+          if (call === 2) {
+            await secondCallGate
+          }
+          return HttpResponse.json(makeTaxEstimate({ taxAmount: call === 1 ? 5 : 9 }))
+        }),
+      )
+
+      const { result } = await renderReadyCartPage()
+      await waitFor(() => {
+        expect(result.current.totals.tax).toBe(5)
+      })
+
+      // Bumps the quantity, which changes `linesSignature` (and therefore the tax-estimate query
+      // key) immediately - independent of the 450ms write debounce.
+      act(() => {
+        result.current.onQuantityChange("up-1", 2, 1)
+      })
+
+      await waitFor(() => {
+        expect(result.current.isTaxLoading).toBe(true)
+      })
+      expect(result.current.totals.tax).toBe(5)
+
+      await act(async () => {
+        releaseSecondCall?.()
+        await secondCallGate
+      })
+
+      await waitFor(() => {
+        expect(result.current.totals.tax).toBe(9)
+      })
+      expect(result.current.isTaxLoading).toBe(false)
+    })
+
+    it("picks the default address once at mount and keeps using it after the address list refetches", async () => {
+      addressResponse = {
+        status: 200,
+        addresses: [
+          makeAddress({ id: "addr-1", defaultAddress: true }),
+          makeAddress({ id: "addr-2", defaultAddress: false }),
+        ],
+      }
+      server.use(
+        http.post("*/backend-api/cart/tax-estimate", async ({ request }) => {
+          const body = (await request.json()) as { addressId: string }
+          return HttpResponse.json(makeTaxEstimate({ taxAmount: body.addressId === "addr-1" ? 3 : 99 }))
+        }),
+      )
+
+      const { result, client } = renderCartPageWithClient()
+      await waitFor(() => {
+        expect(result.current.totals.tax).toBe(3)
+      })
+
+      // The backend's default address flips to addr-2 and the list refetches - the page must
+      // keep using the address it picked at mount, not silently switch mid-session.
+      addressResponse = {
+        status: 200,
+        addresses: [
+          makeAddress({ id: "addr-1", defaultAddress: false }),
+          makeAddress({ id: "addr-2", defaultAddress: true }),
+        ],
+      }
+      // `addressAPI` memoises `GET /address` for 2s regardless of React Query's own cache
+      // settings - push the faked clock past that window so this refetch actually hits MSW.
+      clockOffset += 3_000
+      await act(async () => {
+        await client.refetchQueries({ queryKey: queryKeys.addresses.list() })
+      })
+      await waitFor(() => {
+        expect(recorder.addressGets).toBe(2)
+      })
+
+      expect(result.current.totals.tax).toBe(3)
+    })
+
+    it("does not toast when the default-address lookup fails - tax simply stays unestimated", async () => {
+      addressResponse = { status: 500, addresses: [] }
+      const { result } = await renderReadyCartPage()
+
+      await waitFor(() => {
+        expect(recorder.addressGets).toBe(1)
+      })
+
+      expect(result.current.totals.tax).toBeNull()
+      expect(mockToastError).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("errors", () => {
+    it("toasts the fetch failure exactly once", async () => {
+      server.use(http.get("*/backend-api/cart", () => new HttpResponse(null, { status: 500 })))
+      renderCartPage()
+
+      await waitFor(() => {
+        expect(mockToastError).toHaveBeenCalledWith("Cart unavailable", expect.any(String))
+      })
+      expect(mockToastError).toHaveBeenCalledTimes(1)
+    })
+
+    it("toasts once when removing an item fails", async () => {
+      server.use(http.delete("*/backend-api/cart/items", () => new HttpResponse(null, { status: 500 })))
+      const { result } = await renderReadyCartPage()
+
+      act(() => {
+        result.current.onRemoveItem("up-1")
+      })
+
+      await waitFor(() => {
+        expect(mockToastError).toHaveBeenCalledWith("Cart unavailable", expect.any(String))
+      })
+      expect(mockToastError).toHaveBeenCalledTimes(1)
+    })
+
+    // A real 401 drives the axios interceptor's `handleAuthFailure` (it flags the error
+    // `authHandled` before this hook ever sees it) - the interceptor's own session teardown is
+    // the only reaction, never this page's generic "Cart unavailable" toast.
+    it("does not toast when the cart fetch fails with an auth-handled 401", async () => {
+      useAuthStore.getState().setAuth(makeAccountUser(), "token-1", "refresh-1")
+      let cartGetAttempts = 0
+      server.use(
+        http.post("*/backend-api/auth/logout", () => new HttpResponse(null, { status: 200 })),
+        http.get("*/backend-api/cart", () => {
+          cartGetAttempts += 1
+          return new HttpResponse(null, { status: 401 })
+        }),
+      )
+
+      renderCartPage()
+
+      await waitFor(() => {
+        expect(cartGetAttempts).toBeGreaterThan(0)
+      })
+      // Give the interceptor's async session teardown a turn to run before asserting silence.
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      })
+
+      expect(mockToastError).not.toHaveBeenCalled()
+    })
+
+    it("does not toast when removing an item fails with an auth-handled 401", async () => {
+      useAuthStore.getState().setAuth(makeAccountUser(), "token-1", "refresh-1")
+      let deleteAttempts = 0
+      server.use(
+        http.post("*/backend-api/auth/logout", () => new HttpResponse(null, { status: 200 })),
+        http.delete("*/backend-api/cart/items", () => {
+          deleteAttempts += 1
+          return new HttpResponse(null, { status: 401 })
+        }),
+      )
+      const { result } = await renderReadyCartPage()
+
+      act(() => {
+        result.current.onRemoveItem("up-1")
+      })
+
+      await waitFor(() => {
+        expect(deleteAttempts).toBe(1)
+      })
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      })
+
+      expect(mockToastError).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("write in-flight state", () => {
+    // Ports the design doc's `refreshingWrites` guarantee (cart-queries.ts) through the hook:
+    // the write's own "in flight" state and the cart query's refresh must settle as ONE update,
+    // never two - otherwise the page would flash "loading" for a frame right as the last item
+    // leaves, between the write settling and the refreshed (now empty) cart landing.
+    it("moves straight from ready to empty when the last item is removed - no loading flash in between", async () => {
+      const viewStateHistory: string[] = []
+      const { wrapper } = createQueryWrapper()
+      const { result } = renderHook(
+        () => {
+          const page = useCartPage()
+          viewStateHistory.push(page.viewState)
+          return page
+        },
+        { wrapper },
+      )
+
+      await waitFor(() => {
+        expect(result.current.viewState).toBe("ready")
+      })
+      viewStateHistory.length = 0
+
+      act(() => {
+        cartResponse = makeCart({ cartItems: [] })
+        result.current.onRemoveItem("up-1")
+      })
+
+      await waitFor(() => {
+        expect(result.current.viewState).toBe("empty")
+      })
+
+      expect(result.current.items).toEqual([])
+      expect(viewStateHistory).not.toContain("loading")
     })
   })
 })

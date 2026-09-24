@@ -1,4 +1,4 @@
-import type { QueryClient } from "@tanstack/react-query"
+import { CancelledError, type QueryClient } from "@tanstack/react-query"
 import { HttpResponse, http } from "msw"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { type Cart, cartAPI } from "@/lib/api/cart"
@@ -7,7 +7,15 @@ import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
 import { makeAccountUser, makeCart, makeCartItem, makeCartUserProduct } from "@/test/factories"
 import { createQueryWrapper } from "@/test/render"
-import { type CartData, cartCommands, cartQueryOptions, EMPTY_CART, refreshCart } from "./cart-queries"
+import {
+  type CartData,
+  cartCommands,
+  cartQueryOptions,
+  EMPTY_CART,
+  fetchErrorMessage,
+  refreshCart,
+  writeErrorMessage,
+} from "./cart-queries"
 
 /**
  * Port of `src/stores/cartStore.test.ts` / `cartStore.scale.test.ts` onto the query-cache core.
@@ -926,5 +934,81 @@ describe("cartQueryOptions", () => {
 
     expect(options.queryKey).toEqual(queryKeys.cart.detail())
     expect(options.staleTime).toBe(1_000)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// writeErrorMessage / fetchErrorMessage - the shared toast-message helpers behind cartStore's
+// mutation/query-cache projection AND useCartPage's own toasts (design doc §7 step 4 revision:
+// moved here from cartStore.ts so neither consumer re-implements the fallback/skip rules).
+// ---------------------------------------------------------------------------
+describe("writeErrorMessage", () => {
+  it.each([
+    ["addItem", "Failed to add item"],
+    ["removeItem", "Failed to remove item"],
+    ["updateQuantity", "Failed to update quantity"],
+    ["clearCart", "Failed to clear cart"],
+  ] as const)("%s: an Error's own message wins over the fallback", (command, fallback) => {
+    expect(writeErrorMessage(command, new Error("boom"))).toBe("boom")
+    expect(fallback).not.toBe("boom") // sanity: fallback and message are actually different strings
+  })
+
+  it.each([
+    ["addItem", "Failed to add item"],
+    ["removeItem", "Failed to remove item"],
+    ["updateQuantity", "Failed to update quantity"],
+    ["clearCart", "Failed to clear cart"],
+  ] as const)("%s: a non-Error rejection falls back to %s", (command, fallback) => {
+    expect(writeErrorMessage(command, "just a string")).toBe(fallback)
+    expect(writeErrorMessage(command, { weird: true })).toBe(fallback)
+  })
+
+  it.each(["addItem", "removeItem", "updateQuantity", "clearCart"] as const)(
+    "%s: an auth-handled error is silent (undefined)",
+    (command) => {
+      expect(writeErrorMessage(command, Object.assign(new Error("boom"), { authHandled: true }))).toBeUndefined()
+    },
+  )
+
+  it("setItemAutoOrder never produces a message - its caller owns that toast", () => {
+    expect(writeErrorMessage("setItemAutoOrder", new Error("boom"))).toBeUndefined()
+    expect(writeErrorMessage("setItemAutoOrder", "just a string")).toBeUndefined()
+    expect(
+      writeErrorMessage("setItemAutoOrder", Object.assign(new Error("boom"), { authHandled: true })),
+    ).toBeUndefined()
+  })
+
+  // addToCart alone also treats a bare 401 (not yet flagged `authHandled` by the interceptor) as
+  // an auth failure - every other command surfaces a bare 401 as a normal, message-bearing error.
+  it("addItem: a bare 401 status is silent even without the interceptor's authHandled flag", () => {
+    const bare401 = Object.assign(new Error("boom"), { response: { status: 401 } })
+    expect(writeErrorMessage("addItem", bare401)).toBeUndefined()
+  })
+
+  it.each(["removeItem", "updateQuantity", "clearCart"] as const)(
+    "%s: a bare 401 status is NOT treated as auth - it still produces a message",
+    (command) => {
+      const bare401 = Object.assign(new Error("boom"), { response: { status: 401 } })
+      expect(writeErrorMessage(command, bare401)).toBe("boom")
+    },
+  )
+})
+
+describe("fetchErrorMessage", () => {
+  it("an Error's own message wins over the fallback", () => {
+    expect(fetchErrorMessage(new Error("boom"))).toBe("boom")
+  })
+
+  it("a non-Error rejection falls back to a generic message", () => {
+    expect(fetchErrorMessage("just a string")).toBe("Failed to fetch cart")
+    expect(fetchErrorMessage({ weird: true })).toBe("Failed to fetch cart")
+  })
+
+  it("an auth-handled error is silent (undefined)", () => {
+    expect(fetchErrorMessage(Object.assign(new Error("boom"), { authHandled: true }))).toBeUndefined()
+  })
+
+  it("a cancelled fetch is silent (undefined)", () => {
+    expect(fetchErrorMessage(new CancelledError())).toBeUndefined()
   })
 })

@@ -35,8 +35,19 @@ const installHandlers = () => {
   )
 }
 
+/**
+ * `CartLoadingState`, `CartEmptyState` and `CartContent` all render their own "Shopping Cart"
+ * H1, so `await screen.findByRole(...)` (find, THEN assert) can resolve against the transient
+ * loading/empty heading and, by the time `.toBeInTheDocument()` runs a tick later, that node has
+ * already been unmounted in favour of `CartContent`'s own H1 - a stale-node race, not a real
+ * "not found". Query AND assert inside the same `waitFor` poll instead (no gap for a re-render to
+ * land in), and match on `CartContent`'s "Cart Items (N)" heading, which only the ready view ever
+ * renders.
+ */
 const waitForCartReady = async () => {
-  expect(await screen.findByRole("heading", { name: "Shopping Cart" })).toBeInTheDocument()
+  await waitFor(() => {
+    expect(screen.getByRole("heading", { name: /^Cart Items/ })).toBeInTheDocument()
+  })
 }
 
 describe("CartPage", () => {
