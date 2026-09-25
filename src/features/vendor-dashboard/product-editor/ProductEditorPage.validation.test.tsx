@@ -8,7 +8,7 @@ import { useAuthStore } from "@/stores/authStore"
 import { makeAccountUser, makeProduct, makeVendorUserProduct } from "@/test/factories"
 import { installRadixPointerPolyfills } from "@/test/radix"
 import { render, screen, waitFor } from "@/test/render"
-import CreateProductPage from "./page"
+import CreateProductPage from "./ProductEditorPage"
 
 installRadixPointerPolyfills()
 

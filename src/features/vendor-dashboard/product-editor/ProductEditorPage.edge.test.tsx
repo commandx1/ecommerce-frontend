@@ -7,7 +7,7 @@ import { useAuthStore } from "@/stores/authStore"
 import { makeAccountUser, makeProduct, makeUserProductDetailResponse, makeVendorUserProduct } from "@/test/factories"
 import { installRadixPointerPolyfills } from "@/test/radix"
 import { fireEvent, render, screen, waitFor, within } from "@/test/render"
-import CreateProductPage from "./page"
+import CreateProductPage from "./ProductEditorPage"
 
 installRadixPointerPolyfills()
 
@@ -152,10 +152,7 @@ describe("CreateProductPage — header", () => {
   it("labels the icon-only back link so it has an accessible name", () => {
     render(<CreateProductPage />)
 
-    expect(screen.getByRole("link", { name: "Back to products" })).toHaveAttribute(
-      "href",
-      "/vendor-dashboard/products",
-    )
+    expect(screen.getByRole("link", { name: "Back to products" })).toHaveAttribute("href", "/vendor-dashboard/products")
   })
 })
 
