@@ -5,17 +5,7 @@ import type {
   UserProductSortBy,
   UserProductsFilterResponse,
 } from "./product-types"
-import { apiRequest } from "./request"
-
-const BASE_URL = "" // Use Next.js API routes at /api/...
-
-function getAuthHeaders(token?: string): Record<string, string> {
-  if (!token) {
-    return {}
-  }
-
-  return { Authorization: `Bearer ${token}` }
-}
+import { apiRequest, bearerAuthHeaders } from "./request"
 
 // ==================== User Products ====================
 
@@ -27,8 +17,8 @@ export async function createUserProduct(payload: CreateUserProductPayload, token
   return apiRequest.requestJson<UserProduct, CreateUserProductPayload>({
     client: "app",
     method: "POST",
-    url: `${BASE_URL}/api/user-products`,
-    headers: getAuthHeaders(token),
+    url: "/api/user-products",
+    headers: bearerAuthHeaders(token),
     withCredentials: true,
     data: payload,
     fallbackMessage: "Failed to create user product",
@@ -43,8 +33,8 @@ export async function getUserProducts(token: string): Promise<UserProduct[]> {
   return apiRequest.requestJson<UserProduct[]>({
     client: "app",
     method: "GET",
-    url: `${BASE_URL}/api/user-products`,
-    headers: getAuthHeaders(token),
+    url: "/api/user-products",
+    headers: bearerAuthHeaders(token),
     withCredentials: true,
     fallbackMessage: "Failed to fetch user products",
   })
@@ -58,8 +48,8 @@ export async function getUserProductById(id: string, token: string): Promise<Use
   return apiRequest.requestJson<UserProductDetailResponse>({
     client: "app",
     method: "GET",
-    url: `${BASE_URL}/api/user-products/${id}`,
-    headers: getAuthHeaders(token),
+    url: `/api/user-products/${id}`,
+    headers: bearerAuthHeaders(token),
     withCredentials: true,
     fallbackMessage: "Failed to fetch user product",
   })
@@ -77,8 +67,8 @@ export async function bulkDiscount(
   return apiRequest.requestJson<UserProduct[]>({
     client: "app",
     method: "POST",
-    url: `${BASE_URL}/api/user-products/bulk-discount`,
-    headers: getAuthHeaders(token),
+    url: "/api/user-products/bulk-discount",
+    headers: bearerAuthHeaders(token),
     withCredentials: true,
     data: payload,
     signal,
@@ -94,8 +84,8 @@ export async function getUserProductBrands(token: string, signal?: AbortSignal):
   return apiRequest.requestJson<string[]>({
     client: "app",
     method: "GET",
-    url: `${BASE_URL}/api/user-products/brands`,
-    headers: getAuthHeaders(token),
+    url: "/api/user-products/brands",
+    headers: bearerAuthHeaders(token),
     withCredentials: true,
     signal,
     fallbackMessage: "Failed to fetch vendor brands",
@@ -122,8 +112,8 @@ export async function filterUserProducts(
   const response = await apiRequest.requestResponse<unknown>({
     client: "app",
     method: "GET",
-    url: `${BASE_URL}/api/user-products/filter`,
-    headers: getAuthHeaders(token),
+    url: "/api/user-products/filter",
+    headers: bearerAuthHeaders(token),
     withCredentials: true,
     params: {
       type,
@@ -270,8 +260,8 @@ export async function updateUserProduct(
   >({
     client: "app",
     method: "PUT",
-    url: `${BASE_URL}/api/user-products/${id}`,
-    headers: getAuthHeaders(token),
+    url: `/api/user-products/${id}`,
+    headers: bearerAuthHeaders(token),
     withCredentials: true,
     data: payload,
     fallbackMessage: "Failed to update user product",
@@ -286,8 +276,8 @@ export async function deleteUserProduct(id: string, token: string): Promise<void
   await apiRequest.requestJson<void>({
     client: "app",
     method: "DELETE",
-    url: `${BASE_URL}/api/user-products/${id}`,
-    headers: getAuthHeaders(token),
+    url: `/api/user-products/${id}`,
+    headers: bearerAuthHeaders(token),
     withCredentials: true,
     fallbackMessage: "Failed to delete user product",
   })

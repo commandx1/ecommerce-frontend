@@ -1,6 +1,7 @@
 import { keepPreviousData, queryOptions } from "@tanstack/react-query"
 import { productsAPI, type UserProductSortBy } from "@/lib/api/products"
 import { queryKeys, type VendorProductListParams } from "@/lib/query/keys"
+import { FETCH_ONCE_PER_MOUNT } from "@/lib/query/query-client"
 import { mapFilterProductsToRows, mapReviewItemsToRows } from "../lib/product-list-mappers"
 import type { ProductWithDetails } from "../types"
 
@@ -65,9 +66,7 @@ export function vendorProductsListOptions(
       }
     },
     enabled,
-    staleTime: 0,
-    gcTime: 0,
-    retry: false,
+    ...FETCH_ONCE_PER_MOUNT,
     placeholderData: keepPreviousData,
   })
 }

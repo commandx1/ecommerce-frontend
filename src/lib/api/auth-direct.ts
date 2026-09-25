@@ -3,7 +3,7 @@
 import type { ShipmentPolicy } from "@/lib/api/company"
 import type { BusinessType } from "@/lib/constants/business-types"
 import { appApiClient } from "./client"
-import { apiRequest } from "./request"
+import { apiRequest, bearerAuthHeaders } from "./request"
 
 export type { ShipmentPolicy }
 
@@ -101,14 +101,6 @@ export interface UpdateUserPayload {
 }
 
 class AuthAPIDirect {
-  private getAuthHeaders(token?: string): Record<string, string> {
-    if (!token) {
-      return {}
-    }
-
-    return { Authorization: `Bearer ${token}` }
-  }
-
   private normalizeSoftResponse(data: unknown) {
     if (!data) {
       return { success: true }
@@ -207,7 +199,7 @@ class AuthAPIDirect {
     await apiRequest.requestJson<void, { refreshToken: string }>({
       client: "backend",
       method: "POST",
-      headers: this.getAuthHeaders(token),
+      headers: bearerAuthHeaders(token),
       url: "/auth/logout",
       data: payload,
       validateStatus: () => true,
@@ -278,7 +270,7 @@ class AuthAPIDirect {
     return apiRequest.requestJson<UserResponse>({
       client: "backend",
       method: "GET",
-      headers: this.getAuthHeaders(token),
+      headers: bearerAuthHeaders(token),
       url: "/users/me",
       fallbackMessage: "Failed to fetch user profile",
     })
@@ -288,7 +280,7 @@ class AuthAPIDirect {
     return apiRequest.requestJson<UserResponse, UpdateUserPayload>({
       client: "backend",
       method: "PUT",
-      headers: this.getAuthHeaders(token),
+      headers: bearerAuthHeaders(token),
       url: "/users/me",
       data: payload,
       fallbackMessage: "Failed to update user profile",
@@ -299,7 +291,7 @@ class AuthAPIDirect {
     await apiRequest.requestJson<void>({
       client: "backend",
       method: "DELETE",
-      headers: this.getAuthHeaders(token),
+      headers: bearerAuthHeaders(token),
       url: "/users/me",
       fallbackMessage: "Failed to delete user profile",
     })

@@ -11,19 +11,14 @@ import {
 } from "@/lib/api/vendor-dashboard"
 import { type VendorOrdersResponse, vendorOrdersAPI } from "@/lib/api/vendor-orders"
 import { queryKeys } from "@/lib/query/keys"
-
-/**
- * No caching on any overview/analytics query: a route revisit re-fetches and shows the skeleton.
- * `retry: false` - one request, then the error+Retry UI (the Retry button re-fetches).
- */
-const PARITY_OPTIONS = { staleTime: 0, gcTime: 0, retry: false } as const
+import { FETCH_ONCE_PER_MOUNT } from "@/lib/query/query-client"
 
 export function revenueSummaryOptions(daysFromNow: number, enabled: boolean) {
   return queryOptions<VendorRevenueSummary>({
     queryKey: queryKeys.vendor.overview.revenueSummary(daysFromNow),
     queryFn: ({ signal }) => vendorDashboardAPI.getRevenueSummary(daysFromNow, signal),
     enabled,
-    ...PARITY_OPTIONS,
+    ...FETCH_ONCE_PER_MOUNT,
   })
 }
 
@@ -32,7 +27,7 @@ export function reviewSummaryOptions(enabled: boolean) {
     queryKey: queryKeys.vendor.overview.reviewSummary(),
     queryFn: ({ signal }) => vendorDashboardAPI.getReviewSummary(signal),
     enabled,
-    ...PARITY_OPTIONS,
+    ...FETCH_ONCE_PER_MOUNT,
   })
 }
 
@@ -45,7 +40,7 @@ export function periodicRevenueOptions(params: { months?: number }, enabled: boo
         signal,
       ),
     enabled,
-    ...PARITY_OPTIONS,
+    ...FETCH_ONCE_PER_MOUNT,
   })
 }
 
@@ -58,7 +53,7 @@ export function topSellingOptions(
     queryFn: ({ signal }) =>
       vendorDashboardAPI.getTopSellingProducts(params.page, params.size, params.daysFromNow, params.sortDir, signal),
     enabled,
-    ...PARITY_OPTIONS,
+    ...FETCH_ONCE_PER_MOUNT,
   })
 }
 
@@ -67,7 +62,7 @@ export function stockSummaryOptions(params: { page: number; size: number }, enab
     queryKey: queryKeys.vendor.overview.stockSummary(params),
     queryFn: ({ signal }) => vendorDashboardAPI.getStockSummary(params.page, params.size, signal),
     enabled,
-    ...PARITY_OPTIONS,
+    ...FETCH_ONCE_PER_MOUNT,
   })
 }
 
@@ -76,7 +71,7 @@ export function geoDistributionOptions(params: { daysFromNow?: number }, enabled
     queryKey: queryKeys.vendor.overview.geo(params),
     queryFn: ({ signal }) => vendorDashboardAPI.getGeographicDistribution(params.daysFromNow, signal),
     enabled,
-    ...PARITY_OPTIONS,
+    ...FETCH_ONCE_PER_MOUNT,
   })
 }
 
@@ -93,6 +88,6 @@ export function recentOrdersOptions(enabled: boolean) {
     }),
     queryFn: ({ signal }) => vendorOrdersAPI.getVendorOrders(0, 4, "createdDate", "desc", "ALL", signal),
     enabled,
-    ...PARITY_OPTIONS,
+    ...FETCH_ONCE_PER_MOUNT,
   })
 }

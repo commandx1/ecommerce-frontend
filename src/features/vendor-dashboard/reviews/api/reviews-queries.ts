@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query"
 import { getVendorReviewDashboard, type VendorReviewDashboard } from "@/lib/api/vendor-reviews"
 import { queryKeys } from "@/lib/query/keys"
+import { FETCH_ONCE_PER_MOUNT } from "@/lib/query/query-client"
 
 /**
  * `getVendorReviewDashboard` never throws (it resolves `null` on any failure), so this query never
@@ -12,8 +13,6 @@ export function vendorReviewsDashboardOptions(accessToken: string | undefined) {
     queryKey: queryKeys.vendor.reviews.dashboard(),
     queryFn: () => getVendorReviewDashboard(accessToken as string),
     enabled: Boolean(accessToken),
-    staleTime: 0,
-    gcTime: 0,
-    retry: false,
+    ...FETCH_ONCE_PER_MOUNT,
   })
 }

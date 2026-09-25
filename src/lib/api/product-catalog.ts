@@ -9,17 +9,7 @@ import type {
   PageResponse,
   Product,
 } from "./product-types"
-import { apiRequest } from "./request"
-
-const BASE_URL = "" // Use Next.js API routes at /api/...
-
-function getAuthHeaders(token?: string): Record<string, string> {
-  if (!token) {
-    return {}
-  }
-
-  return { Authorization: `Bearer ${token}` }
-}
+import { apiRequest, bearerAuthHeaders } from "./request"
 
 // ==================== Product CRUD ====================
 
@@ -53,7 +43,7 @@ export async function createProductForReview(payload: CreateProductForReviewPayl
     headers: {
       Authorization: `Bearer ${token}`,
     },
-    url: `${BASE_URL}/api/products/review`,
+    url: "/api/products/review",
     withCredentials: true,
     data: formData,
     fallbackMessage: "Failed to submit product for review",
@@ -92,7 +82,7 @@ export async function updateProductForReview(
     headers: {
       Authorization: `Bearer ${token}`,
     },
-    url: `${BASE_URL}/api/products/review/${id}`,
+    url: `/api/products/review/${id}`,
     withCredentials: true,
     data: formData,
     fallbackMessage: "Failed to update product for review",
@@ -117,8 +107,8 @@ export async function getMyProducts(
   return apiRequest.requestJson<MyProductsPageResponse>({
     client: "app",
     method: "GET",
-    url: `${BASE_URL}/api/products/my-products`,
-    headers: getAuthHeaders(token),
+    url: "/api/products/my-products",
+    headers: bearerAuthHeaders(token),
     withCredentials: true,
     params: {
       approved: params.approved ?? "ALL",
@@ -142,8 +132,8 @@ export async function getProductById(id: string, token?: string): Promise<Produc
   return apiRequest.requestJson<Product>({
     client: "app",
     method: "GET",
-    url: `${BASE_URL}/api/products/${id}`,
-    headers: getAuthHeaders(token),
+    url: `/api/products/${id}`,
+    headers: bearerAuthHeaders(token),
     withCredentials: true,
     fallbackMessage: "Failed to fetch product",
   })
@@ -158,8 +148,8 @@ export async function getProductByIdForOwner(id: string, token?: string): Promis
   return apiRequest.requestJson<Product>({
     client: "app",
     method: "GET",
-    url: `${BASE_URL}/api/products/${id}/owner`,
-    headers: getAuthHeaders(token),
+    url: `/api/products/${id}/owner`,
+    headers: bearerAuthHeaders(token),
     withCredentials: true,
     fallbackMessage: "Failed to fetch product",
   })
@@ -179,8 +169,8 @@ export async function searchBrands(
   return apiRequest.requestJson<PageResponse<string>>({
     client: "app",
     method: "GET",
-    headers: getAuthHeaders(token),
-    url: `${BASE_URL}/api/products/brands/search`,
+    headers: bearerAuthHeaders(token),
+    url: "/api/products/brands/search",
     params: {
       search: params.search,
       page: params.page ?? 0,
@@ -204,8 +194,8 @@ export async function searchActiveProducts(
   return apiRequest.requestJson<PageResponse<ActiveProductSearchItem>>({
     client: "app",
     method: "GET",
-    headers: getAuthHeaders(token),
-    url: `${BASE_URL}/api/products/active`,
+    headers: bearerAuthHeaders(token),
+    url: "/api/products/active",
     params: {
       search: params.search,
       page: params.page ?? 0,

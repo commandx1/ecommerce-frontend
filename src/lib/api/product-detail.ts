@@ -7,13 +7,7 @@ import type {
   ReviewsResponse,
 } from "@/features/products/product-detail/types"
 import { apiRequest } from "./request"
-
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8081"
-
-function requireBackendUrl() {
-  if (!BACKEND_URL) throw new Error("BACKEND_URL is not set")
-  return BACKEND_URL
-}
+import { requireBackendUrl } from "./server-request"
 
 async function getAccessTokenFromCookie(): Promise<string | null> {
   const cookieStore = await cookies()

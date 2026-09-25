@@ -7,6 +7,7 @@ import {
   type VendorPageResponse,
 } from "@/lib/api/vendors"
 import { queryKeys, type VendorDirectoryParams } from "@/lib/query/keys"
+import { FETCH_ONCE_PER_MOUNT } from "@/lib/query/query-client"
 
 /**
  * Every param is required (`null` when unset) so two callers cannot drift into two keys for one
@@ -25,9 +26,7 @@ export function vendorsDirectoryOptions(params: VendorDirectoryParams, enabled =
         signal,
       }),
     enabled,
-    staleTime: 0,
-    gcTime: 0,
-    retry: false,
+    ...FETCH_ONCE_PER_MOUNT,
   })
 }
 
@@ -37,9 +36,7 @@ export function vendorFavoriteIdsOptions(enabled = true) {
     queryKey: queryKeys.vendors.favorites.ids(),
     queryFn: () => getMyFavoriteVendorIds(),
     enabled,
-    staleTime: 0,
-    gcTime: 0,
-    retry: false,
+    ...FETCH_ONCE_PER_MOUNT,
   })
 }
 
@@ -49,8 +46,6 @@ export function vendorFavoritesListOptions(enabled = true) {
     queryKey: queryKeys.vendors.favorites.list(),
     queryFn: () => getMyFavoriteVendors(),
     enabled,
-    staleTime: 0,
-    gcTime: 0,
-    retry: false,
+    ...FETCH_ONCE_PER_MOUNT,
   })
 }

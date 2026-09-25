@@ -1,21 +1,13 @@
 import type { AxiosResponse } from "axios"
 import { NextResponse } from "next/server"
 import { apiRequest } from "@/lib/api/request"
+import { requireBackendUrl } from "@/lib/api/server-request"
 import type { ProductRequestMethod } from "./types"
 
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8081"
 const DEFAULT_HEADERS = {
   "User-Agent": "Mozilla/5.0",
   Accept: "application/json",
 } as const
-
-function requireBackendUrl() {
-  if (!BACKEND_URL) {
-    throw new Error("BACKEND_URL is not set")
-  }
-
-  return BACKEND_URL
-}
 
 function createHeaders(authHeader?: string, includeJsonContentType = false): Record<string, string> {
   const headers: Record<string, string> = {

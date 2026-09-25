@@ -9,6 +9,11 @@ type RequestConfig<TBody = unknown> = {
   fallbackMessage?: string
 } & Omit<AxiosRequestConfig<TBody>, "data">
 
+/** `Authorization: Bearer <token>` when a token is given, otherwise no headers. */
+export function bearerAuthHeaders(token?: string): Record<string, string> {
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
 export class ApiRequestError extends Error {
   status?: number
   data?: unknown

@@ -1,6 +1,5 @@
 import { apiRequest } from "./request"
-
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8081"
+import { requireBackendUrl } from "./server-request"
 
 export type PublicProductsResponse<TProduct = unknown> = {
   content?: TProduct[]
@@ -12,13 +11,6 @@ export type FilterOption = { name: string; count: number }
 export type VendorOption = { id: string; name: string; count: number }
 export type AttributeValueOption = { value: string; count: number }
 export type AttributeGroup = { attributeName: string; values: AttributeValueOption[] }
-
-function requireBackendUrl() {
-  if (!BACKEND_URL) {
-    throw new Error("BACKEND_URL is not set")
-  }
-  return BACKEND_URL
-}
 
 export interface PublicProductsFilterParams {
   brands?: string[]

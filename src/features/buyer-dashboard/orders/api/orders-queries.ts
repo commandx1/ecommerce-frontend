@@ -8,7 +8,7 @@ import {
   type RefundOrderResponse,
 } from "@/lib/api/buyer-orders"
 import { type BuyerOrderListParams, queryKeys } from "@/lib/query/keys"
-import { getQueryClient } from "@/lib/query/query-client"
+import { FETCH_ONCE_PER_MOUNT, getQueryClient } from "@/lib/query/query-client"
 import { applyRefundSubmitted, markItemsCancelRequested } from "../lib/order-patches"
 
 export interface BuyerOrdersListResult {
@@ -43,9 +43,7 @@ export function buyerOrdersListOptions(params: BuyerOrderListParams, enabled: bo
       }
     },
     enabled,
-    staleTime: 0,
-    gcTime: 0,
-    retry: false,
+    ...FETCH_ONCE_PER_MOUNT,
   })
 }
 

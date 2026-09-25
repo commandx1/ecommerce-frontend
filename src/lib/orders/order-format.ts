@@ -42,6 +42,12 @@ export function getSellerFirstTwoLetters(value: string): string {
   return `${words[0][0] ?? ""}${words[1][0] ?? ""}`.toUpperCase()
 }
 
+export function getOrderStatusClasses(orderStatus: string): string {
+  return orderStatus === "PAYMENT_SUCCESS"
+    ? "border border-success/20 bg-success/14 text-success"
+    : "border border-border-soft bg-surface-muted text-text-primary"
+}
+
 export function getOrderItemStatusTagClass(status: string): string {
   const normalizedStatus = typeof status === "string" ? status.toUpperCase() : ""
 

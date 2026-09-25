@@ -2,6 +2,12 @@ import { isServer, QueryClient } from "@tanstack/react-query"
 import { extractErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
 
 /**
+ * Fetch policy for reads that must be fresh on every mount: no cache across mounts, no retry
+ * (one request, then the caller's error UI).
+ */
+export const FETCH_ONCE_PER_MOUNT = { staleTime: 0, gcTime: 0, retry: false } as const
+
+/**
  * One retry for 5xx / network errors, none for anything the interceptor already handled
  * (401 `authHandled`) or any other 4xx (the server has already answered - retrying it is
  * pointless and, for a write-shaped 409/422, actively misleading).

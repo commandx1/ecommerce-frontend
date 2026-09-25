@@ -9,7 +9,7 @@ import DataTable from "@/components/ui/data-table"
 import type { VendorOrder, VendorOrderItem } from "@/lib/api/vendor-orders"
 import { isCancelableOrderItemStatus } from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
-import { formatDateOnly, formatTimeOnly } from "@/lib/orders/order-format"
+import { formatDateOnly, formatTimeOnly, getOrderStatusClasses } from "@/lib/orders/order-format"
 import VendorOrderExpandedContent, { getVendorOrderShippingWithHeavyTotal } from "./order-expanded-content"
 
 interface CancelActionOptions {
@@ -36,12 +36,6 @@ interface VendorOrdersTableProps {
   onOpenLabelModal: (links: { shipping: string[]; tracking: string[] }) => void
   onConfirmReturn: (item: VendorOrderItem) => void
   onRejectReturn: (item: VendorOrderItem) => void
-}
-
-function getOrderStatusClasses(orderStatus: string): string {
-  return orderStatus === "PAYMENT_SUCCESS"
-    ? "border border-success/20 bg-success/14 text-success"
-    : "border border-border-soft bg-surface-muted text-text-primary"
 }
 
 function SortHeaderButton({

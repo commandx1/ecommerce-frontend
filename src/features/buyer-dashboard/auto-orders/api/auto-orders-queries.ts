@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/react-query"
 import { type AutoOrder, autoOrdersAPI, type UpdateAutoOrderPayload } from "@/lib/api/auto-orders"
 import { queryKeys } from "@/lib/query/keys"
-import { getQueryClient } from "@/lib/query/query-client"
+import { FETCH_ONCE_PER_MOUNT, getQueryClient } from "@/lib/query/query-client"
 
 /**
  * Every mount fetches once and a failure goes straight to the page's toast (no retry). A malformed
@@ -15,9 +15,7 @@ export function autoOrdersListOptions(enabled = true) {
       return Array.isArray(response.autoOrders) ? response.autoOrders : []
     },
     enabled,
-    staleTime: 0,
-    gcTime: 0,
-    retry: false,
+    ...FETCH_ONCE_PER_MOUNT,
   })
 }
 

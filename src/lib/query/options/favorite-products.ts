@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query"
 import { type FavoriteProductItem, getMyFavoriteProducts } from "@/lib/api/favorite-products"
 import { queryKeys } from "@/lib/query/keys"
+import { FETCH_ONCE_PER_MOUNT } from "@/lib/query/query-client"
 
 /**
  * `GET /products/favorites` (the list only). The favourite ids and the optimistic heart toggle stay
@@ -11,8 +12,6 @@ export function favoriteProductsListOptions(enabled = true) {
     queryKey: queryKeys.favoriteProducts.list(),
     queryFn: () => getMyFavoriteProducts(),
     enabled,
-    staleTime: 0,
-    gcTime: 0,
-    retry: false,
+    ...FETCH_ONCE_PER_MOUNT,
   })
 }

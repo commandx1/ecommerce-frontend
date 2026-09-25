@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query"
 import { type CompanyProfile, getMyCompany } from "@/lib/api/company"
 import { queryKeys } from "@/lib/query/keys"
+import { FETCH_ONCE_PER_MOUNT } from "@/lib/query/query-client"
 
 /**
  * `GET /companies/me`, one entry shared by `CompanyInfoCard` and `CompanyRoleContext`: a save from
@@ -11,8 +12,6 @@ export function companyMeOptions(enabled = true) {
     queryKey: queryKeys.company.me(),
     queryFn: () => getMyCompany(),
     enabled,
-    staleTime: 0,
-    gcTime: 0,
-    retry: false,
+    ...FETCH_ONCE_PER_MOUNT,
   })
 }

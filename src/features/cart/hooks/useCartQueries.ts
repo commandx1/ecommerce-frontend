@@ -4,6 +4,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { cartQueryOptions, EMPTY_CART } from "@/features/cart/api/cart-queries"
 import { type CartItem, cartAPI } from "@/lib/api/cart"
 import { queryKeys } from "@/lib/query/keys"
+import { FETCH_ONCE_PER_MOUNT } from "@/lib/query/query-client"
 
 /**
  * Reader hooks for the `cart.detail` entry. Each is a disabled observer: it re-renders on cache
@@ -76,9 +77,7 @@ export function useTaxEstimateQuery(params: TaxEstimateQueryParams): TaxEstimate
     queryFn: () => cartAPI.getTaxEstimate({ addressId: addressId as string, shippingAmount }),
     enabled,
     placeholderData: keepPreviousData,
-    staleTime: 0,
-    gcTime: 0,
-    retry: false,
+    ...FETCH_ONCE_PER_MOUNT,
   })
 
   // v5 keeps serving placeholder data to a disabled observer, so `enabled` must be checked

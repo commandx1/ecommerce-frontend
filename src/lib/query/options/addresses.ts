@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query"
 import { type Address, addressAPI } from "@/lib/api/address"
 import { queryKeys } from "@/lib/query/keys"
+import { FETCH_ONCE_PER_MOUNT } from "@/lib/query/query-client"
 
 /**
  * `GET /address`, role-neutral: checkout, buyer settings and auto-orders readiness share one key,
@@ -12,8 +13,6 @@ export function addressesListOptions(enabled = true) {
     queryKey: queryKeys.addresses.list(),
     queryFn: () => addressAPI.getAddresses(),
     enabled,
-    staleTime: 0,
-    gcTime: 0,
-    retry: false,
+    ...FETCH_ONCE_PER_MOUNT,
   })
 }

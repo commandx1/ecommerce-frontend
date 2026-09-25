@@ -7,6 +7,7 @@ import {
   vendorQuestionsAPI,
 } from "@/lib/api/vendor-questions"
 import { queryKeys } from "@/lib/query/keys"
+import { FETCH_ONCE_PER_MOUNT } from "@/lib/query/query-client"
 
 export interface QuestionsListParams {
   page: number
@@ -38,9 +39,7 @@ export function vendorQuestionsListOptions(params: QuestionsListParams, enabled:
     queryFn: () =>
       vendorQuestionsAPI.getSellerQuestions(params.page, params.size, params.filter).then(normalizeQuestionsPage),
     enabled,
-    staleTime: 0,
-    gcTime: 0,
-    retry: false,
+    ...FETCH_ONCE_PER_MOUNT,
   })
 }
 
@@ -50,8 +49,6 @@ export function vendorQuestionsCountsOptions(enabled: boolean) {
     queryKey: queryKeys.vendor.questions.counts(),
     queryFn: () => vendorQuestionsAPI.getSellerCounts(),
     enabled,
-    staleTime: 0,
-    gcTime: 0,
-    retry: false,
+    ...FETCH_ONCE_PER_MOUNT,
   })
 }

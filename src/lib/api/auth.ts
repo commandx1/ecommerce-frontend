@@ -1,5 +1,5 @@
 // Use Next.js API routes as proxy to avoid CORS issues
-import { apiRequest } from "./request"
+import { apiRequest, bearerAuthHeaders } from "./request"
 
 const API_BASE = "/api"
 
@@ -78,14 +78,6 @@ export interface Verify2FAPayload {
 }
 
 class AuthAPI {
-  private getAuthHeaders(token?: string): Record<string, string> {
-    if (!token) {
-      return {}
-    }
-
-    return { Authorization: `Bearer ${token}` }
-  }
-
   async register(payload: RegisterPayload): Promise<RegisterResponse> {
     return apiRequest.requestJson<RegisterResponse, RegisterPayload>({
       client: "app",
@@ -110,7 +102,7 @@ class AuthAPI {
     await apiRequest.requestJson<void, LogoutPayload>({
       client: "app",
       method: "POST",
-      headers: this.getAuthHeaders(token),
+      headers: bearerAuthHeaders(token),
       url: `${API_BASE}/auth/logout`,
       data: payload,
       validateStatus: () => true,
@@ -132,7 +124,7 @@ class AuthAPI {
     return apiRequest.requestJson<LoginResponse>({
       client: "app",
       method: "GET",
-      headers: this.getAuthHeaders(token),
+      headers: bearerAuthHeaders(token),
       url: `${API_BASE}/users/me`,
       fallbackMessage: "Failed to fetch user profile",
     })
@@ -142,7 +134,7 @@ class AuthAPI {
     return apiRequest.requestJson<LoginResponse, UpdateUserPayload>({
       client: "app",
       method: "PUT",
-      headers: this.getAuthHeaders(token),
+      headers: bearerAuthHeaders(token),
       url: `${API_BASE}/users/me`,
       data: payload,
       fallbackMessage: "Failed to update user profile",
@@ -153,7 +145,7 @@ class AuthAPI {
     await apiRequest.requestJson<void>({
       client: "app",
       method: "DELETE",
-      headers: this.getAuthHeaders(token),
+      headers: bearerAuthHeaders(token),
       url: `${API_BASE}/users/me`,
       fallbackMessage: "Failed to delete user profile",
     })

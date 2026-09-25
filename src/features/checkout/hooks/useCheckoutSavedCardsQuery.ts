@@ -3,6 +3,7 @@
 import { type UseQueryResult, useQuery } from "@tanstack/react-query"
 import { ordersAPI, type SavedCard } from "@/lib/api/orders"
 import { queryKeys } from "@/lib/query/keys"
+import { FETCH_ONCE_PER_MOUNT } from "@/lib/query/query-client"
 
 function isNoActiveCardsError(error: unknown): boolean {
   const maybeError = error as { response?: { data?: { message?: string } } } | null
@@ -31,8 +32,6 @@ export function useCheckoutSavedCardsQuery(): UseQueryResult<SavedCard[]> {
   return useQuery({
     queryKey: queryKeys.paymentMethods.checkoutSavedCards(),
     queryFn: fetchCheckoutSavedCards,
-    staleTime: 0,
-    gcTime: 0,
-    retry: false,
+    ...FETCH_ONCE_PER_MOUNT,
   })
 }
