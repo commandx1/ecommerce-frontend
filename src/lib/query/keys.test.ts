@@ -117,3 +117,95 @@ describe("queryKeys.vendor", () => {
     ])
   })
 })
+
+// Phase 4 §2.1/K0: the role-neutral keys added for the buyer/shared account surfaces.
+describe("queryKeys role-neutral additions (Phase 4 K0)", () => {
+  const buyerOrderParams = {
+    page: 0,
+    size: 10,
+    sortBy: "createdDate" as const,
+    sortDir: "desc" as const,
+    type: "ALL" as const,
+    orderId: null,
+  }
+
+  it("orders.list(...) stays under orders.lists() which stays under orders.all", () => {
+    const list = queryKeys.orders.list(buyerOrderParams)
+    const lists = queryKeys.orders.lists()
+    const all = queryKeys.orders.all
+
+    expect(lists.slice(0, all.length)).toEqual([...all])
+    expect(list.slice(0, lists.length)).toEqual([...lists])
+  })
+
+  it("orders.list(...) is distinct per param set (e.g. per tab/page/sort/orderId)", () => {
+    expect(queryKeys.orders.list(buyerOrderParams)).not.toEqual(queryKeys.orders.list({ ...buyerOrderParams, page: 1 }))
+    expect(queryKeys.orders.list(buyerOrderParams)).not.toEqual(
+      queryKeys.orders.list({ ...buyerOrderParams, type: "DELIVERED" }),
+    )
+    expect(queryKeys.orders.list(buyerOrderParams)).not.toEqual(
+      queryKeys.orders.list({ ...buyerOrderParams, orderId: "order-1" }),
+    )
+  })
+
+  it("autoOrders.list() stays under autoOrders.all", () => {
+    expect(queryKeys.autoOrders.list().slice(0, queryKeys.autoOrders.all.length)).toEqual([...queryKeys.autoOrders.all])
+  })
+
+  it("paymentMethods.cards() and .checkoutSavedCards() stay under paymentMethods.all but are distinct from each other", () => {
+    const all = queryKeys.paymentMethods.all
+    expect(queryKeys.paymentMethods.cards().slice(0, all.length)).toEqual([...all])
+    expect(queryKeys.paymentMethods.checkoutSavedCards().slice(0, all.length)).toEqual([...all])
+    expect(queryKeys.paymentMethods.cards()).not.toEqual(queryKeys.paymentMethods.checkoutSavedCards())
+  })
+
+  it("addresses.list() stays under addresses.all (unchanged key, now shared by more readers)", () => {
+    expect(queryKeys.addresses.list().slice(0, queryKeys.addresses.all.length)).toEqual([...queryKeys.addresses.all])
+  })
+
+  it("company.me() stays under company.all", () => {
+    expect(queryKeys.company.me().slice(0, queryKeys.company.all.length)).toEqual([...queryKeys.company.all])
+  })
+
+  it("licenses.list() stays under licenses.all", () => {
+    expect(queryKeys.licenses.list().slice(0, queryKeys.licenses.all.length)).toEqual([...queryKeys.licenses.all])
+  })
+
+  it("vendors.directory(...) stays under vendors.all and is distinct per param set", () => {
+    const params = { page: 0, size: 20, sort: null, minRating: null, search: "" }
+    const directory = queryKeys.vendors.directory(params)
+    expect(directory.slice(0, queryKeys.vendors.all.length)).toEqual([...queryKeys.vendors.all])
+    expect(directory).not.toEqual(queryKeys.vendors.directory({ ...params, page: 1 }))
+  })
+
+  it("vendors.favorites.{ids,list} stay under vendors.favorites.all, which stays under vendors.all", () => {
+    const all = queryKeys.vendors.all
+    const favoritesAll = queryKeys.vendors.favorites.all
+    expect(favoritesAll.slice(0, all.length)).toEqual([...all])
+    expect(queryKeys.vendors.favorites.ids().slice(0, favoritesAll.length)).toEqual([...favoritesAll])
+    expect(queryKeys.vendors.favorites.list().slice(0, favoritesAll.length)).toEqual([...favoritesAll])
+    expect(queryKeys.vendors.favorites.ids()).not.toEqual(queryKeys.vendors.favorites.list())
+  })
+
+  it("favoriteProducts.list() stays under favoriteProducts.all", () => {
+    expect(queryKeys.favoriteProducts.list().slice(0, queryKeys.favoriteProducts.all.length)).toEqual([
+      ...queryKeys.favoriteProducts.all,
+    ])
+  })
+
+  it("none of the new top-level keys collide with an existing role-neutral or vendor prefix", () => {
+    const prefixes = [
+      queryKeys.orders.all[0],
+      queryKeys.autoOrders.all[0],
+      queryKeys.company.all[0],
+      queryKeys.licenses.all[0],
+      queryKeys.vendors.all[0],
+      queryKeys.favoriteProducts.all[0],
+      queryKeys.addresses.all[0],
+      queryKeys.paymentMethods.all[0],
+      queryKeys.cart.all[0],
+      queryKeys.vendor.all[0],
+    ]
+    expect(new Set(prefixes).size).toBe(prefixes.length)
+  })
+})

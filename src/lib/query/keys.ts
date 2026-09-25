@@ -1,4 +1,5 @@
 import { notificationsKeys } from "@/features/notifications/lib/notifications-keys"
+import type { BuyerOrderFilterType } from "@/lib/api/buyer-orders"
 import type { VendorOrderFilterType } from "@/lib/api/vendor-orders"
 import type { QuestionFilter } from "@/lib/api/vendor-questions"
 
@@ -54,6 +55,27 @@ export interface VendorQuestionListParams {
   filter: QuestionFilter
 }
 
+/** Params for the buyer's own orders list (Phase 4 §2.1). Every field is required (`null` when
+ * unset), same convention as `VendorOrderListParams`. */
+export interface BuyerOrderListParams {
+  page: number
+  size: number
+  sortBy: "createdDate" | "totalPrice"
+  sortDir: "asc" | "desc"
+  type: BuyerOrderFilterType
+  orderId: string | null
+}
+
+/** Params for the public vendor directory (`getVendors`, Phase 4 §2.1, wired up in step D1).
+ * Mirrors `VendorListParams` (`lib/api/vendors.ts`) with every field required. */
+export interface VendorDirectoryParams {
+  page: number
+  size: number
+  sort: "rating" | "reviewCount" | "name" | null
+  minRating: number | null
+  search: string
+}
+
 /**
  * Central query key factory. Cart keys in particular must be invalidated from products,
  * buyer-orders and checkout code, so a single file keeps the invalidation map auditable
@@ -77,12 +99,42 @@ export const queryKeys = {
     all: ["payment-methods"] as const,
     // GET /orders/saved-cards
     checkoutSavedCards: () => ["payment-methods", "checkout-saved-cards"] as const,
+    // GET /cards (Phase 4 §2.1) - the buyer's saved wallet, read by the payment-methods page
+    // and by auto-orders readiness.
+    cards: () => ["payment-methods", "cards"] as const,
   },
   orders: {
-    all: ["orders"] as const, // populated in Phase 4
+    all: ["orders"] as const,
+    lists: () => ["orders", "list"] as const,
+    list: (params: BuyerOrderListParams) => ["orders", "list", params] as const,
   },
   autoOrders: {
-    all: ["auto-orders"] as const, // populated in Phase 4
+    all: ["auto-orders"] as const,
+    list: () => ["auto-orders", "list"] as const,
+  },
+  // Role-neutral account resources read by more than one surface (checkout, buyer settings,
+  // vendor settings, the vendor header) - see Phase 4 design doc §2.1 for why these are not
+  // namespaced under `buyer`/`vendor`.
+  company: {
+    all: ["company"] as const,
+    me: () => ["company", "me"] as const,
+  },
+  licenses: {
+    all: ["licenses"] as const,
+    list: () => ["licenses", "list"] as const,
+  },
+  vendors: {
+    all: ["vendors"] as const,
+    directory: (params: VendorDirectoryParams) => ["vendors", "directory", params] as const,
+    favorites: {
+      all: ["vendors", "favorites"] as const,
+      ids: () => ["vendors", "favorites", "ids"] as const,
+      list: () => ["vendors", "favorites", "list"] as const,
+    },
+  },
+  favoriteProducts: {
+    all: ["favorite-products"] as const,
+    list: () => ["favorite-products", "list"] as const,
   },
   notifications: notificationsKeys,
   vendor: {
