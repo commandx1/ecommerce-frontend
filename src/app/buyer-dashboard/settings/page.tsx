@@ -1,7 +1,7 @@
 "use client"
 
-import AccountSettingsShared from "@/components/dashboard-shared/AccountSettingsShared"
-import AddressManagementShared from "@/components/dashboard-shared/AddressManagementShared"
+import AccountSettingsShared from "@/features/account-settings/AccountSettingsShared"
+import AddressManagementShared from "@/features/account-settings/components/AddressManagementShared"
 
 export default function SettingsPage() {
   return (

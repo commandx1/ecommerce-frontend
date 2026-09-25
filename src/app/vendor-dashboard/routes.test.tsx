@@ -19,7 +19,7 @@ vi.mock("@/features/vendor-dashboard/overview/components/CustomerAnalyticsChart"
   stub("customer-analytics-chart"),
 )
 vi.mock("@/features/vendor-dashboard/overview/components/MarketingPerformance", () => stub("marketing-performance"))
-vi.mock("@/components/dashboard-shared/AccountSettingsShared", () => ({
+vi.mock("@/features/account-settings/AccountSettingsShared", () => ({
   default: ({ title, description, children }: { title: string; description: string; children?: React.ReactNode }) => (
     <div>
       <h1>{title}</h1>
@@ -28,7 +28,7 @@ vi.mock("@/components/dashboard-shared/AccountSettingsShared", () => ({
     </div>
   ),
 }))
-vi.mock("@/components/dashboard-shared/AddressManagementShared", () => ({
+vi.mock("@/features/account-settings/components/AddressManagementShared", () => ({
   default: () => <div data-testid="addresses" />,
 }))
 vi.mock("@/features/notifications/NotificationsPage", () => ({

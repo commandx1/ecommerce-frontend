@@ -27,7 +27,7 @@ vi.mock("@/features/favorites/FavoritesPage", () => ({
 vi.mock("@/features/notifications/NotificationsPage", () => ({
   default: () => <div data-testid="notifications-page" />,
 }))
-vi.mock("@/components/dashboard-shared/AccountSettingsShared", () => ({
+vi.mock("@/features/account-settings/AccountSettingsShared", () => ({
   default: ({ title, description, children }: { title: string; description: string; children?: ReactNode }) => (
     <div data-testid="account-settings">
       <h1>{title}</h1>
@@ -36,7 +36,7 @@ vi.mock("@/components/dashboard-shared/AccountSettingsShared", () => ({
     </div>
   ),
 }))
-vi.mock("@/components/dashboard-shared/AddressManagementShared", () => ({
+vi.mock("@/features/account-settings/components/AddressManagementShared", () => ({
   default: () => <div data-testid="address-management" />,
 }))
 
