@@ -77,11 +77,14 @@
       "formatter": { "enabled": false }
     },
     {
-      // Vendor-dashboard boundary (design doc §1, §S11, Phase 4 §7 C1): `features/vendor-dashboard/**`
-      // must not import from `app/vendor-dashboard/**` at all. The former carve-out,
-      // `components/shared/{DashboardPanel,dashboardToneMaps}`, moved to
-      // `components/dashboard-shared/` in Phase 4 (C1), so there is no exception any more.
-      "includes": ["src/features/vendor-dashboard/**"],
+      // Whole-tree features/app boundary (design doc §1, §7, Z), generalized from the separate
+      // vendor-dashboard (S11) and buyer-dashboard (B1-B5) rules that grew up during Phase 4:
+      // `src/features/**` must not import from `@/app/**` at all. Every shared piece any feature
+      // used to reach into `app/` for (order leaves, the auth guard, panel/tone-map primitives,
+      // account-settings components) has moved to `components/`, `lib/` or `features/`, so there
+      // is no exception left. See `src/features/architecture.test.ts` for the harder-to-fool,
+      // whole-tree backstop that doesn't depend on this config staying correct.
+      "includes": ["src/features/**"],
       "linter": {
         "rules": {
           "style": {
@@ -90,32 +93,8 @@
               "options": {
                 "patterns": [
                   {
-                    "group": ["@/app/vendor-dashboard/**"],
-                    "message": "features/vendor-dashboard must not import from app/vendor-dashboard."
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      // Phase 4 buyer-dashboard boundary (design doc §1, §7, B1-B5): `features/buyer-dashboard/**`
-      // must not import from `app/buyer-dashboard/**`. Unlike vendor's S11 boundary, there is no
-      // carve-out - every shared piece the buyer side used to reach into `app/` for already moved
-      // to `components/`, `lib/` or `features/` earlier in Phase 4.
-      "includes": ["src/features/buyer-dashboard/**"],
-      "linter": {
-        "rules": {
-          "style": {
-            "noRestrictedImports": {
-              "level": "error",
-              "options": {
-                "patterns": [
-                  {
-                    "group": ["@/app/buyer-dashboard/**"],
-                    "message": "features/buyer-dashboard must not import from app/buyer-dashboard."
+                    "group": ["@/app/**"],
+                    "message": "features/** must not import from app/**."
                   }
                 ]
               }
