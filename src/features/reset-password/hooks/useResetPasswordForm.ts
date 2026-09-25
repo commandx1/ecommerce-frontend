@@ -3,8 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation"
 import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
-import { submitPasswordReset } from "@/features/reset-password/services/resetPassword"
 import type { ResetPasswordFormData } from "@/features/reset-password/types"
+import { resetPassword } from "@/lib/api/password-recovery"
 
 const MIN_PASSWORD_LENGTH = 8
 const LOGIN_REDIRECT_DELAY = 3000
@@ -77,7 +77,7 @@ export const useResetPasswordForm = () => {
     setIsSubmitting(true)
 
     try {
-      await submitPasswordReset(token, formData.password)
+      await resetPassword(token, formData.password)
       setIsSuccess(true)
       showToast.success("Password updated", "You can now sign in with your new password.")
       redirectTimeoutRef.current = setTimeout(() => {

@@ -1,9 +1,9 @@
 import { ShieldAlert, ShieldCheck, Trash2 } from "lucide-react"
 import Link from "next/link"
 import NotificationCard from "@/components/feedback/NotificationCard"
+import QuantityStepper from "@/components/ui/QuantityStepper"
 import CartItemAutoOrder from "@/features/cart/components/CartItemAutoOrder"
 import CartItemPrice from "@/features/cart/components/CartItemPrice"
-import CartItemQuantityControl from "@/features/cart/components/CartItemQuantityControl"
 import type { CartItemCardProps } from "@/features/cart/types"
 import { getCartItemAlerts } from "@/features/cart/utils/cart-alerts"
 import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
@@ -91,8 +91,8 @@ export default function CartItemCard({
           ) : null}
 
           <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <CartItemQuantityControl
-              quantity={quantity}
+            <QuantityStepper
+              value={quantity}
               onDecrease={() => onQuantityChange(userProduct.userProductId, quantity, -1)}
               onIncrease={() => onQuantityChange(userProduct.userProductId, quantity, 1)}
             />

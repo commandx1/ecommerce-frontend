@@ -2,8 +2,8 @@
 
 import { type ChangeEvent, type FormEvent, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
-import { sendPasswordReset } from "@/features/forgot-password/services/requestPasswordReset"
 import type { ForgotPasswordFormData } from "@/features/forgot-password/types"
+import { requestPasswordReset } from "@/lib/api/password-recovery"
 
 export const useForgotPasswordForm = () => {
   const [formData, setFormData] = useState<ForgotPasswordFormData>({ email: "" })
@@ -26,7 +26,7 @@ export const useForgotPasswordForm = () => {
     setIsSubmitting(true)
 
     try {
-      await sendPasswordReset(formData.email)
+      await requestPasswordReset(formData.email)
       setIsSent(true)
       showToast.success("Reset email sent", "Password reset instructions have been sent to your email address.")
     } catch (error: unknown) {

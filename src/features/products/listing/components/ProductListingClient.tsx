@@ -1,5 +1,6 @@
 import { Suspense } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
+import UiBreadcrumb from "@/components/ui/breadcrumb"
 import type { AttributeGroup, FilterOption, VendorOption } from "@/lib/api/public-products"
 import type { SortValue } from "../server/parse-listing-search-params"
 import { createProductsUrlBuilder } from "./listing/buildProductsUrl"
@@ -8,7 +9,6 @@ import MobileFilters from "./listing/MobileFilters"
 import PaginationBar from "./listing/PaginationBar"
 import ProductFiltersPanel from "./listing/ProductFiltersPanel"
 import ProductGrid from "./listing/ProductGrid"
-import ProductListingBreadcrumb from "./listing/ProductListingBreadcrumb"
 import ResultsSummary from "./listing/ResultsSummary"
 
 export interface APIProduct {
@@ -94,7 +94,14 @@ const ProductListingClient = ({
   return (
     <FilterNavigationProvider>
       <div className="min-h-screen bg-canvas font-sans">
-        <ProductListingBreadcrumb />
+        <UiBreadcrumb
+          items={[
+            { label: "Home", href: "/" },
+            { label: "Categories", href: "/categories" },
+            { label: "All Products" },
+          ]}
+          className="bg-surface"
+        />
         {/* On small screens the collapsible filters card sits directly under the breadcrumb;
            on lg+ the sticky <aside> below takes over and MobileFilters hides itself. */}
         <Suspense>

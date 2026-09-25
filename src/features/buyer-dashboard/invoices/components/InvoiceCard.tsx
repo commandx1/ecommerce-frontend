@@ -5,8 +5,6 @@ import { formatLongDate } from "@/lib/helpers/format"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { cn } from "@/lib/utils"
 import type { BuyerInvoice, InvoiceStatus } from "../invoicesData"
-import ActionIconButton from "./ActionIconButton"
-import InvoiceMeta from "./InvoiceMeta"
 
 const statusPillMap: Record<InvoiceStatus, string> = {
   Paid: "bg-success/15 text-success border border-success/30",
@@ -23,6 +21,27 @@ const statusNoteMap: Record<InvoiceStatus, string> = {
   // 3.42:1 as text (globals.css:146, which added `--danger-strong` for exactly this).
   Overdue: "text-danger-strong",
   Disputed: "text-brand",
+}
+
+function InvoiceMeta({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-muted">{label}</p>
+      <p className="mt-1 text-sm text-text-secondary">{value}</p>
+    </div>
+  )
+}
+
+function ActionIconButton({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border-soft text-text-muted transition-colors hover:text-brand"
+    >
+      {icon}
+    </button>
+  )
 }
 
 export default function InvoiceCard({

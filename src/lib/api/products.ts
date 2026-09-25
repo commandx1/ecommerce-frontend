@@ -15,7 +15,6 @@ export type {
   CreateUserProductPayload,
   MyProductsPageResponse,
   NormalizedSearchProduct,
-  PageResponse,
   Product,
   ProductAttribute,
   ProductReviewStatus,

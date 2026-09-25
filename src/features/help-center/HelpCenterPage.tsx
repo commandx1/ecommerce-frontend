@@ -1,7 +1,7 @@
+import UiBreadcrumb from "@/components/ui/breadcrumb"
 import ContactFormSection from "@/features/help-center/components/ContactFormSection"
 import EmergencySupportSection from "@/features/help-center/components/EmergencySupportSection"
 import FAQSection from "@/features/help-center/components/FAQSection"
-import HelpCenterBreadcrumb from "@/features/help-center/components/HelpCenterBreadcrumb"
 import HelpCenterHero from "@/features/help-center/components/HelpCenterHero"
 import KnowledgeBaseSection from "@/features/help-center/components/KnowledgeBaseSection"
 import QuickSupportOptions from "@/features/help-center/components/QuickSupportOptions"
@@ -12,7 +12,7 @@ import TicketSubmissionSection from "@/features/help-center/components/TicketSub
 export default function HelpCenterPage() {
   return (
     <main className="min-h-screen bg-canvas">
-      <HelpCenterBreadcrumb />
+      <UiBreadcrumb items={[{ label: "Home", href: "/" }, { label: "Support Center" }]} className="bg-surface" />
       <HelpCenterHero />
       <QuickSupportOptions />
       <FAQSection />

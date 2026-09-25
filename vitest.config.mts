@@ -65,7 +65,6 @@ export default defineConfig({
         "src/lib/api/auth-direct.ts",
         "src/lib/api/two-factor.ts",
         "src/lib/api/password-recovery.ts",
-        "src/lib/api/reset-password.ts",
 
         // Next.js framework files (no meaningful branching)
         "src/app/**/layout.tsx",

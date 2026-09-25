@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import { login } from "@/features/login/services/login"
-import { verifyEmail } from "@/features/verify-email/services/verifyEmail"
+import { authAPIDirect } from "@/lib/api/auth-direct"
 import { useAuthStore } from "@/stores/authStore"
 
 const CODE_LENGTH = 6
@@ -55,7 +55,7 @@ export const useVerifyEmailForm = () => {
     setError(null)
 
     try {
-      await verifyEmail({ email, code })
+      await authAPIDirect.verifyEmail({ email, code })
 
       const rawCredentials = typeof window !== "undefined" ? sessionStorage.getItem(VERIFY_EMAIL_AUTLOGIN_KEY) : null
 

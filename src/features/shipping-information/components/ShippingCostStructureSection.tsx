@@ -1,5 +1,5 @@
+import NoticeBanner from "@/components/feedback/NoticeBanner"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
-import FreeShippingNote from "@/features/shipping-information/components/FreeShippingNote"
 import ShippingCostFactorsCard from "@/features/shipping-information/components/ShippingCostFactorsCard"
 import ShippingPricingNotesCard from "@/features/shipping-information/components/ShippingPricingNotesCard"
 import ShippingPricingTransparencyCard from "@/features/shipping-information/components/ShippingPricingTransparencyCard"
@@ -18,7 +18,12 @@ export default function ShippingCostStructureSection() {
         <div className="space-y-6 sm:space-y-8">
           <ShippingPricingTransparencyCard />
           <ShippingPricingNotesCard />
-          <FreeShippingNote />
+          <NoticeBanner
+            tone="info"
+            title="Free Shipping Threshold"
+            description="Standard shipping is free on orders over $500 within the continental U.S."
+            className="p-6"
+          />
         </div>
       </div>
     </PageSectionContainer>

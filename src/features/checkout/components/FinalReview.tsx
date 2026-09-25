@@ -1,13 +1,13 @@
 "use client"
 
 import { Elements } from "@stripe/react-stripe-js"
+import NoticeBanner from "@/components/feedback/NoticeBanner"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import FinalReviewAddressCards from "@/features/checkout/components/FinalReviewAddressCards"
 import FinalReviewAutoOrderSummary from "@/features/checkout/components/FinalReviewAutoOrderSummary"
 import FinalReviewExcludedNotice from "@/features/checkout/components/FinalReviewExcludedNotice"
 import FinalReviewNavigation from "@/features/checkout/components/FinalReviewNavigation"
 import FinalReviewPaymentSummary from "@/features/checkout/components/FinalReviewPaymentSummary"
-import FinalReviewReadyNotice from "@/features/checkout/components/FinalReviewReadyNotice"
 import FinalReviewUnavailable from "@/features/checkout/components/FinalReviewUnavailable"
 import { useCheckoutAutoOrder } from "@/features/checkout/hooks/useCheckoutAutoOrder"
 import { useFinalReview } from "@/features/checkout/hooks/useFinalReview"
@@ -41,7 +41,12 @@ function FinalReviewContent() {
         />
       </div>
 
-      <FinalReviewReadyNotice />
+      <NoticeBanner
+        tone="success"
+        title="Ready to Place Order"
+        description="Please review all information above. Once you place your order, you will receive a confirmation email."
+        className="mb-8 p-6"
+      />
 
       <FinalReviewNavigation
         isPlacingOrder={isPlacingOrder}

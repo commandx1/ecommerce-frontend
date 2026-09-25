@@ -1,5 +1,5 @@
+import Link from "next/link"
 import type { ChangeEvent, FormEvent } from "react"
-import ResetPasswordFooterLink from "@/features/reset-password/components/ResetPasswordFooterLink"
 import ResetPasswordForm from "@/features/reset-password/components/ResetPasswordForm"
 import ResetPasswordHeader from "@/features/reset-password/components/ResetPasswordHeader"
 
@@ -28,7 +28,11 @@ export default function ResetPasswordCard({
         onChange={onChange}
         onSubmit={onSubmit}
       />
-      <ResetPasswordFooterLink />
+      <div className="mt-8 text-center">
+        <Link href="/login" className="text-sm text-text-muted transition-colors hover:text-brand">
+          Cancel and go back
+        </Link>
+      </div>
     </div>
   )
 }

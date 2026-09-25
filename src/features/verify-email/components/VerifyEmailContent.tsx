@@ -1,6 +1,5 @@
 "use client"
 
-import VerifyEmailCard from "@/features/verify-email/components/VerifyEmailCard"
 import VerifyEmailFooter from "@/features/verify-email/components/VerifyEmailFooter"
 import VerifyEmailForm from "@/features/verify-email/components/VerifyEmailForm"
 import VerifyEmailHeader from "@/features/verify-email/components/VerifyEmailHeader"
@@ -20,7 +19,7 @@ export default function VerifyEmailContent() {
   } = useVerifyEmailForm()
 
   return (
-    <VerifyEmailCard>
+    <div className="overflow-hidden rounded-3xl bg-surface-elevated p-6 shadow-2xl sm:p-8 lg:p-12">
       <VerifyEmailHeader email={email} />
       <VerifyEmailForm
         code={code}
@@ -32,6 +31,6 @@ export default function VerifyEmailContent() {
         onBackToRegister={handleBackToRegister}
       />
       <VerifyEmailFooter onResendCode={handleResendCode} />
-    </VerifyEmailCard>
+    </div>
   )
 }
