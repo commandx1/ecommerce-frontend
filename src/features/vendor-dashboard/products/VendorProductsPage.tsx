@@ -33,7 +33,7 @@ export default function ProductsPage() {
   const { listQuery, mutations } = page
 
   // Stabilized with `useCallback` for the same reason the hooks' own handlers are — see
-  // `components/columns.tsx`.
+  // `components/columns/index.tsx`.
   const handleEditSave = useCallback(
     (product: Parameters<typeof mutations.saveEdit>[0]) => void mutations.saveEdit(product),
     [mutations.saveEdit],

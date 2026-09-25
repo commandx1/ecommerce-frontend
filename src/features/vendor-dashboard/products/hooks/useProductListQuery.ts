@@ -107,7 +107,7 @@ export function useProductListQuery(): ProductListQueryResult {
 
   // Stable callbacks (they close only over state setters) so header cells built from them keep
   // their identity - `flexRender` remounts a header whose function changes, dropping a mid-click
-  // interaction (see `components/columns.tsx`).
+  // interaction (see `components/columns/index.tsx`).
   const handleFilterChange = useCallback((filter: FilterType) => {
     setSelectedFilter(filter)
     setCurrentPage(0)

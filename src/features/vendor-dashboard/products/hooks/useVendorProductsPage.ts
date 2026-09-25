@@ -80,7 +80,7 @@ export function useVendorProductsPage() {
   }
 
   // Stabilized with `useCallback` — flows into the table's actions column as `onDelete`, which
-  // needs a stable identity for the same reason described in `components/columns.tsx`.
+  // needs a stable identity for the same reason described in `components/columns/index.tsx`.
   const openDeleteModal = useCallback(
     (userProductId: string, productName: string) =>
       setDeleteModal({ isOpen: true, productId: userProductId, productName }),
@@ -110,7 +110,7 @@ export function useVendorProductsPage() {
   }
 
   // Stabilized with `useCallback` — flows into the table's product column as `onImageError`; see
-  // `components/columns.tsx`.
+  // `components/columns/index.tsx`.
   const handleImageError = useCallback(
     (productId: string) => setImageFallbacks((prev) => (prev[productId] ? prev : { ...prev, [productId]: true })),
     [],
