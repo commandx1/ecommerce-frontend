@@ -11,9 +11,12 @@ const nextConfig: NextConfig = {
     root: path.join(__dirname),
   },
   images: {
-    unoptimized: false,
-    loader: "custom",
-    loaderFile: "./src/lib/image-loader.ts",
+    // Images are served as-is, never through Next's optimizer: external CDNs behind Cloudflare
+    // (net32 etc.) 403 the optimizer's server-side fetches, and the self-hosted standalone server
+    // must never emit `/_next/image` URLs (K15). `unoptimized` states exactly that; the previous
+    // identity `loader` did the same but made next/image warn that width was unused and emit a
+    // srcset repeating the same URL once per width.
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
