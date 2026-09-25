@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { defined } from "@/test/defined"
 import type { ProductDetail, UserProduct } from "../types"
 import {
   buildCategoryTrail,
@@ -62,7 +63,7 @@ describe("buildCategoryTrail", () => {
       "Endodontic accessories",
       "Endo organizers & accessories",
     ])
-    expect(trail[2].fullPath).toBe("Endodontic products > Endodontic accessories > Endo organizers & accessories")
+    expect(trail[2]!.fullPath).toBe("Endodontic products > Endodontic accessories > Endo organizers & accessories")
   })
 
   it("trims whitespace around level values", () => {
@@ -84,7 +85,7 @@ describe("buildCategoryTrail", () => {
     }
     const trail = buildCategoryTrail(product)
     expect(trail).toHaveLength(1)
-    expect(trail[0].label).toBe("Endodontic products")
+    expect(trail[0]!.label).toBe("Endodontic products")
   })
 
   it("returns an empty array when no category levels are set", () => {
@@ -98,7 +99,7 @@ describe("buildCategoryTrail", () => {
       categoryLevel3: "Endodontic sealers & cements",
     }
     const trail = buildCategoryTrail(product)
-    expect(trail[1].href).toContain("categories=Endodontic+products+%3E+Endodontic+sealers+%26+cements")
+    expect(trail[1]!.href).toContain("categories=Endodontic+products+%3E+Endodontic+sealers+%26+cements")
   })
 })
 
@@ -280,7 +281,7 @@ describe("buildSuppliers", () => {
 
   it("builds a single supplier entry, formatting the price as $1,234.56-style currency", () => {
     const up: UserProduct = { ...baseUserProduct, id: "up-1", price: 1234.56 }
-    const [supplier] = buildSuppliers([up], null)
+    const supplier = defined(buildSuppliers([up], null)[0])
     expect(supplier.price).toBe("$1,234.56")
     expect(supplier.id).toBe(1)
     expect(supplier.userProductId).toBe("up-1")
@@ -368,7 +369,7 @@ describe("buildSuppliers", () => {
 
   it("marks an out-of-stock listing as Out of Stock with a gray stock color", () => {
     const outOfStock: UserProduct = { ...baseUserProduct, stock: 0 }
-    const [supplier] = buildSuppliers([outOfStock], null)
+    const supplier = defined(buildSuppliers([outOfStock], null)[0])
     expect(supplier.stock).toBe("Out of Stock")
     expect(supplier.stockColor).toBe("gray")
     expect(supplier.stockCount).toBe(0)
@@ -376,14 +377,14 @@ describe("buildSuppliers", () => {
 
   it("marks an in-stock listing as In Stock with a green stock color", () => {
     const inStock: UserProduct = { ...baseUserProduct, stock: 12 }
-    const [supplier] = buildSuppliers([inStock], null)
+    const supplier = defined(buildSuppliers([inStock], null)[0])
     expect(supplier.stock).toBe("In Stock")
     expect(supplier.stockColor).toBe("green")
   })
 
   it("falls back to Vendor / <Vendor> logo for missing vendor and vendorLogo fields", () => {
     const up: UserProduct = { ...baseUserProduct, vendor: undefined, vendorLogo: undefined }
-    const [supplier] = buildSuppliers([up], null)
+    const supplier = defined(buildSuppliers([up], null)[0])
     expect(supplier.name).toBe("Vendor")
     expect(supplier.alt).toBe("Vendor logo")
     expect(supplier.logo).toBeUndefined()
@@ -391,25 +392,25 @@ describe("buildSuppliers", () => {
 
   it("omits originalPrice when oldPrice equals the current price", () => {
     const up: UserProduct = { ...baseUserProduct, price: 56, oldPrice: 56 }
-    const [supplier] = buildSuppliers([up], null)
+    const supplier = defined(buildSuppliers([up], null)[0])
     expect(supplier.originalPrice).toBeNull()
   })
 
   it("includes originalPrice when oldPrice differs from the current price", () => {
     const up: UserProduct = { ...baseUserProduct, price: 56, oldPrice: 70 }
-    const [supplier] = buildSuppliers([up], null)
+    const supplier = defined(buildSuppliers([up], null)[0])
     expect(supplier.originalPrice).toBe("$70.00")
   })
 
   it("defaults discount to 0 when not a number", () => {
     const up: UserProduct = { ...baseUserProduct, discount: undefined }
-    const [supplier] = buildSuppliers([up], null)
+    const supplier = defined(buildSuppliers([up], null)[0])
     expect(supplier.discount).toBe(0)
   })
 
   it('reports "Free" shipping when shipmentFee and heavyShippingSurcharge are both zero/missing', () => {
     const up: UserProduct = { ...baseUserProduct, shipmentFee: undefined, heavyShippingSurcharge: undefined }
-    const [supplier] = buildSuppliers([up], null)
+    const supplier = defined(buildSuppliers([up], null)[0])
     expect(supplier.shipping).toBe("Free")
     expect(supplier.shippingFee).toBe("Free")
     expect(supplier.heavyShippingFee).toBe("Free")
@@ -417,7 +418,7 @@ describe("buildSuppliers", () => {
 
   it("sums shipmentFee and heavyShippingSurcharge into the total shipping cost", () => {
     const up: UserProduct = { ...baseUserProduct, shipmentFee: 5, heavyShippingSurcharge: 2.5 }
-    const [supplier] = buildSuppliers([up], null)
+    const supplier = defined(buildSuppliers([up], null)[0])
     expect(supplier.shipping).toBe("$7.50")
     expect(supplier.shippingFee).toBe("$5.00")
     expect(supplier.heavyShippingFee).toBe("$2.50")
@@ -425,7 +426,7 @@ describe("buildSuppliers", () => {
 
   it("defaults rating and reviewCount to 0 when missing", () => {
     const up: UserProduct = { ...baseUserProduct, vendorRating: undefined, vendorReviewCount: undefined }
-    const [supplier] = buildSuppliers([up], null)
+    const supplier = defined(buildSuppliers([up], null)[0])
     expect(supplier.rating).toBe(0)
     expect(supplier.reviewCount).toBe(0)
   })
@@ -446,7 +447,7 @@ describe("uberDirectEligible", () => {
     [undefined, "1 mi", false],
   ])("uberEnabled=%s, vendorDistance=%s -> %s", (uberEnabled, vendorDistance, expected) => {
     const up: UserProduct = { ...baseUserProduct, uberEnabled, vendorDistance }
-    const [supplier] = buildSuppliers([up], null)
+    const supplier = defined(buildSuppliers([up], null)[0])
     expect(supplier.uberDirectEligible).toBe(expected)
   })
 })

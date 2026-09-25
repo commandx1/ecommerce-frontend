@@ -232,12 +232,12 @@ describe("AccountSettingsShared", () => {
       licensesHeading,
       screen.getByRole("heading", { name: "Security" }),
     ]
-    for (const [before, after] of [
-      [order[0], order[1]],
-      [order[1], order[2]],
-      [order[2], order[3]],
-    ]) {
-      expect(before.compareDocumentPosition(after) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    let before: HTMLElement | undefined
+    for (const after of order) {
+      if (before !== undefined) {
+        expect(before.compareDocumentPosition(after) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+      }
+      before = after
     }
   })
 
@@ -270,11 +270,12 @@ describe("AccountSettingsShared", () => {
       screen.getByText("Address manager"),
       screen.getByRole("heading", { name: "Security" }),
     ]
-    for (const [before, after] of [
-      [order[0], order[1]],
-      [order[1], order[2]],
-    ]) {
-      expect(before.compareDocumentPosition(after) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    let before: HTMLElement | undefined
+    for (const after of order) {
+      if (before !== undefined) {
+        expect(before.compareDocumentPosition(after) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+      }
+      before = after
     }
   })
 })

@@ -28,7 +28,7 @@ const userProducts = [{ id: "up-1", vendor: "Acme Dental" }]
  * The 1-5 rating stars are icon-only buttons with no accessible name; index 0 is the modal's
  * close control, so star N is button index N.
  */
-const starButton = (star: number) => screen.getAllByRole("button")[star]
+const starButton = (star: number) => screen.getAllByRole("button")[star]!
 
 beforeEach(() => {
   vi.restoreAllMocks()

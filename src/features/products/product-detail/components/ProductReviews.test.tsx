@@ -145,7 +145,7 @@ describe("ProductReviews", () => {
       <ProductReviews
         productId="p-1"
         initialReviews={makeReviewsResponse([makeReview()])}
-        userProducts={[userProducts[0]]}
+        userProducts={[userProducts[0]!]}
       />,
     )
 

@@ -49,7 +49,7 @@ describe("useAddToCartFromCard guest guard", () => {
     expect(returned).toBe(false)
     expect(getProductWithOffers).not.toHaveBeenCalled()
     expect(assignMock).toHaveBeenCalledTimes(1)
-    expect(String(assignMock.mock.calls[0][0])).toContain("reason=login-required")
+    expect(String(assignMock.mock.calls[0]![0])).toContain("reason=login-required")
     expect(mockToastError).not.toHaveBeenCalled()
     expect(mockToastSuccess).not.toHaveBeenCalled()
   })

@@ -107,7 +107,7 @@ describe("ProductListingClient", () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 })
     const { router } = renderListing({}, "page=3&brands=MARK3")
 
-    await user.click(screen.getAllByRole("radio", { name: "Price: Low to High" })[0])
+    await user.click(screen.getAllByRole("radio", { name: "Price: Low to High" })[0]!)
 
     const [url] = router.push.mock.calls[0] as [string]
     const params = new URLSearchParams(url.split("?")[1])
@@ -120,7 +120,7 @@ describe("ProductListingClient", () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 })
     const { router } = renderListing({ sort: "price-asc" }, "sort=price-asc")
 
-    await user.click(screen.getAllByRole("radio", { name: "Best Match" })[0])
+    await user.click(screen.getAllByRole("radio", { name: "Best Match" })[0]!)
 
     const [url] = router.push.mock.calls[0] as [string]
     expect(new URLSearchParams(url.split("?")[1]).has("sort")).toBe(false)

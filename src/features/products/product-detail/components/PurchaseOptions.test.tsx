@@ -98,7 +98,7 @@ describe("PurchaseOptions", () => {
     const user = userEvent.setup()
     renderPurchase({ suppliers: [makeSupplier({ stockCount: 2 })] })
 
-    const [decrement, increment] = stepperButtons()
+    const [decrement, increment] = stepperButtons() as [HTMLElement, HTMLElement]
     await user.click(increment)
     expect(quantityBox()).toHaveValue("2")
 
@@ -110,7 +110,7 @@ describe("PurchaseOptions", () => {
     const user = userEvent.setup()
     renderPurchase()
 
-    const increment = stepperButtons()[1]
+    const increment = stepperButtons()[1]!
     for (let click = 0; click < 9; click += 1) {
       await user.click(increment)
     }
@@ -154,7 +154,7 @@ describe("PurchaseOptions", () => {
     )
     renderPurchase({}, "vendorId=up-1")
 
-    const increment = stepperButtons()[1]
+    const increment = stepperButtons()[1]!
     await user.click(increment)
     await user.click(screen.getByRole("button", { name: /Add to Cart/i }))
 
@@ -178,7 +178,7 @@ describe("PurchaseOptions", () => {
     await user.click(screen.getByRole("button", { name: /Add to Cart/i }))
 
     await waitFor(() => expect(window.location.assign).toHaveBeenCalled())
-    expect(String((window.location.assign as unknown as { mock: { calls: string[][] } }).mock.calls[0][0])).toContain(
+    expect(String((window.location.assign as unknown as { mock: { calls: string[][] } }).mock.calls[0]![0])).toContain(
       "reason=login-required",
     )
     expect(addItemCalled).toBe(false)
@@ -248,7 +248,7 @@ describe("PurchaseOptions", () => {
     const user = userEvent.setup()
     renderPurchase()
 
-    const increment = stepperButtons()[1]
+    const increment = stepperButtons()[1]!
     await user.click(increment)
 
     const summary = screen.getByText("Order Summary").closest("div")!

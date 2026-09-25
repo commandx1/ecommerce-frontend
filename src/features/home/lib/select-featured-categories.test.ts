@@ -31,8 +31,8 @@ describe("selectFeaturedCategories", () => {
     const result = selectFeaturedCategories(options)
 
     expect(result).toHaveLength(1)
-    expect(result[0].name).toBe("Disposables")
-    expect(result[0].count).toBe(3)
+    expect(result[0]!.name).toBe("Disposables")
+    expect(result[0]!.count).toBe(3)
   })
 
   it("truncates to the given limit", () => {
@@ -70,8 +70,8 @@ describe("selectFeaturedCategories", () => {
 
     const result = selectFeaturedCategories(options)
 
-    expect(result[0].name).toBe("Endodontic products")
-    expect(result[0].topChildren).toEqual(["B", "C", "D"])
+    expect(result[0]!.name).toBe("Endodontic products")
+    expect(result[0]!.topChildren).toEqual(["B", "C", "D"])
   })
 
   it("counts a path not present in the taxonomy under its own root", () => {

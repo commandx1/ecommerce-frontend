@@ -114,9 +114,9 @@ describe("useNotificationSocket", () => {
 
     expect(harness.createNotificationSocket).toHaveBeenCalledTimes(1)
     expect(sockets).toHaveLength(1)
-    expect(sockets[0].options.url).toBe("http://localhost/backend-ws")
-    expect(sockets[0].options.transports).toEqual(["xhr-streaming", "xhr-polling"])
-    expect(sockets[0].connect).toHaveBeenCalledTimes(1)
+    expect(sockets[0]!.options.url).toBe("http://localhost/backend-ws")
+    expect(sockets[0]!.options.transports).toEqual(["xhr-streaming", "xhr-polling"])
+    expect(sockets[0]!.connect).toHaveBeenCalledTimes(1)
   })
 
   it("reads the token from the store at CONNECT time, not from the render closure", () => {
@@ -124,13 +124,13 @@ describe("useNotificationSocket", () => {
     const { wrapper } = makeWrapper()
     renderHook(() => useNotificationSocket(), { wrapper })
 
-    expect(sockets[0].options.getToken()).toBe("t1")
+    expect(sockets[0]!.options.getToken()).toBe("t1")
 
     // A silent refresh rotates the token without unmounting: the same socket must see the new one.
     act(() => {
       useAuthStore.setState({ accessToken: "refreshed" })
     })
-    expect(sockets[0].options.getToken()).toBe("refreshed")
+    expect(sockets[0]!.options.getToken()).toBe("refreshed")
   })
 
   it("replaces the socket when the access token changes", () => {
@@ -141,9 +141,9 @@ describe("useNotificationSocket", () => {
     signIn("t2")
 
     expect(sockets).toHaveLength(2)
-    expect(sockets[0].disconnect).toHaveBeenCalledTimes(1)
-    expect(sockets[1].connect).toHaveBeenCalledTimes(1)
-    expect(sockets[1].options.getToken()).toBe("t2")
+    expect(sockets[0]!.disconnect).toHaveBeenCalledTimes(1)
+    expect(sockets[1]!.connect).toHaveBeenCalledTimes(1)
+    expect(sockets[1]!.options.getToken()).toBe("t2")
   })
 
   it("disconnects and stays closed on logout", () => {
@@ -156,7 +156,7 @@ describe("useNotificationSocket", () => {
     })
 
     expect(sockets).toHaveLength(1)
-    expect(sockets[0].disconnect).toHaveBeenCalledTimes(1)
+    expect(sockets[0]!.disconnect).toHaveBeenCalledTimes(1)
   })
 
   it("disconnects on unmount", () => {
@@ -166,7 +166,7 @@ describe("useNotificationSocket", () => {
 
     unmount()
 
-    expect(sockets[0].disconnect).toHaveBeenCalledTimes(1)
+    expect(sockets[0]!.disconnect).toHaveBeenCalledTimes(1)
   })
 
   describe("onMessage", () => {
@@ -176,7 +176,7 @@ describe("useNotificationSocket", () => {
       renderHook(() => useNotificationSocket(), { wrapper })
 
       act(() => {
-        sockets[0].options.onMessage({
+        sockets[0]!.options.onMessage({
           notificationId: "n-1",
           title: "Order shipped",
           message: "Order #1234 is on its way",
@@ -198,7 +198,7 @@ describe("useNotificationSocket", () => {
       renderHook(() => useNotificationSocket(), { wrapper })
 
       act(() => {
-        sockets[0].options.onMessage(body)
+        sockets[0]!.options.onMessage(body)
       })
 
       expect(showToast.info).not.toHaveBeenCalled()
@@ -213,7 +213,7 @@ describe("useNotificationSocket", () => {
       const { rerender } = renderHook(() => useNotificationSocket(), { wrapper })
 
       act(() => {
-        sockets[0].options.onAuthError?.("Unauthorized")
+        sockets[0]!.options.onAuthError?.("Unauthorized")
       })
       rerender()
 
@@ -224,7 +224,7 @@ describe("useNotificationSocket", () => {
       expect(sockets).toHaveLength(2)
       signIn("t1")
       expect(sockets).toHaveLength(2)
-      expect(sockets[1].disconnect).toHaveBeenCalledTimes(1)
+      expect(sockets[1]!.disconnect).toHaveBeenCalledTimes(1)
     })
 
     it("opens a new socket once a genuinely new token arrives", () => {
@@ -233,13 +233,13 @@ describe("useNotificationSocket", () => {
       renderHook(() => useNotificationSocket(), { wrapper })
 
       act(() => {
-        sockets[0].options.onAuthError?.("Unauthorized")
+        sockets[0]!.options.onAuthError?.("Unauthorized")
       })
       signIn("t3")
 
       expect(sockets).toHaveLength(2)
-      expect(sockets[1].connect).toHaveBeenCalledTimes(1)
-      expect(sockets[1].options.getToken()).toBe("t3")
+      expect(sockets[1]!.connect).toHaveBeenCalledTimes(1)
+      expect(sockets[1]!.options.getToken()).toBe("t3")
     })
   })
 

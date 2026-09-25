@@ -85,7 +85,7 @@ describe("useSupplierSelection", () => {
 
     const { result } = renderHook(() => useSupplierSelection(suppliers))
 
-    result.current.setSelectedSupplier(suppliers[1])
+    result.current.setSelectedSupplier(suppliers[1]!)
 
     const router = getRouterMock()
     expect(router.replace).toHaveBeenCalledWith("/products/dental-kit?vendorId=up-2", { scroll: false })
@@ -97,7 +97,7 @@ describe("useSupplierSelection", () => {
 
     const { result } = renderHook(() => useSupplierSelection(suppliers))
 
-    result.current.setSelectedSupplier(suppliers[0])
+    result.current.setSelectedSupplier(suppliers[0]!)
 
     expect(getRouterMock().replace).not.toHaveBeenCalled()
   })
@@ -107,7 +107,7 @@ describe("useSupplierSelection", () => {
 
     const { result } = renderHook(() => useSupplierSelection(suppliers))
 
-    result.current.setSelectedSupplier(suppliers[0])
+    result.current.setSelectedSupplier(suppliers[0]!)
 
     expect(getRouterMock().replace).not.toHaveBeenCalled()
   })

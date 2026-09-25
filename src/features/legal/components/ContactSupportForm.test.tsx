@@ -22,7 +22,7 @@ const submit = () => screen.getByRole("button", { name: "Submit Request" })
 const fillRequired = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.type(screen.getByLabelText("Email Address"), "serhat@example.com")
   await user.click(screen.getByRole("combobox", { name: "Legal Topic" }))
-  await user.click((await screen.findAllByRole("option"))[0])
+  await user.click((await screen.findAllByRole("option"))[0]!)
   await user.type(screen.getByLabelText("Message"), "Question about the DPA.")
 }
 

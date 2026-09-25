@@ -45,7 +45,7 @@ describe("RelatedProducts", () => {
     expect(cards.map((card) => card.textContent)).toEqual(["Related Sealer Two", "Related Sealer Three"])
 
     const link = screen.getByRole("link", { name: /View All Endodontic products/ })
-    expect(link).toHaveAttribute("href", categoryTrail[0].href)
+    expect(link).toHaveAttribute("href", categoryTrail[0]!.href)
 
     expect(mockResolveRelatedProducts).toHaveBeenCalledWith({
       productId: "p-1",

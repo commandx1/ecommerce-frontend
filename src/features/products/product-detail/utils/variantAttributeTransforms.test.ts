@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { defined } from "@/test/defined"
 import type { VariantAttributeValue } from "../types"
 import { sortVariantGroups, toVariantChoices } from "./variantAttributeTransforms"
 
@@ -41,11 +42,11 @@ describe("toVariantChoices", () => {
 
     expect(choices).toHaveLength(2)
     const byValue = Object.fromEntries(choices.map((choice) => [choice.value, choice]))
-    expect(byValue["Package of 200 tips"].names).toEqual([
+    expect(byValue["Package of 200 tips"]!.names).toEqual([
       "MARK3 Mixing Tips 200/Pk. Disposable Multicolored Tips",
       "MARK3 Mixing Tips 200/Pk. Disposable White Tips",
     ])
-    expect(byValue["Package of 1500 syringe tips"].names).toEqual([
+    expect(byValue["Package of 1500 syringe tips"]!.names).toEqual([
       "MARK3 Mixing Tips 1500/Pk. Disposable Multicolored Tips",
       "MARK3 Mixing Tips 1500/Pk. Disposable White Tips",
     ])
@@ -58,7 +59,7 @@ describe("toVariantChoices", () => {
       { value: "Shade A2", selected: false, option: true, available: true, name: "A2 Universal Syringe" },
     ]
 
-    const [choice] = toVariantChoices(values)
+    const choice = defined(toVariantChoices(values)[0])
     expect(choice.names).toEqual(["A2 Universal Syringe"])
   })
 
@@ -68,7 +69,7 @@ describe("toVariantChoices", () => {
       { value: "Translucent", selected: true, option: true, available: true, name: "Product B" },
     ]
 
-    const [choice] = toVariantChoices(values)
+    const choice = defined(toVariantChoices(values)[0])
     expect(choice.selected).toBe(true)
   })
 
@@ -78,7 +79,7 @@ describe("toVariantChoices", () => {
       { value: "Opaque", selected: false, option: true, available: true, name: "Product B" },
     ]
 
-    const [choice] = toVariantChoices(values)
+    const choice = defined(toVariantChoices(values)[0])
     expect(choice.option).toBe(true)
     expect(choice.available).toBe(true)
   })

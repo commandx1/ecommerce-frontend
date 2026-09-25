@@ -105,7 +105,7 @@ describe("ProductDetailPageView", () => {
 
     const mains = screen.getAllByRole("main")
     expect(mains).toHaveLength(1)
-    expect(mains[0]).toContainElement(h1s[0])
+    expect(mains[0]).toContainElement(h1s[0]!)
   })
 
   it("stacks the hero, specifications, purchase, community and recommendation sections", () => {

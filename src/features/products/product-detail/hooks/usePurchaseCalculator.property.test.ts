@@ -131,7 +131,7 @@ const tierLadderArb = fc
           tiers.push({
             id: i + 1,
             range: `${prevMax + 1}-${boundary}`,
-            price: `$${sortedPrices[i].toFixed(2)}`,
+            price: `$${sortedPrices[i]!.toFixed(2)}`,
             note: "",
             selected: false,
           })
@@ -140,7 +140,7 @@ const tierLadderArb = fc
         tiers.push({
           id: boundaries.length + 1,
           range: `${prevMax + 1}+`,
-          price: `$${sortedPrices[boundaries.length].toFixed(2)}`,
+          price: `$${sortedPrices[boundaries.length]!.toFixed(2)}`,
           note: "",
           selected: false,
         })

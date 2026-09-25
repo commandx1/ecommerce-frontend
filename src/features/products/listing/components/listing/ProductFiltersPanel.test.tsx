@@ -58,9 +58,9 @@ describe("ProductFiltersPanel", () => {
 
     await user.click(screen.getByLabelText("MARK3"))
 
-    const [url] = router.push.mock.calls[0] as [string, { scroll: boolean }]
+    const [url] = router.push.mock.calls[0]! as [string, { scroll: boolean }]
     expect(url.startsWith("/products?")).toBe(true)
-    expect(router.push.mock.calls[0][1]).toEqual({ scroll: false })
+    expect(router.push.mock.calls[0]![1]).toEqual({ scroll: false })
     const params = lastPushedParams(router)
     expect(params.getAll("brands")).toEqual(["MARK3"])
     expect(params.get("page")).toBe("1")

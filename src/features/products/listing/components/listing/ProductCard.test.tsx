@@ -155,9 +155,9 @@ describe("ProductCard", () => {
       await userEvent.setup().click(screen.getByRole("button", { name: "Add to Cart" }))
 
       expect(window.location.assign).toHaveBeenCalledTimes(1)
-      expect(String((window.location.assign as unknown as { mock: { calls: string[][] } }).mock.calls[0][0])).toContain(
-        "reason=login-required",
-      )
+      expect(
+        String((window.location.assign as unknown as { mock: { calls: string[][] } }).mock.calls[0]![0]),
+      ).toContain("reason=login-required")
       expect(mockToastWarning).not.toHaveBeenCalled()
       expect(getProductWithOffers).not.toHaveBeenCalled()
     })

@@ -185,7 +185,7 @@ describe("buildProductDetailViewModel", () => {
       questions: emptyQuestions,
     }
     const vm = buildProductDetailViewModel("abcdef1234567890", data, null)
-    expect(vm.suppliers[0].uberDirectEligible).toBe(true)
+    expect(vm.suppliers[0]!.uberDirectEligible).toBe(true)
   })
 
   it("defaults userProducts/vendors/suppliers to empty when userProducts is undefined", () => {
