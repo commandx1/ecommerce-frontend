@@ -90,7 +90,9 @@ describe("BuyerPaymentMethodsPage", () => {
     render(<BuyerPaymentMethodsPage />)
 
     expect(await screen.findByRole("heading", { name: "Payment Methods" })).toBeInTheDocument()
-    const defaultTile = screen.getByText("Default Method").closest("article") as HTMLElement
+    // findByText (was getByText, B2b): the KPI tiles are skeletons until the Query list
+    // resolves, which lands a tick after the static heading - see the file header.
+    const defaultTile = (await screen.findByText("Default Method")).closest("article") as HTMLElement
     expect(within(defaultTile).getByText("Visa •••• 4532")).toBeInTheDocument()
 
     const autoOrderTile = screen.getByText("Auto Order Card").closest("article") as HTMLElement
@@ -452,7 +454,8 @@ describe("BuyerPaymentMethodsPage", () => {
     render(<BuyerPaymentMethodsPage />)
 
     expect(await screen.findByRole("heading", { name: "Payment Methods" })).toBeInTheDocument()
-    expect(screen.getByText("No saved cards yet. Add a card to get started.")).toBeInTheDocument()
+    // findByText (was getByText, B2b): see the "summarises the default card" test's comment.
+    expect(await screen.findByText("No saved cards yet. Add a card to get started.")).toBeInTheDocument()
   })
 
   it("renders the whole wallet, not just the good cards, when one card in the list has a null brand", async () => {

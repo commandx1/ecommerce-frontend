@@ -36,7 +36,7 @@ export interface SetupIntentResponse {
   clientSecret: string
 }
 
-interface SaveCardPayload {
+export interface SaveCardPayload {
   paymentMethodId: string // pm_... from Stripe after confirmCardSetup
   nickname: string
   makeDefault: boolean

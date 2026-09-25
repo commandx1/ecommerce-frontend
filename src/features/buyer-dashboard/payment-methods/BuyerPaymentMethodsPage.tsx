@@ -1,11 +1,9 @@
 "use client"
 
-import { CardNumberElement, Elements, useElements, useStripe } from "@stripe/react-stripe-js"
+import { Elements } from "@stripe/react-stripe-js"
 import { CheckCircle2, CreditCard, Loader2, Plus, Repeat } from "lucide-react"
 import Link from "next/link"
-import { useTheme } from "next-themes"
 import type React from "react"
-import { useCallback, useEffect, useMemo, useState } from "react"
 import ConfirmationModal from "@/components/feedback/ConfirmationModal"
 import SectionHeading from "@/components/layout/SectionHeading"
 import { Button } from "@/components/ui/button"
@@ -13,325 +11,46 @@ import { Input } from "@/components/ui/input"
 import Modal from "@/components/ui/Modal"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import { Skeleton } from "@/components/ui/skeleton"
-import { showToast } from "@/components/ui/Toast"
 import { useStripePromise } from "@/hooks/useStripePromise"
-import { paymentMethodsAPI } from "@/lib/api/payment-methods"
 import { cn } from "@/lib/utils"
 import AddCardModal from "./components/AddCardModal"
 import FormField from "./components/FormField"
 import PaymentMethodCard from "./components/PaymentMethodCard"
-import type { SavedPaymentMethod } from "./paymentMethodsData"
-
-// ── Modal state types ────────────────────────────────────────────────────────
-
-type ModalMode = "add" | "rename" | null
-
-interface RenameState {
-  cardId: string
-  currentNickname: string
-  newNickname: string
-}
+import { usePaymentMethodsPage } from "./hooks/usePaymentMethodsPage"
 
 // ── Inner page (must be inside <Elements>) ───────────────────────────────────
 
 function PaymentMethodsContent() {
-  const stripe = useStripe()
-  const elements = useElements()
-  const { resolvedTheme } = useTheme()
-
-  const [methods, setMethods] = useState<SavedPaymentMethod[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [modalMode, setModalMode] = useState<ModalMode>(null)
-  const [isSaving, setIsSaving] = useState(false)
-  const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null)
-  const [defaultPopoverOpenId, setDefaultPopoverOpenId] = useState<string | null>(null)
-  const [deletePopoverOpenId, setDeletePopoverOpenId] = useState<string | null>(null)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-
-  // Auto order card / off-session mandate
-  const [upgradingId, setUpgradingId] = useState<string | null>(null)
-  const [autoOrderCardActionId, setAutoOrderCardActionId] = useState<string | null>(null)
-  const [stopAutoOrdersFor, setStopAutoOrdersFor] = useState<SavedPaymentMethod | null>(null)
-
-  // Add-card form
-  const [nickname, setNickname] = useState("")
-  const [makeDefault, setMakeDefault] = useState(false)
-  const [allowAutoPayments, setAllowAutoPayments] = useState(true)
-  const [useForAutoOrders, setUseForAutoOrders] = useState(false)
-
-  // Rename form
-  const [renameState, setRenameState] = useState<RenameState | null>(null)
-
-  // Stripe Elements appearance (mirrors checkout styling)
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-  const isDark = mounted && resolvedTheme === "dark"
-
-  const cardElementOptions = useMemo(
-    () => ({
-      disableLink: true,
-      style: {
-        base: {
-          fontFamily: "Manrope, ui-sans-serif, system-ui, sans-serif",
-          fontSize: "16px",
-          color: isDark ? "#F4F1EA" : "#1F2937",
-          iconColor: isDark ? "#F4F1EA" : "#475569",
-          "::placeholder": { color: isDark ? "#A8B0BD" : "#94A3B8" },
-        },
-        invalid: { color: "#DC2626", iconColor: "#DC2626" },
-      },
-    }),
-    [isDark],
-  )
-
-  // ── Data fetching ──────────────────────────────────────────────────────────
-
-  const refreshMethods = useCallback(async () => {
-    const cards = await paymentMethodsAPI.getSavedCards()
-    setMethods(cards)
-  }, [])
-
-  useEffect(() => {
-    refreshMethods()
-      .catch(() => showToast.error("Failed to load", "Could not fetch payment methods."))
-      .finally(() => setIsLoading(false))
-  }, [refreshMethods])
-
-  const defaultMethod = methods.find((m) => m.status === "default") ?? null
-  const autoOrderMethod = methods.find((m) => m.autoOrderCard) ?? null
-
-  // ── Add card (SetupIntent flow) ────────────────────────────────────────────
-
-  const openAddModal = () => {
-    setNickname("")
-    setMakeDefault(methods.length === 0)
-    setAllowAutoPayments(true)
-    setUseForAutoOrders(!autoOrderMethod)
-    setModalMode("add")
-  }
-
-  const handleAddCard = useCallback(async () => {
-    if (!stripe || !elements) {
-      showToast.error("Stripe not ready", "Please refresh and try again.")
-      return
-    }
-    if (!nickname.trim()) {
-      showToast.error("Nickname required", "Please give this card a name.")
-      return
-    }
-
-    setIsSaving(true)
-    try {
-      // 1. Backend creates a SetupIntent — card data never touches our server.
-      //    The flag decides the Stripe mandate (off_session vs on_session).
-      const { clientSecret } = await paymentMethodsAPI.createSetupIntent(allowAutoPayments)
-
-      // 2. Stripe confirms the setup using the card details entered in CardNumberElement
-      const cardElement = elements.getElement(CardNumberElement)
-      if (!cardElement) {
-        showToast.error("Card details missing", "Please enter your card details.")
-        return
-      }
-
-      const { setupIntent, error } = await stripe.confirmCardSetup(clientSecret, {
-        payment_method: { card: cardElement },
-      })
-
-      if (error || !setupIntent?.payment_method) {
-        showToast.error("Card declined", error?.message ?? "Could not verify the card.")
-        return
-      }
-
-      // 3. Tell our backend to retrieve & persist the PaymentMethod
-      const saved = await paymentMethodsAPI.saveCard({
-        paymentMethodId: setupIntent.payment_method as string,
-        nickname: nickname.trim(),
-        makeDefault,
-        openToAutoPayment: allowAutoPayments,
-        autoOrderCard: allowAutoPayments && useForAutoOrders,
-      })
-
-      // Saving can move the default and the auto order card off other cards, so
-      // take the server's view rather than patching locally.
-      await refreshMethods()
-
-      showToast.success("Card added", `${saved.brandLabel} •••• ${saved.last4} saved.`)
-      setModalMode(null)
-    } catch (err: unknown) {
-      const status = (err as { response?: { status?: number } })?.response?.status
-      if (status === 409) {
-        showToast.error("Card not saved", "This card is already linked to your account, or it can't be used here.")
-      } else {
-        showToast.error("Failed to add card", "Please try again.")
-      }
-    } finally {
-      setIsSaving(false)
-    }
-  }, [stripe, elements, nickname, makeDefault, allowAutoPayments, useForAutoOrders, refreshMethods])
-
-  // ── Upgrade an existing card to an off-session mandate ─────────────────────
-
-  const handleEnableAutoPayments = useCallback(
-    async (method: SavedPaymentMethod) => {
-      if (!stripe) {
-        showToast.error("Stripe not ready", "Please refresh and try again.")
-        return
-      }
-
-      setUpgradingId(method.id)
-      try {
-        const { clientSecret, setupIntentId } = await paymentMethodsAPI.createAutoPaymentUpgradeSetupIntent(method.id)
-
-        // The payment method is already attached to this SetupIntent — confirming
-        // it only re-authorises the card and may prompt for 3D Secure.
-        const { setupIntent, error } = await stripe.confirmCardSetup(clientSecret)
-        if (error || setupIntent?.status !== "succeeded") {
-          showToast.error("Could not authorise the card", error?.message ?? "Your bank did not approve the request.")
-          return
-        }
-
-        await paymentMethodsAPI.confirmAutoPaymentUpgrade(method.id, setupIntentId)
-        await refreshMethods()
-        showToast.success("Automatic payments enabled", `${method.brandLabel} •••• ${method.last4} is ready.`)
-      } catch {
-        showToast.error("Could not enable automatic payments", "Please try again.")
-      } finally {
-        setUpgradingId(null)
-      }
-    },
-    [stripe, refreshMethods],
-  )
-
-  // ── Auto order card ────────────────────────────────────────────────────────
-
-  const handleUseForAutoOrders = useCallback(
-    async (method: SavedPaymentMethod) => {
-      setAutoOrderCardActionId(method.id)
-      try {
-        await paymentMethodsAPI.setAutoOrderCard(method.id, true)
-        await refreshMethods()
-        showToast.success(
-          "Auto order card updated",
-          `${method.brandLabel} •••• ${method.last4} will pay for auto orders.`,
-        )
-      } catch (err: unknown) {
-        const status = (err as { response?: { status?: number } })?.response?.status
-        if (status === 409) {
-          showToast.error("Automatic payments required", "Enable automatic payments for this card first.")
-        } else {
-          showToast.error("Could not update auto order card", "Please try again.")
-        }
-      } finally {
-        setAutoOrderCardActionId(null)
-      }
-    },
-    [refreshMethods],
-  )
-
-  const handleStopAutoOrders = useCallback(async () => {
-    if (!stopAutoOrdersFor) return
-
-    setAutoOrderCardActionId(stopAutoOrdersFor.id)
-    try {
-      await paymentMethodsAPI.setAutoOrderCard(stopAutoOrdersFor.id, false)
-      await refreshMethods()
-      showToast.success("Auto orders paused", "Choose another card to start them again.")
-      setStopAutoOrdersFor(null)
-    } catch {
-      showToast.error("Could not update auto order card", "Please try again.")
-    } finally {
-      setAutoOrderCardActionId(null)
-    }
-  }, [stopAutoOrdersFor, refreshMethods])
-
-  // ── Rename ─────────────────────────────────────────────────────────────────
-
-  const openRenameModal = (method: SavedPaymentMethod) => {
-    setRenameState({ cardId: method.id, currentNickname: method.nickname, newNickname: method.nickname })
-    setModalMode("rename")
-  }
-
-  const handleRename = async () => {
-    if (!renameState) return
-    if (!renameState.newNickname.trim()) {
-      showToast.error("Nickname required", "Please enter a name for the card.")
-      return
-    }
-
-    setIsSaving(true)
-    try {
-      const updated = await paymentMethodsAPI.updateNickname(renameState.cardId, {
-        nickname: renameState.newNickname.trim(),
-      })
-      setMethods((current) => current.map((m) => (m.id === updated.id ? updated : m)))
-      showToast.success("Card renamed")
-      setModalMode(null)
-    } catch {
-      showToast.error("Failed to rename card")
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  // ── Delete ─────────────────────────────────────────────────────────────────
-
-  const removeMethod = async (method: SavedPaymentMethod) => {
-    if (methods.length === 1) {
-      showToast.warning("Cannot remove", "At least one payment method must remain.")
-      setDeletePopoverOpenId(null)
-      return
-    }
-
-    setDeletingId(method.id)
-    try {
-      await paymentMethodsAPI.deleteCard(method.id)
-      // Deleting can promote another card to default and pause auto orders, so
-      // read the result back instead of guessing.
-      await refreshMethods()
-      if (method.autoOrderCard) {
-        showToast.success("Card removed", "Your auto orders are paused until you choose another card.")
-      } else {
-        showToast.success("Card removed")
-      }
-    } catch {
-      showToast.error("Failed to remove card")
-    } finally {
-      setDeletingId(null)
-      setDeletePopoverOpenId(null)
-    }
-  }
-
-  // ── Set default ────────────────────────────────────────────────────────────
-
-  const setAsDefault = async (method: SavedPaymentMethod) => {
-    setSettingDefaultId(method.id)
-    try {
-      const updated = await paymentMethodsAPI.setDefault(method.id)
-      setMethods((current) =>
-        current.map((m) => {
-          if (m.id === updated.id) return updated
-          if (m.status === "default") return { ...m, status: "active" }
-          return m
-        }),
-      )
-      showToast.success("Default updated", "Primary payment method changed.")
-    } catch {
-      showToast.error("Failed to update default")
-    } finally {
-      setSettingDefaultId(null)
-      setDefaultPopoverOpenId(null)
-    }
-  }
-
-  // ── Render ─────────────────────────────────────────────────────────────────
-
-  const sortedMethods = [...methods].sort((a, b) => {
-    if (a.status === "default") return -1
-    if (b.status === "default") return 1
-    return a.nickname.localeCompare(b.nickname)
-  })
+  const {
+    methods,
+    sortedMethods,
+    isLoading,
+    defaultMethod,
+    autoOrderMethod,
+    cardElementOptions,
+    addCardFlow,
+    deletingId,
+    settingDefaultId,
+    upgradingId,
+    autoOrderCardActionId,
+    defaultPopoverOpenId,
+    deletePopoverOpenId,
+    setDefaultPopoverOpenId,
+    setDeletePopoverOpenId,
+    stopAutoOrdersFor,
+    requestStopAutoOrders,
+    confirmStopAutoOrders,
+    renameState,
+    isRenaming,
+    openRenameModal,
+    closeRenameModal,
+    setRenameNickname,
+    submitRename,
+    removeMethod,
+    setAsDefault,
+    enableAutomaticPayments,
+    useForAutoOrders,
+  } = usePaymentMethodsPage()
 
   return (
     <div className="space-y-6">
@@ -343,7 +62,7 @@ function PaymentMethodsContent() {
           title="Payment Methods"
           description="Manage cards used for invoice settlement. Cards are stored securely by Stripe — we only hold the last 4 digits and expiry."
           actions={
-            <Button type="button" onClick={openAddModal}>
+            <Button type="button" onClick={addCardFlow.open}>
               <Plus className="h-4 w-4" />
               Add New Card
             </Button>
@@ -457,19 +176,11 @@ function PaymentMethodsContent() {
                 setDeletePopoverOpenId={setDeletePopoverOpenId}
                 setDefaultPopoverOpenId={setDefaultPopoverOpenId}
                 onRename={openRenameModal}
-                onRemove={(m) => {
-                  void removeMethod(m)
-                }}
-                onSetDefault={(m) => {
-                  void setAsDefault(m)
-                }}
-                onEnableAutoPayments={(m) => {
-                  void handleEnableAutoPayments(m)
-                }}
-                onUseForAutoOrders={(m) => {
-                  void handleUseForAutoOrders(m)
-                }}
-                onRequestStopAutoOrders={setStopAutoOrdersFor}
+                onRemove={removeMethod}
+                onSetDefault={setAsDefault}
+                onEnableAutoPayments={enableAutomaticPayments}
+                onUseForAutoOrders={useForAutoOrders}
+                onRequestStopAutoOrders={requestStopAutoOrders}
               />
             ))}
           </div>
@@ -477,31 +188,24 @@ function PaymentMethodsContent() {
       </section>
 
       <AddCardModal
-        isOpen={modalMode === "add"}
-        isSaving={isSaving}
-        nickname={nickname}
-        makeDefault={makeDefault}
-        allowAutoPayments={allowAutoPayments}
-        useForAutoOrders={useForAutoOrders}
+        isOpen={addCardFlow.isOpen}
+        isSaving={addCardFlow.isSaving}
+        nickname={addCardFlow.nickname}
+        makeDefault={addCardFlow.makeDefault}
+        allowAutoPayments={addCardFlow.allowAutoPayments}
+        useForAutoOrders={addCardFlow.useForAutoOrders}
         hasExistingAutoOrderCard={Boolean(autoOrderMethod)}
         cardElementOptions={cardElementOptions}
-        onNicknameChange={setNickname}
-        onMakeDefaultChange={setMakeDefault}
-        onAllowAutoPaymentsChange={setAllowAutoPayments}
-        onUseForAutoOrdersChange={setUseForAutoOrders}
-        onClose={() => setModalMode(null)}
-        onSubmit={() => {
-          void handleAddCard()
-        }}
+        onNicknameChange={addCardFlow.setNickname}
+        onMakeDefaultChange={addCardFlow.setMakeDefault}
+        onAllowAutoPaymentsChange={addCardFlow.setAllowAutoPayments}
+        onUseForAutoOrdersChange={addCardFlow.setUseForAutoOrders}
+        onClose={addCardFlow.close}
+        onSubmit={addCardFlow.submit}
       />
 
       {/* Rename modal */}
-      <Modal
-        isOpen={modalMode === "rename"}
-        onClose={() => setModalMode(null)}
-        title="Rename Card"
-        maxWidthClassName="max-w-sm"
-      >
+      <Modal isOpen={Boolean(renameState)} onClose={closeRenameModal} title="Rename Card" maxWidthClassName="max-w-sm">
         <div className="p-6">
           <h3 className="text-xl font-semibold text-text-primary">Rename card</h3>
           <p className="mt-1 text-sm text-text-secondary">Update the display name for this card.</p>
@@ -510,25 +214,19 @@ function PaymentMethodsContent() {
             <FormField label="New nickname">
               <Input
                 value={renameState?.newNickname ?? ""}
-                onChange={(e) => setRenameState((s) => (s ? { ...s, newNickname: e.target.value } : s))}
+                onChange={(e) => setRenameNickname(e.target.value)}
                 placeholder="e.g. Backup Card"
-                disabled={isSaving}
+                disabled={isRenaming}
               />
             </FormField>
           </div>
 
           <div className="mt-6 flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => setModalMode(null)} disabled={isSaving}>
+            <Button type="button" variant="outline" onClick={closeRenameModal} disabled={isRenaming}>
               Cancel
             </Button>
-            <Button
-              type="button"
-              onClick={() => {
-                void handleRename()
-              }}
-              disabled={isSaving}
-            >
-              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+            <Button type="button" onClick={submitRename} disabled={isRenaming}>
+              {isRenaming ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
             </Button>
           </div>
         </div>
@@ -536,10 +234,8 @@ function PaymentMethodsContent() {
 
       <ConfirmationModal
         isOpen={Boolean(stopAutoOrdersFor)}
-        onClose={() => setStopAutoOrdersFor(null)}
-        onConfirm={() => {
-          void handleStopAutoOrders()
-        }}
+        onClose={() => requestStopAutoOrders(null)}
+        onConfirm={confirmStopAutoOrders}
         title="Stop using this card for auto orders?"
         description="All of your active auto orders will be paused until you pick another card. Your schedules are kept, so you can resume them later."
         confirmText="Stop auto orders"
