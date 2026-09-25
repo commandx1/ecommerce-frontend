@@ -53,13 +53,13 @@
         "noUnusedFunctionParameters": "warn"
       },
       "complexity": {
-        "useOptionalChain": "warn",
+        "useOptionalChain": "error",
         "noUselessFragments": "warn"
       },
       "style": {
         "noNonNullAssertion": "warn",
         "useConst": "error",
-        "useTemplate": "warn"
+        "useTemplate": "error"
       },
       "a11y": {
         "useKeyWithClickEvents": "off"
