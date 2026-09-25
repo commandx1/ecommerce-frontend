@@ -6,7 +6,7 @@ import { useEffect, useId, useState } from "react"
 import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
 import SingleOrderNotice from "@/components/dashboard-shared/SingleOrderNotice"
 import SectionHeading from "@/components/layout/SectionHeading"
-import Modal from "@/components/ui/Modal"
+import Modal, { ModalTitle } from "@/components/ui/Modal"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { VendorOrderItem } from "@/lib/api/vendor-orders"
@@ -383,11 +383,23 @@ export default function VendorOrdersPage() {
           </div>
         </div>
       </Modal>
-      {labelModalLinks && (labelModalLinks.shipping.length > 0 || labelModalLinks.tracking.length > 0) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="glass-panel mx-4 w-full max-w-4xl shadow-xl">
+      <Modal
+        isOpen={Boolean(
+          labelModalLinks && (labelModalLinks.shipping.length > 0 || labelModalLinks.tracking.length > 0),
+        )}
+        onClose={() => setLabelModalLinks(null)}
+        customTitle
+        maxWidthClassName="max-w-4xl"
+        // The printer picker below is itself a Radix Select, which fights this dialog's own
+        // focus trap in a nested-portal scenario (see Modal's `trapFocus` doc comment).
+        trapFocus={false}
+      >
+        {labelModalLinks && (labelModalLinks.shipping.length > 0 || labelModalLinks.tracking.length > 0) && (
+          <>
             <div className="flex items-center justify-between px-6 py-4 border-b border-border-soft">
-              <h2 className="text-lg font-semibold text-brand">Labels &amp; tracking</h2>
+              <ModalTitle asChild>
+                <h2 className="text-lg font-semibold text-brand">Labels &amp; tracking</h2>
+              </ModalTitle>
               <button
                 type="button"
                 onClick={() => setLabelModalLinks(null)}
@@ -579,14 +591,16 @@ export default function VendorOrdersPage() {
                 Close
               </button>
             </div>
-          </div>
-        </div>
-      )}
-      {uberResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="glass-panel mx-4 w-full max-w-xl shadow-xl">
+          </>
+        )}
+      </Modal>
+      <Modal isOpen={Boolean(uberResult)} onClose={() => setUberResult(null)} customTitle maxWidthClassName="max-w-xl">
+        {uberResult && (
+          <>
             <div className="flex items-center justify-between border-b border-border-soft px-6 py-4">
-              <h2 className="text-lg font-semibold text-brand">Uber Delivery Result</h2>
+              <ModalTitle asChild>
+                <h2 className="text-lg font-semibold text-brand">Uber Delivery Result</h2>
+              </ModalTitle>
               <button
                 type="button"
                 onClick={() => setUberResult(null)}
@@ -663,9 +677,9 @@ export default function VendorOrdersPage() {
                 Close
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
     </>
   )
 }

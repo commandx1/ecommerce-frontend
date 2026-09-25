@@ -457,8 +457,10 @@ describe("VendorOrdersPage", () => {
     expect(await screen.findByText("Uber Delivery Result")).toBeInTheDocument()
     expect(screen.getByText("delivery-1")).toBeInTheDocument()
     expect(screen.getByText("$12.50")).toBeInTheDocument()
-    // The same order cannot be dispatched twice
-    expect(table.getAllByRole("button", { name: "Call Uber" })[0]).toBeDisabled()
+    // The same order cannot be dispatched twice. The result dialog above is now a real Radix
+    // modal, which aria-hides the rest of the page while it's open (an approved a11y side effect
+    // of the S8c conversion) - `hidden: true` reaches into that aria-hidden table on purpose.
+    expect(table.getAllByRole("button", { name: "Call Uber", hidden: true })[0]).toBeDisabled()
   })
 
   it("opens the label modal from an expanded row and prints through QZ", async () => {
