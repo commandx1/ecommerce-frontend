@@ -208,6 +208,11 @@ describe("useProductSearch", () => {
       results: [],
       hasMore: false,
       showDropdown: false,
+      // The abort above skips performSearch's own `finally` (it only clears isSearching/isLoadingMore
+      // when its own signal was not aborted), so reset() must clear them itself - otherwise "clear
+      // all" leaves the search panel stuck showing its loading state forever.
+      isSearching: false,
+      isLoadingMore: false,
     })
     expect(toastSpies.error).not.toHaveBeenCalled()
   })

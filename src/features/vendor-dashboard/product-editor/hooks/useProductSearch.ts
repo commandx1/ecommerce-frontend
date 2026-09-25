@@ -31,6 +31,11 @@ export function useProductSearch(accessToken: string | null) {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const resultsListRef = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
+  // Mirrors `searchQuery` synchronously on every render (unlike `debouncedQuery`, which lags
+  // behind by SEARCH_DEBOUNCE_MS). Lets the brand-change effect below tell "the visible query was
+  // just cleared" from "the debounced value hasn't caught up to a still-non-empty query yet".
+  const searchQueryRef = useRef(searchQuery)
+  searchQueryRef.current = searchQuery
 
   const debouncedQuery = useDebounce(searchQuery, SEARCH_DEBOUNCE_MS)
 
@@ -108,8 +113,12 @@ export function useProductSearch(accessToken: string | null) {
     [accessToken],
   )
 
-  // A fresh (page 0) search whenever the settled query or the brand filter changes.
+  // A fresh (page 0) search whenever the settled query or the brand filter changes. A brand
+  // change is not debounced, so it can fire this effect before `debouncedQuery` has caught up to
+  // a query that was just cleared (e.g. by `reset`, which changes both together) - `searchQueryRef`
+  // is checked instead of `debouncedQuery` here because it is never stale.
   useEffect(() => {
+    if (!searchQueryRef.current.trim()) return
     performSearch(debouncedQuery, selectedBrand, 0)
   }, [debouncedQuery, selectedBrand, performSearch])
 
@@ -172,7 +181,12 @@ export function useProductSearch(accessToken: string | null) {
 
     /** Aborts any in-flight search and empties query, brand filter, results and paging. */
     reset: () => {
+      // Abort here skips performSearch's own `finally` (it only clears these when its own signal
+      // was not aborted), so clear them here too - otherwise a reset mid-search left the panel
+      // stuck showing its loading state with nothing left to load.
       abortControllerRef.current?.abort()
+      setIsSearching(false)
+      setIsLoadingMore(false)
       setSearchQuery("")
       setSelectedBrand(null)
       setResults([])
