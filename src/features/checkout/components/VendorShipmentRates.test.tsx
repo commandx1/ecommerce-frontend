@@ -1161,7 +1161,7 @@ describe("VendorShipmentRates — manual selection (click)", () => {
     onSelect.mockClear()
 
     const radios = await screen.findAllByRole("radio")
-    await user.click(radios[1])
+    await user.click(radios[1]!)
 
     expect(onSelect).toHaveBeenCalledWith(
       sellerId,

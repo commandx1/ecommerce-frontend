@@ -41,7 +41,7 @@ describe("AccountMenu", () => {
     await user.click(screen.getByRole("button", { name: /My Account/ }))
     await user.click(screen.getByRole("button", { name: "Dashboard" }))
 
-    expect(items[0].onClick).toHaveBeenCalledTimes(1)
+    expect(items[0]!.onClick).toHaveBeenCalledTimes(1)
     await waitFor(() => expect(screen.queryByRole("button", { name: "Dashboard" })).not.toBeInTheDocument())
   })
 

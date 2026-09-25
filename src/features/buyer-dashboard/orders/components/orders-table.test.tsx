@@ -346,7 +346,7 @@ describe("OrdersTable", () => {
     expect(screen.getAllByText("Fulfillment").length).toBeGreaterThan(0)
     expect(screen.getByText("Customer Details")).toBeInTheDocument()
 
-    await user.click(screen.getAllByRole("button", { name: "Reorder" })[0])
+    await user.click(screen.getAllByRole("button", { name: "Reorder" })[0]!)
     expect(onReorder).toHaveBeenCalledWith("up-1", 2, "Dental Kit")
 
     await user.click(screen.getByRole("button", { name: "Track" }))

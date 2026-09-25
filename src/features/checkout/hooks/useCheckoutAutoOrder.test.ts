@@ -81,7 +81,7 @@ describe("useCheckoutAutoOrder", () => {
   ] as const)("labels the %s period as %s", (period, label) => {
     const { result } = renderAutoOrder([autoOrderItem("up-a", period)])
 
-    expect(result.current.autoOrderLines[0].periodLabel).toBe(label)
+    expect(result.current.autoOrderLines[0]!.periodLabel).toBe(label)
   })
 
   it("keeps every recurring line, in cart order", () => {
@@ -126,7 +126,7 @@ describe("useCheckoutAutoOrder — schedule mutations", () => {
     })
 
     expect(setItemAutoOrder).toHaveBeenCalledWith("up-a", "TWO_MONTHS")
-    expect(useCheckoutStore.getState().orderPayload?.shippoRateOrders[0].products[0].autoOrder).toBe("TWO_MONTHS")
+    expect(useCheckoutStore.getState().orderPayload?.shippoRateOrders[0]?.products[0]?.autoOrder).toBe("TWO_MONTHS")
   })
 
   it("cancels a repeat by writing null to both the cart and the frozen payload", async () => {
@@ -145,7 +145,7 @@ describe("useCheckoutAutoOrder — schedule mutations", () => {
     })
 
     expect(setItemAutoOrder).toHaveBeenCalledWith("up-a", null)
-    expect(useCheckoutStore.getState().orderPayload?.shippoRateOrders[0].products[0].autoOrder).toBeNull()
+    expect(useCheckoutStore.getState().orderPayload?.shippoRateOrders[0]?.products[0]?.autoOrder).toBeNull()
   })
 
   it("toasts and leaves the payload untouched when the cart write fails", async () => {
@@ -165,7 +165,7 @@ describe("useCheckoutAutoOrder — schedule mutations", () => {
     })
 
     expect(errorToast).toHaveBeenCalled()
-    expect(useCheckoutStore.getState().orderPayload?.shippoRateOrders[0].products[0].autoOrder).toBe("ONE_MONTH")
+    expect(useCheckoutStore.getState().orderPayload?.shippoRateOrders[0]?.products[0]?.autoOrder).toBe("ONE_MONTH")
   })
 
   it("marks a row pending while its write is in flight and clears it afterwards", async () => {

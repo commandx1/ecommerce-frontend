@@ -95,6 +95,7 @@ describe("filterEntries", () => {
     const target = entries.find((entry) => entry.children.length > 0)
     if (!target) throw new Error("expected an entry with children for this fixture")
     const child = target.children[0]
+    if (child === undefined) throw new Error("expected the entry's children to be non-empty")
     const results = filterEntries(entries, child.toUpperCase())
     expect(results.some((entry) => entry.name === target.name)).toBe(true)
   })

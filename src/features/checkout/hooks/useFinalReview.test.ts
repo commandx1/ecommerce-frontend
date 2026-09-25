@@ -604,7 +604,7 @@ describe("useFinalReview — double submit", () => {
 
     await placeAndSettle(result.current.onPlaceOrder)
 
-    expect(placeOrder.mock.calls[0][0].cartId).toBe("cart-2")
+    expect(placeOrder.mock.calls[0]![0].cartId).toBe("cart-2")
   })
 
   it("disables the submit button for the whole in-flight order", async () => {
@@ -735,7 +735,7 @@ describe("useFinalReview — payload", () => {
     const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
-    const payload = placeOrder.mock.calls[0][0]
+    const payload = placeOrder.mock.calls[0]![0]
     expect(payload).toMatchObject({
       addressId: "address-1",
       cartId: "cart-1",
@@ -756,7 +756,7 @@ describe("useFinalReview — payload", () => {
     const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
-    expect(placeOrder.mock.calls[0][0]).toMatchObject({ cardSave: false, cardName: "" })
+    expect(placeOrder.mock.calls[0]![0]).toMatchObject({ cardSave: false, cardName: "" })
   })
 
   it("saves a new card with the buyer's off-session consent", async () => {
@@ -771,7 +771,7 @@ describe("useFinalReview — payload", () => {
     const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
-    expect(placeOrder.mock.calls[0][0]).toMatchObject({
+    expect(placeOrder.mock.calls[0]![0]).toMatchObject({
       paymentMethodId: "pm_new",
       cardSave: true,
       cardName: "Clinic Visa",
@@ -793,7 +793,7 @@ describe("useFinalReview — payload", () => {
     const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
-    expect(placeOrder.mock.calls[0][0]).toMatchObject({
+    expect(placeOrder.mock.calls[0]![0]).toMatchObject({
       cardSave: true,
       cardOpenToAutoPayment: true,
       cardAutoOrderCard: true,
@@ -813,7 +813,7 @@ describe("useFinalReview — payload", () => {
     const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
-    expect(placeOrder.mock.calls[0][0]).toMatchObject({
+    expect(placeOrder.mock.calls[0]![0]).toMatchObject({
       cardOpenToAutoPayment: false,
       cardAutoOrderCard: false,
     })
@@ -826,7 +826,7 @@ describe("useFinalReview — payload", () => {
     const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
-    expect(placeOrder.mock.calls[0][0]).toMatchObject({ openToAutoOrder: true, cardSave: false })
+    expect(placeOrder.mock.calls[0]![0]).toMatchObject({ openToAutoOrder: true, cardSave: false })
   })
 
   it("omits the off-session upgrade when consent was not given", async () => {
@@ -836,7 +836,7 @@ describe("useFinalReview — payload", () => {
     const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
-    expect(placeOrder.mock.calls[0][0]).not.toHaveProperty("openToAutoOrder")
+    expect(placeOrder.mock.calls[0]![0]).not.toHaveProperty("openToAutoOrder")
   })
 
   it("never sets the off-session upgrade flag for a brand-new card, even with auto-order consent", async () => {
@@ -853,7 +853,7 @@ describe("useFinalReview — payload", () => {
     const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
-    expect(placeOrder.mock.calls[0][0]).not.toHaveProperty("openToAutoOrder")
+    expect(placeOrder.mock.calls[0]![0]).not.toHaveProperty("openToAutoOrder")
   })
 
   it("does not set the off-session upgrade flag for a saved card when the cart has no repeat items", async () => {
@@ -863,7 +863,7 @@ describe("useFinalReview — payload", () => {
     const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
-    expect(placeOrder.mock.calls[0][0]).not.toHaveProperty("openToAutoOrder")
+    expect(placeOrder.mock.calls[0]![0]).not.toHaveProperty("openToAutoOrder")
   })
 
   it("sends an empty cart id rather than undefined when the cart id is missing", async () => {
@@ -872,7 +872,7 @@ describe("useFinalReview — payload", () => {
     const { result } = renderFinalReview()
     await placeAndSettle(result.current.onPlaceOrder)
 
-    expect(placeOrder.mock.calls[0][0].cartId).toBe("")
+    expect(placeOrder.mock.calls[0]![0].cartId).toBe("")
   })
 })
 
@@ -908,7 +908,7 @@ describe("useFinalReview — stale payload regression (Final Review schedule edi
 
     await placeAndSettle(result.current.finalReview.onPlaceOrder)
 
-    expect(placeOrder.mock.calls[0][0].shippoRateOrders[0].products[0].autoOrder).toBe("TWO_MONTHS")
+    expect(placeOrder.mock.calls[0]![0].shippoRateOrders[0]!.products[0]!.autoOrder).toBe("TWO_MONTHS")
   })
 
   it("sends autoOrder: null to placeOrder after cancelling the repeat on Final Review", async () => {
@@ -933,9 +933,9 @@ describe("useFinalReview — stale payload regression (Final Review schedule edi
 
     await placeAndSettle(result.current.finalReview.onPlaceOrder)
 
-    expect(placeOrder.mock.calls[0][0].shippoRateOrders[0].products[0].autoOrder).toBeNull()
+    expect(placeOrder.mock.calls[0]![0].shippoRateOrders[0]!.products[0]!.autoOrder).toBeNull()
     // Cancelling a repeat never removes the line or touches its quantity.
-    expect(placeOrder.mock.calls[0][0].shippoRateOrders[0].products[0].quantity).toBe(1)
+    expect(placeOrder.mock.calls[0]![0].shippoRateOrders[0]!.products[0]!.quantity).toBe(1)
   })
 })
 
@@ -1033,7 +1033,7 @@ describe("useFinalReview — cache invalidation after the order is created", () 
 
     await placeAndSettle(result.current.onPlaceOrder)
 
-    expect(placeOrder.mock.calls[0][0].cardSave).toBe(true)
+    expect(placeOrder.mock.calls[0]![0].cardSave).toBe(true)
     expect(invalidatedKeys(invalidate)).toEqual([
       queryKeys.orders.all,
       queryKeys.cart.detail(),

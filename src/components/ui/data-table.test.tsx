@@ -74,7 +74,7 @@ describe("DataTable", () => {
     await user.click(screen.getByRole("cell", { name: "Acme Dental" }))
 
     expect(onRowClick).toHaveBeenCalledTimes(1)
-    expect(onRowClick.mock.calls[0][0].id).toBe("r-1")
+    expect(onRowClick.mock.calls[0]![0].id).toBe("r-1")
   })
 
   it("expands one row at a time and renders its detail content", async () => {
@@ -133,7 +133,7 @@ describe("DataTable", () => {
   it("passes a column's cell class through to every cell in it", () => {
     render(<DataTable columns={columns} data={rows} />)
 
-    const bodyRow = screen.getAllByRole("row")[1]
+    const bodyRow = screen.getAllByRole("row")[1]!
     expect(within(bodyRow).getByRole("cell", { name: "240" })).toHaveClass("total-cell")
   })
 

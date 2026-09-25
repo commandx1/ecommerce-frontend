@@ -254,7 +254,7 @@ describe("getOrderItems / getOrderSellerGroups survive malformed nested data", (
 
     const groups = getOrderSellerGroups(order)
     expect(groups).toHaveLength(1)
-    expect(groups[0].orderItems).toEqual([])
+    expect(groups[0]!.orderItems).toEqual([])
   })
 })
 

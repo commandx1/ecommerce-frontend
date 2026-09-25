@@ -23,7 +23,7 @@ describe("Navbar", () => {
     const user = userEvent.setup()
     const { router } = render(<Navbar />, { route: "/" })
 
-    await user.click(screen.getAllByRole("button", { name: "Sign In" })[0])
+    await user.click(screen.getAllByRole("button", { name: "Sign In" })[0]!)
 
     expect(router.push).toHaveBeenCalledWith("/login")
     expect(screen.queryByText("My Account")).not.toBeInTheDocument()
@@ -43,7 +43,7 @@ describe("Navbar", () => {
     const { router } = render(<Navbar />, { route: "/" })
 
     await user.click(await screen.findByText("My Account"))
-    await user.click(screen.getAllByRole("button", { name: /Dashboard/ })[0])
+    await user.click(screen.getAllByRole("button", { name: /Dashboard/ })[0]!)
 
     expect(router.push).toHaveBeenCalledWith("/buyer-dashboard")
   })
@@ -54,7 +54,7 @@ describe("Navbar", () => {
     const { router } = render(<Navbar />, { route: "/" })
 
     await user.click(await screen.findByText("My Account"))
-    await user.click(screen.getAllByRole("button", { name: /Dashboard/ })[0])
+    await user.click(screen.getAllByRole("button", { name: /Dashboard/ })[0]!)
 
     expect(router.push).toHaveBeenCalledWith("/vendor-dashboard")
   })
@@ -66,7 +66,7 @@ describe("Navbar", () => {
     const { router } = render(<Navbar />, { route: "/" })
 
     await user.click(await screen.findByText("My Account"))
-    await user.click(screen.getAllByRole("button", { name: /Sign Out/ })[0])
+    await user.click(screen.getAllByRole("button", { name: /Sign Out/ })[0]!)
 
     await waitFor(() => expect(router.push).toHaveBeenCalledWith("/"))
     expect(router.refresh).toHaveBeenCalled()

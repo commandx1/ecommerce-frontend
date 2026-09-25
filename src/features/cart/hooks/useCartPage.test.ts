@@ -257,7 +257,7 @@ describe("useCartPage", () => {
         result.current.onQuantityChange("up-1", 2, 1)
       })
 
-      expect(result.current.items[0].quantity).toBe(3)
+      expect(result.current.items[0]!.quantity).toBe(3)
       expect(recorder.puts).toHaveLength(0)
 
       await waitFor(
@@ -296,11 +296,11 @@ describe("useCartPage", () => {
       act(() => {
         result.current.onQuantityChange("up-1", 2, 3)
       })
-      expect(result.current.items[0].quantity).toBe(5)
+      expect(result.current.items[0]!.quantity).toBe(5)
 
       await waitFor(
         () => {
-          expect(result.current.items[0].quantity).toBe(2)
+          expect(result.current.items[0]!.quantity).toBe(2)
         },
         { timeout: 3000 },
       )
@@ -316,7 +316,7 @@ describe("useCartPage", () => {
         result.current.onQuantityChange("up-1", 2, -5)
       })
 
-      expect(result.current.items[0].quantity).toBe(0)
+      expect(result.current.items[0]!.quantity).toBe(0)
 
       // quantity 0 is routed to a removal by the store, not to a PUT.
       await waitFor(
@@ -404,7 +404,7 @@ describe("useCartPage", () => {
         await result.current.onAutoOrderChange("up-1", null)
       })
 
-      expect(recorder.puts[0].autoOrder).toBeNull()
+      expect(recorder.puts[0]!.autoOrder).toBeNull()
     })
 
     // `cartCommands.setItemAutoOrder` rethrows on failure, so the hook is still the only thing
@@ -809,8 +809,8 @@ describe("useCartPage", () => {
       const { result } = await renderReadyCartPage()
 
       expect(Object.keys(result.current.sellerGroups).sort()).toEqual(["Standard Seller", "seller-1", "seller-2"])
-      expect(result.current.sellerGroups["seller-1"].items).toHaveLength(1)
-      expect(result.current.sellerGroups["Standard Seller"].name).toBe("Standard Seller")
+      expect(result.current.sellerGroups["seller-1"]!.items).toHaveLength(1)
+      expect(result.current.sellerGroups["Standard Seller"]!.name).toBe("Standard Seller")
     })
 
     it("counts only the lines carrying a schedule", async () => {

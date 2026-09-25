@@ -312,7 +312,7 @@ describe("useOrderSummary", () => {
 
     expect(result.current.currentStep).toBe(4)
     expect(result.current.selectedShippingEtaText).toBe("Priority Mail - 2 business days")
-    expect(result.current.selectedVendorShippingMethods["seller-1"].amount).toBe(9.5)
+    expect(result.current.selectedVendorShippingMethods["seller-1"]!.amount).toBe(9.5)
     expect(result.current.shippingAddress.city).toBe("San Francisco")
   })
 })

@@ -56,7 +56,7 @@ describe("QueryProvider", () => {
       </QueryProvider>,
     )
 
-    const defaults = seen[0].getDefaultOptions().queries
+    const defaults = seen[0]!.getDefaultOptions().queries
 
     // Refetching on focus is noise for a mostly-form dashboard; the other two are what make
     // repeated mounts of the same vendor screen reuse one request instead of re-issuing it.

@@ -301,7 +301,7 @@ describe("RefundOrderModal", () => {
     await user.click(screen.getByRole("button", { name: "Submit refund request" }))
 
     await waitFor(() => expect(submitRefundOrder).toHaveBeenCalledTimes(1))
-    const payload = submitRefundOrder.mock.calls[0][0]
+    const payload = submitRefundOrder.mock.calls[0]![0]
     expect(payload).toEqual({
       items: [{ orderItemId: "item-1", quantity: 2, returnReason: "Product Arrived Damaged" }],
     })
@@ -340,7 +340,7 @@ describe("RefundOrderModal", () => {
     await user.click(screen.getByRole("button", { name: "Submit refund request" }))
 
     await waitFor(() => expect(submitRefundOrder).toHaveBeenCalledTimes(1))
-    const payload = submitRefundOrder.mock.calls[0][0]
+    const payload = submitRefundOrder.mock.calls[0]![0]
     expect(payload.items).toHaveLength(2)
     expect(payload.items).toEqual(
       expect.arrayContaining([
@@ -368,7 +368,7 @@ describe("RefundOrderModal", () => {
     await user.click(screen.getByRole("button", { name: "Submit refund request" }))
 
     await waitFor(() => expect(submitRefundOrder).toHaveBeenCalledTimes(1))
-    expect(submitRefundOrder.mock.calls[0][0].items[0].returnReason).toBe("Other")
+    expect(submitRefundOrder.mock.calls[0]![0].items[0].returnReason).toBe("Other")
   })
 
   it("does not crash and shows no items when the pending order's item data is malformed", () => {

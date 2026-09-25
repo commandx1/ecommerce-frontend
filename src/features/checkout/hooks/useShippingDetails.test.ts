@@ -196,8 +196,8 @@ describe("useShippingDetails — vendor grouping", () => {
     const { result } = await mountHook()
 
     expect(Object.keys(result.current.sellerGroups)).toEqual(["seller-1", "seller-2"])
-    expect(result.current.sellerGroups["seller-1"].items.map((item) => item.userProductId)).toEqual(["up-1", "up-3"])
-    expect(result.current.sellerGroups["seller-2"].name).toBe("Beta Supply")
+    expect(result.current.sellerGroups["seller-1"]!.items.map((item) => item.userProductId)).toEqual(["up-1", "up-3"])
+    expect(result.current.sellerGroups["seller-2"]!.name).toBe("Beta Supply")
   })
 
   it("falls back to a standard seller label when the line carries no seller", async () => {
@@ -211,7 +211,7 @@ describe("useShippingDetails — vendor grouping", () => {
 
     const { result } = await mountHook()
 
-    expect(result.current.sellerGroups["Standard Seller"].name).toBe("Standard Seller")
+    expect(result.current.sellerGroups["Standard Seller"]!.name).toBe("Standard Seller")
   })
 
   it("carries the per-unit product shipment fee through onto each seller group item", async () => {
@@ -225,7 +225,7 @@ describe("useShippingDetails — vendor grouping", () => {
 
     const { result } = await mountHook()
 
-    expect(result.current.sellerGroups["seller-1"].items[0].shipmentFee).toBe(12.5)
+    expect(result.current.sellerGroups["seller-1"]!.items[0]!.shipmentFee).toBe(12.5)
   })
 
   it("treats a missing product shipment fee as zero rather than undefined", async () => {
@@ -243,7 +243,7 @@ describe("useShippingDetails — vendor grouping", () => {
 
     const { result } = await mountHook()
 
-    expect(result.current.sellerGroups["seller-1"].items[0].shipmentFee).toBe(0)
+    expect(result.current.sellerGroups["seller-1"]!.items[0]!.shipmentFee).toBe(0)
   })
 })
 
@@ -273,7 +273,7 @@ describe("useShippingDetails — rate selection", () => {
     })
 
     expect(result.current.selectedRates["seller-1"]).toEqual({ type: "uber", rateId: "quote-uber-1", amount: 18.99 })
-    expect(useCheckoutStore.getState().selectedVendorShippingMethods["seller-1"].methodText).toBe(
+    expect(useCheckoutStore.getState().selectedVendorShippingMethods["seller-1"]!.methodText).toBe(
       "Same-day delivery - Est. 1-4 hours",
     )
     await waitFor(() => expect(useCheckoutStore.getState().selectedShippingCost).toBe(18.99))
@@ -317,7 +317,7 @@ describe("useShippingDetails — rate selection", () => {
     })
 
     await waitFor(() => expect(useCheckoutStore.getState().selectedShippingCost).toBe(7.25))
-    expect(result.current.selectedRates["seller-1"].rateId).toBe("rate-b")
+    expect(result.current.selectedRates["seller-1"]!.rateId).toBe("rate-b")
   })
 
   it("keeps the same object identity when the identical rate is re-selected", async () => {
@@ -354,7 +354,7 @@ describe("useShippingDetails — rate selection", () => {
     await waitFor(() => expect(useCheckoutStore.getState().selectedShippingCost).toBe(40))
 
     act(() => {
-      result.current.onAddressChange(result.current.addresses[1])
+      result.current.onAddressChange(result.current.addresses[1]!)
     })
 
     expect(result.current.selectedAddressId).toBe("address-b")
@@ -555,7 +555,7 @@ describe("useShippingDetails — auto order address notice", () => {
 
     const { result } = await mountHook()
     act(() => {
-      result.current.onAddressChange(result.current.addresses[1])
+      result.current.onAddressChange(result.current.addresses[1]!)
     })
 
     expect(result.current.showAutoOrderAddressNotice).toBe(true)

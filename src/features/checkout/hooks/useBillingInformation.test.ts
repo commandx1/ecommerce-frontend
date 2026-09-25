@@ -125,7 +125,7 @@ describe("useBillingInformation — saved card loading", () => {
     const { result } = await mountHook()
 
     expect(result.current.savedCards.map((card) => card.id)).toEqual(["c1", "c2"])
-    expect(result.current.savedCards[0].isDefault).toBe(true)
+    expect(result.current.savedCards[0]!.isDefault).toBe(true)
   })
 
   // `|| []` only catches null/undefined. A malformed 200 carrying a wrong-typed truthy value

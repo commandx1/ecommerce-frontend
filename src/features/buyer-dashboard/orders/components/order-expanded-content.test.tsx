@@ -322,7 +322,7 @@ describe("OrderExpandedContent — write a review", () => {
 
     await user.click(screen.getByRole("button", { name: /Write a Review/i }))
     const dialog = within(await screen.findByRole("dialog"))
-    await user.click(dialog.getAllByRole("button")[5])
+    await user.click(dialog.getAllByRole("button")[5]!)
     await user.type(dialog.getByLabelText("Review Title *"), "Great")
     await user.type(dialog.getByLabelText("Your Review *"), "Works well")
     await user.click(dialog.getByRole("button", { name: /Submit Review/i }))
@@ -351,7 +351,7 @@ describe("OrderExpandedContent — write a review", () => {
 
     await user.click(screen.getByRole("button", { name: /Write a Review/i }))
     const dialog = within(await screen.findByRole("dialog"))
-    await user.click(dialog.getAllByRole("button")[3])
+    await user.click(dialog.getAllByRole("button")[3]!)
     await user.type(dialog.getByLabelText("Review Title *"), "Great")
     await user.type(dialog.getByLabelText("Your Review *"), "Works well")
     await user.click(dialog.getByRole("button", { name: /Submit Review/i }))

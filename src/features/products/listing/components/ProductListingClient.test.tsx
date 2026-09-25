@@ -76,8 +76,12 @@ describe("ProductListingClient", () => {
       .getAllByRole("heading")
       .map((el) => Number(el.tagName[1]))
       .filter((level) => !Number.isNaN(level))
-    for (let i = 1; i < levels.length; i++) {
-      expect(levels[i] - levels[i - 1]).toBeLessThanOrEqual(1)
+    let previousLevel: number | undefined
+    for (const level of levels) {
+      if (previousLevel !== undefined) {
+        expect(level - previousLevel).toBeLessThanOrEqual(1)
+      }
+      previousLevel = level
     }
   })
 

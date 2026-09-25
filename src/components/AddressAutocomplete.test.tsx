@@ -78,7 +78,7 @@ describe("AddressAutocomplete", () => {
     await user.click(await screen.findByText("201 Madison Ave, New York, NY, USA"))
 
     await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1))
-    const selected = onSelect.mock.calls[0][0] as ParsedAddress
+    const selected = onSelect.mock.calls[0]![0] as ParsedAddress
     expect(selected).toMatchObject({
       city: "New York",
       postalCode: "10016",

@@ -987,7 +987,7 @@ describe("cartCommands.addItem guest guard", () => {
 
     expect(counts.addItem).toBe(0)
     expect(assignMock).toHaveBeenCalledTimes(1)
-    const target = String(assignMock.mock.calls[0][0])
+    const target = String(assignMock.mock.calls[0]![0])
     expect(target).toContain("reason=login-required")
     expect(target).toContain(`redirect=${encodeURIComponent("/products/p-1?vendorId=up-1")}`)
   })
@@ -997,7 +997,7 @@ describe("cartCommands.addItem guest guard", () => {
 
     await expect(cartCommands.addItem("up-1", 1)).rejects.toMatchObject({ authHandled: true })
 
-    const target = String(assignMock.mock.calls[0][0])
+    const target = String(assignMock.mock.calls[0]![0])
     expect(target).not.toContain("redirect=")
     expect(target).toContain("reason=login-required")
   })
@@ -1033,7 +1033,7 @@ describe("cartCommands.addItem guest guard reads live auth state, not a stale sn
 
     expect(counts.addItem).toBe(0)
     expect(assignMock).toHaveBeenCalledTimes(1)
-    expect(String(assignMock.mock.calls[0][0])).toContain("reason=login-required")
+    expect(String(assignMock.mock.calls[0]![0])).toContain("reason=login-required")
   })
 
   it("leaves the cached cart exactly as it was", async () => {

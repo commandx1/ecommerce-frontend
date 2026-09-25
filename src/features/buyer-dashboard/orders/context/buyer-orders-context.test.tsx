@@ -280,7 +280,7 @@ describe("BuyerOrdersProvider / context hooks", () => {
     await waitFor(() => expect(result.current.tableState.isLoading).toBe(false))
 
     const order = result.current.tableState.filteredOrders[0]
-    const orderItem = order.sellerGroups?.[0]?.orderItems[0]
+    const orderItem = order?.sellerGroups?.[0]?.orderItems[0]
     expect(order).toBeDefined()
     expect(orderItem).toBeDefined()
     if (!order || !orderItem) throw new Error("expected seeded order/item")
@@ -356,7 +356,7 @@ describe("BuyerOrdersProvider / context hooks", () => {
     await waitFor(() => expect(result.current.tableState.isLoading).toBe(false))
 
     const order = result.current.tableState.filteredOrders[0]
-    const orderItem = order.sellerGroups?.[0]?.orderItems[0]
+    const orderItem = order?.sellerGroups?.[0]?.orderItems[0]
     if (!order || !orderItem) throw new Error("expected seeded order/item")
 
     act(() => {

@@ -65,8 +65,8 @@ function collectLinks(): Map<string, Set<string>> {
     const source = readFileSync(join(ROOT, file), "utf8")
     for (const match of source.matchAll(LINK_LITERAL)) {
       const raw = match[1]
-      if (!isAppRoute(raw)) continue
-      const target = (raw.split("?")[0].split("#")[0].replace(/\/$/, "") || "/") as string
+      if (raw === undefined || !isAppRoute(raw)) continue
+      const target = ((raw.split("?")[0] ?? "").split("#")[0]?.replace(/\/$/, "") || "/") as string
       const owners = links.get(target) ?? new Set<string>()
       owners.add(file)
       links.set(target, owners)
