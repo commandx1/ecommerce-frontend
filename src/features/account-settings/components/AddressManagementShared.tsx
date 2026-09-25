@@ -1,7 +1,8 @@
 "use client"
 
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Edit2, MapPin, Plus, Save } from "lucide-react"
-import { useCallback, useEffect, useId, useState } from "react"
+import { useId, useState } from "react"
 import AddressAutocomplete from "@/components/AddressAutocomplete"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,6 +11,9 @@ import SurfaceCard from "@/components/ui/SurfaceCard"
 import { Skeleton } from "@/components/ui/skeleton"
 import { showToast } from "@/components/ui/Toast"
 import { type Address, addressAPI, type CreateAddressPayload, type UpdateAddressPayload } from "@/lib/api/address"
+import { queryKeys } from "@/lib/query/keys"
+import { addressesListOptions } from "@/lib/query/options/addresses"
+import { useQueryErrorToast } from "@/lib/query/useQueryErrorToast"
 import type { ParsedAddress } from "@/lib/utils/google-maps"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -28,29 +32,19 @@ export default function AddressManagementShared() {
   const fullNameId = `${idBase}-full-name`
   const phoneNumberId = `${idBase}-phone-number`
   const zipCodeId = `${idBase}-zip-code`
-  const [addresses, setAddresses] = useState<Address[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const queryClient = useQueryClient()
+  // Shared with checkout and auto-orders readiness (Phase 4 §2.1/K0, C3b): a write here
+  // invalidates every reader instead of leaving a stale copy behind.
+  const addressesQuery = useQuery(addressesListOptions())
+  const addresses = addressesQuery.data ?? []
+  const isLoading = addressesQuery.isPending
+  const loadFailed = addressesQuery.isError
+
+  useQueryErrorToast(addressesQuery, () => showToast.error("An error occurred while loading addresses"))
+
   const [isEditing, setIsEditing] = useState(false)
   const [currentAddress, setCurrentAddress] = useState<Partial<Address> | null>(null)
   const [isSaving, setIsSaving] = useState(false)
-  const [loadFailed, setLoadFailed] = useState(false)
-
-  const fetchAddresses = useCallback(async () => {
-    try {
-      const data = await addressAPI.getAddresses()
-      setAddresses(data)
-      setLoadFailed(false)
-    } catch (_error) {
-      showToast.error("An error occurred while loading addresses")
-      setLoadFailed(true)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchAddresses()
-  }, [fetchAddresses])
 
   const handleEdit = (address: Address) => {
     setCurrentAddress(address)
@@ -97,7 +91,9 @@ export default function AddressManagementShared() {
       showToast.success(isUpdate ? "Address updated" : "New address added")
       setIsEditing(false)
       setCurrentAddress(null)
-      fetchAddresses()
+      // addressAPI already cleared its 2s dedupe cache on this write (§2.3), so the refetch
+      // driven by this invalidation is a real request, not a cached echo.
+      await queryClient.invalidateQueries({ queryKey: queryKeys.addresses.all })
     } catch (_error) {
       showToast.error("An error occurred while saving the address")
     } finally {
@@ -305,7 +301,13 @@ export default function AddressManagementShared() {
     <div className="col-span-full rounded-2xl border border-dashed border-border-strong bg-surface-muted/40 p-12 text-center">
       <MapPin className="mx-auto mb-4 h-10 w-10 text-brand/60" />
       <p className="text-text-secondary">We couldn't load your address.</p>
-      <Button type="button" onClick={fetchAddresses} variant="link" size="sm" className="mt-2 h-auto p-0">
+      <Button
+        type="button"
+        onClick={() => addressesQuery.refetch()}
+        variant="link"
+        size="sm"
+        className="mt-2 h-auto p-0"
+      >
         Try again
       </Button>
     </div>

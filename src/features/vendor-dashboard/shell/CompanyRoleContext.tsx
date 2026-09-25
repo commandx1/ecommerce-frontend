@@ -1,7 +1,9 @@
 "use client"
 
-import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from "react"
-import { type CompanyRole, getMyCompany } from "@/lib/api/company"
+import { useQuery } from "@tanstack/react-query"
+import { createContext, type ReactNode, useContext, useMemo } from "react"
+import type { CompanyRole } from "@/lib/api/company"
+import { companyMeOptions } from "@/lib/query/options/company"
 
 interface CompanyRoleContextValue {
   companyRole: CompanyRole | null
@@ -11,35 +13,23 @@ interface CompanyRoleContextValue {
 
 const CompanyRoleContext = createContext<CompanyRoleContextValue | null>(null)
 
+/**
+ * Reads the same `company.me` cache entry as `CompanyInfoCard` (Phase 4 §2.1/K0, C3b/D1): a
+ * company save writes that entry directly, so the vendor sidebar and welcome header pick up the
+ * new name as soon as the save resolves, without waiting for a reload. `staleTime`/`gcTime: 0`
+ * (§2.2) means this still issues its own GET on every mount, same request count as before.
+ */
 export function CompanyRoleProvider({ children }: { children: ReactNode }) {
-  const [companyRole, setCompanyRole] = useState<CompanyRole | null>(null)
-  const [companyName, setCompanyName] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    getMyCompany()
-      .then((company) => {
-        if (controller.signal.aborted) return
-        setCompanyRole(company.companyRole)
-        setCompanyName(company.name?.trim() || null)
-      })
-      .catch(() => {
-        if (controller.signal.aborted) return
-        setCompanyRole(null)
-        setCompanyName(null)
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setIsLoading(false)
-      })
-
-    return () => controller.abort()
-  }, [])
+  const companyQuery = useQuery(companyMeOptions())
+  const company = companyQuery.data ?? null
 
   const value = useMemo<CompanyRoleContextValue>(
-    () => ({ companyRole, companyName, isLoading }),
-    [companyRole, companyName, isLoading],
+    () => ({
+      companyRole: company?.companyRole ?? null,
+      companyName: company?.name?.trim() || null,
+      isLoading: companyQuery.isPending,
+    }),
+    [company, companyQuery.isPending],
   )
 
   return <CompanyRoleContext.Provider value={value}>{children}</CompanyRoleContext.Provider>

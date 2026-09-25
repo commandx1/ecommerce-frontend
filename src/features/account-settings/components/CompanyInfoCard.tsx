@@ -1,8 +1,9 @@
 "use client"
 
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Building2, Globe, Mail, Phone, Save } from "lucide-react"
 import Image from "next/image"
-import { useCallback, useEffect, useId, useState } from "react"
+import { useEffect, useId, useState } from "react"
 import { CheckboxField } from "@/components/form/CheckboxField"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,7 +14,6 @@ import { showToast } from "@/components/ui/Toast"
 import { Textarea } from "@/components/ui/textarea"
 import {
   type CompanyProfile,
-  getMyCompany,
   SHIPMENT_POLICY_DAYS,
   type ShipmentPolicy,
   shipmentPolicyLabel,
@@ -22,6 +22,8 @@ import {
 } from "@/lib/api/company"
 import { ApiRequestError } from "@/lib/api/request"
 import { formatPaddedDate } from "@/lib/helpers/format"
+import { queryKeys } from "@/lib/query/keys"
+import { companyMeOptions } from "@/lib/query/options/company"
 import { cn, isHttpUrl } from "@/lib/utils"
 
 /** Statuses that mean "no company data to show" rather than a real failure. */
@@ -58,43 +60,34 @@ export default function CompanyInfoCard() {
   const uberEnabledId = `${idBase}-uber-enabled`
   const shipmentPolicyId = `${idBase}-shipment-policy`
 
-  const [company, setCompany] = useState<CompanyProfile | null>(null)
+  const queryClient = useQueryClient()
+  // Shared with CompanyRoleContext (Phase 4 §2.1/K0, C3b/D1): a save here writes the same cache
+  // entry the vendor sidebar/welcome header read, so the vendor's name updates right after a
+  // save instead of only after a reload.
+  const companyQuery = useQuery(companyMeOptions())
+  const company = companyQuery.data ?? null
+  const isLoading = companyQuery.isPending
   const [formData, setFormData] = useState<CompanyFormState | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [loadError, setLoadError] = useState<string | null>(null)
-  const [isUnavailable, setIsUnavailable] = useState(false)
   const [logoFailed, setLogoFailed] = useState(false)
 
-  const loadCompany = useCallback(async () => {
-    setIsLoading(true)
-    setLoadError(null)
-    setIsUnavailable(false)
+  const status = companyQuery.error instanceof ApiRequestError ? companyQuery.error.status : undefined
+  const isUnavailable = companyQuery.isError && status !== undefined && EMPTY_STATE_STATUSES.has(status)
+  const loadError =
+    companyQuery.isError && !isUnavailable
+      ? companyQuery.error instanceof Error
+        ? companyQuery.error.message
+        : "Failed to load company information."
+      : null
 
-    try {
-      const data = await getMyCompany()
-      setCompany(data)
-      setFormData(toFormState(data))
-      setLogoFailed(false)
-    } catch (error) {
-      const status = error instanceof ApiRequestError ? error.status : undefined
-
-      if (status !== undefined && EMPTY_STATE_STATUSES.has(status)) {
-        setIsUnavailable(true)
-      } else {
-        setLoadError(error instanceof Error ? error.message : "Failed to load company information.")
-      }
-
-      setCompany(null)
-      setFormData(null)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
+  // Syncs the editable copy whenever a fresh company record arrives (mount, retry, or a save's
+  // setQueryData) - not on every render, since `company` only changes reference then.
   useEffect(() => {
-    loadCompany()
-  }, [loadCompany])
+    if (company) {
+      setFormData(toFormState(company))
+      setLogoFailed(false)
+    }
+  }, [company])
 
   const canEdit = company?.companyRole === "OWNER"
 
@@ -113,7 +106,7 @@ export default function CompanyInfoCard() {
 
     try {
       const updated = await updateMyCompany({ ...formData, shipmentPolicy: formData.shipmentPolicy || null })
-      setCompany(updated)
+      queryClient.setQueryData(queryKeys.company.me(), updated)
       setFormData(toFormState(updated))
       showToast.success("Company information updated successfully!")
     } catch (error) {
@@ -220,7 +213,7 @@ export default function CompanyInfoCard() {
       {!isLoading && loadError && (
         <div className="flex flex-wrap items-center gap-3 p-6">
           <p className="text-sm text-text-secondary">{loadError}</p>
-          <Button type="button" variant="outline" size="sm" onClick={loadCompany}>
+          <Button type="button" variant="outline" size="sm" onClick={() => companyQuery.refetch()}>
             Try again
           </Button>
         </div>

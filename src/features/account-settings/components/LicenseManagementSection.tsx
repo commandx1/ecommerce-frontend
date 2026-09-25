@@ -1,7 +1,8 @@
 "use client"
 
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { AlertCircle, BadgeCheck, Clock3, FileBadge2, Plus, ShieldX, Trash2 } from "lucide-react"
-import { useCallback, useEffect, useId, useRef, useState } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 import ConfirmationModal from "@/components/feedback/ConfirmationModal"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,6 +15,9 @@ import usStateList from "@/data/usstate-list.json"
 import { type CreateLicensePayload, type License, type LicenseType, licenseAPI } from "@/lib/api/licenses"
 import { resolveDentalLicenseStatus } from "@/lib/helpers/dentalLicense"
 import { formatPaddedDate } from "@/lib/helpers/format"
+import { queryKeys } from "@/lib/query/keys"
+import { licensesListOptions } from "@/lib/query/options/licenses"
+import { useQueryErrorToast } from "@/lib/query/useQueryErrorToast"
 import { cn } from "@/lib/utils"
 
 const US_STATES = usStateList.slice(
@@ -132,8 +136,12 @@ export default function LicenseManagementSection() {
   const licenseNumberErrorId = `${idBase}-license-number-error`
   const expirationErrorId = `${idBase}-expiration-error`
 
-  const [licenses, setLicenses] = useState<License[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const queryClient = useQueryClient()
+  const licensesQuery = useQuery(licensesListOptions())
+  const licenses = licensesQuery.data ?? []
+  const isLoading = licensesQuery.isPending
+  useQueryErrorToast(licensesQuery, () => showToast.error("An error occurred while loading licenses"))
+
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [formData, setFormData] = useState<CreateLicensePayload>(emptyFormData)
   const [expirationDate, setExpirationDate] = useState("")
@@ -147,21 +155,6 @@ export default function LicenseManagementSection() {
   const stateOfLicenseTriggerRef = useRef<HTMLButtonElement | null>(null)
   const licenseNumberRef = useRef<HTMLInputElement | null>(null)
   const expirationRef = useRef<HTMLInputElement | null>(null)
-
-  const fetchLicenses = useCallback(async () => {
-    try {
-      const data = await licenseAPI.getLicenses()
-      setLicenses(data)
-    } catch (_error) {
-      showToast.error("An error occurred while loading licenses")
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchLicenses()
-  }, [fetchLicenses])
 
   useEffect(() => {
     if (isFormOpen) {
@@ -226,7 +219,7 @@ export default function LicenseManagementSection() {
       await licenseAPI.createLicense(payload)
       showToast.success("License submitted for review")
       handleCancel()
-      fetchLicenses()
+      await queryClient.invalidateQueries({ queryKey: queryKeys.licenses.all })
     } catch (_error) {
       showToast.error("An error occurred while saving the license")
     } finally {
@@ -242,7 +235,7 @@ export default function LicenseManagementSection() {
       await licenseAPI.deleteLicense(licenseToDelete)
       showToast.success("License deleted successfully")
       setLicenseToDelete(null)
-      fetchLicenses()
+      await queryClient.invalidateQueries({ queryKey: queryKeys.licenses.all })
     } catch (_error) {
       showToast.error("An error occurred while deleting the license")
     } finally {

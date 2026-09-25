@@ -410,7 +410,11 @@ describe("AddressManagementShared", () => {
     render(<AddressManagementShared />)
 
     expect(await screen.findByText("Your delivery location.")).toBeInTheDocument()
-    await user.click(screen.getByRole("button", { name: "Add your address" }))
+    // findByRole (was getByRole): the address list now loads through React Query, which adds a
+    // microtask hop or two versus the old direct fetch-in-useEffect, so the button isn't
+    // synchronously present the instant the header text above resolves. Robustness-only change,
+    // same button, same end state.
+    await user.click(await screen.findByRole("button", { name: "Add your address" }))
     expect(screen.getByLabelText("Full Name")).toHaveValue("")
     expect(screen.getByLabelText("Phone Number")).toHaveValue("")
   })
@@ -481,5 +485,71 @@ describe("AddressManagementShared", () => {
     render(<AddressManagementShared />)
 
     expect(await screen.findByText("Your delivery location.")).toBeInTheDocument()
+  })
+
+  describe("Query request counts (C3b)", () => {
+    it("refetches the address list exactly once after a successful create", async () => {
+      const user = userEvent.setup()
+      let getCount = 0
+      server.use(
+        http.get("*/backend-api/address", () => {
+          getCount++
+          return HttpResponse.json(getCount > 1 ? [makeAddress({ id: "a-1", title: "Clinic" })] : [])
+        }),
+        http.post("*/backend-api/address", () => HttpResponse.json(makeAddress({ id: "a-1", title: "Clinic" }))),
+      )
+
+      render(<AddressManagementShared />)
+      await user.click(await screen.findByRole("button", { name: "Add your address" }))
+      await user.type(screen.getByLabelText(/Address Title/), "Clinic")
+      await pickAddressFromPlaces(user)
+      await waitFor(() => expect(screen.getByRole("button", { name: /Save/ })).toBeEnabled())
+      await user.click(screen.getByRole("button", { name: /Save/ }))
+
+      await waitFor(() => expect(toastSpies.success).toHaveBeenCalledWith("New address added"))
+      // 1 GET on mount + exactly 1 more from the invalidateQueries the create triggers - not 0
+      // (a silent stale list) and not more than 1 (a double refetch).
+      await waitFor(() => expect(getCount).toBe(2))
+    })
+
+    it("refetches the address list exactly once after a successful update", async () => {
+      const user = userEvent.setup()
+      let getCount = 0
+      server.use(
+        http.get("*/backend-api/address", () => {
+          getCount++
+          return HttpResponse.json([makeAddress({ id: "a-1", title: getCount > 1 ? "Office" : "Clinic" })])
+        }),
+        http.put("*/backend-api/address/:id", ({ params }) =>
+          HttpResponse.json(makeAddress({ id: String(params.id), title: "Office" })),
+        ),
+      )
+
+      render(<AddressManagementShared />)
+      await user.click(await screen.findByRole("button", { name: /Edit/ }))
+      await user.click(screen.getByRole("button", { name: /Save/ }))
+
+      await waitFor(() => expect(toastSpies.success).toHaveBeenCalledWith("Address updated"))
+      await waitFor(() => expect(getCount).toBe(2))
+    })
+
+    it("does not refetch the address list when a save fails", async () => {
+      const user = userEvent.setup()
+      let getCount = 0
+      server.use(
+        http.get("*/backend-api/address", () => {
+          getCount++
+          return HttpResponse.json([makeAddress({ id: "a-1", title: "Clinic" })])
+        }),
+        http.put("*/backend-api/address/:id", () => new HttpResponse(null, { status: 400 })),
+      )
+
+      render(<AddressManagementShared />)
+      await user.click(await screen.findByRole("button", { name: /Edit/ }))
+      await user.click(screen.getByRole("button", { name: /Save/ }))
+
+      await waitFor(() => expect(toastSpies.error).toHaveBeenCalledWith("An error occurred while saving the address"))
+      expect(getCount).toBe(1)
+    })
   })
 })

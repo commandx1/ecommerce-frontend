@@ -236,4 +236,70 @@ describe("LicenseManagementSection", () => {
 
     await waitFor(() => expect(toastSpies.error).toHaveBeenCalledWith("An error occurred while loading licenses"))
   })
+
+  describe("Query request counts (C3b)", () => {
+    it("refetches the license list exactly once after a successful create", async () => {
+      const user = userEvent.setup()
+      let getCount = 0
+      server.use(
+        http.get("*/backend-api/licenses", () => {
+          getCount++
+          const licenses = getCount > 1 ? [makeLicense({ id: "l-1" })] : []
+          return HttpResponse.json({ licenses, total: licenses.length })
+        }),
+        http.post("*/backend-api/licenses", () => HttpResponse.json(makeLicense({ id: "l-1" }))),
+      )
+
+      render(<LicenseManagementSection />)
+      await user.click(await screen.findByRole("button", { name: "Add your first license" }))
+      await user.click(screen.getByRole("combobox", { name: "State of License" }))
+      await user.click(await screen.findByRole("option", { name: "New York (NY)" }))
+      await user.type(screen.getByLabelText("License Number"), "DDS-99")
+      await user.type(screen.getByLabelText("Expiration Date"), "2030-06-15")
+      await user.click(screen.getByRole("button", { name: "Submit for review" }))
+
+      await waitFor(() => expect(toastSpies.success).toHaveBeenCalledWith("License submitted for review"))
+      // 1 GET on mount + exactly 1 more from the invalidateQueries the create triggers.
+      await waitFor(() => expect(getCount).toBe(2))
+    })
+
+    it("refetches the license list exactly once after a successful delete", async () => {
+      const user = userEvent.setup()
+      let getCount = 0
+      server.use(
+        http.get("*/backend-api/licenses", () => {
+          getCount++
+          const licenses = getCount > 1 ? [] : [makeLicense({ id: "l-1" })]
+          return HttpResponse.json({ licenses, total: licenses.length })
+        }),
+        http.delete("*/backend-api/licenses/:id", () => new HttpResponse(null, { status: 200 })),
+      )
+
+      render(<LicenseManagementSection />)
+      await user.click(await screen.findByRole("button", { name: /Delete/ }))
+      await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Delete" }))
+
+      await waitFor(() => expect(toastSpies.success).toHaveBeenCalledWith("License deleted successfully"))
+      await waitFor(() => expect(getCount).toBe(2))
+    })
+
+    it("does not refetch the license list when a delete fails", async () => {
+      const user = userEvent.setup()
+      let getCount = 0
+      server.use(
+        http.get("*/backend-api/licenses", () => {
+          getCount++
+          return HttpResponse.json({ licenses: [makeLicense({ id: "l-1" })], total: 1 })
+        }),
+        http.delete("*/backend-api/licenses/:id", () => new HttpResponse(null, { status: 500 })),
+      )
+
+      render(<LicenseManagementSection />)
+      await user.click(await screen.findByRole("button", { name: /Delete/ }))
+      await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Delete" }))
+
+      await waitFor(() => expect(toastSpies.error).toHaveBeenCalledWith("An error occurred while deleting the license"))
+      expect(getCount).toBe(1)
+    })
+  })
 })

@@ -1,11 +1,19 @@
 import userEvent from "@testing-library/user-event"
 import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { CompanyRoleProvider, useCompanyRole } from "@/features/vendor-dashboard/shell/CompanyRoleContext"
 import type { CompanyProfile, UpdateCompanyPayload } from "@/lib/api/company"
 import { server } from "@/mocks/server"
 import { makeCompanyProfile } from "@/test/factories"
-import { fireEvent, render, screen, waitFor } from "@/test/render"
+import { createTestQueryClient, fireEvent, render, screen, waitFor } from "@/test/render"
 import CompanyInfoCard from "./CompanyInfoCard"
+
+/** Reads the same `useCompanyRole` context the vendor sidebar/welcome header use, to prove D1's
+ * accepted cache sharing: a company save should update this consumer without a reload. */
+function CompanyRoleConsumer() {
+  const { companyName } = useCompanyRole()
+  return <span data-testid="company-role-name">{companyName ?? "(none)"}</span>
+}
 
 const toastSpies = vi.hoisted(() => ({
   success: vi.fn(),
@@ -320,6 +328,47 @@ describe("CompanyInfoCard", () => {
       await waitFor(() => expect(toastSpies.error).toHaveBeenCalled())
       // Keeps the form intact/editable instead of losing the owner's unsaved changes
       expect(await screen.findByLabelText("Company Name")).toBeEnabled()
+    })
+  })
+
+  describe("D1 - company.me cache sharing with CompanyRoleContext", () => {
+    it("updates a co-mounted useCompanyRole consumer immediately after a save, with no extra GET", async () => {
+      const user = userEvent.setup()
+      const company = makeCompanyProfile({ name: "Old Name Inc", companyRole: "OWNER" })
+      let getCount = 0
+      server.use(
+        http.get("*/backend-api/companies/me", () => {
+          getCount++
+          return HttpResponse.json(company)
+        }),
+        http.put("*/backend-api/companies/me", async ({ request }) => {
+          const body = (await request.json()) as UpdateCompanyPayload
+          return HttpResponse.json({ ...company, name: body.name })
+        }),
+      )
+
+      const queryClient = createTestQueryClient()
+      render(
+        <CompanyRoleProvider>
+          <CompanyRoleConsumer />
+          <CompanyInfoCard />
+        </CompanyRoleProvider>,
+        { queryClient },
+      )
+
+      // CompanyInfoCard and CompanyRoleContext read the same company.me key: one mount, one GET.
+      await waitFor(() => expect(screen.getByTestId("company-role-name")).toHaveTextContent("Old Name Inc"))
+      expect(getCount).toBe(1)
+
+      const nameInput = await screen.findByLabelText("Company Name")
+      await user.clear(nameInput)
+      await user.type(nameInput, "New Name Inc")
+      await user.click(screen.getByRole("button", { name: /Save Changes/i }))
+
+      await waitFor(() => expect(screen.getByTestId("company-role-name")).toHaveTextContent("New Name Inc"))
+      // The save writes the shared cache entry directly (setQueryData), so the consumer updates
+      // without the extra GET a refetch/invalidate would have caused.
+      expect(getCount).toBe(1)
     })
   })
 })
