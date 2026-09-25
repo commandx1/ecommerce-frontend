@@ -15,6 +15,9 @@ vi.mock("@/features/buyer-dashboard/auto-orders/BuyerAutoOrdersPage", () => ({
 vi.mock("@/features/buyer-dashboard/invoices/BuyerInvoicesPage", () => ({
   default: () => <div data-testid="invoices-page" />,
 }))
+vi.mock("@/features/buyer-dashboard/orders/BuyerOrdersPage", () => ({
+  default: () => <div data-testid="orders-page" />,
+}))
 vi.mock("@/features/buyer-dashboard/payment-methods/BuyerPaymentMethodsPage", () => ({
   default: () => <div data-testid="payment-methods-page" />,
 }))
@@ -50,6 +53,13 @@ describe("buyer dashboard routes", () => {
     render(<Page />)
 
     expect(screen.getByTestId("invoices-page")).toBeInTheDocument()
+  })
+
+  it("renders the orders feature at /buyer-dashboard/orders", async () => {
+    const { default: Page } = await import("./orders/page")
+    render(<Page />)
+
+    expect(screen.getByTestId("orders-page")).toBeInTheDocument()
   })
 
   it("renders the payment methods feature at /buyer-dashboard/payment-methods", async () => {
