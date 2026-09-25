@@ -1,4 +1,4 @@
-import { type ProductAttribute, productsAPI } from "@/lib/api/products"
+import { type NormalizedSearchProduct, type ProductAttribute, productsAPI } from "@/lib/api/products"
 import type { ProductFormValues } from "../lib/product-form"
 import { mapEditLoad, mapReviewEditLoad } from "../lib/product-load-mappers"
 import type { ExistingImages, LinkedImages, PhotoFiles } from "../lib/product-media"
@@ -8,6 +8,7 @@ import {
   buildReviewPayload,
   type SubmitBranch,
 } from "../lib/product-payloads"
+import { buildLocalListingFromSearchResult, buildReviewRequestFromSearchResult } from "../lib/search-result-payloads"
 
 /** Plain edit: the listing is found in the vendor's own list, then its catalogue product is fetched. `null` = not found. */
 export async function loadListingForEdit(userProductId: string, token: string) {
@@ -66,4 +67,22 @@ export async function submitProduct(input: SubmitProductInput, token: string): P
       }
     }
   }
+}
+
+/**
+ * ProductDetailsModal's "Add Product" (a search result, not the editor form): a catalogued
+ * (`source === "local"`) product becomes a listing directly; any other source (barcode lookup or
+ * a plain barcode match) goes through the review flow, same as a manual create.
+ */
+export async function submitSearchResultProduct(
+  product: NormalizedSearchProduct,
+  price: string,
+  stock: string,
+  token: string,
+): Promise<void> {
+  if (product.source === "local") {
+    await productsAPI.createUserProduct(buildLocalListingFromSearchResult(product, price, stock), token)
+    return
+  }
+  await productsAPI.createProductForReview({ data: buildReviewRequestFromSearchResult(product, price, stock) }, token)
 }
