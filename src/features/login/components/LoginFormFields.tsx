@@ -1,5 +1,4 @@
 import type { ChangeEventHandler } from "react"
-import { useId } from "react"
 import { PasswordField } from "@/components/form/PasswordField"
 import { TextField } from "@/components/form/TextField"
 import type { LoginFormData } from "@/features/login/types"
@@ -11,12 +10,11 @@ interface LoginFormFieldsProps {
 }
 
 export default function LoginFormFields({ formData, onChange, isSubmitting }: LoginFormFieldsProps) {
-  const idBase = useId()
-
   return (
     <div className="space-y-6">
+      {/* biome-ignore lint/correctness/useUniqueElementIds: stable id is the test contract - tests/e2e/guest-add-to-cart.spec.ts's fillAndSubmitLogin locates it via page.locator("#email") */}
       <TextField
-        id={`${idBase}-email`}
+        id="email"
         label="Email Address"
         name="email"
         type="email"
@@ -27,8 +25,9 @@ export default function LoginFormFields({ formData, onChange, isSubmitting }: Lo
         disabled={isSubmitting}
       />
 
+      {/* biome-ignore lint/correctness/useUniqueElementIds: stable id is the test contract - tests/e2e/guest-add-to-cart.spec.ts's fillAndSubmitLogin locates it via page.locator("#password") */}
       <PasswordField
-        id={`${idBase}-password`}
+        id="password"
         label="Password"
         name="password"
         required
