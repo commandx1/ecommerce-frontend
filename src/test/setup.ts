@@ -19,22 +19,6 @@ vi.mock("motion/react", async () => {
   return motionMock()
 })
 
-vi.mock("lenis", async () => {
-  const { lenisMock } = await import("./mocks/motion")
-  return lenisMock()
-})
-
-vi.mock("lenis/react", async () => {
-  const { lenisMock } = await import("./mocks/motion")
-  const { default: Lenis } = lenisMock()
-  return {
-    __esModule: true,
-    default: Lenis,
-    ReactLenis: ({ children }: { children?: unknown }) => children,
-    useLenis: () => null,
-  }
-})
-
 vi.mock("next/image", async () => {
   const { nextImageMock } = await import("./mocks/next-image")
   return nextImageMock()
@@ -68,7 +52,7 @@ vi.mock("sonner", async () => {
 /* ------------------------------------------------------------------ *
  * jsdom polyfills
  * Radix (matchMedia), motion (IntersectionObserver),
- * charts/resizable panels (ResizeObserver) and lenis (scrollTo) all need these.
+ * charts/resizable panels (ResizeObserver) all need these.
  * ------------------------------------------------------------------ */
 
 if (!window.matchMedia) {

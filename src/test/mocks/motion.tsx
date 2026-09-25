@@ -105,18 +105,3 @@ export const motionMock = () => ({
   animate: vi.fn(),
   stagger: vi.fn(() => 0),
 })
-
-/** `lenis` (and its React binding) touch rAF + scroll APIs jsdom does not implement. */
-export const lenisMock = () => {
-  class Lenis {
-    raf = vi.fn()
-    scrollTo = vi.fn()
-    on = vi.fn()
-    off = vi.fn()
-    start = vi.fn()
-    stop = vi.fn()
-    resize = vi.fn()
-    destroy = vi.fn()
-  }
-  return { __esModule: true, default: Lenis, Lenis }
-}
