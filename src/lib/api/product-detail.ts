@@ -1,6 +1,7 @@
 "use server"
 
 import { cookies } from "next/headers"
+import { cache } from "react"
 import type {
   ProductDetailPageData,
   QuestionsResponse,
@@ -57,7 +58,19 @@ function buildFriendlyProductError(status: number, backendErrorMessage: string) 
   return backendErrorMessage || "Failed to load product. Please try again."
 }
 
+/**
+ * Per-request memo (React `cache()`): the product and reviews fetchers both resolve headers during the
+ * same render, and each used to issue its own `/api/users/me` check. The result depends only on the
+ * request's own auth cookie, so sharing it within one request can never leak across users.
+ */
+const resolveBackendHeadersOncePerRequest = cache(async (baseUrl: string) => resolveBackendHeadersUncached(baseUrl))
+
+/** Fresh copy per caller so no fetcher can mutate the headers another one is using. */
 async function resolveBackendHeaders(baseUrl: string): Promise<Record<string, string>> {
+  return { ...(await resolveBackendHeadersOncePerRequest(baseUrl)) }
+}
+
+async function resolveBackendHeadersUncached(baseUrl: string): Promise<Record<string, string>> {
   const accessToken = await getAccessTokenFromCookie()
 
   const headers: Record<string, string> = {
@@ -116,33 +129,39 @@ export async function fetchProductDetailPageData(id: string): Promise<ProductDet
 
   const headers = await resolveBackendHeaders(baseUrl)
 
-  let productResponse: Awaited<
-    ReturnType<typeof apiRequest.requestResponse<(Record<string, unknown> & { product?: unknown }) | string>>
-  >
-  try {
-    productResponse = await apiRequest.requestResponse<(Record<string, unknown> & { product?: unknown }) | string>({
-      client: "app",
-      method: "GET",
-      url: `${baseUrl}/api/products/${id}/with-user-products`,
-      headers,
-      validateStatus: () => true,
-      fallbackMessage: "Failed to fetch product",
-    })
-  } catch {
+  // Product and questions are independent, so they run concurrently (questions used to wait for the
+  // product round trip). Questions are optional and never reject; a product transport failure still
+  // surfaces as the connection error below.
+  const [productResult, questionsResponse] = await Promise.all([
+    apiRequest
+      .requestResponse<(Record<string, unknown> & { product?: unknown }) | string>({
+        client: "app",
+        method: "GET",
+        url: `${baseUrl}/api/products/${id}/with-user-products`,
+        headers,
+        validateStatus: () => true,
+        fallbackMessage: "Failed to fetch product",
+      })
+      .then(
+        (response) => ({ ok: true as const, response }),
+        () => ({ ok: false as const }),
+      ),
+    apiRequest
+      .requestJson<QuestionsResponse>({
+        client: "app",
+        method: "GET",
+        url: `${baseUrl}/api/product-questions/product/${id}`,
+        params: { page: 0, size: 10 },
+        headers,
+        fallbackMessage: "Failed to fetch questions",
+      })
+      .catch(() => null),
+  ])
+
+  if (!productResult.ok) {
     throw new Error("Unable to connect to server. Please check your internet connection.")
   }
-
-  // Questions are optional
-  const questionsResponse = await apiRequest
-    .requestJson<QuestionsResponse>({
-      client: "app",
-      method: "GET",
-      url: `${baseUrl}/api/product-questions/product/${id}`,
-      params: { page: 0, size: 10 },
-      headers,
-      fallbackMessage: "Failed to fetch questions",
-    })
-    .catch(() => null)
+  const productResponse = productResult.response
 
   if (productResponse.status < 200 || productResponse.status >= 300) {
     let backendErrorMessage = ""
