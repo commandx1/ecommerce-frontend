@@ -1,17 +1,21 @@
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
+import { VENDOR_CUSTOMERS } from "@/features/vendor-dashboard/customers/lib/customers-data"
 import { notFoundMock } from "@/test/mocks/next-navigation"
 import { render, screen } from "@/test/render"
 import CustomerProfilePage from "./[customerId]/page"
 import VendorCustomersAllPage from "./all/page"
-import { VENDOR_CUSTOMERS } from "./data"
 import VendorCustomersPage from "./page"
 
 vi.mock("@/features/vendor-dashboard/overview/components/CustomerAnalyticsChart", () => ({
   default: () => <div data-testid="customer-analytics" />,
 }))
-vi.mock("./components/CustomerSegmentsCard", () => ({ default: () => <div data-testid="customer-segments" /> }))
-vi.mock("./components/CustomerRevenueTrend", () => ({ default: () => <div data-testid="customer-revenue-trend" /> }))
+vi.mock("@/features/vendor-dashboard/customers/components/CustomerSegmentsCard", () => ({
+  default: () => <div data-testid="customer-segments" />,
+}))
+vi.mock("@/features/vendor-dashboard/customers/components/CustomerRevenueTrend", () => ({
+  default: () => <div data-testid="customer-revenue-trend" />,
+}))
 
 describe("VendorCustomersPage", () => {
   it("derives the KPI tiles from the customer list", () => {

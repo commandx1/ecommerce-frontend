@@ -1,6 +1,6 @@
-import DashboardPanel from "../../components/shared/DashboardPanel"
-import { DOT_TONE_CLASS_MAP, STATUS_TONE_CLASS_MAP } from "../../components/shared/dashboardToneMaps"
-import { getCustomerSegmentDistribution } from "../data"
+import DashboardPanel from "@/app/vendor-dashboard/components/shared/DashboardPanel"
+import { DOT_TONE_CLASS_MAP, STATUS_TONE_CLASS_MAP } from "@/app/vendor-dashboard/components/shared/dashboardToneMaps"
+import { getCustomerSegmentDistribution } from "../lib/customers-data"
 
 const segmentToneMap: Record<string, { badge: string; dot: string }> = {
   "High Value": { badge: STATUS_TONE_CLASS_MAP.success, dot: DOT_TONE_CLASS_MAP.success },
