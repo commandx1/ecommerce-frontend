@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import { showToast } from "@/components/ui/Toast"
 import { paymentMethodsCardsOptions } from "@/lib/query/options/payment-methods"
 import { useQueryErrorToast } from "@/lib/query/useQueryErrorToast"
+import { addModalDefaults, selectAutoOrderMethod, selectDefault } from "../lib/payment-methods"
 import type { SavedPaymentMethod } from "../paymentMethodsData"
 import { type UseAddCardFlowResult, useAddCardFlow } from "./useAddCardFlow"
 import { useCardElementOptions } from "./useCardElementOptions"
@@ -31,11 +32,11 @@ export function usePaymentMethodsPage(): UsePaymentMethodsPageResult {
   const methods = cardsQuery.data ?? []
   const isLoading = cardsQuery.isPending
 
-  const defaultMethod = methods.find((method) => method.status === "default") ?? null
-  const autoOrderMethod = methods.find((method) => method.autoOrderCard) ?? null
+  const defaultMethod = selectDefault(methods)
+  const autoOrderMethod = selectAutoOrderMethod(methods)
 
   const mutations = usePaymentMethodMutations(methods.length)
-  const addCardFlow = useAddCardFlow({ hasCards: methods.length > 0, hasAutoOrderCard: Boolean(autoOrderMethod) })
+  const addCardFlow = useAddCardFlow(addModalDefaults(methods))
   const cardElementOptions = useCardElementOptions()
 
   const sortedMethods = [...methods].sort((a, b) => {
