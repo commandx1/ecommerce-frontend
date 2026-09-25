@@ -1,24 +1,12 @@
 "use client"
 
-import {
-  CategoryScale,
-  Chart as ChartJS,
-  Legend,
-  LinearScale,
-  LineElement,
-  PointElement,
-  Title,
-  Tooltip,
-} from "chart.js"
 import { useId, useMemo } from "react"
-import { Line } from "react-chartjs-2"
 import DashboardPanel from "@/components/dashboard-shared/DashboardPanel"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import LazyLineChart from "@/features/vendor-dashboard/shared/components/LazyLineChart"
 import { getVendorChartOptions, getVendorChartPalette } from "@/features/vendor-dashboard/shared/lib/chartTheme"
 import { useRevenueChartQuery } from "../hooks/useOverviewQueries"
-
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
 
 const RevenueChart = () => {
   const sectionId = useId()
@@ -101,7 +89,7 @@ const RevenueChart = () => {
           ) : (
             // react-chartjs-2 forwards unknown props straight to the underlying <canvas role="img">,
             // which is otherwise nameless to assistive tech.
-            <Line data={data} options={options} aria-label="Monthly revenue performance" />
+            <LazyLineChart data={data} options={options} aria-label="Monthly revenue performance" />
           )}
         </div>
       </DashboardPanel>

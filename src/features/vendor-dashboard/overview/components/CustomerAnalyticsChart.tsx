@@ -1,25 +1,12 @@
 "use client"
 
-import {
-  CategoryScale,
-  Chart as ChartJS,
-  Filler,
-  Legend,
-  LinearScale,
-  LineElement,
-  PointElement,
-  Title,
-  Tooltip,
-} from "chart.js"
 import { useMemo } from "react"
-import { Line } from "react-chartjs-2"
 import DashboardPanel from "@/components/dashboard-shared/DashboardPanel"
 import { STATUS_TONE_CLASS_MAP } from "@/components/dashboard-shared/dashboardToneMaps"
 import { Button } from "@/components/ui/button"
 import vendorCustomerAnalyticsData from "@/data/vendor-customer-analytics.json"
+import LazyLineChart from "@/features/vendor-dashboard/shared/components/LazyLineChart"
 import { getVendorChartOptions, getVendorChartPalette } from "@/features/vendor-dashboard/shared/lib/chartTheme"
-
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)
 
 const CustomerAnalyticsChart = () => {
   const palette = useMemo(() => getVendorChartPalette(), [])
@@ -84,7 +71,7 @@ const CustomerAnalyticsChart = () => {
     >
       <div className="h-64">
         {/* aria-label reaches the underlying <canvas role="img">, which react-chartjs-2 renders nameless otherwise. */}
-        <Line data={data} options={options} aria-label="New and returning customers over time" />
+        <LazyLineChart data={data} options={options} aria-label="New and returning customers over time" />
       </div>
       <div className="mt-6 grid grid-cols-2 gap-4 xl:grid-cols-4">
         {vendorCustomerAnalyticsData.stats.map((stat) => (
