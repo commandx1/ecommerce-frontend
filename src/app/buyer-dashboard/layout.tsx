@@ -5,91 +5,23 @@
 // this tab's router. A loading boundary makes the router commit that stale redirect instantly
 // (see multi-account-tabs.spec.ts "a real cross-tab logout ..."). Fix the prefetch first.
 
-import { useRouter } from "next/navigation"
-import { useEffect, useId, useRef, useState } from "react"
+import { useId } from "react"
 import { DashboardMobileSidebarProvider } from "@/components/layout/DashboardMobileSidebarContext"
 import NotificationSocketBridge from "@/features/notifications/components/NotificationSocketBridge"
-import { tabSessionStorage } from "@/lib/storage/tab-session-storage"
-import { useAuthStore } from "@/stores/authStore"
+import { useDashboardAuthGuard } from "@/lib/hooks/useDashboardAuthGuard"
 import BuyerDashboardLayoutSkeleton from "./components/BuyerDashboardLayoutSkeleton"
 import BuyerHeader from "./components/BuyerHeader"
 import DashboardSidebar from "./components/DashboardSidebar"
 
 export default function BuyerDashboardLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter()
   const mainContentId = useId()
-  const { user, isAuthenticated } = useAuthStore()
-  const [isChecking, setIsChecking] = useState(true)
-  const wasAuthenticatedRef = useRef(false)
+  const { status, unauthorizedRender } = useDashboardAuthGuard("buyer")
 
-  // Track if they were authenticated in this session context
-  if (isAuthenticated && user) {
-    wasAuthenticatedRef.current = true
-  }
-
-  useEffect(() => {
-    // Check cookie directly first (before hydration completes)
-    const checkAuth = () => {
-      try {
-        const cookieData = tabSessionStorage.getItem("auth-storage")
-        if (cookieData) {
-          const parsed = JSON.parse(cookieData)
-          const storedUser = parsed?.state?.user
-          const storedIsAuthenticated = parsed?.state?.isAuthenticated
-
-          // If cookie has user but store doesn't yet, wait a bit for hydration
-          if (storedUser && storedIsAuthenticated) {
-            // Check if user is a vendor
-            if (storedUser.roleName === "Vendor") {
-              router.push("/vendor-dashboard")
-              return
-            }
-            // If buyer, wait for store to hydrate
-            setTimeout(() => {
-              const currentUser = useAuthStore.getState().user
-              if (!currentUser) {
-                router.push(wasAuthenticatedRef.current ? "/" : "/login")
-              } else if (currentUser.roleName === "Vendor") {
-                router.push("/vendor-dashboard")
-              } else {
-                setIsChecking(false)
-              }
-            }, 100)
-            return
-          }
-        }
-
-        // No cookie or no user in cookie
-        if (!isAuthenticated || !user) {
-          router.push(wasAuthenticatedRef.current ? "/" : "/login")
-          return
-        }
-
-        // Check if user is a vendor
-        if (user.roleName === "Vendor") {
-          router.push("/vendor-dashboard")
-          return
-        }
-
-        setIsChecking(false)
-      } catch {
-        // Error reading cookie, check store
-        if (!isAuthenticated || !user) {
-          router.push(wasAuthenticatedRef.current ? "/" : "/login")
-        } else if (user.roleName === "Vendor") {
-          router.push("/vendor-dashboard")
-        } else {
-          setIsChecking(false)
-        }
-      }
-    }
-
-    checkAuth()
-  }, [user, isAuthenticated, router])
-
-  // Show loading while checking or if not authenticated/vendor
-  if (isChecking || !isAuthenticated || !user || user.roleName === "Vendor") {
+  if (status === "checking" || (status === "unauthorized" && unauthorizedRender === "skeleton")) {
     return <BuyerDashboardLayoutSkeleton />
+  }
+  if (status === "unauthorized") {
+    return null
   }
 
   return (
