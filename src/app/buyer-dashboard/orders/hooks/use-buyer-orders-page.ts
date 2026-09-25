@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import { cartCommands } from "@/features/cart/api/cart-queries"
+import { extractApiErrorMessage } from "@/lib/api/api-error-message"
 import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
 import {
   type BuyerOrder,
@@ -19,7 +20,6 @@ import { OrderItemStatus } from "@/lib/constants/order-item-status"
 import { useAuthStore } from "@/stores/authStore"
 import {
   buildBuyerOrderViewModel,
-  extractApiErrorMessage,
   getAddressSummary,
   getOrderItems,
   resolvePaymentSummary,

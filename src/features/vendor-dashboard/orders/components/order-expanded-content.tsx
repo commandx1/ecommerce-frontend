@@ -1,8 +1,7 @@
 "use client"
 
 import { ExternalLink, Loader2 } from "lucide-react"
-import FulfillmentTimeline from "@/app/buyer-dashboard/orders/components/fulfillment-timeline"
-import { formatOrderItemStatus, getOrderItemStatusTagClass } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
+import FulfillmentTimeline from "@/components/orders/FulfillmentTimeline"
 import { Button } from "@/components/ui/button"
 import AddressContactInfo from "@/features/checkout/components/AddressContactInfo"
 import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
@@ -10,6 +9,7 @@ import { getFullImageUrl } from "@/lib/api/products"
 import type { VendorOrder, VendorOrderItem } from "@/lib/api/vendor-orders"
 import { isCancelableOrderItemStatus } from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { formatOrderItemStatus, getOrderItemStatusTagClass } from "@/lib/orders/order-format"
 
 interface CancelActionOptions {
   cancelingItemId?: string

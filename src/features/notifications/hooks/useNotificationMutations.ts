@@ -1,6 +1,6 @@
 import { type UseMutationResult, useMutation, useQueryClient } from "@tanstack/react-query"
-import { extractApiErrorMessage } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
 import { showToast } from "@/components/ui/Toast"
+import { extractApiErrorMessage } from "@/lib/api/api-error-message"
 import type { MarkAllNotificationsReadResponse, NotificationResponse } from "@/lib/api/notifications"
 import { notificationsAPI } from "@/lib/api/notifications"
 import { notificationsKeys } from "../lib/notifications-keys"

@@ -2,13 +2,13 @@
 
 import type { ColumnDef, Row } from "@tanstack/react-table"
 import { ChevronDown, ChevronsUpDown, ChevronUp, Package, Store } from "lucide-react"
+import AutoOrderBadge from "@/components/orders/AutoOrderBadge"
 import { Button } from "@/components/ui/button"
 import DataTable from "@/components/ui/data-table"
 import type { BuyerOrder } from "@/lib/api/buyer-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useBuyerOrdersTableActions, useBuyerOrdersTableSelector } from "../context/buyer-orders-context"
 import { buildBuyerOrderViewModel } from "../lib/order-view-utils"
-import AutoOrderBadge from "./auto-order-badge"
 import OrderExpandedContent from "./order-expanded-content"
 
 export default function OrdersTable() {

@@ -1,11 +1,14 @@
 import type { BuyerOrder, BuyerOrderItem, BuyerOrderSellerGroup, BuyerOrderTrackingLink } from "@/lib/api/buyer-orders"
 
+// Canonical definition moved to lib/orders/fulfillment.ts (Phase 4 §7, step O1) - shared with
+// the vendor side now that FulfillmentTimeline lives in components/orders/. Re-exported here so
+// existing `from "../types"` imports keep working.
+export type { FulfillmentStepState } from "@/lib/orders/fulfillment"
+
 export type OrderViewStatus = "processing" | "shipped" | "delivered" | "shipping"
 export type BuyerOrderStatusTab = "All" | "Pending" | "Shipped" | "Delivered" | "Cancelled" | "Returned"
 
 export type PaymentViewStatus = "paid" | "pending" | "failed" | "refunded" | "unknown"
-
-export type FulfillmentStepState = "pending" | "active" | "done"
 
 export interface BuyerOrderViewModel {
   customerLabel: string

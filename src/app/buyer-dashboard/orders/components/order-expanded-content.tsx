@@ -3,6 +3,7 @@
 import { ChevronDown, Download, ExternalLink, FileText, RotateCcw, Star, Undo2, XCircle } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
+import FulfillmentTimeline from "@/components/orders/FulfillmentTimeline"
 import { Button } from "@/components/ui/button"
 import { Collapse, CollapseContent, CollapseTrigger } from "@/components/ui/collapse"
 import { showToast } from "@/components/ui/Toast"
@@ -14,20 +15,21 @@ import { invoicesAPI } from "@/lib/api/invoices"
 import { getFullImageUrl } from "@/lib/api/products"
 import { isDeliveredOrderItemStatus, isPreShippingCancelableStatus } from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
-import { useBuyerOrdersTableActions, useBuyerOrdersTableSelector } from "../context/buyer-orders-context"
 import {
   formatDateTime,
   formatOrderItemStatus,
-  getOrderItemHeavyShipmentFee,
-  getOrderItemShipmentFee,
   getOrderItemStatusTagClass,
   getSellerFirstTwoLetters,
+} from "@/lib/orders/order-format"
+import { useBuyerOrdersTableActions, useBuyerOrdersTableSelector } from "../context/buyer-orders-context"
+import {
+  getOrderItemHeavyShipmentFee,
+  getOrderItemShipmentFee,
   resolveActiveShippingLinks,
   resolveActiveTrackingLinks,
   resolveOrderItemProductId,
 } from "../lib/order-view-utils"
 import type { BuyerOrderViewModel } from "../types"
-import FulfillmentTimeline from "./fulfillment-timeline"
 
 interface OrderExpandedContentProps {
   order: BuyerOrder

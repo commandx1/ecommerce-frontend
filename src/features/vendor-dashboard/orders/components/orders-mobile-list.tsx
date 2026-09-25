@@ -1,15 +1,15 @@
 "use client"
 
 import { ChevronDown, ChevronsUpDown, ChevronUp, Loader2 } from "lucide-react"
-import AutoOrderBadge from "@/app/buyer-dashboard/orders/components/auto-order-badge"
-import { formatDateOnly, formatTimeOnly } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
+import AutoOrderBadge from "@/components/orders/AutoOrderBadge"
 import { Button } from "@/components/ui/button"
 import { Collapse, CollapseContent, CollapseTrigger } from "@/components/ui/collapse"
-import { Skeleton } from "@/components/ui/skeleton"
 import SurfaceCard from "@/components/ui/SurfaceCard"
+import { Skeleton } from "@/components/ui/skeleton"
 import type { VendorOrder, VendorOrderItem } from "@/lib/api/vendor-orders"
 import { isCancelableOrderItemStatus } from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { formatDateOnly, formatTimeOnly } from "@/lib/orders/order-format"
 import VendorOrderExpandedContent, { getVendorOrderShippingWithHeavyTotal } from "./order-expanded-content"
 
 interface CancelActionOptions {

@@ -3,13 +3,13 @@
 import type { CellContext, ColumnDef, ExpandedState, OnChangeFn, Row } from "@tanstack/react-table"
 import { ChevronDown, ChevronsUpDown, ChevronUp, Loader2 } from "lucide-react"
 import { useCallback, useMemo } from "react"
-import AutoOrderBadge from "@/app/buyer-dashboard/orders/components/auto-order-badge"
-import { formatDateOnly, formatTimeOnly } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
+import AutoOrderBadge from "@/components/orders/AutoOrderBadge"
 import { Button } from "@/components/ui/button"
 import DataTable from "@/components/ui/data-table"
 import type { VendorOrder, VendorOrderItem } from "@/lib/api/vendor-orders"
 import { isCancelableOrderItemStatus } from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { formatDateOnly, formatTimeOnly } from "@/lib/orders/order-format"
 import VendorOrderExpandedContent, { getVendorOrderShippingWithHeavyTotal } from "./order-expanded-content"
 
 interface CancelActionOptions {

@@ -2,8 +2,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
-import { extractApiErrorMessage } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
 import { showToast } from "@/components/ui/Toast"
+import { extractApiErrorMessage } from "@/lib/api/api-error-message"
 import {
   type ProcessUberDeliveriesResponse,
   type VendorOrder,

@@ -6,7 +6,8 @@ import type { HorizontalTimelineStep } from "@/components/ui/horizontal-timeline
 import { HorizontalTimeline } from "@/components/ui/horizontal-timeline"
 import Modal from "@/components/ui/Modal"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { formatDateOnly, resolveOrderItemFulfillmentState } from "../lib/order-view-utils"
+import { resolveOrderItemFulfillmentState } from "@/lib/orders/fulfillment"
+import { formatDateOnly } from "@/lib/orders/order-format"
 
 interface FulfillmentTimelineItem {
   status: string

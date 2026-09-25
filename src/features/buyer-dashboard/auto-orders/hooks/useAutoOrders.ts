@@ -1,9 +1,9 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { extractApiErrorMessage } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
 import { showToast } from "@/components/ui/Toast"
 import { addressAPI } from "@/lib/api/address"
+import { extractApiErrorMessage } from "@/lib/api/api-error-message"
 import { type AutoOrder, autoOrdersAPI, type UpdateAutoOrderPayload } from "@/lib/api/auto-orders"
 import { paymentMethodsAPI } from "@/lib/api/payment-methods"
 

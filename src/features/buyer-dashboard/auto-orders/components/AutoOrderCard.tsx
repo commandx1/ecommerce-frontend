@@ -1,7 +1,6 @@
 "use client"
 
 import { CalendarClock, Loader2, Pause, Pencil, Play, Repeat, Trash2 } from "lucide-react"
-import { formatDateOnly } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import ProductImageWithFallback from "@/features/products/listing/components/ProductImageWithFallback"
@@ -9,6 +8,7 @@ import type { AutoOrder } from "@/lib/api/auto-orders"
 import { getFullImageUrl } from "@/lib/api/products"
 import { AUTO_ORDER_PERIOD_LABELS } from "@/lib/constants/auto-order"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { formatDateOnly } from "@/lib/orders/order-format"
 import { cn } from "@/lib/utils"
 import { describeNextOrderDate } from "../lib/auto-order-view-utils"
 

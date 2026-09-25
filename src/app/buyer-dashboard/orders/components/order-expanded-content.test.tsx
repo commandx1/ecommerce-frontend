@@ -35,7 +35,7 @@ vi.mock("../context/buyer-orders-context", () => ({
   useBuyerOrdersTableActions: () => tableActions,
 }))
 
-vi.mock("./fulfillment-timeline", () => ({
+vi.mock("@/components/orders/FulfillmentTimeline", () => ({
   default: () => <div data-testid="timeline" />,
 }))
 

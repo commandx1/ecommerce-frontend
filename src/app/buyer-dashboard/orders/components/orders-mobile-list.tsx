@@ -1,15 +1,15 @@
 "use client"
 
 import { ChevronDown, ChevronsUpDown, ChevronUp, Package, Store } from "lucide-react"
+import AutoOrderBadge from "@/components/orders/AutoOrderBadge"
 import { Collapse, CollapseContent, CollapseTrigger } from "@/components/ui/collapse"
-import { Skeleton } from "@/components/ui/skeleton"
 import SurfaceCard from "@/components/ui/SurfaceCard"
+import { Skeleton } from "@/components/ui/skeleton"
 import type { BuyerOrder } from "@/lib/api/buyer-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useBuyerOrdersTableActions, useBuyerOrdersTableSelector } from "../context/buyer-orders-context"
 import { buildBuyerOrderViewModel, getOrderStatusBadgeClasses, getOrderStatusLabel } from "../lib/order-view-utils"
 import type { BuyerOrderViewModel } from "../types"
-import AutoOrderBadge from "./auto-order-badge"
 import OrderExpandedContent from "./order-expanded-content"
 
 // `buildBuyerOrderViewModel` calls `.toUpperCase()` on `order.orderStatus` and on each item's

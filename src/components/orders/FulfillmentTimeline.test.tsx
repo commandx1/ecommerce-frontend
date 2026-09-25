@@ -1,12 +1,13 @@
 import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import FulfillmentTimeline from "./fulfillment-timeline"
+import FulfillmentTimeline from "./FulfillmentTimeline"
 
 // This component takes plain props (`item`, `orderDate`) - it does not read the buyer-orders
-// context, so there is nothing to mock. It DOES call the real `order-view-utils` helpers
-// (`resolveOrderItemFulfillmentState`, `formatDateOnly`) - those functions' own logic is covered by
-// order-view-utils.test.ts; here we only verify FulfillmentTimeline USES their output correctly.
+// context, so there is nothing to mock. It DOES call the real `resolveOrderItemFulfillmentState`
+// (lib/orders/fulfillment.test.ts) and `formatDateOnly` (lib/orders/order-format.test.ts) - those
+// functions' own logic is covered there; here we only verify FulfillmentTimeline USES their
+// output correctly.
 
 const ORDER_DATE = "May 20, 2026"
 

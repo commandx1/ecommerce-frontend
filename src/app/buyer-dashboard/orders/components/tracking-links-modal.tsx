@@ -4,8 +4,8 @@ import { Download, ExternalLink, X } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Modal from "@/components/ui/Modal"
+import { formatDateTime } from "@/lib/orders/order-format"
 import { useBuyerOrdersTrackingModalActions, useBuyerOrdersTrackingModalState } from "../context/buyer-orders-context"
-import { formatDateTime } from "../lib/order-view-utils"
 
 function getShippingLabelDownloadHref(labelUrl: string, index: number): string {
   const params = new URLSearchParams({
