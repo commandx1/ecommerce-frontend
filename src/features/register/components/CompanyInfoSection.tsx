@@ -1,3 +1,4 @@
+import { useId } from "react"
 import { SelectField } from "@/components/form/SelectField"
 import { TextAreaField } from "@/components/form/TextAreaField"
 import { TextField } from "@/components/form/TextField"
@@ -26,6 +27,8 @@ export default function CompanyInfoSection({
   onFieldChange,
   onPhoneNumberChange,
 }: CompanyInfoSectionProps) {
+  const idBase = useId()
+
   return (
     <div className="border-t border-border-soft pt-6">
       <h3 className="mb-4 text-lg font-semibold text-text-primary">Company Information</h3>
@@ -33,7 +36,7 @@ export default function CompanyInfoSection({
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <TextField
-            id="companyName"
+            id={`${idBase}-companyName`}
             label="Company Name"
             required
             value={company.name}
@@ -42,7 +45,7 @@ export default function CompanyInfoSection({
             error={errors.companyName}
           />
           <TextField
-            id="taxNumber"
+            id={`${idBase}-taxNumber`}
             label="Tax Number"
             required
             value={company.taxNumber}
@@ -54,7 +57,7 @@ export default function CompanyInfoSection({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <TextField
-            id="companyEmail"
+            id={`${idBase}-companyEmail`}
             label="Company Email"
             type="email"
             required
@@ -64,7 +67,7 @@ export default function CompanyInfoSection({
             error={errors.companyEmail}
           />
           <TextField
-            id="companyPhoneNumber"
+            id={`${idBase}-companyPhoneNumber`}
             label="Company Phone"
             type="tel"
             required
@@ -77,14 +80,14 @@ export default function CompanyInfoSection({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <TextField
-            id="companyWebsite"
+            id={`${idBase}-companyWebsite`}
             label="Website"
             value={company.website}
             onChange={(e) => onFieldChange("website", e.target.value)}
             placeholder="www.company.com"
           />
           <SelectField
-            id="shipmentPolicy"
+            id={`${idBase}-shipmentPolicy`}
             name="shipmentPolicy"
             label="Shipment Policy"
             required
@@ -102,7 +105,7 @@ export default function CompanyInfoSection({
         </div>
 
         <TextAreaField
-          id="companyDescription"
+          id={`${idBase}-companyDescription`}
           label="Description"
           value={company.description}
           onChange={(e) => onFieldChange("description", e.target.value)}
@@ -111,7 +114,7 @@ export default function CompanyInfoSection({
         />
 
         <TextField
-          id="companyPhoto"
+          id={`${idBase}-companyPhoto`}
           label="Company Logo URL"
           value={company.companyPhoto}
           onChange={(e) => onFieldChange("companyPhoto", e.target.value)}

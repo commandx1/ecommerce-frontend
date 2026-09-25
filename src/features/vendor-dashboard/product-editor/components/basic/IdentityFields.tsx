@@ -1,4 +1,5 @@
 import { Barcode } from "lucide-react"
+import { useId } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BARCODE_FORMAT_OPTIONS } from "../../lib/product-form"
 import { FieldError, type FieldGroupProps, fieldClass, LABEL_CLASS } from "../field-styles"
@@ -16,6 +17,9 @@ export default function IdentityFields({
   onInputChange,
   onBarcodeFormatChange,
 }: IdentityFieldsProps) {
+  const barcodeId = useId()
+  const barcodeFormatsId = useId()
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -40,13 +44,13 @@ export default function IdentityFields({
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
-          <label htmlFor="barcode" className={LABEL_CLASS}>
+          <label htmlFor={barcodeId} className={LABEL_CLASS}>
             <Barcode className="w-4 h-4 inline mr-1" />
             Barcode
           </label>
           {/* Never disabled, even on a locked listing (unchanged behaviour). */}
           <input
-            id="barcode"
+            id={barcodeId}
             type="text"
             name="barcode"
             value={values.barcode}
@@ -58,7 +62,7 @@ export default function IdentityFields({
         </div>
 
         <div>
-          <label htmlFor="barcodeFormats" className={LABEL_CLASS}>
+          <label htmlFor={barcodeFormatsId} className={LABEL_CLASS}>
             Barcode Format
           </label>
           <Select
@@ -68,7 +72,7 @@ export default function IdentityFields({
             onValueChange={onBarcodeFormatChange}
           >
             <SelectTrigger
-              id="barcodeFormats"
+              id={barcodeFormatsId}
               className="w-full rounded-lg border-border-soft bg-surface-elevated px-4 py-3 text-text-primary shadow-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:bg-surface disabled:opacity-60"
             >
               <SelectValue />

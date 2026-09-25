@@ -1,3 +1,4 @@
+import { useId } from "react"
 import BrandFilterDropdown from "../BrandFilterDropdown"
 import { FieldError, type FieldGroupProps, fieldClass, LABEL_CLASS } from "../field-styles"
 import TextField from "../TextField"
@@ -15,6 +16,8 @@ export default function ManufacturerFields({
   accessToken,
   onBrandChange,
 }: ManufacturerFieldsProps) {
+  const brandId = useId()
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <TextField
@@ -37,12 +40,12 @@ export default function ManufacturerFields({
       />
 
       <div>
-        <label htmlFor="brand" className={LABEL_CLASS}>
+        <label htmlFor={brandId} className={LABEL_CLASS}>
           Brand *
         </label>
         {/* Required single value, so no "All Brands" option (the search-view filter keeps it). */}
         <BrandFilterDropdown
-          id="brand"
+          id={brandId}
           value={values.brand || null}
           onChange={onBrandChange}
           accessToken={accessToken}

@@ -1,4 +1,5 @@
 import { Info } from "lucide-react"
+import { useId } from "react"
 import type { ProductAttribute } from "@/lib/api/products"
 import type { CategoryPath } from "@/lib/category-tree"
 import CategoryPicker from "../CategoryPicker"
@@ -22,6 +23,8 @@ interface DetailsTabProps extends FieldGroupProps {
 export default function DetailsTab(props: DetailsTabProps) {
   const { values, errors, locked, onInputChange } = props
   const fields = { values, errors, locked, onInputChange }
+  const categoryId = useId()
+  const descriptionId = useId()
 
   return (
     <div className="space-y-6">
@@ -36,7 +39,7 @@ export default function DetailsTab(props: DetailsTabProps) {
 
       <div>
         <CategoryPicker
-          id="category"
+          id={categoryId}
           value={values.categoryPath}
           legacyValue={values.legacyCategory}
           hasError={Boolean(errors.category)}
@@ -63,11 +66,11 @@ export default function DetailsTab(props: DetailsTabProps) {
       />
 
       <div>
-        <label htmlFor="description" className={LABEL_CLASS}>
+        <label htmlFor={descriptionId} className={LABEL_CLASS}>
           Detailed Description *
         </label>
         <textarea
-          id="description"
+          id={descriptionId}
           name="description"
           value={values.description}
           onChange={onInputChange}

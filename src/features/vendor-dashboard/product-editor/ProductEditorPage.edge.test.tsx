@@ -932,9 +932,10 @@ describe("CreateProductPage — Brand field", () => {
     await fillBasicTab(user)
     await user.click(tabButton("Product Details"))
 
-    // The Details-tab Brand dropdown is the required, single-value field (rendered with an id) -
-    // "All Brands" is a no-op there and would trap a vendor who picks it in a validation loop.
-    const requiredBrandCall = brandFilterCalls.find((call) => call.id === "brand")
+    // The Details-tab Brand dropdown is the required, single-value field (rendered with a
+    // generated id, unlike the search-view filter below which passes none) - "All Brands" is a
+    // no-op there and would trap a vendor who picks it in a validation loop.
+    const requiredBrandCall = brandFilterCalls.find((call) => call.id !== undefined)
     expect(requiredBrandCall?.hideAllOption).toBe(true)
   })
 

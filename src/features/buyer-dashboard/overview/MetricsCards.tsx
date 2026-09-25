@@ -1,4 +1,5 @@
 import { Clock, DollarSign, Heart, type LucideIcon, ShoppingBag } from "lucide-react"
+import { useId } from "react"
 import dashboardMetricsData from "@/data/dashboard-metrics.json"
 
 const iconMap: Record<string, LucideIcon> = {
@@ -16,8 +17,10 @@ const colorMap: Record<string, string> = {
 }
 
 const MetricsCards = () => {
+  const sectionId = useId()
+
   return (
-    <section id="metrics-section" className="mb-8">
+    <section id={sectionId} className="mb-8">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {dashboardMetricsData.metrics.map((metric) => {
           const IconComponent = iconMap[metric.icon]

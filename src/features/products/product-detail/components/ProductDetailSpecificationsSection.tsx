@@ -11,6 +11,7 @@ export default function ProductDetailSpecificationsSection({ viewModel }: Produc
   if (viewModel.specifications.length === 0 && !viewModel.sdsUrl) return null
 
   return (
+    // biome-ignore lint/correctness/useUniqueElementIds: fixed anchor target (scroll-mt above is a jump-link offset); one specifications section per product page, so no duplicate-id risk
     <PageSectionContainer
       as="section"
       id="specifications"

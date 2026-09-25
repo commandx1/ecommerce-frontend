@@ -1,4 +1,5 @@
 import type { ChangeEvent } from "react"
+import { useId } from "react"
 import { TextField } from "@/components/form/TextField"
 import type { RegisterFormData, RegisterFormErrors } from "@/features/register/types"
 import { formatPhoneNumber } from "@/lib/utils/phone-number"
@@ -18,11 +19,13 @@ export default function PersonalInfoFields({
   onPhoneNumberChange,
   emailReadOnly,
 }: PersonalInfoFieldsProps) {
+  const idBase = useId()
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <TextField
-          id="name"
+          id={`${idBase}-name`}
           label="First Name"
           name="name"
           required
@@ -32,7 +35,7 @@ export default function PersonalInfoFields({
           error={errors.name}
         />
         <TextField
-          id="surname"
+          id={`${idBase}-surname`}
           label="Last Name"
           name="surname"
           required
@@ -44,7 +47,7 @@ export default function PersonalInfoFields({
       </div>
 
       <TextField
-        id="email"
+        id={`${idBase}-email`}
         label="Email Address"
         name="email"
         type="email"
@@ -57,7 +60,7 @@ export default function PersonalInfoFields({
       />
 
       <TextField
-        id="phoneNumber"
+        id={`${idBase}-phoneNumber`}
         label="Phone Number"
         name="phoneNumber"
         type="tel"

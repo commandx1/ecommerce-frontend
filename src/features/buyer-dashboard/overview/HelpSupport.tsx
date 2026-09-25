@@ -1,4 +1,5 @@
 import { Book, HeadphonesIcon, HelpCircle, type LucideIcon, Phone } from "lucide-react"
+import { useId } from "react"
 import { Button } from "@/components/ui/button"
 import dashboardAccountData from "@/data/dashboard-account.json"
 
@@ -10,8 +11,10 @@ const iconMap: Record<string, LucideIcon> = {
 }
 
 const HelpSupport = () => {
+  const sectionId = useId()
+
   return (
-    <section id="support-section" className="mb-8">
+    <section id={sectionId} className="mb-8">
       <div className="rounded-xl border border-border-soft bg-surface-elevated shadow-soft">
         <div className="border-b border-border-soft p-6">
           <h2 className="text-xl font-semibold text-text-primary">Help & Support</h2>

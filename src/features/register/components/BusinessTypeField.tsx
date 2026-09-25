@@ -1,4 +1,5 @@
 import type { ChangeEvent } from "react"
+import { useId } from "react"
 import { SelectField } from "@/components/form/SelectField"
 import { BUSINESS_TYPE_OPTIONS } from "@/lib/constants/business-types"
 
@@ -9,9 +10,11 @@ interface BusinessTypeFieldProps {
 }
 
 export default function BusinessTypeField({ value, error, onChange }: BusinessTypeFieldProps) {
+  const id = useId()
+
   return (
     <SelectField
-      id="businessDescribe"
+      id={id}
       label="Business Type"
       name="businessDescribe"
       required

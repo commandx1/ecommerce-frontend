@@ -1,5 +1,6 @@
 import { Circle } from "lucide-react"
 import type { ChangeEvent } from "react"
+import { useId } from "react"
 import zxcvbn from "zxcvbn"
 import { PasswordField } from "@/components/form/PasswordField"
 import type { RegisterFormErrors } from "@/features/register/types"
@@ -19,6 +20,7 @@ export default function PasswordSection({
   onPasswordChange,
   onConfirmPasswordChange,
 }: PasswordSectionProps) {
+  const idBase = useId()
   const strengthScore = password ? zxcvbn(password).score : 0
   const strengthLabel = ["Very weak", "Weak", "Fair", "Good", "Strong"][strengthScore] ?? "Very weak"
 
@@ -33,7 +35,7 @@ export default function PasswordSection({
   return (
     <>
       <PasswordField
-        id="password"
+        id={`${idBase}-password`}
         label="Password"
         name="password"
         required
@@ -83,7 +85,7 @@ export default function PasswordSection({
       </div>
 
       <PasswordField
-        id="confirmPassword"
+        id={`${idBase}-confirmPassword`}
         label="Confirm Password"
         required
         value={confirmPassword}

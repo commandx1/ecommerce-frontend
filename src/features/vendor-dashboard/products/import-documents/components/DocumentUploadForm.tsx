@@ -1,7 +1,7 @@
 "use client"
 
 import { FileUp, Loader2, Upload } from "lucide-react"
-import type { RefObject } from "react"
+import { type RefObject, useId } from "react"
 import { cn } from "@/lib/utils"
 
 interface DocumentUploadFormProps {
@@ -21,11 +21,13 @@ export default function DocumentUploadForm({
   onCancel,
   onUpload,
 }: DocumentUploadFormProps) {
+  const inputId = useId()
+
   return (
     <div className="space-y-5">
       {/* Drop zone */}
       <label
-        htmlFor="vendor-doc-upload"
+        htmlFor={inputId}
         className={cn(
           "mx-auto flex w-1/2 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 transition-colors",
           selectedFile
@@ -34,7 +36,7 @@ export default function DocumentUploadForm({
         )}
       >
         <input
-          id="vendor-doc-upload"
+          id={inputId}
           ref={fileInputRef}
           type="file"
           accept=".xlsx,.xls"

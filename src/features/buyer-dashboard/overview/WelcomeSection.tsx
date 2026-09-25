@@ -1,9 +1,11 @@
 "use client"
 
+import { useId } from "react"
 import { formatLongDate } from "@/lib/helpers/format"
 import { useAuthStore } from "@/stores/authStore"
 
 const WelcomeSection = () => {
+  const sectionId = useId()
   const today = formatLongDate(new Date())
 
   const user = useAuthStore((state) => state.user)
@@ -17,7 +19,7 @@ const WelcomeSection = () => {
   const displayName = fullName || user?.email || ""
 
   return (
-    <section id="welcome-section" className="mb-8">
+    <section id={sectionId} className="mb-8">
       <div className="home-spotlight rounded-2xl border border-border-soft bg-brand-surface p-8 text-inverse-foreground shadow-panel">
         <div className="flex items-center justify-between">
           <div>

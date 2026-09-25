@@ -1,4 +1,5 @@
 import type { ChangeEventHandler } from "react"
+import { useId } from "react"
 import { PasswordField } from "@/components/form/PasswordField"
 import { TextField } from "@/components/form/TextField"
 import type { LoginFormData } from "@/features/login/types"
@@ -10,10 +11,12 @@ interface LoginFormFieldsProps {
 }
 
 export default function LoginFormFields({ formData, onChange, isSubmitting }: LoginFormFieldsProps) {
+  const idBase = useId()
+
   return (
     <div className="space-y-6">
       <TextField
-        id="email"
+        id={`${idBase}-email`}
         label="Email Address"
         name="email"
         type="email"
@@ -25,7 +28,7 @@ export default function LoginFormFields({ formData, onChange, isSubmitting }: Lo
       />
 
       <PasswordField
-        id="password"
+        id={`${idBase}-password`}
         label="Password"
         name="password"
         required

@@ -2,7 +2,7 @@
 
 import { AlertCircle, Barcode, ImageIcon, Loader2 } from "lucide-react"
 import Image from "next/image"
-import { useState } from "react"
+import { useId, useState } from "react"
 import Modal from "@/components/ui/Modal"
 import type { NormalizedSearchProduct } from "@/lib/api/products"
 import { useProductDetailsSubmit } from "../hooks/useProductDetailsSubmit"
@@ -78,6 +78,8 @@ export default function ProductDetailsModal({ product, isOpen, onClose, onSucces
   const { price, setPrice, stock, setStock, isSubmitting, errorMessage, canSubmit, handleSubmit } =
     useProductDetailsSubmit({ product, isOpen, onSuccess })
   const { specs, wide, attributes: attributeRows, description } = buildDetailSections(product)
+  const priceId = useId()
+  const stockId = useId()
 
   return (
     <Modal
@@ -156,11 +158,11 @@ export default function ProductDetailsModal({ product, isOpen, onClose, onSucces
           <h3 className="text-sm font-semibold text-text-primary mb-4">Pricing & Inventory</h3>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label htmlFor="modal-price" className="block text-sm font-medium text-text-primary mb-2">
+              <label htmlFor={priceId} className="block text-sm font-medium text-text-primary mb-2">
                 Price *
               </label>
               <input
-                id="modal-price"
+                id={priceId}
                 type="number"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
@@ -171,11 +173,11 @@ export default function ProductDetailsModal({ product, isOpen, onClose, onSucces
               />
             </div>
             <div>
-              <label htmlFor="modal-stock" className="block text-sm font-medium text-text-primary mb-2">
+              <label htmlFor={stockId} className="block text-sm font-medium text-text-primary mb-2">
                 Stock *
               </label>
               <input
-                id="modal-stock"
+                id={stockId}
                 type="number"
                 value={stock}
                 onChange={(e) => setStock(e.target.value)}

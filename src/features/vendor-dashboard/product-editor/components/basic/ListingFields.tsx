@@ -1,3 +1,4 @@
+import { useId } from "react"
 import {
   FULFILLMENT_POLICY_DAYS,
   getFulfillmentPolicyDayUnit,
@@ -12,6 +13,8 @@ type ListingFieldsProps = Omit<FieldGroupProps, "locked">
 
 /** Pricing & Inventory for a new or resubmitted product: the listing half of the review DTO. */
 export default function ListingFields({ values, errors, onInputChange }: ListingFieldsProps) {
+  const fulfillmentPolicyId = useId()
+
   return (
     <div className="border-t border-border-soft pt-6 mt-6">
       <h3 className="text-lg font-semibold text-brand mb-4">Pricing & Inventory</h3>
@@ -50,7 +53,7 @@ export default function ListingFields({ values, errors, onInputChange }: Listing
         />
 
         <div>
-          <label htmlFor="fulfillmentPolicy" className={LABEL_CLASS}>
+          <label htmlFor={fulfillmentPolicyId} className={LABEL_CLASS}>
             Fulfillment Policy *
           </label>
           <div
@@ -58,7 +61,7 @@ export default function ListingFields({ values, errors, onInputChange }: Listing
           >
             <span className="text-text-primary">Ships within</span>
             <select
-              id="fulfillmentPolicy"
+              id={fulfillmentPolicyId}
               name="fulfillmentPolicy"
               value={values.fulfillmentPolicy}
               onChange={onInputChange}

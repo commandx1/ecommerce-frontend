@@ -38,6 +38,7 @@ export default function CoverPhotoField(props: CoverPhotoFieldProps) {
 
       <PhotoModeToggle mode={mode} locked={locked} onChange={props.onModeChange} />
 
+      {/* biome-ignore lint/correctness/useUniqueElementIds: stable id is the test contract - document.querySelector("#coverPhotoInput") in ProductEditorPage.*.test.tsx and useProductMedia.test.ts */}
       <input
         ref={props.inputRef}
         type="file"

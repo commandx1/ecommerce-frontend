@@ -1,7 +1,7 @@
 "use client"
 
 import type { ChangeEvent } from "react"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 import { getPlaceDetails, type ParsedAddress, searchPlaces } from "@/lib/utils/google-maps"
 
 interface AddressAutocompleteProps {
@@ -11,6 +11,7 @@ interface AddressAutocompleteProps {
 }
 
 export default function AddressAutocomplete({ onSelect, selectedAddress, error }: AddressAutocompleteProps) {
+  const addressSearchId = useId()
   const [query, setQuery] = useState("")
   const [predictions, setPredictions] = useState<Array<{ place_id: string; description: string }>>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -97,11 +98,11 @@ export default function AddressAutocomplete({ onSelect, selectedAddress, error }
 
   return (
     <div ref={wrapperRef} className="relative">
-      <label htmlFor="addressSearch" className="block text-sm font-medium text-gray-700 mb-2">
+      <label htmlFor={addressSearchId} className="block text-sm font-medium text-gray-700 mb-2">
         Search Address *
       </label>
       <input
-        id="addressSearch"
+        id={addressSearchId}
         type="text"
         value={query}
         onChange={handleInputChange}

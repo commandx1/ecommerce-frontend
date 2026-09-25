@@ -39,6 +39,7 @@ export default function GalleryField(props: GalleryFieldProps) {
 
       <PhotoModeToggle mode={mode} locked={locked} onChange={props.onModeChange} />
 
+      {/* biome-ignore lint/correctness/useUniqueElementIds: stable id is the test contract - document.querySelector("#photosInput") in ProductEditorPage.*.test.tsx and useProductMedia.test.ts */}
       <input
         ref={props.inputRef}
         type="file"

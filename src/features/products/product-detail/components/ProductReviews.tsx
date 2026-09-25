@@ -123,6 +123,7 @@ export default function ProductReviews({
   })
 
   return (
+    // biome-ignore lint/correctness/useUniqueElementIds: fixed anchor target, linked from ProductHeroDetails' href="#product-reviews"; one reviews section per product page, so no duplicate-id risk
     <section id="product-reviews" className="bg-surface-muted/45 py-10 sm:py-12">
       <PageSectionContainer as="div">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
