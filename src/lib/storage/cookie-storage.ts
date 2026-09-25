@@ -63,6 +63,9 @@ export const cookieStorage: Storage = {
     const expires = new Date()
     expires.setTime(expires.getTime() + 30 * 24 * 60 * 60 * 1000)
 
+    // This *is* the cookie storage adapter: the sync Storage interface it implements (required by
+    // Zustand persist and by SSR reads in layouts) has no equivalent in the async Cookie Store API.
+    // biome-ignore lint/suspicious/noDocumentCookie: sync Storage adapter, see comment above
     document.cookie = `${name}=${encodeURIComponent(stringValue)}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureCookieSuffix()}`
   },
 
@@ -71,6 +74,7 @@ export const cookieStorage: Storage = {
       return
     }
 
+    // biome-ignore lint/suspicious/noDocumentCookie: sync Storage adapter, see setItem above
     document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;${secureCookieSuffix()}`
   },
 }

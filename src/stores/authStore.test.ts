@@ -33,6 +33,7 @@ async function readRawAuthCookie(): Promise<string | null> {
 }
 
 function clearAuthCookie(): void {
+  // biome-ignore lint/suspicious/noDocumentCookie: test cleanup for the cookieStorage-backed auth cookie
   document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
 }
 

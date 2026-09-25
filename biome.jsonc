@@ -48,7 +48,7 @@
           "options": { "allow": ["error", "warn"] }
         },
         "noArrayIndexKey": "warn",
-        "noDocumentCookie": "warn"
+        "noDocumentCookie": "error"
       },
       "correctness": {
         "noUnusedVariables": "error",

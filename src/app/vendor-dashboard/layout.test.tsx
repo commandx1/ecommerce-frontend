@@ -81,6 +81,7 @@ function seedSession(raw: string): void {
 
 function clearAuthStorage(): void {
   sessionStorage.removeItem(COOKIE_NAME)
+  // biome-ignore lint/suspicious/noDocumentCookie: test cleanup for the cookieStorage-backed auth cookie
   document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
 }
 
