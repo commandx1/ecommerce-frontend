@@ -11,16 +11,11 @@ interface QuerySessionBoundaryProps {
 }
 
 /**
- * Clears the query cache whenever the signed-in user changes identity (logout or account
- * switch), so account A's cart/notifications data never leaks into account B's session -
- * nothing did this before Phase 2 (see design doc §0/§1.3).
- *
- * `null -> A` (login/hydration) does NOT clear: there is nothing to leak, and clearing here
- * would tear down observers that just mounted. This one subscription covers every logout
- * funnel at once: manual logout, the `client.ts` 401 interceptor, the cross-tab logout
- * broadcast, and impersonate/setup-vendor/register flows, because they all eventually change
- * `authStore.user`. Flipping `isAdminImpersonating` without a user change is not a trigger -
- * it is the same backend user.
+ * Clears the query cache whenever the signed-in user changes identity (logout or account switch),
+ * so account A's data never leaks into account B's session. `null -> A` (login/hydration) does not
+ * clear: there is nothing to leak, and it would tear down observers that just mounted. Every
+ * logout path (manual, 401 interceptor, cross-tab broadcast, impersonation/register flows) ends in
+ * an `authStore.user` change, so this one subscription covers them all.
  */
 export default function QuerySessionBoundary({ queryClient, children }: QuerySessionBoundaryProps) {
   useEffect(

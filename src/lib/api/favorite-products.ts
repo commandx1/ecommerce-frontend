@@ -26,8 +26,7 @@ export async function getMyFavoriteProductIds(): Promise<string[]> {
     url: "/products/favorite-ids",
     fallbackMessage: "Failed to fetch favorite product IDs",
   })
-  // The endpoint is typed `List<String>`, but a malformed 200 is not an array and callers use
-  // `.has()` on it to decide the starred state (mirrors vendors.ts infra note #26).
+  // Typed `List<String>`, but a malformed 200 is not an array and callers `.has()` on it.
   return Array.isArray(ids) ? ids : []
 }
 

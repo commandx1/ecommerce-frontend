@@ -261,12 +261,9 @@ export default function VendorOrderExpandedContent({
                           {/*
                           DELIBERATELY DISABLED - do not re-enable without a product decision.
                           Rejecting a return is a closed product rule: a vendor may only approve.
-                          The rest of the flow (openRejectReturnModal, handleRejectReturn, the
-                          reason modal, the onRejectReturn prop) is still wired in page.tsx and is
-                          kept so the feature can be switched back on cheaply. `orders/page.tsx`
-                          function coverage sits at ~83% because of exactly these unreachable
-                          functions - that is expected, not a gap to close.
-                          Guarded by: "does not offer a way to reject a return" in page.test.tsx.
+                          The rest of the flow (the reject modal and handlers) is still wired and
+                          kept so the feature can be switched back on cheaply.
+                          Guarded by: "does not offer a way to reject a return".
 
                           <Button
                             type="button"
@@ -292,11 +289,9 @@ export default function VendorOrderExpandedContent({
             )
           })}
 
-          {/* What the cancellation actually cost. Mirrors the buyer strip in
-            buyer-dashboard/orders/components/order-expanded-content.tsx (~line 358-385): the
-            backend only fills these fields AFTER a cancellation, so they stay null on a live
-            order. `cancellationHeavyShipmentFeeRefund` is 0 (not null) when cancelled items had
-            no heavy fee, so it must be compared to `> 0`, not just checked for being a number. */}
+          {/* What the cancellation actually cost (same strip as the buyer side): null until a
+            cancellation. `cancellationHeavyShipmentFeeRefund` is 0 (not null) without a heavy fee,
+            so it is compared with `> 0`. */}
           {typeof order.cancellationShipmentFee === "number" ||
           typeof order.cancellationShipmentRefundFee === "number" ||
           (typeof order.cancellationHeavyShipmentFeeRefund === "number" &&

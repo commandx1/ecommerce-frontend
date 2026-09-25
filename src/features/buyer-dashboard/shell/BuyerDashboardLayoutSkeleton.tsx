@@ -6,9 +6,8 @@ export default function BuyerDashboardLayoutSkeleton() {
   const rowSkeletonIds = ["row-1", "row-2", "row-3", "row-4"] as const
 
   return (
-    // sr-only h1: the real page's h1 ("Welcome back, ...!" in WelcomeSection) only mounts once
-    // auth-check/hydration finishes; this skeleton renders first, so without this the page has
-    // zero headings while it's up (design doc §3; regression guard, see the co-located test).
+    // sr-only h1: the real page's h1 only mounts once the auth check finishes, so without this the
+    // page has zero headings while the skeleton is up (guarded by the co-located test).
     <DashboardShellSkeleton
       heading="Buyer Dashboard"
       navCount={5}

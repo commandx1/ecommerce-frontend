@@ -6,12 +6,10 @@ import { type CartItem, cartAPI } from "@/lib/api/cart"
 import { queryKeys } from "@/lib/query/keys"
 
 /**
- * Reader hooks for the `cart.detail` entry (design doc §5). Each is a disabled observer: it
- * re-renders on cache changes but never fetches. Fetching belongs to the explicit owners
- * (`refreshCart()` on useCartPage / useCheckoutPage / DashboardHeader mount, useAuthHydration)
- * and to the write commands. Deliberately not enabled observers with the 1 s staleTime: every
- * reader mount (checkout steps, badges) would then refetch a stale cart, adding GET /cart calls
- * and a mid-checkout "cart changed" bounce path in useCheckoutCartSync.
+ * Reader hooks for the `cart.detail` entry. Each is a disabled observer: it re-renders on cache
+ * changes but never fetches - fetching belongs to `refreshCart()` owners and the write commands.
+ * Enabled observers would refetch a stale cart on every reader mount (checkout steps, badges),
+ * adding GET /cart calls and a mid-checkout "cart changed" bounce in useCheckoutCartSync.
  */
 
 export function useCartItems(): CartItem[] {
@@ -64,13 +62,10 @@ export interface TaxEstimateResult {
 }
 
 /**
- * `POST /cart/tax-estimate` as a read-only query (design doc §6). `enabled` mirrors today's guard
- * in `useCartPage`/`useOrderSummary`: a chosen address, at least one line, and a shipping figure
- * the backend can accept (`CartTaxEstimateRequest.shippingAmount` is `@NotNull @PositiveOrZero`).
- * `placeholderData: keepPreviousData` keeps the previous estimate on screen while a new one is in
- * flight, instead of flashing back to "calculated at checkout". `retry: false` mirrors the old
- * bare try/catch (one request, immediate `null` fallback on any failure) - a money-adjacent
- * estimate must not sit an extra retry delay before falling back.
+ * `POST /cart/tax-estimate` as a read-only query. Enabled only with an address, at least one line
+ * and a shipping figure the backend accepts (`shippingAmount` is `@NotNull @PositiveOrZero`).
+ * `keepPreviousData` keeps the old estimate on screen while a new one loads; no retry, so a
+ * failure falls back to `null` immediately.
  */
 export function useTaxEstimateQuery(params: TaxEstimateQueryParams): TaxEstimateResult {
   const { addressId, shippingAmount, itemCount, linesSignature } = params

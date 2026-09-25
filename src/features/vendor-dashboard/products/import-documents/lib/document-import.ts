@@ -7,11 +7,8 @@ export const MAX_FILE_BYTES = 1024 * 1024
 export type FileValidationResult = { ok: true } | { ok: false; title: string; message?: string }
 
 /**
- * The two checks the old modal ran inline in its file-input `onChange`: the extension (the
- * accept attribute is only a hint, not enforcement) and the size (Spring Boot's default
- * `spring.servlet.multipart.max-file-size` is 1MB and this endpoint has no override — without
- * this check the request reaches the server, fails with `MaxUploadSizeExceededException`, and the
- * vendor sees that raw exception text in a toast instead of an understandable message).
+ * Extension check (the accept attribute is only a hint) and size check: the endpoint uses Spring's
+ * 1MB default, and without this the vendor would see the raw `MaxUploadSizeExceededException` text.
  */
 export function validateSelectedFile(file: File): FileValidationResult {
   if (!file.name.endsWith(".xlsx") && !file.name.endsWith(".xls")) {

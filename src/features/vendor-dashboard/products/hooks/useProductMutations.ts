@@ -25,16 +25,13 @@ export interface ProductMutations {
 }
 
 /**
- * Inline edit, delete and bulk discount, wired to the invalidation map in design §3.3. Only one
- * row can be inline-edited at a time (same constraint the old page enforced with a single
- * `editingProductId`), so `savingProductId` needs no per-row map — unlike a mutation several rows
- * can trigger independently, this one is exclusive by construction.
+ * Inline edit, delete and bulk discount. Only one row can be inline-edited at a time, so
+ * `savingProductId` needs no per-row map.
  */
 export function useProductMutations(listParams: VendorProductListParams, accessToken: string | null): ProductMutations {
   const queryClient = useQueryClient()
-  // `listParams` is a fresh object every render; keying the memo off its serialized form (not
-  // its reference) keeps `listKey` — and therefore `saveEdit` below — from changing identity on
-  // every unrelated render, only on an actual filter/sort/page change.
+  // Keyed on the serialized `listParams` (a fresh object every render) so `listKey` - and
+  // `saveEdit` below - only change identity on an actual filter/sort/page change.
   // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on the serialized value, not the (always-fresh) listParams reference
   const listKey = useMemo(() => queryKeys.vendor.products.list(listParams), [JSON.stringify(listParams)])
 
@@ -53,9 +50,8 @@ export function useProductMutations(listParams: VendorProductListParams, accessT
     [queryClient],
   )
 
-  // Stabilized with `useCallback` — see the matching note in `useProductListQuery`. These flow
-  // into the table's action-column cells, which read `editingDraft` off a ref rather than a
-  // closure precisely so this stability is possible without the draft's own value as a dependency.
+  // Stable callbacks: they flow into the table's action cells (see `columns.tsx`), which read
+  // `editingDraft` off a ref so the draft need not be a dependency.
   const startEdit = useCallback((product: ProductWithDetails) => {
     setEditingProductId(product.id)
     setEditingDraft({

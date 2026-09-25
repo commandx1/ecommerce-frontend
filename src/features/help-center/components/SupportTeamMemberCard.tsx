@@ -18,11 +18,8 @@ const SupportTeamMemberCard = ({ name, role, bio, avatar }: SupportTeamMemberCar
       <h3 className="mb-1 text-lg font-semibold text-text-primary">{name}</h3>
       <p className="mb-2 text-text-secondary">{role}</p>
       <p className="mb-4 text-sm text-text-muted">{bio}</p>
-      {/* Both buttons are icon-only with no accessible name - axe `button-name` (critical), four
-          cards on /help-center meaning eight anonymous "button"s for a screen reader. They also
-          have no onClick and never had one, so naming them without disabling them would just make
-          dead controls accessibly misleading. Give them a real mailto:/profile link or drop them
-          - see skeleton.md. The names come from the member, so they stay distinct per card. */}
+      {/* These icon-only buttons have no action yet, so they are named (axe `button-name`) and
+          disabled rather than left as misleading dead controls - see skeleton.md. */}
       <div className="flex justify-center space-x-3">
         <button
           type="button"

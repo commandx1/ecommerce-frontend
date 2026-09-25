@@ -4,12 +4,9 @@ import RelatedProductsSkeleton from "@/features/products/product-detail/componen
 export default function ProductDetailLoading() {
   return (
     <div>
-      {/* sr-only: this skeleton is what an a11y scan / screen reader can land on while the real
-          page (ProductHeroDetails' `<h1>{product.title}</h1>`) is still streaming in. The product
-          name isn't known here (no id-specific fetch in a route-level loading.tsx), so this uses
-          a generic "Loading" title rather than guessing - deliberately different text from the
-          real h1 so a test asserting the loaded product's exact title never binds to this
-          temporary node instead. Same pattern as app/products/loading.tsx (F88). */}
+      {/* sr-only: what a screen reader lands on while the real page streams in. The product name is
+          unknown here, so a generic title - deliberately different from the real h1 so tests
+          asserting the product title never bind to this node. */}
       <h1 className="sr-only">Loading Product Details</h1>
 
       {/* Breadcrumb */}

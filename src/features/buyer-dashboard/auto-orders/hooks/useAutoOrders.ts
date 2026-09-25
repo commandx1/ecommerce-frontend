@@ -36,11 +36,8 @@ interface UseAutoOrdersResult {
 }
 
 /**
- * Query-backed (Phase 4 §7, B3). Return contract is unchanged from the pre-migration hook so
- * `BuyerAutoOrdersPage` and its components don't change shape. The `.catch(() => [])` readiness
- * fallback that used to live in `fetchReadiness()` now lives in the derivation (`data ?? []`)
- * instead of the queryFn (§2.2) - a failed read must never write an empty wallet/address list
- * into the cache the payment-methods page and checkout also read.
+ * The readiness fallback (`data ?? []`) lives in the derivation, not the queryFn: a failed read
+ * must never write an empty wallet/address list into the cache checkout and payment methods read.
  */
 export function useAutoOrders(): UseAutoOrdersResult {
   const queryClient = useQueryClient()

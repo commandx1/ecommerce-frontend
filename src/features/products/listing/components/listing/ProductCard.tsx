@@ -102,16 +102,10 @@ const ProductCard = ({ data }: ProductCardProps) => {
               <TooltipTrigger asChild>
                 <Link
                   href={data.href}
-                  // MITIGATION, not a root fix - do not remove without re-measuring.
-                  // /products/[id] intermittently committed a completely EMPTY page segment on a
-                  // soft navigation from here: header + footer, no content, no loading.tsx
-                  // fallback, no error boundary, for 15s+. Nothing threw - the RSC payloads
-                  // returned 200 in tens of ms - so it is the router committing an empty segment,
-                  // not the page failing. The route is `force-dynamic`, so its prefetch can only
-                  // ever cache the loading shell anyway; disabling it costs ~nothing and made the
-                  // failure disappear: 1/108 runs before, 0/324 after (expected ~3 by chance,
-                  // p~0.05). The same router behaviour can still bite other links into dynamic
-                  // routes - see skeleton.md.
+                  // MITIGATION, not a root fix - do not remove without re-measuring. A soft
+                  // navigation to /products/[id] intermittently committed an EMPTY segment; the
+                  // route is `force-dynamic`, so its prefetch only caches the loading shell anyway,
+                  // and disabling it made the failure disappear (1/108 runs -> 0/324). See skeleton.md.
                   prefetch={false}
                   className="outline-none after:absolute after:inset-0 after:rounded-[1.75rem] after:content-['']"
                 >

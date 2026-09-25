@@ -22,9 +22,8 @@ export interface UseAddCardFlowResult {
 }
 
 /**
- * The 3-step SetupIntent add-card flow (Phase 4 §7, B2b) - Stripe stays imperative (design §2.2):
- * `stripe.confirmCardSetup` has no query-cache shape to model. Only `paymentMethodsCommands.saveCard`
- * touches the cache (an `invalidateQueries`, matching the old `refreshMethods()` call it replaces).
+ * The 3-step SetupIntent add-card flow. Stripe stays imperative (`confirmCardSetup` has no
+ * query-cache shape); only `paymentMethodsCommands.saveCard` touches the cache.
  */
 export function useAddCardFlow({
   hasCards,

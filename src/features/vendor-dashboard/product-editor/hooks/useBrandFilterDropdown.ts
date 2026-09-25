@@ -15,8 +15,7 @@ export interface UseBrandFilterDropdownInput {
 
 /**
  * Search-on-open, debounced, infinite-scroll brand picker (GET /api/products/brands/search).
- * Imperative like the editor's own product search (design §3.2): every open/query/page change
- * aborts the previous request, and pages are appended - nothing else shares this fetch.
+ * Imperative: every open/query/page change aborts the previous request, and pages are appended.
  */
 export function useBrandFilterDropdown({ onChange, accessToken }: UseBrandFilterDropdownInput) {
   const [isOpen, setIsOpen] = useState(false)

@@ -2,12 +2,8 @@ import type { License } from "@/lib/api/licenses"
 
 export type DentalLicenseStatus = "valid" | "pending" | "expired" | "rejected" | "missing"
 
-// `dentalLicenseRequired` is a free-form String column, written independently by the vendor
-// dashboard and the admin panel (two separate codebases) with no backend enum constraining its
-// casing or vocabulary. It has been observed as "Yes"/"No", "true"/"false" and "1"/"0" depending
-// on which UI wrote it. A narrower check (e.g. only "yes") silently disables the gate for a
-// product stored with one of the other spellings, so every known affirmative spelling is
-// accepted here rather than guessed at per call site.
+// A free-form String column written by two codebases (vendor dashboard, admin panel), seen as
+// "Yes"/"No", "true"/"false" and "1"/"0" - so every known affirmative spelling is accepted.
 export const isDentalLicenseRequiredValue = (value: string | null | undefined): boolean => {
   // Runtime-guard the type too, not just at compile time: a malformed 200 (or a caller ignoring
   // the declared string type) can hand this a boolean/number, and `.trim()` on a non-string

@@ -18,12 +18,7 @@ export interface QzPrinting {
   handlePrintLabel: (url: string) => void
 }
 
-/**
- * QZ Tray connection/timing is unchanged from the page's own effect (design §S8 - "characterize
- * before moving, do not alter the sequencing"): it (re)connects only when the labels modal is
- * open (`labelModalLinks` truthy), not on mount, and every branch below mirrors the old effect's
- * state writes 1:1.
- */
+/** QZ Tray (re)connects only while the labels modal is open (`labelModalLinks` truthy), not on mount. */
 export function useQzPrinting(labelModalLinks: { shipping: string[]; tracking: string[] } | null): QzPrinting {
   const [printers, setPrinters] = useState<string[]>([])
   const [selectedPrinter, setSelectedPrinter] = useState<string>("")

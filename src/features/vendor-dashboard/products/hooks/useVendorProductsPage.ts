@@ -17,11 +17,8 @@ interface DeleteModalState {
 }
 
 /**
- * Composes the list query, the brand lookup and the mutations into the single view model
- * `VendorProductsPage` renders. UI-only state that does not belong to any one of those — row
- * selection, the image-placeholder fallback map, and which modal (if any) is open — stays here,
- * the same place `VendorOrdersPage` keeps its own modal-open state (design's established
- * pattern for this codebase, not a hook of its own).
+ * Composes the list query, the brand lookup and the mutations into the view model
+ * `VendorProductsPage` renders, plus the UI-only state (row selection, image fallbacks, open modal).
  */
 export function useVendorProductsPage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)

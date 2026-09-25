@@ -36,13 +36,8 @@ async function getAccessTokenFromCookie(): Promise<string | null> {
 }
 
 function buildFriendlyProductError(status: number, backendErrorMessage: string) {
-  // Backend: GET /api/products/{id}/with-user-products -> ProductServiceImpl.getProductWithUserProducts
-  // (line ~758-771) only ever throws ProductNotFoundException, which extends RuntimeException
-  // directly (not ResourceNotFoundException) - GlobalExceptionHandler's trailing
-  // @ExceptionHandler(RuntimeException.class) catch-all maps it to 400, never 404. The `status ===
-  // 404` branch below is therefore dead code for this call; a real "product not found" response
-  // arrives as 400 with a "Product not found. ID: ..." message, so it is matched here too instead
-  // of falling into the generic 400+ branch (which used to leak the raw backend message).
+  // The backend maps ProductNotFoundException to a 400 (its RuntimeException catch-all), never a
+  // 404, so "Product not found" is matched on the 400 message too.
   if (status === 404 || (status === 400 && /product not found/i.test(backendErrorMessage))) {
     return "Product not found. The product may have been removed or doesn't exist."
   }

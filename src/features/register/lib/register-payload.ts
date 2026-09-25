@@ -38,11 +38,8 @@ export const initialFormData: RegisterPayload = {
 }
 
 /**
- * The backend deserializes both /users/register and /users/register/vendor/invite into the same
- * AddressCreateRequest, which has no `state` field. The dentist flow has always compensated by
- * sending the selected state in `city`; the vendor invite flow sent the raw locality instead, so
- * the very same picked address ended up stored differently depending on which endpoint created
- * it. Both flows now build the address here.
+ * Both register endpoints deserialize into an AddressCreateRequest with no `state` field, so the
+ * selected state is sent in `city`. Both flows build the address here so they store it the same way.
  */
 export function buildAddressPayload(formData: RegisterPayload): RegisterPayload["address"] {
   const fullName = `${formData.name} ${formData.surname}`.trim()

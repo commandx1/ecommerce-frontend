@@ -16,10 +16,8 @@ export default function ProductSpecifications({ specifications, sdsUrl }: Produc
           {specifications.map((spec, index) => (
             <div
               key={`${spec.label}-${index}`}
-              // Divider on top, not bottom: `last:border-0` only exempts the last DOM node, which in a
-              // two-column grid is one cell of the final row - the other kept a dangling rule. Exempting
-              // the first row (the first two cells at md+, the first cell when stacked) is correct for
-              // any number of attributes.
+              // Divider on top, not bottom: in a two-column grid `last:border-0` only exempts one cell
+              // of the final row, while exempting the first row works for any attribute count.
               className="flex items-center justify-between gap-4 border-border-soft border-t py-3 first:border-t-0 md:[&:nth-child(-n+2)]:border-t-0"
             >
               <dt className="text-text-muted">{spec.label}</dt>

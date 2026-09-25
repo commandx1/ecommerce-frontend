@@ -51,12 +51,8 @@ function buildShippingRatesCacheKey(args: {
 function readShippingRatesFromCache(cacheKey: string): ShippingRatesCacheValue["data"] | null {
   if (typeof window === "undefined") return null
 
-  // Bug found while testing this file: `getItem`/`JSON.parse`/`removeItem` used to run partly
-  // outside this try block. Storage access can throw for reasons that have nothing to do with the
-  // network (Safari private browsing, a sandboxed checkout iframe, a full quota) — when it did, the
-  // exception propagated up into `fetchRates`'s catch and the user saw "Failed to fetch shipping
-  // rates" with no rates and no retry, even though a normal network fetch would have worked fine.
-  // A storage failure must degrade to "treat as a cache miss", not to a hard error.
+  // Storage access can throw (Safari private mode, sandboxed iframe, full quota). That must degrade
+  // to a cache miss, not surface as "Failed to fetch shipping rates".
   try {
     const rawValue = window.localStorage.getItem(cacheKey)
     if (!rawValue) return null
@@ -105,12 +101,8 @@ function formatShippingAmount(amount: number): string {
   return amount === 0 ? "Free" : formatCurrency(amount)
 }
 
-// `rate.amount` is a raw string off the wire (backend: `ShipmentRateResponse.amount`, sourced from
-// Shippo). It can be non-numeric, and for adversarial/malformed data, negative. A negative amount
-// is numerically "cheapest", so left unguarded it would win auto-selection and render as a
-// nonsensical negative price with a fabricated "Great deal" discount badge (`defaultShipmentFee -
-// methodAmount` where methodAmount < 0). Treat it the same as non-numeric: unusable for sorting or
-// display, falling through to the existing NaN-safe fallbacks.
+// `rate.amount` is a raw string from Shippo and can be non-numeric or negative. A negative amount
+// would win auto-selection and fabricate a "Great deal" badge, so treat it as unusable too.
 function parseRateAmount(rate: ShipmentRate): number {
   const parsed = Number(rate.amount)
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : Number.NaN
@@ -123,12 +115,8 @@ function getEffectiveRateAmount(rate: ShipmentRate, defaultShipmentFee: number |
   return methodAmount
 }
 
-// Backend: `rate.servicelevel` and every string field inside it can be null for a real Shippo
-// carrier rate (see the `ShipmentRate` type comment in `lib/api/shipment.ts`) — this used to be
-// `rate.servicelevel.name.includes(...)` with no guard, so a single rate with no service level
-// metadata threw and blanked the whole vendor's shipping section (matches F77/F83's pattern: an
-// unguarded read of a field the backend can legitimately omit). Unable to classify (no name) is
-// treated as "keep the rate" rather than silently dropping a deliverable option.
+// `rate.servicelevel` and every string inside it can be null for a real Shippo rate (see
+// `ShipmentRate` in `lib/api/shipment.ts`). A rate that cannot be classified is kept, not dropped.
 function isExcludedServiceLevel(rate: ShipmentRate): boolean {
   const name = rate.servicelevel?.name
   if (typeof name !== "string") return false
@@ -290,10 +278,7 @@ export default function VendorShipmentRates({
   }, [addressId, cartId, items, sellerId])
 
   // The seller's plain product shipment fee (heavy surcharge excluded), used only as the "Great
-  // deal" badge's comparison base. Since the 2026-09-12 backend change, `defaultShipmentFee`
-  // itself is also Σ shipmentFee·qty with heavy excluded (ShipmentService.calculateDefaultShipmentFee),
-  // so this is really the same figure recomputed client-side — see the badge computation below
-  // for why the two are still kept separate.
+  // deal" badge's comparison base - see the badge computation below.
   const vendorShipmentFee = useMemo(
     () => items.reduce((sum, item) => sum + (item.shipmentFee ?? 0) * item.quantity, 0),
     [items],
@@ -307,11 +292,8 @@ export default function VendorShipmentRates({
     [rates, defaultShipmentFee],
   )
   const sortedShipmentOptions = useMemo(() => {
-    // A rate whose amount is unusable (non-numeric or negative) is DROPPED, not merely sorted
-    // last. Keeping it looked safe because `getEffectiveRateAmount` returns Infinity, but the
-    // row still rendered - and `formatCurrency` floors a non-finite value to 0, so the buyer saw
-    // "$0.00" (free shipping) and could select it, after which `onRateSelect` fed the raw
-    // negative `rate.amount` into the order total. A price we cannot trust must not be offered.
+    // A rate with an unusable amount is DROPPED, not sorted last: it would render as "$0.00" and,
+    // once selected, feed the raw negative amount into the order total.
     const shippoOptions = sortedRates
       .map((rate) => ({
         type: "shippo" as const,
@@ -401,14 +383,10 @@ export default function VendorShipmentRates({
               defaultShipmentFee !== null && Number.isFinite(methodAmount) && defaultShipmentFee < methodAmount
                 ? defaultShipmentFee
                 : methodAmount
-            // Backend: since the 2026-09-12 change, `defaultShipmentFee` is Σ shipmentFee·qty
-            // with the heavy shipping surcharge EXCLUDED (ShipmentService.calculateDefaultShipmentFee)
-            // — heavy is charged separately, in full, in the order summary (OrderCreationService).
-            // `defaultShipmentFee` is still a price ceiling used to cap what the buyer can be
-            // charged for carrier shipping, not a discountable fee. The badge compares the carrier
-            // rate against `vendorShipmentFee` (the same plain-fee figure, computed client-side)
-            // while the displayed price and cap above stay pinned to `defaultShipmentFee` for
-            // backend parity.
+            // `defaultShipmentFee` (Σ shipmentFee·qty, heavy surcharge excluded - heavy is charged
+            // separately) caps what the buyer pays for carrier shipping; it is not a discountable fee.
+            // The badge compares against `vendorShipmentFee`; the price and cap stay pinned to
+            // `defaultShipmentFee` for backend parity.
             const isGreatDeal = Number.isFinite(methodAmount) && methodAmount < vendorShipmentFee
             const discountAmount = isGreatDeal ? vendorShipmentFee - methodAmount : 0
             const selectableRate: ShipmentRate =

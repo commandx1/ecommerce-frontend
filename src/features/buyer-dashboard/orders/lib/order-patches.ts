@@ -2,11 +2,8 @@ import type { BuyerOrder, BuyerOrderItem, RefundOrderItemLinks } from "@/lib/api
 import { OrderItemStatus } from "@/lib/constants/order-item-status"
 
 /**
- * Pure cache patch (Phase 4 §2.3/B4c), extracted from the old hook's inline `setOrders`
- * callback for `handleCancelDuringDelivery`. Flips every order item in `cancelledOrderItemIds`
- * to `CANCEL_REQUESTED`, across both the legacy flat `orderItems` list and the nested
- * `sellerGroups[].orderItems` shape - same dual-write the old page did, since the backend can
- * serve either shape.
+ * Flips every item in `cancelledOrderItemIds` to `CANCEL_REQUESTED`, in both the flat
+ * `orderItems` list and the nested `sellerGroups[].orderItems` shape (the backend can serve either).
  */
 export function markItemsCancelRequested(orders: BuyerOrder[], cancelledOrderItemIds: Set<string>): BuyerOrder[] {
   return orders.map((order) => ({
@@ -42,9 +39,8 @@ export interface RefundSubmittedPatch {
 }
 
 /**
- * Pure cache patch, extracted from the old hook's inline `setOrders` callback for
- * `submitRefundOrder`. Only touches the order matching `orderId`, marks every refunded item
- * pending, and carries through any return tracking/shipping links the backend returned.
+ * Only touches the order matching `orderId`: marks every refunded item pending and carries through
+ * any return tracking/shipping links the backend returned.
  */
 export function applyRefundSubmitted(orders: BuyerOrder[], patch: RefundSubmittedPatch): BuyerOrder[] {
   const { orderId, refundedItemIds, refundReasonByOrderItemId, submittedAt, linksByItemId } = patch

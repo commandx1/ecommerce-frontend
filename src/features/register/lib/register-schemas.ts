@@ -68,10 +68,8 @@ export const ownerInviteSchema = z
       name: z.string().trim().min(1, "Company name is required"),
       taxNumber: z.string().trim().min(1, "Tax number is required"),
       email: z.string().trim().min(1, "Company email is required").email("Please enter a valid email address"),
-      // Same 10-digit rule as the personal phone above. `normalizePhoneNumber` deliberately no
-      // longer truncates (F52: silently dropping digits produces a different, valid-looking
-      // number that fails at delivery time), so the length bound has to live here - otherwise a
-      // 15-digit entry is accepted and stored as-is.
+      // Same 10-digit rule as the personal phone above. `normalizePhoneNumber` deliberately does
+      // not truncate, so the length bound has to live here.
       phoneNumber: z
         .string()
         .trim()

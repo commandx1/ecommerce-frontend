@@ -39,10 +39,9 @@ export interface PromotionsBoard {
   archiveCampaign: (campaign: PromotionCampaign) => void
 }
 
-/** All in-memory CRUD for the mock promotions board (design §7 - no backend exists yet).
- * `createCampaign`/`updateCampaign` return whether the submission succeeded, so the modal
- * knows whether to close - a failed validation keeps the form open with its draft values,
- * exactly like the page-local version this was extracted from. */
+/** In-memory CRUD for the mock promotions board (no backend exists yet). `createCampaign`/
+ * `updateCampaign` return whether the submission succeeded, so a failed validation keeps the
+ * modal open with its draft values. */
 export function usePromotionsBoard(): PromotionsBoard {
   const [campaigns, dispatch] = useReducer(promotionsReducer, PROMOTION_CAMPAIGNS)
 

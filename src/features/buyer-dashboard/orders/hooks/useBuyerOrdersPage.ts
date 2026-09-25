@@ -9,15 +9,8 @@ import { useBuyerOrderActions } from "./useBuyerOrderActions"
 import { useBuyerOrdersQuery } from "./useBuyerOrdersQuery"
 
 /**
- * Composes `useBuyerOrdersQuery` (URL/tab/page/sort -> params -> list query) and
- * `useBuyerOrderActions` (reorder / cancel / refund, keyed off the query's current params), and
- * owns the remaining page-only UI state (row expansion, tracking-links modal) that neither of
- * those hooks needs (Phase 4 §7, B4c). The return shape is unchanged from the pre-migration
- * hook, so `BuyerOrdersProvider` and its context slices don't change.
- *
- * The old inline `filteredOrders` search filter is dropped here: `searchQuery` was hardcoded to
- * `""`, so `!searchQuery.trim()` was always true and the filter always returned every order
- * unchanged - a behaviour-neutral removal of dead code, not a feature change.
+ * Composes `useBuyerOrdersQuery` and `useBuyerOrderActions`, and owns the page-only UI state (row
+ * expansion, tracking-links modal) that neither needs.
  */
 export function useBuyerOrdersPage() {
   const ordersQuery = useBuyerOrdersQuery()

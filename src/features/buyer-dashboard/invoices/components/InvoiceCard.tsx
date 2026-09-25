@@ -17,8 +17,7 @@ const statusPillMap: Record<InvoiceStatus, string> = {
 const statusNoteMap: Record<InvoiceStatus, string> = {
   Paid: "text-success",
   Pending: "text-warning",
-  // Body text, so it needs `--danger-strong`; `--danger` is the fill/icon red and measures
-  // 3.42:1 as text (globals.css:146, which added `--danger-strong` for exactly this).
+  // Body text: `--danger` is the fill/icon red and fails AA as text.
   Overdue: "text-danger-strong",
   Disputed: "text-brand",
 }

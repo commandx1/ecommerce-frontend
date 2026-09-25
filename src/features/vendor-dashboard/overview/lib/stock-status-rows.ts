@@ -40,9 +40,7 @@ export function buildStockStatusRows(summary: VendorStockSummaryResponse | null 
   ]
 }
 
-/** `summary?.criticStockAlerts.content` only guards `summary` itself - a response without
- * `criticStockAlerts`, or with a non-array `content`, would otherwise throw on `.content`/an
- * implicit `.map` and blank the whole dashboard (F110). */
+/** A response without `criticStockAlerts`, or with a non-array `content`, must not throw and blank the dashboard. */
 export function normalizeCriticalStockAlerts(
   summary: VendorStockSummaryResponse | null | undefined,
 ): VendorCriticalStockAlert[] {

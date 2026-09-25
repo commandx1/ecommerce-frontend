@@ -24,10 +24,8 @@ export interface VendorQuestionsViewModel {
 }
 
 /**
- * Failure semantics (design §3.2): a failed list load keeps showing "Failed to load questions"
- * (one toast per distinct failure, tracked here off `errorUpdatedAt` rather than `isError` alone
- * so a stable error state never re-toasts on an unrelated re-render) and renders empty rows.
- * A failed counts load stays silent - `counts` just stays `null`, same as the old bare try/catch.
+ * A failed list load shows "Failed to load questions" (one toast per distinct failure, keyed off
+ * `errorUpdatedAt`) and renders empty rows. A failed counts load stays silent (`counts` stays `null`).
  */
 export function useVendorQuestionsPage(): VendorQuestionsViewModel {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)

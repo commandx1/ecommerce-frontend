@@ -3,12 +3,8 @@
 import { RootErrorContent } from "@/app/error"
 
 /**
- * Scoped to the buyer-dashboard segment, so it renders inside BuyerDashboardLayout's <main> -
- * the header and sidebar chrome the layout already painted stay on screen around this, only the
- * content area falls back to the error card. Reuses RootErrorContent for the same visuals and
- * digest logging as the root boundary (app/error.tsx), with the home link pointed at the
- * dashboard root instead of "/" since bouncing a signed-in buyer out to the storefront would be
- * a worse recovery path than sending them back to their own dashboard.
+ * Renders inside the dashboard layout's <main>, so the header and sidebar stay on screen. The home
+ * link points at the dashboard root rather than "/", a better recovery path for a signed-in buyer.
  */
 export default function BuyerDashboardError({
   error,

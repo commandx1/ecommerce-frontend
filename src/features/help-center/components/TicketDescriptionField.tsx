@@ -15,12 +15,8 @@ const TicketDescriptionField = ({ textareaId, value, onChange }: TicketDescripti
         Detailed Description *
       </label>
       <div className="overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-soft">
-        {/* This formatting toolbar is decorative: none of these buttons has ever had an onClick,
-            so the textarea below is a plain textarea. axe flagged them as `button-name` (critical)
-            because they are icon-only with no accessible name - a screen reader announced five
-            anonymous "button"s. Naming them alone would only make them accessibly misleading, so
-            they are also disabled: nothing to press that does nothing. Either wire them to a real
-            rich-text editor or drop the toolbar - see skeleton.md. */}
+        {/* Decorative toolbar: the buttons have no action, so they are named (axe `button-name`) and
+            disabled. Wire them to a real rich-text editor or drop the toolbar - see skeleton.md. */}
         <div className="flex items-center space-x-2 border-b border-border-soft bg-surface-muted/80 px-4 py-2">
           <button
             type="button"

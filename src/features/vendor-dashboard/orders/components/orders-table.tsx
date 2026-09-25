@@ -158,18 +158,10 @@ export interface UseOrdersColumnsParams {
 }
 
 /**
- * Builds the vendor orders-table column definitions.
- *
- * `flexRender` keys a cell's React element by the *identity* of its `header`/`cell` function, not
- * by the column `id`. A column array rebuilt from scratch on every render is harmless by itself
- * (a handful of cheap object literals), but a `cell`/`header` value that is a fresh inline arrow
- * function every time makes React tear down and remount that cell's whole subtree - including its
- * real DOM node - on every unrelated re-render, which can silently drop a click that lands between
- * two renders (userEvent drives a click as a pointerdown/pointerup sequence, not one synchronous
- * event). Found in S9b on the products table; the "Call Uber" / "Cancel" / expander buttons here
- * are exactly the same shape of hazard, since `processingOrderId`, `cancelingOrderId` and
- * `uberProcessedOrderIds` change on every action click and previously forced a brand new inline
- * `cell` closure for the whole row on each one.
+ * Builds the vendor orders-table column definitions. `flexRender` keys a cell by the identity of
+ * its `header`/`cell` function, so a fresh inline arrow per render remounts that cell's DOM and can
+ * drop a click landing between two renders. Action state (`processingOrderId`, `cancelingOrderId`,
+ * `uberProcessedOrderIds`) changes on every click, so those cells must keep stable identities.
  */
 export function useOrdersColumns(params: UseOrdersColumnsParams): Array<ColumnDef<VendorOrder, unknown>> {
   const {

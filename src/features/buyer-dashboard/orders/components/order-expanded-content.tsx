@@ -359,14 +359,9 @@ export default function OrderExpandedContent({ order, summary }: OrderExpandedCo
                           })}
                         </div>
 
-                        {/* What the cancellation actually cost. The backend fills these only AFTER a
-                          cancellation (`calculateOrderCancellationShipmentFee` counts items with
-                          `cancelledWithShippingFee`, and the refund side skips anything the customer
-                          has not cancelled - OrderMapper:289-350), so they are null on a live order
-                          and appear once items are cancelled. Until now the values arrived and were
-                          never shown, leaving the buyer to discover the shipping deduction on their
-                          statement. `cancellationHeavyShipmentFeeRefund` is the matching heavy
-                          surcharge refund and follows the same null-until-cancelled rule. */}
+                        {/* What the cancellation actually cost. The backend fills these only after a
+                          cancellation, so they are null on a live order.
+                          `cancellationHeavyShipmentFeeRefund` follows the same rule. */}
                         {typeof group.cancellationShipmentFee === "number" ||
                         typeof group.cancellationShipmentRefundFee === "number" ||
                         (typeof group.cancellationHeavyShipmentFeeRefund === "number" &&

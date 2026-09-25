@@ -11,9 +11,7 @@ interface ProductsPaginationProps {
   onPageChange: (page: number) => void
 }
 
-/** Page-size select plus the numbered pager, unchanged from the page it was extracted from —
- * this is a bespoke widget (page-size select inline with numbered buttons), not a swap-in for
- * the shared `DashboardPagination` used elsewhere. */
+/** Page-size select inline with the numbered pager - a bespoke widget, not the shared `DashboardPagination`. */
 export default function ProductsPagination({
   pageSize,
   onPageSizeChange,

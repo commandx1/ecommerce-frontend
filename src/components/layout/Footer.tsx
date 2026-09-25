@@ -31,11 +31,8 @@ const SUPPORT_LINKS = [
   ["Account Management", "/account-management"],
 ] as const
 
-// These four pointed at /privacy-policy, /terms-of-service, /hipaa-compliance and /cookie-policy,
-// none of which exist - every one 404'd. The documents themselves are written and shipped: the
-// /legal page is a document centre that selects one by `?doc=<id>` (see getLegalDocuments.ts and
-// src/data/legal-*.json, which carry exactly these four ids). So the pages were never missing,
-// only the links were wrong.
+// The legal documents live on the /legal document centre, selected by `?doc=<id>` (see
+// getLegalDocuments.ts and src/data/legal-*.json).
 const POLICY_LINKS = [
   ["Privacy Policy", "/legal?doc=privacy-policy"],
   ["Terms of Service", "/legal?doc=terms-of-service"],

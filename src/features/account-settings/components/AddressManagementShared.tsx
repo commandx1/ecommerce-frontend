@@ -33,8 +33,7 @@ export default function AddressManagementShared() {
   const phoneNumberId = `${idBase}-phone-number`
   const zipCodeId = `${idBase}-zip-code`
   const queryClient = useQueryClient()
-  // Shared with checkout and auto-orders readiness (Phase 4 §2.1/K0, C3b): a write here
-  // invalidates every reader instead of leaving a stale copy behind.
+  // Shared with checkout and auto-orders readiness: a write here invalidates every reader.
   const addressesQuery = useQuery(addressesListOptions())
   const addresses = addressesQuery.data ?? []
   const isLoading = addressesQuery.isPending
@@ -91,8 +90,7 @@ export default function AddressManagementShared() {
       showToast.success(isUpdate ? "Address updated" : "New address added")
       setIsEditing(false)
       setCurrentAddress(null)
-      // addressAPI already cleared its 2s dedupe cache on this write (§2.3), so the refetch
-      // driven by this invalidation is a real request, not a cached echo.
+      // addressAPI already cleared its 2s dedupe cache on this write, so this refetch is real.
       await queryClient.invalidateQueries({ queryKey: queryKeys.addresses.all })
     } catch (_error) {
       showToast.error("An error occurred while saving the address")
@@ -105,11 +103,8 @@ export default function AddressManagementShared() {
     setCurrentAddress((prev) => ({
       ...prev,
       country: parsedAddress.country,
-      // Address (backend AddressResponse/Create/UpdateRequest) has no `state` column - the
-      // state abbreviation is folded into `city` instead, same as before. Do not add a `state`
-      // key to `currentAddress`: it would be forwarded verbatim to createAddress/updateAddress,
-      // silently dropped by the backend, and the buyer would believe a value was saved that
-      // never was (see the comment on the `Address` type in @/lib/api/address).
+      // The backend Address has no `state` column - the state abbreviation is folded into `city`.
+      // Never add a `state` key to `currentAddress`: the backend would silently drop it.
       city: parsedAddress.state, // Only state abbreviation (e.g. CA)
       district: parsedAddress.city, // Move city name to district (e.g. Los Angeles)
       postalCode: parsedAddress.postalCode,

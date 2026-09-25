@@ -3,8 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 
 interface DashboardShellSkeletonProps {
-  /** The sr-only h1 text. Buyer and vendor keep their own wording (design doc §3): the vendor
-   * heading is deliberately worded so it cannot match the real "Vendor Dashboard" heading early. */
+  /** The sr-only h1 text. The vendor wording deliberately cannot match the real "Vendor Dashboard" heading early. */
   heading: string
   /** Number of nav-dot placeholders in the sidebar skeleton (5 for buyer, 6 for vendor). */
   navCount: number
@@ -16,9 +15,8 @@ interface DashboardShellSkeletonProps {
 }
 
 /**
- * Shared chrome for the buyer and vendor dashboard layout skeletons (design doc §3, Phase 4 C2):
- * backdrop, sr-only h1, header strip and nav-dot sidebar. Each role passes its own main-body
- * placeholders as `children` so the visible skeleton content is unchanged.
+ * Shared chrome for the buyer and vendor dashboard layout skeletons: backdrop, sr-only h1, header
+ * strip and nav-dot sidebar. Each role passes its own main-body placeholders as `children`.
  */
 export default function DashboardShellSkeleton({
   heading,

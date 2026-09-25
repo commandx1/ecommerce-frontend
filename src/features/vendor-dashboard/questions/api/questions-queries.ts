@@ -15,10 +15,8 @@ export interface QuestionsListParams {
 }
 
 /**
- * Guarantees `content` is an array and every question's `answers` is an array, so a malformed
- * 200 (missing/null/non-array `content`, or a question with a missing/non-array `answers`) can
- * never reach `.map`/`.find` downstream - the same normalization the page did inline before
- * this query existed (F77/F83-class bug).
+ * Guarantees `content` and every question's `answers` are arrays, so a malformed 200 can never
+ * reach `.map`/`.find` downstream.
  */
 function normalizeQuestionsPage(page: SellerQuestionsPage): SellerQuestionsPage {
   const content: ProductQuestionResponse[] = Array.isArray(page?.content) ? page.content : []
@@ -33,8 +31,7 @@ function normalizeQuestionsPage(page: SellerQuestionsPage): SellerQuestionsPage 
   }
 }
 
-/** D1 (lead decision): `staleTime: 0, gcTime: 0` - every mount (including a route revisit)
- * re-fetches and shows the loading skeleton, exactly like the old per-page-change effect did. */
+/** No caching: every mount (including a route revisit) re-fetches and shows the loading skeleton. */
 export function vendorQuestionsListOptions(params: QuestionsListParams, enabled: boolean) {
   return queryOptions<SellerQuestionsPage>({
     queryKey: queryKeys.vendor.questions.list(params),
@@ -47,7 +44,7 @@ export function vendorQuestionsListOptions(params: QuestionsListParams, enabled:
   })
 }
 
-/** Counts failure stays silent (design §3.2) - the hook just leaves `counts` at its default. */
+/** A counts failure stays silent - the hook just leaves `counts` at its default. */
 export function vendorQuestionsCountsOptions(enabled: boolean) {
   return queryOptions<SellerQuestionCounts>({
     queryKey: queryKeys.vendor.questions.counts(),

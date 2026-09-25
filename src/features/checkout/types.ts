@@ -17,10 +17,8 @@ export interface SellerGroupItem {
 export interface SellerGroup {
   name: string
   /**
-   * The cart line's raw `userProduct.sellerId`, before the "Standard Seller" grouping
-   * fallback. Kept separate from the object key (which the UI keys off of and which falls
-   * back to the seller name when this is empty) so the order payload never sends a
-   * non-UUID string in the backend-facing `userId` field.
+   * The cart line's raw `userProduct.sellerId`, kept separate from the grouping key (which falls
+   * back to the seller name) so the order payload never sends a non-UUID `userId`.
    */
   sellerId: string
   items: SellerGroupItem[]

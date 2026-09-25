@@ -16,11 +16,7 @@ const PAGE_SIZE = 12
 export default function FavoriteSuppliersPage({ embedded = false }: { embedded?: boolean }) {
   const queryClient = useQueryClient()
   const favoritesQuery = useQuery(vendorFavoritesListOptions())
-  // Array.isArray, not the raw response: `GET /vendors/favorites` is typed
-  // `List<VendorListItemDto>` (VendorController:44-49), but a malformed 200 - a partial body,
-  // a proxy hiccup - hands back something that is not an array. `vendors.some(...)` and
-  // `vendors.map(...)` below run unconditionally, so an unguarded value blanks the page
-  // (infra note #26 - the same root pattern found in nineteen other places this week).
+  // Array.isArray: a malformed 200 that is not an array would blank the page at `.some`/`.map` below.
   const vendors = Array.isArray(favoritesQuery.data) ? favoritesQuery.data : []
   const isLoading = favoritesQuery.isPending
   const hasError = favoritesQuery.isError

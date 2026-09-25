@@ -29,11 +29,9 @@ export interface UseBuyerOrderActionsResult {
 }
 
 /**
- * Reorder / cancel-during-delivery / refund actions (Phase 4 §7, B4c). Cache patches happen in
- * `api/orders-queries.ts`'s `ordersCommands`; this hook only owns the pending/loading UI state
- * and the auth-redirect/toast branching, same as the old hook's inline handlers. `params` is the
- * CURRENT list query's params (from `useBuyerOrdersQuery`), so a write patches the exact cache
- * entry the table is reading from - no extra GET, matching the old local `setOrders` calls.
+ * Reorder / cancel-during-delivery / refund actions. Cache patches live in `ordersCommands`; this
+ * hook owns the pending UI state and the auth-redirect/toast branching. `params` are the CURRENT
+ * list query's params, so a write patches the exact entry the table reads (no extra GET).
  */
 export function useBuyerOrderActions(params: BuyerOrderListParams): UseBuyerOrderActionsResult {
   const router = useRouter()

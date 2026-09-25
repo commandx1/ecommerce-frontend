@@ -4,12 +4,9 @@ import { getQueryClient } from "@/lib/query/query-client"
 import type { SavedPaymentMethod } from "../paymentMethodsData"
 
 /**
- * Payment-method writes (Phase 4 design doc §2.3/B2b). Two cache-effect shapes, matching what
- * `BuyerPaymentMethodsPage`'s pre-Query code did (characterized in B2a's GET-count tests):
- * - add / upgrade / set-or-stop-auto-order-card / delete: the old code called `refreshMethods()`
- *   (a fresh GET) after these - `invalidateQueries` reproduces that as exactly one refetch.
- * - rename / set default: the old code patched `methods` locally without a GET - `setQueryData`
- *   reproduces that with no network request.
+ * Payment-method writes, in two cache-effect shapes:
+ * - add / upgrade / set-or-stop-auto-order-card / delete: `invalidateQueries` (exactly one refetch).
+ * - rename / set default: `setQueryData` patch, no network request.
  */
 
 async function invalidateCards(): Promise<void> {
@@ -22,7 +19,7 @@ function patchCard(updated: SavedPaymentMethod): void {
   )
 }
 
-/** Same "one default at a time" patch the old `setAsDefault` did locally. */
+/** Keeps exactly one default card. */
 function patchDefaultCard(updated: SavedPaymentMethod): void {
   getQueryClient().setQueryData<SavedPaymentMethod[]>(queryKeys.paymentMethods.cards(), (current) =>
     current?.map((method) => {

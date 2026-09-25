@@ -12,12 +12,8 @@ import { buildBuyerOrderViewModel, getOrderStatusBadgeClasses, getOrderStatusLab
 import type { BuyerOrderViewModel } from "../types"
 import OrderExpandedContent from "./order-expanded-content"
 
-// `buildBuyerOrderViewModel` calls `.toUpperCase()` on `order.orderStatus` and on each item's
-// `status` without a type guard. Those fields are non-nullable in the `BuyerOrder`/`BuyerOrderItem`
-// TypeScript types, but nothing enforces that at runtime - a corrupted 200 body (same failure class
-// as TEST-FINDINGS.md #26) can still send `null`/missing `orderStatus`. That threw a `TypeError`
-// here and took down every card in the list, not just the malformed one. Fall back to a minimal,
-// clearly-a-fallback summary instead of crashing the page.
+// A corrupted 200 can send a `null` `orderStatus` despite the type, and `buildBuyerOrderViewModel`
+// would throw and take down every card. Fall back to a minimal summary for that one order instead.
 function buildFallbackSummary(order: BuyerOrder): BuyerOrderViewModel {
   const netTotal = typeof order.totalPrice === "number" && Number.isFinite(order.totalPrice) ? order.totalPrice : 0
   return {

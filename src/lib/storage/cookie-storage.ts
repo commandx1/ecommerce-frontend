@@ -1,9 +1,4 @@
-/**
- * Cookie storage adapter for Zustand persist
- * Allows storing auth state in cookies so it can be accessed in Next.js middleware
- *
- * Note: getItem only works client-side. Server-side cookie access is handled by middleware.
- */
+/** Cookie storage adapter for Zustand persist, so auth state is readable server-side (proxy/layouts). */
 
 interface Storage {
   getItem: (name: string) => string | null
@@ -36,15 +31,8 @@ function parseCookieValue(cookieString: string, name: string): string | null {
   return null
 }
 
-/**
- * Cookie storage implementation for Zustand persist
- * Only works client-side - server-side access is handled by Next.js middleware
- */
-// `Secure` can only be added when the page is actually served over HTTPS - on plain http://
-// (e.g. localhost dev, e2e) the browser silently refuses to set a cookie carrying `Secure` at
-// all, which would break the entire session flow. Match this on both `setItem` and `removeItem`:
-// a delete cookie without `Secure` on an https page does not overwrite the `Secure` original,
-// so the "logout" cookie fails to clear it.
+// `Secure` only on HTTPS: on plain http:// the browser refuses the cookie entirely. Used by both
+// `setItem` and `removeItem`, since a delete without `Secure` does not overwrite a `Secure` original.
 const secureCookieSuffix = (): string =>
   typeof location !== "undefined" && location.protocol === "https:" ? "; Secure" : ""
 

@@ -61,9 +61,7 @@ export default function CompanyInfoCard() {
   const shipmentPolicyId = `${idBase}-shipment-policy`
 
   const queryClient = useQueryClient()
-  // Shared with CompanyRoleContext (Phase 4 §2.1/K0, C3b/D1): a save here writes the same cache
-  // entry the vendor sidebar/welcome header read, so the vendor's name updates right after a
-  // save instead of only after a reload.
+  // Shared with CompanyRoleContext: a save updates the vendor sidebar/welcome header name at once.
   const companyQuery = useQuery(companyMeOptions())
   const company = companyQuery.data ?? null
   const isLoading = companyQuery.isPending

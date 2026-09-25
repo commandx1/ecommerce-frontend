@@ -48,12 +48,8 @@ interface PromotionsTableProps {
 }
 
 /**
- * Raw markup, not `ui/data-table` (design §5/§9, D3): DataTable hardcodes `bg-transparent` and
- * `text-text-muted` on its header row with no per-table override, but this table's `<thead>`
- * has a `bg-surface-muted/70` tint and `text-text-secondary` header text; DataTable's row
- * border is `border-b` where this table's is `border-b border-border-soft/80` - close, but the
- * header background/text differences would need a DataTable change that affects every other
- * caller. So this stays a plain `<table>`.
+ * Raw markup, not `ui/data-table`: DataTable hardcodes its header row styling, and this table's
+ * tinted header would need a DataTable change affecting every other caller.
  */
 export default function PromotionsTable({
   campaigns,

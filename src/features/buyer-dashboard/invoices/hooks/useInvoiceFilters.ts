@@ -16,9 +16,8 @@ import {
   sortInvoices,
 } from "../lib/invoice-filters"
 
-// The "today" the date-range filter measures against - hardcoded, not `new Date()` (see
-// `lib/invoice-filters.ts`'s header comment). Locked and asserted on by
-// `BuyerInvoicesPage.test.tsx`; do not change without updating that oracle deliberately.
+// The "today" the date-range filter measures against - hardcoded, not `new Date()`. Locked by
+// `BuyerInvoicesPage.test.tsx`; do not change without updating that test deliberately.
 const TODAY = new Date("2026-05-01")
 
 interface ActiveFilterChip {
@@ -37,8 +36,7 @@ export interface UseInvoiceFiltersResult {
   setDateRange: (value: DateRangeOption) => void
   setStatus: (value: StatusOption) => void
   setSupplier: (value: string) => void
-  /** Also resets `currentPage` to 1, matching the search input's today behaviour - unlike the
-   * other filters, which only reset the page when "Apply Filters" is clicked. */
+  /** Also resets `currentPage` to 1, unlike the other filters, which only reset it on "Apply Filters". */
   setSearchText: (value: string) => void
   setSortBy: (value: SortOption) => void
   setCurrentPage: (updater: number | ((page: number) => number)) => void
@@ -57,9 +55,7 @@ export interface UseInvoiceFiltersResult {
   clearAllFilters: () => void
 }
 
-/** The 7 state atoms (date range, status, supplier, search, sort, selection, page) plus the
- * derived filtered/sorted/paged view and selection actions for `BuyerInvoicesPage` (Phase 4
- * design doc §7, step B1). Data stays the static `invoicesData.ts` mock. */
+/** Filter/sort/selection/page state plus the derived paged view for `BuyerInvoicesPage`. */
 export function useInvoiceFilters(): UseInvoiceFiltersResult {
   const [dateRange, setDateRange] = useState<DateRangeOption>("Last 30 days")
   const [status, setStatus] = useState<StatusOption>("All Statuses")

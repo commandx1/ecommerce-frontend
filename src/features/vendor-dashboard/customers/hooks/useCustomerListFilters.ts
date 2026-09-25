@@ -28,10 +28,7 @@ export interface CustomerListFiltersViewModel {
   goToPage: (page: number) => void
 }
 
-/** URL-driven filter/sort/page state for the all-customers directory (design §6): every
- * filter, sort and page change is a `router.replace` into the URL, never local state, so the
- * list is shareable/bookmarkable and survives a refresh - unchanged from the page-local version
- * this was extracted from. */
+/** Filter/sort/page state lives in the URL (`router.replace`), so the list is shareable and survives a refresh. */
 export function useCustomerListFilters(): CustomerListFiltersViewModel {
   const pathname = usePathname()
   const router = useRouter()

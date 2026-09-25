@@ -12,8 +12,7 @@ function isNoActiveCardsError(error: unknown): boolean {
 async function fetchCheckoutSavedCards(): Promise<SavedCard[]> {
   try {
     const response = await ordersAPI.getSavedCards()
-    // Array.isArray, not `|| []`: a malformed 200 with a non-array `cards` would reach
-    // .map() in the saved-card picker and blank the payment step (infra note #26).
+    // Array.isArray: a malformed 200 with a non-array `cards` would blank the payment step.
     return Array.isArray(response.cards) ? response.cards : []
   } catch (error: unknown) {
     // The backend answers a buyer with no cards with an error instead of an empty list.
@@ -25,12 +24,8 @@ async function fetchCheckoutSavedCards(): Promise<SavedCard[]> {
 }
 
 /**
- * `GET /orders/saved-cards` as a query (Phase 2 design doc §6), resolving to the card list itself.
- *
- * `staleTime: 0, gcTime: 0`: cards are still added/removed through the unmigrated buyer settings
- * pages, so a cached list could hide a change made there; `gcTime: 0` reproduces today's
- * per-mount fetch. `retry: false` mirrors the old bare `.catch` (one request, immediate
- * "Failed to load saved cards." on any failure).
+ * `GET /orders/saved-cards`, resolving to the card list. Not cached (cards change on the buyer
+ * settings pages) and not retried: one request, then "Failed to load saved cards.".
  */
 export function useCheckoutSavedCardsQuery(): UseQueryResult<SavedCard[]> {
   return useQuery({

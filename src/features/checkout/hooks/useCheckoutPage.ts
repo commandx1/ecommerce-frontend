@@ -19,8 +19,8 @@ interface UseCheckoutPageResult {
 
 export function useCheckoutPage(): UseCheckoutPageResult {
   const router = useRouter()
-  // Fetch owner (design doc §5): a disabled reader tracks the shared `cart.detail` query while
-  // `refreshCart()` below owns the mount fetch - same split as `useCartPage`.
+  // Fetch owner: a disabled reader tracks `cart.detail` while `refreshCart()` below owns the mount
+  // fetch - same split as `useCartPage`.
   const items = useCartItems()
   const { currentStep, reset } = useCheckoutStore()
   const licenseGate = useDentalLicenseGate()
@@ -29,11 +29,8 @@ export function useCheckoutPage(): UseCheckoutPageResult {
     void refreshCart()
   }, [])
 
-  // A confirmation left in the store by a previous order must not greet the buyer on the next
-  // visit. OrderConfirmation deliberately does not reset on "Continue Shopping": resetting to step
-  // 1 while the (already emptied) cart is still mounted trips the empty-cart guard below and
-  // bounces the buyer to /cart instead of /products. So the store is cleared on the next entry
-  // instead.
+  // A confirmation left by a previous order must not greet the next visit. OrderConfirmation does
+  // not reset (that would trip the empty-cart guard below), so the store is cleared on entry instead.
   const initialStepRef = useRef(currentStep)
   useEffect(() => {
     if (initialStepRef.current === 5) reset()
@@ -45,11 +42,9 @@ export function useCheckoutPage(): UseCheckoutPageResult {
     }
   }, [currentStep, items.length, router])
 
-  // Guards a buyer who types /checkout directly (or refreshes mid-flow), bypassing the cart
-  // page's click-time gate entirely. Mirrors the empty-cart guard above: never during the
-  // confirmation step, and never while the licence check is still in flight (isChecking) — the
-  // gate is fail-closed on the SETTLED result, not on the pre-fetch default. Uses `replace`
-  // (not `push`) so this guard redirect doesn't leave a checkout-then-cart entry in history.
+  // Guards a buyer who types /checkout directly, bypassing the cart page's click-time gate. Never
+  // during confirmation or while the licence check is in flight (fail-closed on the SETTLED result).
+  // `replace`, so the redirect leaves no checkout-then-cart history entry.
   useEffect(() => {
     if (currentStep === 5) return
     if (licenseGate.isChecking) return

@@ -154,11 +154,8 @@ export default function ProductListingLoading() {
                 </div>
               </div>
 
-              {/* a11y: the root layout's persistent <Footer> renders its own <h3>s
-                  ("Products"/"Services"/"Support") regardless of which page content is showing,
-                  including this skeleton. With nothing between this file's sr-only h1 and that
-                  footer, an a11y scan landing on this skeleton would see a straight h1 -> h3
-                  jump. This sr-only h2 bridges that gap. */}
+              {/* a11y: bridges this skeleton's sr-only h1 to the persistent Footer's <h3>s, which
+                  would otherwise be a straight h1 -> h3 jump. */}
               <h2 className="sr-only">Loading products</h2>
 
               {/* Product card skeletons */}

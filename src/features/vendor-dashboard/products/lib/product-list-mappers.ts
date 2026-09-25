@@ -42,11 +42,8 @@ export function mapReviewItemsToRows(items: VendorProductReviewItem[]): ProductW
 }
 
 /**
- * `GET /api/user-products/filter` returns the `UserProduct` fields only, no nested `Product` —
- * this rebuilds a minimal stand-in so the row shape matches the review queue's. Nothing downstream
- * reads this synthetic product's `barcode` (`Product.barcode` is a `number`; the source data has
- * none), so it is left as the same empty placeholder the un-typed inline literal used before this
- * was extracted, via the cast at the call site below.
+ * `GET /api/user-products/filter` returns the `UserProduct` fields only, no nested `Product`, so
+ * this rebuilds a minimal stand-in to match the review queue's row shape. Nothing reads its `barcode`.
  */
 function buildFallbackProduct(userProduct: UserProduct) {
   return {
@@ -58,7 +55,6 @@ function buildFallbackProduct(userProduct: UserProduct) {
     active: userProduct.active,
     subCategoriesId: userProduct.subCategoriesId || "",
     coverPhotoPath: userProduct.coverPhotoPath,
-    // Add other required Product fields with defaults
     aboutProduct: "",
     customerReviews: "",
     description: "",
@@ -89,11 +85,7 @@ export function mapFilterProductsToRows(userProducts: UserProduct[]): ProductWit
   }))
 }
 
-/**
- * Cache patch for a successful inline-edit save (design §3.3): replaces one row's
- * server-confirmed fields in place and leaves every other row, and the page's own pagination
- * metadata, untouched.
- */
+/** Replaces one row's server-confirmed fields in place; other rows and the pagination stay untouched. */
 export function patchProductRow<T extends { rows: ProductWithDetails[] }>(
   data: T,
   productId: string,

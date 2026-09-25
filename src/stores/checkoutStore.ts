@@ -46,12 +46,8 @@ interface CheckoutStore {
   orderPayload: PlaceOrderPayload | null
   /**
    * Cart lines that will NOT be ordered because no shipping rate could be selected for their
-   * seller (rate lookup failed, or the carrier returned nothing). The backend only creates order
-   * items for the products carried inside `shippoRateOrders`/`uberRateOrders`
-   * (OrderCreationService:163-173), and once payment succeeds it soft-deletes the WHOLE cart
-   * (CartService.processCartAfterPaymentSuccess:189-204) - not just what was ordered. So these
-   * lines vanish twice over: never ordered, and gone from the cart afterwards. Final Review has
-   * to say so before the buyer commits.
+   * seller. The backend orders only the products inside the rate orders and, on payment success,
+   * soft-deletes the WHOLE cart - so these lines are lost twice. Final Review must say so.
    */
   excludedFromOrder: ExcludedSellerLines[]
   orderResult: PlaceOrderResponse | null
@@ -112,34 +108,24 @@ interface CheckoutStore {
   setSelectedShippingCost: (cost: number) => void
   setOrderPayload: (payload: PlaceOrderPayload) => void
   /**
-   * Rewrites `autoOrder` for one product inside the frozen `orderPayload` snapshot. Exists
-   * because the payload is captured once at the step 2→3 transition (`useShippingDetails`) and
-   * `useFinalReview.onPlaceOrder` builds the request body by spreading that snapshot without ever
-   * re-reading the cart — a step-4 schedule change (Final Review's per-line controls) that only
-   * updated the cart store would show as "changed"/"cancelled" on screen while the backend still
-   * received the old schedule and created (or kept) the wrong subscription.
+   * Rewrites `autoOrder` for one product inside the frozen `orderPayload` snapshot, which
+   * `onPlaceOrder` sends without re-reading the cart - a step-4 schedule change must land here too.
    */
   setPayloadAutoOrder: (userProductId: string, autoOrder: AutoOrderPeriod | null) => void
   setExcludedFromOrder: (excluded: ExcludedSellerLines[]) => void
   setOrderResult: (result: PlaceOrderResponse) => void
   /**
-   * Wipes everything the shipping step froze — the ETA text, the per-vendor method map, the
-   * shipping cost, the `orderPayload` snapshot, and the excluded-line list — without touching the
-   * address, payment method, or any other field the buyer already filled in. `useCheckoutCartSync`
-   * calls this when the cart changes underneath a frozen step 3/4 payload, so the buyer re-picks
-   * shipping against the current cart instead of placing an order for lines that no longer match.
+   * Wipes everything the shipping step froze (ETA text, per-vendor methods, shipping cost,
+   * `orderPayload`, excluded lines) but keeps the address and payment fields. Called by
+   * `useCheckoutCartSync` when the cart changes under a frozen step 3/4 payload.
    */
   clearShippingSelection: () => void
   reset: () => void
 }
 
 /**
- * Empty by design. This used to hold a hardcoded demo record ("Michael Chen /
- * Pacific Dental Group / 2847 Mission Street"), which `useShippingDetails`
- * overwrites once the buyer's saved addresses load - but if that request fails
- * or returns nothing, the checkout form stayed pre-filled with a stranger's
- * address and an unnoticed order would ship there. `reset()` restores this
- * same empty record, so a second checkout no longer inherits it either.
+ * Empty by design: a pre-filled record would stay in the form if the saved-address request fails,
+ * and an unnoticed order would ship to it. `reset()` restores this same empty record.
  */
 const initialShippingAddress: ShippingAddress = {
   firstName: "",
@@ -152,12 +138,7 @@ const initialShippingAddress: ShippingAddress = {
   phone: "",
 }
 
-/**
- * Single source of truth for the store's starting values. Both the store creator and `reset()`
- * spread this object, so the two can never drift apart again (Y7: `reset()` used to write a
- * hardcoded "Express Delivery - 2-3 business days" for `selectedShippingEtaText` while the
- * declared initial value was `""`, leaving the store in a state `reset()` itself never produced).
- */
+/** The store's starting values; both the creator and `reset()` spread this so they cannot drift. */
 const initialState = {
   currentStep: 1 as CheckoutStep,
   shippingAddress: initialShippingAddress,
@@ -184,10 +165,8 @@ const initialState = {
 }
 
 /**
- * Shared by `setPayloadAutoOrder` for both `shippoRateOrders` and `uberRateOrders` — same
- * `products` shape on both. Only builds new object/array references for an order that actually
- * contains the matching product, so orders untouched by this write keep their identity and don't
- * cause needless re-renders downstream.
+ * Used by `setPayloadAutoOrder` for both `shippoRateOrders` and `uberRateOrders`. Only orders that
+ * contain the product get new references, so untouched orders keep their identity.
  */
 function withPatchedAutoOrder<T extends { products: { userProductId: string; autoOrder?: AutoOrderPeriod | null }[] }>(
   orders: T[],

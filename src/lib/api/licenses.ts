@@ -36,9 +36,8 @@ export interface CreateLicensePayload {
 class LicenseAPI {
   async getLicenses(): Promise<License[]> {
     const response = await apiClient.get<LicenseListResponse>("/licenses")
-    // Normalised here rather than at each call site: callers store this straight into state and
-    // then `.some()`/`.map()` over it. A malformed 200 would throw during the NEXT render, where
-    // their try/catch cannot reach it (infra note #26).
+    // Normalised here: callers store this in state and `.some()`/`.map()` over it during the NEXT
+    // render, where their try/catch cannot reach a malformed-200 throw.
     return Array.isArray(response.data?.licenses) ? response.data.licenses : []
   }
 

@@ -6,11 +6,8 @@ export default function VendorDashboardLayoutSkeleton() {
   const rowSkeletonIds = ["row-1", "row-2", "row-3", "row-4"] as const
 
   return (
-    // sr-only h1: the real page's h1 ("Vendor Dashboard" in VendorWelcomeHeader) only mounts once
-    // auth-check/hydration finishes; this skeleton renders first, so without this the page has
-    // zero headings while it's up. Deliberately worded differently from that final heading so a
-    // test waiting for the exact "Vendor Dashboard" accessible name can't resolve early against
-    // this transient node (see CartLoadingState for the same footgun; design doc §3).
+    // sr-only h1: the real "Vendor Dashboard" h1 only mounts once the auth check finishes. Worded
+    // differently so a test waiting for that exact name cannot resolve early against this node.
     <DashboardShellSkeleton
       heading="Loading Vendor Dashboard"
       navCount={6}

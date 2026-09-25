@@ -4,10 +4,8 @@ import { useTheme } from "next-themes"
 import { useEffect, useMemo, useState } from "react"
 
 /**
- * Stripe `CardNumberElement` style options, mirroring checkout's styling (Phase 4 §7, B2b).
- * `mounted` avoids an SSR/first-paint theme mismatch: `resolvedTheme` is undefined until the
- * theme provider hydrates, so the element would otherwise flash light-mode colors on a dark
- * session for one render.
+ * Stripe `CardNumberElement` style options, matching checkout. `mounted` avoids a first-paint theme
+ * mismatch: `resolvedTheme` is undefined until the provider hydrates.
  */
 export function useCardElementOptions() {
   const { resolvedTheme } = useTheme()

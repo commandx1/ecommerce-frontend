@@ -262,8 +262,8 @@ export function useFinalReview(): UseFinalReviewResult {
       isPlacingOrderRef.current = false
       setIsPlacingOrder(false)
 
-      // Design doc §4. The cart is only marked stale (no refetch): the badge keeps its count until
-      // "Continue shopping" clears the cart, as before.
+      // The cart is only marked stale (no refetch): the badge keeps its count until "Continue
+      // shopping" clears the cart.
       if (orderCreated) {
         void queryClient.invalidateQueries({ queryKey: queryKeys.orders.all })
         void queryClient.invalidateQueries({ queryKey: queryKeys.cart.detail(), refetchType: "none" })

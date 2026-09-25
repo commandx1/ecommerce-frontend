@@ -1,12 +1,8 @@
 import type { BuyerInvoice, InvoiceStatus } from "../invoicesData"
 
 /**
- * Pure filter/sort/paginate/stat logic for `BuyerInvoicesPage` (Phase 4 design doc §7, step B1).
- * Data stays static mock (`invoicesData.ts`) - this is a structure-only refactor, not a Query
- * migration. `filterInvoices`/`computeInvoiceStats` take an explicit `today` (default `new
- * Date()`) instead of computing it internally, so a test can pin it with `vi.setSystemTime`;
- * `BuyerInvoicesPage.tsx` passes the hardcoded `2026-05-01` it always has, so the (deliberately
- * locked, see `BuyerInvoicesPage.test.tsx`) "today" bug is unchanged.
+ * Pure filter/sort/paginate/stat logic for `BuyerInvoicesPage` (static mock data). `today` is a
+ * parameter so tests can pin it; the page passes a fixed date (see `useInvoiceFilters`).
  */
 
 export const PAGE_SIZE = 6
@@ -99,10 +95,8 @@ export interface InvoiceStats {
   avgInvoiceAmount: number
 }
 
-// Hardcoded, same as the pre-extraction inline check - NOT derived from `today`. The mock data
-// is fixed to March/April 2026, and "today" (2026-05-01) is a different, independently-locked
-// constant (see the file header); deriving one from the other would silently zero out this
-// figure (no invoice is dated in May), a behaviour change this refactor must not make.
+// Hardcoded, not derived from `today`: the mock data is fixed to March/April 2026 and "today" is a
+// separate locked constant; deriving one from the other would zero this figure.
 const PAID_THIS_MONTH_PREFIX = "2026-04"
 
 export function computeInvoiceStats(invoices: ReadonlyArray<BuyerInvoice>): InvoiceStats {

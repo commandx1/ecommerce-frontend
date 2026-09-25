@@ -12,12 +12,9 @@ export interface ErrorToastableQuery {
 }
 
 /**
- * Shared "toast once per distinct query failure" effect (Phase 4 design doc §2.2), extracted
- * from the identical pattern already inline in `useCartPage` and `useVendorQuestionsPage`.
- * Keyed on `errorUpdatedAt` rather than `isError` alone, so a persisting error toasts once, not
- * on every unrelated re-render while it stays true - and stays silent on an auth-handled error
- * (401 the interceptor already turned into a logout/redirect), which is not a failure the user
- * needs telling about a second time.
+ * Toasts once per distinct query failure: keyed on `errorUpdatedAt` rather than `isError`, so a
+ * persisting error does not re-toast on every re-render. Silent on auth-handled errors (the
+ * interceptor already logged out/redirected).
  */
 export function useQueryErrorToast(query: ErrorToastableQuery, onError: () => void): void {
   // biome-ignore lint/correctness/useExhaustiveDependencies: errorUpdatedAt is what makes this fire once per distinct failure, not once per re-render while isError stays true

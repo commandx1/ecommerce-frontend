@@ -47,10 +47,7 @@ const VendorMetricsCards = () => {
         {rangeSelector}
         <div aria-busy="true" className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <span className="sr-only">Loading metrics</span>
-          {/* Keeps the real card's glass shell and mirrors its contents - icon tile, change pill,
-              value, title, description - so the shell never pops in and the text lines land where
-              the placeholders were. The previous version pulsed an empty card, which meant the
-              whole metric block re-laid-out the moment data arrived. */}
+          {/* Mirrors the real card's shell and contents so nothing re-lays-out when data arrives. */}
           {SKELETON_CARD_IDS.map((id) => (
             <SurfaceCard key={id} variant="glass" className="p-6">
               <div className="mb-4 flex items-center justify-between">

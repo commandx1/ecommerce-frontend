@@ -31,9 +31,8 @@ interface PaymentCardSectionProps {
   setPendingNewCard: (card: PendingNewCard | null) => void
 }
 
-// The backend field is `String`/`Integer` (nullable), but props are trusted at the type level
-// only — a broken/wrong-typed value must never surface as the literal "null"/"NaN"/"undefined"
-// text a raw `.toUpperCase()`/template interpolation would otherwise produce (see F101).
+// The backend fields are nullable, and props are only trusted at the type level - a wrong-typed
+// value must never render as the literal "null"/"NaN"/"undefined".
 function formatCardBrand(brand: unknown): string {
   return typeof brand === "string" ? brand.toUpperCase() : ""
 }
@@ -150,11 +149,7 @@ export default function PaymentCardSection({
   // or the buyer explicitly opened it and hasn't tokenized a card yet.
   const isPanelOpen = showInlineNewCardForm || (isAddCardOpen && isNewCard && !pendingNewCard)
 
-  // Backend: `OrderMapper.toSavedCardResponse` returns `null` for a null `SavedCard` entity, and
-  // that `null` is collected straight into the list handed back to the client
-  // (`CardManagementService`/`OrderQueryService`, both `.stream().map(orderMapper::toSavedCardResponse)`).
-  // A malformed/non-array prop is guarded the same way, matching the pattern used everywhere else
-  // list fields come back from this backend.
+  // The backend can put `null` entries into the saved-card list (and a malformed prop may not be an array).
   const validSavedCards = Array.isArray(savedCards) ? savedCards.filter((card): card is SavedCard => card != null) : []
 
   const selectedCard = validSavedCards.find((card) => card.stripeCardId === selectedSavedCardId)

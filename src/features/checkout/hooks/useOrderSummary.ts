@@ -52,10 +52,7 @@ export function useOrderSummary(): UseOrderSummaryResult {
   // fold heavyShipmentFee into the shippingAmount we send.
   const shippingAmountForTax = shipping + heavyShipmentFee
 
-  // `enabled`/finite/non-negative guards, the keepPreviousData behaviour and the malformed-200
-  // (`Number.isFinite`) fallback all live in `useTaxEstimateQuery` now. `linesSignature` uses the
-  // same `userProductId:quantity` signature as the cart page (design doc §10.3, fixed): keying on
-  // `items.length` alone let a quantity change at an unchanged line count skip re-estimation.
+  // The guards, keepPreviousData and malformed-200 fallback live in `useTaxEstimateQuery`.
   const linesSignature = useMemo(() => cartLinesSignature(items), [items])
   const { tax, isTaxLoading } = useTaxEstimateQuery({
     addressId,

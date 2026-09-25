@@ -39,8 +39,7 @@ export interface UseBuyerOrdersQueryResult {
   selectedTab: BuyerOrderStatusTab
   singleOrderId: string | null
   isAuthenticated: boolean
-  /** The list params behind the query currently on screen - handed to `useBuyerOrderActions` so
-   * a cancel/refund write knows which cache entry to patch (§2.3). */
+  /** The list params behind the query on screen, so a cancel/refund write patches that cache entry. */
   params: BuyerOrderListParams
   handleTabChange: (tab: BuyerOrderStatusTab) => void
   handlePageChange: (page: number) => void
@@ -48,11 +47,7 @@ export interface UseBuyerOrdersQueryResult {
   clearSingleOrder: () => void
 }
 
-/**
- * Owns the URL/tab/page/sort -> params derivation and the list query (Phase 4 §7, B4c). Split
- * out of the old `use-buyer-orders-page.ts` so the composing hook doesn't also have to know
- * about `useSearchParams`/pagination state to read `filteredOrders`/`isLoading`.
- */
+/** Owns the URL/tab/page/sort -> params derivation and the list query. */
 export function useBuyerOrdersQuery(): UseBuyerOrdersQueryResult {
   const router = useRouter()
   const pathname = usePathname()

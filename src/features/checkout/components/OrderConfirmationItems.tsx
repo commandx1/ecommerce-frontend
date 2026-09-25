@@ -18,11 +18,7 @@ export default function OrderConfirmationItems({
   autoOrderPeriods,
   autoOrderPending = false,
 }: OrderConfirmationItemsProps) {
-  // Backend: `OrderMapper.toOrderItemResponse` returns `null` for a null `OrderItem` entity, and
-  // that `null` is collected straight into `CreateOrderResponse.orderItems`
-  // (`toCreateOrderResponse`: `.stream().map(this::toOrderItemResponse).collect(...)`). A
-  // missing/non-array `orderItems` field is guarded the same way the rest of this codebase guards
-  // list fields coming back from this backend.
+  // The backend can put `null` entries into `orderItems` (and a malformed 200 may not be an array).
   const orderItems = Array.isArray(orderResult.orderItems)
     ? orderResult.orderItems.filter((item): item is OrderItem => item != null)
     : []

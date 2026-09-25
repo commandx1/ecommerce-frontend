@@ -53,9 +53,6 @@ export default function DocumentProductsPanel({
 
   if (panel.isLoading) {
     // Not DataTable's own `isLoading` skeleton: this panel is a scrollable list, not a table.
-    // (It also used to be a correctness issue — DataTable announced loading through a real body
-    // <tr>, which this file's getAllByRole("row") waits counted as data. That row is a <caption>
-    // now, so the hazard is gone; the list shape is the only reason left.)
     return (
       <div
         aria-busy="true"

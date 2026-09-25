@@ -54,11 +54,8 @@ export function validateProductFields(
       // with an opaque 400 instead of the friendly validation message below.
       newErrors.barcode = "Barcode must be a whole number"
     } else if (Number(values.barcode) > Number.MAX_SAFE_INTEGER) {
-      // JS numbers only carry 53 bits of integer precision (~16 digits); Product.barcode is a
-      // 64-bit Long. A longer digit string still parses as a valid-looking integer but silently
-      // rounds to a different value, so the product would be created with the wrong barcode with
-      // no error shown anywhere. Real barcode formats (EAN-13, UPC-A, GTIN-14) top out at 14
-      // digits, well under this ceiling - this only catches mistyped/garbage input.
+      // JS numbers carry ~16 digits of integer precision while Product.barcode is a 64-bit Long, so
+      // a longer string would silently round. Real barcodes top out at 14 digits.
       newErrors.barcode = "Barcode is too large to submit accurately"
     }
   }

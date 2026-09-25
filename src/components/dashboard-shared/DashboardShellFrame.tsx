@@ -10,10 +10,8 @@ interface DashboardShellFrameProps {
 }
 
 /**
- * Shared chrome for the buyer and vendor dashboard layouts (design doc §3, Phase 4 C2): backdrop,
- * header, sidebar and the `<main>` region. Providers (`DashboardMobileSidebarProvider`,
- * `CompanyRoleProvider`), `NotificationSocketBridge` and `ImpersonationTabTitle` stay in the
- * layouts, since this component must not import features.
+ * Shared chrome for the buyer and vendor dashboard layouts: backdrop, header, sidebar and `<main>`.
+ * Feature providers and bridges stay in the layouts, since this component must not import features.
  */
 export default function DashboardShellFrame({ header, sidebar, mainClassName, children }: DashboardShellFrameProps) {
   const mainContentId = useId()

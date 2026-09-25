@@ -44,9 +44,8 @@ export interface VendorOrdersQueryResult {
 }
 
 /**
- * URL params (tab, single-order deep link) plus local page/size/sort state build the query key,
- * exactly the same fields the old page's fetch effect depended on (design §S8). See
- * `orders-queries.ts` for the `keepPreviousData` behaviour this brings on a param change.
+ * URL params (tab, single-order deep link) plus local page/size/sort state build the query key.
+ * See `orders-queries.ts` for the `keepPreviousData` behaviour on a param change.
  */
 export function useVendorOrdersQuery(): VendorOrdersQueryResult {
   const router = useRouter()

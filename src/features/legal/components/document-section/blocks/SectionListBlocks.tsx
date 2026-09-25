@@ -27,10 +27,7 @@ export function SectionWarningItems({ items }: SectionListProps) {
 
   return (
     <div className="mb-6 rounded-2xl border border-danger/25 bg-danger/10 p-6">
-      {/* `--danger` is a 61% lightness red: fine as a fill or an icon, but it does not reach AA as
-          body text (globals.css measured 3.42:1 and added `--danger-strong` for exactly this).
-          axe flagged this heading as `color-contrast` (serious) - 7 nodes on /legal, since this
-          block renders once per prohibited-use list. */}
+      {/* `--danger-strong`: `--danger` is a fill/icon red and fails AA as text (axe `color-contrast`). */}
       <h4 className="mb-3 font-semibold text-danger-strong">You may not use our Service:</h4>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <ul className="space-y-2 text-sm text-text-secondary">

@@ -12,8 +12,7 @@ const SEARCH_DEBOUNCE_MS = 500
 /**
  * Catalogue search (GET /api/products/active): debounced query + brand filter, infinite scroll,
  * click-outside close, and the result click that loads the full product for ProductDetailsModal.
- * Imperative on purpose (design §3.2): every new query aborts the previous request and pages are
- * appended, which nothing else shares.
+ * Imperative: every new query aborts the previous request and pages are appended.
  */
 export function useProductSearch(accessToken: string | null) {
   const [searchQuery, setSearchQuery] = useState("")

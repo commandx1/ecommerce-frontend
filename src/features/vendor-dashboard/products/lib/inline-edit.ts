@@ -48,11 +48,7 @@ export interface ParsedEditingDraft {
   heavyShippingSurcharge: number
 }
 
-/**
- * The single source of truth for "is this draft saveable" — the actions column's Save button
- * and the save handler used to each maintain their own copy of the same five checks. Returns
- * `null` for a draft that fails any of them.
- */
+/** The single "is this draft saveable" check for both the Save button and the save handler; `null` if not. */
 export function parseEditingDraft(draft: EditingDraft): ParsedEditingDraft | null {
   const price = Number.parseFloat(draft.price)
   const discount = Number.parseFloat(draft.discount)

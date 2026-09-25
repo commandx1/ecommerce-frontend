@@ -20,11 +20,7 @@ export interface UsePaymentMethodsPageResult extends UsePaymentMethodMutationsRe
   addCardFlow: UseAddCardFlowResult
 }
 
-/**
- * Composes the list query with the mutation and add-card-flow hooks (Phase 4 §7, B2b). Keeps
- * `BuyerPaymentMethodsPage`'s pre-migration return contract (same field names) so the JSX in that
- * file - split further in B2c - does not have to change shape in this step.
- */
+/** Composes the list query with the mutation and add-card-flow hooks. */
 export function usePaymentMethodsPage(): UsePaymentMethodsPageResult {
   const cardsQuery = useQuery(paymentMethodsCardsOptions())
   useQueryErrorToast(cardsQuery, () => showToast.error("Failed to load", "Could not fetch payment methods."))

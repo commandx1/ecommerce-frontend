@@ -58,8 +58,7 @@ export async function getMyFavoriteVendorIds(): Promise<string[]> {
     url: "/vendors/favorite-ids",
     fallbackMessage: "Failed to fetch favorite vendor IDs",
   })
-  // The endpoint is typed `List<String>` (VendorController:51-54), but a malformed 200 is not
-  // an array and callers use `.includes()` on it to decide the starred state (infra note #26).
+  // Typed `List<String>`, but a malformed 200 is not an array and callers `.includes()` on it.
   return Array.isArray(ids) ? ids : []
 }
 

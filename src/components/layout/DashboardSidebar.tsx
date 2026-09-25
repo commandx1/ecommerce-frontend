@@ -273,24 +273,12 @@ export default function DashboardSidebar({
       <aside
         id={sidebarId}
         data-testid="dashboard-sidebar"
-        // axe `aria-dialog-name` (serious) fired on 19 dashboard routes: a `role="dialog"` with no
-        // accessible name. Two things were wrong, and both are fixed here.
-        //
-        // The name was missing - a dialog must have one. And on desktop this is not a dialog at
-        // all: it is permanent side navigation that is always on screen and traps nothing, so the
-        // role only holds while the mobile drawer is open. Off mobile it falls back to <aside>'s
-        // own `complementary` role, which also stops it colliding with real modals in
-        // `getByRole("dialog")` lookups - a hazard on every dashboard page that opens one.
-        //
-        // The tests find this element by `data-testid` rather than by role, precisely so the role
-        // is free to describe what the element IS in each layout.
+        // A dialog only while the mobile drawer is open; otherwise permanent navigation, so it keeps
+        // <aside>'s `complementary` role (and does not collide with real modals in `getByRole("dialog")`).
+        // Tests find it by `data-testid` so the role can describe what the element is in each layout.
         aria-label="Dashboard menu"
-        // `role` and `aria-modal` are spread together because they are only valid together:
-        // `aria-modal` is allowed on dialog/alertdialog and nowhere else. Setting them as separate
-        // props left `aria-modal="false"` on the roleless <aside> and traded one violation for
-        // another (`aria-allowed-attr`, critical, on all 19 routes) - caught by re-running the
-        // scan, which is the only reason it did not ship. Spreading them as one object also keeps
-        // Biome's `useAriaPropsSupportedByRole` happy, which cannot see through a conditional role.
+        // `role` and `aria-modal` are spread together: `aria-modal` is only valid on a dialog (a
+        // separate prop left `aria-modal="false"` on the <aside>: axe `aria-allowed-attr`).
         {...(isMobileOpen ? ({ role: "dialog", "aria-modal": true } as const) : {})}
         data-state={expanded ? "expanded" : "collapsed"}
         className={cn(

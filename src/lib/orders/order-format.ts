@@ -1,10 +1,6 @@
 import { formatPaddedDate, formatPaddedDateTime, formatTime, parseApiDate } from "@/lib/helpers/format"
 
-/**
- * Moved from `app/buyer-dashboard/orders/lib/order-view-utils.ts` (Phase 4 design doc §7, step
- * O1) - these format/status helpers apply to an order regardless of which dashboard is showing
- * it. Buyer and vendor orders (tables, mobile lists, the expanded row) both import from here now.
- */
+/** Order format/status helpers shared by buyer and vendor orders. */
 
 export function formatDateTime(value?: string | null): string {
   if (!value) return "-"
@@ -19,11 +15,8 @@ export function formatDateOnly(value?: string | null): string {
   const parsed = parseApiDate(value)
   if (Number.isNaN(parsed.getTime())) return "-"
 
-  // "en-US", not the viewer's locale: every other date in the app is pinned to it
-  // (WelcomeSection, CompanyInfoCard, AccountSettingsShared, ProductDetailModal,
-  // ImportDocumentsModal, vendor questions), and the UI itself is English-only. Left on the
-  // runtime default, these two formatters were the sole outliers - on a tr-TR machine an order
-  // rendered "22 May 2026" in the timeline and "May 22, 2026" everywhere else on the same screen.
+  // "en-US", not the viewer's locale: every other date in the app is pinned to it and the UI is
+  // English-only (a tr-TR runtime default rendered mixed formats on one screen).
   return formatPaddedDate(parsed)
 }
 
@@ -32,8 +25,7 @@ export function formatTimeOnly(value?: string | null): string {
   const parsed = parseApiDate(value)
   if (Number.isNaN(parsed.getTime())) return "-"
 
-  // Pinned for the same reason as formatDateOnly above: the runtime default gave a 24-hour clock
-  // on a tr-TR machine while the rest of the app showed 12-hour times.
+  // Pinned for the same reason as formatDateOnly (the runtime default can be a 24-hour clock).
   return formatTime(parsed)
 }
 

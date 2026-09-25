@@ -3,15 +3,8 @@
 import { useEffect } from "react"
 
 /**
- * Root error boundary. Until this existed the app had none at all - 46 routes, zero `error.tsx` -
- * so anything a Server Component threw left the visitor with the header and footer and a
- * completely empty content region, with no message and nothing to click. That failure mode was
- * captured on /products/[id]: a 280-line DOM snapshot holding only `banner` and `contentinfo`.
- *
- * This is purely additive - it renders only when something below the root layout throws - and it
- * carries an <h1> so the "exactly one h1 per page" contract the a11y smoke spec enforces still
- * holds on the error screen. Mirrors ProductError's card so a failure looks like the rest of the
- * app rather than an unstyled fallback.
+ * Root error boundary: without it a throwing Server Component left an empty content region with no
+ * message. Carries an <h1> so the one-h1-per-page a11y contract holds on the error screen.
  */
 interface RootErrorContentProps {
   error: Error & { digest?: string }
@@ -23,11 +16,7 @@ interface RootErrorContentProps {
   homeLabel?: string
 }
 
-/**
- * The card itself, split out from RootError so other error boundaries in the app (global-error.tsx,
- * the buyer/vendor dashboard error.tsx) can render the same visuals and logging without duplicating
- * either. RootError below is just this wrapped in the page-centering div for the root boundary.
- */
+/** The card itself, shared with global-error.tsx and the dashboard error boundaries (same visuals and logging). */
 export function RootErrorContent({ error, reset, homeHref = "/", homeLabel = "Back to Home" }: RootErrorContentProps) {
   useEffect(() => {
     // An error boundary that swallows its error is how the blank-page failure stayed invisible;

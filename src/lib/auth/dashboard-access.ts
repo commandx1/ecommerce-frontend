@@ -1,10 +1,7 @@
 /**
- * Pure access-decision table for the buyer/vendor dashboard guards (Phase 4 design doc §4.2).
- * Extracted from `app/{buyer,vendor}-dashboard/layout.tsx` (characterized in their
- * `layout.test.tsx` before this file existed) so the two guards' shared shape - "read the cookie
- * first, wait for the store to hydrate, then decide" - is a table plus two pure functions instead
- * of two copies of the same imperative branching. Nothing here touches React, the router or
- * storage; `useDashboardAuthGuard` is the only caller.
+ * Pure access-decision table for the buyer/vendor dashboard guards: "read the cookie first, wait
+ * for the store to hydrate, then decide". No React, router or storage; `useDashboardAuthGuard` is
+ * the only caller.
  */
 
 export type DashboardRole = "buyer" | "vendor"
@@ -19,9 +16,8 @@ export interface DashboardAccessPolicy {
   crossRoleTarget: string
   /** Where a tab with no usable cookie AND an unauthenticated store is sent. */
   unauthenticatedTarget(wasAuthenticated: boolean): string
-  /** Where a tab is sent when the cookie promised a session but the store still has no user
-   * after the hydration wait. Buyer reuses `unauthenticatedTarget`; vendor always bounces to
-   * the buyer dashboard here, regardless of `wasAuthenticated` - kept as today's quirk (Q3). */
+  /** Where a tab is sent when the cookie promised a session but the store still has no user after
+   * the hydration wait. Vendor always bounces to the buyer dashboard here (existing quirk). */
   hydrationMissingUserTarget(wasAuthenticated: boolean): string
   /** Vendor's layout retries a `JSON.parse` failure with `decodeURIComponent`; buyer does not. */
   decodeUriCookieFallback: boolean
@@ -58,10 +54,8 @@ export interface StoredSession {
 }
 
 /**
- * Parses the raw `auth-storage` string exactly like today's two layouts, but never throws - a
- * malformed/partial/garbage value (or a cookie that has neither a user nor `isAuthenticated`)
- * comes back as `null`, the same "nothing usable here" result the callers already fold into
- * their store-based fallback branch.
+ * Parses the raw `auth-storage` string but never throws: a malformed value (or one with neither a
+ * user nor `isAuthenticated`) comes back as `null`.
  */
 export function readStoredSession(raw: string | null, policy: DashboardAccessPolicy): StoredSession | null {
   if (!raw) {

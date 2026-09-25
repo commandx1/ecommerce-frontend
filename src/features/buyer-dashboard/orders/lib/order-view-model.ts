@@ -1,6 +1,4 @@
 import type { BuyerOrder, BuyerOrderAddress, BuyerOrderItem, BuyerOrderSellerGroup } from "@/lib/api/buyer-orders"
-// formatDateOnly/formatTimeOnly moved to lib/orders/order-format.ts (Phase 4 §7, O1) - still
-// used internally by buildBuyerOrderViewModel below.
 import { formatDateOnly, formatTimeOnly } from "@/lib/orders/order-format"
 import type { BuyerOrderViewModel, OrderViewStatus, PaymentViewStatus } from "../types"
 import {
@@ -124,10 +122,8 @@ export function resolvePaymentSummary(order: BuyerOrder): { title: string; detai
 }
 
 export function resolveOrderViewStatus(order: BuyerOrder, orderItems: BuyerOrderItem[]): OrderViewStatus {
-  // `.toUpperCase()` on a missing status is the string form of infra note #26's pattern: a single
-  // malformed order used to throw here and take the whole list down with it, because callers map
-  // over every order and one exception unmounts the tree. The entity columns are non-null, but the
-  // wire is not the entity - a partial body or a proxy hiccup is enough.
+  // The wire is not the entity: a malformed order with a missing status must not throw here, or
+  // one bad order unmounts the whole list.
   const normalizedOrderStatus = typeof order.orderStatus === "string" ? order.orderStatus.toUpperCase() : ""
   const itemStatuses = (Array.isArray(orderItems) ? orderItems : []).map((item) =>
     typeof item?.status === "string" ? item.status.toUpperCase() : "",
@@ -173,9 +169,7 @@ export function getOrderStatusLabel(status: OrderViewStatus): string {
 }
 
 export function resolvePaymentViewStatus(orderStatus: string): PaymentViewStatus {
-  // Same guard as resolveOrderViewStatus - `buildBuyerOrderViewModel` feeds BOTH from the same
-  // `order.orderStatus`, so hardening only the other one left this path still throwing on a
-  // malformed body (infra note #26, string form).
+  // Same guard as resolveOrderViewStatus - both read the same `order.orderStatus`.
   const normalized = typeof orderStatus === "string" ? orderStatus.toUpperCase() : ""
   if (normalized.includes("REFUND")) return "refunded"
   if (normalized.includes("FAIL")) return "failed"

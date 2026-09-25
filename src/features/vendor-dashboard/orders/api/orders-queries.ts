@@ -3,11 +3,9 @@ import { type VendorOrdersResponse, vendorOrdersAPI } from "@/lib/api/vendor-ord
 import { queryKeys, type VendorOrderListParams } from "@/lib/query/keys"
 
 /**
- * A malformed 200 (empty/partial body, wrong shape from a misbehaving proxy) parses fine as
- * JSON but can leave `orders` missing - `orders-mobile-list.tsx` calls `orders.length`
- * unconditionally (it renders in the DOM, just CSS-hidden on desktop), so an unguarded
- * `undefined` here white-screens every vendor, not just mobile ones. Same guard `totalPages`/
- * `totalElements` had inline on the page before this moved into the query.
+ * A malformed 200 can leave `orders` missing, and `orders-mobile-list.tsx` reads `orders.length`
+ * unconditionally (it is in the DOM, just CSS-hidden on desktop), so an unguarded `undefined`
+ * would white-screen every vendor.
  */
 function normalizeOrdersResponse(response: VendorOrdersResponse): VendorOrdersResponse {
   return {
@@ -19,11 +17,8 @@ function normalizeOrdersResponse(response: VendorOrdersResponse): VendorOrdersRe
 }
 
 /**
- * `placeholderData: keepPreviousData` (design §S8): a tab/page/sort change keeps the previous
- * page's rows on screen while the new one loads instead of clearing to a skeleton. Still exactly
- * one request per distinct set of params - TanStack aborts the in-flight request itself via the
- * `signal` it hands `queryFn` when the key changes again before it resolves, matching the old
- * page's own `AbortController`.
+ * `keepPreviousData`: a tab/page/sort change keeps the previous rows on screen while the new page
+ * loads. TanStack aborts a superseded request via the `signal` it hands `queryFn`.
  */
 export function vendorOrdersListOptions(params: VendorOrderListParams, enabled: boolean) {
   return queryOptions<VendorOrdersResponse>({

@@ -2,10 +2,8 @@ import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 
 /**
- * Y16: statuses Google returns for its own quota/availability problems, not for anything the
- * caller did wrong. These must not be reported as a 400 (client error) - they are upstream
- * failures, so we answer with a 502 instead. `ZERO_RESULTS` / `NOT_FOUND` (the placeId itself
- * didn't resolve) are intentionally excluded and stay a 400.
+ * Google's own quota/availability statuses are upstream failures, answered with a 502, not a 400.
+ * `ZERO_RESULTS` / `NOT_FOUND` (the placeId did not resolve) stay a 400.
  */
 const GOOGLE_UPSTREAM_ERROR_STATUSES = new Set(["OVER_QUERY_LIMIT", "REQUEST_DENIED", "UNKNOWN_ERROR"])
 

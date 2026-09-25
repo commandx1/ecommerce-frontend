@@ -20,11 +20,8 @@ export const useProductImageGallery = (mainImage: string, thumbnailImages: strin
 
   const [selectedImage, setSelectedImage] = useState(images[0] || FALLBACK_IMAGE)
 
-  // Reset the selection only when the *content* of the image list actually changes, not merely
-  // its reference. Callers (e.g. `ProductHero` -> `ProductHeroGallery`) often rebuild
-  // `thumbnailImages` as a fresh array on every render, which recomputed `images` above and,
-  // when this effect keyed on `[images]` directly, reverted a user's explicit thumbnail pick
-  // back to the main image on the very next unrelated render (e.g. the magnifier's mousemove).
+  // Reset the selection only when the image list's *content* changes: callers rebuild the array on
+  // every render, and keying on its reference reverted a thumbnail pick on the next mousemove.
   const imagesKey = images.join("|")
   const previousImagesKey = useRef(imagesKey)
   useEffect(() => {

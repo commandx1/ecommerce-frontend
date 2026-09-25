@@ -1,8 +1,4 @@
-/**
- * Moved from `app/buyer-dashboard/orders/lib/order-view-utils.ts` (Phase 4 design doc §7, step
- * O1) - `FulfillmentTimeline` (`components/orders/`) is shared by buyer and vendor orders, and
- * these are its pure step-resolution/class helpers.
- */
+/** Pure step-resolution/class helpers for `FulfillmentTimeline`, shared by buyer and vendor orders. */
 
 export type FulfillmentStepState = "pending" | "active" | "done"
 
@@ -18,7 +14,7 @@ export function resolveOrderItemFulfillmentState(item: OrderItemFulfillmentInput
   shipping: FulfillmentStepState
   delivered: FulfillmentStepState
 } {
-  // A non-string status must degrade, not throw (infra note #26).
+  // A non-string status must degrade, not throw.
   const normalizedStatus = typeof item?.status === "string" ? item.status.toUpperCase() : ""
   const isCancelled =
     Boolean(item.cancelledByCustomer) || Boolean(item.cancelledBySeller) || normalizedStatus.includes("CANCEL")

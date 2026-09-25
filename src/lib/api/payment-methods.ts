@@ -56,11 +56,8 @@ interface UpdateNicknamePayload {
 // ── Mapping ──────────────────────────────────────────────────────────────────
 
 /**
- * `SavedCardResponse` fields are typed as non-null `String`/`Integer` on the backend, but nothing
- * stops a malformed response (a bug, a bad migration, a proxy mangling the body) from sending
- * `null`/missing values on the wire, which JSON has no way to rule out at the type level. Every
- * field read here is defended so one bad card degrades gracefully (an empty label, a blank
- * expiry) instead of throwing inside `.map()` and losing every OTHER card in the wallet too.
+ * Every field is defended against a malformed `null`/missing value, so one bad card degrades (an
+ * empty label, a blank expiry) instead of throwing inside `.map()` and losing the whole wallet.
  */
 function safeString(value: unknown): string {
   return typeof value === "string" ? value : ""
@@ -101,9 +98,7 @@ export function mapApiCard(card: ApiSavedCard): SavedPaymentMethod {
 class PaymentMethodsAPI {
   async getSavedCards(): Promise<SavedPaymentMethod[]> {
     const response = await apiClient.get<SavedCardListResponse>("/cards")
-    // A missing/null/non-array `cards` field (a broken 200 body) would otherwise throw inside
-    // `.map()` and take down the whole wallet page behind a generic "failed to load" toast — see
-    // TEST-FINDINGS.md F77/F83 for the same pattern in orders and product listing.
+    // A non-array `cards` (malformed 200) would otherwise throw in `.map()` and take down the wallet page.
     const cards = Array.isArray(response.data?.cards) ? response.data.cards : []
     return cards.map(mapApiCard)
   }

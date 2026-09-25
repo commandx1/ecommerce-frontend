@@ -15,9 +15,7 @@ function normalizeGeoParams(params: { daysFromNow?: number }): { daysFromNow: nu
   return { daysFromNow: params.daysFromNow ?? null }
 }
 
-/** View-model params for the vendor products list query (S9). Every field is required (use
- * `null`, never omit) so two callers can never drift into two different-looking keys for the
- * same request. */
+/** Every field is required (`null`, never omitted) so two callers cannot drift into two keys for one request. */
 export type VendorProductListParams =
   | {
       view: "review"
@@ -55,8 +53,7 @@ export interface VendorQuestionListParams {
   filter: QuestionFilter
 }
 
-/** Params for the buyer's own orders list (Phase 4 §2.1). Every field is required (`null` when
- * unset), same convention as `VendorOrderListParams`. */
+/** Every field is required (`null` when unset), same convention as `VendorOrderListParams`. */
 export interface BuyerOrderListParams {
   page: number
   size: number
@@ -66,8 +63,7 @@ export interface BuyerOrderListParams {
   orderId: string | null
 }
 
-/** Params for the public vendor directory (`getVendors`, Phase 4 §2.1, wired up in step D1).
- * Mirrors `VendorListParams` (`lib/api/vendors.ts`) with every field required. */
+/** Mirrors `VendorListParams` (`lib/api/vendors.ts`) with every field required. */
 export interface VendorDirectoryParams {
   page: number
   size: number
@@ -77,12 +73,8 @@ export interface VendorDirectoryParams {
 }
 
 /**
- * Central query key factory. Cart keys in particular must be invalidated from products,
- * buyer-orders and checkout code, so a single file keeps the invalidation map auditable
- * (see the Phase 2 design doc, §4). Vendor keys live here (Phase 3 §3.1); the old
- * `vendorProductStatsQueryKey` / `userProductBrandsQueryKey` / `vendorDocumentsQueryKey` /
- * `documentProductsQueryKey` exports in `src/lib/api/*.ts` are gone - this is their only home
- * now. Notifications keys are re-exported as-is (physical move in Phase 3).
+ * Central query key factory. Cart keys in particular are invalidated from products, buyer-orders
+ * and checkout code, so a single file keeps the invalidation map auditable.
  */
 export const queryKeys = {
   cart: {
@@ -99,8 +91,7 @@ export const queryKeys = {
     all: ["payment-methods"] as const,
     // GET /orders/saved-cards
     checkoutSavedCards: () => ["payment-methods", "checkout-saved-cards"] as const,
-    // GET /cards (Phase 4 §2.1) - the buyer's saved wallet, read by the payment-methods page
-    // and by auto-orders readiness.
+    // GET /cards - the buyer's wallet, read by the payment-methods page and auto-orders readiness.
     cards: () => ["payment-methods", "cards"] as const,
   },
   orders: {
@@ -112,9 +103,8 @@ export const queryKeys = {
     all: ["auto-orders"] as const,
     list: () => ["auto-orders", "list"] as const,
   },
-  // Role-neutral account resources read by more than one surface (checkout, buyer settings,
-  // vendor settings, the vendor header) - see Phase 4 design doc §2.1 for why these are not
-  // namespaced under `buyer`/`vendor`.
+  // Role-neutral account resources read by more than one surface (checkout, buyer and vendor
+  // settings, the vendor header), so not namespaced under `buyer`/`vendor`.
   company: {
     all: ["company"] as const,
     me: () => ["company", "me"] as const,

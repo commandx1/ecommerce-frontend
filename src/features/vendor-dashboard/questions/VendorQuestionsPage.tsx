@@ -46,12 +46,8 @@ export default function VendorQuestionsPage() {
           title="Product Questions"
           description="Answer customer questions about your products"
           actions={
-            // Reserved while the counts are in flight. On mobile SectionHeading stacks its
-            // actions under the description, so the "N unanswered" badge appearing after the
-            // fetch pushed the whole questions panel down ~62px - measured as the single source
-            // of this route's 0.176 mobile CLS (desktop keeps actions inline, so it read 0.0005).
-            // The trade is deliberate: a vendor with nothing unanswered now sees the placeholder
-            // collapse instead, and this page exists for the unanswered case.
+            // Reserved while the counts load: on mobile the badge appearing late pushed the panel
+            // down ~62px (the route's whole 0.176 CLS). Collapsing it for zero unanswered is the trade.
             isLoading ? (
               <Skeleton className="h-11 w-40 rounded-2xl" />
             ) : counts && counts.unanswered > 0 ? (
@@ -117,10 +113,8 @@ export default function VendorQuestionsPage() {
           )}
         </div>
 
-        {/* The pagination row is reserved while loading instead of being left out entirely.
-            Rendering nothing here meant the bar popped in underneath the results once the fetch
-            landed and pushed everything below it down - a layout shift that had nothing to do
-            with how many results came back. Mirrors DashboardPagination's own border-t + p-4. */}
+        {/* The pagination row is reserved while loading so it does not pop in and shift the page.
+            Mirrors DashboardPagination's own border-t + p-4. */}
         {isLoading ? (
           <div
             aria-hidden="true"

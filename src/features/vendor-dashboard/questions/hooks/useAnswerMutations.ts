@@ -29,10 +29,8 @@ export interface AnswerMutations {
 }
 
 /**
- * Cache patches match today's page-local `setQuestions` updates exactly (design §3.3): create
- * and delete both patch the active list and invalidate the counts query once; update only
- * patches the list - the page never refetched counts after an edit, only after a create/delete
- * changed the unanswered total.
+ * Create and delete patch the active list and invalidate the counts query once; update only patches
+ * the list (an edit cannot change the unanswered total).
  */
 export function useAnswerMutations(listParams: QuestionsListParams): AnswerMutations {
   const queryClient = useQueryClient()

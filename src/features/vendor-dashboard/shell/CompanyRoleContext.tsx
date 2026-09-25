@@ -14,10 +14,8 @@ interface CompanyRoleContextValue {
 const CompanyRoleContext = createContext<CompanyRoleContextValue | null>(null)
 
 /**
- * Reads the same `company.me` cache entry as `CompanyInfoCard` (Phase 4 §2.1/K0, C3b/D1): a
- * company save writes that entry directly, so the vendor sidebar and welcome header pick up the
- * new name as soon as the save resolves, without waiting for a reload. `staleTime`/`gcTime: 0`
- * (§2.2) means this still issues its own GET on every mount, same request count as before.
+ * Reads the same `company.me` cache entry as `CompanyInfoCard`, so a company save shows up in the
+ * vendor sidebar and welcome header as soon as it resolves, without a reload.
  */
 export function CompanyRoleProvider({ children }: { children: ReactNode }) {
   const companyQuery = useQuery(companyMeOptions())

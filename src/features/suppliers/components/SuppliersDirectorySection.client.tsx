@@ -61,7 +61,7 @@ export default function SuppliersDirectorySection() {
     [currentPage, selectedSort, selectedRating],
   )
   const directoryQuery = useQuery(vendorsDirectoryOptions(directoryParams))
-  // Array.isArray, not `?? []` - see infra note #26.
+  // Array.isArray, not `?? []`: a malformed 200 can carry a wrong-typed value.
   const vendors = Array.isArray(directoryQuery.data?.vendors) ? directoryQuery.data.vendors : []
   const totalCount = directoryQuery.data?.totalCount ?? 0
   const totalPages = directoryQuery.data?.totalPages ?? 1
@@ -347,11 +347,8 @@ export default function SuppliersDirectorySection() {
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
                 href="/register"
-                // `text-neutral-100` is raw Tailwind, not a token, and it put near-white text on
-                // `--accent-strong` - a 77.9% lightness lime. axe flagged it as `color-contrast`
-                // (serious) on /vendors and /suppliers. `text-accent-foreground` is the pairing
-                // this palette defines for that background (it resolves to `--brand-strong`), and
-                // it is what QuickReorder and not-found.tsx already use with `bg-accent-strong`.
+                // `text-accent-foreground` is the palette's pairing for `bg-accent-strong`; raw
+                // near-white text failed AA contrast on the lime.
                 className="rounded-full px-8 py-3 text-sm font-semibold bg-accent-strong text-accent-foreground transition-transform hover:-translate-y-0.5"
               >
                 Create Free Account

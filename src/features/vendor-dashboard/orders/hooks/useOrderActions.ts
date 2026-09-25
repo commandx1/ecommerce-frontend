@@ -35,13 +35,10 @@ export interface OrderActions {
 }
 
 /**
- * Cache patches match today's page-local `setOrders` updates exactly (design §3.3): each action
- * patches the active orders list via `lib/order-patches` and invalidates every other mounted
- * orders view without forcing it to refetch immediately (`refetchType: "none"`) - the same
- * "patches without a refetch" contract the request-count tests in `VendorOrdersPage.test.tsx`
- * characterize. Per-item/per-order "in flight" state stays local (mirrors the old page's own
- * state, not `mutation.isPending`) because several rows can independently trigger the *same*
- * cancel mutation and each needs its own disabled state.
+ * Each action patches the active orders list via `lib/order-patches` and marks every other orders
+ * view stale without refetching it. Per-item/per-order "in flight" state is local (not
+ * `mutation.isPending`) because several rows can trigger the same cancel mutation and each needs
+ * its own disabled state.
  */
 export function useOrderActions(listParams: VendorOrderListParams): OrderActions {
   const queryClient = useQueryClient()

@@ -71,10 +71,8 @@ export default function DataTable<TData>({
       aria-busy={isLoading || undefined}
       className={cn("w-full border-collapse text-center", minTableWidthClassName, tableClassName)}
     >
-      {/* The loading announcement lives in a <caption>, not a body <tr>. As a row it was a real,
-          non-aria-hidden row, so every caller counting rows with getAllByRole("row") to wait for
-          real data resolved one row early - DocumentProductsPanel had to hand-roll its own
-          skeleton to dodge exactly that. A caption is still announced but is not a row. */}
+      {/* The loading announcement lives in a <caption>, not a body <tr>, so callers counting rows
+          with getAllByRole("row") never see it as data. */}
       {isLoading ? <caption className="sr-only">{loadingText}</caption> : null}
       <thead>
         {table.getHeaderGroups().map((headerGroup) => (

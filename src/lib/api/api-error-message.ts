@@ -1,9 +1,4 @@
-/**
- * Moved from `app/buyer-dashboard/orders/lib/order-view-utils.ts` (Phase 4 design doc §7, step
- * O1) - a generic axios-error-body reader, not an orders concept. Lives next to `auth-error.ts`
- * since both read shape out of an unknown caught error. Used by buyer orders, vendor orders,
- * notifications and auto-orders to turn a failed write into a user-facing toast description.
- */
+/** Reads a user-facing message out of an unknown caught (axios) error, for write-failure toasts. */
 export function extractApiErrorMessage(error: unknown): string | null {
   if (!error || typeof error !== "object") return null
 

@@ -23,8 +23,7 @@ function getInitials(firstName: string | null | undefined, lastName: string | nu
 }
 
 function getOrderTotal(order: VendorOrder): number {
-  // `orderItems` missing, null, or not an array on an otherwise-valid order (malformed 200 body)
-  // would otherwise throw on `.reduce` and blank the whole dashboard (infra note #26).
+  // A malformed 200 can carry a non-array `orderItems`, which would throw on `.reduce`.
   if (!Array.isArray(order.orderItems)) return 0
   return order.orderItems.reduce((sum, item) => sum + (Number.isFinite(item.totalPrice) ? item.totalPrice : 0), 0)
 }

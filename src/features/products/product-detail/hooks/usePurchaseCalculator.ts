@@ -84,10 +84,8 @@ export const usePurchaseCalculator = ({
   const shippingPrice = shippingFeePrice + heavyShippingFeePrice
   const productTotal = unitPrice * quantity
   const subtotal = productTotal
-  // No tax is estimated here. Sales tax is address-based and the backend recalculates it with
-  // Stripe Tax at order creation (OrderCreationService.computeTaxes), so this screen - which has
-  // no address yet - cannot know it. It used to show a flat 10% of the subtotal, which is not any
-  // real rate and made the buyer read a total they would never be charged.
+  // No tax is estimated here: sales tax is address-based and computed by the backend at order
+  // creation, and this screen has no address yet.
   const total = subtotal + shippingPrice
 
   return {

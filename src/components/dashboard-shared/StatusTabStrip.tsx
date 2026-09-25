@@ -4,11 +4,7 @@ interface StatusTabStripProps<T extends string> {
   onChange: (tab: T) => void
 }
 
-/**
- * Role-agnostic status tab strip (design doc §3, Phase 4 C2). The buyer orders tab strip and the
- * vendor orders tab strip were byte-identical markup (same classes, `aria-pressed`, `mb-4`
- * wrapper); this is that markup, generalized over the tab value type.
- */
+/** Role-agnostic status tab strip shared by the buyer and vendor orders pages. */
 export default function StatusTabStrip<T extends string>({ tabs, value, onChange }: StatusTabStripProps<T>) {
   return (
     <div className="mb-4">

@@ -114,11 +114,8 @@ export interface ProcessUberDeliveriesResponse {
   message: string
   successCount: number
   failureCount: number
-  // Mirrors backend `ProcessUberDeliveriesResponse.java`: both are plain `String` fields
-  // sourced from Uber's own delivery-creation response, and the backend's own code treats
-  // them as possibly absent (`OrderUberDeliveryService` gates the tracking-link/shipping-link
-  // save on `response.getTrackingUrl() != null` / `response.getDeliveryId() != null`) - so the
-  // client cannot assume either is always present, even on a 200.
+  // Plain strings from Uber's delivery-creation response; the backend itself treats both as
+  // possibly absent, so the client cannot assume them even on a 200.
   deliveryId: string | null
   shippingPrice: number
   trackingUrl: string | null

@@ -90,8 +90,8 @@ interface UseCartPageResult {
 
 export function useCartPage(): UseCartPageResult {
   const router = useRouter()
-  // Fetch owner (design doc §5): a disabled observer on `cart.detail` plus an explicit
-  // `refreshCart()` on mount - see `useCartQueries` for why readers never fetch on their own.
+  // Fetch owner: a disabled observer on `cart.detail` plus an explicit `refreshCart()` on mount -
+  // see `useCartQueries` for why readers never fetch on their own.
   const cartQuery = useQuery({ ...cartQueryOptions(), enabled: false })
   const pendingWritesCount = useIsMutating({ mutationKey: mutationKeys.cart.all })
   // Loading = the cart GET or a cart write request is in flight.
@@ -129,9 +129,8 @@ export function useCartPage(): UseCartPageResult {
     void refreshCart()
   }, [])
 
-  // Fetch-error toast: keyed on `errorUpdatedAt` so a persisting error does not re-toast on every
-  // unrelated re-render, only when a new failure actually lands. `fetchErrorMessage` turns a
-  // cancelled/auth-handled error into silence. Intentionally keyed on `errorUpdatedAt` only.
+  // Keyed on `errorUpdatedAt` only, so a persisting error does not re-toast on every unrelated
+  // re-render - only when a new failure lands.
   // biome-ignore lint/correctness/useExhaustiveDependencies: see comment above
   useEffect(() => {
     if (!cartQuery.error) {
@@ -157,9 +156,8 @@ export function useCartPage(): UseCartPageResult {
         return
       }
 
-      // A mutation removed from the cache (cleared on logout/account switch, design doc §1.3)
-      // keeps running in the background, but its outcome must not toast into a session it no
-      // longer belongs to - same guard the old store's projection used before this hook existed.
+      // A mutation removed from the cache (logout/account switch) keeps running, but its outcome
+      // must not toast into a session it no longer belongs to.
       const isLive = event.mutation !== undefined && queryClient.getMutationCache().getAll().includes(event.mutation)
       if (!isLive) {
         return
@@ -203,7 +201,7 @@ export function useCartPage(): UseCartPageResult {
   const addressesQuery = useAddressesQuery()
   const [defaultAddressId, setDefaultAddressId] = useState<string | null>(null)
   // Selection runs once per mount, off the first settled fetch - never re-picked on a later
-  // background refetch (matches today's mount-only effect).
+  // background refetch.
   const hasSelectedDefaultAddressRef = useRef(false)
 
   useEffect(() => {
@@ -343,9 +341,8 @@ export function useCartPage(): UseCartPageResult {
 
       void (async () => {
         try {
-          // THE RACE FIX: await the actual settled licence result instead of reading
-          // `isLicenseBlocked`, which can still hold its initial "not blocked" default the
-          // instant a buyer clicks before the background licence fetch has resolved.
+          // Await the settled licence result: `isLicenseBlocked` can still hold its initial
+          // "not blocked" default if the buyer clicks before the background fetch resolves.
           const { status: resolvedStatus, checkFailed: resolvedCheckFailed } = await licenseGate.ensureChecked()
 
           if (resolvedCheckFailed || resolvedStatus !== "valid") {

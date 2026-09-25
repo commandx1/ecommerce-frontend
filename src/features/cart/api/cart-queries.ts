@@ -158,19 +158,11 @@ function autoOrderFromCart(cart: CartData, userProductId: string): AutoOrderPeri
 }
 
 /**
- * An explicit `requested` value is returned as-is, synchronously - no cache lookup. Otherwise the
- * schedule already on the cached item must be read. Whatever is cached is used AS IS, stale or
- * not: staleness doesn't matter for this read, only whether a cart exists in the cache at all, so
- * this deliberately does not go through `refreshCart()`/its 1s dedup window - the real `GET /cart`
- * is multiple seconds, and every write on the hottest path (add/update quantity without an
- * explicit schedule) would otherwise pay that latency the instant the 1s window lapses, which is
- * effectively always. Only a genuinely cold cache - nothing fetched yet, a write racing ahead of
- * the cart's first load (design doc §10.4) - awaits an ensure-fetch, and that fetch is
- * best-effort: on failure this falls back to `null`, exactly like a cold cache did before the
- * fix, rather than ever rejecting the write. Returns a plain value (not a promise) on the common,
- * already-cached path so callers can skip `await` entirely there - an `await` defers by a
- * microtask tick even for an already-resolved value, which would otherwise delay every write's
- * mutation from registering as "in flight" for no reason.
+ * An explicit `requested` value is returned as-is. Otherwise the cached item's schedule is used as
+ * is, stale or not - deliberately bypassing `refreshCart()`'s 1s window, since a multi-second
+ * `GET /cart` on every add/update would slow the hottest path. Only a cold cache awaits a
+ * best-effort ensure-fetch (falling back to `null`, never rejecting the write). The cached path
+ * returns a plain value, not a promise, so the write registers as "in flight" without a microtask delay.
  */
 function resolveAutoOrder(
   userProductId: string,
@@ -295,8 +287,5 @@ async function clearCart(): Promise<void> {
   await queryClient.invalidateQueries({ queryKey: queryKeys.cart.detail(), refetchType: "none" })
 }
 
-/**
- * Imperative cart writes (design doc §5). Each awaits its request and then a forced refresh, so
- * `await cartCommands.x()` resolves once the new cart is in the cache.
- */
+/** Imperative cart writes. Each resolves once its forced refresh has put the new cart in the cache. */
 export const cartCommands = { addItem, removeItem, updateQuantity, setItemAutoOrder, clearCart }

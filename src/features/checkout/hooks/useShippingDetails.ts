@@ -63,10 +63,7 @@ export function useShippingDetails(): UseShippingDetailsResult {
         lastName: address.fullName.split(" ").slice(1).join(" ") || "",
         street: address.addressLine,
         city: address.city,
-        // Address (backend AddressResponse) has no `state` field - this was already always
-        // `undefined` at runtime despite the old `Address.state: string` type promise; kept as
-        // "" here for the same no-value behavior now that the type says so honestly. Out of
-        // scope for this pass (cart/checkout); not otherwise touched.
+        // The backend Address has no `state` field.
         state: "",
         zipCode: address.postalCode,
         phone: address.phoneNumber,
@@ -182,12 +179,9 @@ export function useShippingDetails(): UseShippingDetailsResult {
 
       const shippoRateOrders: ShippoRateOrder[] = []
       const uberRateOrders: UberRateOrder[] = []
-      // Sellers we could not ship for. The backend builds the order purely from the products
-      // carried inside the rate orders below (OrderCreationService:163-173), and once payment
-      // succeeds it soft-deletes the ENTIRE cart, not just the ordered lines
-      // (CartService.processCartAfterPaymentSuccess:189-204). So a line dropped here is lost
-      // twice: never ordered, and gone from the cart. Final Review names them before the buyer
-      // commits, instead of letting them disappear silently.
+      // Sellers we could not ship for. The backend orders only the products inside the rate orders
+      // and soft-deletes the WHOLE cart after payment, so these lines would silently vanish - Final
+      // Review names them before the buyer commits.
       const excluded: ExcludedSellerLines[] = []
 
       Object.entries(sellerGroups).forEach(([sellerId, group]) => {
@@ -205,16 +199,9 @@ export function useShippingDetails(): UseShippingDetailsResult {
           autoOrder: item.autoOrder,
         }))
 
-        // `userId` on the wire is `group.sellerId` (the cart line's raw seller id), never the
-        // `sellerId` grouping key above — that key falls back to the seller's display name (or
-        // "Standard Seller") when the cart line carries no seller id (see the `sellerGroups`
-        // memo). Sending that fallback text through as `userId` broke the whole order: backend
-        // types `ShippoRateOrder.userId`/`UberRateOrder.userId` as `UUID`, and Jackson rejects
-        // the *entire* request body if any one field fails to parse as its declared type — a
-        // non-UUID string here 400s the whole order, not just this vendor's line. Neither
-        // `OrderCreationService` nor any other backend code calls `getUserId()` on either DTO
-        // (the one call site is commented out — `OrderUberDeliveryService.java:242`), so the
-        // field is safe to omit entirely when there is no real seller id to send.
+        // `userId` is the raw seller id, never the grouping key above (which can fall back to a
+        // display name). The backend types it as `UUID` and rejects the entire body on a non-UUID
+        // string; nothing reads the field, so it is omitted when there is no real seller id.
         const userId = group.sellerId || undefined
 
         if (selection.type === "shippo") {

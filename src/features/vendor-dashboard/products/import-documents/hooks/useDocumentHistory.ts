@@ -53,8 +53,7 @@ export function useDocumentHistory(isOpen: boolean): DocumentHistory {
     staleTime: 15_000,
   })
 
-  // Array.isArray, not `?? []` — a malformed 200 with a non-array `content` reaches .map()
-  // downstream and blanks the upload history (infra note #26).
+  // Array.isArray, not `?? []`: a malformed 200 with a non-array `content` would reach .map().
   const documents: VendorDocument[] = Array.isArray(documentsPage?.content) ? documentsPage.content : []
   const totalPages = documentsPage?.totalPages ?? 1
 

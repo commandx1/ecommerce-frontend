@@ -19,11 +19,8 @@ const EMERGENCY_CHANNELS = [
   },
   {
     title: "Priority Email",
-    // Was "urgent@dentalhub.com": a previous-brand domain, so mail sent here reached nobody.
-    // Confirmed with the product owner that no `urgent@` mailbox exists, so this is the correct
-    // destination rather than a stand-in - it is the app's one real support address, also used by
-    // not-found.tsx and the forgot-password panel. The "15-minute response" note below is the
-    // promise attached to it; if a dedicated priority mailbox is ever created, move this there.
+    // The app's one real support address (no `urgent@` mailbox exists, confirmed with the product
+    // owner). If a dedicated priority mailbox is ever created, move this there.
     value: "support@dentypro.com",
     note: "15-minute response",
     icon: Mail,

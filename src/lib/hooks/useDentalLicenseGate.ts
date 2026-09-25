@@ -13,10 +13,8 @@ interface UseDentalLicenseGateResult extends DentalLicenseCheckResult {
   isChecking: boolean
   rejectionReason: string | null
   /**
-   * Awaits the in-flight (or starts a fresh) licence lookup and resolves with the SETTLED
-   * result. This is what a click handler must await instead of reading render state: render
-   * state can still hold its initial "not yet checked" value at the instant of a fast click,
-   * which is exactly the race that used to let an unlicensed buyer reach checkout.
+   * Awaits the in-flight (or a fresh) licence lookup and resolves with the SETTLED result. A click
+   * handler must await this: render state can still hold its initial "not yet checked" value.
    */
   ensureChecked: () => Promise<DentalLicenseCheckResult>
 }

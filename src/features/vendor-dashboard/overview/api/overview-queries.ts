@@ -13,10 +13,8 @@ import { type VendorOrdersResponse, vendorOrdersAPI } from "@/lib/api/vendor-ord
 import { queryKeys } from "@/lib/query/keys"
 
 /**
- * D1 (lead decision): `staleTime: 0, gcTime: 0` on every overview/analytics query - a route
- * revisit re-fetches and shows the loading skeleton, exactly like the old per-widget effect did
- * on every mount. `retry: false`: one request, immediate error+Retry UI, same as the old bare
- * try/catch (the Retry button is what re-fetches, not an automatic retry).
+ * No caching on any overview/analytics query: a route revisit re-fetches and shows the skeleton.
+ * `retry: false` - one request, then the error+Retry UI (the Retry button re-fetches).
  */
 const PARITY_OPTIONS = { staleTime: 0, gcTime: 0, retry: false } as const
 
@@ -82,8 +80,7 @@ export function geoDistributionOptions(params: { daysFromNow?: number }, enabled
   })
 }
 
-/** RecentOrders reuses the vendor.orders.list key (design §5) - shared with the vendor orders
- * page once it migrates (S8), so an order write there can invalidate this widget too. */
+/** Reuses the vendor.orders.list key, shared with the orders page, so an order write there invalidates this widget too. */
 export function recentOrdersOptions(enabled: boolean) {
   return queryOptions<VendorOrdersResponse>({
     queryKey: queryKeys.vendor.orders.list({

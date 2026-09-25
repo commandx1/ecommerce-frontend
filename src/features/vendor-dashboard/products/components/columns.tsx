@@ -131,20 +131,10 @@ export interface UseProductColumnsParams {
 }
 
 /**
- * Builds the products-table column definitions.
- *
- * Every `header`/`cell` is either hoisted to module scope (fully static, or pure functions of
- * `row` alone) or wrapped in its own `useCallback`. This matters more than it looks: react-table's
- * `flexRender` treats a plain function as a component type, keyed by that function's *identity*.
- * The array itself is rebuilt on every render either way (cheap - it is a handful of object
- * literals), but if the `header`/`cell` value inside one of those literals were a fresh inline
- * arrow function every time, React would tear down and remount that cell's subtree — including
- * its real DOM node — on every unrelated re-render of the page, which can silently drop a click or
- * keystroke that lands between two renders (observed via `userEvent`, which drives pointer/input
- * events as a sequence rather than one synchronous `fireEvent`). All of the interactive cells
- * (price/discount/stock/fee inputs, status, actions) additionally read the *current* editing state
- * off a ref rather than closing over it directly, so their `useCallback` dependency stays limited
- * to the handful of caller-supplied callbacks and never changes on every keystroke.
+ * Builds the products-table column definitions. Every `header`/`cell` is hoisted to module scope or
+ * wrapped in `useCallback`: `flexRender` keys a cell by its function's identity, so a fresh inline
+ * arrow would remount the cell's DOM on every re-render and can drop a click or keystroke. The
+ * interactive cells read the current editing state off a ref, so their callbacks never change per keystroke.
  */
 export function useProductColumns(params: UseProductColumnsParams): Array<ColumnDef<ProductWithDetails, unknown>> {
   const {

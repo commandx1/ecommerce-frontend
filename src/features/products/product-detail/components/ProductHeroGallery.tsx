@@ -24,23 +24,15 @@ const ProductHeroGallery = ({ title, sku, mainImage, thumbnailImages, badge, pro
 
   return (
     <div className="min-w-0 space-y-4">
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: onMouseMove/onMouseLeave here only
-          track cursor position for the hover magnifier - no keyboard equivalent is meaningful
-          (there's nothing to "activate"), so no ARIA widget role fits. `role="img"` used to sit
-          here to satisfy this rule, but it also wrapped the real "Toggle magnifier" `<button>`
-          below, which axe flags as `nested-interactive` (role="img" can't contain focusable
-          content). `role="group"`/"region" would satisfy the linter but add a fake landmark/group
-          semantic with no real grouping purpose, which is worse than an explicit ignore here. */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: the mouse handlers only track the cursor
+          for the hover magnifier - there is nothing to activate by keyboard. `role="img"` cannot sit
+          here because it would wrap the magnifier <button> (axe `nested-interactive`). */}
       <div
         className="relative overflow-hidden rounded-4xl border border-border-soft bg-surface-elevated shadow-panel"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        {/* `role="img"` lives here instead, on the element that wraps ONLY the picture. An
-            element with role="img" isn't allowed to contain focusable/interactive content (axe
-            `nested-interactive`): AT treats its subtree as a single image, so a button inside it
-            becomes unreachable. Moving the role down here fixes that while keeping the exact
-            same visual layout - only the ARIA role/label attributes moved. */}
+        {/* `role="img"` wraps ONLY the picture, since it may not contain interactive content. */}
         <div className="aspect-square relative p-4 sm:p-6 md:p-8" role="img" aria-label="Product image with magnifier">
           <LoadableImage
             ref={imageRef}

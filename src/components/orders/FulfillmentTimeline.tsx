@@ -134,10 +134,8 @@ function FulfillmentTimelineView({ steps }: { steps: HorizontalTimelineStep[] })
 }
 
 export default function FulfillmentTimeline({ item: rawItem, orderDate }: FulfillmentTimelineProps) {
-  // `item.status` is non-nullable in the type, but a corrupted 200 body (same failure class as
-  // TEST-FINDINGS.md #26) can still send it as `null`/missing. Both this component and
-  // `resolveOrderItemFulfillmentState` call `.toUpperCase()` on it unconditionally - sanitize once
-  // at the boundary instead of duplicating the guard at every call site.
+  // `item.status` is non-nullable in the type, but a corrupted 200 can still send `null`. Both this
+  // component and `resolveOrderItemFulfillmentState` call `.toUpperCase()` on it - sanitize once here.
   const item: FulfillmentTimelineItem = {
     ...rawItem,
     status: typeof rawItem.status === "string" ? rawItem.status : "",

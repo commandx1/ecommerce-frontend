@@ -11,14 +11,10 @@ export interface VendorProductsListResult {
 }
 
 /**
- * One query serves both views of the products list (design §3.1's `VendorProductListParams`
- * union): the review queue reads `GET /api/products/my-products`, everything else reads
- * `GET /api/user-products/filter`. Both branches are mapped to the same `VendorProductsListResult`
- * shape here so the hook and its cache patches never need to branch on `params.view` again.
- *
- * D1 (lead decision): `staleTime: 0, gcTime: 0` — a route revisit refetches and, like every
- * filter/sort/page change, keeps the previous page's rows on screen via `keepPreviousData` while
- * the new one loads (today's `isFetching` overlay), rather than clearing to a skeleton.
+ * One query serves both views of the products list: the review queue reads
+ * `GET /api/products/my-products`, everything else `GET /api/user-products/filter`. Both map to
+ * `VendorProductsListResult` so the hook and its cache patches never branch on `params.view`.
+ * `keepPreviousData` keeps the previous page's rows on screen while a new one loads.
  */
 export function vendorProductsListOptions(
   params: VendorProductListParams,
@@ -77,9 +73,8 @@ export function vendorProductsListOptions(
 }
 
 /**
- * The vendor's brand list barely moves and the filter needs it on every visit, so it stays
- * cached across mounts (unchanged from the page's own query before this moved here). A failure
- * degrades to an empty option list rather than blocking the page.
+ * The brand list barely moves and the filter needs it on every visit, so it stays cached across
+ * mounts. A failure degrades to an empty option list rather than blocking the page.
  */
 export function vendorProductBrandsOptions(enabled: boolean, accessToken: string | null) {
   return queryOptions<string[]>({

@@ -4,11 +4,8 @@ import { queryKeys } from "@/lib/query/keys"
 import { getQueryClient } from "@/lib/query/query-client"
 
 /**
- * `GET /auto-orders` (Phase 4 design doc §2.1/B3). `staleTime: 0, gcTime: 0, retry: false`
- * (§2.2 fetch policy parity): every mount fetches once, and a failure goes straight to the
- * page's existing toast. The `Array.isArray` guard replaces the old hook's `?? []` fallback -
- * a malformed 200 carrying a wrong-typed truthy value must not reach `.map()`/`.length` in the
- * list (infra note #26).
+ * Every mount fetches once and a failure goes straight to the page's toast (no retry). A malformed
+ * 200 carrying a wrong-typed value must not reach `.map()`/`.length` in the list.
  */
 export function autoOrdersListOptions(enabled = true) {
   return queryOptions<AutoOrder[]>({
@@ -36,11 +33,7 @@ function removeAutoOrder(autoOrderId: string): void {
   )
 }
 
-/**
- * Readiness refetch (§2.3): "On update failure: `refetchQueries(addresses.list)` +
- * `refetchQueries(paymentMethods.cards)` (today: `fetchReadiness()`)". Both share options
- * objects with checkout and the payment-methods page (K0), so this reaches every reader.
- */
+/** Both entries are shared with checkout and the payment-methods page, so this reaches every reader. */
 async function refetchReadiness(): Promise<void> {
   await Promise.all([
     getQueryClient().refetchQueries({ queryKey: queryKeys.addresses.list() }),
@@ -49,9 +42,8 @@ async function refetchReadiness(): Promise<void> {
 }
 
 /**
- * Auto-order writes (Phase 4 §2.3/B3). Update/delete patch the list cache directly (no extra
- * GET, matching the old hook's local `setAutoOrders`); an update failure additionally refetches
- * the two readiness reads, same as the old `fetchReadiness()` call in the failure branch.
+ * Update/delete patch the list cache directly (no extra GET); an update failure also refetches the
+ * two readiness reads.
  */
 export const autoOrdersCommands = {
   async updateAutoOrder(autoOrderId: string, payload: UpdateAutoOrderPayload): Promise<AutoOrder> {

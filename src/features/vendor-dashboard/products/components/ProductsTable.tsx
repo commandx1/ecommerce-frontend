@@ -19,8 +19,7 @@ interface ProductsTableProps {
   onRowClick: (row: Row<ProductWithDetails>, event: MouseEvent<HTMLTableRowElement>) => void
 }
 
-/** The list body: the failed-to-load banner, or the table with the same fetching-overlay
- * treatment the page applied inline before this was extracted. */
+/** The failed-to-load banner, or the table with its fetching overlay. */
 export default function ProductsTable({
   columns,
   rows,

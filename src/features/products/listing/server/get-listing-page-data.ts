@@ -22,15 +22,9 @@ export interface ListingPageData {
 }
 
 /**
- * Fans out six server-side fetches in a single `Promise.all`. The product-list call
- * (`getPublicProducts`) is NOT caught here: if it rejects, the rejection propagates out of this
- * function and up to `src/app/products/page.tsx`, whose `try/catch` renders
- * `<ProductListingErrorState />` — a failed product list must be shown to the user, not hidden
- * behind an empty grid (product decision, 3 Sep 2026).
- *
- * The five filter-facet fetchers (brands, manufacturers, categories, vendors, attributes) keep
- * their existing graceful degradation — each already catches internally and resolves to `[]` on
- * failure, so a facet outage never takes down the whole page.
+ * Fans out six server-side fetches in one `Promise.all`. The product-list call is NOT caught: a
+ * failed list must reach `app/products/page.tsx`'s error state, not hide behind an empty grid. The
+ * five facet fetchers already resolve to `[]` on failure, so a facet outage never breaks the page.
  */
 export async function getListingPageData({
   apiPage,
@@ -69,8 +63,7 @@ export async function getListingPageData({
   ])
 
   return {
-    // `|| []` only catches null/undefined - a malformed 200 carrying an object or string here
-    // reached .map() and took down the whole listing page (infra note #26).
+    // Array.isArray, not `|| []`: a malformed 200 carrying an object or string would reach .map().
     products: Array.isArray(productsResponse.content) ? productsResponse.content : [],
     totalElements: productsResponse.totalElements || 0,
     totalPages: productsResponse.totalPages || 1,

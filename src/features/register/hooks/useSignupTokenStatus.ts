@@ -9,16 +9,13 @@ const INVALID_TOKEN_MESSAGE =
 export interface UseSignupTokenStatusResult {
   tokenStatus: SignupTokenStatus
   tokenErrorMessage: string | undefined
-  /** Lets a later submit failure (e.g. "Invalid signup token" from the server) invalidate an
-   * already-"valid" token, same as the original inline effect's error branch did. */
+  /** Lets a later submit failure (e.g. "Invalid signup token") invalidate an already-"valid" token. */
   markInvalid: () => void
 }
 
 /**
- * One-shot validate-token effect (Phase 4 §6, D3), split out of the old useRegisterForm. Stays
- * imperative (not Query, per the design's general rule for one-shot auth commands, §5): there is
- * exactly one reader, and a token is either checked once on mount or invalidated by a submit
- * failure - never re-read.
+ * One-shot token validation on mount. Imperative rather than a query: there is exactly one reader,
+ * and a token is never re-read - only invalidated by a submit failure.
  */
 export function useSignupTokenStatus(token: string | undefined): UseSignupTokenStatusResult {
   const [tokenStatus, setTokenStatus] = useState<SignupTokenStatus>("idle")

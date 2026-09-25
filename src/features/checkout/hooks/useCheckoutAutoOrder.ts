@@ -26,12 +26,9 @@ export interface CheckoutAutoOrderState {
 }
 
 /**
- * The recurring lines the buyer picked in the cart, plus the ability to change or cancel a
- * schedule from Final Review (step 4). Checkout used to only READ these — that stopped being true
- * once the per-line controls landed here, because a write must reach both the live cart (so the
- * next `GET /cart` reflects it) AND the frozen `orderPayload` snapshot `useFinalReview` actually
- * sends (`checkoutStore.setPayloadAutoOrder`) — the snapshot is captured at the shipping step and
- * is never re-derived from the cart before `placeOrder`.
+ * The recurring lines the buyer picked in the cart, plus changing or cancelling a schedule from
+ * Final Review. A write must reach both the live cart and the frozen `orderPayload` snapshot
+ * `useFinalReview` sends (`checkoutStore.setPayloadAutoOrder`), which is never re-derived from the cart.
  */
 export function useCheckoutAutoOrder(): CheckoutAutoOrderState {
   const items = useCartItems()

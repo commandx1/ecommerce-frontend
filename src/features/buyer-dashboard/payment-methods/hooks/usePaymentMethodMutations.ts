@@ -37,10 +37,9 @@ export interface UsePaymentMethodMutationsResult {
 }
 
 /**
- * Every action on an existing card (Phase 4 §7, B2b) - rename/set-default patch the query cache
- * locally (no GET), the rest invalidate it (one GET), matching `paymentMethodsCommands` and the
- * B2a request-count characterization. `methodCount` only gates the "can't remove the last card"
- * guard, the one piece of validation that lived on the old page rather than the backend.
+ * Every action on an existing card: rename/set-default patch the cache (no GET), the rest
+ * invalidate it (one GET). `methodCount` gates the "can't remove the last card" guard, the only
+ * validation that is not the backend's.
  */
 export function usePaymentMethodMutations(methodCount: number): UsePaymentMethodMutationsResult {
   const stripe = useStripe()

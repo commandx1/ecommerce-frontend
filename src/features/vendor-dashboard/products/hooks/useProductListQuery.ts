@@ -54,11 +54,9 @@ export interface ProductListQueryResult {
 }
 
 /**
- * Owns every filter/sort/page/view piece of state the list request depends on, builds the
- * `VendorProductListParams` key (design §3.1) and runs the query. Failure semantics (design
- * §3.2): a non-auth-handled error renders an empty table with `fetchError` (the page shows the
- * "Failed to load" banner); an auth-handled 401/403 leaves the vendor on the page mid-redirect
- * with no banner, matching the axios interceptor's own logout.
+ * Owns the filter/sort/page/view state, builds the `VendorProductListParams` key and runs the
+ * query. A non-auth error renders an empty table with `fetchError` (the "Failed to load" banner);
+ * an auth-handled 401/403 shows no banner while the interceptor redirects.
  */
 export function useProductListQuery(): ProductListQueryResult {
   const searchParams = useSearchParams()
@@ -107,11 +105,9 @@ export function useProductListQuery(): ProductListQueryResult {
   const enabled = Boolean(isAuthenticated && accessToken)
   const listQuery = useQuery(vendorProductsListOptions(listParams, enabled, accessToken))
 
-  // Stabilized with `useCallback` (every one of these closes only over `set*` state setters,
-  // which React itself guarantees are stable) so a table column built from them can be
-  // `useMemo`-d in `components/columns.tsx` — without that, react-table's `flexRender` treats
-  // each header as a brand-new component on every unrelated re-render, remounting the header
-  // `<button>` mid-click and silently dropping the interaction (see that file for detail).
+  // Stable callbacks (they close only over state setters) so header cells built from them keep
+  // their identity - `flexRender` remounts a header whose function changes, dropping a mid-click
+  // interaction (see `components/columns.tsx`).
   const handleFilterChange = useCallback((filter: FilterType) => {
     setSelectedFilter(filter)
     setCurrentPage(0)
@@ -186,8 +182,8 @@ export function useProductListQuery(): ProductListQueryResult {
     totalPages: listQuery.data?.totalPages ?? 0,
     totalElements: listQuery.data?.totalElements ?? 0,
     rows: listQuery.data?.rows ?? [],
-    // Mutually exclusive with `isFetching`, same as the page's old isLoading/isFetching split:
-    // only the very first fetch (nothing cached yet) shows the full skeleton text.
+    // Mutually exclusive with `isFetching`: only the very first fetch (nothing cached yet) shows
+    // the full skeleton text.
     isLoading: listQuery.isPending && enabled,
     isFetching: listQuery.isFetching && !listQuery.isPending,
     fetchError,

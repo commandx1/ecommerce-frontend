@@ -52,10 +52,8 @@ const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }:
               />
             </div>
           )}
-          {/* `relative` + an absolutely positioned badge: the Best Seller pill used to sit inline
-              next to the name, which widened the Supplier column and pushed the centred
-              logo/name block sideways on the one row that has it. Taking it out of flow pins
-              it under the name so badged and un-badged rows line up identically. */}
+          {/* The Best Seller badge is out of flow, pinned under the name, so badged and un-badged
+              rows line up identically. */}
           <div className="relative">
             <div className="font-semibold text-text-primary">{supplier.name}</div>
             {isBestSeller && (

@@ -25,14 +25,9 @@ export interface DashboardAuthGuardResult {
 }
 
 /**
- * Extracted from `app/{buyer,vendor}-dashboard/layout.tsx` (Phase 4 design doc §4.2/G2).
- * Behaviour matches the pre-extraction code - see both layouts' `layout.test.tsx` (written
- * against the pre-extraction code, and still passing unmodified) for the oracle - except for one
- * deliberate fix (G3, design doc §9 D3): the hydration-wait timer is cleared on effect cleanup,
- * so a store change inside that window can no longer leave a stale, superseded redirect pending
- * on top of the one the re-run already issues. Reads the `auth-storage` cookie once per effect
- * run; a cookie that already shows the right role waits `HYDRATION_WAIT_MS` for the Zustand
- * store to catch up before trusting it, everything else resolves synchronously off the store.
+ * Shared auth gate for the buyer and vendor dashboard layouts. Reads the `auth-storage` cookie
+ * once per effect run; a cookie that already shows the right role waits `HYDRATION_WAIT_MS` for
+ * the Zustand store to catch up before trusting it, everything else resolves synchronously.
  */
 export function useDashboardAuthGuard(role: DashboardRole): DashboardAuthGuardResult {
   const router = useRouter()
@@ -41,15 +36,13 @@ export function useDashboardAuthGuard(role: DashboardRole): DashboardAuthGuardRe
   const wasAuthenticatedRef = useRef(false)
   const policy = DASHBOARD_ACCESS_POLICIES[role]
 
-  // Render-time, not effect-time (Phase 4 §4.1): tracks whether this mount has EVER seen an
-  // authenticated store, so a later logout still redirects a buyer to "/" instead of "/login".
+  // Render-time, not effect-time: tracks whether this mount has EVER seen an authenticated
+  // store, so a later logout still redirects a buyer to "/" instead of "/login".
   if (isAuthenticated && user) {
     wasAuthenticatedRef.current = true
   }
 
-  // `policy` is a stable per-role constant (not per-render), so omitting it changes nothing;
-  // deps are pinned to `[user, isAuthenticated, router]` to match the pre-extraction effect
-  // exactly (see G1's layout.test.tsx).
+  // `policy` is a stable per-role constant, so omitting it changes nothing.
   // biome-ignore lint/correctness/useExhaustiveDependencies: policy is stable per role, see above
   useEffect(() => {
     let raw: string | null
@@ -72,11 +65,9 @@ export function useDashboardAuthGuard(role: DashboardRole): DashboardAuthGuardRe
       return
     }
 
-    // decision.kind === "await-hydration". Cleared on cleanup (G3): without this, a store
-    // change that lands before this timer fires (e.g. a logout inside the 100ms window) leaves
-    // it pending - it still fires later against whatever the store looks like by then and can
-    // push a second, stale redirect on top of the one the re-run already issued (design doc §9
-    // D3: on vendor this used to be `/login` immediately, then a stale `/buyer-dashboard`).
+    // decision.kind === "await-hydration". Cleared on cleanup: otherwise a store change inside
+    // the wait (e.g. a logout) leaves this timer to push a second, stale redirect on top of the
+    // one the re-run already issued.
     const timer = setTimeout(() => {
       const after = decideAfterHydration(policy, useAuthStore.getState().user, wasAuthenticatedRef.current)
       if (after.kind === "redirect") {

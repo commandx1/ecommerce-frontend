@@ -21,9 +21,8 @@ const PRODUCTS_PATH = "/vendor-dashboard/products"
 const loadFailureMessage = (error: unknown) => (error as { message?: string })?.message || "Failed to load product data"
 
 /**
- * Seeds the form once for plain edit or review edit. Imperative rather than a query (design
- * §3.2): the data seeds editable local state, and a failure toasts and returns to the products
- * list instead of retrying. A token change re-runs the load, as it always has.
+ * Seeds the form once for plain edit or review edit. Imperative rather than a query: the data seeds
+ * editable local state, and a failure toasts and returns to the products list. A token change re-runs it.
  */
 export function useProductEditorLoad(
   modeInfo: ProductEditorModeInfo,

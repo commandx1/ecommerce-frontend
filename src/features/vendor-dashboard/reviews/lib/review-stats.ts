@@ -26,11 +26,7 @@ export function filterReviewsByStar(reviews: VendorReviewItem[], selectedStar: n
   return selectedStar === null ? reviews : reviews.filter((review) => review.star === selectedStar)
 }
 
-/**
- * A broken 200 body (non-array `reviews`) must not white-screen the page - same class of bug as
- * the vendor orders/brand-filter fixes (F77/F83). `?? []` alone only guards null/undefined, not a
- * wrong-typed truthy value.
- */
+/** A malformed 200 (non-array `reviews`) must not white-screen the page; `?? []` only guards null/undefined. */
 export function normalizeReviews(reviews: unknown): VendorReviewItem[] {
   return Array.isArray(reviews) ? (reviews as VendorReviewItem[]) : []
 }

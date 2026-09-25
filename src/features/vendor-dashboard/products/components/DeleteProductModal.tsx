@@ -10,10 +10,7 @@ interface DeleteProductModalProps {
   productName: string
 }
 
-/**
- * Visually distinct from the shared `components/feedback/ConfirmationModal` (P4 question in the
- * design), so this stays its own component rather than switching to it now.
- */
+/** Visually distinct from the shared `ConfirmationModal`, so it stays its own component. */
 export default function DeleteProductModal({ isOpen, onClose, onConfirm, productName }: DeleteProductModalProps) {
   return (
     <Modal

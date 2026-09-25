@@ -97,8 +97,7 @@ const InventoryStatus = () => {
           <div className="mt-6">
             <h3 className="mb-3 font-semibold text-text-primary">Critical Stock Alerts</h3>
             <div className="space-y-2">
-              {/* An empty list under the heading used to render as blank space, which reads like
-                  the panel failed to load rather than "there is nothing to report". */}
+              {/* An empty list must read as "nothing to report", not as a failed load. */}
               {criticalAlerts.length === 0 ? (
                 <p className="text-sm text-text-secondary">No critical stock alerts right now.</p>
               ) : (
