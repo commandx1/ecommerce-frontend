@@ -41,6 +41,20 @@ const serveCards = (...cards: ReturnType<typeof makeApiSavedCard>[]) => {
   server.use(http.get("*/backend-api/cards", () => HttpResponse.json({ cards, total: cards.length })))
 }
 
+/** Counts every `GET /cards` the page makes - the characterization B2b's Query migration must
+ * match: `refreshMethods()` (add, upgrade, set/stop auto-order card, delete) means one extra GET
+ * after the mutation; a local `setMethods` patch (rename, set default) means none. */
+const serveCardsWithGetCount = (...cards: ReturnType<typeof makeApiSavedCard>[]) => {
+  const state = { count: 0 }
+  server.use(
+    http.get("*/backend-api/cards", () => {
+      state.count += 1
+      return HttpResponse.json({ cards, total: cards.length })
+    }),
+  )
+  return state
+}
+
 const twoCards = () => [
   makeApiSavedCard({
     id: "pm-1",
@@ -463,5 +477,198 @@ describe("BuyerPaymentMethodsPage", () => {
     expect(await screen.findByRole("heading", { name: "Main Clinic Card" })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Mystery Card" })).toBeInTheDocument()
     expect(screen.getByText("2 cards")).toBeInTheDocument()
+  })
+
+  // Phase 4 step B2a: `GET /cards` request counts per command, characterizing today's
+  // `refreshMethods()` (refetch) vs local-`setMethods` (patch) split before the Query migration.
+  describe("GET /cards request counts", () => {
+    it("initial load: exactly one GET", async () => {
+      const getCount = serveCardsWithGetCount(...twoCards())
+
+      render(<BuyerPaymentMethodsPage />)
+
+      await screen.findByRole("heading", { name: "Payment Methods" })
+      await waitFor(() => expect(getCount.count).toBe(1))
+    })
+
+    it("a failed load makes exactly one request attempt, not a retry loop", async () => {
+      const attempts = { count: 0 }
+      server.use(
+        http.get("*/backend-api/cards", () => {
+          attempts.count += 1
+          return new HttpResponse(null, { status: 500 })
+        }),
+      )
+
+      render(<BuyerPaymentMethodsPage />)
+
+      await waitFor(() =>
+        expect(toastSpies.error).toHaveBeenCalledWith("Failed to load", "Could not fetch payment methods."),
+      )
+      expect(attempts.count).toBe(1)
+    })
+
+    it("add card: 2 GETs total (initial + refreshMethods after save)", async () => {
+      const user = userEvent.setup()
+      const getCount = serveCardsWithGetCount(...twoCards())
+      server.use(
+        http.post("*/backend-api/cards/setup-intent/:openToAutoPayment", () =>
+          HttpResponse.json({ setupIntentId: "seti_1", clientSecret: "seti_1_secret" }),
+        ),
+        http.post("*/backend-api/cards", () =>
+          HttpResponse.json(makeApiSavedCard({ id: "pm-3", name: "Travel Card" })),
+        ),
+      )
+      stripeRef.current.confirmCardSetup.mockResolvedValue({
+        setupIntent: { ...stripeSetupIntent().setupIntent, payment_method: "pm_stripe_123" },
+      })
+
+      render(<BuyerPaymentMethodsPage />)
+      await waitFor(() => expect(getCount.count).toBe(1))
+
+      await user.click(await screen.findByRole("button", { name: "Add New Card" }))
+      await user.type(await screen.findByPlaceholderText("e.g. Main Clinic Card"), "Travel Card")
+      await user.click(screen.getByRole("button", { name: "Save Card" }))
+
+      await waitFor(() => expect(toastSpies.success).toHaveBeenCalledWith("Card added", expect.any(String)))
+      expect(getCount.count).toBe(2)
+    })
+
+    it("enable automatic payments (upgrade): 2 GETs total", async () => {
+      const user = userEvent.setup()
+      const getCount = serveCardsWithGetCount(...twoCards())
+      server.use(
+        http.post("*/backend-api/cards/:cardId/auto-payment-upgrade/setup-intent", () =>
+          HttpResponse.json({ setupIntentId: "seti_upgrade", clientSecret: "seti_upgrade_secret" }),
+        ),
+        http.post("*/backend-api/cards/:cardId/auto-payment-upgrade/confirm", () =>
+          HttpResponse.json(makeApiSavedCard({ id: "pm-2", openToAutoPayment: true })),
+        ),
+      )
+
+      render(<BuyerPaymentMethodsPage />)
+      await waitFor(() => expect(getCount.count).toBe(1))
+
+      await user.click(await screen.findByRole("button", { name: "Enable automatic payments" }))
+
+      await waitFor(() =>
+        expect(toastSpies.success).toHaveBeenCalledWith("Automatic payments enabled", expect.any(String)),
+      )
+      expect(getCount.count).toBe(2)
+    })
+
+    it("use for auto orders: 2 GETs total", async () => {
+      const user = userEvent.setup()
+      const getCount = serveCardsWithGetCount(
+        makeApiSavedCard({ id: "pm-1", isDefault: true, autoOrderCard: false, openToAutoPayment: true }),
+        makeApiSavedCard({
+          id: "pm-2",
+          name: "Backup",
+          isDefault: false,
+          autoOrderCard: false,
+          openToAutoPayment: true,
+        }),
+      )
+      server.use(
+        http.patch("*/backend-api/cards/:cardId/auto-order-card", ({ params }) =>
+          HttpResponse.json(makeApiSavedCard({ id: String(params.cardId), autoOrderCard: true })),
+        ),
+      )
+
+      render(<BuyerPaymentMethodsPage />)
+      await waitFor(() => expect(getCount.count).toBe(1))
+
+      const buttons = await screen.findAllByRole("button", { name: "Use for auto orders" })
+      await user.click(buttons[0] as HTMLElement)
+
+      await waitFor(() =>
+        expect(toastSpies.success).toHaveBeenCalledWith("Auto order card updated", expect.any(String)),
+      )
+      expect(getCount.count).toBe(2)
+    })
+
+    it("stop auto orders: 2 GETs total", async () => {
+      const user = userEvent.setup()
+      const getCount = serveCardsWithGetCount(...twoCards())
+      server.use(
+        http.patch("*/backend-api/cards/:cardId/auto-order-card", () =>
+          HttpResponse.json(makeApiSavedCard({ id: "pm-1", autoOrderCard: false })),
+        ),
+      )
+
+      render(<BuyerPaymentMethodsPage />)
+      await waitFor(() => expect(getCount.count).toBe(1))
+
+      await user.click(await screen.findByRole("button", { name: "Stop using for auto orders" }))
+      const dialog = await screen.findByRole("dialog")
+      await user.click(within(dialog).getByRole("button", { name: "Stop auto orders" }))
+
+      await waitFor(() => expect(toastSpies.success).toHaveBeenCalledWith("Auto orders paused", expect.any(String)))
+      expect(getCount.count).toBe(2)
+    })
+
+    it("delete: 2 GETs total", async () => {
+      const user = userEvent.setup()
+      const getCount = serveCardsWithGetCount(...twoCards())
+      server.use(http.delete("*/backend-api/cards/:cardId", () => new HttpResponse(null, { status: 200 })))
+
+      render(<BuyerPaymentMethodsPage />)
+      await waitFor(() => expect(getCount.count).toBe(1))
+
+      // pm-2 (Procurement Backup) is not the auto-order card, so this hits the plain "Card
+      // removed" toast branch, not the "...auto orders are paused" variant.
+      const removeButtons = await screen.findAllByRole("button", { name: "Remove" })
+      await user.click(removeButtons[1] as HTMLElement)
+      const popover = (await screen.findByText("Remove card?")).closest("div") as HTMLElement
+      await user.click(within(popover).getByRole("button", { name: "Remove" }))
+
+      await waitFor(() => expect(toastSpies.success).toHaveBeenCalledWith("Card removed"))
+      expect(getCount.count).toBe(2)
+    })
+
+    it("rename: 1 GET total (local patch, no refetch)", async () => {
+      const user = userEvent.setup()
+      const getCount = serveCardsWithGetCount(...twoCards())
+      server.use(
+        http.patch("*/backend-api/cards/:cardId/nickname", ({ params }) =>
+          HttpResponse.json(makeApiSavedCard({ id: String(params.cardId), name: "Renamed Card" })),
+        ),
+      )
+
+      render(<BuyerPaymentMethodsPage />)
+      await waitFor(() => expect(getCount.count).toBe(1))
+
+      const article = (await screen.findByRole("heading", { name: "Main Clinic Card" })).closest(
+        "article",
+      ) as HTMLElement
+      await user.click(within(article).getByRole("button", { name: "Rename" }))
+      const input = await screen.findByPlaceholderText("e.g. Backup Card")
+      await user.clear(input)
+      await user.type(input, "Renamed Card")
+      await user.click(screen.getByRole("button", { name: "Save" }))
+
+      await waitFor(() => expect(toastSpies.success).toHaveBeenCalledWith("Card renamed"))
+      expect(getCount.count).toBe(1)
+    })
+
+    it("set default: 1 GET total (local patch, no refetch)", async () => {
+      const user = userEvent.setup()
+      const getCount = serveCardsWithGetCount(...twoCards())
+      server.use(
+        http.patch("*/backend-api/cards/:cardId/default", ({ params }) =>
+          HttpResponse.json(makeApiSavedCard({ id: String(params.cardId), isDefault: true })),
+        ),
+      )
+
+      render(<BuyerPaymentMethodsPage />)
+      await waitFor(() => expect(getCount.count).toBe(1))
+
+      await user.click(await screen.findByRole("button", { name: "Set as Default" }))
+      const popover = (await screen.findByText("Set as default?")).closest("div") as HTMLElement
+      await user.click(within(popover).getByRole("button", { name: "OK" }))
+
+      await waitFor(() => expect(toastSpies.success).toHaveBeenCalledWith("Default updated", expect.any(String)))
+      expect(getCount.count).toBe(1)
+    })
   })
 })
