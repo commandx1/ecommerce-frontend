@@ -298,4 +298,25 @@ describe("BuyerDashboardLayout guard (characterization)", () => {
     expect(() => render(<BuyerDashboardLayout>{children}</BuyerDashboardLayout>)).not.toThrow()
     expect(getRouterMock().push).toHaveBeenCalledWith("/login")
   })
+
+  it("G3: logout inside the 100ms window pushes exactly once, not once from the immediate branch and once from the stale timer", () => {
+    setStoreState(buyerUser, true)
+    seedSession(persistedEnvelope(buyerUser, true))
+
+    render(<BuyerDashboardLayout>{children}</BuyerDashboardLayout>)
+
+    // A real logout mid-window re-runs the effect (immediate push, wasAuth true -> "/") while
+    // the original 100ms hydration timer from the first run is still pending. Uncleared, that
+    // timer also fires later and pushes again - the G3 fix clears it on effect cleanup.
+    act(() => {
+      vi.advanceTimersByTime(10)
+      useAuthStore.getState().clearAuth()
+    })
+    act(() => {
+      vi.advanceTimersByTime(90)
+    })
+
+    expect(getRouterMock().push).toHaveBeenCalledTimes(1)
+    expect(getRouterMock().push).toHaveBeenCalledWith("/")
+  })
 })

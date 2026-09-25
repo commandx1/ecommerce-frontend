@@ -26,11 +26,13 @@ export interface DashboardAuthGuardResult {
 
 /**
  * Extracted from `app/{buyer,vendor}-dashboard/layout.tsx` (Phase 4 design doc §4.2/G2).
- * Behaviour is unchanged from before the extraction - see both layouts' `layout.test.tsx`
- * (written against the pre-extraction code and left unmodified) for the oracle. Reads the
- * `auth-storage` cookie once per effect run; a cookie that already shows the right role waits
- * `HYDRATION_WAIT_MS` for the Zustand store to catch up before trusting it, everything else
- * resolves synchronously off the store.
+ * Behaviour matches the pre-extraction code - see both layouts' `layout.test.tsx` (written
+ * against the pre-extraction code, and still passing unmodified) for the oracle - except for one
+ * deliberate fix (G3, design doc §9 D3): the hydration-wait timer is cleared on effect cleanup,
+ * so a store change inside that window can no longer leave a stale, superseded redirect pending
+ * on top of the one the re-run already issues. Reads the `auth-storage` cookie once per effect
+ * run; a cookie that already shows the right role waits `HYDRATION_WAIT_MS` for the Zustand
+ * store to catch up before trusting it, everything else resolves synchronously off the store.
  */
 export function useDashboardAuthGuard(role: DashboardRole): DashboardAuthGuardResult {
   const router = useRouter()
@@ -70,8 +72,12 @@ export function useDashboardAuthGuard(role: DashboardRole): DashboardAuthGuardRe
       return
     }
 
-    // decision.kind === "await-hydration"
-    setTimeout(() => {
+    // decision.kind === "await-hydration". Cleared on cleanup (G3): without this, a store
+    // change that lands before this timer fires (e.g. a logout inside the 100ms window) leaves
+    // it pending - it still fires later against whatever the store looks like by then and can
+    // push a second, stale redirect on top of the one the re-run already issued (design doc §9
+    // D3: on vendor this used to be `/login` immediately, then a stale `/buyer-dashboard`).
+    const timer = setTimeout(() => {
       const after = decideAfterHydration(policy, useAuthStore.getState().user, wasAuthenticatedRef.current)
       if (after.kind === "redirect") {
         router.push(after.to)
@@ -79,6 +85,8 @@ export function useDashboardAuthGuard(role: DashboardRole): DashboardAuthGuardRe
         setIsChecking(false)
       }
     }, HYDRATION_WAIT_MS)
+
+    return () => clearTimeout(timer)
   }, [user, isAuthenticated, router])
 
   if (isChecking) {
