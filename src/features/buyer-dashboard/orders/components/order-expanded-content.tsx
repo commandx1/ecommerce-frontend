@@ -22,13 +22,9 @@ import {
   getSellerFirstTwoLetters,
 } from "@/lib/orders/order-format"
 import { useBuyerOrdersTableActions, useBuyerOrdersTableSelector } from "../context/buyer-orders-context"
-import {
-  getOrderItemHeavyShipmentFee,
-  getOrderItemShipmentFee,
-  resolveActiveShippingLinks,
-  resolveActiveTrackingLinks,
-  resolveOrderItemProductId,
-} from "../lib/order-view-utils"
+import { getOrderItemHeavyShipmentFee, getOrderItemShipmentFee } from "../lib/order-money"
+import { resolveOrderItemProductId } from "../lib/order-view-model"
+import { resolveActiveShippingLinks, resolveActiveTrackingLinks } from "../lib/tracking-links"
 import type { BuyerOrderViewModel } from "../types"
 
 interface OrderExpandedContentProps {

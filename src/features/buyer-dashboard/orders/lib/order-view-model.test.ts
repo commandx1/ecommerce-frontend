@@ -3,30 +3,18 @@ import type { BuyerOrder, BuyerOrderItem, BuyerOrderSellerGroup } from "@/lib/ap
 import {
   buildBuyerOrderViewModel,
   getAddressSummary,
-  getOrderItemHeavyShipmentFee,
-  getOrderItemShipmentFee,
   getOrderItems,
-  getOrderItemTaxPrice,
   getOrderSellerGroups,
   getOrderStatusBadgeClasses,
   getOrderStatusLabel,
   getPaymentViewStatusClasses,
   getPaymentViewStatusLabel,
   getSellerSummary,
-  getTrackingLinkCount,
-  hasOrderItemReturnFlowStarted,
-  resolveActiveShippingLinks,
-  resolveActiveTrackingLinks,
   resolveOrderItemProductId,
-  resolveOrderMoneyBreakdown,
   resolveOrderViewStatus,
   resolvePaymentSummary,
   resolvePaymentViewStatus,
-  resolveReturnShippingLinks,
-  resolveReturnTrackingLinks,
-  resolveShippingLinks,
-  resolveTrackingLinks,
-} from "./order-view-utils"
+} from "./order-view-model"
 
 const orderFixture: BuyerOrder = {
   orderId: "order-fixture-1",
@@ -270,147 +258,6 @@ describe("getOrderItems / getOrderSellerGroups survive malformed nested data", (
   })
 })
 
-describe("active order item links", () => {
-  const baseItem: BuyerOrderItem = {
-    id: "item-links-1",
-    userProductId: "up-links-1",
-    productId: "product-links-1",
-    productName: "Dental Mirror",
-    price: 12,
-    quantity: 1,
-    status: "DELIVERED",
-    productCoverPhotoPath: null,
-    sellerName: "Acme",
-    sellerSurname: "Store",
-    trackingLinks: [{ trackingUrl: "https://carrier.example/outbound-track" }],
-    shippingLinks: [{ shippingUrl: "https://carrier.example/outbound-label.pdf" }],
-    updatedDate: "2026-05-20T11:00:00Z",
-  }
-
-  it("uses outbound tracking and shipping links before a return starts", () => {
-    expect(resolveActiveTrackingLinks(baseItem)).toEqual([{ trackingUrl: "https://carrier.example/outbound-track" }])
-    expect(resolveActiveShippingLinks(baseItem)).toEqual([
-      {
-        trackingUrl: "https://carrier.example/outbound-label.pdf",
-        status: undefined,
-        updatedDate: undefined,
-      },
-    ])
-  })
-
-  it("uses return tracking and return shipping links after a return starts", () => {
-    const item: BuyerOrderItem = {
-      ...baseItem,
-      returnDate: "2026-05-21T10:00:00Z",
-      returnRefundStatus: "PENDING",
-      returnTrackingLinks: [{ trackingUrl: "https://carrier.example/return-track" }],
-      returnShippingLinks: [{ shippingUrl: "https://carrier.example/return-label.pdf" }],
-    }
-
-    expect(resolveActiveTrackingLinks(item)).toEqual([{ trackingUrl: "https://carrier.example/return-track" }])
-    expect(resolveActiveShippingLinks(item)).toEqual([
-      {
-        trackingUrl: "https://carrier.example/return-label.pdf",
-        status: undefined,
-        updatedDate: undefined,
-      },
-    ])
-  })
-
-  it("does not mix outbound tracking with return shipping links", () => {
-    const item: BuyerOrderItem = {
-      ...baseItem,
-      returnDate: "2026-05-21T10:00:00Z",
-      returnRefundStatus: "PENDING",
-      returnTrackingLinks: [],
-      returnShippingLinks: [{ shippingUrl: "https://carrier.example/return-label.pdf" }],
-    }
-
-    expect(resolveActiveTrackingLinks(item)).toEqual([])
-    expect(resolveActiveShippingLinks(item)).toEqual([
-      {
-        trackingUrl: "https://carrier.example/return-label.pdf",
-        status: undefined,
-        updatedDate: undefined,
-      },
-    ])
-  })
-
-  // Backend contract: `hasOrderItemReturnFlowStarted` can be true (returnDate/returnRefundStatus
-  // set) while BOTH return link arrays are still empty - the return was just initiated and the
-  // seller hasn't generated a return label yet. In that gap the user must still see the ORIGINAL
-  // outbound tracking/shipping links, not a blank panel.
-  it("falls back to outbound links when a return has started but no return-specific links exist yet", () => {
-    const item: BuyerOrderItem = {
-      ...baseItem,
-      returnDate: "2026-05-21T10:00:00Z",
-      returnRefundStatus: "PENDING",
-      returnTrackingLinks: [],
-      returnShippingLinks: [],
-    }
-
-    expect(resolveActiveTrackingLinks(item)).toEqual([{ trackingUrl: "https://carrier.example/outbound-track" }])
-    expect(resolveActiveShippingLinks(item)).toEqual([
-      {
-        trackingUrl: "https://carrier.example/outbound-label.pdf",
-        status: undefined,
-        updatedDate: undefined,
-      },
-    ])
-  })
-})
-
-// ---------------------------------------------------------------------------
-// `shipmentPrice` / `takedHeavyShipmentFee` / `taxPrice` are LINE TOTALS from the backend
-// (BuyerOrderItemResponse), not per-unit values - they must never be multiplied by quantity
-// again on the frontend. `heavyShippingSurcharge` is a separate, CURRENT per-unit product
-// value and must NOT be used for money display.
-// ---------------------------------------------------------------------------
-describe("getOrderItemShipmentFee / getOrderItemHeavyShipmentFee / getOrderItemTaxPrice", () => {
-  const baseItem: BuyerOrderItem = {
-    id: "item-money",
-    userProductId: "up-money",
-    productId: "product-money",
-    productName: "Dental Kit",
-    price: 55.3,
-    quantity: 2,
-    status: "WAITING_FOR_SHIPMENT",
-    productCoverPhotoPath: null,
-    sellerName: "Acme",
-    sellerSurname: "Store",
-    updatedDate: "2026-05-20T11:00:00Z",
-  }
-
-  it("does not multiply shipmentPrice by quantity - it is already the line total", () => {
-    const item: BuyerOrderItem = { ...baseItem, shipmentPrice: 12.99, quantity: 2 }
-    expect(getOrderItemShipmentFee(item)).toBe(12.99)
-  })
-
-  it("shows the charged shipment amount even when shipmentFreeBySeller is true (Uber orders can have both)", () => {
-    const item: BuyerOrderItem = { ...baseItem, shipmentPrice: 12.99, shipmentFreeBySeller: true }
-    expect(getOrderItemShipmentFee(item)).toBe(12.99)
-  })
-
-  it("treats shipmentPrice 0 or null as free shipping (0)", () => {
-    expect(getOrderItemShipmentFee({ ...baseItem, shipmentPrice: 0 })).toBe(0)
-    expect(getOrderItemShipmentFee({ ...baseItem, shipmentPrice: null })).toBe(0)
-    expect(getOrderItemShipmentFee({ ...baseItem })).toBe(0)
-  })
-
-  it("getOrderItemHeavyShipmentFee reads takedHeavyShipmentFee (the charged total), defaulting to 0", () => {
-    expect(getOrderItemHeavyShipmentFee({ ...baseItem, takedHeavyShipmentFee: 50 })).toBe(50)
-    expect(getOrderItemHeavyShipmentFee({ ...baseItem, takedHeavyShipmentFee: 0 })).toBe(0)
-    expect(getOrderItemHeavyShipmentFee({ ...baseItem, takedHeavyShipmentFee: null })).toBe(0)
-    expect(getOrderItemHeavyShipmentFee({ ...baseItem })).toBe(0)
-  })
-
-  it("getOrderItemTaxPrice reads taxPrice, defaulting to 0", () => {
-    expect(getOrderItemTaxPrice({ ...baseItem, taxPrice: 3.5 })).toBe(3.5)
-    expect(getOrderItemTaxPrice({ ...baseItem, taxPrice: null })).toBe(0)
-    expect(getOrderItemTaxPrice({ ...baseItem })).toBe(0)
-  })
-})
-
 // QA DB proof: order.totalPrice = Sum(price*qty) + Sum(shipmentPrice) + Sum(takedHeavyShipmentFee)
 // + Sum(taxPrice). Example: qty 2 x 55.30, shipmentPrice 12.99, heavy 50, tax 0 -> totalPrice 173.59.
 describe("buildBuyerOrderViewModel - heavy shipment fee and tax totals", () => {
@@ -455,114 +302,6 @@ describe("buildBuyerOrderViewModel - heavy shipment fee and tax totals", () => {
     expect(summary.heavyShipmentTotal).toBe(50)
     expect(summary.taxTotal).toBe(0)
     expect(summary.money.netTotal).toBeCloseTo(173.59, 10)
-  })
-})
-
-describe("hasOrderItemReturnFlowStarted", () => {
-  const base: BuyerOrderItem = {
-    id: "item-return-flag",
-    userProductId: "up-return-flag",
-    productId: "product-return-flag",
-    productName: "Dental Mirror",
-    price: 12,
-    quantity: 1,
-    status: "DELIVERED",
-    productCoverPhotoPath: null,
-    sellerName: "Acme",
-    sellerSurname: "Store",
-    updatedDate: "2026-05-20T11:00:00Z",
-  }
-
-  it.each([
-    { name: "no return fields at all", overrides: {}, expected: false },
-    { name: "returnDate set", overrides: { returnDate: "2026-05-21T10:00:00Z" }, expected: true },
-    { name: "returnDate is an empty string", overrides: { returnDate: "" }, expected: false },
-    { name: "returnDate is whitespace only", overrides: { returnDate: "   " }, expected: false },
-    { name: "returnRefundStatus set", overrides: { returnRefundStatus: "PENDING" }, expected: true },
-    { name: "returnRefundStatus is an empty string", overrides: { returnRefundStatus: "" }, expected: false },
-    { name: "legacy refundStatus set", overrides: { refundStatus: "APPROVED" }, expected: true },
-    { name: "legacy refundStatus is whitespace only", overrides: { refundStatus: "  " }, expected: false },
-  ])("$name -> $expected", ({ overrides, expected }) => {
-    expect(hasOrderItemReturnFlowStarted({ ...base, ...overrides })).toBe(expected)
-  })
-})
-
-// ---------------------------------------------------------------------------
-// Priority 1: money. Backend `OrderMapper` computes `totalPrice` independently
-// of item price + shipment fee sums (tax, promos, rounding). `resolveOrderMoneyBreakdown`
-// reconciles the two: it trusts the backend total when present, and derives an implied
-// "tax" only when the backend total is strictly HIGHER than item+shipping. If it's wrong,
-// the buyer sees an incorrect charge on their own order.
-// ---------------------------------------------------------------------------
-describe("resolveOrderMoneyBreakdown", () => {
-  it.each([
-    {
-      name: "no explicit backend total -> falls back to item+shipping, no tax",
-      itemTotal: 100,
-      shippingTotal: 10,
-      explicitTotal: undefined,
-      expected: { tax: 0, netTotal: 110 },
-    },
-    {
-      name: "explicit total exactly equals item+shipping -> no tax (boundary: not > or <)",
-      itemTotal: 100,
-      shippingTotal: 10,
-      explicitTotal: 110,
-      expected: { tax: 0, netTotal: 110 },
-    },
-    {
-      name: "explicit total is HIGHER than item+shipping -> the difference is tax",
-      itemTotal: 100,
-      shippingTotal: 10,
-      explicitTotal: 120,
-      expected: { tax: 10, netTotal: 120 },
-    },
-    {
-      name: "explicit total is LOWER than item+shipping -> trust backend total, tax is 0 (not negative)",
-      itemTotal: 100,
-      shippingTotal: 10,
-      explicitTotal: 90,
-      expected: { tax: 0, netTotal: 90 },
-    },
-    {
-      name: "explicit total is NaN -> not finite, falls back to item+shipping",
-      itemTotal: 50,
-      shippingTotal: 5,
-      explicitTotal: Number.NaN,
-      expected: { tax: 0, netTotal: 55 },
-    },
-    {
-      name: "explicit total is Infinity -> not finite, falls back to item+shipping",
-      itemTotal: 50,
-      shippingTotal: 5,
-      explicitTotal: Number.POSITIVE_INFINITY,
-      expected: { tax: 0, netTotal: 55 },
-    },
-    {
-      name: "explicit total is 0 (a real, valid backend total, not 'missing') -> trusted as-is",
-      itemTotal: 20,
-      shippingTotal: 0,
-      explicitTotal: 0,
-      expected: { tax: 0, netTotal: 0 },
-    },
-    {
-      name: "zero item and shipping totals with a positive explicit total -> entire total is tax",
-      itemTotal: 0,
-      shippingTotal: 0,
-      explicitTotal: 7.5,
-      expected: { tax: 7.5, netTotal: 7.5 },
-    },
-    {
-      name: "fractional cents -> difference computed without rounding surprises",
-      itemTotal: 19.99,
-      shippingTotal: 4.99,
-      explicitTotal: 26.58,
-      expected: { tax: 1.6, netTotal: 26.58 },
-    },
-  ])("$name", ({ itemTotal, shippingTotal, explicitTotal, expected }) => {
-    const result = resolveOrderMoneyBreakdown(itemTotal, shippingTotal, explicitTotal)
-    expect(result.netTotal).toBe(expected.netTotal)
-    expect(result.tax).toBeCloseTo(expected.tax, 10)
   })
 })
 
@@ -930,38 +669,6 @@ describe("getSellerSummary", () => {
   })
 })
 
-describe("getTrackingLinkCount", () => {
-  const trackedItem = (id: string, url: string): BuyerOrderItem => ({
-    id,
-    userProductId: `up-${id}`,
-    productId: "product-x",
-    productName: "Item",
-    price: 1,
-    quantity: 1,
-    status: "ON_WAY",
-    productCoverPhotoPath: null,
-    sellerName: "Acme",
-    sellerSurname: "Store",
-    trackingLinks: url ? [{ trackingUrl: url }] : [],
-    updatedDate: "2026-05-20T11:00:00Z",
-  })
-
-  it("counts distinct tracking URLs across items", () => {
-    const items = [trackedItem("1", "https://track/a"), trackedItem("2", "https://track/b")]
-    expect(getTrackingLinkCount(items)).toBe(2)
-  })
-
-  it("deduplicates the same tracking URL shared across multiple items (one shipment, many line items)", () => {
-    const items = [trackedItem("1", "https://track/shared"), trackedItem("2", "https://track/shared")]
-    expect(getTrackingLinkCount(items)).toBe(1)
-  })
-
-  it("skips items with no tracking links and returns 0 for an empty item list", () => {
-    expect(getTrackingLinkCount([])).toBe(0)
-    expect(getTrackingLinkCount([trackedItem("1", "")])).toBe(0)
-  })
-})
-
 describe("resolvePaymentSummary", () => {
   const baseOrder: BuyerOrder = {
     orderId: "order-x",
@@ -1024,87 +731,5 @@ describe("resolvePaymentSummary", () => {
 
   it("returns a placeholder when there is no card info at all", () => {
     expect(resolvePaymentSummary(baseOrder)).toEqual({ title: "-", detail: "" })
-  })
-})
-
-// ---------------------------------------------------------------------------
-// Priority 7: link resolvers - completing branches not covered by the pre-existing
-// "active order item links" describe block above.
-// ---------------------------------------------------------------------------
-describe("resolveTrackingLinks / resolveShippingLinks / resolveReturnTrackingLinks / resolveReturnShippingLinks", () => {
-  const base: BuyerOrderItem = {
-    id: "item-links",
-    userProductId: "up-links",
-    productId: "product-links",
-    productName: "Item",
-    price: 1,
-    quantity: 1,
-    status: "ON_WAY",
-    productCoverPhotoPath: null,
-    sellerName: "Acme",
-    sellerSurname: "Store",
-    updatedDate: "2026-05-20T11:00:00Z",
-  }
-
-  it("resolveTrackingLinks prefers the structured trackingLinks array over the legacy string array", () => {
-    const item: BuyerOrderItem = {
-      ...base,
-      trackingLinks: [{ trackingUrl: "https://structured" }],
-      trackingLink: ["https://legacy"],
-    }
-    expect(resolveTrackingLinks(item)).toEqual([{ trackingUrl: "https://structured" }])
-  })
-
-  it("resolveTrackingLinks falls back to the legacy string array, mapping each URL to an object", () => {
-    const item: BuyerOrderItem = { ...base, trackingLink: ["https://legacy-a", "https://legacy-b"] }
-    expect(resolveTrackingLinks(item)).toEqual([
-      { trackingUrl: "https://legacy-a" },
-      { trackingUrl: "https://legacy-b" },
-    ])
-  })
-
-  it("resolveTrackingLinks filters out entries with a missing or empty trackingUrl", () => {
-    const item: BuyerOrderItem = {
-      ...base,
-      trackingLinks: [{ trackingUrl: "" }, { trackingUrl: "https://kept" }],
-    }
-    expect(resolveTrackingLinks(item)).toEqual([{ trackingUrl: "https://kept" }])
-  })
-
-  it("resolveTrackingLinks returns [] when there are no links of either shape", () => {
-    expect(resolveTrackingLinks(base)).toEqual([])
-  })
-
-  it("resolveShippingLinks prefers structured shippingLinks and carries status/updatedDate through", () => {
-    const item: BuyerOrderItem = {
-      ...base,
-      shippingLinks: [{ shippingUrl: "https://ship", status: "IN_TRANSIT", updatedDate: "2026-05-21T00:00:00Z" }],
-    }
-    expect(resolveShippingLinks(item)).toEqual([
-      { trackingUrl: "https://ship", status: "IN_TRANSIT", updatedDate: "2026-05-21T00:00:00Z" },
-    ])
-  })
-
-  it("resolveShippingLinks falls back to the legacy shippingLink string array", () => {
-    const item: BuyerOrderItem = { ...base, shippingLink: ["https://legacy-ship"] }
-    expect(resolveShippingLinks(item)).toEqual([{ trackingUrl: "https://legacy-ship" }])
-  })
-
-  it("resolveReturnTrackingLinks is empty when returnTrackingLinks is missing or not an array", () => {
-    expect(resolveReturnTrackingLinks(base)).toEqual([])
-    expect(resolveReturnTrackingLinks({ ...base, returnTrackingLinks: "not-an-array" as unknown as never })).toEqual([])
-  })
-
-  it("resolveReturnShippingLinks maps status/updatedDate through and filters empty shippingUrl", () => {
-    const item: BuyerOrderItem = {
-      ...base,
-      returnShippingLinks: [
-        { shippingUrl: "", status: "PENDING" },
-        { shippingUrl: "https://return-ship", status: "DELIVERED", updatedDate: "2026-05-22T00:00:00Z" },
-      ],
-    }
-    expect(resolveReturnShippingLinks(item)).toEqual([
-      { trackingUrl: "https://return-ship", status: "DELIVERED", updatedDate: "2026-05-22T00:00:00Z" },
-    ])
   })
 })

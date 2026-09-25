@@ -6,7 +6,7 @@ import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
 import { makeAccountUser } from "@/test/factories"
 import { makeBuyerOrder, makeBuyerOrderItem, makeBuyerOrderSellerGroup } from "@/test/factories/order.factory"
-import { buildBuyerOrderViewModel } from "../lib/order-view-utils"
+import { buildBuyerOrderViewModel } from "../lib/order-view-model"
 import OrderExpandedContent from "./order-expanded-content"
 
 const mockToastError = vi.fn()

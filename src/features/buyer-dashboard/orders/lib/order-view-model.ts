@@ -1,14 +1,15 @@
-import type {
-  BuyerOrder,
-  BuyerOrderAddress,
-  BuyerOrderItem,
-  BuyerOrderSellerGroup,
-  BuyerOrderTrackingLink,
-} from "@/lib/api/buyer-orders"
+import type { BuyerOrder, BuyerOrderAddress, BuyerOrderItem, BuyerOrderSellerGroup } from "@/lib/api/buyer-orders"
 // formatDateOnly/formatTimeOnly moved to lib/orders/order-format.ts (Phase 4 §7, O1) - still
 // used internally by buildBuyerOrderViewModel below.
 import { formatDateOnly, formatTimeOnly } from "@/lib/orders/order-format"
 import type { BuyerOrderViewModel, OrderViewStatus, PaymentViewStatus } from "../types"
+import {
+  getOrderItemHeavyShipmentFee,
+  getOrderItemShipmentFee,
+  getOrderItemTaxPrice,
+  resolveOrderMoneyBreakdown,
+} from "./order-money"
+import { getTrackingLinkCount } from "./tracking-links"
 
 export function resolveOrderItemProductId(item: BuyerOrderItem): string | null {
   const rawItem = item as unknown as Record<string, unknown>
@@ -47,84 +48,6 @@ export function getAddressSummary(
     title: address.title || "-",
     line: address.formattedAddress || address.addressLine || "-",
   }
-}
-
-export function resolveTrackingLinks(item: BuyerOrderItem): BuyerOrderTrackingLink[] {
-  if (Array.isArray(item.trackingLinks) && item.trackingLinks.length > 0) {
-    return item.trackingLinks.filter((entry) => typeof entry.trackingUrl === "string" && entry.trackingUrl.length > 0)
-  }
-
-  if (Array.isArray(item.trackingLink) && item.trackingLink.length > 0) {
-    return item.trackingLink
-      .filter((url) => typeof url === "string" && url.length > 0)
-      .map((url) => ({ trackingUrl: url }))
-  }
-
-  return []
-}
-
-export function resolveReturnTrackingLinks(item: BuyerOrderItem): BuyerOrderTrackingLink[] {
-  return Array.isArray(item.returnTrackingLinks)
-    ? item.returnTrackingLinks.filter((entry) => typeof entry.trackingUrl === "string" && entry.trackingUrl.length > 0)
-    : []
-}
-
-export function resolveShippingLinks(item: BuyerOrderItem): BuyerOrderTrackingLink[] {
-  if (Array.isArray(item.shippingLinks) && item.shippingLinks.length > 0) {
-    return item.shippingLinks
-      .filter((entry) => typeof entry.shippingUrl === "string" && entry.shippingUrl.length > 0)
-      .map((entry) => ({
-        trackingUrl: entry.shippingUrl,
-        status: entry.status,
-        updatedDate: entry.updatedDate,
-      }))
-  }
-
-  if (Array.isArray(item.shippingLink) && item.shippingLink.length > 0) {
-    return item.shippingLink
-      .filter((url) => typeof url === "string" && url.length > 0)
-      .map((url) => ({ trackingUrl: url }))
-  }
-
-  return []
-}
-
-export function resolveReturnShippingLinks(item: BuyerOrderItem): BuyerOrderTrackingLink[] {
-  return Array.isArray(item.returnShippingLinks)
-    ? item.returnShippingLinks
-        .filter((entry) => typeof entry.shippingUrl === "string" && entry.shippingUrl.length > 0)
-        .map((entry) => ({
-          trackingUrl: entry.shippingUrl,
-          status: entry.status,
-          updatedDate: entry.updatedDate,
-        }))
-    : []
-}
-
-export function resolveActiveTrackingLinks(item: BuyerOrderItem): BuyerOrderTrackingLink[] {
-  if (hasOrderItemReturnFlowStarted(item)) {
-    const returnTrackingLinks = resolveReturnTrackingLinks(item)
-    if (returnTrackingLinks.length > 0) {
-      return returnTrackingLinks
-    }
-
-    return resolveReturnShippingLinks(item).length > 0 ? [] : resolveTrackingLinks(item)
-  }
-
-  return resolveTrackingLinks(item)
-}
-
-export function resolveActiveShippingLinks(item: BuyerOrderItem): BuyerOrderTrackingLink[] {
-  if (hasOrderItemReturnFlowStarted(item)) {
-    const returnShippingLinks = resolveReturnShippingLinks(item)
-    if (returnShippingLinks.length > 0) {
-      return returnShippingLinks
-    }
-
-    return resolveReturnTrackingLinks(item).length > 0 ? [] : resolveShippingLinks(item)
-  }
-
-  return resolveShippingLinks(item)
 }
 
 export function getOrderItems(order: BuyerOrder): BuyerOrderItem[] {
@@ -286,68 +209,6 @@ export function getSellerSummary(sellerGroups: BuyerOrderSellerGroup[]): { prima
   const primarySeller = [firstSeller.sellerName, firstSeller.sellerSurname].filter(Boolean).join(" ").trim() || "Seller"
 
   return { primarySeller, moreCount: remainingSellers.length }
-}
-
-export function getTrackingLinkCount(orderItems: BuyerOrderItem[]): number {
-  const linkSet = new Set<string>()
-
-  for (const item of orderItems) {
-    for (const link of resolveTrackingLinks(item)) {
-      if (link.trackingUrl) {
-        linkSet.add(link.trackingUrl)
-      }
-    }
-  }
-
-  return linkSet.size
-}
-
-export function resolveOrderMoneyBreakdown(
-  itemTotal: number,
-  shippingTotal: number,
-  explicitTotal?: number,
-): {
-  tax: number
-  netTotal: number
-} {
-  const baseTotal = itemTotal + shippingTotal
-  const netTotal = typeof explicitTotal === "number" && Number.isFinite(explicitTotal) ? explicitTotal : baseTotal
-
-  if (netTotal < baseTotal) {
-    return { tax: 0, netTotal }
-  }
-
-  if (netTotal > baseTotal) {
-    return { tax: netTotal - baseTotal, netTotal }
-  }
-
-  return { tax: 0, netTotal }
-}
-
-export function getOrderItemShipmentFee(item: BuyerOrderItem): number {
-  return typeof item.shipmentPrice === "number" && Number.isFinite(item.shipmentPrice) ? item.shipmentPrice : 0
-}
-
-export function getOrderItemHeavyShipmentFee(item: BuyerOrderItem): number {
-  return typeof item.takedHeavyShipmentFee === "number" && Number.isFinite(item.takedHeavyShipmentFee)
-    ? item.takedHeavyShipmentFee
-    : 0
-}
-
-export function getOrderItemTaxPrice(item: BuyerOrderItem): number {
-  return typeof item.taxPrice === "number" && Number.isFinite(item.taxPrice) ? item.taxPrice : 0
-}
-
-export function hasOrderItemReturnFlowStarted(item: BuyerOrderItem): boolean {
-  const hasReturnDate = typeof item.returnDate === "string" && item.returnDate.trim().length > 0
-  const hasReturnStatus = typeof item.returnRefundStatus === "string" && item.returnRefundStatus.trim().length > 0
-  const hasLegacyRefundStatus = typeof item.refundStatus === "string" && item.refundStatus.trim().length > 0
-
-  return hasReturnDate || hasReturnStatus || hasLegacyRefundStatus
-}
-
-export function hasAnyOrderItemReturnFlowStarted(items: BuyerOrderItem[]): boolean {
-  return items.some(hasOrderItemReturnFlowStarted)
 }
 
 export function buildBuyerOrderViewModel(order: BuyerOrder): BuyerOrderViewModel {

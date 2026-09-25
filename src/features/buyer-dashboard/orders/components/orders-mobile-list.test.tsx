@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { BuyerOrder } from "@/lib/api/buyer-orders"
 import { makeBuyerOrder, makeBuyerOrderItem, makeBuyerOrderSellerGroup } from "@/test/factories/order.factory"
-import { buildBuyerOrderViewModel } from "../lib/order-view-utils"
+import { buildBuyerOrderViewModel } from "../lib/order-view-model"
 import OrdersMobileList from "./orders-mobile-list"
 
 const mockUseBuyerOrdersTableSelector = vi.fn()

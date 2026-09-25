@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import type { BuyerOrder } from "@/lib/api/buyer-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { useBuyerOrdersTableActions, useBuyerOrdersTableSelector } from "../context/buyer-orders-context"
-import { buildBuyerOrderViewModel, getOrderStatusBadgeClasses, getOrderStatusLabel } from "../lib/order-view-utils"
+import { buildBuyerOrderViewModel, getOrderStatusBadgeClasses, getOrderStatusLabel } from "../lib/order-view-model"
 import type { BuyerOrderViewModel } from "../types"
 import OrderExpandedContent from "./order-expanded-content"
 

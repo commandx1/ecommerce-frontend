@@ -23,7 +23,7 @@ import {
   getAddressSummary,
   getOrderItems,
   resolvePaymentSummary,
-} from "../lib/order-view-utils"
+} from "../lib/order-view-model"
 import type { BuyerOrderLinksModalPayload, BuyerOrderStatusTab, PendingCancelAction } from "../types"
 
 const DEFAULT_PAGE_SIZE = 10

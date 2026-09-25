@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import Modal from "@/components/ui/Modal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useBuyerOrdersRefundModalActions, useBuyerOrdersRefundModalState } from "../context/buyer-orders-context"
-import { getOrderItems } from "../lib/order-view-utils"
+import { getOrderItems } from "../lib/order-view-model"
 
 interface RefundFormItemState {
   isSelected: boolean

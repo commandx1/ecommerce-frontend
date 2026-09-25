@@ -4,7 +4,7 @@ import { useMemo } from "react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { BuyerOrder, BuyerOrderItem } from "@/lib/api/buyer-orders"
 import { StatefulTableHarness } from "@/test/harness/stateful-table-harness"
-import { buildBuyerOrderViewModel } from "../lib/order-view-utils"
+import { buildBuyerOrderViewModel } from "../lib/order-view-model"
 import OrdersTable from "./orders-table"
 
 const mockUseBuyerOrdersTableState = vi.fn()
