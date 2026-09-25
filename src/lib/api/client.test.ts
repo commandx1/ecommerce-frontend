@@ -342,7 +342,7 @@ describe("403 with an expired access token", () => {
 
     expect(logout).toHaveBeenCalledTimes(1)
     expect(assignMock).toHaveBeenCalledTimes(1)
-    const target = new URL(assignMock.mock.calls[0][0] as string)
+    const target = new URL(assignMock.mock.calls[0]![0] as string)
     expect(target.pathname).toBe("/login")
     expect(target.searchParams.get("redirect")).toBe("/buyer-dashboard/orders?selectedTab=All")
     expect(target.searchParams.get("reason")).toBe("session-expired")

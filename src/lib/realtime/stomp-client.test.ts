@@ -314,7 +314,7 @@ describe("createNotificationSocket - messages", () => {
 
     expect(onConnected).toHaveBeenCalledTimes(1)
     expect(client.subscribe).toHaveBeenCalledTimes(1)
-    expect(client.subscriptions[0].destination).toBe(NOTIFICATIONS_QUEUE_DESTINATION)
+    expect(client.subscriptions[0]!.destination).toBe(NOTIFICATIONS_QUEUE_DESTINATION)
     expect(NOTIFICATIONS_QUEUE_DESTINATION).toBe("/user/queue/notifications")
 
     client.deliver('{"id":7,"title":"New order"}')
@@ -328,7 +328,7 @@ describe("createNotificationSocket - messages", () => {
     const client = lastClient()
     client.fireConnect()
 
-    expect(client.subscriptions[0].destination).toBe("/topic/broadcast")
+    expect(client.subscriptions[0]!.destination).toBe("/topic/broadcast")
   })
 
   it("ignores a malformed payload instead of throwing", async () => {
@@ -529,7 +529,7 @@ describe("createNotificationSocket - real @stomp/stompjs Client", () => {
     socket.connect()
     await vi.waitFor(() => expect(sockets).toHaveLength(1))
 
-    expect(sockets[0].url).toBe("https://example.test/backend-ws")
+    expect(sockets[0]!.url).toBe("https://example.test/backend-ws")
     expect(sockJsCalls.at(-1)?.options).toEqual({ transports: ["xhr-polling"] })
     expect(socket.isActive()).toBe(true)
 

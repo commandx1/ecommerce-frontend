@@ -129,7 +129,7 @@ async function createApiMock(page: Page): Promise<ApiMock> {
 
       const params: Record<string, string> = {}
       entry.compiled.paramNames.forEach((name, index) => {
-        params[name] = decodeURIComponent(match[index + 1])
+        params[name] = decodeURIComponent(match[index + 1] ?? "")
       })
 
       const resolved = await entry.handler({ params, url })

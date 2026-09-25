@@ -229,8 +229,8 @@ describe("authStore logout", () => {
     await store().logout()
 
     expect(logoutRequests).toHaveLength(1)
-    expect(logoutRequests[0].body).toEqual({ refreshToken: "refresh-1" })
-    expect(logoutRequests[0].authorization).toBe("Bearer access-1")
+    expect(logoutRequests[0]!.body).toEqual({ refreshToken: "refresh-1" })
+    expect(logoutRequests[0]!.authorization).toBe("Bearer access-1")
   })
 
   it("clears the session state", async () => {
@@ -290,7 +290,7 @@ describe("authStore logout", () => {
     await store().logout()
 
     expect(logoutRequests).toHaveLength(2)
-    expect(logoutRequests[1].authorization).toBe("Bearer access-2")
+    expect(logoutRequests[1]!.authorization).toBe("Bearer access-2")
   })
 
   it("makes no request at all when there is no session", async () => {

@@ -114,12 +114,14 @@
       // (e.g. `screen.getByText(...).closest("div")!` right after rendering that div); a `!`
       // there is clearer than a defensive `if (!x) throw` a test will never actually hit, and a
       // thrown TypeError on a genuinely missing node fails the test just as loudly either way.
-      // Production code still gets no exception - see noNonNullAssertion above.
+      // Production code still gets no exception - see noNonNullAssertion above. Includes
+      // Playwright's tests/e2e/**/*.spec.ts alongside the Vitest **/*.test.ts(x) convention -
+      // same reasoning, different runner.
       //
       // Unit tests also render a single instance of a form component per test (jsdom, no
       // concurrent instances), so a fixed, readable `id="..."` prop passed in to exercise
       // label/aria wiring carries no real duplicate-id risk the way it would in production.
-      "includes": ["**/*.test.ts", "**/*.test.tsx"],
+      "includes": ["**/*.test.ts", "**/*.test.tsx", "tests/e2e/**/*.spec.ts"],
       "linter": {
         "rules": {
           "correctness": {

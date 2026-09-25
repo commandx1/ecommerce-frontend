@@ -255,11 +255,11 @@ describe("checkoutStore.setPayloadAutoOrder", () => {
     store().setPayloadAutoOrder("up-1", "TWO_MONTHS")
 
     const { orderPayload } = store()
-    expect(orderPayload?.shippoRateOrders[0].products).toEqual([
+    expect(orderPayload?.shippoRateOrders[0]?.products).toEqual([
       { userProductId: "up-1", quantity: 2, autoOrder: "TWO_MONTHS" },
       { userProductId: "up-2", quantity: 1, autoOrder: null },
     ])
-    expect(orderPayload?.uberRateOrders[0].products).toEqual([
+    expect(orderPayload?.uberRateOrders[0]?.products).toEqual([
       { userProductId: "up-1", quantity: 2, autoOrder: "TWO_MONTHS" },
     ])
   })
@@ -275,7 +275,7 @@ describe("checkoutStore.setPayloadAutoOrder", () => {
 
     store().setPayloadAutoOrder("up-1", null)
 
-    expect(store().orderPayload?.shippoRateOrders[0].products[0]).toEqual({
+    expect(store().orderPayload?.shippoRateOrders[0]?.products[0]).toEqual({
       userProductId: "up-1",
       quantity: 3,
       autoOrder: null,
@@ -333,7 +333,7 @@ describe("checkoutStore shipping selections", () => {
 
     store().setSelectedVendorShippingMethods((prev) => ({
       ...prev,
-      "seller-1": { ...prev["seller-1"], methodText: "Overnight", amount: 29 },
+      "seller-1": { ...prev["seller-1"]!, methodText: "Overnight", amount: 29 },
     }))
 
     expect(store().selectedVendorShippingMethods["seller-1"]).toEqual({
@@ -348,7 +348,7 @@ describe("checkoutStore shipping selections", () => {
       "seller-1": { sellerName: "Acme Dental", methodText: "Free pickup" },
     })
 
-    expect(store().selectedVendorShippingMethods["seller-1"].amount).toBeUndefined()
+    expect(store().selectedVendorShippingMethods["seller-1"]!.amount).toBeUndefined()
   })
 
   it("stores the aggregate shipping cost and eta text", () => {

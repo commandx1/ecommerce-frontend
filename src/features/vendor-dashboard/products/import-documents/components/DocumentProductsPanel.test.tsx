@@ -85,7 +85,7 @@ describe("DocumentProductsPanel", () => {
     )
 
     await waitFor(() => expect(tableRows()).toHaveLength(1))
-    expect(within(tableRows()[0]).getByText("SKU-1")).toBeInTheDocument()
+    expect(within(tableRows()[0]!).getByText("SKU-1")).toBeInTheDocument()
   })
 
   // Spreadsheet cells arrive as strings, so a failed row still has to render
@@ -131,7 +131,7 @@ describe("DocumentProductsPanel", () => {
     render(<DocumentProductsPanel documentId={DOCUMENT_ID} />)
 
     await waitFor(() => expect(tableRows()).toHaveLength(1))
-    await user.click(tableRows()[0])
+    await user.click(tableRows()[0]!)
 
     expect(screen.getByText("Some Extra Column")).toBeInTheDocument()
     expect(screen.getByText("Another Odd Header")).toBeInTheDocument()
@@ -270,7 +270,7 @@ describe("DocumentProductsPanel", () => {
     render(<DocumentProductsPanel documentId={DOCUMENT_ID} />)
 
     await waitFor(() => expect(tableRows()).toHaveLength(1))
-    await user.click(tableRows()[0])
+    await user.click(tableRows()[0]!)
 
     expect(await screen.findByText("No cell values for this row.")).toBeInTheDocument()
   })
@@ -288,7 +288,7 @@ describe("DocumentProductsPanel", () => {
     render(<DocumentProductsPanel documentId={DOCUMENT_ID} />)
 
     await waitFor(() => expect(tableRows()).toHaveLength(1))
-    await user.click(tableRows()[0])
+    await user.click(tableRows()[0]!)
 
     expect(await screen.findByText("___")).toBeInTheDocument()
   })
@@ -303,7 +303,7 @@ describe("DocumentProductsPanel", () => {
     render(<DocumentProductsPanel documentId={DOCUMENT_ID} />)
 
     await waitFor(() => expect(tableRows()).toHaveLength(1))
-    await user.click(tableRows()[0])
+    await user.click(tableRows()[0]!)
 
     expect(await screen.findByText("N/A")).toBeInTheDocument()
   })

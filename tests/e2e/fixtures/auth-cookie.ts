@@ -68,6 +68,11 @@ export function buildAuthCookie(state: PersistedAuthState, baseURL = "http://loc
   // "auth-storage=<encoded>; expires=...; path=/; SameSite=Lax". Playwright's
   // addCookies wants a bare { name, value } pair (it manages expiry/path itself).
   const [nameValuePair] = documentStub.cookie.split(";")
+  // String.split always returns at least one element (even "".split(";") is [""]), so this is
+  // just satisfying noUncheckedIndexedAccess.
+  if (nameValuePair === undefined) {
+    throw new Error(`buildAuthCookie: cookie-storage.ts produced an unexpected cookie string: "${documentStub.cookie}"`)
+  }
   const eqIndex = nameValuePair.indexOf("=")
   if (eqIndex === -1) {
     throw new Error(`buildAuthCookie: cookie-storage.ts produced an unexpected cookie string: "${documentStub.cookie}"`)

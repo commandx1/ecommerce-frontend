@@ -132,7 +132,7 @@ test.describe("vendor orders", () => {
         (window as unknown as { __qzPrintCalls: Array<{ data: Array<{ type: string; data: string }> }> })
           .__qzPrintCalls,
     )
-    expect(calls[0].data[0]).toMatchObject({ type: "pdf", data: "https://labels.example.com/label-1.pdf" })
+    expect(calls[0]!.data[0]).toMatchObject({ type: "pdf", data: "https://labels.example.com/label-1.pdf" })
 
     // Switching printers is a real Radix Select nested inside this modal's Dialog - a
     // combination the unit suite can't exercise in jsdom (see VendorOrdersPage.test.tsx's
@@ -150,6 +150,6 @@ test.describe("vendor orders", () => {
     const secondCall = await vendorPage.evaluate(
       () => (window as unknown as { __qzPrintCalls: Array<{ config: { printer: string } }> }).__qzPrintCalls[1],
     )
-    expect(secondCall.config.printer).toBe("Second Printer")
+    expect(secondCall!.config.printer).toBe("Second Printer")
   })
 })

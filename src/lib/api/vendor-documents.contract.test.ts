@@ -440,7 +440,7 @@ describe("vendorDocumentsAPI.getDocumentProducts contract", () => {
 
     expect(result.documentId).toBe(DOCUMENT_ID)
     expect(result.products.map((entry) => entry.status)).toEqual(["success", "skip"])
-    expect(result.products[0].product.skuCode).toBe("SKU-1")
+    expect(result.products[0]!.product.skuCode).toBe("SKU-1")
     expect(result.wrongRows).toEqual([{ Manufacturer_Code: "MC-9", Brand: "Acme", Status: "x" }])
   })
 
@@ -455,7 +455,7 @@ describe("vendorDocumentsAPI.getDocumentProducts contract", () => {
 
     const result = await vendorDocumentsAPI.getDocumentProducts(DOCUMENT_ID, TOKEN)
 
-    expect(result.products[0].status).toBeNull()
+    expect(result.products[0]!.status).toBeNull()
     expect(result.wrongRows).toEqual([])
   })
 

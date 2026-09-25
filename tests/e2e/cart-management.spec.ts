@@ -48,7 +48,7 @@ test.describe("cart management", () => {
     // Wait past the debounce window, then assert exactly one PUT landed with
     // the FINAL quantity (base 2 + 3 clicks = 5, per makeCartItem()'s default).
     await expect.poll(() => requests.length, { timeout: 5_000 }).toBe(1)
-    const body = JSON.parse(requests[0]) as { userProductId: string; quantity: number }
+    const body = JSON.parse(requests[0]!) as { userProductId: string; quantity: number }
     expect(body.userProductId).toBe("up-1")
     expect(body.quantity).toBe(5)
 

@@ -86,7 +86,7 @@ describe("FavoriteSuppliersPage", () => {
     render(<FavoriteSuppliersPage />)
     await screen.findByRole("heading", { name: "Acme Dental", level: 3 })
 
-    await user.click(screen.getAllByRole("button", { name: "Remove from favorites" })[0])
+    await user.click(screen.getAllByRole("button", { name: "Remove from favorites" })[0]!)
     await user.click(await screen.findByRole("button", { name: "Remove" }))
 
     await waitFor(() =>
@@ -102,7 +102,7 @@ describe("FavoriteSuppliersPage", () => {
     render(<FavoriteSuppliersPage />)
     await screen.findByRole("heading", { name: "Acme Dental", level: 3 })
 
-    await user.click(screen.getAllByRole("button", { name: "Remove from favorites" })[0])
+    await user.click(screen.getAllByRole("button", { name: "Remove from favorites" })[0]!)
     await user.click(await screen.findByRole("button", { name: "Remove" }))
 
     expect(await screen.findByRole("heading", { name: "Acme Dental", level: 3 })).toBeInTheDocument()

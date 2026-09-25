@@ -131,10 +131,12 @@ async function assertNoHeadingLevelSkips(page: Page): Promise<string[]> {
     Array.from(document.querySelectorAll("h1, h2, h3, h4, h5, h6")).map((el) => Number(el.tagName[1])),
   )
   const skips: string[] = []
-  for (let i = 1; i < levels.length; i++) {
-    if (levels[i] - levels[i - 1] > 1) {
-      skips.push(`h${levels[i - 1]} -> h${levels[i]} at position ${i}`)
+  let previousLevel: number | undefined
+  for (const [i, level] of levels.entries()) {
+    if (previousLevel !== undefined && level - previousLevel > 1) {
+      skips.push(`h${previousLevel} -> h${level} at position ${i}`)
     }
+    previousLevel = level
   }
   return skips
 }
