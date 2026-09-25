@@ -206,10 +206,14 @@ describe("Vendor ProductsPage — filters, sorting and paging", () => {
     render(<ProductsPage />)
     await screen.findByRole("table")
 
+    // The numbered pager only has real values once the list response (with `totalPages`) lands,
+    // one tick after the table itself — `findByRole` (which retries) waits for that instead of
+    // racing a synchronous `getByRole` against it.
+    const pageThreeButton = await screen.findByRole("button", { name: "3" })
     const previous = screen.getAllByRole("button").find((button) => button.querySelector(".lucide-chevron-left"))
     expect(previous).toBeDisabled()
 
-    await user.click(screen.getByRole("button", { name: "3" }))
+    await user.click(pageThreeButton)
     await waitFor(() => expect(calls.paramsOf(calls.last()).page).toBe("2"))
 
     const next = screen.getAllByRole("button").find((button) => button.querySelector(".lucide-chevron-right"))
@@ -224,7 +228,9 @@ describe("Vendor ProductsPage — filters, sorting and paging", () => {
     render(<ProductsPage />)
     await screen.findByRole("table")
 
-    await user.click(screen.getByRole("button", { name: "2" }))
+    // See the matching note above: the numbered pager needs the list response, not just the
+    // table shell, so this waits for it instead of a synchronous `getByRole`.
+    await user.click(await screen.findByRole("button", { name: "2" }))
     await waitFor(() => expect(calls.paramsOf(calls.last()).page).toBe("1"))
 
     await user.click(selectShowing("25"))
