@@ -133,7 +133,6 @@ describe("useProductEditor — clearAll", () => {
       errors: {},
       activeTab: "basic",
       isProductSelected: false,
-      selectedProduct: null,
     })
     expect(result.current.media).toMatchObject({
       photoFiles: INITIAL_PHOTO_FILES,

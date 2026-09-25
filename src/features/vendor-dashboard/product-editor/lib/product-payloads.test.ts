@@ -1,11 +1,8 @@
 import { describe, expect, it } from "vitest"
-import type { NormalizedSearchProduct } from "@/lib/api/products"
-import { makeProduct } from "@/test/factories"
 import { INITIAL_VALUES, type ProductFormValues } from "./product-form"
 import { INITIAL_EXISTING_IMAGES, INITIAL_LINKED_IMAGES } from "./product-media"
 import {
   buildListingUpdate,
-  buildLocalListingPayload,
   buildProductVendorRequest,
   buildReviewPayload,
   SUBMIT_SUCCESS_MESSAGES,
@@ -41,35 +38,18 @@ const VALUES: ProductFormValues = {
   fulfillmentPolicy: "Ships within 2 days",
 }
 
-const searchResult = (source: NormalizedSearchProduct["source"]): NormalizedSearchProduct => ({
-  id: "p-1",
-  barcode: "123",
-  title: "Composite Kit",
-  images: [],
-  source,
-  originalData: makeProduct(),
-})
-
 describe("selectSubmitBranch", () => {
   const base = {
     isEditMode: false,
     userProductId: null,
     isReviewEditMode: false,
     reviewProductId: null,
-    selectedProduct: null,
   }
 
   it.each([
     ["plain create", {}, "createForReview"],
     ["plain edit", { isEditMode: true, userProductId: "up-9" }, "updateListing"],
     ["review edit", { isReviewEditMode: true, reviewProductId: "p-1" }, "updateForReview"],
-    ["local catalogue product", { selectedProduct: searchResult("local") }, "createListing"],
-    ["barcode-lookup product", { selectedProduct: searchResult("barcode_lookup") }, "createForReview"],
-    [
-      "local product while review editing",
-      { isReviewEditMode: true, reviewProductId: "p-1", selectedProduct: searchResult("local") },
-      "updateForReview",
-    ],
     [
       "both edit and review-edit params",
       { isEditMode: true, userProductId: "up-9", isReviewEditMode: true, reviewProductId: "p-1" },
@@ -89,18 +69,6 @@ describe("buildListingUpdate", () => {
 
   it.each(["", "   "])("sends a blank discount (%j) as 0", (discount) => {
     expect(buildListingUpdate(VALUES, discount).discount).toBe(0)
-  })
-})
-
-describe("buildLocalListingPayload", () => {
-  it("creates an active listing with no discount", () => {
-    expect(buildLocalListingPayload("p-1", VALUES)).toEqual({
-      productId: "p-1",
-      price: 42.5,
-      discount: 0,
-      stock: 7,
-      active: true,
-    })
   })
 })
 
@@ -255,7 +223,6 @@ describe("SUBMIT_SUCCESS_MESSAGES", () => {
   it("has the toast for each branch", () => {
     expect(SUBMIT_SUCCESS_MESSAGES).toEqual({
       updateListing: "Product updated successfully!",
-      createListing: "Product created successfully!",
       updateForReview: "Product updated and resubmitted for review!",
       createForReview: "Product submitted for review!",
     })

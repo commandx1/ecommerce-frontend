@@ -1,10 +1,9 @@
-import { type NormalizedSearchProduct, type Product, type ProductAttribute, productsAPI } from "@/lib/api/products"
+import { type ProductAttribute, productsAPI } from "@/lib/api/products"
 import type { ProductFormValues } from "../lib/product-form"
 import { mapEditLoad, mapReviewEditLoad } from "../lib/product-load-mappers"
 import type { ExistingImages, LinkedImages, PhotoFiles } from "../lib/product-media"
 import {
   buildListingUpdate,
-  buildLocalListingPayload,
   buildProductVendorRequest,
   buildReviewPayload,
   type SubmitBranch,
@@ -39,7 +38,6 @@ export interface SubmitProductInput {
   linkedImages: LinkedImages
   userProductId: string | null
   reviewProductId: string | null
-  selectedProduct: NormalizedSearchProduct | null
 }
 
 /** One request per branch; see `SubmitBranch` for the endpoint each one hits. */
@@ -52,11 +50,6 @@ export async function submitProduct(input: SubmitProductInput, token: string): P
         token,
       )
       return
-    case "createListing": {
-      const localProduct = input.selectedProduct?.originalData as Product
-      await productsAPI.createUserProduct(buildLocalListingPayload(localProduct.id, input.values), token)
-      return
-    }
     default: {
       const payload = buildReviewPayload(
         buildProductVendorRequest(

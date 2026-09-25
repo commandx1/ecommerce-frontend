@@ -243,7 +243,6 @@ describe("useProductForm — seed and reset", () => {
       errors: {},
       activeTab: "basic",
       isProductSelected: false,
-      selectedProduct: null,
     })
   })
 })

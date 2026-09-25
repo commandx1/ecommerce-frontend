@@ -31,7 +31,6 @@ const UPDATE_LISTING: SubmitProductInput = {
   linkedImages: INITIAL_LINKED_IMAGES,
   userProductId: "up-9",
   reviewProductId: null,
-  selectedProduct: null,
 }
 
 const setup = (mode: "create" | "edit" = "edit") => {

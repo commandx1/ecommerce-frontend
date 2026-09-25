@@ -54,7 +54,7 @@ export function useProductEditor() {
 
     form.clearErrors()
     submit({
-      branch: selectSubmitBranch({ ...modeInfo, selectedProduct: form.selectedProduct }),
+      branch: selectSubmitBranch(modeInfo),
       values: form.values,
       editDiscount: form.editDiscount,
       attributes: form.attributes,
@@ -63,7 +63,6 @@ export function useProductEditor() {
       linkedImages: media.linkedImages,
       userProductId: modeInfo.userProductId,
       reviewProductId: modeInfo.reviewProductId,
-      selectedProduct: form.selectedProduct,
     })
   }
 

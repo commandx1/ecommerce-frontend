@@ -1,7 +1,7 @@
 "use client"
 
 import { type ChangeEvent, useState } from "react"
-import type { NormalizedSearchProduct, ProductAttribute } from "@/lib/api/products"
+import type { ProductAttribute } from "@/lib/api/products"
 import type { CategoryPath } from "@/lib/category-tree"
 import {
   ALL_FIELDS,
@@ -36,9 +36,6 @@ export function useProductForm(mode: EditorMode) {
   const [errors, setErrors] = useState<FieldErrors>({})
   const [activeTab, setActiveTab] = useState<TabKey>("basic")
   const [isProductSelected, setIsProductSelected] = useState(false)
-  // Only ever reset: search results open ProductDetailsModal instead of selecting into this form,
-  // so the "local catalogue product" submit branch is currently unreachable (kept, not removed).
-  const [selectedProduct, setSelectedProduct] = useState<NormalizedSearchProduct | null>(null)
 
   const clearError = (name: string) => setErrors((prev) => withoutError(prev, name))
 
@@ -59,7 +56,6 @@ export function useProductForm(mode: EditorMode) {
     errors,
     activeTab,
     isProductSelected,
-    selectedProduct,
     handleInputChange,
     clearError,
     setBarcodeFormat: (barcodeFormats: string) => setValues((prev) => ({ ...prev, barcodeFormats })),
@@ -124,7 +120,6 @@ export function useProductForm(mode: EditorMode) {
       // wherever the vendor last was (e.g. Media), showing an empty form with the wrong tab active.
       setActiveTab("basic")
       setIsProductSelected(false)
-      setSelectedProduct(null)
       setErrors({})
     },
   }
