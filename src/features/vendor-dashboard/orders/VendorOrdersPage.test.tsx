@@ -745,6 +745,11 @@ describe("VendorOrdersPage", () => {
 
       render(<VendorOrdersPage />)
       const table = await desktopTable()
+      // Wait for the initial load to settle before interacting: TanStack Query resolves the
+      // first fetch one tick later than the old direct-axios effect did, and clicking a header
+      // while it's still in flight would target a row/skeleton the query's own data arriving
+      // is about to replace.
+      await table.findAllByText("Jane Doe")
       await user.click(table.getByRole("button", { name: /Sort by price/ }))
 
       await waitFor(() => {
@@ -760,6 +765,8 @@ describe("VendorOrdersPage", () => {
 
       render(<VendorOrdersPage />)
       await screen.findByRole("table")
+      // See "sorts by price from the desktop header": wait for the initial load before clicking.
+      await mobileList().findAllByText("Jane Doe")
 
       await user.click(mobileList().getByRole("button", { name: "Quantity" }))
       await waitFor(() => expect(requests.at(-1)?.get("sortBy")).toBe("quantity"))
@@ -1040,6 +1047,8 @@ describe("VendorOrdersPage", () => {
 
       render(<VendorOrdersPage />)
       await screen.findByRole("table")
+      // See "sorts by price from the desktop header": wait for the initial load before clicking.
+      await mobileList().findAllByText("Jane Doe")
       await user.click(mobileList().getByRole("button", { name: "Cancel" }))
       await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Confirm cancel" }))
 
@@ -1206,6 +1215,8 @@ describe("VendorOrdersPage", () => {
 
       render(<VendorOrdersPage />)
       await screen.findByRole("table")
+      // See "sorts by price from the desktop header": wait for the initial load before clicking.
+      await mobileList().findAllByText("Jane Doe")
       await user.click(mobileList().getByRole("button", { name: "Call Uber" }))
 
       expect(await screen.findByText("Uber Delivery Result")).toBeInTheDocument()
@@ -1774,6 +1785,10 @@ describe("VendorOrdersPage", () => {
       const user = userEvent.setup()
       render(<VendorOrdersPage />)
       const table = await desktopTable()
+      // See "sorts by price from the desktop header": wait for the initial load before
+      // interacting. The buyer name is blank here, so wait for a real data row (as opposed to
+      // just the header row that's present even while the skeleton is still showing) instead.
+      await waitFor(() => expect(table.getAllByRole("row").length).toBeGreaterThan(1))
       const row = (await table.findAllByRole("row"))[1] as HTMLElement
       const rowButtons = within(row).getAllByRole("button")
       await user.click(rowButtons[rowButtons.length - 1] as HTMLElement)
@@ -2009,6 +2024,8 @@ describe("VendorOrdersPage", () => {
 
       render(<VendorOrdersPage />)
       await screen.findByRole("table")
+      // See "sorts by price from the desktop header": wait for the initial load before interacting.
+      await mobileList().findAllByText("Jane Doe")
       const trigger = mobileList()
         .getAllByRole("button")
         .find((button: HTMLElement) => button.hasAttribute("aria-expanded")) as HTMLElement
@@ -2019,6 +2036,112 @@ describe("VendorOrdersPage", () => {
 
       await user.click(trigger)
       await waitFor(() => expect(trigger).toHaveAttribute("aria-expanded", "false"))
+    })
+  })
+
+  // S8b characterization (design §6): written against the pre-migration page, before the
+  // useVendorOrdersQuery/useOrderActions extraction, and kept green afterward unmodified.
+  describe("request counts", () => {
+    it("sends exactly one GET per tab, page and sort change - no duplicates, no dropped requests", async () => {
+      const user = userEvent.setup()
+      const requests = serveOrdersTracking([makeVendorOrder({ orderId: "vorder-1" })], {
+        totalPages: 3,
+        totalElements: 25,
+      })
+
+      const { rerender } = render(<VendorOrdersPage />)
+      await waitFor(() => expect(requests.length).toBe(1))
+      expect(requests[0]?.get("type")).toBe("ALL")
+
+      // The tab is URL-driven (`selectedTab` comes from `useSearchParams()`), and this test
+      // harness's `router.replace` spy does not feed back into the mocked search params on its
+      // own - only a real navigation would. Simulate the URL having actually changed, the same
+      // way the existing "resets to page 0 once an orderId appears" test above does.
+      setSearchParams("selectedTab=Shipped")
+      rerender(<VendorOrdersPage />)
+      await waitFor(() => expect(requests.length).toBe(2))
+      expect(requests[1]?.get("type")).toBe("ON_WAY")
+
+      await user.click(screen.getByRole("button", { name: "2" }))
+      await waitFor(() => expect(requests.length).toBe(3))
+      expect(requests[2]?.get("page")).toBe("1")
+
+      const table = await desktopTable()
+      await user.click(table.getByRole("button", { name: "Created" }))
+      await waitFor(() => expect(requests.length).toBe(4))
+      expect(requests[3]?.get("sortBy")).toBe("createdDate")
+      expect(requests[3]?.get("sortDir")).toBe("asc")
+      // The sort click also resets the page, but that happens within the same state update
+      // batch, so it costs no extra request.
+      expect(requests[3]?.get("page")).toBe("0")
+    })
+
+    it("cancelling an item patches state locally without an extra orders request", async () => {
+      const user = userEvent.setup()
+      const requests = serveOrdersTracking([
+        makeVendorOrder({
+          orderId: "vorder-1",
+          orderItems: [makeVendorOrderItem({ id: "vitem-1", status: "WAITING_FOR_SHIPMENT" })],
+        }),
+      ])
+      server.use(
+        http.post("*/backend-api/orders/cancelBySeller", () =>
+          HttpResponse.json({
+            message: "Cancellation queued",
+            successCount: 1,
+            failureCount: 0,
+            cancelledOrderItemIds: ["vitem-1"],
+          }),
+        ),
+      )
+
+      render(<VendorOrdersPage />)
+      await waitFor(() => expect(requests.length).toBe(1))
+      await expandFirstOrder(userEvent.setup())
+      const table = await desktopTable()
+      await user.click((await table.findAllByRole("button", { name: "Cancel Item" }))[0] as HTMLElement)
+      await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Confirm cancel" }))
+
+      await waitFor(() => expect(toastSpies.success).toHaveBeenCalled())
+      expect(requests.length).toBe(1)
+    })
+
+    it("approving a return patches state locally without an extra orders request", async () => {
+      const user = userEvent.setup()
+      const requests = serveOrdersTracking([
+        makeVendorOrder({
+          orderId: "vorder-1",
+          orderItems: [makeVendorOrderItem({ id: "vitem-1", status: "DELIVERED", returnRefundStatus: "DELIVERED" })],
+        }),
+      ])
+
+      render(<VendorOrdersPage />)
+      await waitFor(() => expect(requests.length).toBe(1))
+      await expandFirstOrder(user)
+      await user.click(
+        (await (await desktopTable()).findAllByRole("button", { name: /Approve Return/ }))[0] as HTMLElement,
+      )
+
+      await waitFor(() => expect(toastSpies.success).toHaveBeenCalled())
+      expect(requests.length).toBe(1)
+    })
+
+    it("calling Uber patches state locally without an extra orders request", async () => {
+      const user = userEvent.setup()
+      const requests = serveOrdersTracking([
+        makeVendorOrder({
+          orderId: "vorder-1",
+          orderItems: [makeVendorOrderItem({ id: "vitem-1", status: "WAITING_FOR_UBER_DIRECT" })],
+        }),
+      ])
+
+      render(<VendorOrdersPage />)
+      await waitFor(() => expect(requests.length).toBe(1))
+      const table = await desktopTable()
+      await user.click((await table.findAllByRole("button", { name: "Call Uber" }))[0] as HTMLElement)
+
+      await waitFor(() => expect(screen.getByText("Uber Delivery Result")).toBeInTheDocument())
+      expect(requests.length).toBe(1)
     })
   })
 })

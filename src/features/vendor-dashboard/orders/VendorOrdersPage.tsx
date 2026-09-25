@@ -2,42 +2,21 @@
 
 import { CheckCircle2, ExternalLink, Loader2, Printer, X } from "lucide-react"
 import Link from "next/link"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
-import { extractApiErrorMessage } from "@/app/buyer-dashboard/orders/lib/order-view-utils"
+import { useEffect, useId, useState } from "react"
 import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
 import SingleOrderNotice from "@/components/dashboard-shared/SingleOrderNotice"
 import SectionHeading from "@/components/layout/SectionHeading"
 import Modal from "@/components/ui/Modal"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { showToast } from "@/components/ui/Toast"
-import { parseOrderIdParam } from "@/lib/api/orders"
-import {
-  type ProcessUberDeliveriesResponse,
-  type VendorOrder,
-  type VendorOrderFilterType,
-  type VendorOrderItem,
-  vendorOrdersAPI,
-} from "@/lib/api/vendor-orders"
-import { OrderItemStatus } from "@/lib/constants/order-item-status"
+import type { VendorOrderItem } from "@/lib/api/vendor-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
-import { getQzConnectionStatus, printShippingLabel, type QzPrintOptions } from "@/lib/qz/printLabel"
 import { useAuthStore } from "@/stores/authStore"
 import OrdersMobileList from "./components/orders-mobile-list"
 import OrdersTable from "./components/orders-table"
-
-const VENDOR_ORDER_TABS = ["All", "Pending", "Shipped", "Delivered", "Cancelled", "Returned"] as const
-type VendorOrderStatusTab = (typeof VENDOR_ORDER_TABS)[number]
-
-const TAB_TO_FILTER: Record<VendorOrderStatusTab, VendorOrderFilterType> = {
-  All: "ALL",
-  Pending: "WAITING_FOR_SHIPMENT",
-  Shipped: "ON_WAY",
-  Delivered: "DELIVERED",
-  Cancelled: "CANCELLED",
-  Returned: "RETURNED",
-}
+import { useOrderActions } from "./hooks/useOrderActions"
+import { useQzPrinting } from "./hooks/useQzPrinting"
+import { useVendorOrdersQuery, VENDOR_ORDER_TABS } from "./hooks/useVendorOrdersQuery"
 
 interface PendingVendorCancelAction {
   orderItemIds: string[]
@@ -55,42 +34,45 @@ interface PendingVendorReturnRejectAction {
 
 export default function VendorOrdersPage() {
   const id = useId()
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-  const { isAuthenticated } = useAuthStore()
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
 
-  const selectedTab = useMemo<VendorOrderStatusTab>(() => {
-    const value = searchParams.get("selectedTab")
-    return VENDOR_ORDER_TABS.includes(value as VendorOrderStatusTab) ? (value as VendorOrderStatusTab) : "All"
-  }, [searchParams])
-  // See buyer orders page: the backend ignores type/page/sort while orderId is set and
-  // returns only that one order.
-  const singleOrderId = useMemo(() => parseOrderIdParam(searchParams.get("orderId")), [searchParams])
-  const [orders, setOrders] = useState<VendorOrder[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [pageSize, setPageSize] = useState<number>(10)
-  const [currentPage, setCurrentPage] = useState<number>(0)
-  // Derived, not reset in an effect: a second state update would abort and re-send the request.
-  const effectivePage = singleOrderId ? 0 : currentPage
-  const [totalPages, setTotalPages] = useState<number>(1)
-  const [totalElements, setTotalElements] = useState<number>(0)
-  const [sortBy, setSortBy] = useState<"price" | "quantity" | "createdDate">("createdDate")
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
+  const ordersQuery = useVendorOrdersQuery()
+  const {
+    selectedTab,
+    singleOrderId,
+    clearSingleOrder,
+    orders,
+    isLoading,
+    pageSize,
+    handlePageSizeChange,
+    effectivePage,
+    handlePageChange,
+    totalPages,
+    totalElements,
+    sortBy,
+    sortDir,
+    handleSortToggle,
+    listParams,
+  } = ordersQuery
+
+  const orderActions = useOrderActions(listParams)
+  const {
+    processingOrderId,
+    cancelingItemId,
+    cancelingOrderId,
+    returnActionItemId,
+    returnActionType,
+    uberResult,
+    setUberResult,
+    uberProcessedOrderIds,
+    handleCallUber,
+    handleCancelDuringDelivery,
+    handleConfirmReturn,
+    handleRejectReturn,
+  } = orderActions
+
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
   const [labelModalLinks, setLabelModalLinks] = useState<{ shipping: string[]; tracking: string[] } | null>(null)
-  const [printers, setPrinters] = useState<string[]>([])
-  const [selectedPrinter, setSelectedPrinter] = useState<string>("")
-  const [printOptions, setPrintOptions] = useState<Pick<QzPrintOptions, "copies" | "colorType">>({
-    copies: 1,
-    colorType: "color",
-  })
-  const [isQzReady, setIsQzReady] = useState(false)
-  const [qzError, setQzError] = useState<string | null>(null)
-  const [qzInfo, setQzInfo] = useState<string | null>(null)
-  const [processingOrderId, setProcessingOrderId] = useState<string | null>(null)
-  const [cancelingItemId, setCancelingItemId] = useState<string | null>(null)
-  const [cancelingOrderId, setCancelingOrderId] = useState<string | null>(null)
   const [pendingCancelAction, setPendingCancelAction] = useState<PendingVendorCancelAction | null>(null)
   const [isConfirmingCancel, setIsConfirmingCancel] = useState(false)
   const [pendingRejectReturnAction, setPendingRejectReturnAction] = useState<PendingVendorReturnRejectAction | null>(
@@ -98,56 +80,19 @@ export default function VendorOrdersPage() {
   )
   const [rejectReturnReason, setRejectReturnReason] = useState("")
   const [rejectReturnError, setRejectReturnError] = useState<string | null>(null)
-  const [returnActionItemId, setReturnActionItemId] = useState<string | null>(null)
-  const [returnActionType, setReturnActionType] = useState<"confirm" | "reject" | null>(null)
-  const [uberResult, setUberResult] = useState<ProcessUberDeliveriesResponse | null>(null)
-  const [uberProcessedOrderIds, setUberProcessedOrderIds] = useState<string[]>([])
-  const abortControllerRef = useRef<AbortController | null>(null)
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      if (!isAuthenticated) return
-
-      abortControllerRef.current?.abort()
-      const controller = new AbortController()
-      abortControllerRef.current = controller
-
-      try {
-        setIsLoading(true)
-        const response = await vendorOrdersAPI.getVendorOrders(
-          effectivePage,
-          pageSize,
-          sortBy,
-          sortDir,
-          TAB_TO_FILTER[selectedTab],
-          controller.signal,
-          singleOrderId ?? undefined,
-        )
-        // A malformed 200 (empty/partial body, wrong shape from a misbehaving proxy) parses fine
-        // as JSON but can leave `orders` missing - `orders-mobile-list.tsx` calls `orders.length`
-        // unconditionally (it renders in the DOM, just CSS-hidden on desktop), so an unguarded
-        // `undefined` here white-screens every vendor, not just mobile ones.
-        setOrders(Array.isArray(response.orders) ? response.orders : [])
-        setTotalPages(typeof response.totalPages === "number" ? response.totalPages : 0)
-        setTotalElements(typeof response.totalElements === "number" ? response.totalElements : 0)
-      } catch {
-        if (controller.signal.aborted) return
-        setOrders([])
-        setTotalPages(0)
-        setTotalElements(0)
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    void fetchOrders()
-
-    return () => {
-      abortControllerRef.current?.abort()
-    }
-  }, [isAuthenticated, effectivePage, pageSize, sortBy, sortDir, selectedTab, singleOrderId])
+  const qzPrinting = useQzPrinting(labelModalLinks)
+  const {
+    printers,
+    selectedPrinter,
+    setSelectedPrinter,
+    printOptions,
+    setPrintOptions,
+    isQzReady,
+    qzError,
+    qzInfo,
+    handlePrintLabel,
+  } = qzPrinting
 
   useEffect(() => {
     if (singleOrderId) {
@@ -155,165 +100,9 @@ export default function VendorOrdersPage() {
     }
   }, [singleOrderId])
 
-  useEffect(() => {
-    if (!labelModalLinks) return
-
-    const initQz = async () => {
-      try {
-        setQzError(null)
-        setQzInfo(null)
-
-        const status = await getQzConnectionStatus()
-        const infoParts = [status.version ? `QZ ${status.version}` : null, status.scriptSource]
-          .filter(Boolean)
-          .join(" • ")
-
-        setQzInfo(infoParts || null)
-
-        if (status.status === "connected" && status.printers.length > 0) {
-          // Radix's <SelectItem> throws if given an empty-string value, which would crash the
-          // whole label modal if QZ ever reports a printer with a blank name. Drop those before
-          // they reach the printer picker.
-          const availablePrinters = status.printers.filter((printer) => printer.trim().length > 0)
-          setPrinters(availablePrinters)
-          setSelectedPrinter(availablePrinters[0] || "")
-          setIsQzReady(true)
-        } else {
-          setIsQzReady(false)
-          setPrinters([])
-          setSelectedPrinter("")
-          setQzError(status.message)
-        }
-      } catch {
-        setIsQzReady(false)
-        setPrinters([])
-        setSelectedPrinter("")
-        setQzInfo(null)
-        setQzError("QZ Tray could not be initialized. Labels will open in your browser.")
-      }
-    }
-
-    void initQz()
-  }, [labelModalLinks])
-
-  const handleTabChange = useCallback(
-    (tab: VendorOrderStatusTab) => {
-      const nextParams = new URLSearchParams(searchParams.toString())
-      nextParams.set("selectedTab", tab)
-      nextParams.delete("orderId")
-      router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false })
-      setCurrentPage(0)
-      setExpandedOrderId(null)
-    },
-    [pathname, router, searchParams],
-  )
-
-  const clearSingleOrder = useCallback(() => {
-    const nextParams = new URLSearchParams(searchParams.toString())
-    nextParams.delete("orderId")
-    const query = nextParams.toString()
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
-  }, [pathname, router, searchParams])
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-  }
-
-  const handlePageSizeChange = (newPageSize: number) => {
-    setPageSize(newPageSize)
-    setCurrentPage(0)
-  }
-
-  const handleSortToggle = (field: "price" | "quantity" | "createdDate") => {
-    if (sortBy === field) {
-      setSortDir((prev) => (prev === "desc" ? "asc" : "desc"))
-    } else {
-      setSortBy(field)
-      setSortDir("desc")
-    }
-    setCurrentPage(0)
-  }
-
-  const handlePrintLabel = (url: string) => {
-    const options: QzPrintOptions = {
-      printer: selectedPrinter || undefined,
-      copies: printOptions.copies,
-      colorType: printOptions.colorType,
-    }
-    const isUrlValid = url.startsWith("http") || url.startsWith("https")
-    if (!isUrlValid) {
-      showToast.error("Invalid URL. Please check the URL and try again.")
-    }
-    void printShippingLabel(url, options)
-  }
-
-  const handleCallUber = async (order: VendorOrder) => {
-    const orderItemIds = order.orderItems
-      .filter((item) => item.status === "WAITING_FOR_UBER_DIRECT" || item.status === "UBER_ERROR")
-      .map((item) => item.id)
-
-    if (orderItemIds.length === 0) {
-      showToast.info("No eligible items", "This order has no Uber-waiting or Uber-error items.")
-      return
-    }
-
-    try {
-      setProcessingOrderId(order.orderId)
-      const response = await vendorOrdersAPI.processUberDeliveries({ orderItemIds })
-      setUberResult(response)
-      setUberProcessedOrderIds((prev) => (prev.includes(order.orderId) ? prev : [...prev, order.orderId]))
-      showToast.success("Uber request sent", response.message || "Uber delivery has been created.")
-    } catch (error: unknown) {
-      // Match the other seller-action handlers: read the backend's message out of the response
-      // body first (axios's own generic "Request failed with status code N" was masking it here).
-      const apiErrorMessage = extractApiErrorMessage(error)
-      showToast.error("Call Uber failed", apiErrorMessage || "Uber delivery could not be created.")
-    } finally {
-      setProcessingOrderId(null)
-    }
-  }
-
-  const handleCancelDuringDelivery = async (
-    orderItemIds: string[],
-    description: string,
-    options?: { cancelingItemId?: string; cancelingOrderId?: string },
-  ) => {
-    if (orderItemIds.length === 0) return
-    if (options?.cancelingItemId) {
-      setCancelingItemId(options.cancelingItemId)
-    }
-    if (options?.cancelingOrderId) {
-      setCancelingOrderId(options.cancelingOrderId)
-    }
-
-    try {
-      const response = await vendorOrdersAPI.cancelBySeller({ orderItemIds })
-      // A malformed 200 (proxy/gateway hiccup) can leave this field missing even though the
-      // backend service always sets it on every code path it controls - the wire is not the
-      // service.
-      const cancelledIds = Array.isArray(response.cancelledOrderItemIds) ? response.cancelledOrderItemIds : []
-      setOrders((prev) =>
-        prev.map((order) => ({
-          ...order,
-          orderItems: order.orderItems.map((orderItem) =>
-            cancelledIds.includes(orderItem.id)
-              ? { ...orderItem, status: OrderItemStatus.CANCEL_REQUESTED }
-              : orderItem,
-          ),
-        })),
-      )
-      showToast.success("Cancellation sent", response.message || description)
-    } catch (error: unknown) {
-      const apiErrorMessage = extractApiErrorMessage(error)
-      showToast.error("Cancellation failed", apiErrorMessage || "Cancellation request could not be submitted.")
-    } finally {
-      if (options?.cancelingItemId) {
-        setCancelingItemId(null)
-      }
-      if (options?.cancelingOrderId) {
-        setCancelingOrderId(null)
-      }
-    }
+  const handleTabChange = (tab: (typeof VENDOR_ORDER_TABS)[number]) => {
+    ordersQuery.handleTabChange(tab)
+    setExpandedOrderId(null)
   }
 
   const confirmPendingCancelAction = async () => {
@@ -332,45 +121,13 @@ export default function VendorOrdersPage() {
     }
   }
 
-  const handleConfirmReturn = async (item: VendorOrderItem) => {
-    setReturnActionItemId(item.id)
-    setReturnActionType("confirm")
-    try {
-      const response = await vendorOrdersAPI.sellerConfirmReturn({ orderItemIds: [item.id] })
-      // See handleCancelDuringDelivery: a malformed 200 can leave this field missing.
-      const confirmedIds = Array.isArray(response.orderItemIds) ? response.orderItemIds : []
-      setOrders((prev) =>
-        prev.map((order) => ({
-          ...order,
-          orderItems: order.orderItems.map((orderItem) =>
-            confirmedIds.includes(orderItem.id)
-              ? {
-                  ...orderItem,
-                  returnRefundStatus: "APPROVED",
-                  sellerConfirmedReturn: true,
-                  returnRejectReason: null,
-                }
-              : orderItem,
-          ),
-        })),
-      )
-      showToast.success("Return approved", response.message || "Return confirmed and refund created.")
-    } catch (error: unknown) {
-      const apiErrorMessage = extractApiErrorMessage(error)
-      showToast.error("Return approval failed", apiErrorMessage || "Return could not be approved.")
-    } finally {
-      setReturnActionItemId(null)
-      setReturnActionType(null)
-    }
-  }
-
   const openRejectReturnModal = (item: VendorOrderItem) => {
     setPendingRejectReturnAction({ orderItemId: item.id, productName: item.productName })
     setRejectReturnReason("")
     setRejectReturnError(null)
   }
 
-  const handleRejectReturn = async () => {
+  const submitRejectReturn = async () => {
     if (!pendingRejectReturnAction) return
 
     const reason = rejectReturnReason.trim()
@@ -379,42 +136,11 @@ export default function VendorOrdersPage() {
       return
     }
 
-    setReturnActionItemId(pendingRejectReturnAction.orderItemId)
-    setReturnActionType("reject")
-
-    try {
-      const response = await vendorOrdersAPI.sellerRejectReturn({
-        items: [{ orderItemId: pendingRejectReturnAction.orderItemId, returnRejectReason: reason }],
-      })
-
-      // See handleCancelDuringDelivery: a malformed 200 can leave this field missing.
-      const rejectedIds = Array.isArray(response.orderItemIds) ? response.orderItemIds : []
-      setOrders((prev) =>
-        prev.map((order) => ({
-          ...order,
-          orderItems: order.orderItems.map((orderItem) =>
-            rejectedIds.includes(orderItem.id)
-              ? {
-                  ...orderItem,
-                  returnRefundStatus: "REJECTED_BY_SELLER",
-                  returnRejectReason: reason,
-                  returnRejectDate: new Date().toISOString(),
-                }
-              : orderItem,
-          ),
-        })),
-      )
-
-      showToast.success("Return rejected", response.message || "Return rejected.")
+    const succeeded = await handleRejectReturn(pendingRejectReturnAction.orderItemId, reason)
+    if (succeeded) {
       setPendingRejectReturnAction(null)
       setRejectReturnReason("")
       setRejectReturnError(null)
-    } catch (error: unknown) {
-      const apiErrorMessage = extractApiErrorMessage(error)
-      showToast.error("Return rejection failed", apiErrorMessage || "Return could not be rejected.")
-    } finally {
-      setReturnActionItemId(null)
-      setReturnActionType(null)
     }
   }
 
@@ -641,7 +367,7 @@ export default function VendorOrdersPage() {
             </button>
             <button
               type="button"
-              onClick={() => void handleRejectReturn()}
+              onClick={() => void submitRejectReturn()}
               disabled={returnActionType === "reject"}
               className="inline-flex items-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-semibold text-white hover:bg-danger/90 disabled:cursor-not-allowed disabled:opacity-70"
             >
