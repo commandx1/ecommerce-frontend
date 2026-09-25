@@ -146,6 +146,24 @@ describe("SuppliersDirectorySection", () => {
     await waitFor(() => expect(queries.at(-1)).toMatchObject({ page: "0", sort: "name" }))
   })
 
+  describe("Query request counts (D1)", () => {
+    it("issues exactly one GET per page/sort/rating change, not a duplicate or a silent no-op", async () => {
+      installVendorHandlers(vendorPage([makeVendorListItem()], 18, 3))
+      render(<SuppliersDirectorySection />)
+      await screen.findByRole("heading", { name: "Acme Dental Supplies", level: 3 })
+      expect(queries).toHaveLength(1)
+
+      await user().click(screen.getByRole("button", { name: "Next page" }))
+      await waitFor(() => expect(queries).toHaveLength(2))
+      expect(queries.at(-1)?.page).toBe("1")
+
+      await user().click(screen.getByRole("combobox", { name: "Sort suppliers" }))
+      await user().click(await screen.findByRole("option", { name: "A-Z" }))
+      await waitFor(() => expect(queries).toHaveLength(3))
+      expect(queries.at(-1)?.sort).toBe("name")
+    })
+  })
+
   describe("pagination", () => {
     it("stays hidden while everything fits on one page", async () => {
       installVendorHandlers()

@@ -1,8 +1,9 @@
 "use client"
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { ChevronLeft, ChevronRight, Star } from "lucide-react"
 import Link from "next/link"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useMemo, useState } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -14,15 +15,10 @@ import {
   supplierTrustItems,
   vendorToSupplierItem,
 } from "@/features/suppliers/suppliersPageData"
-import type { VendorListItem } from "@/lib/api/vendors"
-import {
-  addVendorFavorite,
-  getMyFavoriteVendorIds,
-  getVendors,
-  removeVendorFavorite,
-  type VendorListParams,
-} from "@/lib/api/vendors"
+import { addVendorFavorite, removeVendorFavorite, type VendorListParams } from "@/lib/api/vendors"
 import { formatNumber } from "@/lib/helpers/format"
+import { queryKeys } from "@/lib/query/keys"
+import { vendorFavoriteIdsOptions, vendorsDirectoryOptions } from "@/lib/query/options/vendors"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -48,84 +44,63 @@ function toApiMinRating(rating: RatingOption): number | undefined {
 
 export default function SuppliersDirectorySection() {
   const { isAuthenticated } = useAuthStore()
+  const queryClient = useQueryClient()
 
   const [selectedRating, setSelectedRating] = useState<RatingOption>("Rating: All")
   const [selectedSort, setSelectedSort] = useState<SortOption>("Highest Rated")
   const [currentPage, setCurrentPage] = useState(1)
 
-  const [vendors, setVendors] = useState<VendorListItem[]>([])
-  const [totalCount, setTotalCount] = useState(0)
-  const [totalPages, setTotalPages] = useState(1)
-  const [isLoading, setIsLoading] = useState(true)
-  const [hasError, setHasError] = useState(false)
-
-  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
-  const favoriteIdsRef = useRef<Set<string>>(new Set())
-
-  useEffect(() => {
-    favoriteIdsRef.current = favoriteIds
-  }, [favoriteIds])
-
-  useEffect(() => {
-    if (!isAuthenticated) return
-    getMyFavoriteVendorIds()
-      .then((ids) => setFavoriteIds(new Set(ids)))
-      .catch(() => {})
-  }, [isAuthenticated])
-
-  const handleToggleFavorite = useCallback(
-    async (vendorId: string) => {
-      if (!isAuthenticated) {
-        showToast.warning("Login required", "Please sign in to save vendors to your favorites.")
-        return
-      }
-      const isFav = favoriteIdsRef.current.has(vendorId)
-      setFavoriteIds((prev) => {
-        const next = new Set(prev)
-        if (isFav) next.delete(vendorId)
-        else next.add(vendorId)
-        return next
-      })
-      try {
-        if (isFav) await removeVendorFavorite(vendorId)
-        else await addVendorFavorite(vendorId)
-      } catch {
-        setFavoriteIds((prev) => {
-          const next = new Set(prev)
-          if (isFav) next.add(vendorId)
-          else next.delete(vendorId)
-          return next
-        })
-      }
-    },
-    [isAuthenticated],
-  )
-
-  useEffect(() => {
-    const controller = new AbortController()
-    setIsLoading(true)
-    setHasError(false)
-    getVendors({
+  const directoryParams = useMemo(
+    () => ({
       page: currentPage - 1,
       size: ITEMS_PER_PAGE,
-      sort: toApiSort(selectedSort),
-      minRating: toApiMinRating(selectedRating),
-      signal: controller.signal,
-    })
-      .then((result) => {
-        // Array.isArray, not `?? []` - see infra note #26.
-        setVendors(Array.isArray(result.vendors) ? result.vendors : [])
-        setTotalCount(result.totalCount ?? 0)
-        setTotalPages(result.totalPages ?? 1)
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setHasError(true)
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setIsLoading(false)
-      })
-    return () => controller.abort()
-  }, [currentPage, selectedSort, selectedRating])
+      sort: toApiSort(selectedSort) ?? null,
+      minRating: toApiMinRating(selectedRating) ?? null,
+      search: "",
+    }),
+    [currentPage, selectedSort, selectedRating],
+  )
+  const directoryQuery = useQuery(vendorsDirectoryOptions(directoryParams))
+  // Array.isArray, not `?? []` - see infra note #26.
+  const vendors = Array.isArray(directoryQuery.data?.vendors) ? directoryQuery.data.vendors : []
+  const totalCount = directoryQuery.data?.totalCount ?? 0
+  const totalPages = directoryQuery.data?.totalPages ?? 1
+  const isLoading = directoryQuery.isPending
+  const hasError = directoryQuery.isError
+
+  const favoriteIdsQuery = useQuery(vendorFavoriteIdsOptions(isAuthenticated))
+  const favoriteIds = new Set(favoriteIdsQuery.data ?? [])
+
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: ({ vendorId, isFav }: { vendorId: string; isFav: boolean }) =>
+      isFav ? removeVendorFavorite(vendorId) : addVendorFavorite(vendorId),
+    onMutate: async ({ vendorId, isFav }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.vendors.favorites.ids() })
+      const previousIds = queryClient.getQueryData<string[]>(queryKeys.vendors.favorites.ids())
+      queryClient.setQueryData<string[]>(queryKeys.vendors.favorites.ids(), (old = []) =>
+        isFav ? old.filter((id) => id !== vendorId) : [...old, vendorId],
+      )
+      return { previousIds }
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousIds) {
+        queryClient.setQueryData(queryKeys.vendors.favorites.ids(), context.previousIds)
+      }
+    },
+    onSettled: () => {
+      // No extra GET: the optimistic setQueryData above (or its rollback) is already the
+      // correct value, so this only drops the entry's staleness bookkeeping.
+      queryClient.invalidateQueries({ queryKey: queryKeys.vendors.favorites.all, refetchType: "none" })
+    },
+  })
+
+  const handleToggleFavorite = (vendorId: string) => {
+    if (!isAuthenticated) {
+      showToast.warning("Login required", "Please sign in to save vendors to your favorites.")
+      return
+    }
+    toggleFavoriteMutation.mutate({ vendorId, isFav: favoriteIds.has(vendorId) })
+  }
 
   const supplierItems = useMemo(() => vendors.map(vendorToSupplierItem), [vendors])
 

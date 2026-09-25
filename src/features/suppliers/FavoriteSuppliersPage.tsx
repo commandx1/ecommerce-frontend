@@ -1,43 +1,42 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
 import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
 import { showToast } from "@/components/ui/Toast"
 import SupplierDirectoryCard from "@/features/suppliers/components/SupplierDirectoryCard"
 import { SupplierCardSkeleton } from "@/features/suppliers/components/SuppliersDirectorySection.client"
 import { vendorToSupplierItem } from "@/features/suppliers/suppliersPageData"
-import { addVendorFavorite, getMyFavoriteVendors, removeVendorFavorite, type VendorListItem } from "@/lib/api/vendors"
+import { addVendorFavorite, removeVendorFavorite, type VendorListItem } from "@/lib/api/vendors"
+import { queryKeys } from "@/lib/query/keys"
+import { vendorFavoritesListOptions } from "@/lib/query/options/vendors"
 
 const PAGE_SIZE = 12
 
 export default function FavoriteSuppliersPage({ embedded = false }: { embedded?: boolean }) {
-  const [vendors, setVendors] = useState<VendorListItem[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [hasError, setHasError] = useState(false)
+  const queryClient = useQueryClient()
+  const favoritesQuery = useQuery(vendorFavoritesListOptions())
+  // Array.isArray, not the raw response: `GET /vendors/favorites` is typed
+  // `List<VendorListItemDto>` (VendorController:44-49), but a malformed 200 - a partial body,
+  // a proxy hiccup - hands back something that is not an array. `vendors.some(...)` and
+  // `vendors.map(...)` below run unconditionally, so an unguarded value blanks the page
+  // (infra note #26 - the same root pattern found in nineteen other places this week).
+  const vendors = Array.isArray(favoritesQuery.data) ? favoritesQuery.data : []
+  const isLoading = favoritesQuery.isPending
+  const hasError = favoritesQuery.isError
   const [page, setPage] = useState(0)
-
-  useEffect(() => {
-    getMyFavoriteVendors()
-      // Array.isArray, not the raw response: `GET /vendors/favorites` is typed
-      // `List<VendorListItemDto>` (VendorController:44-49), but a malformed 200 - a partial body,
-      // a proxy hiccup - hands back something that is not an array. `vendors.some(...)` and
-      // `vendors.map(...)` below run unconditionally, so an unguarded value blanks the page
-      // (infra note #26 - the same root pattern found in nineteen other places this week).
-      .then((favorites) => setVendors(Array.isArray(favorites) ? favorites : []))
-      .catch(() => setHasError(true))
-      .finally(() => setIsLoading(false))
-  }, [])
 
   const handleToggleFavorite = async (vendorId: string) => {
     const isFav = vendors.some((v) => v.id === vendorId)
-    setVendors((prev) => prev.filter((v) => v.id !== vendorId))
+    queryClient.setQueryData<VendorListItem[]>(queryKeys.vendors.favorites.list(), (old = []) =>
+      old.filter((v) => v.id !== vendorId),
+    )
     try {
       if (isFav) await removeVendorFavorite(vendorId)
       else await addVendorFavorite(vendorId)
     } catch {
       showToast.error("Action failed", "Could not update favorites. Please try again.")
-      const restored = await getMyFavoriteVendors().catch(() => null)
-      if (Array.isArray(restored)) setVendors(restored)
+      await queryClient.refetchQueries({ queryKey: queryKeys.vendors.favorites.list() })
     }
   }
 
