@@ -1,6 +1,6 @@
 "use client"
 
-import { RING_TONE_CLASS_MAP, STATUS_TONE_CLASS_MAP } from "@/app/vendor-dashboard/components/shared/dashboardToneMaps"
+import { RING_TONE_CLASS_MAP, STATUS_TONE_CLASS_MAP } from "@/components/dashboard-shared/dashboardToneMaps"
 import { Button } from "@/components/ui/button"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import { Skeleton } from "@/components/ui/skeleton"

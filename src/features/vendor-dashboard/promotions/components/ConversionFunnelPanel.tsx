@@ -1,4 +1,4 @@
-import DashboardPanel from "@/app/vendor-dashboard/components/shared/DashboardPanel"
+import DashboardPanel from "@/components/dashboard-shared/DashboardPanel"
 import { formatNumber } from "@/lib/helpers/format"
 import { cn } from "@/lib/utils"
 import type { CampaignKpiSnapshot } from "../lib/promotion-filters"

@@ -2,7 +2,7 @@
 
 import { Plus } from "lucide-react"
 import { useMemo, useState } from "react"
-import DashboardPanel from "@/app/vendor-dashboard/components/shared/DashboardPanel"
+import DashboardPanel from "@/components/dashboard-shared/DashboardPanel"
 import SectionHeading from "@/components/layout/SectionHeading"
 import { Button } from "@/components/ui/button"
 import SurfaceCard from "@/components/ui/SurfaceCard"

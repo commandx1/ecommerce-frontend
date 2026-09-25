@@ -1,4 +1,4 @@
-import DashboardPanel from "@/app/vendor-dashboard/components/shared/DashboardPanel"
+import DashboardPanel from "@/components/dashboard-shared/DashboardPanel"
 import { formatLastOrder, type VendorCustomer } from "../lib/customers-data"
 
 interface CustomerStatusPanelsProps {

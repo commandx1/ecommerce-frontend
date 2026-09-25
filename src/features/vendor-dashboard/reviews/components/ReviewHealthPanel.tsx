@@ -1,6 +1,6 @@
 import { Star } from "lucide-react"
-import DashboardPanel from "@/app/vendor-dashboard/components/shared/DashboardPanel"
-import { STATUS_TONE_CLASS_MAP } from "@/app/vendor-dashboard/components/shared/dashboardToneMaps"
+import DashboardPanel from "@/components/dashboard-shared/DashboardPanel"
+import { STATUS_TONE_CLASS_MAP } from "@/components/dashboard-shared/dashboardToneMaps"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 

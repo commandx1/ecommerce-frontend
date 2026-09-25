@@ -1,5 +1,5 @@
 import { MessageSquare } from "lucide-react"
-import DashboardPanel from "@/app/vendor-dashboard/components/shared/DashboardPanel"
+import DashboardPanel from "@/components/dashboard-shared/DashboardPanel"
 import { Skeleton } from "@/components/ui/skeleton"
 import StarRating from "@/features/products/product-detail/components/StarRating"
 import { formatRelativeDate } from "@/features/products/product-detail/utils/relativeDate"

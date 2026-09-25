@@ -1,4 +1,4 @@
-import DashboardPanel from "@/app/vendor-dashboard/components/shared/DashboardPanel"
+import DashboardPanel from "@/components/dashboard-shared/DashboardPanel"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { cn } from "@/lib/utils"
 import type { CampaignChannel } from "../lib/mock-data"

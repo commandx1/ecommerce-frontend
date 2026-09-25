@@ -1,5 +1,5 @@
 import { Copy, PauseCircle, Pencil, PlayCircle, Trash2 } from "lucide-react"
-import { STATUS_TONE_CLASS_MAP } from "@/app/vendor-dashboard/components/shared/dashboardToneMaps"
+import { STATUS_TONE_CLASS_MAP } from "@/components/dashboard-shared/dashboardToneMaps"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { cn } from "@/lib/utils"
 import type { CampaignStatus, PromotionCampaign } from "../lib/mock-data"

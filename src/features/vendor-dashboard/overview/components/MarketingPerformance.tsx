@@ -1,9 +1,9 @@
-import DashboardPanel from "@/app/vendor-dashboard/components/shared/DashboardPanel"
+import DashboardPanel from "@/components/dashboard-shared/DashboardPanel"
 import {
   DOT_TONE_CLASS_MAP,
   RING_TONE_CLASS_MAP,
   STATUS_TONE_CLASS_MAP,
-} from "@/app/vendor-dashboard/components/shared/dashboardToneMaps"
+} from "@/components/dashboard-shared/dashboardToneMaps"
 import { Button } from "@/components/ui/button"
 import vendorMarketingData from "@/data/vendor-marketing.json"
 import { cn } from "@/lib/utils"

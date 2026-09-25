@@ -1,6 +1,6 @@
 import { ArrowRight } from "lucide-react"
 import Link from "next/link"
-import { STATUS_TONE_CLASS_MAP } from "@/app/vendor-dashboard/components/shared/dashboardToneMaps"
+import { STATUS_TONE_CLASS_MAP } from "@/components/dashboard-shared/dashboardToneMaps"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { cn } from "@/lib/utils"
 import { formatLastOrder, type VendorCustomer } from "../lib/customers-data"

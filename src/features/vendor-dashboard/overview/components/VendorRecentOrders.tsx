@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import DashboardPanel from "@/app/vendor-dashboard/components/shared/DashboardPanel"
-import { STATUS_TONE_CLASS_MAP } from "@/app/vendor-dashboard/components/shared/dashboardToneMaps"
+import DashboardPanel from "@/components/dashboard-shared/DashboardPanel"
+import { STATUS_TONE_CLASS_MAP } from "@/components/dashboard-shared/dashboardToneMaps"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { VendorOrder } from "@/lib/api/vendor-orders"

@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
-import { RING_TONE_CLASS_MAP } from "@/app/vendor-dashboard/components/shared/dashboardToneMaps"
+import { RING_TONE_CLASS_MAP } from "@/components/dashboard-shared/dashboardToneMaps"
 import { Skeleton } from "@/components/ui/skeleton"
 import { fetchUserProductStats } from "@/lib/api/vendor-products"
 import { queryKeys } from "@/lib/query/keys"
