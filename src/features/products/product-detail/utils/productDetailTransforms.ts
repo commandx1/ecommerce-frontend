@@ -1,4 +1,4 @@
-import { CATEGORY_PATH_SEPARATOR } from "@/features/products/listing/lib/category-facet-tree"
+import { CATEGORY_PATH_SEPARATOR } from "@/features/products/listing/lib/category-path-separator"
 import { getFullImageUrl } from "@/lib/api/products"
 import { isDentalLicenseRequiredValue } from "@/lib/helpers/dentalLicense"
 import formatCurrency from "@/lib/helpers/formatCurrency"

@@ -1,16 +1,9 @@
-import {
-  buildCategoryFacetTree,
-  CATEGORY_PATH_SEPARATOR,
-  compareByCountThenLabel,
-} from "@/features/products/listing/lib/category-facet-tree"
+import { buildCategoryFacetTree, compareByCountThenLabel } from "@/features/products/listing/lib/category-facet-tree"
 import type { FilterOption } from "@/lib/api/public-products"
 import { getChildren } from "@/lib/category-tree"
+import type { CategoryDirectoryEntry } from "./category-directory-links"
 
-export interface CategoryDirectoryEntry {
-  name: string
-  count: number
-  children: string[]
-}
+export { type CategoryDirectoryEntry, categoryHref, filterEntries } from "./category-directory-links"
 
 export const DIRECTORY_CHILD_LIMIT = 4
 
@@ -37,21 +30,4 @@ export function buildCategoryDirectory(options: FilterOption[]): CategoryDirecto
       }
     })
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "en"))
-}
-
-export function filterEntries(entries: CategoryDirectoryEntry[], query: string): CategoryDirectoryEntry[] {
-  const trimmed = query.trim().toLowerCase()
-  if (trimmed.length === 0) {
-    return entries
-  }
-
-  return entries.filter(
-    (entry) =>
-      entry.name.toLowerCase().includes(trimmed) ||
-      entry.children.some((child) => child.toLowerCase().includes(trimmed)),
-  )
-}
-
-export function categoryHref(...path: string[]): string {
-  return `/products?categories=${encodeURIComponent(path.join(CATEGORY_PATH_SEPARATOR))}`
 }

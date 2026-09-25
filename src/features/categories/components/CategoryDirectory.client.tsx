@@ -4,7 +4,7 @@ import { Search, SearchX } from "lucide-react"
 import { useId, useMemo, useState } from "react"
 import PageSectionContainer from "@/components/layout/PageSectionContainer"
 import CategoryTile from "@/features/categories/components/CategoryTile"
-import { type CategoryDirectoryEntry, filterEntries } from "@/features/categories/lib/build-category-directory"
+import { type CategoryDirectoryEntry, filterEntries } from "@/features/categories/lib/category-directory-links"
 
 interface CategoryDirectoryProps {
   entries: CategoryDirectoryEntry[]

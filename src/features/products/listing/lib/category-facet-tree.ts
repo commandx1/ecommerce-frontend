@@ -1,7 +1,8 @@
 import type { FilterOption } from "@/lib/api/public-products"
 import { getChildren } from "@/lib/category-tree"
+import { CATEGORY_PATH_SEPARATOR } from "./category-path-separator"
 
-export const CATEGORY_PATH_SEPARATOR = " > "
+export { CATEGORY_PATH_SEPARATOR }
 
 export interface CategoryFacetNode {
   label: string

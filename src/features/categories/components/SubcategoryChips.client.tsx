@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { LiquidGlass, useLensFollow } from "@/components/ui/liquid-glass"
-import { categoryHref } from "@/features/categories/lib/build-category-directory"
+import { categoryHref } from "@/features/categories/lib/category-directory-links"
 
 interface SubcategoryChipsProps {
   category: string

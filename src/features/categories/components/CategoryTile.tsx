@@ -3,7 +3,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { SpotlightCard } from "@/components/ui/spotlight-card"
 import SubcategoryChips from "@/features/categories/components/SubcategoryChips.client"
-import { type CategoryDirectoryEntry, categoryHref } from "@/features/categories/lib/build-category-directory"
+import { type CategoryDirectoryEntry, categoryHref } from "@/features/categories/lib/category-directory-links"
 import { getFeaturedCategoryAsset } from "@/features/home/data/featured-category-assets"
 import { formatNumber } from "@/lib/helpers/format"
 
