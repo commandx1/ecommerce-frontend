@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { PeriodTab, ReviewApprovedFilter, ViewMode } from "../types"
 
-export const PERIOD_TABS: ReadonlyArray<{ label: string; value: PeriodTab }> = [
+const PERIOD_TABS: ReadonlyArray<{ label: string; value: PeriodTab }> = [
   { label: "3 months", value: "3 months" },
   { label: "6 months", value: "6 months" },
   { label: "12 months", value: "12 months" },
 ]
 
-export const REVIEW_APPROVED_FILTER_OPTIONS: ReadonlyArray<{ label: string; value: ReviewApprovedFilter }> = [
+const REVIEW_APPROVED_FILTER_OPTIONS: ReadonlyArray<{ label: string; value: ReviewApprovedFilter }> = [
   { label: "Pending Review", value: "NULL" },
   { label: "Rejected", value: "FALSE" },
   { label: "All", value: "ALL" },

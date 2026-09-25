@@ -25,7 +25,7 @@ export type DateRangeOption = (typeof dateRangeOptions)[number]
 export type StatusOption = (typeof statusOptions)[number]
 export type SortOption = (typeof sortOptions)[number]
 
-export const rangeDaysMap: Record<DateRangeOption, number> = {
+const rangeDaysMap: Record<DateRangeOption, number> = {
   "Last 30 days": 30,
   "Last 60 days": 60,
   "Last 90 days": 90,

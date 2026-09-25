@@ -83,11 +83,11 @@ export const resolveBestPriceVendorUserProductId = (product: ProductDetail, user
 
 // Mirrors the hardcoded `>= 10.0` gate in ecommerce-api ShipmentService.createShipmentRates —
 // both must change together.
-export const UBER_DIRECT_MAX_DISTANCE_MILES = 10
+const UBER_DIRECT_MAX_DISTANCE_MILES = 10
 
 // vendorDistance is a pre-formatted string from Google Distance Matrix (e.g. "12.3 mi", "500 ft"),
 // not a numeric field, so it has to be parsed before it can be used for ordering.
-export const parseDistanceToMiles = (value?: string): number | null => {
+const parseDistanceToMiles = (value?: string): number | null => {
   if (!value) return null
 
   const trimmed = value.trim()

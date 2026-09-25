@@ -91,8 +91,6 @@ export default defineConfig({
         "src/components/ui/ActionButton.tsx",
 
         // Decorative / animation-only components
-        "src/components/ui/background-gradient-animation.tsx",
-        "src/components/ui/shine-border.tsx",
         "src/components/ui/spotlight-card.tsx",
         "src/components/ui/motion-highlight.tsx",
         "src/components/ui/motion-tabs.tsx",

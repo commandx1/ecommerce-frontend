@@ -159,5 +159,3 @@ export function useBrandFilterDropdown({ onChange, accessToken }: UseBrandFilter
     handleRetry,
   }
 }
-
-export type BrandFilterDropdownViewModel = ReturnType<typeof useBrandFilterDropdown>

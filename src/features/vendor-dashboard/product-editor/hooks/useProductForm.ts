@@ -124,5 +124,3 @@ export function useProductForm(mode: EditorMode) {
     },
   }
 }
-
-export type ProductForm = ReturnType<typeof useProductForm>

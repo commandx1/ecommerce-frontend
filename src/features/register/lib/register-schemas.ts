@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 export const PASSWORD_COMPLEXITY_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d\s]).+$/
-export const PASSWORD_COMPLEXITY_MESSAGE =
+const PASSWORD_COMPLEXITY_MESSAGE =
   "Password must contain an uppercase letter, a lowercase letter, a number and a special character"
 
 /** The self-serve /register flow: full personal + address + company details, no invite token. */

@@ -62,5 +62,3 @@ export function useProductDetailsSubmit({ product, isOpen, onSuccess }: UseProdu
     handleSubmit,
   }
 }
-
-export type ProductDetailsSubmit = ReturnType<typeof useProductDetailsSubmit>

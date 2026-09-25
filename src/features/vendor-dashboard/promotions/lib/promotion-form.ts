@@ -9,7 +9,7 @@ export interface CampaignFormState {
   endDate: string
 }
 
-export const todayDate = (): string => new Date().toISOString().slice(0, 10)
+const todayDate = (): string => new Date().toISOString().slice(0, 10)
 
 export const toInputDate = (isoDate: string): string => isoDate.slice(0, 10)
 

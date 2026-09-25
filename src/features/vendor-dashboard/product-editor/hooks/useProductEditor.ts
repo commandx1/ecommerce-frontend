@@ -98,5 +98,3 @@ export function useProductEditor() {
     goToLogin: () => router.push("/login"),
   }
 }
-
-export type ProductEditorViewModel = ReturnType<typeof useProductEditor>

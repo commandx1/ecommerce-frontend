@@ -13,7 +13,7 @@ export interface RelatedProductItem {
   stock?: number | null
 }
 
-export const RELATED_PRODUCTS_TARGET = 4
+const RELATED_PRODUCTS_TARGET = 4
 
 export type RelatedProductsFetcher = (
   size: number,

@@ -10,8 +10,6 @@ import type { ProductWithDetails } from "../types"
 import { useProductListQuery } from "./useProductListQuery"
 import { useProductMutations } from "./useProductMutations"
 
-export { BRAND_FILTER_ALL } from "./useProductListQuery"
-
 interface DeleteModalState {
   isOpen: boolean
   productId: string | null
@@ -149,5 +147,3 @@ export function useVendorProductsPage() {
     confirmBulkDiscount,
   }
 }
-
-export type VendorProductsPageViewModel = ReturnType<typeof useVendorProductsPage>

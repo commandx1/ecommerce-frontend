@@ -94,7 +94,7 @@ export const TAB_FIELDS = {
   media: ["coverPhoto"],
 } as const
 
-export const TAB_ORDER = ["basic", "details", "media"] as const
+const TAB_ORDER = ["basic", "details", "media"] as const
 export type TabKey = (typeof TAB_ORDER)[number]
 
 export const ALL_FIELDS: readonly string[] = [...TAB_FIELDS.basic, ...TAB_FIELDS.details, ...TAB_FIELDS.media]

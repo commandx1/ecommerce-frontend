@@ -12,7 +12,7 @@ import { vendorProductsListOptions } from "../api/products-queries"
 import type { FilterType } from "../components/ProductStatsCards"
 import type { PeriodTab, ProductWithDetails, ReviewApprovedFilter, ViewMode } from "../types"
 
-export const PERIOD_TAB_TO_DAY_COUNT: Record<PeriodTab, number> = {
+const PERIOD_TAB_TO_DAY_COUNT: Record<PeriodTab, number> = {
   "3 months": 90,
   "6 months": 180,
   "12 months": 365,

@@ -17,17 +17,3 @@ export interface TicketFormData {
   description: string
   urgentCallback: boolean
 }
-
-export interface SystemStatusItem {
-  name: string
-  status: string
-  color: "green" | "yellow"
-}
-
-export interface SystemAnnouncementItem {
-  type: string
-  dotColor: string
-  date: string
-  title: string
-  description: string
-}

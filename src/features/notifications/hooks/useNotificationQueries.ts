@@ -4,7 +4,7 @@ import { useAuthStore } from "@/stores/authStore"
 import { notificationsKeys } from "../lib/notifications-keys"
 import type { NotificationsPageResponse } from "../types"
 
-export const RECENT_NOTIFICATIONS_SIZE = 6
+const RECENT_NOTIFICATIONS_SIZE = 6
 
 interface UnreadNotificationCountResult {
   count: number

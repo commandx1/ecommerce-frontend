@@ -140,5 +140,3 @@ export function formatNumericDate(value: Date | string | number): string {
 export function formatTime(value: Date | string | number): string {
   return formatWith(timeFormatter, value)
 }
-
-export default formatCurrency

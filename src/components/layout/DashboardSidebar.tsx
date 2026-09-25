@@ -60,20 +60,20 @@ interface DashboardSidebarProps {
   defaultItemSize?: SidebarItemSize
 }
 
-export const badgeClassMap: Record<SidebarBadgeTone, string> = {
+const badgeClassMap: Record<SidebarBadgeTone, string> = {
   neutral: "bg-surface-muted text-text-secondary",
   warning: "bg-warning/20 text-warning",
   info: "bg-brand/15 text-brand",
   success: "bg-success/15 text-success",
 }
 
-export const quickActionToneClassMap: Record<SidebarQuickActionTone, string> = {
+const quickActionToneClassMap: Record<SidebarQuickActionTone, string> = {
   brand: "bg-brand text-primary-foreground hover:bg-brand-strong",
   accent: "bg-accent-strong text-neutral-800 hover:brightness-95",
   surface: "border border-border-strong bg-surface text-text-primary hover:border-brand/40 hover:text-brand",
 }
 
-export const isItemActive = (
+const isItemActive = (
   pathname: string | null,
   item: { href: string; match?: string; matchMode?: SidebarMatchMode },
 ) => {

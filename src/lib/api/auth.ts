@@ -77,12 +77,6 @@ export interface Verify2FAPayload {
   device: string
 }
 
-export interface ErrorResponse {
-  timestamp: string
-  message: string
-  status: number
-}
-
 class AuthAPI {
   private getAuthHeaders(token?: string): Record<string, string> {
     if (!token) {

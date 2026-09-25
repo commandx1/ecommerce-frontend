@@ -1,5 +1,4 @@
 // Use Next.js API routes as proxy to avoid CORS issues
-export const BASE_URL = "" // Use Next.js API routes at /api/...
 const IMAGE_PROXY_URL = "/api/images" // Proxy path for images
 
 function normalizeBackendImagePath(path: string): string {

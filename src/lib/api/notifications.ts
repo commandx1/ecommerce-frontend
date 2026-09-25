@@ -53,7 +53,7 @@ export interface GetNotificationsParams {
  * actually serialises it as `read` (verified against NotificationResponse). Normalize
  * defensively so either shape works: prefer `read`, fall back to `isRead`.
  */
-export function normalizeNotification(raw: unknown): NotificationResponse {
+function normalizeNotification(raw: unknown): NotificationResponse {
   const source = (raw ?? {}) as Record<string, unknown>
 
   return {
@@ -68,7 +68,7 @@ export function normalizeNotification(raw: unknown): NotificationResponse {
   }
 }
 
-export function normalizeNotificationsPage(raw: unknown): NotificationsPageResponse {
+function normalizeNotificationsPage(raw: unknown): NotificationsPageResponse {
   const source = (raw ?? {}) as Record<string, unknown>
   const content = Array.isArray(source.content) ? source.content : []
 

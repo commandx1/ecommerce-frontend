@@ -7,7 +7,7 @@ export interface FeaturedCategory {
   topChildren: string[]
 }
 
-export const FEATURED_CATEGORY_LIMIT = 8
+const FEATURED_CATEGORY_LIMIT = 8
 
 export function selectFeaturedCategories(options: FilterOption[], limit = FEATURED_CATEGORY_LIMIT): FeaturedCategory[] {
   const roots = buildCategoryFacetTree(options)

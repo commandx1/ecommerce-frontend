@@ -1,7 +1,6 @@
 import categoryTree from "@/data/category_tree.json"
 
 export const ROOT_CATEGORY = "Dental Supplies"
-export const MAX_TREE_DEPTH = 4
 
 export type CategoryPath = string[]
 

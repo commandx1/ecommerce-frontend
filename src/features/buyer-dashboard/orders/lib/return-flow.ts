@@ -7,7 +7,3 @@ export function hasOrderItemReturnFlowStarted(item: BuyerOrderItem): boolean {
 
   return hasReturnDate || hasReturnStatus || hasLegacyRefundStatus
 }
-
-export function hasAnyOrderItemReturnFlowStarted(items: BuyerOrderItem[]): boolean {
-  return items.some(hasOrderItemReturnFlowStarted)
-}

@@ -75,7 +75,7 @@ function getVendorShipmentFee(item: VendorOrderItem): number {
  * `heavyShippingSurcharge`, which is the *current* per-unit product value and must never be
  * shown as money.
  */
-export function getVendorHeavyShipmentFee(item: VendorOrderItem): number {
+function getVendorHeavyShipmentFee(item: VendorOrderItem): number {
   return typeof item.takedHeavyShipmentFee === "number" && Number.isFinite(item.takedHeavyShipmentFee)
     ? item.takedHeavyShipmentFee
     : 0
