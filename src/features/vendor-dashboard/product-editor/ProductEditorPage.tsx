@@ -1,6 +1,5 @@
 "use client"
 
-import { useQueryClient } from "@tanstack/react-query"
 import {
   AlertCircle,
   ArrowLeft,
@@ -20,384 +19,39 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
-import { Suspense, useCallback, useEffect, useRef, useState } from "react"
+import { Suspense } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { showToast } from "@/components/ui/Toast"
-import { type NormalizedSearchProduct, type Product, type ProductAttribute, productsAPI } from "@/lib/api/products"
-import { useDebounce } from "@/lib/hooks/useDebounce"
-import { queryKeys } from "@/lib/query/keys"
-import { useAuthStore } from "@/stores/authStore"
 import BrandFilterDropdown from "./components/BrandFilterDropdown"
 import CategoryPicker from "./components/CategoryPicker"
 import ProductDetailsModal from "./components/ProductDetailsModal"
+import { useProductEditor } from "./hooks/useProductEditor"
 import {
   FULFILLMENT_POLICY_DAYS,
   getFulfillmentPolicyDayUnit,
   getFulfillmentPolicyValue,
   parseFulfillmentPolicyDays,
 } from "./lib/fulfillment-policy"
-import { isValidImageUrl } from "./lib/image-url"
-import { checkCoverPhoto, checkGalleryPhotos } from "./lib/photo-upload-limits"
-import {
-  ALL_FIELDS,
-  BARCODE_FORMAT_OPTIONS,
-  countTabErrors,
-  type FieldErrors,
-  fieldsBetweenTabs,
-  getTabForField,
-  INITIAL_VALUES,
-  type ProductFormValues,
-  resolveEditorMode,
-  type TabKey,
-  withoutError,
-} from "./lib/product-form"
-import { mapEditLoad, mapReviewEditLoad } from "./lib/product-load-mappers"
-import {
-  addLinkedPhoto,
-  type ExistingImages,
-  hasCoverPhoto,
-  INITIAL_EXISTING_IMAGES,
-  INITIAL_LINKED_IMAGES,
-  INITIAL_PHOTO_FILES,
-  INVALID_IMAGE_URL_MESSAGE,
-  type LinkedImages,
-  type PhotoFiles,
-  removeAt,
-} from "./lib/product-media"
-import {
-  buildListingUpdate,
-  buildLocalListingPayload,
-  buildProductVendorRequest,
-  buildReviewPayload,
-  SUBMIT_SUCCESS_MESSAGES,
-  selectSubmitBranch,
-  submitErrorMessage,
-} from "./lib/product-payloads"
-import { validateProductFields } from "./lib/validate-product-fields"
+import { BARCODE_FORMAT_OPTIONS } from "./lib/product-form"
 
-const SEARCH_PAGE_SIZE = 10
-const SEARCH_SCROLL_THRESHOLD_PX = 48
-
-function CreateProductPageContent() {
-  const router = useRouter()
-  const queryClient = useQueryClient()
-
-  // The products page caches the brand filter and the stat cards, so creating or
-  // editing a listing here has to knock both down before navigating back to it.
-  const invalidateProductsPageCaches = () =>
-    Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.vendor.products.brands() }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.vendor.products.stats() }),
-    ])
-  const searchParams = useSearchParams()
-  const { accessToken, isAuthenticated, user } = useAuthStore()
-
-  const editUserProductId = searchParams.get("edit")
-  const [isEditMode] = useState(!!editUserProductId)
-  const [userProductId] = useState<string | null>(editUserProductId)
-
-  // Edit a rejected product and resubmit it for review (distinct from isEditMode, which only
-  // updates price/stock on an already-approved UserProduct)
-  const reviewEditProductId = searchParams.get("reviewEditId")
-  const reviewEditUserProductId = searchParams.get("reviewUserProductId")
-  const [isReviewEditMode] = useState(!!reviewEditProductId)
-  const [reviewProductId] = useState<string | null>(reviewEditProductId)
-  const [reviewUserProductId] = useState<string | null>(reviewEditUserProductId)
-  const mode = resolveEditorMode({ isEditMode, isReviewEditMode })
-
-  const [formData, setFormData] = useState<ProductFormValues>(INITIAL_VALUES)
-  const [attributes, setAttributes] = useState<ProductAttribute[]>([])
-  // Discount is only used by the edit flow (updateUserProduct); it is not part of the review DTO
-  const [editDiscount, setEditDiscount] = useState("")
-  const [fileData, setFileData] = useState<PhotoFiles>(INITIAL_PHOTO_FILES)
-  const [existingImages, setExistingImages] = useState<ExistingImages>(INITIAL_EXISTING_IMAGES)
-  const [linkedImages, setLinkedImages] = useState<LinkedImages>(INITIAL_LINKED_IMAGES)
-  const [coverPhotoMode, setCoverPhotoMode] = useState<"upload" | "link">("upload")
-  const [photosMode, setPhotosMode] = useState<"upload" | "link">("upload")
-  const [coverPhotoUrlInput, setCoverPhotoUrlInput] = useState("")
-  const [photoUrlInput, setPhotoUrlInput] = useState("")
-  const [coverPhotoUrlError, setCoverPhotoUrlError] = useState("")
-  const [photoUrlError, setPhotoUrlError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [errors, setErrors] = useState<FieldErrors>({})
-  const [activeTab, setActiveTab] = useState<TabKey>("basic")
-  const [isProductSelected, setIsProductSelected] = useState(false)
-  const [selectedProduct, setSelectedProduct] = useState<NormalizedSearchProduct | null>(null)
-
-  // Search-first UX: start on the search view unless we're editing/resubmitting an existing product
-  const [view, setView] = useState<"search" | "form">(editUserProductId || reviewEditProductId ? "form" : "search")
-  const [modalProduct, setModalProduct] = useState<NormalizedSearchProduct | null>(null)
-
-  // File input refs
-  const coverPhotoInputRef = useRef<HTMLInputElement>(null)
-  const photosInputRef = useRef<HTMLInputElement>(null)
-
-  // Autocomplete search states
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedBrand, setSelectedBrand] = useState<string | null>(null)
-  const [searchResults, setSearchResults] = useState<NormalizedSearchProduct[]>([])
-  const [isSearching, setIsSearching] = useState(false)
-  const [isLoadingMoreResults, setIsLoadingMoreResults] = useState(false)
-  const [searchResultsPage, setSearchResultsPage] = useState(0)
-  const [hasMoreResults, setHasMoreResults] = useState(false)
-  const [showDropdown, setShowDropdown] = useState(false)
-  const [brokenImageIds, setBrokenImageIds] = useState<Set<string>>(new Set())
-  const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null)
-  const searchInputRef = useRef<HTMLInputElement>(null)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const searchResultsListRef = useRef<HTMLDivElement>(null)
-  const searchAbortControllerRef = useRef<AbortController | null>(null)
-
-  // Debounced search query
-  const debouncedSearchQuery = useDebounce(searchQuery, 500)
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node) &&
-        searchInputRef.current &&
-        !searchInputRef.current.contains(event.target as Node)
-      ) {
-        setShowDropdown(false)
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
-
-  // Search function (GET /api/products/active?search=...&brand=...&page=...&size=...)
-  const performSearch = useCallback(
-    async (query: string, brand: string | null, page: number, options: { append?: boolean } = {}) => {
-      if (!query.trim() || !accessToken) {
-        searchAbortControllerRef.current?.abort()
-        setSearchResults([])
-        setShowDropdown(false)
-        setHasMoreResults(false)
-        return
-      }
-
-      searchAbortControllerRef.current?.abort()
-      const controller = new AbortController()
-      searchAbortControllerRef.current = controller
-
-      if (options.append) {
-        setIsLoadingMoreResults(true)
-      } else {
-        setIsSearching(true)
-      }
-
-      try {
-        const response = await productsAPI.searchActiveProducts(
-          { search: query.trim(), brand, page, size: SEARCH_PAGE_SIZE },
-          accessToken,
-          controller.signal,
-        )
-        // A malformed 200 (missing/null/non-array `content`) must not reach a bare `.map` - that
-        // would throw inside this try block and surface as a raw JS error via the catch below
-        // ("Search error: Cannot read properties of undefined ...") instead of a real result or a
-        // clean status. Same defensive normalization for `number`/`last`, which drive pagination.
-        const rawContent = Array.isArray(response.content) ? response.content : []
-        const normalized = rawContent.map((item) => productsAPI.normalizeActiveProductSearchItem(item))
-
-        setSearchResults((prev) => (options.append ? [...prev, ...normalized] : normalized))
-        setSearchResultsPage(typeof response.number === "number" ? response.number : page)
-        setHasMoreResults(response.last === false)
-        setShowDropdown(true)
-      } catch (error) {
-        if (controller.signal.aborted) return
-
-        const errorMessage =
-          error && typeof error === "object" && "message" in error
-            ? (error.message as string)
-            : error instanceof Error
-              ? error.message
-              : "An error occurred during search"
-        showToast.error(`Search error: ${errorMessage}`)
-        if (!options.append) setSearchResults([])
-        setHasMoreResults(false)
-      } finally {
-        // Never `return` from `finally` — it would silently swallow returns/throws from try/catch.
-        if (!controller.signal.aborted) {
-          if (options.append) setIsLoadingMoreResults(false)
-          else setIsSearching(false)
-        }
-      }
-    },
-    [accessToken],
-  )
-
-  // Trigger a fresh (page 0) search whenever the debounced query or the brand filter changes
-  useEffect(() => {
-    performSearch(debouncedSearchQuery, selectedBrand, 0)
-  }, [debouncedSearchQuery, selectedBrand, performSearch])
-
-  // Abort any in-flight search on unmount
-  useEffect(() => {
-    return () => {
-      searchAbortControllerRef.current?.abort()
-    }
-  }, [])
-
-  const handleSearchResultsScroll = () => {
-    const el = searchResultsListRef.current
-    if (!el || isSearching || isLoadingMoreResults || !hasMoreResults) return
-
-    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
-    if (distanceFromBottom <= SEARCH_SCROLL_THRESHOLD_PX) {
-      performSearch(debouncedSearchQuery, selectedBrand, searchResultsPage + 1, { append: true })
-    }
+const blockInvalidNumberKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  if (["e", "E", "+", "-"].includes(e.key)) {
+    e.preventDefault()
   }
+}
 
-  // A search result row was clicked: fetch full product details before opening the modal,
-  // since /api/products/active only returns a partial projection (id, name, brand, ...)
-  const handleSelectSearchResult = async (item: NormalizedSearchProduct) => {
-    if (!accessToken || loadingDetailId) return
-
-    setLoadingDetailId(item.id)
-    try {
-      const fullProduct = await productsAPI.getProductById(item.id, accessToken)
-      setModalProduct(productsAPI.normalizeBarcodeResult(fullProduct))
-    } catch (error) {
-      const errorMessage = (error as { message?: string })?.message || "Failed to load product details"
-      showToast.error(errorMessage)
-    } finally {
-      setLoadingDetailId(null)
-    }
+const blockInvalidNumberPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+  const pastedText = e.clipboardData.getData("text")
+  if (!/^\d*\.?\d*$/.test(pastedText)) {
+    e.preventDefault()
   }
+}
 
-  // Load product data in edit mode
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <no need to re-run this effect>
-  useEffect(() => {
-    if (isEditMode && userProductId && accessToken) {
-      loadProductForEdit()
-    }
-  }, [isEditMode, userProductId, accessToken])
-
-  // Load full product data for a rejected product that's being edited and resubmitted for review
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <no need to re-run this effect>
-  useEffect(() => {
-    if (isReviewEditMode && reviewProductId && reviewUserProductId && accessToken) {
-      loadProductForReviewEdit()
-    }
-  }, [isReviewEditMode, reviewProductId, reviewUserProductId, accessToken])
-
-  const loadProductForReviewEdit = async () => {
-    if (!reviewProductId || !reviewUserProductId || !accessToken) return
-
-    try {
-      setIsLoading(true)
-
-      const [product, userProduct] = await Promise.all([
-        productsAPI.getProductByIdForOwner(reviewProductId, accessToken),
-        productsAPI.getUserProductById(reviewUserProductId, accessToken),
-      ])
-
-      const loaded = mapReviewEditLoad(product, userProduct)
-      setFormData(loaded.values)
-      setExistingImages(loaded.existingImages)
-    } catch (error) {
-      showToast.error((error as { message?: string })?.message || "Failed to load product data")
-      router.push("/vendor-dashboard/products")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const loadProductForEdit = async () => {
-    if (!userProductId || !accessToken) return
-
-    try {
-      setIsLoading(true)
-      // First, get user-product to get productId and user-product fields
-      const userProducts = await productsAPI.getUserProducts(accessToken)
-      const userProduct = userProducts.find((up) => up.id === userProductId)
-
-      if (!userProduct) {
-        showToast.error("Product not found")
-        router.push("/vendor-dashboard/products")
-        return
-      }
-
-      // Get product details
-      const product = await productsAPI.getProductById(userProduct.productId, accessToken)
-
-      const loaded = mapEditLoad(product, userProduct)
-      setFormData(loaded.values)
-      setEditDiscount(loaded.editDiscount)
-      setExistingImages(loaded.existingImages)
-
-      // Disable form fields in edit mode
-      setIsProductSelected(true)
-    } catch (error) {
-      showToast.error((error as { message?: string })?.message || "Failed to load product data")
-      router.push("/vendor-dashboard/products")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Clear all form data and images
-  const handleClearAll = () => {
-    // Reset form data
-    setFormData(INITIAL_VALUES)
-    setAttributes([])
-    setEditDiscount("")
-    // Land back on the first tab - otherwise starting a new product after clearing re-opens
-    // wherever the vendor last was (e.g. Media), showing an empty form with the wrong tab active.
-    setActiveTab("basic")
-
-    // Clear file data and revoke URLs
-    if (fileData.coverPhotoPreview) {
-      URL.revokeObjectURL(fileData.coverPhotoPreview)
-    }
-    for (const preview of fileData.photosPreviews) {
-      URL.revokeObjectURL(preview)
-    }
-    setFileData(INITIAL_PHOTO_FILES)
-
-    // Clear existing images
-    setExistingImages(INITIAL_EXISTING_IMAGES)
-
-    // Clear linked images
-    setLinkedImages(INITIAL_LINKED_IMAGES)
-    setCoverPhotoMode("upload")
-    setPhotosMode("upload")
-    setCoverPhotoUrlInput("")
-    setPhotoUrlInput("")
-    setCoverPhotoUrlError("")
-    setPhotoUrlError("")
-
-    // Reset product selected state
-    setIsProductSelected(false)
-    setSelectedProduct(null)
-
-    // Clear errors
-    setErrors({})
-
-    // Clear search
-    searchAbortControllerRef.current?.abort()
-    setSearchQuery("")
-    setSelectedBrand(null)
-    setSearchResults([])
-    setSearchResultsPage(0)
-    setHasMoreResults(false)
-    setShowDropdown(false)
-
-    // Reset file inputs
-    if (coverPhotoInputRef.current) {
-      coverPhotoInputRef.current.value = ""
-    }
-    if (photosInputRef.current) {
-      photosInputRef.current.value = ""
-    }
-  }
+function ProductEditorContent() {
+  const vm = useProductEditor()
+  const { form, media, search, mode, view } = vm
 
   // Redirect to login if not authenticated
-  if (!isAuthenticated || !user) {
+  if (!vm.isSignedIn) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center p-8">
         <div className="bg-surface-elevated rounded-2xl shadow-lg p-12 text-center max-w-md">
@@ -408,7 +62,7 @@ function CreateProductPageContent() {
           <p className="text-text-secondary mb-6">You need to be logged in to create a product.</p>
           <button
             type="button"
-            onClick={() => router.push("/login")}
+            onClick={vm.goToLogin}
             className="w-full bg-brand text-white py-3 px-6 rounded-lg hover:bg-opacity-90 font-semibold transition-colors"
           >
             Go to Login
@@ -418,230 +72,13 @@ function CreateProductPageContent() {
     )
   }
 
-  // Clear a single field's error, if any
-  const clearError = (name: string) => {
-    setErrors((prev) => withoutError(prev, name))
-  }
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target
-    const checked = (e.target as HTMLInputElement).checked
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }))
-
-    // Clear error when user starts typing
-    clearError(name)
-  }
-
-  const blockInvalidNumberKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (["e", "E", "+", "-"].includes(e.key)) {
-      e.preventDefault()
-    }
-  }
-
-  const blockInvalidNumberPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    const pastedText = e.clipboardData.getData("text")
-    if (!/^\d*\.?\d*$/.test(pastedText)) {
-      e.preventDefault()
-    }
-  }
-
-  // Handle cover photo selection
-  const handleCoverPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const check = checkCoverPhoto(file, fileData.photos)
-      if (!check.ok) {
-        showToast.error(check.title, check.message)
-        e.target.value = ""
-        return
-      }
-
-      // Revoke old preview URL to prevent memory leak
-      if (fileData.coverPhotoPreview) {
-        URL.revokeObjectURL(fileData.coverPhotoPreview)
-      }
-      setFileData((prev) => ({
-        ...prev,
-        coverPhoto: file,
-        coverPhotoPreview: URL.createObjectURL(file),
-      }))
-      clearError("coverPhoto")
-    }
-    // Reset the input value so choosing the exact same file again (e.g. after picking the wrong
-    // one first) still fires a change event - browsers don't fire one when the value is unchanged.
-    e.target.value = ""
-  }
-
-  // Remove cover photo
-  const removeCoverPhoto = () => {
-    if (fileData.coverPhotoPreview) {
-      URL.revokeObjectURL(fileData.coverPhotoPreview)
-    }
-    setFileData((prev) => ({
-      ...prev,
-      coverPhoto: null,
-      coverPhotoPreview: null,
-    }))
-    if (coverPhotoInputRef.current) {
-      coverPhotoInputRef.current.value = ""
-    }
-  }
-
-  // Handle additional photos selection
-  const handlePhotosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-    const check = checkGalleryPhotos(files, fileData)
-    if (!check.ok) {
-      showToast.error(check.title, check.message)
-      e.target.value = ""
-      return
-    }
-    if (files.length > 0) {
-      const newPreviews = files.map((file) => URL.createObjectURL(file))
-      setFileData((prev) => ({
-        ...prev,
-        photos: [...prev.photos, ...files],
-        photosPreviews: [...prev.photosPreviews, ...newPreviews],
-      }))
-    }
-    // Reset the input value so re-selecting the same file(s) after removing them from the
-    // gallery still fires a change event - browsers don't fire one when the value is unchanged.
-    e.target.value = ""
-  }
-
-  // Remove a photo by index
-  const removePhoto = (index: number) => {
-    URL.revokeObjectURL(fileData.photosPreviews[index])
-    setFileData((prev) => ({
-      ...prev,
-      photos: removeAt(prev.photos, index),
-      photosPreviews: removeAt(prev.photosPreviews, index),
-    }))
-  }
-
-  // Add cover photo by URL
-  const handleAddCoverPhotoLink = () => {
-    if (!isValidImageUrl(coverPhotoUrlInput)) {
-      setCoverPhotoUrlError(INVALID_IMAGE_URL_MESSAGE)
-      return
-    }
-    setLinkedImages((prev) => ({ ...prev, coverPhoto: coverPhotoUrlInput.trim() }))
-    setCoverPhotoUrlInput("")
-    setCoverPhotoUrlError("")
-    clearError("coverPhoto")
-  }
-
-  // Remove linked cover photo
-  const removeLinkedCoverPhoto = () => {
-    setLinkedImages((prev) => ({ ...prev, coverPhoto: null }))
-  }
-
-  // Add an additional photo by URL
-  const handleAddPhotoLink = () => {
-    if (!isValidImageUrl(photoUrlInput)) {
-      setPhotoUrlError(INVALID_IMAGE_URL_MESSAGE)
-      return
-    }
-    const url = photoUrlInput.trim()
-    setLinkedImages((prev) => addLinkedPhoto(prev, url))
-    setPhotoUrlInput("")
-    setPhotoUrlError("")
-  }
-
-  // Remove a linked photo by index
-  const removeLinkedPhoto = (index: number) => {
-    setLinkedImages((prev) => ({ ...prev, photos: removeAt(prev.photos, index) }))
-  }
-
-  const validateFields = (fields: readonly string[]) =>
-    validateProductFields(
-      formData,
-      { mode, editDiscount, hasCoverPhoto: hasCoverPhoto(fileData, existingImages, linkedImages) },
-      fields,
-    )
-
-  const validateForm = (): boolean => {
-    const newErrors = validateFields(ALL_FIELDS)
-    setErrors(newErrors)
-
-    if (Object.keys(newErrors).length > 0) {
-      const firstErrorField = Object.keys(newErrors)[0]
-      setActiveTab(getTabForField(firstErrorField))
-    }
-
-    return Object.keys(newErrors).length === 0
-  }
-
-  // Validate the tab being left when moving forward; backward navigation is always allowed.
-  // A tab header click can jump forward across more than one tab (e.g. Basic -> Media), so every
-  // tab between the current one and the target - not just the active one - must be validated,
-  // otherwise a skipped tab's required fields go unchecked until the final submit.
-  const tryLeaveTab = (to: TabKey) => {
-    const tabErrors = validateFields(fieldsBetweenTabs(activeTab, to))
-    if (Object.keys(tabErrors).length > 0) {
-      setErrors((prev) => ({ ...prev, ...tabErrors }))
-      return
-    }
-
-    setActiveTab(to)
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!validateForm()) {
-      return
-    }
-
-    setIsLoading(true)
-    setErrors({})
-
-    try {
-      const branch = selectSubmitBranch({
-        isEditMode,
-        userProductId,
-        isReviewEditMode,
-        reviewProductId,
-        selectedProduct,
-      })
-      const token = accessToken || ""
-
-      if (branch === "updateListing") {
-        await productsAPI.updateUserProduct(userProductId as string, buildListingUpdate(formData, editDiscount), token)
-      } else if (branch === "createListing") {
-        const localProduct = selectedProduct?.originalData as Product
-        await productsAPI.createUserProduct(buildLocalListingPayload(localProduct.id, formData), token)
-      } else {
-        const reviewPayload = buildReviewPayload(
-          buildProductVendorRequest(formData, { existing: existingImages, linked: linkedImages }, attributes),
-          fileData,
-        )
-        if (branch === "updateForReview") {
-          await productsAPI.updateProductForReview(reviewProductId as string, reviewPayload, token)
-        } else {
-          await productsAPI.createProductForReview(reviewPayload, token)
-        }
-      }
-
-      showToast.success(SUBMIT_SUCCESS_MESSAGES[branch])
-      void invalidateProductsPageCaches()
-      router.push("/vendor-dashboard/products")
-    } catch (error: unknown) {
-      const errorMessage = submitErrorMessage(error, mode)
-      setErrors({ submit: errorMessage })
-      showToast.error(errorMessage)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const basicErrorCount = countTabErrors(errors, "basic")
-  const detailsErrorCount = countTabErrors(errors, "details")
-  const mediaErrorCount = countTabErrors(errors, "media")
+  // Interim aliases for the not-yet-split JSX below (S10 d replaces it with section components).
+  const isEditMode = mode === "edit"
+  const isReviewEditMode = mode === "reviewEdit"
+  const { values: formData, errors, activeTab, isProductSelected, editDiscount, attributes, handleInputChange } = form
+  const { photoFiles: fileData, existingImages, linkedImages, coverPhotoMode, photosMode } = media
+  const { coverPhotoUrlInput, coverPhotoUrlError, photoUrlInput, photoUrlError } = media
+  const { basic: basicErrorCount, details: detailsErrorCount, media: mediaErrorCount } = vm.tabErrorCounts
 
   return (
     <div className="p-0 sm:p-8">
@@ -672,10 +109,7 @@ function CreateProductPageContent() {
           {view === "form" && !isEditMode && !isReviewEditMode && (
             <button
               type="button"
-              onClick={() => {
-                handleClearAll()
-                setView("search")
-              }}
+              onClick={vm.backToSearch}
               className="px-6 py-2 border border-border-soft rounded-lg text-text-primary hover:bg-surface-muted transition-colors font-medium flex items-center"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -684,7 +118,7 @@ function CreateProductPageContent() {
           )}
           <button
             type="button"
-            onClick={() => router.push("/vendor-dashboard/products")}
+            onClick={vm.cancel}
             className="px-6 py-2 border border-border-soft rounded-lg text-text-primary hover:bg-surface-muted transition-colors font-medium"
           >
             Cancel
@@ -708,34 +142,33 @@ function CreateProductPageContent() {
 
             <div className="relative">
               <div className="flex items-stretch gap-2">
-                <BrandFilterDropdown value={selectedBrand} onChange={setSelectedBrand} accessToken={accessToken} />
+                <BrandFilterDropdown
+                  value={search.selectedBrand}
+                  onChange={search.setSelectedBrand}
+                  accessToken={vm.accessToken}
+                />
 
                 <div className="relative flex-1">
                   <input
-                    ref={searchInputRef}
+                    ref={search.searchInputRef}
                     type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
+                    value={search.searchQuery}
+                    onChange={(e) => search.setSearchQuery(e.target.value)}
+                    onFocus={search.reopenDropdown}
                     placeholder="Search by barcode, name, detailed name, or manufacturer code..."
                     className="w-full px-4 py-3 pl-12 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent"
                   />
                   <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                    {isSearching ? (
+                    {search.isSearching ? (
                       <Loader2 className="w-5 h-5 text-text-muted animate-spin" />
                     ) : (
                       <Search className="w-5 h-5 text-text-muted" />
                     )}
                   </div>
-                  {searchQuery && (
+                  {search.searchQuery && (
                     <button
                       type="button"
-                      onClick={() => {
-                        setSearchQuery("")
-                        setSearchResults([])
-                        setShowDropdown(false)
-                        setHasMoreResults(false)
-                      }}
+                      onClick={search.clearQuery}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary"
                     >
                       <X className="w-5 h-5" />
@@ -745,39 +178,38 @@ function CreateProductPageContent() {
               </div>
 
               {/* Search Results Panel */}
-              {showDropdown && searchResults.length > 0 && (
+              {search.showDropdown && search.results.length > 0 && (
                 <div
-                  ref={dropdownRef}
+                  ref={search.dropdownRef}
                   className="relative z-10 w-full mt-2 bg-surface-elevated border border-border-soft rounded-xl shadow-xl"
                 >
                   <div
-                    ref={searchResultsListRef}
-                    onScroll={handleSearchResultsScroll}
+                    ref={search.resultsListRef}
+                    onScroll={search.handleResultsScroll}
                     className="p-2 max-h-96 overflow-y-auto"
                   >
                     <p className="px-3 py-2 text-xs font-medium text-text-muted uppercase tracking-wide">
-                      {searchResults.length} results found
+                      {search.results.length} results found
                     </p>
-                    {searchResults.map((product) => (
+                    {search.results.map((product) => (
                       <button
                         key={`${product.source}-${product.id}`}
                         type="button"
-                        disabled={loadingDetailId === product.id}
-                        onClick={() => handleSelectSearchResult(product)}
+                        disabled={search.loadingDetailId === product.id}
+                        onClick={() => search.selectResult(product)}
                         className="w-full flex items-center space-x-4 p-3 hover:bg-surface-muted rounded-lg transition-colors text-left disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         {/* Product Image */}
                         <div className="w-16 h-16 bg-surface rounded-lg overflow-hidden shrink-0">
-                          {product.images.length > 0 && !brokenImageIds.has(`${product.source}-${product.id}`) ? (
+                          {product.images.length > 0 &&
+                          !search.brokenImageIds.has(`${product.source}-${product.id}`) ? (
                             <Image
                               src={product.images[0]}
                               alt={product.title}
                               width={64}
                               height={64}
                               className="w-full h-full object-cover"
-                              onError={() => {
-                                setBrokenImageIds((prev) => new Set(prev).add(`${product.source}-${product.id}`))
-                              }}
+                              onError={() => search.markImageBroken(`${product.source}-${product.id}`)}
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
@@ -804,22 +236,19 @@ function CreateProductPageContent() {
                         </div>
                       </button>
                     ))}
-                    {isLoadingMoreResults && (
+                    {search.isLoadingMore && (
                       <div className="flex items-center justify-center py-3">
                         <Loader2 className="w-4 h-4 text-text-muted animate-spin" />
                       </div>
                     )}
-                    {!isLoadingMoreResults && !hasMoreResults && searchResults.length > 0 && (
+                    {!search.isLoadingMore && !search.hasMore && search.results.length > 0 && (
                       <p className="text-center text-xs text-text-muted py-2">No more results</p>
                     )}
                   </div>
                   <div className="border-t border-border-soft p-3">
                     <button
                       type="button"
-                      onClick={() => {
-                        handleClearAll()
-                        setView("form")
-                      }}
+                      onClick={vm.startNewProduct}
                       className="w-full text-center text-sm font-medium text-brand hover:underline"
                     >
                       Can't find your product? Create new
@@ -829,27 +258,27 @@ function CreateProductPageContent() {
               )}
 
               {/* No Results */}
-              {showDropdown && searchResults.length === 0 && !isSearching && debouncedSearchQuery.trim() && (
-                <div
-                  ref={dropdownRef}
-                  className="relative z-10 w-full mt-2 bg-surface-elevated border border-border-soft rounded-xl shadow-xl p-6 text-center"
-                >
-                  <Search className="w-10 h-10 text-text-muted/70 mx-auto mb-3" />
-                  <p className="text-text-secondary font-medium">No results found</p>
-                  <p className="text-text-muted text-sm mt-1">No matching products for "{debouncedSearchQuery}"</p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleClearAll()
-                      setView("form")
-                    }}
-                    className="mt-4 inline-flex items-center px-4 py-2 bg-brand text-white rounded-lg hover:bg-opacity-90 transition-colors font-medium"
+              {search.showDropdown &&
+                search.results.length === 0 &&
+                !search.isSearching &&
+                search.debouncedQuery.trim() && (
+                  <div
+                    ref={search.dropdownRef}
+                    className="relative z-10 w-full mt-2 bg-surface-elevated border border-border-soft rounded-xl shadow-xl p-6 text-center"
                   >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create New Product
-                  </button>
-                </div>
-              )}
+                    <Search className="w-10 h-10 text-text-muted/70 mx-auto mb-3" />
+                    <p className="text-text-secondary font-medium">No results found</p>
+                    <p className="text-text-muted text-sm mt-1">No matching products for "{search.debouncedQuery}"</p>
+                    <button
+                      type="button"
+                      onClick={vm.startNewProduct}
+                      className="mt-4 inline-flex items-center px-4 py-2 bg-brand text-white rounded-lg hover:bg-opacity-90 transition-colors font-medium"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create New Product
+                    </button>
+                  </div>
+                )}
             </div>
           </div>
         </>
@@ -862,7 +291,7 @@ function CreateProductPageContent() {
             <div className="no-scrollbar flex gap-4 overflow-x-auto px-4 sm:gap-8 sm:px-8">
               <button
                 type="button"
-                onClick={() => tryLeaveTab("basic")}
+                onClick={() => vm.goToTab("basic")}
                 className={`shrink-0 whitespace-nowrap py-4 px-2 font-medium border-b-2 transition-colors ${
                   activeTab === "basic"
                     ? "text-brand border-brand"
@@ -884,7 +313,7 @@ function CreateProductPageContent() {
               </button>
               <button
                 type="button"
-                onClick={() => tryLeaveTab("details")}
+                onClick={() => vm.goToTab("details")}
                 className={`shrink-0 whitespace-nowrap py-4 px-2 font-medium border-b-2 transition-colors ${
                   activeTab === "details"
                     ? "text-brand border-brand"
@@ -909,7 +338,7 @@ function CreateProductPageContent() {
               </button>
               <button
                 type="button"
-                onClick={() => tryLeaveTab("media")}
+                onClick={() => vm.goToTab("media")}
                 className={`shrink-0 whitespace-nowrap py-4 px-2 font-medium border-b-2 transition-colors ${
                   activeTab === "media"
                     ? "text-brand border-brand"
@@ -933,7 +362,7 @@ function CreateProductPageContent() {
           </div>
 
           {/* Form */}
-          <form id="create-product-form" onSubmit={handleSubmit}>
+          <form id="create-product-form" onSubmit={vm.handleSubmit}>
             <div className="bg-surface-elevated rounded-b-2xl shadow-lg p-4 sm:p-8">
               {errors.submit && (
                 <div className="mb-6 bg-destructive/10 border border-destructive/25 rounded-lg p-4 flex items-start space-x-3">
@@ -1006,7 +435,7 @@ function CreateProductPageContent() {
                         name="barcodeFormats"
                         value={formData.barcodeFormats}
                         disabled={isProductSelected}
-                        onValueChange={(value) => setFormData((prev) => ({ ...prev, barcodeFormats: value }))}
+                        onValueChange={form.setBarcodeFormat}
                       >
                         <SelectTrigger
                           id="barcodeFormats"
@@ -1205,16 +634,7 @@ function CreateProductPageContent() {
                             type="number"
                             name="discount"
                             value={editDiscount}
-                            onChange={(e) => {
-                              setEditDiscount(e.target.value)
-                              if (errors.discount) {
-                                setErrors((prev) => {
-                                  const newErrors = { ...prev }
-                                  delete newErrors.discount
-                                  return newErrors
-                                })
-                              }
-                            }}
+                            onChange={(e) => form.changeDiscount(e.target.value)}
                             min="0"
                             step="0.01"
                             className={`w-full px-4 py-3 border ${errors.discount ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent`}
@@ -1301,11 +721,8 @@ function CreateProductPageContent() {
                       <BrandFilterDropdown
                         id="brand"
                         value={formData.brand || null}
-                        onChange={(brand) => {
-                          setFormData((prev) => ({ ...prev, brand: brand ?? "" }))
-                          clearError("brand")
-                        }}
-                        accessToken={accessToken}
+                        onChange={form.setBrand}
+                        accessToken={vm.accessToken}
                         disabled={isProductSelected}
                         hideAllOption
                         triggerClassName={`w-full px-4 py-3 border ${errors.brand ? "border-destructive" : "border-border-soft"} rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60`}
@@ -1322,10 +739,7 @@ function CreateProductPageContent() {
                       legacyValue={formData.legacyCategory}
                       hasError={Boolean(errors.category)}
                       disabled={isProductSelected}
-                      onChange={(path) => {
-                        setFormData((prev) => ({ ...prev, categoryPath: path, legacyCategory: null }))
-                        clearError("category")
-                      }}
+                      onChange={form.setCategoryPath}
                       // The picker itself marks only the first empty level red (aria-invalid), so the
                       // shared trigger class must stay neutral - a conditional border here would paint
                       // every level's dropdown red at once.
@@ -1366,12 +780,7 @@ function CreateProductPageContent() {
                           type="button"
                           role="switch"
                           aria-checked={formData.dentalLicenseRequired === "Yes"}
-                          onClick={() =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              dentalLicenseRequired: prev.dentalLicenseRequired === "Yes" ? "No" : "Yes",
-                            }))
-                          }
+                          onClick={form.toggleDentalLicense}
                           disabled={isProductSelected}
                           className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60 ${
                             formData.dentalLicenseRequired === "Yes"
@@ -1456,7 +865,7 @@ function CreateProductPageContent() {
                       <h4 className="text-sm font-semibold text-text-primary">Attributes</h4>
                       <button
                         type="button"
-                        onClick={() => setAttributes((prev) => [...prev, { attributeName: "", attributeValue: "" }])}
+                        onClick={form.addAttribute}
                         disabled={isProductSelected}
                         className="inline-flex items-center px-3 py-1.5 bg-surface text-text-primary text-sm rounded-lg hover:bg-surface-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
@@ -1477,13 +886,7 @@ function CreateProductPageContent() {
                             <input
                               type="text"
                               value={attribute.attributeName}
-                              onChange={(e) =>
-                                setAttributes((prev) =>
-                                  prev.map((attr, i) =>
-                                    i === index ? { ...attr, attributeName: e.target.value } : attr,
-                                  ),
-                                )
-                              }
+                              onChange={(e) => form.updateAttribute(index, { attributeName: e.target.value })}
                               disabled={isProductSelected}
                               className="flex-1 px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
                               placeholder="Attribute name (e.g., Color)"
@@ -1491,20 +894,14 @@ function CreateProductPageContent() {
                             <input
                               type="text"
                               value={attribute.attributeValue}
-                              onChange={(e) =>
-                                setAttributes((prev) =>
-                                  prev.map((attr, i) =>
-                                    i === index ? { ...attr, attributeValue: e.target.value } : attr,
-                                  ),
-                                )
-                              }
+                              onChange={(e) => form.updateAttribute(index, { attributeValue: e.target.value })}
                               disabled={isProductSelected}
                               className="flex-1 px-4 py-3 border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent disabled:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
                               placeholder="Attribute value (e.g., Blue)"
                             />
                             <button
                               type="button"
-                              onClick={() => setAttributes((prev) => prev.filter((_, i) => i !== index))}
+                              onClick={() => form.removeAttribute(index)}
                               disabled={isProductSelected}
                               className="w-8 h-8 shrink-0 bg-destructive/10 text-destructive rounded-full flex items-center justify-center hover:bg-destructive/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
@@ -1551,7 +948,7 @@ function CreateProductPageContent() {
                     <div className="flex items-center gap-2 mb-4">
                       <button
                         type="button"
-                        onClick={() => setCoverPhotoMode("upload")}
+                        onClick={() => media.setCoverPhotoMode("upload")}
                         disabled={isProductSelected}
                         className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                           coverPhotoMode === "upload"
@@ -1564,7 +961,7 @@ function CreateProductPageContent() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setCoverPhotoMode("link")}
+                        onClick={() => media.setCoverPhotoMode("link")}
                         disabled={isProductSelected}
                         className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                           coverPhotoMode === "link"
@@ -1578,10 +975,10 @@ function CreateProductPageContent() {
                     </div>
 
                     <input
-                      ref={coverPhotoInputRef}
+                      ref={media.coverPhotoInputRef}
                       type="file"
                       accept="image/*"
-                      onChange={handleCoverPhotoChange}
+                      onChange={media.handleCoverPhotoChange}
                       disabled={isProductSelected}
                       className="hidden"
                       id="coverPhotoInput"
@@ -1609,15 +1006,7 @@ function CreateProductPageContent() {
                         </span>
                         <button
                           type="button"
-                          onClick={() => {
-                            if (fileData.coverPhotoPreview) {
-                              removeCoverPhoto()
-                            } else if (existingImages.coverPhoto) {
-                              setExistingImages((prev) => ({ ...prev, coverPhoto: null }))
-                            } else {
-                              removeLinkedCoverPhoto()
-                            }
-                          }}
+                          onClick={media.removeCoverPhoto}
                           disabled={isProductSelected}
                           className="absolute top-2 right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center hover:bg-destructive/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-destructive"
                         >
@@ -1626,7 +1015,7 @@ function CreateProductPageContent() {
                         {coverPhotoMode === "upload" && fileData.coverPhotoPreview && (
                           <button
                             type="button"
-                            onClick={() => coverPhotoInputRef.current?.click()}
+                            onClick={media.openCoverPhotoPicker}
                             className="absolute bottom-2 right-2 px-3 py-1 bg-surface-elevated text-text-primary text-xs rounded shadow hover:bg-surface-muted transition-colors"
                           >
                             Change
@@ -1636,7 +1025,7 @@ function CreateProductPageContent() {
                     ) : coverPhotoMode === "upload" ? (
                       <button
                         type="button"
-                        onClick={() => coverPhotoInputRef.current?.click()}
+                        onClick={media.openCoverPhotoPicker}
                         disabled={isProductSelected}
                         className="border-2 border-dashed border-border-soft rounded-lg p-8 text-center hover:border-brand hover:bg-surface-muted transition-colors cursor-pointer w-full max-w-md disabled:opacity-50 disabled:cursor-not-allowed"
                       >
@@ -1650,17 +1039,14 @@ function CreateProductPageContent() {
                           <input
                             type="url"
                             value={coverPhotoUrlInput}
-                            onChange={(e) => {
-                              setCoverPhotoUrlInput(e.target.value)
-                              if (coverPhotoUrlError) setCoverPhotoUrlError("")
-                            }}
+                            onChange={(e) => media.changeCoverPhotoUrl(e.target.value)}
                             disabled={isProductSelected}
                             placeholder="https://example.com/image.jpg"
                             className="flex-1 px-3 py-2 border border-border-soft rounded-lg text-sm bg-surface-elevated text-text-primary focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-50 disabled:cursor-not-allowed"
                           />
                           <button
                             type="button"
-                            onClick={handleAddCoverPhotoLink}
+                            onClick={media.addCoverPhotoLink}
                             disabled={isProductSelected}
                             className="px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium hover:bg-brand/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
@@ -1686,7 +1072,7 @@ function CreateProductPageContent() {
                     <div className="flex items-center gap-2 mb-4">
                       <button
                         type="button"
-                        onClick={() => setPhotosMode("upload")}
+                        onClick={() => media.setPhotosMode("upload")}
                         disabled={isProductSelected}
                         className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                           photosMode === "upload"
@@ -1699,7 +1085,7 @@ function CreateProductPageContent() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setPhotosMode("link")}
+                        onClick={() => media.setPhotosMode("link")}
                         disabled={isProductSelected}
                         className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                           photosMode === "link"
@@ -1713,11 +1099,11 @@ function CreateProductPageContent() {
                     </div>
 
                     <input
-                      ref={photosInputRef}
+                      ref={media.photosInputRef}
                       type="file"
                       accept="image/*"
                       multiple
-                      onChange={handlePhotosChange}
+                      onChange={media.handlePhotosChange}
                       disabled={isProductSelected}
                       className="hidden"
                       id="photosInput"
@@ -1727,7 +1113,7 @@ function CreateProductPageContent() {
                       {photosMode === "upload" ? (
                         <button
                           type="button"
-                          onClick={() => photosInputRef.current?.click()}
+                          onClick={media.openPhotosPicker}
                           disabled={isProductSelected}
                           className="inline-flex items-center px-4 py-2 bg-surface text-text-primary rounded-lg hover:bg-surface-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -1740,17 +1126,14 @@ function CreateProductPageContent() {
                             <input
                               type="url"
                               value={photoUrlInput}
-                              onChange={(e) => {
-                                setPhotoUrlInput(e.target.value)
-                                if (photoUrlError) setPhotoUrlError("")
-                              }}
+                              onChange={(e) => media.changePhotoUrl(e.target.value)}
                               disabled={isProductSelected}
                               placeholder="https://example.com/image.jpg"
                               className="flex-1 px-3 py-2 border border-border-soft rounded-lg text-sm bg-surface-elevated text-text-primary focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                             <button
                               type="button"
-                              onClick={handleAddPhotoLink}
+                              onClick={media.addPhotoLink}
                               disabled={isProductSelected}
                               className="px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium hover:bg-brand/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
@@ -1783,12 +1166,7 @@ function CreateProductPageContent() {
                               </div>
                               <button
                                 type="button"
-                                onClick={() => {
-                                  setExistingImages((prev) => ({
-                                    ...prev,
-                                    photos: prev.photos.filter((_, i) => i !== index),
-                                  }))
-                                }}
+                                onClick={() => media.removeExistingPhoto(index)}
                                 disabled={isProductSelected}
                                 className="absolute top-2 right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90 disabled:opacity-0 disabled:cursor-not-allowed"
                               >
@@ -1817,7 +1195,7 @@ function CreateProductPageContent() {
                               </div>
                               <button
                                 type="button"
-                                onClick={() => removePhoto(index)}
+                                onClick={() => media.removePhoto(index)}
                                 disabled={isProductSelected}
                                 className="absolute top-2 right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90 disabled:opacity-0 disabled:cursor-not-allowed"
                               >
@@ -1846,7 +1224,7 @@ function CreateProductPageContent() {
                               </div>
                               <button
                                 type="button"
-                                onClick={() => removeLinkedPhoto(index)}
+                                onClick={() => media.removeLinkedPhoto(index)}
                                 disabled={isProductSelected}
                                 className="absolute top-2 right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90 disabled:opacity-0 disabled:cursor-not-allowed"
                               >
@@ -1927,8 +1305,8 @@ function CreateProductPageContent() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (activeTab === "details") tryLeaveTab("basic")
-                    else if (activeTab === "media") tryLeaveTab("details")
+                    if (activeTab === "details") vm.goToTab("basic")
+                    else if (activeTab === "media") vm.goToTab("details")
                   }}
                   className={`px-6 py-2 border border-border-soft rounded-lg text-text-primary hover:bg-surface-muted transition-colors font-medium ${
                     activeTab === "basic" ? "invisible" : ""
@@ -1940,11 +1318,11 @@ function CreateProductPageContent() {
                   <button
                     type="submit"
                     form="create-product-form"
-                    disabled={isLoading}
+                    disabled={vm.isBusy}
                     className="px-6 py-2 bg-brand text-white rounded-lg hover:bg-opacity-90 transition-colors font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Save className="w-4 h-4 mr-2" />
-                    {isLoading
+                    {vm.isBusy
                       ? isReviewEditMode
                         ? "Resubmitting..."
                         : isEditMode
@@ -1960,8 +1338,8 @@ function CreateProductPageContent() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (activeTab === "basic") tryLeaveTab("details")
-                      else if (activeTab === "details") tryLeaveTab("media")
+                      if (activeTab === "basic") vm.goToTab("details")
+                      else if (activeTab === "details") vm.goToTab("media")
                     }}
                     className="px-6 py-2 bg-accent-strong text-muted rounded-lg hover:bg-opacity-90 transition-colors font-medium"
                   >
@@ -1974,19 +1352,19 @@ function CreateProductPageContent() {
         </>
       )}
 
-      {modalProduct && (
+      {search.modalProduct && (
         <ProductDetailsModal
-          product={modalProduct}
-          isOpen={!!modalProduct}
-          onClose={() => setModalProduct(null)}
-          onSuccess={() => setModalProduct(null)}
+          product={search.modalProduct}
+          isOpen={!!search.modalProduct}
+          onClose={search.closeModal}
+          onSuccess={search.closeModal}
         />
       )}
     </div>
   )
 }
 
-export default function CreateProductPage() {
+export default function ProductEditorPage() {
   return (
     <Suspense
       fallback={
@@ -1998,7 +1376,7 @@ export default function CreateProductPage() {
         </div>
       }
     >
-      <CreateProductPageContent />
+      <ProductEditorContent />
     </Suspense>
   )
 }
