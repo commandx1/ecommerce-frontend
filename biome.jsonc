@@ -104,6 +104,30 @@
           }
         }
       }
+    },
+    {
+      // Phase 4 buyer-dashboard boundary (design doc §1, §7, B1-B5): `features/buyer-dashboard/**`
+      // must not import from `app/buyer-dashboard/**`. Unlike vendor's S11 boundary, there is no
+      // carve-out - every shared piece the buyer side used to reach into `app/` for already moved
+      // to `components/`, `lib/` or `features/` earlier in Phase 4.
+      "includes": ["src/features/buyer-dashboard/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@/app/buyer-dashboard/**"],
+                    "message": "features/buyer-dashboard must not import from app/buyer-dashboard."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "assist": {
