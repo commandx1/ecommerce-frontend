@@ -37,9 +37,9 @@ export function getSellerFirstTwoLetters(value: string): string {
     .filter(Boolean)
 
   if (words.length === 0) return "SE"
-  if (words.length === 1) return words[0].slice(0, 2).toUpperCase()
+  if (words.length === 1) return (words[0] ?? "").slice(0, 2).toUpperCase()
 
-  return `${words[0][0] ?? ""}${words[1][0] ?? ""}`.toUpperCase()
+  return `${(words[0] ?? "").charAt(0)}${(words[1] ?? "").charAt(0)}`.toUpperCase()
 }
 
 export function getOrderStatusClasses(orderStatus: string): string {
@@ -75,7 +75,7 @@ export function formatOrderItemStatus(status: string): string {
   return status
     .toLowerCase()
     .split("_")
-    .map((part) => (part ? `${part[0].toUpperCase()}${part.slice(1)}` : ""))
+    .map((part) => (part ? `${part.charAt(0).toUpperCase()}${part.slice(1)}` : ""))
     .join(" ")
 }
 

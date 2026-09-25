@@ -95,11 +95,13 @@ const parseDistanceToMiles = (value?: string): number | null => {
 
   const match = trimmed.replace(/,/g, "").match(/^(-?\d+(?:\.\d+)?)\s*(mi|ft|km|m)$/i)
   if (!match) return null
+  const [, amountText, unitText] = match
+  if (amountText === undefined || unitText === undefined) return null
 
-  const amount = Number.parseFloat(match[1])
+  const amount = Number.parseFloat(amountText)
   if (Number.isNaN(amount)) return null
 
-  const unit = match[2].toLowerCase()
+  const unit = unitText.toLowerCase()
   switch (unit) {
     case "mi":
       return amount

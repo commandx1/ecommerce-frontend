@@ -30,6 +30,7 @@ const ActiveFilters = ({ vendors }: ActiveFiltersProps) => {
 
   const attributeGroups = currentAttributes.reduce<Record<string, string[]>>((acc, attr) => {
     const [name, value] = attr.split(":", 2)
+    if (!name || value === undefined) return acc
     if (!acc[name]) acc[name] = []
     acc[name].push(value)
     return acc

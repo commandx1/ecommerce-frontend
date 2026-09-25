@@ -175,10 +175,11 @@ function withPatchedAutoOrder<T extends { products: { userProductId: string; aut
 ): T[] {
   return orders.map((order) => {
     const matchIndex = order.products.findIndex((product) => product.userProductId === userProductId)
-    if (matchIndex === -1) return order
+    const matchedProduct = matchIndex === -1 ? undefined : order.products[matchIndex]
+    if (matchIndex === -1 || matchedProduct === undefined) return order
 
     const nextProducts = [...order.products]
-    nextProducts[matchIndex] = { ...nextProducts[matchIndex], autoOrder }
+    nextProducts[matchIndex] = { ...matchedProduct, autoOrder }
     return { ...order, products: nextProducts }
   })
 }

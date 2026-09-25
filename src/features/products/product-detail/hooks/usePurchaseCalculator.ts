@@ -32,7 +32,7 @@ const parsePrice = (priceString: string): number => {
 
 const resolveBulkPricing = (bulkPricing: BulkPricingOption[], quantity: number) => {
   const sortedBulk = [...bulkPricing].sort((a, b) => {
-    const getMin = (range: string) => parseInt(range.split("-")[0].replace(/\+/g, ""), 10) || 0
+    const getMin = (range: string) => parseInt((range.split("-")[0] ?? "").replace(/\+/g, ""), 10) || 0
     return getMin(b.range) - getMin(a.range)
   })
 
@@ -43,7 +43,7 @@ const resolveBulkPricing = (bulkPricing: BulkPricingOption[], quantity: number) 
       if (quantity >= min) return tier
     } else if (range.includes("-")) {
       const [min, max] = range.split("-").map((value) => parseInt(value, 10))
-      if (quantity >= min && quantity <= max) return tier
+      if (min !== undefined && max !== undefined && quantity >= min && quantity <= max) return tier
     } else if (range.includes("1 unit")) {
       if (quantity === 1) return tier
     }

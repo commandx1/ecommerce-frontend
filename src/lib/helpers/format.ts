@@ -71,6 +71,8 @@ export function parseApiDate(value: Date | string | number): Date {
 
   if (DATE_ONLY_PATTERN.test(value)) {
     const [year, month, day] = value.split("-").map(Number)
+    // DATE_ONLY_PATTERN guarantees exactly 3 numeric parts; this is just satisfying the compiler.
+    if (year === undefined || month === undefined || day === undefined) return new Date(Number.NaN)
     return new Date(year, month - 1, day)
   }
 

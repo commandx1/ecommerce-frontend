@@ -70,8 +70,8 @@ export function buildProductDetailViewModel(
   const suppliers = buildSuppliers(userProducts, bestPriceVendorUserProductId)
   const thumbnailImages = buildThumbnailImages(photoPaths)
   const categoryTrail = buildCategoryTrail(product)
-  const categoryLabel =
-    categoryTrail.length > 0 ? categoryTrail[categoryTrail.length - 1].label : product.primaryMarket || "Products"
+  const lastCategoryTrailEntry = categoryTrail.at(-1)
+  const categoryLabel = lastCategoryTrailEntry ? lastCategoryTrailEntry.label : product.primaryMarket || "Products"
 
   return {
     productId: id,

@@ -51,7 +51,14 @@ export function humanizeColumn(key: string): string {
 
   if (words.length === 0) return key
 
-  return words.map((word) => (word === word.toUpperCase() ? word : word[0].toUpperCase() + word.slice(1))).join(" ")
+  return words
+    .map((word) => {
+      if (word === word.toUpperCase()) return word
+      // `words` came through `.filter(Boolean)` above, so `word` is never empty here.
+      const firstLetter = word[0]
+      return firstLetter === undefined ? word : firstLetter.toUpperCase() + word.slice(1)
+    })
+    .join(" ")
 }
 
 export function columnLabel(key: string): string {

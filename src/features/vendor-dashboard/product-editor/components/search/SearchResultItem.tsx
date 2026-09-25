@@ -17,6 +17,8 @@ export default function SearchResultItem({
   onSelect,
   onImageError,
 }: SearchResultItemProps) {
+  const firstImage = product.images[0]
+
   return (
     <button
       type="button"
@@ -25,9 +27,9 @@ export default function SearchResultItem({
       className="w-full flex items-center space-x-4 p-3 hover:bg-surface-muted rounded-lg transition-colors text-left disabled:opacity-60 disabled:cursor-not-allowed"
     >
       <div className="w-16 h-16 bg-surface rounded-lg overflow-hidden shrink-0">
-        {product.images.length > 0 && !imageBroken ? (
+        {firstImage !== undefined && !imageBroken ? (
           <Image
-            src={product.images[0]}
+            src={firstImage}
             alt={product.title}
             width={64}
             height={64}

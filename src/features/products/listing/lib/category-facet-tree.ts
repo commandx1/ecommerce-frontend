@@ -66,8 +66,7 @@ function buildTaxonomyMirror(pathSegments: string[]): MutableFacetNode[] {
 function insertOption(roots: MutableFacetNode[], segments: string[], count: number): void {
   let levelNodes = roots
 
-  for (let i = 0; i < segments.length; i++) {
-    const label = segments[i]
+  for (const [i, label] of segments.entries()) {
     let node = levelNodes.find((candidate) => candidate.label === label)
 
     if (!node) {

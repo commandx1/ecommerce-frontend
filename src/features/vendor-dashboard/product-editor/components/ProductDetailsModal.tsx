@@ -25,8 +25,9 @@ function ProductImageGallery({ images, alt }: { images: string[]; alt: string })
 
   const validIndices = images.map((_, i) => i).filter((i) => !brokenIndices.has(i))
   const activeIndex = validIndices.includes(selectedIndex) ? selectedIndex : validIndices[0]
+  const activeImage = activeIndex !== undefined ? images[activeIndex] : undefined
 
-  if (validIndices.length === 0 || activeIndex === undefined) {
+  if (validIndices.length === 0 || activeIndex === undefined || activeImage === undefined) {
     return (
       <div className="flex h-40 w-40 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border-soft bg-surface">
         <ImageIcon className="w-10 h-10 text-text-muted/70" />
@@ -38,8 +39,8 @@ function ProductImageGallery({ images, alt }: { images: string[]; alt: string })
     <div className="flex shrink-0 gap-2">
       <div className="w-70 h-70 bg-surface rounded-lg overflow-hidden border border-border-soft shrink-0">
         <Image
-          key={images[activeIndex]}
-          src={images[activeIndex]}
+          key={activeImage}
+          src={activeImage}
           alt={alt}
           width={160}
           height={160}
@@ -49,25 +50,29 @@ function ProductImageGallery({ images, alt }: { images: string[]; alt: string })
       </div>
       {validIndices.length > 1 && (
         <div className="flex max-h-40 flex-col gap-1.5 overflow-y-auto">
-          {validIndices.map((i) => (
-            <button
-              key={images[i]}
-              type="button"
-              onClick={() => setSelectedIndex(i)}
-              className={`h-8 w-8 shrink-0 overflow-hidden rounded border ${
-                i === activeIndex ? "border-brand" : "border-border-soft"
-              }`}
-            >
-              <Image
-                src={images[i]}
-                alt=""
-                width={32}
-                height={32}
-                className="w-full h-full object-cover"
-                onError={() => setBrokenIndices((prev) => new Set(prev).add(i))}
-              />
-            </button>
-          ))}
+          {validIndices.flatMap((i) => {
+            const image = images[i]
+            if (image === undefined) return []
+            return [
+              <button
+                key={image}
+                type="button"
+                onClick={() => setSelectedIndex(i)}
+                className={`h-8 w-8 shrink-0 overflow-hidden rounded border ${
+                  i === activeIndex ? "border-brand" : "border-border-soft"
+                }`}
+              >
+                <Image
+                  src={image}
+                  alt=""
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-cover"
+                  onError={() => setBrokenIndices((prev) => new Set(prev).add(i))}
+                />
+              </button>,
+            ]
+          })}
         </div>
       )}
     </div>

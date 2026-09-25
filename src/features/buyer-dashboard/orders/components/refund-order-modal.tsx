@@ -18,6 +18,11 @@ interface RefundFormItemState {
 
 type RefundFormState = Record<string, RefundFormItemState>
 
+// formState is seeded from orderItems for every item id (see createInitialFormState), so
+// `prev[item.id]` below is never actually missing - this fallback exists only to satisfy
+// noUncheckedIndexedAccess when spreading a Record lookup.
+const FALLBACK_ITEM_STATE: RefundFormItemState = { isSelected: false, quantity: 1, returnReason: "" }
+
 const RETURN_REASON_OPTIONS = [
   "Wrong Item Received",
   "Product Arrived Damaged",
@@ -84,13 +89,19 @@ export default function RefundOrderModal() {
       return
     }
 
-    const payloadItems = selectedItems.map((item) => {
+    const payloadItems = selectedItems.flatMap((item) => {
       const current = formState[item.id]
-      return {
-        orderItemId: item.id,
-        quantity: current.quantity,
-        returnReason: current.returnReason.trim(),
-      }
+      // formState is seeded from orderItems (see createInitialFormState) and never loses a key for
+      // an item that's still in orderItems, so this is always defined - the guard is here only to
+      // satisfy noUncheckedIndexedAccess.
+      if (!current) return []
+      return [
+        {
+          orderItemId: item.id,
+          quantity: current.quantity,
+          returnReason: current.returnReason.trim(),
+        },
+      ]
     })
 
     if (
@@ -152,7 +163,7 @@ export default function RefundOrderModal() {
                       const isSelected = event.target.checked
                       setFormState((prev) => ({
                         ...prev,
-                        [item.id]: { ...prev[item.id], isSelected },
+                        [item.id]: { ...(prev[item.id] ?? FALLBACK_ITEM_STATE), isSelected },
                       }))
                     }}
                     className="mt-1"
@@ -186,7 +197,7 @@ export default function RefundOrderModal() {
                             setFormState((prev) => ({
                               ...prev,
                               [item.id]: {
-                                ...prev[item.id],
+                                ...(prev[item.id] ?? FALLBACK_ITEM_STATE),
                                 quantity: Math.min(Math.max(nextQuantity, 1), item.quantity),
                               },
                             }))
@@ -209,7 +220,7 @@ export default function RefundOrderModal() {
                           setFormState((prev) => ({
                             ...prev,
                             [item.id]: {
-                              ...prev[item.id],
+                              ...(prev[item.id] ?? FALLBACK_ITEM_STATE),
                               returnReason,
                             },
                           }))

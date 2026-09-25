@@ -106,7 +106,8 @@ export function useProductMedia({ onCoverPhotoAdded }: { onCoverPhotoAdded: () =
     },
 
     removePhoto: (index: number) => {
-      URL.revokeObjectURL(photoFiles.photosPreviews[index])
+      const preview = photoFiles.photosPreviews[index]
+      if (preview !== undefined) URL.revokeObjectURL(preview)
       setPhotoFiles((prev) => ({
         ...prev,
         photos: removeAt(prev.photos, index),

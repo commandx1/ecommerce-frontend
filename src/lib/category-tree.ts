@@ -104,10 +104,10 @@ export function categoryPathToLevels(path: CategoryPath): CategoryLevels {
   const levels: CategoryLevels = { categoryLevel1: ROOT_CATEGORY }
   const levelKeys = ["categoryLevel2", "categoryLevel3", "categoryLevel4", "categoryLevel5"] as const
 
-  for (let i = 0; i < levelKeys.length; i++) {
+  for (const [i, key] of levelKeys.entries()) {
     const value = path[i]
     if (value !== undefined) {
-      levels[levelKeys[i]] = value
+      levels[key] = value
     }
   }
 

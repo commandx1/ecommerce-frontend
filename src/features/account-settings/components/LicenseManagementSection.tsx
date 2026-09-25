@@ -202,7 +202,13 @@ export default function LicenseManagementSection() {
       return
     }
 
+    // The native date input always yields "YYYY-MM-DD" once non-empty (checked above), so this
+    // split always has exactly 3 parts - the guard is here only to satisfy noUncheckedIndexedAccess.
     const [year, month, day] = expirationDate.split("-").map(Number)
+    if (year === undefined || month === undefined || day === undefined) {
+      setErrors((prev) => ({ ...prev, expirationDate: "Expiration date is invalid" }))
+      return
+    }
 
     setIsSaving(true)
     try {

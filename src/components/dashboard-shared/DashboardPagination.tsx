@@ -34,11 +34,13 @@ function getPageNumbers(currentPage: number, totalPages: number): (number | "...
   const sorted = Array.from(pages).sort((a, b) => a - b)
   const result: (number | "...")[] = []
 
-  for (let i = 0; i < sorted.length; i++) {
-    if (i > 0 && (sorted[i] as number) - (sorted[i - 1] as number) > 1) {
+  let previous: number | undefined
+  for (const page of sorted) {
+    if (previous !== undefined && page - previous > 1) {
       result.push("...")
     }
-    result.push(sorted[i])
+    result.push(page)
+    previous = page
   }
 
   return result

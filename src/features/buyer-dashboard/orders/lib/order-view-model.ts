@@ -200,6 +200,10 @@ export function getSellerSummary(sellerGroups: BuyerOrderSellerGroup[]): { prima
   }
 
   const [firstSeller, ...remainingSellers] = sellerGroups
+  // sellerGroups.length === 0 already returned above, so firstSeller always exists here.
+  if (!firstSeller) {
+    return { primarySeller: "Unknown Seller", moreCount: 0 }
+  }
   const primarySeller = [firstSeller.sellerName, firstSeller.sellerSurname].filter(Boolean).join(" ").trim() || "Seller"
 
   return { primarySeller, moreCount: remainingSellers.length }

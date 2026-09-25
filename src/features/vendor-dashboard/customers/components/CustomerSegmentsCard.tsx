@@ -9,6 +9,8 @@ const segmentToneMap: Record<string, { badge: string; dot: string }> = {
   New: { badge: STATUS_TONE_CLASS_MAP.neutral, dot: DOT_TONE_CLASS_MAP.neutral },
 }
 
+const fallbackSegmentTone = { badge: STATUS_TONE_CLASS_MAP.neutral, dot: DOT_TONE_CLASS_MAP.neutral }
+
 export default function CustomerSegmentsCard() {
   const segments = getCustomerSegmentDistribution()
 
@@ -16,7 +18,7 @@ export default function CustomerSegmentsCard() {
     <DashboardPanel title="Customer Segments" description="Distribution by lifecycle and value profile">
       <div className="space-y-4">
         {segments.map((segmentRow) => {
-          const tone = segmentToneMap[segmentRow.segment]
+          const tone = segmentToneMap[segmentRow.segment] ?? fallbackSegmentTone
           return (
             <div key={segmentRow.segment}>
               <div className="mb-2 flex items-center justify-between">
