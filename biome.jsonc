@@ -63,7 +63,7 @@
         "noUselessFragments": "error"
       },
       "style": {
-        "noNonNullAssertion": "warn",
+        "noNonNullAssertion": "error",
         "useConst": "error",
         "useTemplate": "error"
       },
@@ -105,6 +105,21 @@
                 ]
               }
             }
+          }
+        }
+      }
+    },
+    {
+      // Tests assert on DOM/data shapes that are already guaranteed by the test setup itself
+      // (e.g. `screen.getByText(...).closest("div")!` right after rendering that div); a `!`
+      // there is clearer than a defensive `if (!x) throw` a test will never actually hit, and a
+      // thrown TypeError on a genuinely missing node fails the test just as loudly either way.
+      // Production code still gets no exception - see noNonNullAssertion above.
+      "includes": ["**/*.test.ts", "**/*.test.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noNonNullAssertion": "off"
           }
         }
       }

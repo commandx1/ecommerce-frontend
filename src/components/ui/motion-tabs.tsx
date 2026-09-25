@@ -6,7 +6,9 @@ import { MotionHighlight, MotionHighlightItem } from "@/components/ui/motion-hig
 import { cn } from "@/lib/utils"
 
 type TabsContextType<T extends string> = {
-  activeValue: T
+  // Undefined until an uncontrolled Tabs picks its first tab (see the registerTrigger/useEffect
+  // fallback below) or a controlled Tabs is given a value; consumers already tolerate this.
+  activeValue: T | undefined
   handleValueChange: (value: T) => void
   registerTrigger: (value: T, node: HTMLElement | null) => void
 }
@@ -88,7 +90,7 @@ function Tabs<T extends string = string>({
     <TabsContext.Provider
       value={
         {
-          activeValue: (value ?? activeValue)!,
+          activeValue: value ?? activeValue,
           handleValueChange,
           registerTrigger,
           // Mirrors the read-side cast in useTabs: the context is generic over T, but the context

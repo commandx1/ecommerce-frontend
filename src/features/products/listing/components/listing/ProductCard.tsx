@@ -43,6 +43,9 @@ const ProductCard = ({ data }: ProductCardProps) => {
   const { addToCart, pendingProductId } = useAddToCartFromCard()
   const productId = String(data.id)
   const isOutOfStock = data.stock !== undefined && data.stock <= 0
+  // A local const (unlike `data.overallStar`) keeps its narrowed, non-undefined type inside the
+  // .map() closure below.
+  const overallStar = data.overallStar
   const isPending = pendingProductId === productId
   const [quantity, setQuantity] = useState(1)
   const maxQuantity = data.stock !== undefined && data.stock > 0 ? data.stock : 999
@@ -118,18 +121,18 @@ const ProductCard = ({ data }: ProductCardProps) => {
             </Tooltip>
           </h3>
 
-          {data.overallStar !== undefined && (
+          {overallStar !== undefined && (
             <div className="mt-2 flex items-center gap-2">
               <div aria-hidden className="flex text-warning">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
-                    className={`h-3.5 w-3.5 ${star <= Math.floor(data.overallStar!) ? "fill-current" : "text-border-strong"}`}
+                    className={`h-3.5 w-3.5 ${star <= Math.floor(overallStar) ? "fill-current" : "text-border-strong"}`}
                   />
                 ))}
               </div>
               <span className="text-xs tabular-nums text-text-secondary">
-                {data.overallStar.toFixed(1)} ({data.reviewCount ?? 0} reviews)
+                {overallStar.toFixed(1)} ({data.reviewCount ?? 0} reviews)
               </span>
             </div>
           )}
