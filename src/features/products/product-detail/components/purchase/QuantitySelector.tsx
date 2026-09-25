@@ -5,18 +5,11 @@ import { Input } from "@/components/ui/input"
 interface QuantitySelectorProps {
   quantity: number
   stockCount: number
-  onQuantityChange: (value: number) => void
   onIncrement: () => void
   onDecrement: () => void
 }
 
-const QuantitySelector = ({
-  quantity,
-  stockCount,
-  onQuantityChange,
-  onIncrement,
-  onDecrement,
-}: QuantitySelectorProps) => {
+const QuantitySelector = ({ quantity, stockCount, onIncrement, onDecrement }: QuantitySelectorProps) => {
   const inputId = useId()
 
   return (

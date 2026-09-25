@@ -45,16 +45,16 @@
         "noDocumentCookie": "warn"
       },
       "correctness": {
-        "noUnusedVariables": "warn",
+        "noUnusedVariables": "error",
         "useExhaustiveDependencies": "warn",
-        "noUnusedImports": "warn",
+        "noUnusedImports": "error",
         "noConstAssign": "error",
         "useUniqueElementIds": "warn",
-        "noUnusedFunctionParameters": "warn"
+        "noUnusedFunctionParameters": "error"
       },
       "complexity": {
         "useOptionalChain": "error",
-        "noUselessFragments": "warn"
+        "noUselessFragments": "error"
       },
       "style": {
         "noNonNullAssertion": "warn",

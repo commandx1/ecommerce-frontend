@@ -269,13 +269,6 @@ describe("sessionStorage unavailable (private window / blocked storage)", () => 
 })
 
 describe("guest tabs claim the shared cookie (BUG-1/BUG-3: proxy redirect loop)", () => {
-  const stubHidden = (): (() => void) => {
-    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" })
-    return () => {
-      Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "visible" })
-    }
-  }
-
   it("non-bootstrap empty read in a visible tab deletes the cookie", () => {
     // Bootstrap read with nothing anywhere - consumes the adoption gate.
     expect(tabSessionStorage.getItem(NAME)).toBeNull()

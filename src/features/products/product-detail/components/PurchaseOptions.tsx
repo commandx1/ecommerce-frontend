@@ -116,7 +116,6 @@ const PurchaseOptions = ({
                 <QuantitySelector
                   quantity={quantity}
                   stockCount={stockCount}
-                  onQuantityChange={handleQuantityChange}
                   onIncrement={() => handleQuantityChange(quantity + 1)}
                   onDecrement={() => handleQuantityChange(quantity - 1)}
                 />

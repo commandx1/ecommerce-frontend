@@ -9,7 +9,6 @@ interface AddressSectionProps {
   errors: RegisterFormErrors
   onAddressSelect: (address: ParsedAddress) => void
   onAddressFieldChange: (field: keyof RegisterAddress, value: string) => void
-  onPostalCodeChange: (value: string) => void
 }
 
 export default function AddressSection({
@@ -17,7 +16,6 @@ export default function AddressSection({
   errors,
   onAddressSelect,
   onAddressFieldChange,
-  onPostalCodeChange,
 }: AddressSectionProps) {
   const idBase = useId()
 

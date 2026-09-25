@@ -5,7 +5,7 @@ import { ApiRequestError } from "@/lib/api/request"
 import { vendorDocumentsAPI } from "@/lib/api/vendor-documents"
 import { server } from "@/mocks/server"
 import { installRadixPointerPolyfills } from "@/test/radix"
-import { render, screen, waitFor, within } from "@/test/render"
+import { render, screen, waitFor } from "@/test/render"
 import { signInVendor } from "@/test/vendor-products-page-harness"
 import ImportDocumentsModal from "./ImportDocumentsModal"
 

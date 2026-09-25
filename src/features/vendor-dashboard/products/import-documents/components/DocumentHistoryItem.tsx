@@ -106,25 +106,22 @@ export default function DocumentHistoryItem({
             {extractFileName(doc.filePath)}
           </p>
           <p className="mt-0.5 text-xs text-text-muted">{formatShortDate(doc.createdDate)}</p>
-          {doc.revisionRequested && (
-            <>
-              {doc.revisedFilePath && doc.revisionApproved === null ? (
-                <p className="mt-2 rounded-lg bg-brand/8 px-3 py-2 text-xs text-brand">
-                  <span className="font-semibold">Revision submitted</span> — awaiting admin review
-                </p>
-              ) : doc.revisionApproved === false && doc.requestedEdits ? (
-                <div className="mt-2 rounded-lg bg-danger/8 px-3 py-2 text-xs text-danger">
-                  <span className="font-semibold">Fix required: </span>
-                  <ExpandableText text={doc.requestedEdits} />
-                </div>
-              ) : !doc.revisedFilePath && doc.requestedEdits ? (
-                <div className="mt-2 rounded-lg bg-warning/10 px-3 py-2 text-xs text-warning">
-                  <span className="font-semibold">Revision note: </span>
-                  <ExpandableText text={doc.requestedEdits} />
-                </div>
-              ) : null}
-            </>
-          )}
+          {doc.revisionRequested &&
+            (doc.revisedFilePath && doc.revisionApproved === null ? (
+              <p className="mt-2 rounded-lg bg-brand/8 px-3 py-2 text-xs text-brand">
+                <span className="font-semibold">Revision submitted</span> — awaiting admin review
+              </p>
+            ) : doc.revisionApproved === false && doc.requestedEdits ? (
+              <div className="mt-2 rounded-lg bg-danger/8 px-3 py-2 text-xs text-danger">
+                <span className="font-semibold">Fix required: </span>
+                <ExpandableText text={doc.requestedEdits} />
+              </div>
+            ) : !doc.revisedFilePath && doc.requestedEdits ? (
+              <div className="mt-2 rounded-lg bg-warning/10 px-3 py-2 text-xs text-warning">
+                <span className="font-semibold">Revision note: </span>
+                <ExpandableText text={doc.requestedEdits} />
+              </div>
+            ) : null)}
         </div>
         <div className="shrink-0">
           <StatusBadge doc={doc} />

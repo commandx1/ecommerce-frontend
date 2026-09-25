@@ -1,6 +1,6 @@
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { render, screen, within } from "@/test/render"
+import { render, screen } from "@/test/render"
 import AsyncSubmitButton from "./AsyncSubmitButton"
 import { Collapse, CollapseContent, CollapseTrigger } from "./collapse"
 import { HorizontalTimeline } from "./horizontal-timeline"

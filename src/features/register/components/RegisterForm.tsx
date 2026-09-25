@@ -35,7 +35,6 @@ export default function RegisterForm() {
     handleCompanyPhoneNumberChange,
     handleConfirmPasswordChange,
     handlePhoneNumberChange,
-    handlePostalCodeChange,
     handleSubmit,
     isLoading,
     submitErrorToken,
@@ -117,7 +116,6 @@ export default function RegisterForm() {
               errors={errors}
               onAddressSelect={handleAddressSelect}
               onAddressFieldChange={handleAddressFieldChange}
-              onPostalCodeChange={handlePostalCodeChange}
             />
           )}
 
