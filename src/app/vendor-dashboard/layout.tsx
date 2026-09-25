@@ -5,7 +5,7 @@
 // this tab's router. A loading boundary makes the router commit that stale redirect instantly
 // (see multi-account-tabs.spec.ts "a real cross-tab logout ..."). Fix the prefetch first.
 
-import { useId } from "react"
+import DashboardShellFrame from "@/components/dashboard-shared/DashboardShellFrame"
 import { DashboardMobileSidebarProvider } from "@/components/layout/DashboardMobileSidebarContext"
 import NotificationSocketBridge from "@/features/notifications/components/NotificationSocketBridge"
 import { CompanyRoleProvider } from "@/features/vendor-dashboard/shell/CompanyRoleContext"
@@ -16,7 +16,6 @@ import VendorSidebar from "@/features/vendor-dashboard/shell/VendorSidebar"
 import { useDashboardAuthGuard } from "@/lib/hooks/useDashboardAuthGuard"
 
 export default function VendorDashboardLayout({ children }: { children: React.ReactNode }) {
-  const mainContentId = useId()
   const { status, unauthorizedRender } = useDashboardAuthGuard("vendor")
 
   if (status === "checking" || (status === "unauthorized" && unauthorizedRender === "skeleton")) {
@@ -31,16 +30,9 @@ export default function VendorDashboardLayout({ children }: { children: React.Re
       <DashboardMobileSidebarProvider>
         <ImpersonationTabTitle />
         <NotificationSocketBridge />
-        <div data-theme-scope="dashboard" className="relative isolate flex min-h-screen flex-col">
-          <div className="dashboard-backdrop" aria-hidden />
-          <VendorHeader />
-          <div className="flex flex-1">
-            <VendorSidebar />
-            <main id={mainContentId} className="min-w-0 flex-1 p-4 md:p-6">
-              {children}
-            </main>
-          </div>
-        </div>
+        <DashboardShellFrame header={<VendorHeader />} sidebar={<VendorSidebar />}>
+          {children}
+        </DashboardShellFrame>
       </DashboardMobileSidebarProvider>
     </CompanyRoleProvider>
   )

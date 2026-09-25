@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useEffect, useId, useState } from "react"
 import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
 import SingleOrderNotice from "@/components/dashboard-shared/SingleOrderNotice"
+import StatusTabStrip from "@/components/dashboard-shared/StatusTabStrip"
 import SectionHeading from "@/components/layout/SectionHeading"
 import Modal, { ModalTitle } from "@/components/ui/Modal"
 import SurfaceCard from "@/components/ui/SurfaceCard"
@@ -167,25 +168,7 @@ export default function VendorOrdersPage() {
       {/* Orders Table */}
       <SurfaceCard as="section" id={`${id}-orders-table-section`} variant="glass" className="overflow-hidden">
         <div className="border-b border-border-soft px-4 pt-4 sm:px-6">
-          <div className="mb-4">
-            <div className="no-scrollbar flex w-full items-center gap-1.5 overflow-x-auto rounded-sm border border-border-soft bg-surface p-1.5 shadow-soft sm:gap-2">
-              {VENDOR_ORDER_TABS.map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => handleTabChange(tab)}
-                  className={`shrink-0 whitespace-nowrap rounded-sm px-3 py-2 text-xs font-medium transition-colors sm:px-4 sm:text-sm ${
-                    selectedTab === tab
-                      ? "bg-brand text-muted shadow-soft"
-                      : "text-text-secondary hover:bg-surface-muted hover:text-text-primary"
-                  }`}
-                  aria-pressed={selectedTab === tab}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-          </div>
+          <StatusTabStrip tabs={VENDOR_ORDER_TABS} value={selectedTab} onChange={handleTabChange} />
         </div>
 
         {singleOrderId ? <SingleOrderNotice onClear={clearSingleOrder} /> : null}

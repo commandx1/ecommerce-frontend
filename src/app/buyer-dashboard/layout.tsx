@@ -5,7 +5,7 @@
 // this tab's router. A loading boundary makes the router commit that stale redirect instantly
 // (see multi-account-tabs.spec.ts "a real cross-tab logout ..."). Fix the prefetch first.
 
-import { useId } from "react"
+import DashboardShellFrame from "@/components/dashboard-shared/DashboardShellFrame"
 import { DashboardMobileSidebarProvider } from "@/components/layout/DashboardMobileSidebarContext"
 import BuyerDashboardLayoutSkeleton from "@/features/buyer-dashboard/shell/BuyerDashboardLayoutSkeleton"
 import BuyerHeader from "@/features/buyer-dashboard/shell/BuyerHeader"
@@ -14,7 +14,6 @@ import NotificationSocketBridge from "@/features/notifications/components/Notifi
 import { useDashboardAuthGuard } from "@/lib/hooks/useDashboardAuthGuard"
 
 export default function BuyerDashboardLayout({ children }: { children: React.ReactNode }) {
-  const mainContentId = useId()
   const { status, unauthorizedRender } = useDashboardAuthGuard("buyer")
 
   if (status === "checking" || (status === "unauthorized" && unauthorizedRender === "skeleton")) {
@@ -27,16 +26,9 @@ export default function BuyerDashboardLayout({ children }: { children: React.Rea
   return (
     <DashboardMobileSidebarProvider>
       <NotificationSocketBridge />
-      <div data-theme-scope="dashboard" className="relative isolate flex min-h-screen flex-col">
-        <div className="dashboard-backdrop" aria-hidden />
-        <BuyerHeader />
-        <div className="flex flex-1">
-          <BuyerSidebar />
-          <main id={mainContentId} className="min-w-0 flex-1 overflow-auto p-4 md:p-6">
-            {children}
-          </main>
-        </div>
-      </div>
+      <DashboardShellFrame header={<BuyerHeader />} sidebar={<BuyerSidebar />} mainClassName="overflow-auto">
+        {children}
+      </DashboardShellFrame>
     </DashboardMobileSidebarProvider>
   )
 }
