@@ -33,10 +33,10 @@ type MotionHighlightContextType<T extends string> = {
   forceUpdateBounds?: boolean
 }
 
-const MotionHighlightContext = React.createContext<
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  MotionHighlightContextType<any> | undefined
->(undefined)
+// The provider is generic over the highlighted value's type, but a single React context can only
+// hold one concrete instantiation. `string` is the widest valid choice (T extends string); callers
+// narrow back to their own T via the `as unknown as MotionHighlightContextType<T>` cast below.
+const MotionHighlightContext = React.createContext<MotionHighlightContextType<string> | undefined>(undefined)
 
 function useMotionHighlight<T extends string>(): MotionHighlightContextType<T> {
   const context = React.useContext(MotionHighlightContext)
@@ -252,23 +252,27 @@ function MotionHighlight<T extends string>({ ref, ...props }: MotionHighlightPro
 
   return (
     <MotionHighlightContext.Provider
-      value={{
-        mode,
-        activeValue,
-        setActiveValue: safeSetActiveValue,
-        id,
-        hover,
-        className,
-        transition,
-        disabled,
-        enabled,
-        exitDelay,
-        setBounds: safeSetBounds,
-        clearBounds,
-        activeClassName: activeClassNameState,
-        setActiveClassName: setActiveClassNameState,
-        forceUpdateBounds: (props as ParentModeMotionHighlightProps)?.forceUpdateBounds,
-      }}
+      value={
+        {
+          mode,
+          activeValue,
+          setActiveValue: safeSetActiveValue,
+          id,
+          hover,
+          className,
+          transition,
+          disabled,
+          enabled,
+          exitDelay,
+          setBounds: safeSetBounds,
+          clearBounds,
+          activeClassName: activeClassNameState,
+          setActiveClassName: setActiveClassNameState,
+          forceUpdateBounds: (props as ParentModeMotionHighlightProps)?.forceUpdateBounds,
+          // Mirrors the read-side cast in useMotionHighlight: the context is generic over T, but the
+          // context object itself is fixed at `string`.
+        } as unknown as MotionHighlightContextType<string>
+      }
     >
       {enabled
         ? controlledItems

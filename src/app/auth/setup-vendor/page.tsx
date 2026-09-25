@@ -5,6 +5,7 @@ import { Suspense, useEffect } from "react"
 import ThemeToggle from "@/components/theme/ThemeToggle"
 import { showToast } from "@/components/ui/Toast"
 import { refreshTokenForVendorSetup } from "@/lib/api/setup-vendor"
+import type { User } from "@/stores/authStore"
 import { useAuthStore } from "@/stores/authStore"
 
 function SetupVendorContent() {
@@ -36,7 +37,7 @@ function SetupVendorContent() {
         }
 
         // Update store (not impersonating, just a setup/login)
-        setAuth(userObj as any, data.accessToken, (data.refreshToken as string | undefined) || refreshToken, false)
+        setAuth(userObj as unknown as User, data.accessToken, data.refreshToken || refreshToken, false)
 
         showToast.success("Account setup successful!", "Please complete your profile information.", 5000)
 

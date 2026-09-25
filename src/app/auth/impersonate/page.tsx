@@ -5,6 +5,7 @@ import { Suspense, useEffect } from "react"
 import ThemeToggle from "@/components/theme/ThemeToggle"
 import { showToast } from "@/components/ui/Toast"
 import { refreshTokenForImpersonation } from "@/lib/api/impersonation"
+import type { User } from "@/stores/authStore"
 import { useAuthStore } from "@/stores/authStore"
 
 function ImpersonateContent() {
@@ -35,7 +36,7 @@ function ImpersonateContent() {
           roleName: data.roleName || "Vendor",
         }
 
-        setAuth(userObj as any, data.accessToken, (data.refreshToken as string | undefined) || refreshToken, true)
+        setAuth(userObj as unknown as User, data.accessToken, data.refreshToken || refreshToken, true)
 
         router.push("/vendor-dashboard")
       } catch (error) {

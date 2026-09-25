@@ -39,7 +39,7 @@
       // "error" incrementally, one rule at a time.
       "suspicious": {
         "noUnknownAtRules": "off",
-        "noExplicitAny": "warn",
+        "noExplicitAny": "error",
         "noConsole": "warn",
         "noArrayIndexKey": "warn",
         "noDocumentCookie": "warn"

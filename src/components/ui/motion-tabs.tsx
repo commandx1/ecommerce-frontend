@@ -11,8 +11,10 @@ type TabsContextType<T extends string> = {
   registerTrigger: (value: T, node: HTMLElement | null) => void
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const TabsContext = React.createContext<TabsContextType<any> | undefined>(undefined)
+// The provider is generic over the active tab value's type, but a single React context can only
+// hold one concrete instantiation. `string` is the widest valid choice (T extends string); callers
+// narrow back to their own T via the `as unknown as TabsContextType<T>` cast below.
+const TabsContext = React.createContext<TabsContextType<string> | undefined>(undefined)
 
 function useTabs<T extends string = string>(): TabsContextType<T> {
   const context = React.useContext(TabsContext)
@@ -21,7 +23,7 @@ function useTabs<T extends string = string>(): TabsContextType<T> {
     throw new Error("useTabs must be used within a TabsProvider")
   }
 
-  return context
+  return context as unknown as TabsContextType<T>
 }
 
 type BaseTabsProps = React.ComponentProps<"div"> & {
@@ -84,11 +86,15 @@ function Tabs<T extends string = string>({
 
   return (
     <TabsContext.Provider
-      value={{
-        activeValue: (value ?? activeValue)!,
-        handleValueChange,
-        registerTrigger,
-      }}
+      value={
+        {
+          activeValue: (value ?? activeValue)!,
+          handleValueChange,
+          registerTrigger,
+          // Mirrors the read-side cast in useTabs: the context is generic over T, but the context
+          // object itself is fixed at `string`.
+        } as unknown as TabsContextType<string>
+      }
     >
       <div data-slot="tabs" className={cn("flex flex-col gap-2", className)} {...props}>
         {children}

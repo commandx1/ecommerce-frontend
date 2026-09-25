@@ -9,7 +9,7 @@ import { tabSessionStorage } from "@/lib/storage/tab-session-storage"
 // promise. Cleared in `finally` so a later, genuinely new logout is not swallowed.
 let logoutPromise: Promise<void> | null = null
 
-interface User {
+export interface User {
   id: string
   name: string
   surname: string
