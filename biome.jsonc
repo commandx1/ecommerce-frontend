@@ -75,6 +75,35 @@
       "includes": ["public/**"],
       "linter": { "enabled": false },
       "formatter": { "enabled": false }
+    },
+    {
+      // Phase 3 vendor-dashboard boundary (design doc §1, §S11): `features/vendor-dashboard/**`
+      // must not import from `app/vendor-dashboard/**`. The one carve-out is
+      // `components/shared/{DashboardPanel,dashboardToneMaps}`, which move to
+      // `features/vendor-dashboard/shared/` in Phase 4 - until then they stay put and are
+      // explicitly allowed here.
+      "includes": ["src/features/vendor-dashboard/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/app/vendor-dashboard/**",
+                      "!@/app/vendor-dashboard/components/shared/DashboardPanel",
+                      "!@/app/vendor-dashboard/components/shared/dashboardToneMaps"
+                    ],
+                    "message": "features/vendor-dashboard must not import from app/vendor-dashboard. The only allowed exception is components/shared/{DashboardPanel,dashboardToneMaps} (P4-shared, moves in Phase 4)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "assist": {
