@@ -7,11 +7,11 @@
 
 import { useId } from "react"
 import { DashboardMobileSidebarProvider } from "@/components/layout/DashboardMobileSidebarContext"
+import BuyerDashboardLayoutSkeleton from "@/features/buyer-dashboard/shell/BuyerDashboardLayoutSkeleton"
+import BuyerHeader from "@/features/buyer-dashboard/shell/BuyerHeader"
+import BuyerSidebar from "@/features/buyer-dashboard/shell/BuyerSidebar"
 import NotificationSocketBridge from "@/features/notifications/components/NotificationSocketBridge"
 import { useDashboardAuthGuard } from "@/lib/hooks/useDashboardAuthGuard"
-import BuyerDashboardLayoutSkeleton from "./components/BuyerDashboardLayoutSkeleton"
-import BuyerHeader from "./components/BuyerHeader"
-import DashboardSidebar from "./components/DashboardSidebar"
 
 export default function BuyerDashboardLayout({ children }: { children: React.ReactNode }) {
   const mainContentId = useId()
@@ -31,7 +31,7 @@ export default function BuyerDashboardLayout({ children }: { children: React.Rea
         <div className="dashboard-backdrop" aria-hidden />
         <BuyerHeader />
         <div className="flex flex-1">
-          <DashboardSidebar />
+          <BuyerSidebar />
           <main id={mainContentId} className="min-w-0 flex-1 overflow-auto p-4 md:p-6">
             {children}
           </main>

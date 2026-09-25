@@ -43,7 +43,7 @@ const BUYER_QUICK_ACTIONS: DashboardSidebarQuickAction[] = [
   { label: "Find Vendors", icon: Search, tone: "surface", href: "/vendors" },
 ]
 
-const DashboardSidebar = () => {
+const BuyerSidebar = () => {
   return (
     <CommonDashboardSidebar
       brand={{ label: "Buyer Panel", icon: LayoutDashboard }}
@@ -56,4 +56,4 @@ const DashboardSidebar = () => {
   )
 }
 
-export default DashboardSidebar
+export default BuyerSidebar

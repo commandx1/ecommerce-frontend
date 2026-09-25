@@ -19,8 +19,8 @@ import BuyerDashboardLayout from "./layout"
 // render (row 4) accept that the change also re-persists a matching cookie and can trigger a
 // second, immediate effect run - documented inline where it applies.
 
-vi.mock("./components/BuyerHeader", () => ({ default: () => <div data-testid="buyer-header" /> }))
-vi.mock("./components/DashboardSidebar", () => ({ default: () => <div data-testid="buyer-sidebar" /> }))
+vi.mock("@/features/buyer-dashboard/shell/BuyerHeader", () => ({ default: () => <div data-testid="buyer-header" /> }))
+vi.mock("@/features/buyer-dashboard/shell/BuyerSidebar", () => ({ default: () => <div data-testid="buyer-sidebar" /> }))
 vi.mock("@/features/notifications/components/NotificationSocketBridge", () => ({
   default: () => <div data-testid="notification-bridge" />,
 }))
