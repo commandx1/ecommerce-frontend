@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, type ReactNode, useContext, useMemo } from "react"
-import { type UseBuyerOrdersPageResult, useBuyerOrdersPage } from "../hooks/use-buyer-orders-page"
+import { type UseBuyerOrdersPageResult, useBuyerOrdersPage } from "../hooks/useBuyerOrdersPage"
 
 type BuyerOrdersAuthState = Pick<UseBuyerOrdersPageResult, "isAuthenticated">
 type BuyerOrdersTabsState = Pick<UseBuyerOrdersPageResult, "selectedTab" | "singleOrderId">

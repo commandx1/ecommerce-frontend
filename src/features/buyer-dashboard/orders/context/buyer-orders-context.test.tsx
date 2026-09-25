@@ -1,9 +1,11 @@
 import { act, renderHook, waitFor } from "@testing-library/react"
 import { HttpResponse, http } from "msw"
+import type { ReactNode } from "react"
 import { beforeEach, describe, expect, it } from "vitest"
 import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
 import { makeAccountUser } from "@/test/factories/user.factory"
+import { createQueryWrapper } from "@/test/render"
 import {
   BuyerOrdersProvider,
   useBuyerOrdersAuthState,
@@ -27,7 +29,8 @@ import {
 
 /**
  * `BuyerOrdersProvider` composes twelve `React.createContext` slices around the real
- * `useBuyerOrdersPage` hook (already exhaustively unit-tested in `../hooks/use-buyer-orders-page.test.tsx`).
+ * `useBuyerOrdersPage` hook (already exhaustively unit-tested in `../hooks/useBuyerOrdersPage.test.tsx`,
+ * `../hooks/useBuyerOrdersQuery.test.ts` and `../hooks/useBuyerOrderActions.test.ts`).
  * These tests exercise the provider/selector wiring itself: every exported hook is reachable,
  * outside-provider usage fails loudly, and the two state transitions that live only in the
  * provider's call sites (tab-change resetting page/expansion) behave as documented.
@@ -59,8 +62,17 @@ function useAllBuyerOrdersContexts() {
   }
 }
 
+/** `useBuyerOrdersQuery` (inside `BuyerOrdersProvider`) is Query-backed (Phase 4 B4c) - every
+ * render needs a `QueryClientProvider` above it, same as any other Query-backed hook test. */
 function renderAllContexts() {
-  return renderHook(() => useAllBuyerOrdersContexts(), { wrapper: BuyerOrdersProvider })
+  const { wrapper: QueryWrapper } = createQueryWrapper()
+  return renderHook(() => useAllBuyerOrdersContexts(), {
+    wrapper: ({ children }: { children: ReactNode }) => (
+      <QueryWrapper>
+        <BuyerOrdersProvider>{children}</BuyerOrdersProvider>
+      </QueryWrapper>
+    ),
+  })
 }
 
 describe("BuyerOrdersProvider / context hooks", () => {
