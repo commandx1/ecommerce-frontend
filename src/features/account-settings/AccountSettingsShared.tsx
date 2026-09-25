@@ -153,9 +153,7 @@ export default function AccountSettingsShared({
           <div>
             <h2 className="font-medium text-text-primary">Account temporarily locked</h2>
             <p className="text-sm text-text-secondary">
-              Too many failed sign-in attempts. Access is restored on{" "}
-              {formatPaddedDateTime(lockedUntil)}
-              .
+              Too many failed sign-in attempts. Access is restored on {formatPaddedDateTime(lockedUntil)}.
             </p>
           </div>
         </div>

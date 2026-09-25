@@ -1,7 +1,7 @@
 import { createRef } from "react"
 import { describe, expect, it, vi } from "vitest"
-import { render, screen } from "@/test/render"
 import type { SearchProduct } from "@/lib/api/product-search"
+import { render, screen } from "@/test/render"
 import SearchResultsDropdown from "./SearchResultsDropdown"
 
 const product: SearchProduct = {

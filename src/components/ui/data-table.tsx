@@ -98,31 +98,28 @@ export default function DataTable<TData>({
       <tbody className="text-sm text-text-secondary">
         {isLoading ? (
           Array.from({ length: 6 }, (_, rowIndex) => (
-              // biome-ignore lint/a11y/noAriaHiddenOnFocusable: a <tr> is not focusable; this hides placeholder skeleton rows
-              <tr key={`loading-skeleton-row-${rowIndex}`} className="border-b border-border-soft" aria-hidden="true">
-                {table.getVisibleLeafColumns().map((column, colIndex) => {
-                  const meta = column.columnDef.meta as DataTableColumnMeta | undefined
-                  return (
-                    <td
-                      key={`loading-skeleton-cell-${rowIndex}-${column.id}`}
-                      className={cn("p-4", meta?.cellClassName)}
-                    >
-                      {/* Keeps --glass-tile rather than the primitive's --skeleton-base: these rows
+            // biome-ignore lint/a11y/noAriaHiddenOnFocusable: a <tr> is not focusable; this hides placeholder skeleton rows
+            <tr key={`loading-skeleton-row-${rowIndex}`} className="border-b border-border-soft" aria-hidden="true">
+              {table.getVisibleLeafColumns().map((column, colIndex) => {
+                const meta = column.columnDef.meta as DataTableColumnMeta | undefined
+                return (
+                  <td key={`loading-skeleton-cell-${rowIndex}-${column.id}`} className={cn("p-4", meta?.cellClassName)}>
+                    {/* Keeps --glass-tile rather than the primitive's --skeleton-base: these rows
                           sit on the dashboard's glass panels, where that token is what matches. */}
-                      {lastColumnSkeletonCircle && colIndex === visibleColumnCount - 1 ? (
-                        <Skeleton className="mx-auto h-7 w-7 rounded-full bg-(--glass-tile)" />
-                      ) : (
-                        <Skeleton
-                          className={cn(
-                            "h-4 bg-(--glass-tile)",
-                            colIndex === 0 ? "w-14" : colIndex === visibleColumnCount - 1 ? "ml-auto w-20" : "w-full",
-                          )}
-                        />
-                      )}
-                    </td>
-                  )
-                })}
-              </tr>
+                    {lastColumnSkeletonCircle && colIndex === visibleColumnCount - 1 ? (
+                      <Skeleton className="mx-auto h-7 w-7 rounded-full bg-(--glass-tile)" />
+                    ) : (
+                      <Skeleton
+                        className={cn(
+                          "h-4 bg-(--glass-tile)",
+                          colIndex === 0 ? "w-14" : colIndex === visibleColumnCount - 1 ? "ml-auto w-20" : "w-full",
+                        )}
+                      />
+                    )}
+                  </td>
+                )
+              })}
+            </tr>
           ))
         ) : table.getRowModel().rows.length === 0 ? (
           <tr>

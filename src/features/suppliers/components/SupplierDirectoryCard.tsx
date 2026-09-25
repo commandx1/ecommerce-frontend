@@ -105,8 +105,7 @@ export default function SupplierDirectoryCard({
               <div className="flex items-center text-sm text-text-secondary">
                 <CheckCircle className="mr-2 h-4 w-4 text-success" aria-hidden="true" />
                 <span>
-                  {formatNumber(supplier.productCount)}{" "}
-                  {supplier.productCount === 1 ? "Product" : "Products"} Available
+                  {formatNumber(supplier.productCount)} {supplier.productCount === 1 ? "Product" : "Products"} Available
                 </span>
               </div>
             ) : null}

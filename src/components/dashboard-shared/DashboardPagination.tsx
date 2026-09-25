@@ -63,9 +63,7 @@ export default function DashboardPagination({
       )}
     >
       <span>
-        {totalElements > 0
-          ? `Showing ${from} to ${to} of ${formatNumber(totalElements)} results`
-          : "Showing 0 results"}
+        {totalElements > 0 ? `Showing ${from} to ${to} of ${formatNumber(totalElements)} results` : "Showing 0 results"}
       </span>
 
       {totalPages > 1 && (

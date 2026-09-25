@@ -13,8 +13,6 @@ describe("VerifyEmailHeader", () => {
   it("falls back to a complete sentence instead of trailing off when email is empty", () => {
     render(<VerifyEmailHeader email="" />)
 
-    expect(
-      screen.getByText("Enter the 6-digit verification code sent to your email address."),
-    ).toBeInTheDocument()
+    expect(screen.getByText("Enter the 6-digit verification code sent to your email address.")).toBeInTheDocument()
   })
 })
