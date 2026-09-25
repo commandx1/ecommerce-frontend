@@ -176,84 +176,13 @@ function TabsTrigger({ ref, value, children, className, ...props }: TabsTriggerP
   )
 }
 
-type TabsContentsProps = React.ComponentProps<"div"> & {
-  children: React.ReactNode
-  transition?: Transition
-}
-
-function TabsContents({
-  children,
-  className,
-  transition = {
-    type: "spring",
-    stiffness: 300,
-    damping: 30,
-    bounce: 0,
-    restDelta: 0.01,
-  },
-  ...props
-}: TabsContentsProps) {
-  const { activeValue } = useTabs()
-  const childrenArray = React.Children.toArray(children)
-
-  const activeIndex = childrenArray.findIndex(
-    (child): child is React.ReactElement<{ value: string }> =>
-      React.isValidElement(child) &&
-      typeof child.props === "object" &&
-      child.props !== null &&
-      "value" in child.props &&
-      child.props.value === activeValue,
-  )
-
-  return (
-    <div data-slot="tabs-contents" className={cn("overflow-hidden", className)} {...props}>
-      <motion.div className="-mx-2 flex" animate={{ x: activeIndex * -100 + "%" }} transition={transition}>
-        {childrenArray.map((child, index) => (
-          <div key={index} className="w-full shrink-0 px-2">
-            {child}
-          </div>
-        ))}
-      </motion.div>
-    </div>
-  )
-}
-
-type TabsContentProps = HTMLMotionProps<"div"> & {
-  value: string
-  children: React.ReactNode
-}
-
-function TabsContent({ children, value, className, ...props }: TabsContentProps) {
-  const { activeValue } = useTabs()
-  const isActive = activeValue === value
-
-  return (
-    <motion.div
-      role="tabpanel"
-      data-slot="tabs-content"
-      className={cn("overflow-hidden", className)}
-      initial={{ filter: "blur(0px)" }}
-      animate={{ filter: isActive ? "blur(0px)" : "blur(2px)" }}
-      exit={{ filter: "blur(0px)" }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      {...props}
-    >
-      {children}
-    </motion.div>
-  )
-}
-
 export {
   Tabs,
   TabsList,
   TabsTrigger,
-  TabsContents,
-  TabsContent,
   useTabs,
   type TabsContextType,
   type TabsProps,
   type TabsListProps,
   type TabsTriggerProps,
-  type TabsContentsProps,
-  type TabsContentProps,
 }
