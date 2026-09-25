@@ -1,14 +1,15 @@
 "use client"
 
 import Link from "next/link"
-import { useCallback, useEffect, useRef, useState } from "react"
 import DashboardPanel from "@/app/vendor-dashboard/components/shared/DashboardPanel"
 import { STATUS_TONE_CLASS_MAP } from "@/app/vendor-dashboard/components/shared/dashboardToneMaps"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { type VendorOrder, vendorOrdersAPI } from "@/lib/api/vendor-orders"
+import type { VendorOrder } from "@/lib/api/vendor-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
-import { useAuthStore } from "@/stores/authStore"
+import { useRecentOrdersQuery } from "../hooks/useOverviewQueries"
+
+const SKELETON_ROW_IDS = ["row-1", "row-2", "row-3", "row-4"] as const
 
 function getStatusTone(status: string): keyof typeof STATUS_TONE_CLASS_MAP {
   if (status.includes("CANCEL")) return "danger"
@@ -29,44 +30,7 @@ function getOrderTotal(order: VendorOrder): number {
 }
 
 const VendorRecentOrders = () => {
-  const { isAuthenticated } = useAuthStore()
-  const [orders, setOrders] = useState<VendorOrder[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [fetchError, setFetchError] = useState(false)
-  const abortControllerRef = useRef<AbortController | null>(null)
-
-  const fetchRecentOrders = useCallback(async () => {
-    if (!isAuthenticated) return
-
-    abortControllerRef.current?.abort()
-    const controller = new AbortController()
-    abortControllerRef.current = controller
-
-    try {
-      setIsLoading(true)
-      setFetchError(false)
-      const response = await vendorOrdersAPI.getVendorOrders(0, 4, "createdDate", "desc", "ALL", controller.signal)
-      // Guard against a malformed 200 body — `orders` missing, null, or not an array would
-      // otherwise throw on `.map` and blank the whole dashboard (infra note #26).
-      setOrders(Array.isArray(response.orders) ? response.orders : [])
-    } catch {
-      if (controller.signal.aborted) return
-      setOrders([])
-      setFetchError(true)
-    } finally {
-      if (!controller.signal.aborted) {
-        setIsLoading(false)
-      }
-    }
-  }, [isAuthenticated])
-
-  useEffect(() => {
-    void fetchRecentOrders()
-
-    return () => {
-      abortControllerRef.current?.abort()
-    }
-  }, [fetchRecentOrders])
+  const { isLoading, fetchError, orders, refetch } = useRecentOrdersQuery()
 
   return (
     <DashboardPanel
@@ -79,14 +43,14 @@ const VendorRecentOrders = () => {
     >
       {isLoading ? (
         <div className="space-y-4">
-          {[0, 1, 2, 3].map((placeholder) => (
-            <Skeleton key={placeholder} className="h-16 rounded-xl" />
+          {SKELETON_ROW_IDS.map((id) => (
+            <Skeleton key={id} className="h-16 rounded-xl" />
           ))}
         </div>
       ) : fetchError ? (
         <div className="flex flex-col items-center justify-center gap-3 px-6 py-10 text-center">
           <p className="text-sm font-medium text-danger">Couldn't load recent orders. Please try again.</p>
-          <Button type="button" variant="outline" onClick={() => void fetchRecentOrders()} className="rounded-lg px-4">
+          <Button type="button" variant="outline" onClick={refetch} className="rounded-lg px-4">
             Retry
           </Button>
         </div>

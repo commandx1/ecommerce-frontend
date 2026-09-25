@@ -2,17 +2,17 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useState } from "react"
 import DashboardPanel from "@/app/vendor-dashboard/components/shared/DashboardPanel"
 import { DOT_TONE_CLASS_MAP } from "@/app/vendor-dashboard/components/shared/dashboardToneMaps"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getFullImageUrl } from "@/lib/api/products"
-import { type VendorStockSummaryResponse, vendorDashboardAPI } from "@/lib/api/vendor-dashboard"
-import { useAuthStore } from "@/stores/authStore"
+import { useInventoryStatusQuery } from "../hooks/useOverviewQueries"
 
 const CRITICAL_STOCK_THRESHOLD = 5
 const PLACEHOLDER_IMAGE = "/dentypro-product-placeholder.png"
+const SKELETON_ROW_IDS = ["row-1", "row-2", "row-3"] as const
 
 const colorMap = {
   green: {
@@ -41,72 +41,8 @@ const statusColorMap: Record<string, string> = {
 }
 
 const InventoryStatus = () => {
-  const { isAuthenticated } = useAuthStore()
-  const [summary, setSummary] = useState<VendorStockSummaryResponse | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [fetchError, setFetchError] = useState(false)
+  const { isLoading, fetchError, statusRows, criticalAlerts, refetch } = useInventoryStatusQuery()
   const [imageFallbacks, setImageFallbacks] = useState<Record<string, boolean>>({})
-  const abortControllerRef = useRef<AbortController | null>(null)
-
-  const fetchStockSummary = useCallback(async () => {
-    if (!isAuthenticated) return
-
-    abortControllerRef.current?.abort()
-    const controller = new AbortController()
-    abortControllerRef.current = controller
-
-    try {
-      setIsLoading(true)
-      setFetchError(false)
-      const response = await vendorDashboardAPI.getStockSummary(0, 3, controller.signal)
-      setSummary(response)
-    } catch {
-      if (controller.signal.aborted) return
-      setSummary(null)
-      setFetchError(true)
-    } finally {
-      if (!controller.signal.aborted) {
-        setIsLoading(false)
-      }
-    }
-  }, [isAuthenticated])
-
-  useEffect(() => {
-    void fetchStockSummary()
-
-    return () => {
-      abortControllerRef.current?.abort()
-    }
-  }, [fetchStockSummary])
-
-  // A bucket missing from an otherwise-valid `summary` (malformed 200 body) would otherwise
-  // throw on `row.bucket.count` below and blank the whole dashboard (infra note #26).
-  const FALLBACK_BUCKET = { count: 0, percentage: 0 }
-  const statusRows = summary
-    ? [
-        {
-          key: "inStock",
-          label: "In Stock",
-          color: "green" as const,
-          bucket: summary.inStock ?? FALLBACK_BUCKET,
-          filterType: "ACTIVE",
-        },
-        {
-          key: "lowStock",
-          label: "Low Stock",
-          color: "yellow" as const,
-          bucket: summary.lowStock ?? FALLBACK_BUCKET,
-          filterType: "LOW_STOCK",
-        },
-        {
-          key: "outOfStock",
-          label: "Out of Stock",
-          color: "red" as const,
-          bucket: summary.outOfStock ?? FALLBACK_BUCKET,
-          filterType: "OUT_OF_STOCK",
-        },
-      ]
-    : []
 
   return (
     <DashboardPanel
@@ -119,14 +55,14 @@ const InventoryStatus = () => {
     >
       {isLoading ? (
         <div className="space-y-4">
-          {[0, 1, 2].map((placeholder) => (
-            <Skeleton key={placeholder} className="h-16 rounded-xl" />
+          {SKELETON_ROW_IDS.map((id) => (
+            <Skeleton key={id} className="h-16 rounded-xl" />
           ))}
         </div>
       ) : fetchError ? (
         <div className="flex flex-col items-center justify-center gap-3 px-6 py-10 text-center">
           <p className="text-sm font-medium text-danger">Couldn't load inventory status. Please try again.</p>
-          <Button type="button" variant="outline" onClick={() => void fetchStockSummary()} className="rounded-lg px-4">
+          <Button type="button" variant="outline" onClick={refetch} className="rounded-lg px-4">
             Retry
           </Button>
         </div>
@@ -161,18 +97,12 @@ const InventoryStatus = () => {
           <div className="mt-6">
             <h3 className="mb-3 font-semibold text-text-primary">Critical Stock Alerts</h3>
             <div className="space-y-2">
-              {/* `summary?.criticStockAlerts.content` only guarded `summary`: a response without
-                  `criticStockAlerts` threw on `.content` and blanked the dashboard (infra note #26). */}
-              {(() => {
-                const alerts = Array.isArray(summary?.criticStockAlerts?.content)
-                  ? summary.criticStockAlerts.content
-                  : []
-                // An empty list under the heading used to render as blank space, which reads like
-                // the panel failed to load rather than "there is nothing to report".
-                if (alerts.length === 0) {
-                  return <p className="text-sm text-text-secondary">No critical stock alerts right now.</p>
-                }
-                return alerts.map((alert) => {
+              {/* An empty list under the heading used to render as blank space, which reads like
+                  the panel failed to load rather than "there is nothing to report". */}
+              {criticalAlerts.length === 0 ? (
+                <p className="text-sm text-text-secondary">No critical stock alerts right now.</p>
+              ) : (
+                criticalAlerts.map((alert) => {
                   const status = alert.stock <= CRITICAL_STOCK_THRESHOLD ? "critical" : "warning"
                   const imageSrc = imageFallbacks[alert.userProductId]
                     ? PLACEHOLDER_IMAGE
@@ -201,7 +131,7 @@ const InventoryStatus = () => {
                     </Link>
                   )
                 })
-              })()}
+              )}
             </div>
           </div>
         </>

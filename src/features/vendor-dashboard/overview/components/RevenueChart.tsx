@@ -10,68 +10,20 @@ import {
   Title,
   Tooltip,
 } from "chart.js"
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
+import { useId, useMemo } from "react"
 import { Line } from "react-chartjs-2"
 import DashboardPanel from "@/app/vendor-dashboard/components/shared/DashboardPanel"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getVendorChartOptions, getVendorChartPalette } from "@/features/vendor-dashboard/shared/lib/chartTheme"
-import { vendorDashboardAPI } from "@/lib/api/vendor-dashboard"
-import { useAuthStore } from "@/stores/authStore"
+import { useRevenueChartQuery } from "../hooks/useOverviewQueries"
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
-
-type RevenueRange = 6 | 12 | "all"
 
 const RevenueChart = () => {
   const sectionId = useId()
   const palette = useMemo(() => getVendorChartPalette(), [])
-  const { isAuthenticated } = useAuthStore()
-  const [range, setRange] = useState<RevenueRange>(12)
-  const [labels, setLabels] = useState<string[]>([])
-  const [values, setValues] = useState<number[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [fetchError, setFetchError] = useState(false)
-  const abortControllerRef = useRef<AbortController | null>(null)
-
-  const fetchRevenue = useCallback(async () => {
-    if (!isAuthenticated) return
-
-    abortControllerRef.current?.abort()
-    const controller = new AbortController()
-    abortControllerRef.current = controller
-
-    try {
-      setIsLoading(true)
-      setFetchError(false)
-      const response = await vendorDashboardAPI.getPeriodicRevenue(
-        range === "all" ? undefined : { months: range },
-        controller.signal,
-      )
-      // Guard against a malformed 200 body — `periods` missing, null, or not an array would
-      // otherwise throw on `.map` and blank the whole dashboard (infra note #26).
-      const periods = Array.isArray(response.periods) ? response.periods : []
-      setLabels(periods.map((period) => period.period))
-      setValues(periods.map((period) => period.totalRevenue))
-    } catch {
-      if (controller.signal.aborted) return
-      setLabels([])
-      setValues([])
-      setFetchError(true)
-    } finally {
-      if (!controller.signal.aborted) {
-        setIsLoading(false)
-      }
-    }
-  }, [isAuthenticated, range])
-
-  useEffect(() => {
-    void fetchRevenue()
-
-    return () => {
-      abortControllerRef.current?.abort()
-    }
-  }, [fetchRevenue])
+  const { range, setRange, isLoading, fetchError, labels, values, refetch } = useRevenueChartQuery()
 
   const data = {
     labels,
@@ -142,7 +94,7 @@ const RevenueChart = () => {
           ) : fetchError ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
               <p className="text-sm font-medium text-danger">Couldn't load revenue. Please try again.</p>
-              <Button type="button" variant="outline" onClick={() => void fetchRevenue()} className="rounded-lg px-4">
+              <Button type="button" variant="outline" onClick={refetch} className="rounded-lg px-4">
                 Retry
               </Button>
             </div>

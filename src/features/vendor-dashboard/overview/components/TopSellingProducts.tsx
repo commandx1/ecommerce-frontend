@@ -2,56 +2,19 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useState } from "react"
 import DashboardPanel from "@/app/vendor-dashboard/components/shared/DashboardPanel"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getFullImageUrl } from "@/lib/api/products"
-import { type VendorTopSellingProduct, vendorDashboardAPI } from "@/lib/api/vendor-dashboard"
-import { useAuthStore } from "@/stores/authStore"
+import { useTopSellingProductsQuery } from "../hooks/useOverviewQueries"
 
 const PLACEHOLDER_IMAGE = "/dentypro-product-placeholder.png"
+const SKELETON_ROW_IDS = ["row-1", "row-2", "row-3", "row-4"] as const
 
 const TopSellingProducts = () => {
-  const { isAuthenticated } = useAuthStore()
-  const [products, setProducts] = useState<VendorTopSellingProduct[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [fetchError, setFetchError] = useState(false)
+  const { isLoading, fetchError, products, refetch } = useTopSellingProductsQuery()
   const [imageFallbacks, setImageFallbacks] = useState<Record<string, boolean>>({})
-  const abortControllerRef = useRef<AbortController | null>(null)
-
-  const fetchTopSellingProducts = useCallback(async () => {
-    if (!isAuthenticated) return
-
-    abortControllerRef.current?.abort()
-    const controller = new AbortController()
-    abortControllerRef.current = controller
-
-    try {
-      setIsLoading(true)
-      setFetchError(false)
-      const response = await vendorDashboardAPI.getTopSellingProducts(0, 4, 30, "desc", controller.signal)
-      // Guard against a malformed 200 body — `content` missing, null, or not an array would
-      // otherwise throw on `.map` and blank the whole dashboard (infra note #26).
-      setProducts(Array.isArray(response.content) ? response.content : [])
-    } catch {
-      if (controller.signal.aborted) return
-      setProducts([])
-      setFetchError(true)
-    } finally {
-      if (!controller.signal.aborted) {
-        setIsLoading(false)
-      }
-    }
-  }, [isAuthenticated])
-
-  useEffect(() => {
-    void fetchTopSellingProducts()
-
-    return () => {
-      abortControllerRef.current?.abort()
-    }
-  }, [fetchTopSellingProducts])
 
   return (
     <DashboardPanel
@@ -67,19 +30,14 @@ const TopSellingProducts = () => {
     >
       {isLoading ? (
         <div className="space-y-4">
-          {[0, 1, 2, 3].map((placeholder) => (
-            <Skeleton key={placeholder} className="h-16 rounded-xl" />
+          {SKELETON_ROW_IDS.map((id) => (
+            <Skeleton key={id} className="h-16 rounded-xl" />
           ))}
         </div>
       ) : fetchError ? (
         <div className="flex flex-col items-center justify-center gap-3 px-6 py-10 text-center">
           <p className="text-sm font-medium text-danger">Couldn't load top selling products. Please try again.</p>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => void fetchTopSellingProducts()}
-            className="rounded-lg px-4"
-          >
+          <Button type="button" variant="outline" onClick={refetch} className="rounded-lg px-4">
             Retry
           </Button>
         </div>

@@ -1,27 +1,11 @@
 "use client"
 
-import { DollarSign, type LucideIcon, ShoppingBag, Star } from "lucide-react"
-import { useCallback, useEffect, useRef, useState } from "react"
 import { RING_TONE_CLASS_MAP, STATUS_TONE_CLASS_MAP } from "@/app/vendor-dashboard/components/shared/dashboardToneMaps"
 import { Button } from "@/components/ui/button"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import { Skeleton } from "@/components/ui/skeleton"
-import { vendorDashboardAPI } from "@/lib/api/vendor-dashboard"
-import formatCurrency from "@/lib/helpers/formatCurrency"
 import { cn } from "@/lib/utils"
-import { useAuthStore } from "@/stores/authStore"
-
-interface MetricCard {
-  id: string
-  title: string
-  value: string
-  description: string
-  footer?: string
-  change?: string
-  changeType?: "positive" | "negative"
-  icon: LucideIcon
-  iconColor: string
-}
+import { useVendorMetricsQuery } from "../hooks/useOverviewQueries"
 
 const colorMap: Record<string, string> = {
   green: RING_TONE_CLASS_MAP.success,
@@ -29,95 +13,16 @@ const colorMap: Record<string, string> = {
   orange: RING_TONE_CLASS_MAP.warning,
 }
 
-type RangeOption = 7 | 30 | 90
-
-const RANGE_OPTIONS: { label: string; value: RangeOption }[] = [
+const RANGE_OPTIONS: { label: string; value: 7 | 30 | 90 }[] = [
   { label: "7D", value: 7 },
   { label: "30D", value: 30 },
   { label: "90D", value: 90 },
 ]
 
-/** A malformed 200 body can send `null`/a non-number for a count field — falling through to
- * `String(null)` would literally print "null" to the vendor, so this floors to 0 instead. */
-const formatCount = (value: number): string => (Number.isFinite(value) ? String(value) : "0")
+const SKELETON_CARD_IDS = ["card-1", "card-2", "card-3"] as const
 
 const VendorMetricsCards = () => {
-  const { isAuthenticated } = useAuthStore()
-  const [range, setRange] = useState<RangeOption>(30)
-  const [metrics, setMetrics] = useState<MetricCard[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [fetchError, setFetchError] = useState(false)
-  const abortControllerRef = useRef<AbortController | null>(null)
-
-  const fetchMetrics = useCallback(async () => {
-    if (!isAuthenticated) return
-
-    abortControllerRef.current?.abort()
-    const controller = new AbortController()
-    abortControllerRef.current = controller
-
-    try {
-      setIsLoading(true)
-      setFetchError(false)
-      const [revenueSummary, reviewSummary] = await Promise.all([
-        vendorDashboardAPI.getRevenueSummary(range, controller.signal),
-        vendorDashboardAPI.getReviewSummary(controller.signal),
-      ])
-
-      const nextMetrics: MetricCard[] = [
-        {
-          id: "revenue",
-          title: "Total Revenue",
-          value: formatCurrency(revenueSummary.totalRevenue),
-          description: `Last ${range} days`,
-          footer: `${formatCurrency(revenueSummary.totalApprovedVendorPayment)} approved payout (${formatCount(revenueSummary.approvedVendorPaymentCount)})`,
-          icon: DollarSign,
-          iconColor: "green",
-        },
-        {
-          id: "orders",
-          title: "Orders",
-          value: formatCount(revenueSummary.orderItemCount),
-          description: `Last ${range} days`,
-          icon: ShoppingBag,
-          iconColor: "blue",
-        },
-        {
-          id: "rating",
-          title: "Rating",
-          value:
-            reviewSummary.currentReviewCount > 0 && Number.isFinite(reviewSummary.currentAverageRating)
-              ? reviewSummary.currentAverageRating.toFixed(1)
-              : "—",
-          description: "Average rating",
-          change: Number.isFinite(reviewSummary.ratingChangePercentage)
-            ? `${(reviewSummary.ratingChangePercentage as number) > 0 ? "+" : ""}${reviewSummary.ratingChangePercentage}%`
-            : undefined,
-          changeType: (reviewSummary.ratingChangePercentage ?? 0) >= 0 ? "positive" : "negative",
-          icon: Star,
-          iconColor: "orange",
-        },
-      ]
-
-      setMetrics(nextMetrics)
-    } catch {
-      if (controller.signal.aborted) return
-      setMetrics([])
-      setFetchError(true)
-    } finally {
-      if (!controller.signal.aborted) {
-        setIsLoading(false)
-      }
-    }
-  }, [isAuthenticated, range])
-
-  useEffect(() => {
-    void fetchMetrics()
-
-    return () => {
-      abortControllerRef.current?.abort()
-    }
-  }, [fetchMetrics])
+  const { range, setRange, isLoading, fetchError, metrics, refetch } = useVendorMetricsQuery()
 
   const rangeSelector = (
     <div className="mb-4 flex items-center justify-end gap-2">
@@ -146,8 +51,8 @@ const VendorMetricsCards = () => {
               value, title, description - so the shell never pops in and the text lines land where
               the placeholders were. The previous version pulsed an empty card, which meant the
               whole metric block re-laid-out the moment data arrived. */}
-          {[0, 1, 2].map((placeholder) => (
-            <SurfaceCard key={placeholder} variant="glass" className="p-6">
+          {SKELETON_CARD_IDS.map((id) => (
+            <SurfaceCard key={id} variant="glass" className="p-6">
               <div className="mb-4 flex items-center justify-between">
                 <Skeleton className="h-12 w-12 rounded-xl" />
                 <Skeleton className="h-7 w-16 rounded-full" />
@@ -171,7 +76,7 @@ const VendorMetricsCards = () => {
           className="mb-6 flex flex-col items-center justify-center gap-3 px-6 py-16 text-center"
         >
           <p className="text-sm font-medium text-danger">Couldn't load your metrics. Please try again.</p>
-          <Button type="button" variant="outline" onClick={() => void fetchMetrics()} className="rounded-lg px-4">
+          <Button type="button" variant="outline" onClick={refetch} className="rounded-lg px-4">
             Retry
           </Button>
         </SurfaceCard>
