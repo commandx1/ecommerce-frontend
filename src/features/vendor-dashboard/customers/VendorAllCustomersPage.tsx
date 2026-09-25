@@ -2,73 +2,33 @@
 
 import { ArrowLeft, ArrowRight, Search } from "lucide-react"
 import Link from "next/link"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useMemo } from "react"
 import SectionHeading from "@/components/layout/SectionHeading"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import TopCustomersTable from "./components/TopCustomersTable"
-import { CUSTOMER_HEALTH, CUSTOMER_SEGMENTS, VENDOR_CUSTOMERS, type VendorCustomer } from "./lib/customers-data"
+import { useCustomerListFilters } from "./hooks/useCustomerListFilters"
+import { CUSTOMER_HEALTH, CUSTOMER_SEGMENTS } from "./lib/customers-data"
 
 const PAGE_SIZE = 10
 
-type SortKey = "totalSpend" | "lastOrderDaysAgo" | "averageOrderValue" | "orders" | "returnRate"
-type SortDir = "asc" | "desc"
-
 export default function VendorAllCustomersPage() {
-  const pathname = usePathname()
-  const router = useRouter()
-  const searchParams = useSearchParams()
-
-  const query = searchParams.get("q") ?? ""
-  const segment = searchParams.get("segment") ?? "all"
-  const status = searchParams.get("status") ?? "all"
-  const sortBy = (searchParams.get("sort") as SortKey | null) ?? "totalSpend"
-  const sortDir = (searchParams.get("dir") as SortDir | null) ?? "desc"
-  const page = Number(searchParams.get("page") ?? "1")
-
-  const filteredCustomers = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase()
-
-    return VENDOR_CUSTOMERS.filter((customer) => {
-      const matchesQuery =
-        normalizedQuery.length === 0 ||
-        customer.name.toLowerCase().includes(normalizedQuery) ||
-        customer.clinicName.toLowerCase().includes(normalizedQuery) ||
-        customer.email.toLowerCase().includes(normalizedQuery)
-      const matchesSegment = segment === "all" || customer.segment === segment
-      const matchesStatus = status === "all" || customer.health === status
-      return matchesQuery && matchesSegment && matchesStatus
-    })
-  }, [query, segment, status])
-
-  const sortedCustomers = useMemo(() => {
-    return [...filteredCustomers].sort((a: VendorCustomer, b: VendorCustomer) => {
-      const left = a[sortBy]
-      const right = b[sortBy]
-      if (left === right) return 0
-      if (sortDir === "asc") return left > right ? 1 : -1
-      return left > right ? -1 : 1
-    })
-  }, [filteredCustomers, sortBy, sortDir])
-
-  const totalPages = Math.max(1, Math.ceil(sortedCustomers.length / PAGE_SIZE))
-  const safePage = Number.isNaN(page) ? 1 : Math.min(Math.max(page, 1), totalPages)
-  const pageStart = (safePage - 1) * PAGE_SIZE
-  const pageRows = sortedCustomers.slice(pageStart, pageStart + PAGE_SIZE)
-
-  const updateParams = (updates: Record<string, string | null>) => {
-    const params = new URLSearchParams(searchParams.toString())
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value === null || value === "" || value === "all") {
-        params.delete(key)
-      } else {
-        params.set(key, value)
-      }
-    })
-
-    const queryString = params.toString()
-    router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false })
-  }
+  const {
+    query,
+    segment,
+    status,
+    sortBy,
+    sortDir,
+    pageRows,
+    sortedCount,
+    totalPages,
+    safePage,
+    pageStart,
+    setQuery,
+    setSegment,
+    setStatus,
+    setSortBy,
+    setSortDir,
+    goToPage,
+  } = useCustomerListFilters()
 
   return (
     <>
@@ -98,7 +58,7 @@ export default function VendorAllCustomersPage() {
             <input
               type="text"
               value={query}
-              onChange={(event) => updateParams({ q: event.target.value, page: "1" })}
+              onChange={(event) => setQuery(event.target.value)}
               placeholder="Customer, clinic or email"
               className="w-full bg-transparent text-sm text-text-primary outline-none placeholder:text-text-muted"
             />
@@ -107,7 +67,7 @@ export default function VendorAllCustomersPage() {
 
         <div>
           <p className="mb-1 text-xs font-medium uppercase tracking-wider text-text-secondary">Segment</p>
-          <Select value={segment} onValueChange={(value) => updateParams({ segment: value, page: "1" })}>
+          <Select value={segment} onValueChange={setSegment}>
             <SelectTrigger
               aria-label="Segment"
               className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
@@ -127,7 +87,7 @@ export default function VendorAllCustomersPage() {
 
         <div>
           <p className="mb-1 text-xs font-medium uppercase tracking-wider text-text-secondary">Status</p>
-          <Select value={status} onValueChange={(value) => updateParams({ status: value, page: "1" })}>
+          <Select value={status} onValueChange={setStatus}>
             <SelectTrigger
               aria-label="Status"
               className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
@@ -148,7 +108,7 @@ export default function VendorAllCustomersPage() {
         <div>
           <p className="mb-1 text-xs font-medium uppercase tracking-wider text-text-secondary">Sort</p>
           <div className="grid grid-cols-2 gap-2">
-            <Select value={sortBy} onValueChange={(value) => updateParams({ sort: value, page: "1" })}>
+            <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger
                 aria-label="Sort By"
                 className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
@@ -163,7 +123,7 @@ export default function VendorAllCustomersPage() {
                 <SelectItem value="returnRate">Return Rate</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={sortDir} onValueChange={(value) => updateParams({ dir: value, page: "1" })}>
+            <Select value={sortDir} onValueChange={setSortDir}>
               <SelectTrigger
                 aria-label="Sort Direction"
                 className="h-11 w-full rounded-2xl border border-border-soft bg-surface-elevated shadow-soft"
@@ -182,19 +142,19 @@ export default function VendorAllCustomersPage() {
       <TopCustomersTable
         customers={pageRows}
         title="Customer Directory"
-        description={`${sortedCustomers.length} matched accounts`}
+        description={`${sortedCount} matched accounts`}
       />
 
       <section className="mt-5 flex items-center justify-between">
         <p className="text-sm text-text-secondary">
-          Showing {pageRows.length === 0 ? 0 : pageStart + 1}-{Math.min(pageStart + PAGE_SIZE, sortedCustomers.length)}{" "}
-          of {sortedCustomers.length}
+          Showing {pageRows.length === 0 ? 0 : pageStart + 1}-{Math.min(pageStart + PAGE_SIZE, sortedCount)} of{" "}
+          {sortedCount}
         </p>
         <div className="flex items-center gap-2">
           <button
             type="button"
             disabled={safePage <= 1}
-            onClick={() => updateParams({ page: String(safePage - 1) })}
+            onClick={() => goToPage(safePage - 1)}
             className="inline-flex h-9 items-center gap-1 rounded-lg border border-border-soft px-3 text-sm text-text-primary disabled:opacity-40"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -206,7 +166,7 @@ export default function VendorAllCustomersPage() {
           <button
             type="button"
             disabled={safePage >= totalPages}
-            onClick={() => updateParams({ page: String(safePage + 1) })}
+            onClick={() => goToPage(safePage + 1)}
             className="inline-flex h-9 items-center gap-1 rounded-lg border border-border-soft px-3 text-sm text-text-primary disabled:opacity-40"
           >
             Next

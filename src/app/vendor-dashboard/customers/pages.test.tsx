@@ -2,10 +2,13 @@ import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import { VENDOR_CUSTOMERS } from "@/features/vendor-dashboard/customers/lib/customers-data"
 import { notFoundMock } from "@/test/mocks/next-navigation"
-import { render, screen } from "@/test/render"
+import { installRadixPointerPolyfills } from "@/test/radix"
+import { render, screen, within } from "@/test/render"
 import CustomerProfilePage from "./[customerId]/page"
 import VendorCustomersAllPage from "./all/page"
 import VendorCustomersPage from "./page"
+
+installRadixPointerPolyfills()
 
 vi.mock("@/features/vendor-dashboard/overview/components/CustomerAnalyticsChart", () => ({
   default: () => <div data-testid="customer-analytics" />,
@@ -104,6 +107,63 @@ describe("VendorCustomersAllPage", () => {
     expect(screen.getByRole("combobox", { name: "Status" })).toBeInTheDocument()
     expect(screen.getByRole("combobox", { name: "Sort By" })).toBeInTheDocument()
     expect(screen.getByRole("combobox", { name: "Sort Direction" })).toBeInTheDocument()
+  })
+
+  const rowNames = () =>
+    screen
+      .getAllByRole("row")
+      .slice(1)
+      .map((row) => within(row).getAllByRole("cell")[0]?.textContent)
+
+  it("sorts the visible page by the selected sort key, descending by default", () => {
+    render(<VendorCustomersAllPage />, { route: "/vendor-dashboard/customers/all", searchParams: "sort=orders" })
+
+    const expectedFirstPage = [...VENDOR_CUSTOMERS].sort((a, b) => b.orders - a.orders).slice(0, 10)
+    expect(rowNames()).toEqual(expectedFirstPage.map((c) => expect.stringContaining(c.name)))
+  })
+
+  it("reverses the sort order when the sort direction is set to ascending", () => {
+    render(<VendorCustomersAllPage />, {
+      route: "/vendor-dashboard/customers/all",
+      searchParams: "sort=orders&dir=asc",
+    })
+
+    const expectedFirstPage = [...VENDOR_CUSTOMERS].sort((a, b) => a.orders - b.orders).slice(0, 10)
+    expect(rowNames()).toEqual(expectedFirstPage.map((c) => expect.stringContaining(c.name)))
+  })
+
+  it("sorts by total spend by default when no sort param is present", () => {
+    render(<VendorCustomersAllPage />, { route: "/vendor-dashboard/customers/all" })
+
+    const expectedFirstPage = [...VENDOR_CUSTOMERS].sort((a, b) => b.totalSpend - a.totalSpend).slice(0, 10)
+    expect(rowNames()).toEqual(expectedFirstPage.map((c) => expect.stringContaining(c.name)))
+  })
+
+  it("combines a segment filter and a status filter (AND, not OR)", () => {
+    render(<VendorCustomersAllPage />, {
+      route: "/vendor-dashboard/customers/all",
+      searchParams: "segment=High+Value&status=Healthy",
+    })
+
+    const expected = VENDOR_CUSTOMERS.filter(
+      (customer) => customer.segment === "High Value" && customer.health === "Healthy",
+    ).length
+    expect(screen.getByText(`${expected} matched accounts`)).toBeInTheDocument()
+  })
+
+  it("changing the sort select pushes the sort param into the URL and resets to page 1", async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 })
+    const { router } = render(<VendorCustomersAllPage />, {
+      route: "/vendor-dashboard/customers/all",
+      searchParams: "page=2",
+    })
+
+    await user.click(screen.getByRole("combobox", { name: "Sort By" }))
+    await user.click(await screen.findByRole("option", { name: "Orders" }))
+
+    expect(router.replace).toHaveBeenLastCalledWith("/vendor-dashboard/customers/all?page=1&sort=orders", {
+      scroll: false,
+    })
   })
 })
 
