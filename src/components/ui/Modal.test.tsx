@@ -96,14 +96,4 @@ describe("Modal", () => {
 
     expect(document.body.style.pointerEvents).toBe("none")
   })
-
-  it("trapFocus=false: does not lock pointer events on the rest of the page, for dialogs hosting a nested Radix popover (e.g. a Select)", () => {
-    render(
-      <Modal isOpen onClose={vi.fn()} title="Confirm" trapFocus={false}>
-        <p>Body content</p>
-      </Modal>,
-    )
-
-    expect(document.body.style.pointerEvents).not.toBe("none")
-  })
 })

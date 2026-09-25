@@ -43,7 +43,7 @@ const FAKE_QZ_INIT_SCRIPT = `
   window.__qzPrintCalls = [];
   window.qz = {
     websocket: { isActive: () => true, connect: async () => {} },
-    printers: { find: async () => ["Fake Printer"] },
+    printers: { find: async () => ["Fake Printer", "Second Printer"] },
     configs: { create: (printer, options) => ({ printer, options }) },
     print: async (config, data) => { window.__qzPrintCalls.push({ config, data }); },
     api: { getVersion: async () => "test-2.0" },
@@ -133,5 +133,23 @@ test.describe("vendor orders", () => {
           .__qzPrintCalls,
     )
     expect(calls[0].data[0]).toMatchObject({ type: "pdf", data: "https://labels.example.com/label-1.pdf" })
+
+    // Switching printers is a real Radix Select nested inside this modal's Dialog - a
+    // combination the unit suite can't exercise in jsdom (see VendorOrdersPage.test.tsx's
+    // "selects a different printer before printing" for why), so this is its only coverage.
+    await vendorPage.getByRole("combobox", { name: "Printer" }).click()
+    await vendorPage.getByRole("option", { name: "Second Printer" }).click()
+    await orders.printLabelButtons.first().click()
+
+    await expect
+      .poll(async () =>
+        vendorPage.evaluate(() => (window as unknown as { __qzPrintCalls: unknown[] }).__qzPrintCalls.length),
+      )
+      .toBe(2)
+
+    const secondCall = await vendorPage.evaluate(
+      () => (window as unknown as { __qzPrintCalls: Array<{ config: { printer: string } }> }).__qzPrintCalls[1],
+    )
+    expect(secondCall.config.printer).toBe("Second Printer")
   })
 })

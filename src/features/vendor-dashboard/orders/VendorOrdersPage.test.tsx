@@ -1337,38 +1337,18 @@ describe("VendorOrdersPage", () => {
       expect(screen.queryByText(/Shipping labels/)).not.toBeInTheDocument()
     })
 
-    it("selects a different printer before printing", async () => {
-      const user = setupSelectUser()
-      serveOrders(
-        makeVendorOrder({
-          orderId: "vorder-1",
-          orderItems: [
-            makeVendorOrderItem({
-              id: "vitem-1",
-              status: "ON_WAY",
-              shippingLinks: [{ shippingUrl: "https://labels.example/label-1.pdf" }],
-            }),
-          ],
-        }),
-      )
-
-      render(<VendorOrdersPage />)
-      await expandFirstOrder(userEvent.setup())
-      await user.click(
-        (await (await desktopTable()).findAllByRole("button", { name: /Track \/ Labels/ }))[0] as HTMLElement,
-      )
-      await screen.findByText(/QZ Tray connected/)
-
-      await user.click(selectShowing("Zebra ZD410"))
-      await user.click(await screen.findByRole("option", { name: "PDF Printer" }))
-      await user.click(screen.getByRole("button", { name: /Print/ }))
-
-      expect(qzMocks.printShippingLabel).toHaveBeenCalledWith("https://labels.example/label-1.pdf", {
-        printer: "PDF Printer",
-        copies: 1,
-        colorType: "color",
-      })
-    })
+    // No "selects a different printer before printing" RTL test here on purpose: the printer
+    // picker is a Radix <Select> rendered inside the labels modal's Radix <Dialog>, and opening
+    // it in this suite reliably crashes (`@radix-ui/react-focus-scope` recurses into "Maximum
+    // call stack size exceeded"). Confirmed via `@radix-ui/react-select`'s own nested copy of
+    // react-focus-scope being a different installed version than the top-level one Dialog uses -
+    // a real dependency-tree issue, not something specific to this page - and confirmed to be
+    // jsdom/dependency-resolution-only, not a production a11y problem: the same interaction
+    // passes in a real browser (`vendor-orders.spec.ts`'s "printing a shipping label..." e2e test
+    // switches printers through the actual UI at --repeat-each=5), and `Modal` keeps its normal,
+    // unweakened Radix focus trap. The selection -> print wiring this used to cover now lives in
+    // `useQzPrinting.test.ts` ("prints with whichever printer is currently selected, not just the
+    // default"), one layer down, without mounting that Select/Dialog combination.
 
     it("switches back to Color after choosing B/W", async () => {
       const user = userEvent.setup()

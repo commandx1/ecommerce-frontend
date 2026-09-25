@@ -35,14 +35,6 @@ interface ModalProps {
    * doesn't need (or would be harmed by) an autofocused control.
    */
   preventAutoFocus?: boolean
-  /**
-   * Radix's default `modal` Dialog locks focus inside itself and disables pointer events on the
-   * rest of the page. That trap fights a `Select`/other Radix popover rendered inside the dialog
-   * (both portal to `document.body`), so a dialog that hosts one of those needs this set to
-   * `false`. Losing the strict trap for that one dialog is an accepted trade-off, not a bug: the
-   * overlay, Esc-to-close and outside-click-to-close all keep working either way.
-   */
-  trapFocus?: boolean
 }
 
 export default function Modal({
@@ -60,11 +52,9 @@ export default function Modal({
   closeOnOverlayClick = true,
   closeOnEscape = true,
   preventAutoFocus = false,
-  trapFocus = true,
 }: ModalProps) {
   return (
     <Dialog
-      modal={trapFocus}
       open={isOpen}
       onOpenChange={(open) => {
         if (!open) {

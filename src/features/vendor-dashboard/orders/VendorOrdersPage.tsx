@@ -390,9 +390,6 @@ export default function VendorOrdersPage() {
         onClose={() => setLabelModalLinks(null)}
         customTitle
         maxWidthClassName="max-w-4xl"
-        // The printer picker below is itself a Radix Select, which fights this dialog's own
-        // focus trap in a nested-portal scenario (see Modal's `trapFocus` doc comment).
-        trapFocus={false}
       >
         {labelModalLinks && (labelModalLinks.shipping.length > 0 || labelModalLinks.tracking.length > 0) && (
           <>
