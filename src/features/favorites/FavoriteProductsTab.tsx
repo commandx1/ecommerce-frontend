@@ -1,20 +1,18 @@
 "use client"
 
+import { useQuery } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 import DashboardPagination from "@/components/dashboard-shared/DashboardPagination"
 import SurfaceCard from "@/components/ui/SurfaceCard"
 import { adaptProductCardData } from "@/features/products/listing/components/listing/adaptProductCardData"
 import ProductCard from "@/features/products/listing/components/listing/ProductCard"
 import ProductCardSkeleton from "@/features/products/listing/components/listing/ProductCardSkeleton"
-import { type FavoriteProductItem, getMyFavoriteProducts } from "@/lib/api/favorite-products"
+import { favoriteProductsListOptions } from "@/lib/query/options/favorite-products"
 import { useFavoriteProductsStore } from "@/stores/favoriteProductsStore"
 
 const PAGE_SIZE = 12
 
 export default function FavoriteProductsTab() {
-  const [items, setItems] = useState<FavoriteProductItem[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [hasError, setHasError] = useState(false)
   const [page, setPage] = useState(0)
 
   const hydrate = useFavoriteProductsStore((s) => s.hydrate)
@@ -23,11 +21,12 @@ export default function FavoriteProductsTab() {
 
   useEffect(() => {
     void hydrate()
-    getMyFavoriteProducts()
-      .then(setItems)
-      .catch(() => setHasError(true))
-      .finally(() => setIsLoading(false))
   }, [hydrate])
+
+  const favoritesQuery = useQuery(favoriteProductsListOptions())
+  const items = favoritesQuery.data ?? []
+  const isLoading = favoritesQuery.isPending
+  const hasError = favoritesQuery.isError
 
   // Each card's own heart button owns the toggle/rollback against the store; this tab only
   // reflects the store's current ids once it has hydrated, so an unfavorite click elsewhere
