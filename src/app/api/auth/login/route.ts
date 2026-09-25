@@ -16,7 +16,6 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     })
 
-    // Check if response has JSON content
     const contentType = response.headers.get("content-type")
     const hasJson = contentType?.includes("application/json")
 
@@ -54,7 +53,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create response with data and tokens in body
     const nextResponse = NextResponse.json({
       ...data,
       accessToken,

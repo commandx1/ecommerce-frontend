@@ -13,7 +13,6 @@ function normalizeBackendImagePath(path: string): string {
   return cleanPath
 }
 
-// Helper function to get full image URL
 export function getFullImageUrl(path: string | null | undefined): string {
   if (!path || typeof path !== "string" || path.trim() === "") return ""
 

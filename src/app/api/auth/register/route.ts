@@ -16,7 +16,6 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     })
 
-    // Check if response has content
     const contentType = response.headers.get("content-type")
     const hasJson = contentType?.includes("application/json")
 
@@ -25,7 +24,6 @@ export async function POST(request: NextRequest) {
         const data = await response.json()
         return NextResponse.json(data, { status: response.status })
       }
-      // Return generic error if no JSON response
       return NextResponse.json(
         { message: `Registration failed with status ${response.status}`, status: response.status },
         { status: response.status },

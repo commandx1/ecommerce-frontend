@@ -28,7 +28,6 @@ export function useAuthHydration() {
       return
     }
 
-    // Check if we need to restore from cookie
     if (!isAuthenticated || !user || !accessToken) {
       try {
         const cookieData = tabSessionStorage.getItem("auth-storage")

@@ -32,7 +32,6 @@ interface AuthState {
   isLoading: boolean
   error: string | null
 
-  // Actions
   setUser: (user: User) => void
   setTokens: (accessToken: string, refreshToken: string) => void
   setAuth: (user: User, accessToken: string, refreshToken: string, isAdminImpersonating?: boolean) => void
@@ -96,7 +95,6 @@ export const useAuthStore = create<AuthState>()(
         useAuthStore.persist.clearStorage()
         // Cached server data (cart included) is dropped by QuerySessionBoundary on the user change above.
 
-        // Clear favorite products state
         const { useFavoriteProductsStore } = await import("./favoriteProductsStore")
         useFavoriteProductsStore.getState().reset()
       },

@@ -65,13 +65,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: "Failed to fetch image" }, { status: 502 })
     }
 
-    // Get the image as blob
     const blob = await response.blob()
 
-    // Get content type from response or default to image/jpeg
     const contentType = response.headers.get("content-type") || "image/jpeg"
 
-    // Return the image with proper headers
     return new NextResponse(blob, {
       status: 200,
       headers: {

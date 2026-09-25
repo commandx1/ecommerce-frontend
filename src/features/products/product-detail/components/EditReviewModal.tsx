@@ -34,7 +34,6 @@ export default function EditReviewModal({ review, isOpen, onClose, onSuccess }: 
   const [comment, setComment] = useState(review.comment)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Update state when review changes
   useEffect(() => {
     setRating(review.star)
     setTitle(review.title)

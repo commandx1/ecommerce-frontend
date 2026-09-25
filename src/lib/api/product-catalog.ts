@@ -11,8 +11,6 @@ import type {
 } from "./product-types"
 import { apiRequest, bearerAuthHeaders } from "./request"
 
-// ==================== Product CRUD ====================
-
 /**
  * Create a new product and submit it for review (vendor flow)
  * POST /api/products/review
@@ -22,15 +20,12 @@ import { apiRequest, bearerAuthHeaders } from "./request"
 export async function createProductForReview(payload: CreateProductForReviewPayload, token: string): Promise<Product> {
   const formData = new FormData()
 
-  // Add JSON data as string
   formData.append("data", JSON.stringify(payload.data))
 
-  // Add cover photo if provided
   if (payload.coverPhoto) {
     formData.append("coverPhoto", payload.coverPhoto)
   }
 
-  // Add additional photos if provided
   if (payload.photos && payload.photos.length > 0) {
     for (const photo of payload.photos) {
       formData.append("photos", photo)
@@ -89,10 +84,7 @@ export async function updateProductForReview(
   })
 }
 
-/**
- * Get the vendor's own products together with their review status
- * GET /api/products/my-products
- */
+/** The vendor's own products together with their review status. */
 export async function getMyProducts(
   token: string,
   params: {
@@ -124,10 +116,6 @@ export async function getMyProducts(
   })
 }
 
-/**
- * Get product by ID
- * GET /api/products/:id
- */
 export async function getProductById(id: string, token?: string): Promise<Product> {
   return apiRequest.requestJson<Product>({
     client: "app",
@@ -155,12 +143,7 @@ export async function getProductByIdForOwner(id: string, token?: string): Promis
   })
 }
 
-// ==================== Product Search (active products + brand filter) ====================
-
-/**
- * Search brand names for the brand filter dropdown (paginated, typeahead)
- * GET /api/products/brands/search?search=...&page=...&size=...
- */
+/** Brand-name typeahead for the brand filter dropdown (paginated). */
 export async function searchBrands(
   params: { search: string; page?: number; size?: number },
   token: string,
@@ -232,13 +215,9 @@ export function normalizeActiveProductSearchItem(item: ActiveProductSearchItem):
   }
 }
 
-/**
- * Normalize a single barcode product result
- */
 export function normalizeBarcodeResult(
   product: Product | BarcodeLookupProduct | BarcodeProduct,
 ): NormalizedSearchProduct {
-  // Check if it's a BarcodeLookupProduct (has barcode_number)
   if ("barcode_number" in product) {
     return {
       id: product.barcode_number,
@@ -252,7 +231,6 @@ export function normalizeBarcodeResult(
     }
   }
 
-  // Check if it's a BarcodeProduct (has barcodeNumber)
   if ("barcodeNumber" in product) {
     return {
       id: String(product.id),
@@ -266,7 +244,6 @@ export function normalizeBarcodeResult(
     }
   }
 
-  // It's a local Product
   const images: string[] = []
   if (product.coverPhotoPath) {
     images.push(getFullImageUrl(product.coverPhotoPath))

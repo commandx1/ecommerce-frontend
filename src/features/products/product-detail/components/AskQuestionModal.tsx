@@ -39,7 +39,6 @@ export default function AskQuestionModal({
   const [question, setQuestion] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Get vendor name for display
   const selectedVendor = userProducts.find((up) => up.id === preSelectedUserProductId)
 
   const handleSubmit = async (e: React.FormEvent) => {

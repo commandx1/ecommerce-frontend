@@ -93,7 +93,6 @@ export default function ProductDetailModal({
       contentClassName="glass-panel max-h-[88vh] p-0"
       bodyClassName="flex max-h-[88vh] flex-col"
     >
-      {/* Header */}
       <div className="flex items-start justify-between gap-4 border-b border-border-soft bg-surface-muted/60 px-6 py-4">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-widest text-brand">Product · Details</p>
@@ -310,7 +309,6 @@ export default function ProductDetailModal({
         )}
       </div>
 
-      {/* Footer */}
       <div className="flex items-center justify-end gap-2 border-t border-border-soft bg-surface-muted/60 px-6 py-3.5">
         <button
           type="button"

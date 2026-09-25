@@ -18,7 +18,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       Accept: "application/json",
     }
 
-    // Add authorization header if token exists
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`
     }

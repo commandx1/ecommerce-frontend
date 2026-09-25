@@ -13,7 +13,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    // Get the form data from the request
     const formData = await request.formData()
 
     // Forward the form data to the backend

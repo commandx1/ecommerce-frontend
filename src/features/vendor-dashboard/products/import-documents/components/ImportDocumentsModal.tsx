@@ -26,7 +26,6 @@ export default function ImportDocumentsModal({ isOpen, onClose }: ImportDocument
       overlayClassName="bg-brand-strong/40 backdrop-blur-[2px]"
       contentClassName="glass-panel p-0"
     >
-      {/* Header */}
       <div className="flex items-center justify-between border-b border-border-soft px-6 py-4">
         <div>
           <h2 className="text-lg font-semibold text-text-primary">Import Products</h2>

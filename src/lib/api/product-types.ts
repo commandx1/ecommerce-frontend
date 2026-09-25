@@ -1,4 +1,3 @@
-// Product Types
 export interface Product {
   id: string
   name: string
@@ -97,7 +96,6 @@ export interface CreateProductForReviewPayload {
   photos?: File[]
 }
 
-// Barcode Lookup Types
 export interface BarcodeLookupProduct {
   barcode_number: string
   barcode_formats?: string
@@ -181,7 +179,6 @@ export interface NormalizedSearchProduct {
   originalData: Product | BarcodeLookupProduct | BarcodeProduct
 }
 
-// User Product Types
 export interface CreateUserProductPayload {
   productId: string
   price: number

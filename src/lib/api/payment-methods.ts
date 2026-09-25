@@ -4,8 +4,6 @@ import type {
 } from "@/features/buyer-dashboard/payment-methods/paymentMethodsData"
 import apiClient from "./client"
 
-// ── API shapes (matches Java DTOs) ──────────────────────────────────────────
-
 export interface ApiSavedCard {
   id: string
   name: string
@@ -53,8 +51,6 @@ interface UpdateNicknamePayload {
   nickname: string
 }
 
-// ── Mapping ──────────────────────────────────────────────────────────────────
-
 /**
  * Every field is defended against a malformed `null`/missing value, so one bad card degrades (an
  * empty label, a blank expiry) instead of throwing inside `.map()` and losing the whole wallet.
@@ -92,8 +88,6 @@ export function mapApiCard(card: ApiSavedCard): SavedPaymentMethod {
     autoOrderCard: Boolean(card.autoOrderCard),
   }
 }
-
-// ── API Client ───────────────────────────────────────────────────────────────
 
 class PaymentMethodsAPI {
   async getSavedCards(): Promise<SavedPaymentMethod[]> {

@@ -44,20 +44,17 @@ import {
 } from "./user-products"
 
 export const productsAPI = {
-  // ==================== Product CRUD ====================
   createProductForReview,
   updateProductForReview,
   getMyProducts,
   getProductById,
   getProductByIdForOwner,
 
-  // ==================== Product Search (active products + brand filter) ====================
   searchBrands,
   searchActiveProducts,
   normalizeActiveProductSearchItem,
   normalizeBarcodeResult,
 
-  // ==================== User Products ====================
   createUserProduct,
   getUserProducts,
   getUserProductById,

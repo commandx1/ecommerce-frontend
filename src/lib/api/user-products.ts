@@ -7,12 +7,6 @@ import type {
 } from "./product-types"
 import { apiRequest, bearerAuthHeaders } from "./request"
 
-// ==================== User Products ====================
-
-/**
- * Create a user product
- * POST /api/user-products
- */
 export async function createUserProduct(payload: CreateUserProductPayload, token: string): Promise<UserProduct> {
   return apiRequest.requestJson<UserProduct, CreateUserProductPayload>({
     client: "app",
@@ -25,10 +19,6 @@ export async function createUserProduct(payload: CreateUserProductPayload, token
   })
 }
 
-/**
- * Get all user products
- * GET /api/user-products
- */
 export async function getUserProducts(token: string): Promise<UserProduct[]> {
   return apiRequest.requestJson<UserProduct[]>({
     client: "app",
@@ -40,10 +30,6 @@ export async function getUserProducts(token: string): Promise<UserProduct[]> {
   })
 }
 
-/**
- * Get user product by ID
- * GET /api/user-products/:id
- */
 export async function getUserProductById(id: string, token: string): Promise<UserProductDetailResponse> {
   return apiRequest.requestJson<UserProductDetailResponse>({
     client: "app",
@@ -55,10 +41,7 @@ export async function getUserProductById(id: string, token: string): Promise<Use
   })
 }
 
-/**
- * Apply the same discount percentage to several of the vendor's products
- * POST /api/user-products/bulk-discount
- */
+/** Applies the same discount percentage to several of the vendor's products. */
 export async function bulkDiscount(
   token: string,
   payload: { userProductIds: string[]; discount: number },
@@ -76,10 +59,7 @@ export async function bulkDiscount(
   })
 }
 
-/**
- * Distinct brands of the authenticated vendor's own products
- * GET /api/user-products/brands
- */
+/** Distinct brands of the authenticated vendor's own products. */
 export async function getUserProductBrands(token: string, signal?: AbortSignal): Promise<string[]> {
   return apiRequest.requestJson<string[]>({
     client: "app",
@@ -92,10 +72,6 @@ export async function getUserProductBrands(token: string, signal?: AbortSignal):
   })
 }
 
-/**
- * Filter user products
- * GET /api/user-products/filter?type=TOTAL&price=true&stock=false&page=0&size=10
- */
 export async function filterUserProducts(
   token: string,
   type: "ACTIVE" | "INACTIVE" | "OUT_OF_STOCK" | "LOW_STOCK" | "TOTAL",
@@ -199,9 +175,7 @@ export async function filterUserProducts(
     }
   }
 
-  // Handle both array and pagination object responses
   if (Array.isArray(data)) {
-    // If response is array, create pagination object
     return {
       content: data,
       totalElements: data.length,
@@ -229,10 +203,6 @@ export async function filterUserProducts(
   throw new Error("Invalid user product filter response")
 }
 
-/**
- * Update a user product
- * PUT /api/user-products/:id
- */
 export async function updateUserProduct(
   id: string,
   payload: {
@@ -268,10 +238,6 @@ export async function updateUserProduct(
   })
 }
 
-/**
- * Delete a user product
- * DELETE /api/user-products/:id
- */
 export async function deleteUserProduct(id: string, token: string): Promise<void> {
   await apiRequest.requestJson<void>({
     client: "app",

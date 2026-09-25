@@ -60,7 +60,6 @@ export const cookieStorage: Storage = {
       stringValue = JSON.stringify(value)
     }
 
-    // Set cookie with 30 days expiration
     const expires = new Date()
     expires.setTime(expires.getTime() + 30 * 24 * 60 * 60 * 1000)
 
