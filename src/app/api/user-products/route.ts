@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     // `getAll` method is block-commented (UserProductController.java:68-73). Spring therefore
     // returns 404 ("no handler found"), never 403, for this request. The 403 branch below used to
     // be the only fallback trigger, which meant this codepath silently never fired in production
-    // and callers like vendor-dashboard/products/create/page.tsx would see a raw error instead of
+    // and callers like the vendor product editor would see a raw error instead of
     // falling back to /filter. Fall back on 404 too (kept 403 as a defensive no-op in case the
     // backend mapping is ever restored with an authorization check).
     if (response.status === 403 || response.status === 404) {

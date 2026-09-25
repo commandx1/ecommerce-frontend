@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
   ALL_FIELDS,
+  adjacentTab,
   countTabErrors,
   fieldsBetweenTabs,
   getTabForField,
@@ -100,6 +101,19 @@ describe("fieldsBetweenTabs", () => {
     ["media", "details", []],
   ] as const)("%s -> %s", (from, to, expected) => {
     expect(fieldsBetweenTabs(from, to)).toEqual(expected)
+  })
+})
+
+describe("adjacentTab", () => {
+  it.each([
+    ["basic", -1, null],
+    ["basic", 1, "details"],
+    ["details", -1, "basic"],
+    ["details", 1, "media"],
+    ["media", -1, "details"],
+    ["media", 1, null],
+  ] as const)("%s %i -> %s", (tab, step, expected) => {
+    expect(adjacentTab(tab, step)).toBe(expected)
   })
 })
 

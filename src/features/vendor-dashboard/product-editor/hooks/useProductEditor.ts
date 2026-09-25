@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { type FormEvent, useState } from "react"
 import { useAuthStore } from "@/stores/authStore"
-import { countTabErrors, type TabKey } from "../lib/product-form"
+import { adjacentTab, countTabErrors, type TabKey } from "../lib/product-form"
 import { selectSubmitBranch } from "../lib/product-payloads"
 import { useProductEditorLoad } from "./useProductEditorLoad"
 import { useProductEditorMode } from "./useProductEditorMode"
@@ -42,6 +42,12 @@ export function useProductEditor() {
     search.reset()
   }
 
+  const goToTab = (tab: TabKey) => form.tryLeaveTab(tab, media.hasCoverPhoto)
+  const goToAdjacentTab = (step: -1 | 1) => {
+    const tab = adjacentTab(form.activeTab, step)
+    if (tab) goToTab(tab)
+  }
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (!form.validateAll(media.hasCoverPhoto)) return
@@ -76,7 +82,9 @@ export function useProductEditor() {
       details: countTabErrors(form.errors, "details"),
       media: countTabErrors(form.errors, "media"),
     } satisfies Record<TabKey, number>,
-    goToTab: (tab: TabKey) => form.tryLeaveTab(tab, media.hasCoverPhoto),
+    goToTab,
+    goToPreviousTab: () => goToAdjacentTab(-1),
+    goToNextTab: () => goToAdjacentTab(1),
     handleSubmit,
     clearAll,
     startNewProduct: () => {

@@ -133,6 +133,11 @@ export function fieldsBetweenTabs(from: TabKey, to: TabKey): readonly string[] {
   return TAB_ORDER.slice(fromIndex, toIndex).flatMap((tab) => TAB_FIELDS[tab])
 }
 
+/** The tab the Previous / Next buttons lead to; null past either end. */
+export function adjacentTab(tab: TabKey, step: -1 | 1): TabKey | null {
+  return TAB_ORDER[TAB_ORDER.indexOf(tab) + step] ?? null
+}
+
 /** Returns `errors` itself when `name` has no error, so a state setter can bail out of a re-render. */
 export function withoutError(errors: FieldErrors, name: string): FieldErrors {
   if (!errors[name]) return errors

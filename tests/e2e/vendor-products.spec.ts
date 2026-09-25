@@ -11,7 +11,7 @@ import { VendorCreateProductPage, VendorProductsPage } from "./pages/vendor-prod
  * (`productsAPI.searchActiveProducts`) hits it on every keystroke.
  * `openBlankForm` needs the "Can't find your product? Create new" link,
  * which only renders at the bottom of a NON-empty results list (see
- * create/page.tsx ~line 1080) - a zero-result response instead shows a
+ * product-editor/components/search/SearchResults.tsx) - a zero-result response shows a
  * different "No results found" panel with a "Create New Product" button.
  */
 function registerCreateProductMocks(apiMock: ApiMock) {

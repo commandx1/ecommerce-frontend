@@ -135,7 +135,7 @@ export class VendorCreateProductPage extends BasePage {
     await this.stockInput.fill(stock)
   }
 
-  /** Fills every required Basic-tab field; leaves the form on the Basic tab. Mirrors page.validation.test.tsx's fillBasicTab. */
+  /** Fills every required Basic-tab field; leaves the form on the Basic tab. Mirrors ProductEditorPage.validation.test.tsx's fillBasicTab. */
   async fillBasicTab(): Promise<void> {
     await this.nameInput.fill("Composite Kit")
     await this.skuInput.fill("SKU-1")
@@ -151,7 +151,7 @@ export class VendorCreateProductPage extends BasePage {
 
   /**
    * Fills every required Details-tab field; leaves the form on the Details tab. Mirrors
-   * page.validation.test.tsx's fillDetailsTab, except Brand is a searchable dropdown here
+   * ProductEditorPage.validation.test.tsx's fillDetailsTab, except Brand is a searchable dropdown here
    * (not a plain input) - opening it triggers `GET /api/products/brands/search`, which the
    * spec must register via `apiMock.on`.
    */
