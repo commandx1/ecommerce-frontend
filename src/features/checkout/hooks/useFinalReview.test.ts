@@ -570,7 +570,6 @@ describe("useFinalReview — status polling", () => {
     expect(getPaymentStatus).toHaveBeenCalledTimes(2)
     expect(useCheckoutStore.getState().orderResult).toMatchObject({ status: "PAYMENT_SUCCESS" })
     // Transient failures are logged, not swallowed silently.
-    // biome-ignore lint/suspicious/noConsole: asserting on the spied console.warn call itself
     expect(console.warn).toHaveBeenCalledWith("Payment status polling attempt failed", expect.anything())
   })
 })

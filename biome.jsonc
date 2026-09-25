@@ -40,7 +40,13 @@
       "suspicious": {
         "noUnknownAtRules": "off",
         "noExplicitAny": "error",
-        "noConsole": "warn",
+        // Every remaining call site is deliberate error-path logging (console.error/warn in a
+        // catch block, no debug logs). Allow those two methods explicitly instead of building a
+        // logging abstraction just for this; console.log/debug/etc. are still disallowed.
+        "noConsole": {
+          "level": "error",
+          "options": { "allow": ["error", "warn"] }
+        },
         "noArrayIndexKey": "warn",
         "noDocumentCookie": "warn"
       },

@@ -21,7 +21,6 @@ export function RootErrorContent({ error, reset, homeHref = "/", homeLabel = "Ba
   useEffect(() => {
     // An error boundary that swallows its error is how the blank-page failure stayed invisible;
     // the digest is the only handle on the server-side stack once this is in production.
-    // biome-ignore lint/suspicious/noConsole: deliberate - this is the app's only error report
     console.error("[app] unhandled error", error.digest ?? "", error)
   }, [error])
 
