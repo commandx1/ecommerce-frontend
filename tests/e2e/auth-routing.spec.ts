@@ -232,7 +232,9 @@ test.describe("auth-routing (src/proxy.ts)", () => {
       ),
     ])
 
-    await page.goto("/buyer-dashboard")
-    await expect(page).toHaveURL(/\/login\?redirect=%2Fbuyer-dashboard/)
+    // Assert the proxy's server redirect itself: once /login hydrates, the login page may restore
+    // the cookie's tokens and move on, so the in-page URL is only transiently /login.
+    const response = await page.goto("/buyer-dashboard")
+    expect(response?.url()).toMatch(/\/login\?redirect=%2Fbuyer-dashboard/)
   })
 })
