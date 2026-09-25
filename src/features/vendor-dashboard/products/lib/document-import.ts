@@ -1,10 +1,8 @@
+import { formatMb } from "@/lib/helpers/format"
+
 // Mirrors the server's default spring.servlet.multipart.max-file-size (1MB) — see
 // `useDocumentUpload` for why this is checked client-side.
 export const MAX_FILE_BYTES = 1024 * 1024
-
-export function formatMb(bytes: number): string {
-  return `${(bytes / (1024 * 1024)).toFixed(bytes % (1024 * 1024) === 0 ? 0 : 1)}MB`
-}
 
 export type FileValidationResult = { ok: true } | { ok: false; title: string; message?: string }
 

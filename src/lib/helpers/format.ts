@@ -98,6 +98,14 @@ export function formatCurrency(amount: number): string {
   return currencyFormatter.format(Number.isFinite(amount) ? amount || 0 : 0)
 }
 
+/**
+ * Upload-size label in binary megabytes: whole for an exact boundary ("1MB"), else one decimal
+ * ("1.5MB"). Used in the "file too large" messages that quote the server's multipart limits.
+ */
+export function formatMb(bytes: number): string {
+  return `${(bytes / (1024 * 1024)).toFixed(bytes % (1024 * 1024) === 0 ? 0 : 1)}MB`
+}
+
 /** Plain grouped number, e.g. `1,234`. */
 export function formatNumber(value: number): string {
   return numberFormatter.format(value)

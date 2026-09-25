@@ -1,20 +1,10 @@
 import { describe, expect, it } from "vitest"
-import { formatMb, MAX_FILE_BYTES, parseImportMessage, validateSelectedFile } from "./document-import"
+import { MAX_FILE_BYTES, parseImportMessage, validateSelectedFile } from "./document-import"
 
 function makeFile(name: string, size: number): File {
   const file = new File([new Uint8Array(size)], name)
   return file
 }
-
-describe("formatMb", () => {
-  it("shows a whole number for an exact megabyte boundary", () => {
-    expect(formatMb(1024 * 1024)).toBe("1MB")
-  })
-
-  it("shows one decimal for a non-exact size", () => {
-    expect(formatMb(1.5 * 1024 * 1024)).toBe("1.5MB")
-  })
-})
 
 describe("validateSelectedFile", () => {
   it("accepts a .xlsx file within the size limit", () => {

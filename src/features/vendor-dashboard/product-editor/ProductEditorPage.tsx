@@ -24,203 +24,60 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { showToast } from "@/components/ui/Toast"
-import {
-  type CreateUserProductPayload,
-  getFullImageUrl,
-  type NormalizedSearchProduct,
-  type Product,
-  type ProductAttribute,
-  type ProductVendorRequestData,
-  productsAPI,
-} from "@/lib/api/products"
-import {
-  type CategoryPath,
-  categoryPathToLevels,
-  formatLegacyCategory,
-  isLeafPath,
-  levelsToCategoryPath,
-} from "@/lib/category-tree"
+import { type NormalizedSearchProduct, type Product, type ProductAttribute, productsAPI } from "@/lib/api/products"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { queryKeys } from "@/lib/query/keys"
 import { useAuthStore } from "@/stores/authStore"
 import BrandFilterDropdown from "./components/BrandFilterDropdown"
 import CategoryPicker from "./components/CategoryPicker"
 import ProductDetailsModal from "./components/ProductDetailsModal"
+import {
+  FULFILLMENT_POLICY_DAYS,
+  getFulfillmentPolicyDayUnit,
+  getFulfillmentPolicyValue,
+  parseFulfillmentPolicyDays,
+} from "./lib/fulfillment-policy"
+import { isValidImageUrl } from "./lib/image-url"
+import { checkCoverPhoto, checkGalleryPhotos } from "./lib/photo-upload-limits"
+import {
+  ALL_FIELDS,
+  BARCODE_FORMAT_OPTIONS,
+  countTabErrors,
+  type FieldErrors,
+  fieldsBetweenTabs,
+  getTabForField,
+  INITIAL_VALUES,
+  type ProductFormValues,
+  resolveEditorMode,
+  type TabKey,
+  withoutError,
+} from "./lib/product-form"
+import { mapEditLoad, mapReviewEditLoad } from "./lib/product-load-mappers"
+import {
+  addLinkedPhoto,
+  type ExistingImages,
+  hasCoverPhoto,
+  INITIAL_EXISTING_IMAGES,
+  INITIAL_LINKED_IMAGES,
+  INITIAL_PHOTO_FILES,
+  INVALID_IMAGE_URL_MESSAGE,
+  type LinkedImages,
+  type PhotoFiles,
+  removeAt,
+} from "./lib/product-media"
+import {
+  buildListingUpdate,
+  buildLocalListingPayload,
+  buildProductVendorRequest,
+  buildReviewPayload,
+  SUBMIT_SUCCESS_MESSAGES,
+  selectSubmitBranch,
+  submitErrorMessage,
+} from "./lib/product-payloads"
+import { validateProductFields } from "./lib/validate-product-fields"
 
 const SEARCH_PAGE_SIZE = 10
 const SEARCH_SCROLL_THRESHOLD_PX = 48
-
-function isValidImageUrl(value: string): boolean {
-  try {
-    const url = new URL(value.trim())
-    return url.protocol === "http:" || url.protocol === "https:"
-  } catch {
-    return false
-  }
-}
-
-const TAB_FIELDS = {
-  basic: [
-    "name",
-    "detailedName",
-    "barcode",
-    "barcodeFormats",
-    "skuCode",
-    "price",
-    "discount",
-    "stock",
-    "shipmentFee",
-    "heavyShippingSurcharge",
-    "exportPackaging",
-    "fulfillmentPolicy",
-  ],
-  details: [
-    "description",
-    "manufacturerCode",
-    "manufacturer",
-    "brand",
-    "exampleVariationsProductId",
-    "category",
-    "manufacturerSiteProductPage",
-    "dentalLicenseRequired",
-    "height",
-    "length",
-    "width",
-    "weight",
-  ],
-  media: ["coverPhoto"],
-} as const
-
-const TAB_ORDER = ["basic", "details", "media"] as const
-type TabKey = (typeof TAB_ORDER)[number]
-
-// Determine which tab contains a given field
-function getTabForField(fieldName: string): TabKey {
-  if ((TAB_FIELDS.basic as readonly string[]).includes(fieldName)) return "basic"
-  if ((TAB_FIELDS.details as readonly string[]).includes(fieldName)) return "details"
-  return "media"
-}
-
-interface FormData {
-  // Product fields
-  name: string
-  detailedName: string
-  barcode: string
-  barcodeFormats: string
-  active: boolean
-  // Product Details fields
-  description: string
-  manufacturerCode: string
-  manufacturer: string
-  brand: string
-  exampleVariationsProductId: string
-  categoryPath: CategoryPath | null
-  legacyCategory: string | null
-  manufacturerSiteProductPage: string
-  dentalLicenseRequired: string
-  height: string
-  length: string
-  width: string
-  weight: string
-  // User Product fields
-  skuCode: string
-  price: string
-  stock: string
-  shipmentFee: string
-  heavyShippingSurcharge: string
-  exportPackaging: boolean
-  fulfillmentPolicy: string
-}
-
-// For file uploads
-interface FileData {
-  coverPhoto: File | null
-  coverPhotoPreview: string | null
-  photos: File[]
-  photosPreviews: string[]
-}
-
-const initialFormData: FormData = {
-  name: "",
-  detailedName: "",
-  barcode: "",
-  barcodeFormats: "EAN_13",
-  active: true,
-  description: "",
-  manufacturerCode: "",
-  manufacturer: "",
-  brand: "",
-  exampleVariationsProductId: "",
-  categoryPath: null,
-  legacyCategory: null,
-  manufacturerSiteProductPage: "",
-  dentalLicenseRequired: "No",
-  height: "",
-  length: "",
-  width: "",
-  weight: "",
-  skuCode: "",
-  price: "",
-  stock: "",
-  shipmentFee: "",
-  heavyShippingSurcharge: "",
-  exportPackaging: false,
-  fulfillmentPolicy: "",
-}
-
-const initialFileData: FileData = {
-  coverPhoto: null,
-  coverPhotoPreview: null,
-  photos: [],
-  photosPreviews: [],
-}
-
-// For existing images from selected product (URLs, not files)
-interface ExistingImages {
-  coverPhoto: string | null
-  photos: string[]
-}
-
-// For manually entered image links (URLs, not files)
-interface LinkedImages {
-  coverPhoto: string | null
-  photos: string[]
-}
-
-const initialLinkedImages: LinkedImages = {
-  coverPhoto: null,
-  photos: [],
-}
-
-const barcodeFormatOptions = [
-  { value: "EAN_13", label: "EAN-13" },
-  { value: "EAN_8", label: "EAN-8" },
-  { value: "UPC_A", label: "UPC-A" },
-  { value: "UPC_E", label: "UPC-E" },
-  { value: "CODE_128", label: "Code 128" },
-  { value: "CODE_39", label: "Code 39" },
-  { value: "QR_CODE", label: "QR Code" },
-]
-
-const fulfillmentPolicyDays = [1, 2, 3, 4, 5] as const
-type FulfillmentPolicyDay = (typeof fulfillmentPolicyDays)[number]
-
-/** Reads the day count back out of a policy string; null when it is empty or out of the 1-5 range. */
-function parseFulfillmentPolicyDays(value: string | undefined): FulfillmentPolicyDay | null {
-  const dayMatch = value?.match(/\b([1-5])\b/)
-  return dayMatch ? (Number(dayMatch[1]) as FulfillmentPolicyDay) : null
-}
-
-// "days" is also the unit shown next to the dropdown before anything is picked.
-const getFulfillmentPolicyDayUnit = (days: number | null) => (days === 1 ? "day" : "days")
-
-const getFulfillmentPolicyValue = (days: FulfillmentPolicyDay) =>
-  `Ships within ${days} ${getFulfillmentPolicyDayUnit(days)}`
-
-function normalizeFulfillmentPolicy(value: string | undefined): string {
-  const days = parseFulfillmentPolicyDays(value)
-  return days ? getFulfillmentPolicyValue(days) : ""
-}
 
 function CreateProductPageContent() {
   const router = useRouter()
@@ -247,14 +104,15 @@ function CreateProductPageContent() {
   const [isReviewEditMode] = useState(!!reviewEditProductId)
   const [reviewProductId] = useState<string | null>(reviewEditProductId)
   const [reviewUserProductId] = useState<string | null>(reviewEditUserProductId)
+  const mode = resolveEditorMode({ isEditMode, isReviewEditMode })
 
-  const [formData, setFormData] = useState<FormData>(initialFormData)
+  const [formData, setFormData] = useState<ProductFormValues>(INITIAL_VALUES)
   const [attributes, setAttributes] = useState<ProductAttribute[]>([])
   // Discount is only used by the edit flow (updateUserProduct); it is not part of the review DTO
   const [editDiscount, setEditDiscount] = useState("")
-  const [fileData, setFileData] = useState<FileData>(initialFileData)
-  const [existingImages, setExistingImages] = useState<ExistingImages>({ coverPhoto: null, photos: [] })
-  const [linkedImages, setLinkedImages] = useState<LinkedImages>(initialLinkedImages)
+  const [fileData, setFileData] = useState<PhotoFiles>(INITIAL_PHOTO_FILES)
+  const [existingImages, setExistingImages] = useState<ExistingImages>(INITIAL_EXISTING_IMAGES)
+  const [linkedImages, setLinkedImages] = useState<LinkedImages>(INITIAL_LINKED_IMAGES)
   const [coverPhotoMode, setCoverPhotoMode] = useState<"upload" | "link">("upload")
   const [photosMode, setPhotosMode] = useState<"upload" | "link">("upload")
   const [coverPhotoUrlInput, setCoverPhotoUrlInput] = useState("")
@@ -262,7 +120,7 @@ function CreateProductPageContent() {
   const [coverPhotoUrlError, setCoverPhotoUrlError] = useState("")
   const [photoUrlError, setPhotoUrlError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [errors, setErrors] = useState<FieldErrors>({})
   const [activeTab, setActiveTab] = useState<TabKey>("basic")
   const [isProductSelected, setIsProductSelected] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<NormalizedSearchProduct | null>(null)
@@ -438,40 +296,9 @@ function CreateProductPageContent() {
         productsAPI.getUserProductById(reviewUserProductId, accessToken),
       ])
 
-      const categoryPath = levelsToCategoryPath(product)
-
-      setFormData({
-        ...initialFormData,
-        name: product.name || "",
-        detailedName: product.detailedName || "",
-        barcode: product.barcode ? String(product.barcode) : "",
-        barcodeFormats: product.barcodeFormats || "EAN_13",
-        active: userProduct.active,
-        description: product.description || "",
-        manufacturerCode: product.manufacturerCode || "",
-        manufacturer: product.manufacturer || "",
-        brand: product.brand || "",
-        exampleVariationsProductId: product.exampleVariationsProductId || "",
-        categoryPath,
-        legacyCategory: categoryPath ? null : formatLegacyCategory(product),
-        manufacturerSiteProductPage: product.manufacturerSiteProductPage || "",
-        dentalLicenseRequired: product.dentalLicenseRequired || "No",
-        height: product.height != null ? String(product.height) : "",
-        length: product.length != null ? String(product.length) : "",
-        width: product.width != null ? String(product.width) : "",
-        weight: product.weight != null ? String(product.weight) : "",
-        skuCode: userProduct.skuCode || "",
-        price: String(userProduct.price),
-        stock: String(userProduct.stock),
-        shipmentFee: userProduct.shipmentFee != null ? String(userProduct.shipmentFee) : "",
-        heavyShippingSurcharge:
-          userProduct.heavyShippingSurcharge != null ? String(userProduct.heavyShippingSurcharge) : "",
-        fulfillmentPolicy: normalizeFulfillmentPolicy(userProduct.fulfillmentPolicy),
-      })
-
-      const coverPhoto = product.coverPhotoPath ? getFullImageUrl(product.coverPhotoPath) : null
-      const photos = product.photoPhats ? product.photoPhats.map(getFullImageUrl) : []
-      setExistingImages({ coverPhoto, photos })
+      const loaded = mapReviewEditLoad(product, userProduct)
+      setFormData(loaded.values)
+      setExistingImages(loaded.existingImages)
     } catch (error) {
       showToast.error((error as { message?: string })?.message || "Failed to load product data")
       router.push("/vendor-dashboard/products")
@@ -498,30 +325,10 @@ function CreateProductPageContent() {
       // Get product details
       const product = await productsAPI.getProductById(userProduct.productId, accessToken)
 
-      // Populate form data
-      setFormData({
-        ...initialFormData,
-        name: product.name || "",
-        detailedName: product.detailedName || "",
-        barcode: String(product.barcode),
-        barcodeFormats: product.barcodeFormats || "EAN_13",
-        active: userProduct.active,
-        description: product.description || "",
-        manufacturerCode: product.manufacturerCode || "",
-        brand: product.brand || "",
-        price: String(userProduct.price),
-        stock: String(userProduct.stock),
-      })
-      setEditDiscount(String(userProduct.discount))
-
-      // Load existing images
-      const coverPhoto = product.coverPhotoPath ? getFullImageUrl(product.coverPhotoPath) : null
-      const photos = product.photoPhats ? product.photoPhats.map(getFullImageUrl) : []
-
-      setExistingImages({
-        coverPhoto,
-        photos,
-      })
+      const loaded = mapEditLoad(product, userProduct)
+      setFormData(loaded.values)
+      setEditDiscount(loaded.editDiscount)
+      setExistingImages(loaded.existingImages)
 
       // Disable form fields in edit mode
       setIsProductSelected(true)
@@ -536,7 +343,7 @@ function CreateProductPageContent() {
   // Clear all form data and images
   const handleClearAll = () => {
     // Reset form data
-    setFormData(initialFormData)
+    setFormData(INITIAL_VALUES)
     setAttributes([])
     setEditDiscount("")
     // Land back on the first tab - otherwise starting a new product after clearing re-opens
@@ -550,13 +357,13 @@ function CreateProductPageContent() {
     for (const preview of fileData.photosPreviews) {
       URL.revokeObjectURL(preview)
     }
-    setFileData(initialFileData)
+    setFileData(INITIAL_PHOTO_FILES)
 
     // Clear existing images
-    setExistingImages({ coverPhoto: null, photos: [] })
+    setExistingImages(INITIAL_EXISTING_IMAGES)
 
     // Clear linked images
-    setLinkedImages(initialLinkedImages)
+    setLinkedImages(INITIAL_LINKED_IMAGES)
     setCoverPhotoMode("upload")
     setPhotosMode("upload")
     setCoverPhotoUrlInput("")
@@ -613,12 +420,7 @@ function CreateProductPageContent() {
 
   // Clear a single field's error, if any
   const clearError = (name: string) => {
-    setErrors((prev) => {
-      if (!prev[name]) return prev
-      const newErrors = { ...prev }
-      delete newErrors[name]
-      return newErrors
-    })
+    setErrors((prev) => withoutError(prev, name))
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -647,39 +449,13 @@ function CreateProductPageContent() {
     }
   }
 
-  // Backend limits (ecommerce-api has NO multipart override, so Spring Boot 3.5.7 defaults apply):
-  //   spring.servlet.multipart.max-file-size    = 1MB  per file
-  //   spring.servlet.multipart.max-request-size = 10MB per request
-  // Enforcing them here turns an opaque backend 400 ("Maximum upload size exceeded") into a
-  // message that names the file and the limit. Raising the 1MB ceiling is a backend change -
-  // see BACKEND-HANDOFF.md §14; if it is raised, update these two constants to match.
-  const MAX_FILE_BYTES = 1024 * 1024
-  const MAX_REQUEST_BYTES = 10 * 1024 * 1024
-  const formatMb = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(bytes % (1024 * 1024) === 0 ? 0 : 1)}MB`
-  const oversizedFile = (file: File) => file.size > MAX_FILE_BYTES
-
   // Handle cover photo selection
   const handleCoverPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file && oversizedFile(file)) {
-      showToast.error(
-        "Photo is too large",
-        `${file.name} is ${formatMb(file.size)}. The largest photo the server accepts is ${formatMb(MAX_FILE_BYTES)}.`,
-      )
-      e.target.value = ""
-      return
-    }
-    // The gallery handler below also guards the 10MB total, but only when *it* runs. A vendor who
-    // fills the gallery close to the ceiling first and then uses "Change" to swap the cover photo
-    // never passes through that handler, so the total must be checked here too - otherwise the
-    // request silently exceeds the server's 10MB-per-request limit and bounces with an opaque 400.
     if (file) {
-      const totalBytes = [file, ...fileData.photos].reduce((sum, f) => sum + f.size, 0)
-      if (totalBytes > MAX_REQUEST_BYTES) {
-        showToast.error(
-          "Photos are too large together",
-          `The server accepts up to ${formatMb(MAX_REQUEST_BYTES)} per upload. Remove a photo and try again.`,
-        )
+      const check = checkCoverPhoto(file, fileData.photos)
+      if (!check.ok) {
+        showToast.error(check.title, check.message)
         e.target.value = ""
         return
       }
@@ -718,24 +494,9 @@ function CreateProductPageContent() {
   // Handle additional photos selection
   const handlePhotosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
-    const tooBig = files.filter(oversizedFile)
-    if (tooBig.length > 0) {
-      showToast.error(
-        tooBig.length === 1 ? "Photo is too large" : "Some photos are too large",
-        `${tooBig.map((f) => f.name).join(", ")} — the largest photo the server accepts is ${formatMb(MAX_FILE_BYTES)}.`,
-      )
-      e.target.value = ""
-      return
-    }
-    const accepted = files.filter((file) => !oversizedFile(file))
-    const totalBytes = [fileData.coverPhoto, ...fileData.photos, ...accepted]
-      .filter((f): f is File => Boolean(f))
-      .reduce((sum, f) => sum + f.size, 0)
-    if (totalBytes > MAX_REQUEST_BYTES) {
-      showToast.error(
-        "Photos are too large together",
-        `The server accepts up to ${formatMb(MAX_REQUEST_BYTES)} per upload. Remove a photo and try again.`,
-      )
+    const check = checkGalleryPhotos(files, fileData)
+    if (!check.ok) {
+      showToast.error(check.title, check.message)
       e.target.value = ""
       return
     }
@@ -757,15 +518,15 @@ function CreateProductPageContent() {
     URL.revokeObjectURL(fileData.photosPreviews[index])
     setFileData((prev) => ({
       ...prev,
-      photos: prev.photos.filter((_, i) => i !== index),
-      photosPreviews: prev.photosPreviews.filter((_, i) => i !== index),
+      photos: removeAt(prev.photos, index),
+      photosPreviews: removeAt(prev.photosPreviews, index),
     }))
   }
 
   // Add cover photo by URL
   const handleAddCoverPhotoLink = () => {
     if (!isValidImageUrl(coverPhotoUrlInput)) {
-      setCoverPhotoUrlError("Please enter a valid image URL (starting with http:// or https://)")
+      setCoverPhotoUrlError(INVALID_IMAGE_URL_MESSAGE)
       return
     }
     setLinkedImages((prev) => ({ ...prev, coverPhoto: coverPhotoUrlInput.trim() }))
@@ -782,191 +543,29 @@ function CreateProductPageContent() {
   // Add an additional photo by URL
   const handleAddPhotoLink = () => {
     if (!isValidImageUrl(photoUrlInput)) {
-      setPhotoUrlError("Please enter a valid image URL (starting with http:// or https://)")
+      setPhotoUrlError(INVALID_IMAGE_URL_MESSAGE)
       return
     }
     const url = photoUrlInput.trim()
-    setLinkedImages((prev) => (prev.photos.includes(url) ? prev : { ...prev, photos: [...prev.photos, url] }))
+    setLinkedImages((prev) => addLinkedPhoto(prev, url))
     setPhotoUrlInput("")
     setPhotoUrlError("")
   }
 
   // Remove a linked photo by index
   const removeLinkedPhoto = (index: number) => {
-    setLinkedImages((prev) => ({
-      ...prev,
-      photos: prev.photos.filter((_, i) => i !== index),
-    }))
+    setLinkedImages((prev) => ({ ...prev, photos: removeAt(prev.photos, index) }))
   }
 
-  // Pure validation for a subset of fields. Mode-aware: in plain edit mode (not review-edit),
-  // only price/stock/discount are validated (current behavior); otherwise the full rule set
-  // that mirrors the backend's ProductServiceImpl.validate() requirements applies.
-  const validateFields = (fields: readonly string[]): Record<string, string> => {
-    const fieldSet = new Set(fields)
-    const has = (name: string) => fieldSet.has(name)
-    const newErrors: Record<string, string> = {}
-
-    if (isEditMode && !isReviewEditMode) {
-      if (has("price")) {
-        if (!formData.price.trim()) {
-          newErrors.price = "Price is required"
-        } else if (Number.isNaN(Number(formData.price)) || Number(formData.price) < 0) {
-          newErrors.price = "Price must be a non-negative number"
-        }
-      }
-
-      if (has("stock")) {
-        if (!formData.stock.trim()) {
-          newErrors.stock = "Stock is required"
-        } else if (Number.isNaN(Number(formData.stock)) || Number(formData.stock) < 0) {
-          newErrors.stock = "Stock must be a non-negative number"
-        } else if (!Number.isInteger(Number(formData.stock))) {
-          // Backend UserProduct.stock is an Integer; a decimal value fails JSON deserialization
-          // with an opaque 400 instead of the friendly validation message below.
-          newErrors.stock = "Stock must be a whole number"
-        }
-      }
-
-      if (has("discount") && editDiscount.trim() && (Number.isNaN(Number(editDiscount)) || Number(editDiscount) < 0)) {
-        newErrors.discount = "Discount must be a non-negative number"
-      }
-
-      return newErrors
-    }
-
-    if (has("name") && !formData.name.trim()) {
-      newErrors.name = "Product name is required"
-    }
-
-    if (has("barcode") && formData.barcode.trim()) {
-      if (Number.isNaN(Number(formData.barcode))) {
-        newErrors.barcode = "Barcode must be a number"
-      } else if (Number(formData.barcode) <= 0) {
-        newErrors.barcode = "Barcode must be a positive number"
-      } else if (!Number.isInteger(Number(formData.barcode))) {
-        // Backend Product.barcode is a Long; a decimal value fails JSON deserialization
-        // with an opaque 400 instead of the friendly validation message below.
-        newErrors.barcode = "Barcode must be a whole number"
-      } else if (Number(formData.barcode) > Number.MAX_SAFE_INTEGER) {
-        // JS numbers only carry 53 bits of integer precision (~16 digits); Product.barcode is a
-        // 64-bit Long. A longer digit string still parses as a valid-looking integer but silently
-        // rounds to a different value, so the product would be created with the wrong barcode with
-        // no error shown anywhere. Real barcode formats (EAN-13, UPC-A, GTIN-14) top out at 14
-        // digits, well under this ceiling - this only catches mistyped/garbage input.
-        newErrors.barcode = "Barcode is too large to submit accurately"
-      }
-    }
-
-    if (has("skuCode") && !formData.skuCode.trim()) {
-      newErrors.skuCode = "SKU code is required"
-    }
-
-    if (has("price")) {
-      if (!formData.price.trim()) {
-        newErrors.price = "Price is required"
-      } else if (Number.isNaN(Number(formData.price)) || Number(formData.price) < 0) {
-        newErrors.price = "Price must be a non-negative number"
-      }
-    }
-
-    if (has("stock")) {
-      if (!formData.stock.trim()) {
-        newErrors.stock = "Stock is required"
-      } else if (Number.isNaN(Number(formData.stock)) || Number(formData.stock) < 0) {
-        newErrors.stock = "Stock must be a non-negative number"
-      } else if (!Number.isInteger(Number(formData.stock))) {
-        // Backend UserProduct.stock is an Integer; a decimal value fails JSON deserialization
-        // with an opaque 400 instead of the friendly validation message below.
-        newErrors.stock = "Stock must be a whole number"
-      }
-    }
-
-    if (has("shipmentFee")) {
-      if (!formData.shipmentFee.trim()) {
-        newErrors.shipmentFee = "Shipment fee is required"
-      } else if (Number.isNaN(Number(formData.shipmentFee)) || Number(formData.shipmentFee) < 0) {
-        newErrors.shipmentFee = "Shipment fee must be a non-negative number"
-      }
-    }
-
-    if (has("heavyShippingSurcharge")) {
-      if (!formData.heavyShippingSurcharge.trim()) {
-        newErrors.heavyShippingSurcharge = "Heavy shipping fee is required"
-      } else if (Number.isNaN(Number(formData.heavyShippingSurcharge)) || Number(formData.heavyShippingSurcharge) < 0) {
-        newErrors.heavyShippingSurcharge = "Heavy shipping fee must be a non-negative number"
-      }
-    }
-
-    if (has("fulfillmentPolicy") && !formData.fulfillmentPolicy.trim()) {
-      newErrors.fulfillmentPolicy = "Fulfillment policy is required"
-    }
-
-    if (has("description") && !formData.description.trim()) {
-      newErrors.description = "Description is required"
-    }
-
-    if (has("manufacturerCode") && !formData.manufacturerCode.trim()) {
-      newErrors.manufacturerCode = "Manufacturer code is required"
-    }
-
-    if (has("manufacturer") && !formData.manufacturer.trim()) {
-      newErrors.manufacturer = "Manufacturer is required"
-    }
-
-    if (has("brand") && !formData.brand.trim()) {
-      newErrors.brand = "Brand is required"
-    }
-
-    if (has("category")) {
-      const path = formData.categoryPath ?? []
-      if (path.length === 0) {
-        newErrors.category = "Category is required"
-      } else if (!isLeafPath(path)) {
-        newErrors.category = "Please select a category at every level"
-      }
-    }
-
-    if (has("manufacturerSiteProductPage")) {
-      if (!formData.manufacturerSiteProductPage.trim()) {
-        newErrors.manufacturerSiteProductPage = "Manufacturer site product page is required"
-      } else if (!isValidImageUrl(formData.manufacturerSiteProductPage)) {
-        newErrors.manufacturerSiteProductPage =
-          "Manufacturer site product page must be a valid URL (starting with http:// or https://)"
-      }
-    }
-
-    if (has("weight")) {
-      if (!formData.weight.trim()) {
-        newErrors.weight = "Weight is required"
-      } else if (Number.isNaN(Number(formData.weight)) || Number(formData.weight) <= 0) {
-        newErrors.weight = "Weight must be greater than 0"
-      }
-    }
-
-    const optionalNonNegativeFields: Array<[keyof FormData, string]> = [
-      ["height", "Height"],
-      ["length", "Length"],
-      ["width", "Width"],
-    ]
-    for (const [field, label] of optionalNonNegativeFields) {
-      if (!has(field)) continue
-      const value = formData[field] as string
-      if (value.trim() && (Number.isNaN(Number(value)) || Number(value) < 0)) {
-        newErrors[field] = `${label} must be a non-negative number`
-      }
-    }
-
-    if (has("coverPhoto") && !(fileData.coverPhoto || existingImages.coverPhoto || linkedImages.coverPhoto)) {
-      newErrors.coverPhoto = "Cover photo is required"
-    }
-
-    return newErrors
-  }
+  const validateFields = (fields: readonly string[]) =>
+    validateProductFields(
+      formData,
+      { mode, editDiscount, hasCoverPhoto: hasCoverPhoto(fileData, existingImages, linkedImages) },
+      fields,
+    )
 
   const validateForm = (): boolean => {
-    const allFields = [...TAB_FIELDS.basic, ...TAB_FIELDS.details, ...TAB_FIELDS.media]
-    const newErrors = validateFields(allFields)
+    const newErrors = validateFields(ALL_FIELDS)
     setErrors(newErrors)
 
     if (Object.keys(newErrors).length > 0) {
@@ -982,16 +581,10 @@ function CreateProductPageContent() {
   // tab between the current one and the target - not just the active one - must be validated,
   // otherwise a skipped tab's required fields go unchecked until the final submit.
   const tryLeaveTab = (to: TabKey) => {
-    const fromIndex = TAB_ORDER.indexOf(activeTab)
-    const toIndex = TAB_ORDER.indexOf(to)
-
-    if (toIndex > fromIndex) {
-      const skippedFields = TAB_ORDER.slice(fromIndex, toIndex).flatMap((tab) => TAB_FIELDS[tab])
-      const tabErrors = validateFields(skippedFields)
-      if (Object.keys(tabErrors).length > 0) {
-        setErrors((prev) => ({ ...prev, ...tabErrors }))
-        return
-      }
+    const tabErrors = validateFields(fieldsBetweenTabs(activeTab, to))
+    if (Object.keys(tabErrors).length > 0) {
+      setErrors((prev) => ({ ...prev, ...tabErrors }))
+      return
     }
 
     setActiveTab(to)
@@ -1008,113 +601,37 @@ function CreateProductPageContent() {
     setErrors({})
 
     try {
-      // Edit mode: Update user-product only
-      if (isEditMode && userProductId) {
-        await productsAPI.updateUserProduct(
-          userProductId,
-          {
-            price: Number(formData.price),
-            discount: editDiscount.trim() ? Number(editDiscount) : 0,
-            stock: Number(formData.stock),
-            active: formData.active,
-          },
-          accessToken || "",
-        )
+      const branch = selectSubmitBranch({
+        isEditMode,
+        userProductId,
+        isReviewEditMode,
+        reviewProductId,
+        selectedProduct,
+      })
+      const token = accessToken || ""
 
-        showToast.success("Product updated successfully!")
-
-        void invalidateProductsPageCaches()
-        // Redirect immediately
-        router.push("/vendor-dashboard/products")
-        return
-      }
-
-      // Create mode: Continue with existing logic
-
-      // Case 1: Local product selected - only create user-product
-      if (!isReviewEditMode && selectedProduct && selectedProduct.source === "local") {
-        const localProduct = selectedProduct.originalData as Product
-
-        // Create user product
-        const userProductPayload: CreateUserProductPayload = {
-          productId: localProduct.id,
-          price: Number(formData.price),
-          discount: 0,
-          stock: Number(formData.stock),
-          active: true,
-        }
-
-        await productsAPI.createUserProduct(userProductPayload, accessToken || "")
-
-        showToast.success("Product created successfully!")
-        void invalidateProductsPageCaches()
-        router.push("/vendor-dashboard/products")
-        return
-      }
-
-      // Case 2: Barcode product selected, manual creation, or resubmitting a rejected product -
-      // Product + UserProduct info goes in a single ProductVendorRequestDto payload
-      const toOptionalNumber = (value: string): number | undefined => (value.trim() ? Number(value) : undefined)
-      const toOptionalString = (value: string): string | undefined => value.trim() || undefined
-
-      const filledAttributes = attributes.filter((attr) => attr.attributeName.trim() && attr.attributeValue.trim())
-
-      const productData: ProductVendorRequestData = {
-        name: formData.name,
-        detailedName: toOptionalString(formData.detailedName),
-        // Fallback image paths (used by backend when no files are uploaded)
-        coverPhotoPath: existingImages.coverPhoto || linkedImages.coverPhoto || undefined,
-        photoPhats:
-          [...existingImages.photos, ...linkedImages.photos].length > 0
-            ? [...existingImages.photos, ...linkedImages.photos]
-            : undefined,
-        barcode: toOptionalNumber(formData.barcode),
-        barcodeFormats: formData.barcodeFormats,
-        description: toOptionalString(formData.description),
-        manufacturerCode: toOptionalString(formData.manufacturerCode),
-        manufacturer: toOptionalString(formData.manufacturer),
-        brand: toOptionalString(formData.brand),
-        exampleVariationsProductId: toOptionalString(formData.exampleVariationsProductId),
-        ...categoryPathToLevels(formData.categoryPath ?? []),
-        manufacturerSiteProductPage: toOptionalString(formData.manufacturerSiteProductPage),
-        dentalLicenseRequired: toOptionalString(formData.dentalLicenseRequired),
-        height: toOptionalNumber(formData.height),
-        length: toOptionalNumber(formData.length),
-        width: toOptionalNumber(formData.width),
-        weight: toOptionalNumber(formData.weight),
-        attributes: filledAttributes.length > 0 ? filledAttributes : undefined,
-        // UserProduct (vendor listing) fields
-        skuCode: toOptionalString(formData.skuCode),
-        price: Number(formData.price),
-        stock: Number(formData.stock),
-        active: true,
-        shipmentFee: toOptionalNumber(formData.shipmentFee),
-        heavyShippingSurcharge: toOptionalNumber(formData.heavyShippingSurcharge),
-        exportPackaging: formData.exportPackaging,
-        fulfillmentPolicy: toOptionalString(formData.fulfillmentPolicy),
-      }
-
-      const reviewPayload = {
-        data: productData,
-        coverPhoto: fileData.coverPhoto || undefined,
-        photos: fileData.photos.length > 0 ? fileData.photos : undefined,
-      }
-
-      if (isReviewEditMode && reviewProductId) {
-        await productsAPI.updateProductForReview(reviewProductId, reviewPayload, accessToken || "")
-        showToast.success("Product updated and resubmitted for review!")
+      if (branch === "updateListing") {
+        await productsAPI.updateUserProduct(userProductId as string, buildListingUpdate(formData, editDiscount), token)
+      } else if (branch === "createListing") {
+        const localProduct = selectedProduct?.originalData as Product
+        await productsAPI.createUserProduct(buildLocalListingPayload(localProduct.id, formData), token)
       } else {
-        await productsAPI.createProductForReview(reviewPayload, accessToken || "")
-        showToast.success("Product submitted for review!")
+        const reviewPayload = buildReviewPayload(
+          buildProductVendorRequest(formData, { existing: existingImages, linked: linkedImages }, attributes),
+          fileData,
+        )
+        if (branch === "updateForReview") {
+          await productsAPI.updateProductForReview(reviewProductId as string, reviewPayload, token)
+        } else {
+          await productsAPI.createProductForReview(reviewPayload, token)
+        }
       }
 
+      showToast.success(SUBMIT_SUCCESS_MESSAGES[branch])
       void invalidateProductsPageCaches()
-      // Redirect immediately
       router.push("/vendor-dashboard/products")
     } catch (error: unknown) {
-      const err = error as { message?: string }
-      const errorMessage =
-        err.message || `Failed to ${isEditMode || isReviewEditMode ? "update" : "create"} product. Please try again.`
+      const errorMessage = submitErrorMessage(error, mode)
       setErrors({ submit: errorMessage })
       showToast.error(errorMessage)
     } finally {
@@ -1122,15 +639,9 @@ function CreateProductPageContent() {
     }
   }
 
-  const basicErrorCount = Object.keys(errors).filter(
-    (k) => k !== "submit" && (TAB_FIELDS.basic as readonly string[]).includes(k),
-  ).length
-  const detailsErrorCount = Object.keys(errors).filter(
-    (k) => k !== "submit" && (TAB_FIELDS.details as readonly string[]).includes(k),
-  ).length
-  const mediaErrorCount = Object.keys(errors).filter(
-    (k) => k !== "submit" && (TAB_FIELDS.media as readonly string[]).includes(k),
-  ).length
+  const basicErrorCount = countTabErrors(errors, "basic")
+  const detailsErrorCount = countTabErrors(errors, "details")
+  const mediaErrorCount = countTabErrors(errors, "media")
 
   return (
     <div className="p-0 sm:p-8">
@@ -1504,7 +1015,7 @@ function CreateProductPageContent() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {barcodeFormatOptions.map((option) => (
+                          {BARCODE_FORMAT_OPTIONS.map((option) => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.label}
                             </SelectItem>
@@ -1631,7 +1142,7 @@ function CreateProductPageContent() {
                               className="h-8 rounded-md border border-border-soft bg-surface-elevated px-2 text-sm font-medium text-text-primary focus:outline-none focus:ring-2 focus:ring-ring/50"
                             >
                               <option value="">Select</option>
-                              {fulfillmentPolicyDays.map((days) => (
+                              {FULFILLMENT_POLICY_DAYS.map((days) => (
                                 <option key={days} value={getFulfillmentPolicyValue(days)}>
                                   {days}
                                 </option>

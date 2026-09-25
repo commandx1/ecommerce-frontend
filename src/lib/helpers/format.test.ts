@@ -3,6 +3,7 @@ import {
   CURRENCY,
   formatCurrency,
   formatLongDate,
+  formatMb,
   formatNumber,
   formatNumericDate,
   formatPaddedDate,
@@ -217,5 +218,16 @@ describe("parseApiDate", () => {
   it("returns an Invalid Date for unparseable input instead of throwing", () => {
     const parsed = parseApiDate("not-a-date")
     expect(Number.isNaN(parsed.getTime())).toBe(true)
+  })
+})
+
+describe("formatMb", () => {
+  it.each([
+    [1024 * 1024, "1MB"],
+    [10 * 1024 * 1024, "10MB"],
+    [1.5 * 1024 * 1024, "1.5MB"],
+    [3 * 1024 * 1024 + 1, "3.0MB"],
+  ])("formats %i bytes as %s", (bytes, expected) => {
+    expect(formatMb(bytes)).toBe(expected)
   })
 })
