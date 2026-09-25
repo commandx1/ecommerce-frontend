@@ -1,10 +1,32 @@
 "use client"
 
-import { useGSAP } from "@gsap/react"
-import gsap from "gsap"
-import { type ReactNode, type RefObject, useEffect, useId, useRef, useState } from "react"
+import { type ReactNode, type RefObject, useEffect, useId, useLayoutEffect, useRef, useState } from "react"
 import { glassDarkTintClass, LiquidGlass } from "@/components/ui/liquid-glass"
 import { cn } from "@/lib/utils"
+
+type Gsap = typeof import("gsap").gsap
+
+/**
+ * gsap (~32 KB gzip) is only needed once a menu/search panel opens, but this module sits in the
+ * navbar on every route. It is therefore loaded lazily, on idle right after the page's JS runs, so
+ * it stays out of the first-load JS yet is in memory long before a user can open anything.
+ */
+let loadedGsap: Gsap | null = null
+let gsapPromise: Promise<Gsap> | null = null
+function loadGsap(): Promise<Gsap> {
+  gsapPromise ??= import("gsap").then((mod) => {
+    loadedGsap = mod.gsap
+    return mod.gsap
+  })
+  return gsapPromise
+}
+if (typeof window !== "undefined") {
+  const preload = () => void loadGsap()
+  if (typeof window.requestIdleCallback === "function") window.requestIdleCallback(preload, { timeout: 2000 })
+  else setTimeout(preload, 1)
+}
+
+const MENU_CONTENT_SELECTOR = "[data-menu-head], [data-menu-item]"
 
 interface GlassMorphMenuProps {
   /** Trigger's inner content (icon/avatar/text). `open` lets it swap icons. */
@@ -31,83 +53,111 @@ export interface GlassMorphRefs {
 /** Grows the glass from the anchor's box to anchor+panel while `open`; returns whether the panel should stay mounted (true through the closing tween). */
 export function useGlassMorph(open: boolean, refs: GlassMorphRefs): boolean {
   const [rendered, setRendered] = useState(false)
+  // Stable RefObjects (callers pass a fresh wrapper object each render, so depend on these, not on `refs`).
+  const { root: rootRef, glass: glassRef, anchor: anchorRef, panel: panelRef } = refs
+  // Same lifecycle `useGSAP` gave this hook: one gsap context per mount, scoped to the root, never
+  // reverted between runs, reverted on unmount.
+  const contextRef = useRef<gsap.Context | null>(null)
 
-  useGSAP(
-    () => {
-      if (open && !rendered) {
-        setRendered(true)
-        return
-      }
+  useLayoutEffect(() => () => contextRef.current?.revert(), [])
 
-      const glass = refs.glass.current
-      const panel = refs.panel.current
-      const anchor = refs.anchor.current
-      const root = refs.root.current
-      if (!glass || !anchor || !root) return
+  useLayoutEffect(() => {
+    if (open && !rendered) {
+      setRendered(true)
+      return
+    }
 
-      const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false
-      const dur = reduce ? 0 : 1
-      const content = panel ? gsap.utils.toArray<HTMLElement>("[data-menu-head], [data-menu-item]", panel) : []
-      const targets = content.length > 0 ? content : panel ? Array.from(panel.children) : []
-      // A quick re-toggle must not let the previous timeline keep writing after this one clears props.
-      gsap.killTweensOf([glass, ...targets])
+    let cancelled = false
+    const animate = (gsap: Gsap) => {
+      if (cancelled) return
+      contextRef.current ??= gsap.context(() => {}, rootRef)
+      contextRef.current.add(() => {
+        const glass = glassRef.current
+        const panel = panelRef.current
+        const anchor = anchorRef.current
+        const root = rootRef.current
+        if (!glass || !anchor || !root) return
 
-      if (open && rendered && panel) {
-        const r = root.getBoundingClientRect()
-        // Keep the panel inside the viewport: an end-aligned menu near the left edge (mobile bell) would
-        // otherwise hang off-screen. The glass follows the panel's final box, so shifting is enough.
-        panel.style.transform = ""
-        let p = panel.getBoundingClientRect()
-        const margin = 8
-        const shift =
-          p.left < margin
-            ? margin - p.left
-            : p.right > window.innerWidth - margin
-              ? window.innerWidth - margin - p.right
-              : 0
-        if (shift !== 0) {
-          panel.style.transform = `translateX(${shift}px)`
-          p = panel.getBoundingClientRect()
-        }
-        const tl = gsap.timeline()
-        tl.to(glass, {
-          left: p.left - r.left,
-          top: 0,
-          width: p.width,
-          height: p.bottom - r.top,
-          duration: 0.45 * dur,
-          ease: "back.out(1.2)",
-        })
-        tl.fromTo(
-          targets,
-          { opacity: 0, y: 8 },
-          { opacity: 1, y: 0, duration: 0.25 * dur, stagger: 0.04 * dur, ease: "power2.out" },
-          0.12 * dur,
-        )
-      } else if (!open && rendered) {
-        const tl = gsap.timeline({
-          onComplete: () => {
-            gsap.set(glass, { clearProps: "left,top,width,height" })
-            setRendered(false)
-          },
-        })
-        tl.to(targets, { opacity: 0, y: 4, duration: 0.12 * dur })
-        tl.to(
-          glass,
-          {
-            left: 0,
+        const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false
+        const dur = reduce ? 0 : 1
+        const content = panel ? gsap.utils.toArray<HTMLElement>(MENU_CONTENT_SELECTOR, panel) : []
+        const targets = content.length > 0 ? content : panel ? Array.from(panel.children) : []
+        // A quick re-toggle must not let the previous timeline keep writing after this one clears props.
+        gsap.killTweensOf([glass, ...targets])
+
+        if (open && rendered && panel) {
+          const r = root.getBoundingClientRect()
+          // Keep the panel inside the viewport: an end-aligned menu near the left edge (mobile bell) would
+          // otherwise hang off-screen. The glass follows the panel's final box, so shifting is enough.
+          panel.style.transform = ""
+          let p = panel.getBoundingClientRect()
+          const margin = 8
+          const shift =
+            p.left < margin
+              ? margin - p.left
+              : p.right > window.innerWidth - margin
+                ? window.innerWidth - margin - p.right
+                : 0
+          if (shift !== 0) {
+            panel.style.transform = `translateX(${shift}px)`
+            p = panel.getBoundingClientRect()
+          }
+          const tl = gsap.timeline()
+          tl.to(glass, {
+            left: p.left - r.left,
             top: 0,
-            width: anchor.offsetWidth,
-            height: anchor.offsetHeight,
-            duration: 0.32 * dur,
-            ease: "power3.in",
-          },
-          "<0.04",
-        )
+            width: p.width,
+            height: p.bottom - r.top,
+            duration: 0.45 * dur,
+            ease: "back.out(1.2)",
+          })
+          tl.fromTo(
+            targets,
+            { opacity: 0, y: 8 },
+            { opacity: 1, y: 0, duration: 0.25 * dur, stagger: 0.04 * dur, ease: "power2.out" },
+            0.12 * dur,
+          )
+        } else if (!open && rendered) {
+          const tl = gsap.timeline({
+            onComplete: () => {
+              gsap.set(glass, { clearProps: "left,top,width,height" })
+              setRendered(false)
+            },
+          })
+          tl.to(targets, { opacity: 0, y: 4, duration: 0.12 * dur })
+          tl.to(
+            glass,
+            {
+              left: 0,
+              top: 0,
+              width: anchor.offsetWidth,
+              height: anchor.offsetHeight,
+              duration: 0.32 * dur,
+              ease: "power3.in",
+            },
+            "<0.04",
+          )
+        }
+      }, rootRef)
+    }
+
+    if (loadedGsap) {
+      animate(loadedGsap)
+    } else {
+      // Only reachable if a panel opens before the idle preload finished: keep the freshly mounted
+      // content hidden until the entrance tween (which starts from opacity 0) can take over.
+      const panel = panelRef.current
+      if (open && rendered && panel) {
+        const content = Array.from(panel.querySelectorAll<HTMLElement>(MENU_CONTENT_SELECTOR))
+        const targets = content.length > 0 ? content : Array.from(panel.children as HTMLCollectionOf<HTMLElement>)
+        for (const el of targets) el.style.opacity = "0"
       }
-    },
-    { dependencies: [open, rendered], scope: refs.root },
-  )
+      void loadGsap().then(animate)
+    }
+    return () => {
+      cancelled = true
+    }
+  }, [open, rendered, rootRef, glassRef, anchorRef, panelRef])
 
   // Panel content often changes size while open (query resolves, results list grows/shrinks):
   // follow it so the glass never ends short of the panel.
@@ -124,7 +174,9 @@ export function useGlassMorph(open: boolean, refs: GlassMorphRefs): boolean {
       last = size
       const r = root.getBoundingClientRect()
       const p = panel.getBoundingClientRect()
-      gsap.to(glass, {
+      // Loaded by now in practice (the opening tween needed it); if not, that tween measures the
+      // final box itself once it runs.
+      loadedGsap?.to(glass, {
         left: p.left - r.left,
         width: p.width,
         height: p.bottom - r.top,
