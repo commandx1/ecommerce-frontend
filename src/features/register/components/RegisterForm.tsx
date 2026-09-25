@@ -11,7 +11,7 @@ import PasswordSection from "@/features/register/components/PasswordSection"
 import PersonalInfoFields from "@/features/register/components/PersonalInfoFields"
 import RegisterFormActions from "@/features/register/components/RegisterFormActions"
 import RegisterFormIntro from "@/features/register/components/RegisterFormIntro"
-import { useRegisterForm } from "@/hooks/useRegisterForm"
+import { useRegisterForm } from "@/features/register/hooks/useRegisterForm"
 import { useAuthStore } from "@/stores/authStore"
 
 export default function RegisterForm() {
