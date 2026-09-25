@@ -7,7 +7,7 @@ import { makeAccountUser, makeVendorOrder, makeVendorOrderItem } from "@/test/fa
 import { setSearchParams } from "@/test/mocks/next-navigation"
 import { installRadixPointerPolyfills } from "@/test/radix"
 import { fireEvent, render, screen, waitFor, within } from "@/test/render"
-import VendorOrdersPage from "./page"
+import VendorOrdersPage from "./VendorOrdersPage"
 
 installRadixPointerPolyfills()
 
