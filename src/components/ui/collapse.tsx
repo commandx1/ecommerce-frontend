@@ -1,7 +1,7 @@
 "use client"
 
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react"
-import { createContext, useContext, useId, useMemo, useState } from "react"
+import { createContext, useCallback, useContext, useId, useMemo, useState } from "react"
 import { cn } from "@/lib/utils"
 
 interface CollapseContextValue {
@@ -34,12 +34,15 @@ export function Collapse({ children, className, defaultOpen = true, onOpenChange
   const isControlled = typeof open === "boolean"
   const isOpen = isControlled ? open : internalOpen
 
-  const setOpen = (next: boolean) => {
-    if (!isControlled) {
-      setInternalOpen(next)
-    }
-    onOpenChange?.(next)
-  }
+  const setOpen = useCallback(
+    (next: boolean) => {
+      if (!isControlled) {
+        setInternalOpen(next)
+      }
+      onOpenChange?.(next)
+    },
+    [isControlled, onOpenChange],
+  )
 
   const contextValue = useMemo(
     () => ({
@@ -47,7 +50,7 @@ export function Collapse({ children, className, defaultOpen = true, onOpenChange
       open: isOpen,
       setOpen,
     }),
-    [contentId, isOpen],
+    [contentId, isOpen, setOpen],
   )
 
   return (

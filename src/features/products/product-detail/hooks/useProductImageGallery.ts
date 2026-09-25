@@ -24,13 +24,11 @@ export const useProductImageGallery = (mainImage: string, thumbnailImages: strin
   // every render, and keying on its reference reverted a thumbnail pick on the next mousemove.
   const imagesKey = images.join("|")
   const previousImagesKey = useRef(imagesKey)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally keyed on the stringified image list (imagesKey), not `images` or `images[0]`, so a re-render that rebuilds `images` with the same content does not re-trigger the reset
   useEffect(() => {
     if (previousImagesKey.current === imagesKey) return
     previousImagesKey.current = imagesKey
     setSelectedImage(images[0] || FALLBACK_IMAGE)
-    // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally keyed on the
-    // stringified image list (imagesKey) rather than `images` itself, so a re-render that
-    // rebuilds `images` with the same content does not re-trigger the reset.
   }, [imagesKey])
 
   return {

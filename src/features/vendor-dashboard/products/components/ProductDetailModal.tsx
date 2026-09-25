@@ -31,6 +31,7 @@ export default function ProductDetailModal({
   const [activePhoto, setActivePhoto] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reloadKey is a manual retry trigger, not read in the body - it must stay in the deps so bumping it re-runs the fetch
   useEffect(() => {
     if (!accessToken) return
     let cancelled = false
@@ -58,7 +59,6 @@ export default function ProductDetailModal({
     return () => {
       cancelled = true
     }
-    // biome-ignore lint/correctness/useExhaustiveDependencies: reloadKey is a manual retry trigger
   }, [productId, userProductId, accessToken, reloadKey])
 
   const photos = product

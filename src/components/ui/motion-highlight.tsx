@@ -123,6 +123,12 @@ function MotionHighlight<T extends string>({ ref, ...props }: MotionHighlightPro
 
   React.useImperativeHandle(ref as React.Ref<HTMLDivElement>, () => localRef.current as HTMLDivElement)
 
+  // `props` (the whole rest-props object) is a new reference every render, which would defeat the
+  // memoization below and make it re-run every render regardless of these actually changing. Depend
+  // on the two specific parent-mode-only fields read from it instead.
+  const boundsOffset = (props as ParentModeMotionHighlightProps)?.boundsOffset
+  const containerClassName = (props as ParentModeMotionHighlightProps)?.containerClassName
+
   const [activeValue, setActiveValue] = React.useState<T | null>(value ?? defaultValue ?? null)
   const [boundsState, setBoundsState] = React.useState<Bounds | null>(null)
   const [activeClassNameState, setActiveClassNameState] = React.useState<string>("")
@@ -139,7 +145,7 @@ function MotionHighlight<T extends string>({ ref, ...props }: MotionHighlightPro
     (bounds: DOMRect) => {
       if (!localRef.current) return
 
-      const boundsOffset = (props as ParentModeMotionHighlightProps)?.boundsOffset ?? {
+      const offset = boundsOffset ?? {
         top: 0,
         left: 0,
         width: 0,
@@ -149,10 +155,10 @@ function MotionHighlight<T extends string>({ ref, ...props }: MotionHighlightPro
       const containerRect = localRef.current.getBoundingClientRect()
 
       const newBounds: Bounds = {
-        top: bounds.top - containerRect.top + (boundsOffset.top ?? 0),
-        left: bounds.left - containerRect.left + (boundsOffset.left ?? 0),
-        width: bounds.width + (boundsOffset.width ?? 0),
-        height: bounds.height + (boundsOffset.height ?? 0),
+        top: bounds.top - containerRect.top + (offset.top ?? 0),
+        left: bounds.left - containerRect.left + (offset.left ?? 0),
+        width: bounds.width + (offset.width ?? 0),
+        height: bounds.height + (offset.height ?? 0),
       }
 
       setBoundsState((prev) => {
@@ -169,7 +175,7 @@ function MotionHighlight<T extends string>({ ref, ...props }: MotionHighlightPro
         return newBounds
       })
     },
-    [props],
+    [boundsOffset],
   )
 
   const clearBounds = React.useCallback(() => {
@@ -205,11 +211,7 @@ function MotionHighlight<T extends string>({ ref, ...props }: MotionHighlightPro
     (children: React.ReactNode) => {
       if (mode === "parent") {
         return (
-          <div
-            ref={localRef}
-            data-slot="motion-highlight-container"
-            className={cn("relative", (props as ParentModeMotionHighlightProps)?.containerClassName)}
-          >
+          <div ref={localRef} data-slot="motion-highlight-container" className={cn("relative", containerClassName)}>
             <AnimatePresence initial={false}>
               {boundsState && (
                 <motion.div
@@ -247,7 +249,7 @@ function MotionHighlight<T extends string>({ ref, ...props }: MotionHighlightPro
 
       return children
     },
-    [mode, props, boundsState, transition, exitDelay, className, activeClassNameState],
+    [mode, containerClassName, boundsState, transition, exitDelay, className, activeClassNameState],
   )
 
   return (

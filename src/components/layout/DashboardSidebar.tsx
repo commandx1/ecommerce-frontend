@@ -207,6 +207,7 @@ export default function DashboardSidebar({
   }
 
   // Close the mobile drawer whenever the route changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname isn't read in the body, but it's the trigger - the effect must re-run on every route change, not just when closeMobile's identity changes
   useEffect(() => {
     closeMobile()
   }, [pathname, closeMobile])

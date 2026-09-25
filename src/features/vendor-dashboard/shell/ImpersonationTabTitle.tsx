@@ -11,14 +11,16 @@ export default function ImpersonationTabTitle() {
   const isAdminImpersonating = useAuthStore((s) => s.isAdminImpersonating)
   const pathname = usePathname()
 
+  // Next.js re-applies the page's <title> from metadata on every client navigation, and this
+  // effect runs after that commit, so pathname is a dep (not read in the body) to keep our title
+  // winning on every navigation, not just when the other values change.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is a re-run trigger, see comment above
   useEffect(() => {
     if (!isAdminImpersonating) return
     const fullName = user ? `${user.name} ${user.surname}`.trim() : ""
     const title = [companyName, fullName].filter(Boolean).join(" - ")
     if (!title) return
     document.title = title
-    // Next.js re-applies the page's <title> from metadata on every client navigation,
-    // and this effect runs after that commit, so pathname is a dep to keep our title winning.
   }, [isAdminImpersonating, companyName, user, pathname])
 
   return null

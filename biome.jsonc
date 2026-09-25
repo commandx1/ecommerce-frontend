@@ -52,7 +52,7 @@
       },
       "correctness": {
         "noUnusedVariables": "error",
-        "useExhaustiveDependencies": "warn",
+        "useExhaustiveDependencies": "error",
         "noUnusedImports": "error",
         "noConstAssign": "error",
         "useUniqueElementIds": "warn",
