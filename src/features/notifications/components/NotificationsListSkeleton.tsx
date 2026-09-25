@@ -8,6 +8,7 @@ export default function NotificationsListSkeleton({ rows = 6 }: NotificationsLis
   return (
     <ul aria-hidden data-testid="notifications-skeleton" className="divide-y divide-border-soft">
       {Array.from({ length: rows }, (_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length placeholder rows, never reordered/inserted/removed
         <li key={`skeleton-row-${i}`} className="flex items-start gap-3 px-4 py-3">
           <Skeleton className="mt-2 h-2 w-2 shrink-0 rounded-full" />
           <div className="min-w-0 flex-1 space-y-2">

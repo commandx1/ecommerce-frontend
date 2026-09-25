@@ -279,6 +279,7 @@ function MotionHighlight<T extends string>({ ref, ...props }: MotionHighlightPro
           ? render(children)
           : render(
               React.Children.map(children, (child, index) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: wraps arbitrary caller-supplied children with no id of their own; this primitive doesn't reorder them itself
                 <MotionHighlightItem key={index} className={props?.itemsClassName}>
                   {child}
                 </MotionHighlightItem>

@@ -47,7 +47,7 @@
           "level": "error",
           "options": { "allow": ["error", "warn"] }
         },
-        "noArrayIndexKey": "warn",
+        "noArrayIndexKey": "error",
         "noDocumentCookie": "error"
       },
       "correctness": {

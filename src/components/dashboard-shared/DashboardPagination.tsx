@@ -82,6 +82,7 @@ export default function DashboardPagination({
 
             {getPageNumbers(currentPage, totalPages).map((page, i) =>
               page === "..." ? (
+                // biome-ignore lint/suspicious/noArrayIndexKey: at most 2 ellipses, each in a fixed position, never reordered relative to each other
                 <PaginationItem key={`ellipsis-${i}`}>
                   <PaginationEllipsis />
                 </PaginationItem>

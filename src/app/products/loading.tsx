@@ -1,3 +1,6 @@
+/** biome-ignore-all lint/suspicious/noArrayIndexKey: static placeholder-width arrays, rendered once
+ with a fixed length and never reordered/inserted/removed, so index-as-key is safe here. */
+
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function ProductListingLoading() {
