@@ -4,8 +4,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { SavedPaymentMethod } from "@/features/buyer-dashboard/payment-methods/paymentMethodsData"
 import { addressAPI } from "@/lib/api/address"
 import { paymentMethodsAPI } from "@/lib/api/payment-methods"
+import { queryKeys } from "@/lib/query/keys"
 import { server } from "@/mocks/server"
 import { makeAddress, makeAutoOrder, makeAutoOrdersResponse } from "@/test/factories"
+import { createQueryWrapper } from "@/test/render"
 import { useAutoOrders } from "./useAutoOrders"
 
 const mockToastError = vi.fn()
@@ -32,11 +34,25 @@ const readyCard: SavedPaymentMethod = {
   autoOrderCard: true,
 }
 
+/** Counts every `GET /auto-orders` the hook makes, mirroring the `/cards` counter pattern from
+ * the payment-methods characterization (B2a). */
+const serveAutoOrdersWithGetCount = (...autoOrders: ReturnType<typeof makeAutoOrder>[]) => {
+  const state = { count: 0 }
+  server.use(
+    http.get("*/backend-api/auto-orders", () => {
+      state.count += 1
+      return HttpResponse.json(makeAutoOrdersResponse({ autoOrders }))
+    }),
+  )
+  return state
+}
+
 describe("useAutoOrders", () => {
   beforeEach(() => {
     mockToastError.mockReset()
     // `addressAPI.getAddresses` dedupes/caches at module scope; spying bypasses that cache so
-    // every test gets exactly the response it configures instead of a stale one from a previous test.
+    // every test gets exactly the response it configures instead of a stale one from a previous
+    // test, and lets the spy's own `.mock.calls` double as a request counter.
     vi.spyOn(addressAPI, "getAddresses").mockResolvedValue([makeAddress({ defaultAddress: true })])
     vi.spyOn(paymentMethodsAPI, "getSavedCards").mockResolvedValue([])
   })
@@ -47,7 +63,7 @@ describe("useAutoOrders", () => {
       http.get("*/backend-api/auto-orders", () => HttpResponse.json(makeAutoOrdersResponse({ autoOrders: [order] }))),
     )
 
-    const { result } = renderHook(() => useAutoOrders())
+    const { result } = renderHook(() => useAutoOrders(), { wrapper: createQueryWrapper().wrapper })
 
     expect(result.current.isLoading).toBe(true)
 
@@ -55,10 +71,23 @@ describe("useAutoOrders", () => {
     expect(result.current.autoOrders).toEqual([order])
   })
 
+  it("mount fires exactly one GET each for auto-orders, addresses and payment-method cards", async () => {
+    const autoOrdersCounter = serveAutoOrdersWithGetCount(makeAutoOrder())
+
+    const { result } = renderHook(() => useAutoOrders(), { wrapper: createQueryWrapper().wrapper })
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    await waitFor(() => expect(result.current.readiness.isLoading).toBe(false))
+
+    expect(autoOrdersCounter.count).toBe(1)
+    expect(addressAPI.getAddresses).toHaveBeenCalledTimes(1)
+    expect(paymentMethodsAPI.getSavedCards).toHaveBeenCalledTimes(1)
+  })
+
   it("handles an empty auto-orders list", async () => {
     server.use(http.get("*/backend-api/auto-orders", () => HttpResponse.json({ autoOrders: [], total: 0 })))
 
-    const { result } = renderHook(() => useAutoOrders())
+    const { result } = renderHook(() => useAutoOrders(), { wrapper: createQueryWrapper().wrapper })
 
     await waitFor(() => expect(result.current.isLoading).toBe(false))
     expect(result.current.autoOrders).toEqual([])
@@ -74,7 +103,7 @@ describe("useAutoOrders", () => {
   ])("shows an empty list instead of crashing when autoOrders is %s", async (_label, autoOrders) => {
     server.use(http.get("*/backend-api/auto-orders", () => HttpResponse.json({ autoOrders, total: 0 })))
 
-    const { result } = renderHook(() => useAutoOrders())
+    const { result } = renderHook(() => useAutoOrders(), { wrapper: createQueryWrapper().wrapper })
 
     await waitFor(() => expect(result.current.isLoading).toBe(false))
     expect(result.current.autoOrders).toEqual([])
@@ -83,7 +112,7 @@ describe("useAutoOrders", () => {
   it("surfaces a toast and stops loading when the initial fetch fails", async () => {
     server.use(http.get("*/backend-api/auto-orders", () => HttpResponse.json({ message: "boom" }, { status: 500 })))
 
-    const { result } = renderHook(() => useAutoOrders())
+    const { result } = renderHook(() => useAutoOrders(), { wrapper: createQueryWrapper().wrapper })
 
     await waitFor(() => expect(result.current.isLoading).toBe(false))
     expect(result.current.autoOrders).toEqual([])
@@ -95,7 +124,7 @@ describe("useAutoOrders", () => {
     vi.spyOn(paymentMethodsAPI, "getSavedCards").mockResolvedValue([readyCard])
     server.use(http.get("*/backend-api/auto-orders", () => HttpResponse.json(makeAutoOrdersResponse())))
 
-    const { result } = renderHook(() => useAutoOrders())
+    const { result } = renderHook(() => useAutoOrders(), { wrapper: createQueryWrapper().wrapper })
 
     await waitFor(() => expect(result.current.readiness.isLoading).toBe(false))
     expect(result.current.readiness.hasPrimaryAddress).toBe(false)
@@ -108,7 +137,7 @@ describe("useAutoOrders", () => {
     vi.spyOn(paymentMethodsAPI, "getSavedCards").mockResolvedValue([{ ...readyCard, openToAutoPayment: false }])
     server.use(http.get("*/backend-api/auto-orders", () => HttpResponse.json(makeAutoOrdersResponse())))
 
-    const { result } = renderHook(() => useAutoOrders())
+    const { result } = renderHook(() => useAutoOrders(), { wrapper: createQueryWrapper().wrapper })
 
     await waitFor(() => expect(result.current.readiness.isLoading).toBe(false))
     expect(result.current.readiness.hasAutoOrderCard).toBe(false)
@@ -120,7 +149,7 @@ describe("useAutoOrders", () => {
     vi.spyOn(paymentMethodsAPI, "getSavedCards").mockResolvedValue([readyCard])
     server.use(http.get("*/backend-api/auto-orders", () => HttpResponse.json(makeAutoOrdersResponse())))
 
-    const { result } = renderHook(() => useAutoOrders())
+    const { result } = renderHook(() => useAutoOrders(), { wrapper: createQueryWrapper().wrapper })
 
     await waitFor(() => expect(result.current.readiness.isLoading).toBe(false))
     expect(result.current.readiness.isReady).toBe(true)
@@ -131,10 +160,25 @@ describe("useAutoOrders", () => {
     vi.spyOn(paymentMethodsAPI, "getSavedCards").mockRejectedValue(new Error("network down"))
     server.use(http.get("*/backend-api/auto-orders", () => HttpResponse.json(makeAutoOrdersResponse())))
 
-    const { result } = renderHook(() => useAutoOrders())
+    const { result } = renderHook(() => useAutoOrders(), { wrapper: createQueryWrapper().wrapper })
 
     await waitFor(() => expect(result.current.readiness.isLoading).toBe(false))
     expect(result.current.readiness.isReady).toBe(false)
+  })
+
+  it("a failed readiness read does not poison the shared payment-methods-cards cache with an empty list", async () => {
+    vi.spyOn(addressAPI, "getAddresses").mockResolvedValue([makeAddress({ defaultAddress: true })])
+    vi.spyOn(paymentMethodsAPI, "getSavedCards").mockRejectedValue(new Error("network down"))
+    server.use(http.get("*/backend-api/auto-orders", () => HttpResponse.json(makeAutoOrdersResponse())))
+
+    const { client, wrapper } = createQueryWrapper()
+    const { result } = renderHook(() => useAutoOrders(), { wrapper })
+
+    await waitFor(() => expect(result.current.readiness.isLoading).toBe(false))
+    expect(result.current.readiness.hasAutoOrderCard).toBe(false)
+    // The `.catch(() => [])` fallback lives in the hook's derivation only - the cache entry the
+    // payment-methods page reads must stay untouched (undefined, not `[]`) after the failure.
+    expect(client.getQueryData(queryKeys.paymentMethods.cards())).toBeUndefined()
   })
 
   it("updateAutoOrder replaces the updated order in place and returns true on success", async () => {
@@ -146,7 +190,7 @@ describe("useAutoOrders", () => {
       ),
     )
 
-    const { result } = renderHook(() => useAutoOrders())
+    const { result } = renderHook(() => useAutoOrders(), { wrapper: createQueryWrapper().wrapper })
     await waitFor(() => expect(result.current.isLoading).toBe(false))
 
     let success: boolean | undefined
@@ -159,7 +203,7 @@ describe("useAutoOrders", () => {
     expect(result.current.pendingId).toBeNull()
   })
 
-  it("updateAutoOrder shows a toast, refreshes readiness, and returns false on a 400 (e.g. not ready to activate)", async () => {
+  it("updateAutoOrder shows a toast, refetches readiness once, and returns false on a 400 (e.g. not ready to activate)", async () => {
     const order = makeAutoOrder({ id: "auto-1", active: false })
     server.use(
       http.get("*/backend-api/auto-orders", () => HttpResponse.json(makeAutoOrdersResponse({ autoOrders: [order] }))),
@@ -167,11 +211,12 @@ describe("useAutoOrders", () => {
         HttpResponse.json({ message: "A primary address and an auto order card are required." }, { status: 400 }),
       ),
     )
-    const readinessSpy = vi.spyOn(addressAPI, "getAddresses")
 
-    const { result } = renderHook(() => useAutoOrders())
+    const { result } = renderHook(() => useAutoOrders(), { wrapper: createQueryWrapper().wrapper })
     await waitFor(() => expect(result.current.isLoading).toBe(false))
-    readinessSpy.mockClear()
+    await waitFor(() => expect(result.current.readiness.isLoading).toBe(false))
+    vi.mocked(addressAPI.getAddresses).mockClear()
+    vi.mocked(paymentMethodsAPI.getSavedCards).mockClear()
 
     let success: boolean | undefined
     await act(async () => {
@@ -184,18 +229,18 @@ describe("useAutoOrders", () => {
       "A primary address and an auto order card are required.",
     )
     expect(result.current.autoOrders[0]?.active).toBe(false)
-    expect(readinessSpy).toHaveBeenCalled()
+    expect(addressAPI.getAddresses).toHaveBeenCalledTimes(1)
+    expect(paymentMethodsAPI.getSavedCards).toHaveBeenCalledTimes(1)
   })
 
-  it("deleteAutoOrder removes the order from the list and returns true on success", async () => {
+  it("deleteAutoOrder removes the order from the list and returns true on success, without an extra GET", async () => {
     const order = makeAutoOrder({ id: "auto-1" })
-    server.use(
-      http.get("*/backend-api/auto-orders", () => HttpResponse.json(makeAutoOrdersResponse({ autoOrders: [order] }))),
-      http.delete("*/backend-api/auto-orders/:autoOrderId", () => new HttpResponse(null, { status: 204 })),
-    )
+    const autoOrdersCounter = serveAutoOrdersWithGetCount(order)
+    server.use(http.delete("*/backend-api/auto-orders/:autoOrderId", () => new HttpResponse(null, { status: 204 })))
 
-    const { result } = renderHook(() => useAutoOrders())
+    const { result } = renderHook(() => useAutoOrders(), { wrapper: createQueryWrapper().wrapper })
     await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(autoOrdersCounter.count).toBe(1)
 
     let success: boolean | undefined
     await act(async () => {
@@ -204,6 +249,7 @@ describe("useAutoOrders", () => {
 
     expect(success).toBe(true)
     expect(result.current.autoOrders).toEqual([])
+    expect(autoOrdersCounter.count).toBe(1)
   })
 
   it("deleteAutoOrder shows a toast and keeps the list unchanged on failure", async () => {
@@ -215,7 +261,7 @@ describe("useAutoOrders", () => {
       ),
     )
 
-    const { result } = renderHook(() => useAutoOrders())
+    const { result } = renderHook(() => useAutoOrders(), { wrapper: createQueryWrapper().wrapper })
     await waitFor(() => expect(result.current.isLoading).toBe(false))
 
     let success: boolean | undefined
@@ -229,26 +275,52 @@ describe("useAutoOrders", () => {
     expect(result.current.pendingId).toBeNull()
   })
 
-  it("refresh() reloads both the auto orders list and the readiness computation", async () => {
+  it("refresh() reloads auto orders, addresses and payment-method cards (one GET each)", async () => {
+    let autoOrdersToServe: ReturnType<typeof makeAutoOrder>[] = []
+    const state = { count: 0 }
     server.use(
-      http.get("*/backend-api/auto-orders", () => HttpResponse.json(makeAutoOrdersResponse({ autoOrders: [] }))),
+      http.get("*/backend-api/auto-orders", () => {
+        state.count += 1
+        return HttpResponse.json(makeAutoOrdersResponse({ autoOrders: autoOrdersToServe }))
+      }),
     )
 
-    const { result } = renderHook(() => useAutoOrders())
+    const { result } = renderHook(() => useAutoOrders(), { wrapper: createQueryWrapper().wrapper })
     await waitFor(() => expect(result.current.isLoading).toBe(false))
+    await waitFor(() => expect(result.current.readiness.isLoading).toBe(false))
     expect(result.current.autoOrders).toEqual([])
+    expect(state.count).toBe(1)
 
     const refreshedOrder = makeAutoOrder({ id: "auto-2" })
-    server.use(
-      http.get("*/backend-api/auto-orders", () =>
-        HttpResponse.json(makeAutoOrdersResponse({ autoOrders: [refreshedOrder] })),
-      ),
-    )
+    autoOrdersToServe = [refreshedOrder]
 
     await act(async () => {
       await result.current.refresh()
     })
 
-    expect(result.current.autoOrders).toEqual([refreshedOrder])
+    expect(state.count).toBe(2)
+    expect(addressAPI.getAddresses).toHaveBeenCalledTimes(2)
+    expect(paymentMethodsAPI.getSavedCards).toHaveBeenCalledTimes(2)
+    // The queryFn/network round-trip is done by the time `refresh()` resolves (asserted above);
+    // the hook's own re-render lands a tick later, same "robustness-only wait" as every other
+    // useQuery-backed hook in this suite.
+    await waitFor(() => expect(result.current.autoOrders).toEqual([refreshedOrder]))
+  })
+
+  it("refresh() toasts once when the auto-orders reload fails", async () => {
+    server.use(
+      http.get("*/backend-api/auto-orders", () => HttpResponse.json(makeAutoOrdersResponse({ autoOrders: [] }))),
+    )
+
+    const { result } = renderHook(() => useAutoOrders(), { wrapper: createQueryWrapper().wrapper })
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    server.use(http.get("*/backend-api/auto-orders", () => HttpResponse.json({ message: "boom" }, { status: 500 })))
+
+    await act(async () => {
+      await result.current.refresh()
+    })
+
+    expect(mockToastError).toHaveBeenCalledWith("Failed to load auto orders", "boom")
   })
 })
