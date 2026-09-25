@@ -6,7 +6,7 @@ import { server } from "@/mocks/server"
 import { makeVendorUserProduct } from "@/test/factories"
 import { render, screen, waitFor } from "@/test/render"
 import { serveFilter, serveStats, signInVendor } from "@/test/vendor-products-page-harness"
-import ProductsPage from "./page"
+import ProductsPage from "./VendorProductsPage"
 
 const toastSpies = vi.hoisted(() => ({
   success: vi.fn(),

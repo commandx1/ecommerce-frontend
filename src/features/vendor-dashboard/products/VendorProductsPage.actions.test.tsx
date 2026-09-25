@@ -6,7 +6,7 @@ import { makeProduct, makeUserProductDetailResponse, makeVendorUserProduct } fro
 import { installRadixPointerPolyfills } from "@/test/radix"
 import { render, screen, waitFor, within } from "@/test/render"
 import { serveBrands, serveFilter, serveStats, signInVendor } from "@/test/vendor-products-page-harness"
-import ProductsPage from "./page"
+import ProductsPage from "./VendorProductsPage"
 
 const toastSpies = vi.hoisted(() => ({
   success: vi.fn(),

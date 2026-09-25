@@ -2,12 +2,12 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
+import { RING_TONE_CLASS_MAP } from "@/app/vendor-dashboard/components/shared/dashboardToneMaps"
 import { Skeleton } from "@/components/ui/skeleton"
 import { fetchUserProductStats } from "@/lib/api/vendor-products"
 import { queryKeys } from "@/lib/query/keys"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
-import { RING_TONE_CLASS_MAP } from "../../components/shared/dashboardToneMaps"
 
 export type FilterType = "ALL" | "TOTAL" | "ACTIVE" | "INACTIVE" | "OUT_OF_STOCK" | "LOW_STOCK"
 

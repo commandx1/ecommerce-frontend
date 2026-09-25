@@ -5,7 +5,7 @@ import { useAuthStore } from "@/stores/authStore"
 import { makeVendorUserProduct } from "@/test/factories"
 import { render, screen, waitFor, within } from "@/test/render"
 import { serveBrands, serveFilter, serveStats, signInVendor } from "@/test/vendor-products-page-harness"
-import ProductsPage from "./page"
+import ProductsPage from "./VendorProductsPage"
 
 const toastSpies = vi.hoisted(() => ({
   success: vi.fn(),
