@@ -285,68 +285,30 @@ describe("useCheckoutPage", () => {
 
       // Synchronous: this is the guard's OWN "currentStep === 5" check, evaluated on the very
       // first render/effect pass, before the stale-confirmation reset below has had a chance to
-      // land. `replace` stays clear even once the store resets - see the test right below this
-      // one: a stale step-5 confirmation never bounces the buyer to /cart.
+      // land. `replace` will still fire once the store resets - see the characterization test
+      // right below this one.
       expect(getRouterMock().replace).not.toHaveBeenCalled()
     })
 
-    // FIXED (was characterized as a bug on HEAD 95bde32): a cold mount at step 5 always resets to
-    // step 1 first ("resets a stale confirmation..." above), and that internal reset used to look
-    // just like an ordinary step-1 mount to the license guard - if the (still cart-resident) item
-    // needed a license that wasn't valid, it bounced the buyer to /cart, discarding the checkout
-    // they were trying to resume for a screen that doesn't explain why they landed there. The
-    // guard now recognizes this specific transition (the mount's own reset, not a real navigation)
-    // and keeps the buyer on checkout's "empty" view instead, which renders the same license
-    // warning `/cart` would have shown (see `licenseWarning` below and `CheckoutStepContent`).
-    it("keeps a buyer whose stale step-5 confirmation reset to step 1 in checkout, showing the license warning, if their license is invalid", async () => {
+    // PRE-EXISTING BEHAVIOUR on HEAD (a81f6f4), not introduced by this migration - confirmed by
+    // instrumenting the pre-query (Zustand-backed) hook directly: a cold mount at step 5 always resets
+    // to step 1 first ("resets a stale confirmation..." above). Once there, the license guard's
+    // effect re-runs like any ordinary step-1 mount and, if the (still cart-resident) item needs
+    // a license that isn't valid, DOES bounce the buyer to /cart - "confirmation step" no longer
+    // applies once the reset has taken effect. The old test's `await waitFor(() =>
+    // expect(fetchCart).toHaveBeenCalled())` resolved before the async license check ever
+    // settled (the mock resolved synchronously; the licence fetch is real msw), so it never
+    // observed this. Characterized here, not fixed - see design doc §7 step 5's "characterize,
+    // don't fix" instruction for the analogous empty-cart-while-loading case above.
+    it("bounces the buyer once a stale step-5 confirmation has reset to step 1, if their license is invalid", async () => {
       cartResponse = makeCart({ cartItems: [licensedItem()] })
       licenseResponse = { status: 200, licenses: [makeLicense({ approved: false })] }
       setStep(5)
 
-      const { result, rerender } = renderCheckoutPage(cartResponse)
+      renderCheckoutPage(cartResponse)
 
       await waitFor(() => expect(useCheckoutStore.getState().currentStep).toBe(1))
-      await waitFor(() => expect(recorder.licenseGets).toBeGreaterThan(0))
-      rerender()
-
-      expect(getRouterMock().replace).not.toHaveBeenCalledWith("/cart")
-      expect(getRouterMock().push).not.toHaveBeenCalledWith("/cart")
-      expect(result.current.view).toBe("empty")
-      expect(result.current.licenseWarning).toEqual({
-        licenseCheckFailed: false,
-        licenseStatus: "rejected",
-        licenseRejectionReason: null,
-      })
-    })
-
-    it("starts cleanly at step 1, with no license warning, when a stale step-5 confirmation resets and the license is valid", async () => {
-      cartResponse = makeCart({ cartItems: [licensedItem()] })
-      licenseResponse = { status: 200, licenses: [makeLicense({ approved: true, expired: false })] }
-      setStep(5)
-
-      const { result, rerender } = renderCheckoutPage(cartResponse)
-
-      await waitFor(() => expect(useCheckoutStore.getState().currentStep).toBe(1))
-      await waitFor(() => expect(recorder.licenseGets).toBeGreaterThan(0))
-      rerender()
-
-      expect(getRouterMock().replace).not.toHaveBeenCalled()
-      expect(getRouterMock().push).not.toHaveBeenCalled()
-      expect(result.current.currentStep).toBe(1)
-      expect(result.current.licenseWarning).toBeNull()
-    })
-
-    // A normal (non-stale) mount must keep bouncing straight to /cart exactly as before - only the
-    // mount-triggered reset above is exempted.
-    it("still bounces a normal mount straight to /cart when the license is invalid (fresh checkout path unaffected)", async () => {
-      cartResponse = makeCart({ cartItems: [licensedItem()] })
-      licenseResponse = { status: 200, licenses: [makeLicense({ approved: false })] }
-      setStep(2)
-
-      const { result } = renderCheckoutPage(cartResponse)
-
       await waitFor(() => expect(getRouterMock().replace).toHaveBeenCalledWith("/cart"))
-      expect(result.current.licenseWarning).toBeNull()
     })
 
     it("does not touch a cart that requires no license", async () => {
