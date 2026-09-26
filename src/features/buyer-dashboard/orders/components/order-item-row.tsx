@@ -10,12 +10,16 @@ import { getFullImageUrl } from "@/lib/api/products"
 import { isDeliveredOrderItemStatus, isPreShippingCancelableStatus } from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
 import { hasHeavyShipmentFee } from "@/lib/helpers/shipping"
-import { formatOrderItemStatus, getOrderItemStatusTagClass } from "@/lib/orders/order-format"
+import { formatOrderItemStatus, getOrderItemStatusTagClass, getShippingLabelText } from "@/lib/orders/order-format"
 import type { useBuyerOrdersTableActions } from "../context/buyer-orders-context"
 import { getItemAccentClasses } from "../lib/order-item-accent"
 import { getOrderItemHeavyShipmentFee, getOrderItemShipmentFee } from "../lib/order-money"
 import { resolveOrderItemProductId } from "../lib/order-view-model"
-import { resolveActiveShippingLinks, resolveActiveTrackingLinks } from "../lib/tracking-links"
+import {
+  isActiveShippingLinkReturn,
+  resolveActiveShippingLinks,
+  resolveActiveTrackingLinks,
+} from "../lib/tracking-links"
 
 type OrdersTableActions = ReturnType<typeof useBuyerOrdersTableActions>
 
@@ -63,6 +67,7 @@ export default function OrderItemRow({
     : null
   const trackingLinks = resolveActiveTrackingLinks(item)
   const shippingLinks = resolveActiveShippingLinks(item)
+  const shippingLabelText = getShippingLabelText(isActiveShippingLinkReturn(item))
   const hasReturnFlow = Boolean(item.returnRefundStatus)
   const metadataStatusValue = hasReturnFlow ? (item.returnRefundStatus ?? item.status) : item.status
   const metadataStatusLabel = hasReturnFlow
@@ -191,7 +196,7 @@ export default function OrderItemRow({
             className="inline-flex items-center gap-1 rounded-[8px] border border-border-strong/70 bg-transparent px-2.5 py-1 text-[11px] font-semibold text-text-secondary hover:bg-surface-muted hover:text-text-primary"
           >
             <FileText className="h-3 w-3" />
-            Shipping Label
+            {shippingLabelText}
           </Button>
         ) : null}
         {canRequestItemReturn ? (

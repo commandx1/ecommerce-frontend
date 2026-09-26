@@ -79,6 +79,17 @@ export function resolveActiveShippingLinks(item: BuyerOrderItem): BuyerOrderTrac
   return resolveShippingLinks(item)
 }
 
+/**
+ * True when `resolveActiveShippingLinks` is showing the return-to-seller label(s) rather than the
+ * original outbound one. Mirrors that function's own branching exactly (rather than just checking
+ * `hasOrderItemReturnFlowStarted`) because a return can be started before the seller has generated
+ * a return-specific label - in that gap `resolveActiveShippingLinks` still falls back to the
+ * outbound `shippingLinks`, and the label text must fall back with it.
+ */
+export function isActiveShippingLinkReturn(item: BuyerOrderItem): boolean {
+  return hasOrderItemReturnFlowStarted(item) && resolveReturnShippingLinks(item).length > 0
+}
+
 export function getTrackingLinkCount(orderItems: BuyerOrderItem[]): number {
   const linkSet = new Set<string>()
 

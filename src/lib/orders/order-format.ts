@@ -86,3 +86,12 @@ export function formatRefundStatus(refundStatus: string): string {
   if (normalizedStatus === "PENDING") return "Return Pending"
   return `Return ${formatOrderItemStatus(refundStatus)}`
 }
+
+/**
+ * Single source of truth for the shipping-label action's text: a return shipment gets its own
+ * label (the customer's return-to-seller label), distinct from the original outbound one, so it
+ * must not read the same as a normal "Shipping Label" button/link.
+ */
+export function getShippingLabelText(isReturnLabel: boolean): string {
+  return isReturnLabel ? "Return Shipping Label" : "Shipping Label"
+}

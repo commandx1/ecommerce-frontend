@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import type { BuyerOrderItem } from "@/lib/api/buyer-orders"
 import {
   getTrackingLinkCount,
+  isActiveShippingLinkReturn,
   resolveActiveShippingLinks,
   resolveActiveTrackingLinks,
   resolveReturnShippingLinks,
@@ -97,6 +98,51 @@ describe("active order item links", () => {
         updatedDate: undefined,
       },
     ])
+  })
+})
+
+// The "Shipping Label" vs "Return Shipping Label" button text (order-item-row.tsx) is driven by
+// this flag, so it must track resolveActiveShippingLinks' own branching exactly.
+describe("isActiveShippingLinkReturn", () => {
+  const baseItem: BuyerOrderItem = {
+    id: "item-links-1",
+    userProductId: "up-links-1",
+    productId: "product-links-1",
+    productName: "Dental Mirror",
+    price: 12,
+    quantity: 1,
+    status: "DELIVERED",
+    productCoverPhotoPath: null,
+    sellerName: "Acme",
+    sellerSurname: "Store",
+    trackingLinks: [{ trackingUrl: "https://carrier.example/outbound-track" }],
+    shippingLinks: [{ shippingUrl: "https://carrier.example/outbound-label.pdf" }],
+    updatedDate: "2026-05-20T11:00:00Z",
+  }
+
+  it("is false before a return starts (normal outbound shipping label)", () => {
+    expect(isActiveShippingLinkReturn(baseItem)).toBe(false)
+  })
+
+  it("is true once a return-specific shipping label exists", () => {
+    const item: BuyerOrderItem = {
+      ...baseItem,
+      returnDate: "2026-05-21T10:00:00Z",
+      returnRefundStatus: "PENDING",
+      returnShippingLinks: [{ shippingUrl: "https://carrier.example/return-label.pdf" }],
+    }
+    expect(isActiveShippingLinkReturn(item)).toBe(true)
+  })
+
+  it("stays false when a return has started but no return-specific label exists yet (outbound fallback)", () => {
+    const item: BuyerOrderItem = {
+      ...baseItem,
+      returnDate: "2026-05-21T10:00:00Z",
+      returnRefundStatus: "PENDING",
+      returnTrackingLinks: [],
+      returnShippingLinks: [],
+    }
+    expect(isActiveShippingLinkReturn(item)).toBe(false)
   })
 })
 

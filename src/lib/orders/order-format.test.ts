@@ -7,6 +7,7 @@ import {
   formatTimeOnly,
   getOrderItemStatusTagClass,
   getSellerFirstTwoLetters,
+  getShippingLabelText,
 } from "./order-format"
 
 // Moved verbatim from app/buyer-dashboard/orders/lib/order-view-utils.test.ts (Phase 4 §7, O1) -
@@ -148,5 +149,15 @@ describe("getOrderItemStatusTagClass", () => {
     const waitingClass = getOrderItemStatusTagClass("WAITING_FOR_SHIPMENT")
     expect(waitingClass).toContain("warning")
     expect(waitingClass).not.toContain("brand")
+  })
+})
+
+describe("getShippingLabelText", () => {
+  it("returns the plain label text for a normal (non-return) shipment", () => {
+    expect(getShippingLabelText(false)).toBe("Shipping Label")
+  })
+
+  it("returns the return-specific label text for a return shipment", () => {
+    expect(getShippingLabelText(true)).toBe("Return Shipping Label")
   })
 })
