@@ -1,10 +1,14 @@
 import { QueryClientProvider } from "@tanstack/react-query"
-import { act, render, renderHook } from "@testing-library/react"
+import { act, render, renderHook, waitFor } from "@testing-library/react"
+import { HttpResponse, http } from "msw"
 import { type ReactNode, StrictMode } from "react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { showToast } from "@/components/ui/Toast"
 import type { NotificationSocketOptions } from "@/lib/realtime/stomp-client"
+import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
+import { makeAccountUser } from "@/test/factories"
+import { getRouterMock } from "@/test/mocks/next-navigation"
 import { createTestQueryClient } from "@/test/render"
 import { useNotificationSocket } from "./useNotificationSocket"
 
@@ -203,6 +207,86 @@ describe("useNotificationSocket", () => {
 
       expect(showToast.info).not.toHaveBeenCalled()
       expect(invalidateQueries).not.toHaveBeenCalled()
+    })
+
+    const VALID_ORDER_ID = "11111111-1111-1111-1111-111111111111"
+
+    it("makes the toast clickable, using the same href resolver as the notifications menu, when the push carries a resolvable orderId", () => {
+      useAuthStore.setState({
+        isAuthenticated: true,
+        accessToken: "t1",
+        user: makeAccountUser({ roleName: "Vendor" }),
+      })
+      const { wrapper } = makeWrapper()
+      renderHook(() => useNotificationSocket(), { wrapper })
+
+      act(() => {
+        sockets[0]!.options.onMessage({
+          notificationId: "n-1",
+          type: "CUSTOMER_ORDER_SHIPPED",
+          orderId: VALID_ORDER_ID,
+          title: "Order shipped",
+          message: "Order is on its way",
+        })
+      })
+
+      expect(showToast.info).toHaveBeenCalledWith("Order shipped", "Order is on its way", {
+        onClick: expect.any(Function),
+      })
+    })
+
+    it("navigates to the order and marks the notification read when the toast's onClick runs", async () => {
+      let markReadId: string | null = null
+      server.use(
+        http.patch("*/backend-api/notifications/:id/read", ({ params }) => {
+          markReadId = params.id as string
+          return HttpResponse.json({})
+        }),
+      )
+      useAuthStore.setState({
+        isAuthenticated: true,
+        accessToken: "t1",
+        user: makeAccountUser({ roleName: "Vendor" }),
+      })
+      const { wrapper } = makeWrapper()
+      renderHook(() => useNotificationSocket(), { wrapper })
+
+      act(() => {
+        sockets[0]!.options.onMessage({
+          notificationId: "n-1",
+          type: "CUSTOMER_ORDER_SHIPPED",
+          orderId: VALID_ORDER_ID,
+          title: "Order shipped",
+          message: "Order is on its way",
+        })
+      })
+
+      const [, , { onClick }] = vi.mocked(showToast.info).mock.calls.at(-1) as [string, string, { onClick: () => void }]
+
+      act(() => {
+        onClick()
+      })
+
+      expect(getRouterMock().push).toHaveBeenCalledWith(`/vendor-dashboard/orders?orderId=${VALID_ORDER_ID}`)
+      await waitFor(() => expect(markReadId).toBe("n-1"))
+    })
+
+    it("does not make the toast clickable when the push has no resolvable orderId", () => {
+      useAuthStore.setState({ isAuthenticated: true, accessToken: "t1", user: makeAccountUser() })
+      const { wrapper } = makeWrapper()
+      renderHook(() => useNotificationSocket(), { wrapper })
+
+      act(() => {
+        sockets[0]!.options.onMessage({
+          notificationId: "n-1",
+          type: "SOME_UNKNOWN_TYPE",
+          orderId: null,
+          title: "Heads up",
+          message: "Nothing to open here",
+        })
+      })
+
+      expect(showToast.info).toHaveBeenCalledWith("Heads up", "Nothing to open here")
     })
   })
 

@@ -1,8 +1,10 @@
 "use client"
 
 import { useQueryClient } from "@tanstack/react-query"
+import { useRouter } from "next/navigation"
 import { useEffect, useRef } from "react"
 import { showToast } from "@/components/ui/Toast"
+import { parseOrderIdParam } from "@/lib/api/orders"
 import {
   createNotificationSocket,
   resolveNotificationSocketUrl,
@@ -11,6 +13,8 @@ import {
 import { useAuthStore } from "@/stores/authStore"
 import { notificationsKeys } from "../lib/notifications-keys"
 import { isNotificationPushPayload } from "../lib/push-payload"
+import { getDashboardRole, resolveNotificationHref } from "../lib/resolve-notification-href"
+import { useMarkNotificationRead } from "./useNotificationMutations"
 
 /**
  * Owns the lifecycle of the notification STOMP socket: one live socket per (authenticated,
@@ -26,14 +30,24 @@ import { isNotificationPushPayload } from "../lib/push-payload"
  *    token again; `stomp-client` deliberately stays dead after an auth rejection, so the retry
  *    has to be gated here, on a genuinely new token.
  *
+ * 3. `latestRef` (role, `router.push`, mark-as-read) is read imperatively inside `onMessage` for
+ *    the same reason as `getToken`: none of the three belong in the effect's dependency array,
+ *    since a role/router/mutation-identity change must not tear down and reconnect the socket.
+ *
  * Deliberately free of `@/app/*` imports: both dashboard layouts mount it through
  * `NotificationSocketBridge`, and neither may leak into the feature module.
  */
 export function useNotificationSocket(): void {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const accessToken = useAuthStore((state) => state.accessToken)
+  const role = useAuthStore((state) => getDashboardRole(state.user?.roleName))
   const queryClient = useQueryClient()
+  const router = useRouter()
+  const markNotificationRead = useMarkNotificationRead()
   const rejectedTokenRef = useRef<string | null>(null)
+
+  const latestRef = useRef({ role, push: router.push, markAsRead: markNotificationRead.mutate })
+  latestRef.current = { role, push: router.push, markAsRead: markNotificationRead.mutate }
 
   useEffect(() => {
     if (!isAuthenticated || !accessToken) {
@@ -52,7 +66,20 @@ export function useNotificationSocket(): void {
         if (!isNotificationPushPayload(body)) {
           return
         }
-        showToast.info(body.title, body.message)
+        // Only order-related pushes get a "go to the order" click, exactly like the menu item:
+        // without a resolvable orderId the toast stays informational, same as before.
+        const orderId = parseOrderIdParam(body.orderId)
+        if (orderId) {
+          showToast.info(body.title, body.message, {
+            onClick: () => {
+              const { role: currentRole, push, markAsRead } = latestRef.current
+              markAsRead(body.notificationId)
+              push(resolveNotificationHref(body, currentRole))
+            },
+          })
+        } else {
+          showToast.info(body.title, body.message)
+        }
         void queryClient.invalidateQueries({ queryKey: notificationsKeys.all })
       },
       onAuthError: () => {

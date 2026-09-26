@@ -3,9 +3,17 @@ import type React from "react"
 import { toast } from "sonner"
 
 type ToastType = "success" | "error" | "warning" | "info" | "love" | "loading"
+
+/** Makes the whole toast body activate a callback (e.g. open the order it's about to). */
+export interface ToastClickOptions {
+  onClick: () => void
+}
+
+type ToastExtra = number | ToastClickOptions
+
 type ToastFn = {
-  (message: string, duration?: number): void
-  (title: string, message: string, duration?: number): void
+  (message: string, extra?: ToastExtra): void
+  (title: string, message: string, extra?: ToastExtra): void
 }
 
 interface ToastProps {
@@ -14,6 +22,7 @@ interface ToastProps {
   title: string
   message: string
   duration?: number
+  onClick?: () => void
 }
 
 const toastConfig = {
@@ -58,60 +67,94 @@ const defaultTitles: Record<ToastType, string> = {
   loading: "Loading",
 }
 
+const isToastClickOptions = (value: unknown): value is ToastClickOptions =>
+  typeof value === "object" && value !== null && typeof (value as ToastClickOptions).onClick === "function"
+
 const resolveToastArgs = (
   type: ToastType,
   titleOrMessage: string,
-  messageOrDuration?: string | number,
-  maybeDuration?: number,
+  messageOrExtra?: string | ToastExtra,
+  maybeExtra?: ToastExtra,
 ) => {
   let title = defaultTitles[type]
   let message = titleOrMessage
-  let duration = maybeDuration
+  let duration: number | undefined
+  let onClick: (() => void) | undefined
 
-  if (typeof messageOrDuration === "string") {
+  if (typeof messageOrExtra === "string") {
     title = titleOrMessage
-    message = messageOrDuration
-  } else if (typeof messageOrDuration === "number") {
-    duration = messageOrDuration
+    message = messageOrExtra
+    if (typeof maybeExtra === "number") {
+      duration = maybeExtra
+    } else if (isToastClickOptions(maybeExtra)) {
+      onClick = maybeExtra.onClick
+    }
+  } else if (typeof messageOrExtra === "number") {
+    duration = messageOrExtra
+  } else if (isToastClickOptions(messageOrExtra)) {
+    onClick = messageOrExtra.onClick
   }
 
-  return { title, message, duration }
+  return { title, message, duration, onClick }
 }
 
 const createToastHandler = (type: ToastType, defaultDuration: number): ToastFn => {
-  return (titleOrMessage: string, messageOrDuration?: string | number, maybeDuration?: number) => {
-    const { title, message, duration } = resolveToastArgs(type, titleOrMessage, messageOrDuration, maybeDuration)
+  return (titleOrMessage: string, messageOrExtra?: string | ToastExtra, maybeExtra?: ToastExtra) => {
+    const { title, message, duration, onClick } = resolveToastArgs(type, titleOrMessage, messageOrExtra, maybeExtra)
     const finalDuration = duration ?? defaultDuration
 
-    toast.custom((id) => <Toast id={id} type={type} title={title} message={message} duration={finalDuration} />, {
-      duration: finalDuration,
-    })
+    toast.custom(
+      (id) => <Toast id={id} type={type} title={title} message={message} duration={finalDuration} onClick={onClick} />,
+      { duration: finalDuration },
+    )
   }
 }
 
-export function Toast({ id, type, title, message, duration = 4000 }: ToastProps) {
+export function Toast({ id, type, title, message, duration = 4000, onClick }: ToastProps) {
   const config = toastConfig[type]
   const Icon = config.icon
+
+  const body = (
+    <>
+      <div className="shrink-0">
+        <div className={`flex h-10 w-10 items-center justify-center rounded-full ${config.iconWrap}`}>
+          <Icon
+            className={type === "loading" ? "animate-spin" : ""}
+            size={20}
+            fill={type === "love" ? "currentColor" : "none"}
+          />
+        </div>
+      </div>
+      <div className="ml-4 flex-1">
+        <h4 className="mb-1 text-sm font-bold text-text-primary">{title}</h4>
+        <p className="text-xs leading-relaxed text-text-secondary">{message}</p>
+      </div>
+    </>
+  )
 
   return (
     <div className="min-w-[320px] overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated/98 font-indie-flower shadow-panel backdrop-blur-xl pointer-events-auto">
       <div className="flex items-start p-4">
-        <div className="shrink-0">
-          <div className={`flex h-10 w-10 items-center justify-center rounded-full ${config.iconWrap}`}>
-            <Icon
-              className={type === "loading" ? "animate-spin" : ""}
-              size={20}
-              fill={type === "love" ? "currentColor" : "none"}
-            />
-          </div>
-        </div>
-        <div className="ml-4 flex-1">
-          <h4 className="mb-1 text-sm font-bold text-text-primary">{title}</h4>
-          <p className="text-xs leading-relaxed text-text-secondary">{message}</p>
-        </div>
+        {onClick ? (
+          <button
+            type="button"
+            onClick={() => {
+              onClick()
+              toast.dismiss(id)
+            }}
+            className="flex flex-1 cursor-pointer items-start text-left"
+          >
+            {body}
+          </button>
+        ) : (
+          <div className="flex flex-1 items-start">{body}</div>
+        )}
         <button
           type="button"
-          onClick={() => toast.dismiss(id)}
+          onClick={(event) => {
+            event.stopPropagation()
+            toast.dismiss(id)
+          }}
           aria-label="Dismiss notification"
           className="ml-4 shrink-0 text-text-muted transition-colors hover:text-text-primary"
         >

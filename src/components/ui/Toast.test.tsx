@@ -54,6 +54,33 @@ describe("showToast", () => {
 
     expect(customMock).toHaveBeenCalledWith(expect.any(Function), { duration: Number.POSITIVE_INFINITY })
   })
+
+  it("reads a numeric third argument as the duration for the title+message form", () => {
+    showToast.success("Saved", "Your changes are live.", 6000)
+
+    expect(customMock).toHaveBeenCalledWith(expect.any(Function), { duration: 6000 })
+  })
+
+  it("passes an onClick option through without treating it as a duration", () => {
+    const onClick = vi.fn()
+    showToast.info("Order shipped", "Order #1234 is on its way", { onClick })
+
+    expect(customMock).toHaveBeenCalledWith(expect.any(Function), { duration: 4000 })
+    renderLatestToast()
+
+    screen.getByRole("button", { name: /Order shipped/ }).click()
+    expect(onClick).toHaveBeenCalledTimes(1)
+  })
+
+  it("accepts an onClick option after only a message (no explicit title)", () => {
+    const onClick = vi.fn()
+    showToast.info("Heads up", { onClick })
+    renderLatestToast()
+
+    expect(screen.getByRole("heading", { name: "Info" })).toBeInTheDocument()
+    screen.getByRole("button", { name: /Heads up/ }).click()
+    expect(onClick).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe("Toast", () => {
@@ -76,5 +103,37 @@ describe("Toast", () => {
 
     rerender(<Toast id="t" type="loading" title="Loading" message="Working" />)
     expect(container.querySelector(".toast-progress")).toBeNull()
+  })
+
+  it("renders the body as plain text (not a button) when no onClick is given", () => {
+    render(<Toast id="t" type="info" title="Info" message="Just letting you know" />)
+
+    expect(screen.queryByRole("button", { name: /Just letting you know/ })).not.toBeInTheDocument()
+  })
+
+  it("activates onClick and dismisses itself when the toast body is clicked", async () => {
+    const user = userEvent.setup()
+    const onClick = vi.fn()
+    render(
+      <Toast id="toast-7" type="info" title="Order shipped" message="Order #1234 is on its way" onClick={onClick} />,
+    )
+
+    await user.click(screen.getByRole("button", { name: /Order shipped/ }))
+
+    expect(onClick).toHaveBeenCalledTimes(1)
+    expect(toast.dismiss).toHaveBeenCalledWith("toast-7")
+  })
+
+  it("dismisses without activating onClick when only the close control is clicked", async () => {
+    const user = userEvent.setup()
+    const onClick = vi.fn()
+    render(
+      <Toast id="toast-8" type="info" title="Order shipped" message="Order #1234 is on its way" onClick={onClick} />,
+    )
+
+    await user.click(screen.getByRole("button", { name: "Dismiss notification" }))
+
+    expect(onClick).not.toHaveBeenCalled()
+    expect(toast.dismiss).toHaveBeenCalledWith("toast-8")
   })
 })
