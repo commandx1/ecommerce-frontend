@@ -51,6 +51,14 @@ describe("CheckoutPage", () => {
     await waitFor(() => expect(router.push).toHaveBeenCalledWith("/cart"))
   })
 
+  it("sends a buyer who lands on the blank step-1 view back to the cart page", async () => {
+    useCheckoutStore.setState({ currentStep: 1 })
+
+    const { router } = render(<CheckoutPage />)
+
+    await waitFor(() => expect(router.replace).toHaveBeenCalledWith("/cart"))
+  })
+
   it("renders the shipping step with the buyer's single address, not a picker", async () => {
     useCheckoutStore.setState({ currentStep: 2 })
 

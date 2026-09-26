@@ -124,14 +124,23 @@ describe("useCheckoutPage", () => {
   // buyer away from their confirmation (and its auto-order registration polling) while the
   // confirmation is still live — i.e. reached by a step transition, not a cold mount. See
   // "keeps the confirmation when the step reaches 5 after mount" below.
-  it("resets a stale confirmation left by a previous order on mount", async () => {
+  it("resets a stale confirmation left by a previous order on mount, then sends the buyer to the cart", async () => {
     setStep(5)
     useCheckoutStore.setState({ orderResult: { orderId: "order-1" } as never })
 
-    renderCheckoutPage()
+    renderCheckoutPage(cartResponse)
 
     await waitFor(() => expect(useCheckoutStore.getState().currentStep).toBe(1))
     expect(useCheckoutStore.getState().orderResult).toBeNull()
+    await waitFor(() => expect(getRouterMock().replace).toHaveBeenCalledWith("/cart"))
+  })
+
+  it("sends a fresh mount at step 1 straight to the cart, even with items in it", async () => {
+    setStep(1)
+
+    renderCheckoutPage(cartResponse)
+
+    await waitFor(() => expect(getRouterMock().replace).toHaveBeenCalledWith("/cart"))
   })
 
   it("keeps the confirmation when the step reaches 5 after mount, even once the cart empties", async () => {
@@ -276,33 +285,23 @@ describe("useCheckoutPage", () => {
       await waitFor(() => expect(getRouterMock().replace).toHaveBeenCalledWith("/cart"))
     })
 
-    it("does not run the license guard while the step still reads 5, even without a valid license", () => {
+    // A cold mount at step 5 always resets to step 1 first ("resets a stale confirmation..."
+    // above), and the step-1 guard then sends the buyer straight back to /cart - regardless of
+    // license state, since there is nothing left to show at a reset step 1.
+    it("sends the buyer to the cart once a stale step-5 confirmation has reset to step 1, if their license is invalid", async () => {
       cartResponse = makeCart({ cartItems: [licensedItem()] })
       licenseResponse = { status: 200, licenses: [makeLicense({ approved: false })] }
       setStep(5)
 
       renderCheckoutPage(cartResponse)
 
-      // Synchronous: this is the guard's OWN "currentStep === 5" check, evaluated on the very
-      // first render/effect pass, before the stale-confirmation reset below has had a chance to
-      // land. `replace` will still fire once the store resets - see the characterization test
-      // right below this one.
-      expect(getRouterMock().replace).not.toHaveBeenCalled()
+      await waitFor(() => expect(useCheckoutStore.getState().currentStep).toBe(1))
+      await waitFor(() => expect(getRouterMock().replace).toHaveBeenCalledWith("/cart"))
     })
 
-    // PRE-EXISTING BEHAVIOUR on HEAD (a81f6f4), not introduced by this migration - confirmed by
-    // instrumenting the pre-query (Zustand-backed) hook directly: a cold mount at step 5 always resets
-    // to step 1 first ("resets a stale confirmation..." above). Once there, the license guard's
-    // effect re-runs like any ordinary step-1 mount and, if the (still cart-resident) item needs
-    // a license that isn't valid, DOES bounce the buyer to /cart - "confirmation step" no longer
-    // applies once the reset has taken effect. The old test's `await waitFor(() =>
-    // expect(fetchCart).toHaveBeenCalled())` resolved before the async license check ever
-    // settled (the mock resolved synchronously; the licence fetch is real msw), so it never
-    // observed this. Characterized here, not fixed - see design doc §7 step 5's "characterize,
-    // don't fix" instruction for the analogous empty-cart-while-loading case above.
-    it("bounces the buyer once a stale step-5 confirmation has reset to step 1, if their license is invalid", async () => {
+    it("sends the buyer to the cart once a stale step-5 confirmation has reset to step 1, even with a valid license", async () => {
       cartResponse = makeCart({ cartItems: [licensedItem()] })
-      licenseResponse = { status: 200, licenses: [makeLicense({ approved: false })] }
+      licenseResponse = { status: 200, licenses: [makeLicense({ approved: true, expired: false })] }
       setStep(5)
 
       renderCheckoutPage(cartResponse)

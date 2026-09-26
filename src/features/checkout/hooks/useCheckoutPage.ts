@@ -36,17 +36,29 @@ export function useCheckoutPage(): UseCheckoutPageResult {
     if (initialStepRef.current === 5) reset()
   }, [reset])
 
+  // Step 1 renders nothing (see `view` below): a buyer only ever reaches checkout via the cart's
+  // gated "Proceed" click, which sets the step before navigating here. A mount that still reads
+  // step 1 - a cold direct visit, or the stale-confirmation reset above landing back on it - has
+  // nothing to show, so send it back to /cart instead of rendering a blank page. `replace` leaves
+  // no checkout-then-cart history entry. The other guards below skip step 1; this one owns it.
   useEffect(() => {
+    if (currentStep !== 1) return
+    router.replace("/cart")
+  }, [currentStep, router])
+
+  useEffect(() => {
+    if (currentStep === 1) return
     if (items.length === 0 && currentStep !== 5) {
       router.push("/cart")
     }
   }, [currentStep, items.length, router])
 
-  // Guards a buyer who types /checkout directly, bypassing the cart page's click-time gate. Never
-  // during confirmation or while the licence check is in flight (fail-closed on the SETTLED result).
-  // `replace`, so the redirect leaves no checkout-then-cart history entry.
+  // Guards a buyer who types /checkout directly at an in-progress step (2-4), bypassing the cart
+  // page's click-time gate. Never during confirmation, and step 1 is already handled above. Never
+  // while the licence check is in flight (fail-closed on the SETTLED result). `replace`, so the
+  // redirect leaves no checkout-then-cart history entry.
   useEffect(() => {
-    if (currentStep === 5) return
+    if (currentStep === 1 || currentStep === 5) return
     if (licenseGate.isChecking) return
     if (!cartRequiresDentalLicense(items)) return
     if (!licenseGate.checkFailed && licenseGate.status === "valid") return
