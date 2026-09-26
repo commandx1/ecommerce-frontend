@@ -74,6 +74,14 @@ describe("AsyncSubmitButton", () => {
     expect(button).toBeDisabled()
   })
 
+  it("marks itself aria-busy only while submitting, for a screen reader watching an in-flight submit", () => {
+    const { rerender } = render(<AsyncSubmitButton idleText="Save changes" isSubmitting={false} />)
+    expect(screen.getByRole("button", { name: "Save changes" })).not.toHaveAttribute("aria-busy")
+
+    rerender(<AsyncSubmitButton idleText="Save changes" submittingText="Saving..." isSubmitting />)
+    expect(screen.getByRole("button", { name: "Saving..." })).toHaveAttribute("aria-busy", "true")
+  })
+
   it("keeps the idle label when no submitting label is supplied", () => {
     render(<AsyncSubmitButton idleText="Save changes" isSubmitting />)
 

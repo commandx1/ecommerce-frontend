@@ -40,6 +40,7 @@ export default function AsyncSubmitButton({
       fullWidth={fullWidth}
       className={className}
       disabled={isSubmitting || disabled}
+      aria-busy={isSubmitting || undefined}
     >
       {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
       <span>{label}</span>

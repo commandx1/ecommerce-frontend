@@ -706,6 +706,36 @@ describe("useFinalReview — double submit", () => {
     expect(result.current.submitDisabled).toBe(false)
   })
 
+  it("does not automatically retry placeOrder when the network call fails, and re-enables the button for a manual retry", async () => {
+    placeOrder.mockRejectedValueOnce(new Error("Network Error"))
+
+    const { result } = renderFinalReview()
+    await placeAndSettle(result.current.onPlaceOrder)
+
+    // Exactly one attempt: nothing inside the hook (or React Query, or axios) retries a failed
+    // order creation on its own — a silent retry would risk a second charge for one click.
+    expect(placeOrder).toHaveBeenCalledTimes(1)
+    expect(errorToast).toHaveBeenCalledWith("Failed to place order. Please try again.")
+    expect(result.current.isPlacingOrder).toBe(false)
+    expect(result.current.submitDisabled).toBe(false)
+  })
+
+  it("lets a genuine retry through after a failed attempt, placing a second, distinct order", async () => {
+    placeOrder
+      .mockRejectedValueOnce(apiError("One or more items are out of stock"))
+      .mockResolvedValueOnce(orderResponse())
+
+    const { result } = renderFinalReview()
+
+    await placeAndSettle(result.current.onPlaceOrder)
+    expect(placeOrder).toHaveBeenCalledTimes(1)
+    expect(useCheckoutStore.getState().currentStep).toBe(4)
+
+    await placeAndSettle(result.current.onPlaceOrder)
+    expect(placeOrder).toHaveBeenCalledTimes(2)
+    expect(useCheckoutStore.getState().currentStep).toBe(5)
+  })
+
   it("blocks submission while the card details are missing", () => {
     useCheckoutStore.setState({ paymentMethodId: "" })
 
