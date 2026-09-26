@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import { useCartId, useCartItems } from "@/features/cart/hooks/useCartQueries"
 import { useAddressesQuery } from "@/features/checkout/hooks/useAddressesQuery"
+import { isShippingQuoteExpired } from "@/features/checkout/lib/shipping-quote-expiry"
 import type { SellerGroup, ShippingRate } from "@/features/checkout/types"
 import { getSellerGroupKey } from "@/features/checkout/utils/seller-group-key"
 import type { Address } from "@/lib/api/address"
@@ -16,6 +17,9 @@ interface SelectedRateInfo {
   type: "shippo" | "uber"
   rateId: string
   amount: number
+  /** `Date.now()` when the rate response this selection came from landed — see
+   * `VendorShipmentRates`'s `onSelect` contract. */
+  fetchedAt: number
 }
 
 interface UseShippingDetailsResult {
@@ -31,9 +35,15 @@ interface UseShippingDetailsResult {
    * the primary one — the scheduler always ships auto orders to the primary.
    */
   showAutoOrderAddressNotice: boolean
+  /**
+   * Bumped whenever a stale quote blocks Continue, so `ShippingMethodsSection` can remount each
+   * `VendorShipmentRates` (part of its `key`) and force a fresh fetch — the components no longer
+   * cache (see `VendorShipmentRates`), so a remount is a plain refetch.
+   */
+  refreshKey: number
   onAddAddress: () => void
   onAddressChange: (address: Address) => void
-  onRateSelect: (vendorId: string, rate: ShippingRate) => void
+  onRateSelect: (vendorId: string, rate: ShippingRate, fetchedAt: number) => void
   onSubmit: (event: React.FormEvent) => void
 }
 
@@ -47,6 +57,7 @@ export function useShippingDetails(): UseShippingDetailsResult {
     setSelectedShippingEtaText,
     setSelectedShippingCost,
     setSelectedVendorShippingMethods,
+    setShippingQuoteFetchedAt,
   } = useCheckoutStore()
   const items = useCartItems()
   const cartId = useCartId()
@@ -54,6 +65,7 @@ export function useShippingDetails(): UseShippingDetailsResult {
 
   const [selectedAddressId, setSelectedAddressId] = useState("")
   const [selectedRates, setSelectedRates] = useState<Record<string, SelectedRateInfo>>({})
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const onAddressChange = useCallback(
     (address: Address) => {
@@ -129,7 +141,7 @@ export function useShippingDetails(): UseShippingDetailsResult {
   }, [items])
 
   const onRateSelect = useCallback(
-    (vendorId: string, rate: ShippingRate) => {
+    (vendorId: string, rate: ShippingRate, fetchedAt: number) => {
       const isUber = "fee" in rate && "duration" in rate
       const rateId = "objectId" in rate ? rate.objectId : rate.id
       const type: SelectedRateInfo["type"] = isUber ? "uber" : "shippo"
@@ -143,10 +155,16 @@ export function useShippingDetails(): UseShippingDetailsResult {
         : `${rate.servicelevel?.name ?? "Shipping"} - ${rate.estimatedDays} business days`
 
       setSelectedRates((prev) => {
-        if (prev[vendorId]?.rateId === rateId && prev[vendorId]?.type === type && prev[vendorId]?.amount === amount) {
+        const current = prev[vendorId]
+        if (
+          current?.rateId === rateId &&
+          current?.type === type &&
+          current?.amount === amount &&
+          current?.fetchedAt === fetchedAt
+        ) {
           return prev
         }
-        return { ...prev, [vendorId]: { type, rateId, amount } }
+        return { ...prev, [vendorId]: { type, rateId, amount, fetchedAt } }
       })
 
       // `setSelectedRates` updater timing'i ile senkron `didChange` bayrağı güvenilir değil; ETA her seçimde güncellenmeli.
@@ -174,6 +192,24 @@ export function useShippingDetails(): UseShippingDetailsResult {
 
       if (!selectedAddressId) {
         showToast.error("Please select a shipping address")
+        return
+      }
+
+      // The quote's age is the OLDEST fetch among the currently selected vendors' rates (with
+      // several vendors, the slowest-fetched one governs). `null` (nothing selected yet) is never
+      // expired — the "select at least one shipping method" check below covers that case instead.
+      const oldestFetchedAt = Object.values(selectedRates).reduce<number | null>(
+        (oldest, selection) => (oldest === null ? selection.fetchedAt : Math.min(oldest, selection.fetchedAt)),
+        null,
+      )
+
+      if (isShippingQuoteExpired(oldestFetchedAt, Date.now())) {
+        showToast.warning(
+          "Shipping rates expired",
+          "Shipping prices can change. Please choose a shipping method again.",
+        )
+        setSelectedRates({})
+        setRefreshKey((key) => key + 1)
         return
       }
 
@@ -231,9 +267,18 @@ export function useShippingDetails(): UseShippingDetailsResult {
         shippoRateOrders,
         uberRateOrders,
       })
+      setShippingQuoteFetchedAt(oldestFetchedAt)
       nextStep()
     },
-    [nextStep, selectedAddressId, selectedRates, sellerGroups, setExcludedFromOrder, setOrderPayload],
+    [
+      nextStep,
+      selectedAddressId,
+      selectedRates,
+      sellerGroups,
+      setExcludedFromOrder,
+      setOrderPayload,
+      setShippingQuoteFetchedAt,
+    ],
   )
 
   const onAddAddress = useCallback(() => {
@@ -257,6 +302,7 @@ export function useShippingDetails(): UseShippingDetailsResult {
     sellerGroups,
     userId: user?.id || "",
     showAutoOrderAddressNotice,
+    refreshKey,
     onAddAddress,
     onAddressChange,
     onRateSelect,

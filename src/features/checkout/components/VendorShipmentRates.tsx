@@ -10,7 +10,9 @@ interface VendorShipmentRatesProps {
   items: { userProductId: string; productId: string; name: string; quantity: number; shipmentFee: number }[]
   addressId: string
   cartId: string
-  onSelect: (sellerId: string, rate: ShipmentRate | UberQuote) => void
+  /** `fetchedAt` is `Date.now()` when the rate response this selection came from landed — the
+   * quote's age for `SHIPPING_QUOTE_TTL_MS` purposes, not the time of the click. */
+  onSelect: (sellerId: string, rate: ShipmentRate | UberQuote, fetchedAt: number) => void
   selectedRateId?: string
 }
 
@@ -99,11 +101,17 @@ export default function VendorShipmentRates({
   // selection it did not itself make (e.g. one resumed from a parent/session), only a later
   // refetch may replace it.
   const previousResponseRef = useRef<RatesResponseData | null>(null)
+  // The fetch time of the response currently on screen, read by the manual-click handlers below so
+  // a buyer's own selection reports the same quote age as an auto-selection would (the quote's
+  // clock starts at fetch, never at click).
+  const fetchedAtRef = useRef<number | null>(null)
 
   useEffect(() => {
     let isMounted = true
 
     const applyRatesData = (data: RatesResponseData) => {
+      const fetchedAt = Date.now()
+      fetchedAtRef.current = fetchedAt
       const filteredRates = data.shippoRates.filter((rate) => !isExcludedServiceLevel(rate))
 
       setRates(filteredRates)
@@ -130,15 +138,19 @@ export default function VendorShipmentRates({
         if (filteredRates.length === 0 && !data.uberQuote) return
 
         if (data.uberQuote && uberAmount < cheapestRateAmount) {
-          onSelectRef.current(sellerId, data.uberQuote)
+          onSelectRef.current(sellerId, data.uberQuote, fetchedAt)
           return
         }
 
         if (cheapestRate) {
-          onSelectRef.current(sellerId, {
-            ...cheapestRate,
-            amount: cheapestRateAmount.toFixed(2),
-          })
+          onSelectRef.current(
+            sellerId,
+            {
+              ...cheapestRate,
+              amount: cheapestRateAmount.toFixed(2),
+            },
+            fetchedAt,
+          )
         }
       }
 
@@ -164,7 +176,7 @@ export default function VendorShipmentRates({
         const previousUberAmount = previousResponse.uberQuote ? getUberQuoteAmount(previousResponse.uberQuote) : null
         const newUberAmount = getUberQuoteAmount(matchedUber)
         if (previousUberAmount === null || previousUberAmount !== newUberAmount) {
-          onSelectRef.current(sellerId, matchedUber)
+          onSelectRef.current(sellerId, matchedUber, fetchedAt)
         }
         return
       }
@@ -180,7 +192,7 @@ export default function VendorShipmentRates({
           ? getEffectiveRateAmount(previousMatch, previousResponse.defaultShipmentFee)
           : null
         if (previousAmount === null || previousAmount !== newAmount) {
-          onSelectRef.current(sellerId, { ...matchedRate, amount: newAmount.toFixed(2) })
+          onSelectRef.current(sellerId, { ...matchedRate, amount: newAmount.toFixed(2) }, fetchedAt)
         }
         return
       }
@@ -312,7 +324,7 @@ export default function VendorShipmentRates({
                     name={`shipment-${sellerId}`}
                     className="sr-only"
                     checked={selectedRateId === quote.id}
-                    onChange={() => onSelect(sellerId, quote)}
+                    onChange={() => onSelect(sellerId, quote, fetchedAtRef.current ?? Date.now())}
                   />
                   <div className="flex min-w-0 flex-1 items-center">
                     <div className="mr-3 min-w-0 flex-1">
@@ -368,7 +380,7 @@ export default function VendorShipmentRates({
                   name={`shipment-${sellerId}`}
                   className="sr-only"
                   checked={selectedRateId === rate.objectId}
-                  onChange={() => onSelect(sellerId, selectableRate)}
+                  onChange={() => onSelect(sellerId, selectableRate, fetchedAtRef.current ?? Date.now())}
                 />
                 <div className="flex min-w-0 flex-1 items-center">
                   <div className="mr-3 min-w-0 flex-1">

@@ -4,6 +4,7 @@ import { afterAll, beforeEach, describe, expect, it, type MockInstance, vi } fro
 import { showToast } from "@/components/ui/Toast"
 import { type CartData, cartCommands } from "@/features/cart/api/cart-queries"
 import { useCheckoutAutoOrder } from "@/features/checkout/hooks/useCheckoutAutoOrder"
+import { SHIPPING_QUOTE_TTL_MS } from "@/features/checkout/lib/shipping-quote-expiry"
 import type { GetPaymentStatusResponse, PlaceOrderPayload, PlaceOrderResponse } from "@/lib/api/orders"
 import { ordersAPI } from "@/lib/api/orders"
 import { queryKeys } from "@/lib/query/keys"
@@ -1110,5 +1111,65 @@ describe("useFinalReview — cache invalidation after the order is created", () 
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(invalidatedKeys(invalidate)).not.toContainEqual(queryKeys.autoOrders.all)
+  })
+})
+
+/**
+ * `useShippingQuoteExpiry`'s background timer normally catches a stale quote first, but this hook
+ * takes its own synchronous check right before a charge would be attempted - the last line of
+ * defense (e.g. a background-tab timer that never got a chance to re-check on focus).
+ */
+describe("useFinalReview — shipping quote expiry", () => {
+  it("refuses to place the order and bounces back to shipping when the quote is expired", async () => {
+    const warningToast = vi.spyOn(showToast, "warning").mockImplementation(() => undefined)
+    useCheckoutStore.setState({ shippingQuoteFetchedAt: Date.now() - SHIPPING_QUOTE_TTL_MS - 1000 })
+
+    const { result } = renderFinalReview()
+    await act(async () => {
+      await result.current.onPlaceOrder()
+    })
+
+    expect(placeOrder).not.toHaveBeenCalled()
+    expect(fakeStripe().confirmCardPayment).not.toHaveBeenCalled()
+    expect(warningToast).toHaveBeenCalledWith(
+      "Shipping rates expired",
+      "Shipping prices can change. Please choose a shipping method again.",
+    )
+    expect(useCheckoutStore.getState().currentStep).toBe(2)
+    expect(useCheckoutStore.getState().orderPayload).toBeNull()
+    expect(result.current.isPlacingOrder).toBe(false)
+  })
+
+  it("releases the in-flight guard on an expired quote, so a genuine retry after re-selecting still works", async () => {
+    useCheckoutStore.setState({ shippingQuoteFetchedAt: Date.now() - SHIPPING_QUOTE_TTL_MS - 1000 })
+    const { result } = renderFinalReview()
+
+    await act(async () => {
+      await result.current.onPlaceOrder()
+    })
+    expect(placeOrder).not.toHaveBeenCalled()
+
+    // The buyer re-selects rates on step 2 (out of this hook's scope) - simulate a fresh quote AND
+    // a re-frozen payload, since `handleExpiredShippingQuote` cleared the old one via
+    // `clearShippingSelection`. Flushed through its own `act` so `result.current` is re-rendered
+    // off the new store value before the next call reads it - otherwise it would still close over
+    // the just-expired one.
+    act(() => {
+      useCheckoutStore.setState({ shippingQuoteFetchedAt: Date.now(), currentStep: 4, orderPayload: orderPayload() })
+    })
+
+    await placeAndSettle(result.current.onPlaceOrder)
+
+    expect(placeOrder).toHaveBeenCalledTimes(1)
+  })
+
+  it("places the order normally when the quote is still within its TTL", async () => {
+    useCheckoutStore.setState({ shippingQuoteFetchedAt: Date.now() - 60_000 })
+    const { result } = renderFinalReview()
+
+    await placeAndSettle(result.current.onPlaceOrder)
+
+    expect(placeOrder).toHaveBeenCalledTimes(1)
+    expect(useCheckoutStore.getState().currentStep).toBe(5)
   })
 })

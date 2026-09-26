@@ -2,6 +2,7 @@ import type { QueryClient } from "@tanstack/react-query"
 import { act, renderHook, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { showToast } from "@/components/ui/Toast"
+import { SHIPPING_QUOTE_TTL_MS } from "@/features/checkout/lib/shipping-quote-expiry"
 import type { ShippingRate } from "@/features/checkout/types"
 import { addressAPI } from "@/lib/api/address"
 import type { ShipmentRate, UberQuote } from "@/lib/api/shipment"
@@ -252,10 +253,15 @@ describe("useShippingDetails — rate selection", () => {
     const { result } = await mountHook()
 
     act(() => {
-      result.current.onRateSelect("seller-1", makeShippoRate() as ShippingRate)
+      result.current.onRateSelect("seller-1", makeShippoRate() as ShippingRate, Date.now())
     })
 
-    expect(result.current.selectedRates["seller-1"]).toEqual({ type: "shippo", rateId: "rate-shippo-1", amount: 12.5 })
+    expect(result.current.selectedRates["seller-1"]).toEqual({
+      type: "shippo",
+      rateId: "rate-shippo-1",
+      amount: 12.5,
+      fetchedAt: expect.any(Number),
+    })
     await waitFor(() => expect(useCheckoutStore.getState().selectedShippingCost).toBe(12.5))
     expect(useCheckoutStore.getState().selectedShippingEtaText).toBe("Priority Mail - 3 business days")
     expect(useCheckoutStore.getState().selectedVendorShippingMethods["seller-1"]).toEqual({
@@ -269,10 +275,15 @@ describe("useShippingDetails — rate selection", () => {
     const { result } = await mountHook()
 
     act(() => {
-      result.current.onRateSelect("seller-1", makeUberQuote() as ShippingRate)
+      result.current.onRateSelect("seller-1", makeUberQuote() as ShippingRate, Date.now())
     })
 
-    expect(result.current.selectedRates["seller-1"]).toEqual({ type: "uber", rateId: "quote-uber-1", amount: 18.99 })
+    expect(result.current.selectedRates["seller-1"]).toEqual({
+      type: "uber",
+      rateId: "quote-uber-1",
+      amount: 18.99,
+      fetchedAt: expect.any(Number),
+    })
     expect(useCheckoutStore.getState().selectedVendorShippingMethods["seller-1"]!.methodText).toBe(
       "Same-day delivery - Est. 1-4 hours",
     )
@@ -292,10 +303,10 @@ describe("useShippingDetails — rate selection", () => {
     const { result } = await mountHook()
 
     act(() => {
-      result.current.onRateSelect("seller-1", makeShippoRate({ amount: "10.00" }) as ShippingRate)
+      result.current.onRateSelect("seller-1", makeShippoRate({ amount: "10.00" }) as ShippingRate, Date.now())
     })
     act(() => {
-      result.current.onRateSelect("seller-2", makeUberQuote({ fee: 500 }) as ShippingRate)
+      result.current.onRateSelect("seller-2", makeUberQuote({ fee: 500 }) as ShippingRate, Date.now())
     })
 
     await waitFor(() => expect(useCheckoutStore.getState().selectedShippingCost).toBe(15))
@@ -308,12 +319,20 @@ describe("useShippingDetails — rate selection", () => {
     const { result } = await mountHook()
 
     act(() => {
-      result.current.onRateSelect("seller-1", makeShippoRate({ objectId: "rate-a", amount: "30.00" }) as ShippingRate)
+      result.current.onRateSelect(
+        "seller-1",
+        makeShippoRate({ objectId: "rate-a", amount: "30.00" }) as ShippingRate,
+        Date.now(),
+      )
     })
     await waitFor(() => expect(useCheckoutStore.getState().selectedShippingCost).toBe(30))
 
     act(() => {
-      result.current.onRateSelect("seller-1", makeShippoRate({ objectId: "rate-b", amount: "7.25" }) as ShippingRate)
+      result.current.onRateSelect(
+        "seller-1",
+        makeShippoRate({ objectId: "rate-b", amount: "7.25" }) as ShippingRate,
+        Date.now(),
+      )
     })
 
     await waitFor(() => expect(useCheckoutStore.getState().selectedShippingCost).toBe(7.25))
@@ -322,14 +341,17 @@ describe("useShippingDetails — rate selection", () => {
 
   it("keeps the same object identity when the identical rate is re-selected", async () => {
     const { result } = await mountHook()
+    // Same fetchedAt both times: this is the SAME fetch response reporting the SAME rate twice
+    // (e.g. a re-render), not a refetch — a real refetch would carry a new fetchedAt.
+    const fetchedAt = Date.now()
 
     act(() => {
-      result.current.onRateSelect("seller-1", makeShippoRate() as ShippingRate)
+      result.current.onRateSelect("seller-1", makeShippoRate() as ShippingRate, fetchedAt)
     })
     const first = result.current.selectedRates
 
     act(() => {
-      result.current.onRateSelect("seller-1", makeShippoRate() as ShippingRate)
+      result.current.onRateSelect("seller-1", makeShippoRate() as ShippingRate, fetchedAt)
     })
 
     expect(result.current.selectedRates).toBe(first)
@@ -349,7 +371,7 @@ describe("useShippingDetails — rate selection", () => {
     const { result } = await mountHook()
 
     act(() => {
-      result.current.onRateSelect("seller-1", makeShippoRate({ amount: "40.00" }) as ShippingRate)
+      result.current.onRateSelect("seller-1", makeShippoRate({ amount: "40.00" }) as ShippingRate, Date.now())
     })
     await waitFor(() => expect(useCheckoutStore.getState().selectedShippingCost).toBe(40))
 
@@ -358,7 +380,12 @@ describe("useShippingDetails — rate selection", () => {
     })
 
     expect(result.current.selectedAddressId).toBe("address-b")
-    expect(result.current.selectedRates["seller-1"]).toEqual({ type: "shippo", rateId: "rate-shippo-1", amount: 40 })
+    expect(result.current.selectedRates["seller-1"]).toEqual({
+      type: "shippo",
+      rateId: "rate-shippo-1",
+      amount: 40,
+      fetchedAt: expect.any(Number),
+    })
     expect(useCheckoutStore.getState().selectedShippingCost).toBe(40)
   })
 })
@@ -397,10 +424,10 @@ describe("useShippingDetails — submit", () => {
     const { result } = await mountHook()
 
     act(() => {
-      result.current.onRateSelect("seller-1", makeShippoRate({ objectId: "rate-x" }) as ShippingRate)
+      result.current.onRateSelect("seller-1", makeShippoRate({ objectId: "rate-x" }) as ShippingRate, Date.now())
     })
     act(() => {
-      result.current.onRateSelect("seller-2", makeUberQuote({ id: "quote-y" }) as ShippingRate)
+      result.current.onRateSelect("seller-2", makeUberQuote({ id: "quote-y" }) as ShippingRate, Date.now())
     })
     act(() => {
       result.current.onSubmit(submitEvent())
@@ -433,7 +460,7 @@ describe("useShippingDetails — submit", () => {
     const { result } = await mountHook()
 
     act(() => {
-      result.current.onRateSelect("seller-1", makeShippoRate() as ShippingRate)
+      result.current.onRateSelect("seller-1", makeShippoRate() as ShippingRate, Date.now())
     })
     act(() => {
       result.current.onSubmit(submitEvent())
@@ -463,7 +490,7 @@ describe("useShippingDetails — submit", () => {
     const { result } = await mountHook()
 
     act(() => {
-      result.current.onRateSelect("Standard Seller", makeShippoRate() as ShippingRate)
+      result.current.onRateSelect("Standard Seller", makeShippoRate() as ShippingRate, Date.now())
     })
     act(() => {
       result.current.onSubmit(submitEvent())
@@ -487,7 +514,7 @@ describe("useShippingDetails — submit", () => {
     const { result } = await mountHook()
 
     act(() => {
-      result.current.onRateSelect("seller-1", makeShippoRate() as ShippingRate)
+      result.current.onRateSelect("seller-1", makeShippoRate() as ShippingRate, Date.now())
     })
     act(() => {
       result.current.onSubmit(submitEvent())
@@ -505,7 +532,7 @@ describe("useShippingDetails — submit", () => {
     const { result } = await mountHook()
 
     act(() => {
-      result.current.onRateSelect("seller-1", makeShippoRate() as ShippingRate)
+      result.current.onRateSelect("seller-1", makeShippoRate() as ShippingRate, Date.now())
     })
     act(() => {
       result.current.onSubmit(submitEvent())
@@ -519,7 +546,7 @@ describe("useShippingDetails — submit", () => {
     const { result } = await mountHook()
 
     act(() => {
-      result.current.onRateSelect("seller-1", makeShippoRate() as ShippingRate)
+      result.current.onRateSelect("seller-1", makeShippoRate() as ShippingRate, Date.now())
     })
     act(() => {
       result.current.onSubmit(submitEvent())
@@ -527,6 +554,104 @@ describe("useShippingDetails — submit", () => {
 
     const payload = useCheckoutStore.getState().orderPayload
     expect(payload?.shippoRateOrders[0]?.userId).toBe("seller-1")
+  })
+})
+
+describe("useShippingDetails — quote expiry", () => {
+  it("blocks Continue on a stale quote: warns, refetches, and never advances or freezes a payload", async () => {
+    const warningToast = vi.spyOn(showToast, "warning").mockImplementation(() => undefined)
+    const { result } = await mountHook()
+
+    const staleFetchedAt = Date.now() - SHIPPING_QUOTE_TTL_MS - 1000
+    act(() => {
+      result.current.onRateSelect("seller-1", makeShippoRate() as ShippingRate, staleFetchedAt)
+    })
+    const refreshKeyBefore = result.current.refreshKey
+
+    act(() => {
+      result.current.onSubmit(submitEvent())
+    })
+
+    expect(warningToast).toHaveBeenCalledWith(
+      "Shipping rates expired",
+      "Shipping prices can change. Please choose a shipping method again.",
+    )
+    // Never advances to step 3, and no stale quote is frozen into the payload.
+    expect(useCheckoutStore.getState().currentStep).toBe(1)
+    expect(useCheckoutStore.getState().orderPayload).toBeNull()
+    // The selection is cleared so `VendorShipmentRates` (remounted via the bumped refresh key)
+    // refetches fresh rates and auto-selects the cheapest again, exactly like a first mount.
+    expect(result.current.selectedRates).toEqual({})
+    expect(result.current.refreshKey).toBe(refreshKeyBefore + 1)
+  })
+
+  it("lets Continue through on a fresh quote (regression: does not treat every submit as stale)", async () => {
+    const warningToast = vi.spyOn(showToast, "warning").mockImplementation(() => undefined)
+    const { result } = await mountHook()
+
+    act(() => {
+      result.current.onRateSelect("seller-1", makeShippoRate() as ShippingRate, Date.now())
+    })
+    act(() => {
+      result.current.onSubmit(submitEvent())
+    })
+
+    expect(warningToast).not.toHaveBeenCalled()
+    expect(useCheckoutStore.getState().currentStep).toBe(2)
+    expect(useCheckoutStore.getState().orderPayload).not.toBeNull()
+  })
+
+  it("uses the OLDEST selected vendor's fetch time across multiple vendors, not the newest", async () => {
+    seedCart(client, {
+      cartItems: [itemFor("seller-1", "Acme Dental", "up-1"), itemFor("seller-2", "Beta Supply", "up-2")],
+    })
+    const { result } = await mountHook()
+
+    const freshFetchedAt = Date.now()
+    // Just past the limit on its own - this vendor's rate alone would already be stale.
+    const staleFetchedAt = Date.now() - SHIPPING_QUOTE_TTL_MS - 1000
+
+    act(() => {
+      result.current.onRateSelect(
+        "seller-1",
+        makeShippoRate({ objectId: "rate-fresh" }) as ShippingRate,
+        freshFetchedAt,
+      )
+    })
+    act(() => {
+      result.current.onRateSelect("seller-2", makeUberQuote() as ShippingRate, staleFetchedAt)
+    })
+    act(() => {
+      result.current.onSubmit(submitEvent())
+    })
+
+    // The oldest (seller-2's) fetch governs the whole quote's age, so Continue is blocked even
+    // though seller-1's own rate is brand new.
+    expect(useCheckoutStore.getState().currentStep).toBe(1)
+    expect(useCheckoutStore.getState().orderPayload).toBeNull()
+  })
+
+  it("freezes the OLDEST selected vendor's fetch time as the quote's timestamp when Continue succeeds", async () => {
+    seedCart(client, {
+      cartItems: [itemFor("seller-1", "Acme Dental", "up-1"), itemFor("seller-2", "Beta Supply", "up-2")],
+    })
+    const { result } = await mountHook()
+
+    const olderFetchedAt = Date.now() - 60_000
+    const newerFetchedAt = Date.now()
+
+    act(() => {
+      result.current.onRateSelect("seller-1", makeShippoRate({ objectId: "rate-a" }) as ShippingRate, olderFetchedAt)
+    })
+    act(() => {
+      result.current.onRateSelect("seller-2", makeUberQuote() as ShippingRate, newerFetchedAt)
+    })
+    act(() => {
+      result.current.onSubmit(submitEvent())
+    })
+
+    expect(useCheckoutStore.getState().currentStep).toBe(2)
+    expect(useCheckoutStore.getState().shippingQuoteFetchedAt).toBe(olderFetchedAt)
   })
 })
 

@@ -81,6 +81,18 @@ interface CheckoutStore {
   selectedShippingEtaText: string
   selectedVendorShippingMethods: Record<string, VendorShippingSelection>
   selectedShippingCost: number
+  /**
+   * `Date.now()` the shipping quote was fetched at — the oldest `fetchedAt` among the vendors'
+   * rates selected in step 2, frozen alongside `orderPayload` at the step 2→3 transition. Read by
+   * `useShippingQuoteExpiry`/`useFinalReview` to expire the quote after `SHIPPING_QUOTE_TTL_MS`.
+   * `null` before step 2 has been completed.
+   */
+  shippingQuoteFetchedAt: number | null
+  /**
+   * Mirrors `useFinalReview`'s own in-flight guard so a hook outside that component (the shipping
+   * quote's expiry timer) can tell an order submission is in progress and must not be interrupted.
+   */
+  isPlacingOrder: boolean
   setStep: (step: CheckoutStep) => void
   nextStep: () => void
   previousStep: () => void
@@ -106,6 +118,8 @@ interface CheckoutStore {
       | ((prev: Record<string, VendorShippingSelection>) => Record<string, VendorShippingSelection>),
   ) => void
   setSelectedShippingCost: (cost: number) => void
+  setShippingQuoteFetchedAt: (fetchedAt: number | null) => void
+  setIsPlacingOrder: (isPlacingOrder: boolean) => void
   setOrderPayload: (payload: PlaceOrderPayload) => void
   /**
    * Rewrites `autoOrder` for one product inside the frozen `orderPayload` snapshot, which
@@ -162,6 +176,8 @@ const initialState = {
   selectedShippingEtaText: "",
   selectedVendorShippingMethods: {} as Record<string, VendorShippingSelection>,
   selectedShippingCost: 0,
+  shippingQuoteFetchedAt: null as number | null,
+  isPlacingOrder: false,
 }
 
 /**
@@ -211,6 +227,8 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
         typeof methods === "function" ? methods(state.selectedVendorShippingMethods) : methods,
     })),
   setSelectedShippingCost: (cost) => set({ selectedShippingCost: cost }),
+  setShippingQuoteFetchedAt: (fetchedAt) => set({ shippingQuoteFetchedAt: fetchedAt }),
+  setIsPlacingOrder: (isPlacingOrder) => set({ isPlacingOrder }),
   setOrderPayload: (payload) => set({ orderPayload: payload }),
   setPayloadAutoOrder: (userProductId, autoOrder) =>
     set((state) => {
@@ -240,6 +258,7 @@ export const useCheckoutStore = create<CheckoutStore>((set) => ({
       selectedShippingCost: initialState.selectedShippingCost,
       orderPayload: initialState.orderPayload,
       excludedFromOrder: initialState.excludedFromOrder,
+      shippingQuoteFetchedAt: initialState.shippingQuoteFetchedAt,
     }),
   reset: () => set({ ...initialState }),
 }))

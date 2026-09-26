@@ -6,6 +6,7 @@ import { refreshCart } from "@/features/cart/api/cart-queries"
 import { useCartItems } from "@/features/cart/hooks/useCartQueries"
 import { cartRequiresDentalLicense } from "@/features/cart/utils/license-check"
 import { useCheckoutCartSync } from "@/features/checkout/hooks/useCheckoutCartSync"
+import { useShippingQuoteExpiry } from "@/features/checkout/hooks/useShippingQuoteExpiry"
 import { useDentalLicenseGate } from "@/lib/hooks/useDentalLicenseGate"
 import { useCheckoutStore } from "@/stores/checkoutStore"
 
@@ -67,6 +68,7 @@ export function useCheckoutPage(): UseCheckoutPageResult {
   }, [currentStep, items, licenseGate.isChecking, licenseGate.checkFailed, licenseGate.status, router])
 
   useCheckoutCartSync()
+  useShippingQuoteExpiry()
 
   const view = useMemo<CheckoutView>(() => {
     if (currentStep === 2) return "shipping"

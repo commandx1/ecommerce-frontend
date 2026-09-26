@@ -16,6 +16,7 @@ export default function ShippingDetails() {
     selectedRates,
     sellerGroups,
     showAutoOrderAddressNotice,
+    refreshKey,
     onAddAddress,
     onRateSelect,
     onSubmit,
@@ -44,6 +45,7 @@ export default function ShippingDetails() {
           cartId={cartId}
           selectedRates={selectedRates}
           sellerGroups={sellerGroups}
+          refreshKey={refreshKey}
           onRateSelect={onRateSelect}
         />
       ) : null}

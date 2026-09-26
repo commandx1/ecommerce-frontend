@@ -6,6 +6,7 @@ import { useCallback, useMemo, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import { useCartId } from "@/features/cart/hooks/useCartQueries"
 import { useCheckoutAutoOrder } from "@/features/checkout/hooks/useCheckoutAutoOrder"
+import { handleExpiredShippingQuote, isShippingQuoteExpired } from "@/features/checkout/lib/shipping-quote-expiry"
 import { extractErrorStatus, isAuthErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
 import { ordersAPI } from "@/lib/api/orders"
 import { queryKeys } from "@/lib/query/keys"
@@ -60,6 +61,8 @@ export function useFinalReview(): UseFinalReviewResult {
     newCardAutoPaymentConsent,
     selectedSavedCardId,
     setAutoOrderUserProductIds,
+    shippingQuoteFetchedAt,
+    setIsPlacingOrder: setStoreIsPlacingOrder,
   } = useCheckoutStore()
   const cartId = useCartId()
   const { hasAutoOrderItems, autoOrderLines } = useCheckoutAutoOrder()
@@ -113,6 +116,17 @@ export function useFinalReview(): UseFinalReviewResult {
       return
     }
     isPlacingOrderRef.current = true
+
+    // The quote frozen in step 2 can have gone stale while the buyer lingered on billing/review -
+    // `useShippingQuoteExpiry`'s background timer normally catches this first, but a synchronous
+    // check right here, before a charge is ever attempted, is the last line of defense (e.g. a
+    // background-tab timer that never got the chance to re-check on focus/visibilitychange).
+    if (isShippingQuoteExpired(shippingQuoteFetchedAt, Date.now())) {
+      isPlacingOrderRef.current = false
+      handleExpiredShippingQuote()
+      return
+    }
+
     // Set once `placeOrder` has resolved (the order row exists) - only then can anything cached
     // about orders, the cart, saved cards or schedules have changed server-side.
     let orderCreated = false
@@ -138,6 +152,7 @@ export function useFinalReview(): UseFinalReviewResult {
       }
 
       setIsPlacingOrder(true)
+      setStoreIsPlacingOrder(true)
       const payload = {
         ...orderPayload,
         cartId: cartId || "",
@@ -261,6 +276,7 @@ export function useFinalReview(): UseFinalReviewResult {
     } finally {
       isPlacingOrderRef.current = false
       setIsPlacingOrder(false)
+      setStoreIsPlacingOrder(false)
 
       // The cart is only marked stale (no refetch): the badge keeps its count until "Continue
       // shopping" clears the cart.
@@ -291,6 +307,8 @@ export function useFinalReview(): UseFinalReviewResult {
     saveCard,
     selectedSavedCardId,
     setOrderResult,
+    setStoreIsPlacingOrder,
+    shippingQuoteFetchedAt,
     stripe,
   ])
 

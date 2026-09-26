@@ -7,7 +7,12 @@ interface ShippingMethodsSectionProps {
   cartId: string
   selectedRates: Record<string, { type: "shippo" | "uber"; rateId: string }>
   sellerGroups: Record<string, SellerGroup>
-  onRateSelect: (vendorId: string, rate: ShippingRate) => void
+  /**
+   * Bumped when a stale shipping quote blocks Continue — folded into each `VendorShipmentRates`'s
+   * `key` below so a bump remounts (and thus refetches, see `VendorShipmentRates`) every card.
+   */
+  refreshKey: number
+  onRateSelect: (vendorId: string, rate: ShippingRate, fetchedAt: number) => void
 }
 
 export default function ShippingMethodsSection({
@@ -15,6 +20,7 @@ export default function ShippingMethodsSection({
   cartId,
   selectedRates,
   sellerGroups,
+  refreshKey,
   onRateSelect,
 }: ShippingMethodsSectionProps) {
   return (
@@ -29,7 +35,7 @@ export default function ShippingMethodsSection({
       <div className="space-y-8">
         {Object.entries(sellerGroups).map(([sellerId, group]) => (
           <VendorShipmentRates
-            key={sellerId}
+            key={`${sellerId}-${refreshKey}`}
             sellerId={sellerId}
             sellerName={group.name}
             items={group.items}

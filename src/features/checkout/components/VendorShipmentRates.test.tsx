@@ -112,7 +112,11 @@ describe("VendorShipmentRates — malformed servicelevel (C axis)", () => {
     await waitFor(() => expect(screen.getByText("Shipping option")).toBeInTheDocument())
     expect(screen.queryByText("Failed to fetch shipping rates")).not.toBeInTheDocument()
     await waitFor(() =>
-      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "rate-1" })),
+      expect(onSelect).toHaveBeenCalledWith(
+        sellerId,
+        expect.objectContaining({ objectId: "rate-1" }),
+        expect.any(Number),
+      ),
     )
   })
 
@@ -174,7 +178,11 @@ describe("VendorShipmentRates — malformed servicelevel (C axis)", () => {
 
     await waitFor(() => expect(screen.getByText("Priority Mail")).toBeInTheDocument())
     await waitFor(() =>
-      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "rate-1" })),
+      expect(onSelect).toHaveBeenCalledWith(
+        sellerId,
+        expect.objectContaining({ objectId: "rate-1" }),
+        expect.any(Number),
+      ),
     )
   })
 })
@@ -312,7 +320,11 @@ describe("VendorShipmentRates — stale selection is replaced on refetch", () =>
       />,
     )
     await waitFor(() =>
-      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "rate-old" })),
+      expect(onSelect).toHaveBeenCalledWith(
+        sellerId,
+        expect.objectContaining({ objectId: "rate-old" }),
+        expect.any(Number),
+      ),
     )
     onSelect.mockClear()
 
@@ -338,7 +350,11 @@ describe("VendorShipmentRates — stale selection is replaced on refetch", () =>
     // "rate-old" no longer exists in the fresh response — it must not silently ride along into
     // the order. The cheapest available rate is auto-selected in its place.
     await waitFor(() =>
-      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "rate-new-cheap" })),
+      expect(onSelect).toHaveBeenCalledWith(
+        sellerId,
+        expect.objectContaining({ objectId: "rate-new-cheap" }),
+        expect.any(Number),
+      ),
     )
   })
 
@@ -361,7 +377,11 @@ describe("VendorShipmentRates — stale selection is replaced on refetch", () =>
       />,
     )
     await waitFor(() =>
-      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "rate-1", amount: "10.00" })),
+      expect(onSelect).toHaveBeenCalledWith(
+        sellerId,
+        expect.objectContaining({ objectId: "rate-1", amount: "10.00" }),
+        expect.any(Number),
+      ),
     )
     onSelect.mockClear()
 
@@ -384,7 +404,11 @@ describe("VendorShipmentRates — stale selection is replaced on refetch", () =>
     )
 
     await waitFor(() =>
-      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "rate-1", amount: "18.00" })),
+      expect(onSelect).toHaveBeenCalledWith(
+        sellerId,
+        expect.objectContaining({ objectId: "rate-1", amount: "18.00" }),
+        expect.any(Number),
+      ),
     )
   })
 
@@ -407,7 +431,11 @@ describe("VendorShipmentRates — stale selection is replaced on refetch", () =>
       />,
     )
     await waitFor(() =>
-      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "rate-1" })),
+      expect(onSelect).toHaveBeenCalledWith(
+        sellerId,
+        expect.objectContaining({ objectId: "rate-1" }),
+        expect.any(Number),
+      ),
     )
     onSelect.mockClear()
 
@@ -493,7 +521,11 @@ describe("VendorShipmentRates — rate selection and pricing", () => {
     )
 
     await waitFor(() =>
-      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "cheapest" })),
+      expect(onSelect).toHaveBeenCalledWith(
+        sellerId,
+        expect.objectContaining({ objectId: "cheapest" }),
+        expect.any(Number),
+      ),
     )
     // Rendered options are also sorted cheapest-first.
     const radios = await screen.findAllByRole("radio")
@@ -521,7 +553,11 @@ describe("VendorShipmentRates — rate selection and pricing", () => {
     )
 
     await waitFor(() =>
-      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ kind: "delivery_quote" })),
+      expect(onSelect).toHaveBeenCalledWith(
+        sellerId,
+        expect.objectContaining({ kind: "delivery_quote" }),
+        expect.any(Number),
+      ),
     )
     expect(screen.getByText("Uber Direct")).toBeInTheDocument()
   })
@@ -546,7 +582,11 @@ describe("VendorShipmentRates — rate selection and pricing", () => {
     )
 
     await waitFor(() =>
-      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "shippo-rate" })),
+      expect(onSelect).toHaveBeenCalledWith(
+        sellerId,
+        expect.objectContaining({ objectId: "shippo-rate" }),
+        expect.any(Number),
+      ),
     )
   })
 
@@ -572,7 +612,9 @@ describe("VendorShipmentRates — rate selection and pricing", () => {
 
     await waitFor(() => expect(screen.getByText("$25.00")).toBeInTheDocument())
     expect(screen.queryByText(/Great deal/)).not.toBeInTheDocument()
-    await waitFor(() => expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ amount: "25.00" })))
+    await waitFor(() =>
+      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ amount: "25.00" }), expect.any(Number)),
+    )
   })
 
   it("shows a Great deal badge with the correct discount when the carrier rate undercuts the plain shipment fee", async () => {
@@ -598,7 +640,9 @@ describe("VendorShipmentRates — rate selection and pricing", () => {
     )
 
     await waitFor(() => expect(screen.getByText(/Great deal: \$15\.00 shipping discount/)).toBeInTheDocument())
-    await waitFor(() => expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ amount: "10.00" })))
+    await waitFor(() =>
+      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ amount: "10.00" }), expect.any(Number)),
+    )
   })
 
   /**
@@ -793,7 +837,9 @@ describe("VendorShipmentRates — rate selection and pricing", () => {
     // (5) — and no badge, since the raw carrier rate (50) is nowhere near vendorShipmentFee.
     await waitFor(() => expect(screen.getByText("$30.00")).toBeInTheDocument())
     expect(screen.queryByText(/Great deal:/)).not.toBeInTheDocument()
-    await waitFor(() => expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ amount: "30.00" })))
+    await waitFor(() =>
+      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ amount: "30.00" }), expect.any(Number)),
+    )
   })
 
   it("renders all shippo rates in ascending price order, not fetch order", async () => {
@@ -872,7 +918,11 @@ describe("VendorShipmentRates — rate selection and pricing", () => {
     // A tie must not be treated as "Uber is cheaper" — the comparison is strictly-less-than, so
     // the shippo rate (evaluated first in the fallback) keeps its spot.
     await waitFor(() =>
-      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "shippo-rate" })),
+      expect(onSelect).toHaveBeenCalledWith(
+        sellerId,
+        expect.objectContaining({ objectId: "shippo-rate" }),
+        expect.any(Number),
+      ),
     )
   })
 
@@ -899,7 +949,11 @@ describe("VendorShipmentRates — rate selection and pricing", () => {
     )
 
     await waitFor(() =>
-      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "shippo-rate" })),
+      expect(onSelect).toHaveBeenCalledWith(
+        sellerId,
+        expect.objectContaining({ objectId: "shippo-rate" }),
+        expect.any(Number),
+      ),
     )
   })
 
@@ -925,7 +979,11 @@ describe("VendorShipmentRates — rate selection and pricing", () => {
     // A promotional $0 Uber fee is real money-relevant information — it must win against a paid
     // shippo rate exactly like any other cheaper quote would, not be excluded as "invalid".
     await waitFor(() =>
-      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ kind: "delivery_quote" })),
+      expect(onSelect).toHaveBeenCalledWith(
+        sellerId,
+        expect.objectContaining({ kind: "delivery_quote" }),
+        expect.any(Number),
+      ),
     )
   })
 
@@ -978,7 +1036,11 @@ describe("VendorShipmentRates — rate selection and pricing", () => {
     )
 
     await waitFor(() =>
-      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ kind: "delivery_quote" })),
+      expect(onSelect).toHaveBeenCalledWith(
+        sellerId,
+        expect.objectContaining({ kind: "delivery_quote" }),
+        expect.any(Number),
+      ),
     )
   })
 })
@@ -1051,7 +1113,11 @@ describe("VendorShipmentRates — manual selection (click)", () => {
 
     // Wait for the cheapest to auto-select first, then act as the buyer manually overriding it.
     await waitFor(() =>
-      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "auto-picked" })),
+      expect(onSelect).toHaveBeenCalledWith(
+        sellerId,
+        expect.objectContaining({ objectId: "auto-picked" }),
+        expect.any(Number),
+      ),
     )
     onSelect.mockClear()
 
@@ -1061,6 +1127,7 @@ describe("VendorShipmentRates — manual selection (click)", () => {
     expect(onSelect).toHaveBeenCalledWith(
       sellerId,
       expect.objectContaining({ objectId: "manually-picked", amount: "15.00" }),
+      expect.any(Number),
     )
   })
 
@@ -1088,7 +1155,11 @@ describe("VendorShipmentRates — manual selection (click)", () => {
     const radio = await screen.findByRole("radio")
     await user.click(radio)
 
-    expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "free-rate", amount: "0.00" }))
+    expect(onSelect).toHaveBeenCalledWith(
+      sellerId,
+      expect.objectContaining({ objectId: "free-rate", amount: "0.00" }),
+      expect.any(Number),
+    )
   })
 
   /**
@@ -1126,7 +1197,11 @@ describe("VendorShipmentRates — manual selection (click)", () => {
 
     // And it is the usable rate that gets auto-selected, never the untrusted one.
     await waitFor(() =>
-      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "good-amount" })),
+      expect(onSelect).toHaveBeenCalledWith(
+        sellerId,
+        expect.objectContaining({ objectId: "good-amount" }),
+        expect.any(Number),
+      ),
     )
     for (const [, reportedRate] of onSelect.mock.calls as [string, ShipmentRate][]) {
       expect(reportedRate.objectId).not.toBe("bad-amount")
@@ -1359,7 +1434,11 @@ describe("VendorShipmentRates — adversarial rate data (C axis)", () => {
     // The valid, positively-priced rate must win — not the broken one, even though a raw
     // numeric/string comparison would rank a negative amount as "cheapest".
     await waitFor(() =>
-      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "good-amount" })),
+      expect(onSelect).toHaveBeenCalledWith(
+        sellerId,
+        expect.objectContaining({ objectId: "good-amount" }),
+        expect.any(Number),
+      ),
     )
     expect(screen.queryByText(/Great deal: \$40\.00/)).not.toBeInTheDocument()
     expect(screen.queryByText("-$10.00")).not.toBeInTheDocument()
@@ -1386,7 +1465,11 @@ describe("VendorShipmentRates — adversarial rate data (C axis)", () => {
 
     await waitFor(() => expect(screen.getByText("Free")).toBeInTheDocument())
     await waitFor(() =>
-      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "free-rate" })),
+      expect(onSelect).toHaveBeenCalledWith(
+        sellerId,
+        expect.objectContaining({ objectId: "free-rate" }),
+        expect.any(Number),
+      ),
     )
   })
 

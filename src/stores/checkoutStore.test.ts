@@ -382,6 +382,7 @@ describe("checkoutStore shipping selections", () => {
     store().setSelectedShippingEtaText("Ground - 5 business days")
     store().setOrderPayload(orderPayload)
     store().setExcludedFromOrder([{ sellerName: "Beta Dental", itemNames: ["Widget"] }])
+    store().setShippingQuoteFetchedAt(Date.now())
 
     store().clearShippingSelection()
 
@@ -390,9 +391,47 @@ describe("checkoutStore shipping selections", () => {
     expect(store().selectedShippingEtaText).toBe("")
     expect(store().orderPayload).toBeNull()
     expect(store().excludedFromOrder).toEqual([])
+    expect(store().shippingQuoteFetchedAt).toBeNull()
     expect(store().poNumber).toBe("PO-9001")
     expect(store().currentStep).toBe(3)
     expect(store().paymentMethodId).toBe("pm_123")
+  })
+})
+
+describe("checkoutStore shipping quote expiry fields", () => {
+  it("defaults shippingQuoteFetchedAt to null and isPlacingOrder to false", () => {
+    expect(store().shippingQuoteFetchedAt).toBeNull()
+    expect(store().isPlacingOrder).toBe(false)
+  })
+
+  it("stores and clears the shipping quote's fetch timestamp", () => {
+    store().setShippingQuoteFetchedAt(1_700_000_000_000)
+
+    expect(store().shippingQuoteFetchedAt).toBe(1_700_000_000_000)
+
+    store().setShippingQuoteFetchedAt(null)
+
+    expect(store().shippingQuoteFetchedAt).toBeNull()
+  })
+
+  it("tracks the in-flight order submission flag", () => {
+    store().setIsPlacingOrder(true)
+
+    expect(store().isPlacingOrder).toBe(true)
+
+    store().setIsPlacingOrder(false)
+
+    expect(store().isPlacingOrder).toBe(false)
+  })
+
+  it("resets both fields on reset", () => {
+    store().setShippingQuoteFetchedAt(1_700_000_000_000)
+    store().setIsPlacingOrder(true)
+
+    store().reset()
+
+    expect(store().shippingQuoteFetchedAt).toBeNull()
+    expect(store().isPlacingOrder).toBe(false)
   })
 })
 
