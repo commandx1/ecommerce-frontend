@@ -16,6 +16,13 @@ import { buildBuyerAuthCookie, buildVendorAuthCookie } from "./fixtures/auth-coo
 const BUYER_ID = "buyer-cross-tab-1"
 
 /**
+ * Next's own handle on the App Router instance (`window.next.router`, set in production builds too).
+ * Used to issue a prefetch / soft navigation exactly as a <Link> would, without depending on which
+ * links a given page happens to render. Only ever referenced inside `page.evaluate`.
+ */
+type NextRouterWindow = { next: { router: { prefetch(href: string): void; push(href: string): void } } }
+
+/**
  * Writes an account cookie and confirms the jar actually holds it before the caller navigates.
  * `addCookies` resolves before the value is necessarily observable, and a sibling tab's sync can
  * land in that gap - in which case the tab about to load would adopt the wrong account.
@@ -320,5 +327,106 @@ test.describe("multi-account tabs (per-browser-tab sessions)", () => {
     await expect(buyerTabA).toHaveURL(/\/$/, { timeout: 10_000 })
     // vendorTab (a different account) never received a matching user id and stays put.
     await expect(vendorTab).toHaveURL(/\/vendor-dashboard/)
+  })
+
+  test("scenario A: a background tab's prefetch never caches a cross-role redirect", async ({ context, baseURL }) => {
+    await installVisibilityControl(context)
+
+    const buyerTab = await openTabAs(
+      context,
+      buildBuyerAuthCookie({ id: BUYER_ID }, baseURL),
+      "BUYER",
+      "/buyer-dashboard",
+    )
+    await expect(buyerTab).toHaveURL(/\/buyer-dashboard/)
+    const vendorTab = await openTabAs(context, buildVendorAuthCookie({}, baseURL), "Vendor", "/vendor-dashboard")
+    await expect(vendorTab).toHaveURL(/\/vendor-dashboard/)
+
+    // The buyer tab is now in the background and the shared cookie belongs to the vendor tab - the
+    // exact state in which a background prefetch used to be judged by the WRONG account.
+    const jar = await context.cookies()
+    expect(decodeURIComponent(jar.find((c) => c.name === "auth-storage")?.value ?? "")).toContain("Vendor")
+
+    const prefetches: Array<{ status: number; pathname: string }> = []
+    buyerTab.on("response", (response) => {
+      if (response.request().headers()["next-router-prefetch"] !== undefined) {
+        prefetches.push({ status: response.status(), pathname: new URL(response.url()).pathname })
+      }
+    })
+
+    // A unique URL, so no earlier prefetch of the same link can already sit in the Router Cache.
+    const probe = `/buyer-dashboard/orders?prefetch-probe=${Date.now()}`
+    await buyerTab.evaluate((href) => (window as unknown as NextRouterWindow).next.router.prefetch(href), probe)
+    await expect.poll(() => prefetches.some((p) => p.pathname === "/buyer-dashboard/orders")).toBe(true)
+
+    // proxy.ts used to answer this with 307 -> /vendor-dashboard (vendor cookie), and the Router
+    // Cache kept that for minutes. Prefetches now skip the proxy, so no redirect exists to cache.
+    expect(prefetches.filter((p) => p.status >= 300 && p.status < 400)).toEqual([])
+    expect(prefetches.filter((p) => p.pathname.startsWith("/vendor-dashboard"))).toEqual([])
+
+    // The buyer comes back and follows that very link: it lands where the link points, not on the
+    // vendor dashboard (and not bounced back to the buyer dashboard root by the vendor guard).
+    await activateTab(buyerTab)
+    await buyerTab.evaluate((href) => (window as unknown as NextRouterWindow).next.router.push(href), probe)
+    await expect(buyerTab).toHaveURL(/\/buyer-dashboard\/orders\?prefetch-probe=/)
+    await expect(vendorTab).toHaveURL(/\/vendor-dashboard/)
+  })
+
+  test("scenario B: a background vendor tab reloaded under a buyer cookie returns to its own dashboard", async ({
+    context,
+    baseURL,
+  }) => {
+    await installVisibilityControl(context)
+
+    const buyerCookie = buildBuyerAuthCookie({ id: BUYER_ID }, baseURL)
+    const buyerTab = await openTabAs(context, buyerCookie, "BUYER", "/buyer-dashboard")
+    const vendorTab = await openTabAs(context, buildVendorAuthCookie({}, baseURL), "Vendor", "/vendor-dashboard")
+    await expect(vendorTab).toHaveURL(/\/vendor-dashboard/)
+
+    // Buyer in front -> the shared cookie is the buyer's; the vendor tab is in the background.
+    await activateTab(buyerTab)
+    await buyerTab.waitForFunction(
+      () => document.cookie.includes("auth-storage") && !document.cookie.includes("Vendor"),
+    )
+
+    // Simulate the race that used to strand the tab: right as the vendor guard's FIRST client
+    // navigation back to /vendor-dashboard leaves, the focused buyer tab re-writes the shared cookie.
+    // The proxy judges that request (and the redirect hop it answers with, which Playwright does not
+    // route again - hence the jar write, not just the header) by the buyer account and bounces it to
+    // /buyer-dashboard. Only that one navigation is tampered with.
+    let bounced = 0
+    await vendorTab.route(
+      (url) => url.pathname === "/vendor-dashboard" && url.searchParams.has("_rsc"),
+      async (route) => {
+        const headers = await route.request().allHeaders()
+        if (bounced === 0 && headers["next-router-prefetch"] === undefined) {
+          bounced++
+          await context.addCookies([buyerCookie])
+          await route.continue({ headers: { ...headers, cookie: `${buyerCookie.name}=${buyerCookie.value}` } })
+          return
+        }
+        await route.continue()
+      },
+    )
+
+    // The reload itself is judged by the buyer cookie -> the proxy sends the vendor tab to the buyer
+    // dashboard; its guard sees the tab's own vendor session and pushes it back home.
+    await vendorTab.reload({ waitUntil: "domcontentloaded" })
+    await expect.poll(() => bounced, { timeout: 10_000 }).toBe(1)
+    // That push was bounced: the tab is stuck on the buyer dashboard (this used to be permanent).
+    await expect(vendorTab).toHaveURL(/\/buyer-dashboard/)
+
+    // Looking at the tab again re-runs the guard, which re-points the cookie at the vendor session
+    // before navigating - so this time the proxy lets it through.
+    await activateTab(vendorTab)
+    await expect(vendorTab).toHaveURL(/\/vendor-dashboard/, { timeout: 10_000 })
+    expect(await vendorTab.evaluate(() => sessionStorage.getItem("auth-storage"))).toContain("Vendor")
+
+    // The buyer tab never adopted the vendor account and still resolves to its own dashboard.
+    await activateTab(buyerTab)
+    await buyerTab.waitForFunction(() => !document.cookie.includes("Vendor"))
+    await buyerTab.reload({ waitUntil: "domcontentloaded" })
+    await expect(buyerTab).toHaveURL(/\/buyer-dashboard/)
+    expect(await buyerTab.evaluate(() => sessionStorage.getItem("auth-storage"))).not.toContain("Vendor")
   })
 })

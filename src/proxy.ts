@@ -1,6 +1,18 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 
+/**
+ * Every redirect below is decided by the shared `auth-storage` cookie, which only mirrors whichever
+ * tab wrote it last (per-tab sessions, see tab-session-storage.ts). Such a decision must never be
+ * stored by any HTTP cache; the client Router Cache is covered by `config.matcher` (prefetches
+ * never reach this function).
+ */
+const redirectTo = (url: URL): NextResponse => {
+  const response = NextResponse.redirect(url)
+  response.headers.set("Cache-Control", "private, no-store")
+  return response
+}
+
 export async function proxy(request: NextRequest) {
   const url = new URL(request.url)
   const pathname = url.pathname
@@ -42,7 +54,7 @@ export async function proxy(request: NextRequest) {
   const AUTH_PATHS = ["/login", "/register", "/verify-email", "/verify-2fa", "/forgot-password", "/reset-password"]
   const isAuthPage = pathname.startsWith("/auth/") || AUTH_PATHS.includes(pathname)
   if (isAuthenticated && user?.roleName === "Vendor" && !pathname.startsWith("/vendor-dashboard") && !isAuthPage) {
-    return NextResponse.redirect(new URL("/vendor-dashboard", request.url))
+    return redirectTo(new URL("/vendor-dashboard", request.url))
   }
 
   // Protected dashboard routes logic
@@ -50,27 +62,50 @@ export async function proxy(request: NextRequest) {
     if (!authCookie || !user || !isAuthenticated) {
       const loginUrl = new URL("/login", request.url)
       loginUrl.searchParams.set("redirect", pathname + request.nextUrl.search)
-      return NextResponse.redirect(loginUrl)
+      return redirectTo(loginUrl)
     }
 
     // Role check between dashboards
     if (pathname.startsWith("/vendor-dashboard") && user.roleName !== "Vendor") {
-      return NextResponse.redirect(new URL("/buyer-dashboard", request.url))
+      return redirectTo(new URL("/buyer-dashboard", request.url))
     }
 
     if (pathname.startsWith("/buyer-dashboard") && user.roleName === "Vendor") {
-      return NextResponse.redirect(new URL("/vendor-dashboard", request.url))
+      return redirectTo(new URL("/vendor-dashboard", request.url))
     }
   }
 
   return NextResponse.next()
 }
 
+/**
+ * App Router prefetches skip this proxy entirely (`missing` below), so a role/auth redirect is
+ * never stored in the client Router Cache.
+ *
+ * A prefetch runs in the background - often in a tab that is not focused - and therefore carries
+ * the FOCUSED tab's cookie. Redirecting it (e.g. "/" -> /vendor-dashboard because a sibling tab is
+ * a vendor) made the Router Cache remember "this link leads to /vendor-dashboard" for minutes, and
+ * with a dashboard `loading.tsx` the router committed that stale redirect instantly on the next
+ * navigation. Next strips the `rsc` / `next-router-*prefetch` headers before calling `proxy()`, so
+ * the function itself cannot tell a prefetch apart - only the matcher, which sees the raw request.
+ *
+ * This does not weaken the guard: a prefetch renders a route's layouts only down to its
+ * `loading.tsx` (the dashboard layouts are client guards that render no `children` until the tab's
+ * own session passes, and no dashboard server component reads the cookie), and the navigation that
+ * follows is a normal RSC request that always passes through here with the then-current cookie.
+ */
 export const config = {
   matcher: [
-    // The lookahead is anchored to a segment boundary (`api/` or end-of-path) so that a page
-    // whose first segment merely STARTS with an excluded name (`/apidocs`, `/api-status`)
-    // still goes through the auth guard.
-    "/((?!api/|api$|backend-api/|backend-api$|backend-ws/|backend-ws$|_next/static|_next/image|favicon\\.ico$|qz-tray\\.js$|.*\\.(?:png|jpe?g|gif|svg|webp|avif|ico|txt|xml|json|woff2?)$).*)",
+    {
+      // The lookahead is anchored to a segment boundary (`api/` or end-of-path) so that a page
+      // whose first segment merely STARTS with an excluded name (`/apidocs`, `/api-status`)
+      // still goes through the auth guard.
+      source:
+        "/((?!api/|api$|backend-api/|backend-api$|backend-ws/|backend-ws$|_next/static|_next/image|favicon\\.ico$|qz-tray\\.js$|.*\\.(?:png|jpe?g|gif|svg|webp|avif|ico|txt|xml|json|woff2?)$).*)",
+      missing: [
+        { type: "header", key: "next-router-prefetch" },
+        { type: "header", key: "next-router-segment-prefetch" },
+      ],
+    },
   ],
 }

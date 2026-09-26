@@ -189,6 +189,35 @@ describe("bindActiveTabSync", () => {
 
     expect(cookieStorage.getItem(NAME)).toBe("sibling-tab-value-2")
   })
+
+  // A background tab can move the cookie while this one keeps focus (no focus event follows), so
+  // the next click/keypress here must re-claim it before the navigation it starts hits the proxy.
+  it.each(["pointerdown", "keydown"])("re-claims the cookie on %s in the visible tab", (type) => {
+    sessionStorage.setItem(NAME, "this-tab-value")
+    vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible")
+    const unbind = bindActiveTabSync(NAME)
+    cookieStorage.setItem(NAME, "sibling-tab-value")
+
+    document.body.dispatchEvent(new Event(type, { bubbles: true }))
+
+    expect(cookieStorage.getItem(NAME)).toBe("this-tab-value")
+    unbind()
+  })
+
+  it("does not re-claim the cookie on input while hidden, and stops after cleanup", () => {
+    sessionStorage.setItem(NAME, "this-tab-value")
+    const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden")
+    const unbind = bindActiveTabSync(NAME)
+    cookieStorage.setItem(NAME, "sibling-tab-value")
+
+    document.body.dispatchEvent(new Event("pointerdown", { bubbles: true }))
+    expect(cookieStorage.getItem(NAME)).toBe("sibling-tab-value")
+
+    unbind()
+    visibility.mockReturnValue("visible")
+    document.body.dispatchEvent(new Event("keydown", { bubbles: true }))
+    expect(cookieStorage.getItem(NAME)).toBe("sibling-tab-value")
+  })
 })
 
 describe("sessionStorage unavailable (private window / blocked storage)", () => {

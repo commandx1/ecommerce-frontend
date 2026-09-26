@@ -129,11 +129,24 @@ export const bindActiveTabSync = (name: string): (() => void) => {
     if (document.visibilityState === "visible") sync()
   }
 
+  // A background tab can move the cookie without this tab losing focus (its bootstrap read, a token
+  // refresh, its dashboard guard). Re-claiming it on every pointer/key press in the visible tab
+  // means a link click or Enter here is always judged by the proxy with THIS tab's account.
+  // Capture phase, so it runs before any click handler starts a navigation.
+  const onUserInput = () => {
+    if (document.visibilityState === "visible") sync()
+  }
+  const inputOptions: AddEventListenerOptions = { capture: true, passive: true }
+
   window.addEventListener("focus", sync)
   document.addEventListener("visibilitychange", onVisibilityChange)
+  document.addEventListener("pointerdown", onUserInput, inputOptions)
+  document.addEventListener("keydown", onUserInput, inputOptions)
 
   return () => {
     window.removeEventListener("focus", sync)
     document.removeEventListener("visibilitychange", onVisibilityChange)
+    document.removeEventListener("pointerdown", onUserInput, inputOptions)
+    document.removeEventListener("keydown", onUserInput, inputOptions)
   }
 }

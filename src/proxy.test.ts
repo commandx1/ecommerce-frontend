@@ -1,3 +1,4 @@
+import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server"
 import { NextRequest } from "next/server"
 import { describe, expect, it } from "vitest"
 import { config, proxy } from "./proxy"
@@ -338,7 +339,7 @@ describe("proxy redirect construction", () => {
 })
 
 describe("proxy config.matcher", () => {
-  const matcher = new RegExp(`^${config.matcher[0]}$`)
+  const matcher = new RegExp(`^${config.matcher[0]?.source}$`)
 
   it.each([
     ["/api/users", false],
@@ -370,5 +371,62 @@ describe("proxy config.matcher", () => {
     ["/backend-api", false],
   ])("matcher against %s -> %s", (pathname, expected) => {
     expect(matcher.test(pathname)).toBe(expected)
+  })
+})
+
+describe("proxy never lets a cookie-dependent redirect be cached", () => {
+  // The shared cookie mirrors whichever tab wrote it last, so every redirect is only true for that
+  // instant and must not be stored by an HTTP cache (browser, CDN, reverse proxy).
+  it.each([
+    ["role mismatch (buyer -> vendor dashboard)", BUYER, "/vendor-dashboard"],
+    ["role mismatch (vendor -> storefront)", VENDOR, "/"],
+    ["role mismatch (vendor -> buyer dashboard)", VENDOR, "/buyer-dashboard"],
+    ["no session on a dashboard", undefined, "/buyer-dashboard/orders"],
+  ])("%s redirect is `private, no-store`", async (_name, cookie, path) => {
+    const response = await proxy(makeRequest(path, cookie))
+
+    expect(response.status).toBe(307)
+    expect(response.headers.get("cache-control")).toBe("private, no-store")
+  })
+
+  it("a pass-through response is left for Next to decide (no cache header forced)", async () => {
+    const response = await proxy(makeRequest("/buyer-dashboard", BUYER))
+
+    expect(isNext(response)).toBe(true)
+    expect(response.headers.get("cache-control")).toBeNull()
+  })
+})
+
+describe("proxy matcher skips App Router prefetches (Router Cache must never store a redirect)", () => {
+  // Evaluated with Next's own matcher implementation (`has`/`missing` included), against the RAW
+  // request headers - Next strips `rsc`/`next-router-*` before `proxy()` runs, so the matcher is
+  // the only place a prefetch can be told apart.
+  const matches = (url: string, headers: Record<string, string> = {}) =>
+    unstable_doesMiddlewareMatch({ config, url: `${ORIGIN}${url}`, headers })
+
+  it.each(["/", "/vendor-dashboard", "/buyer-dashboard/orders", "/products?companyId=1"])(
+    "a document request to %s still runs the proxy",
+    (url) => {
+      expect(matches(url)).toBe(true)
+    },
+  )
+
+  it("a client-side navigation (RSC request without prefetch headers) still runs the proxy", () => {
+    expect(matches("/vendor-dashboard", { rsc: "1", "next-router-state-tree": "%5B%5D" })).toBe(true)
+  })
+
+  it.each([
+    ["route-tree prefetch", { rsc: "1", "next-router-prefetch": "1", "next-router-segment-prefetch": "/_tree" }],
+    ["loading-boundary prefetch", { rsc: "1", "next-router-prefetch": "1" }],
+    ["runtime prefetch", { rsc: "1", "next-router-prefetch": "2" }],
+    ["segment prefetch", { rsc: "1", "next-router-segment-prefetch": "/buyer-dashboard/__PAGE__" }],
+  ])("a %s bypasses the proxy", (_name, headers) => {
+    expect(matches("/vendor-dashboard", headers)).toBe(false)
+    expect(matches("/", headers)).toBe(false)
+  })
+
+  it("static assets stay excluded for prefetches and navigations alike", () => {
+    expect(matches("/DentyProLogo.png")).toBe(false)
+    expect(matches("/DentyProLogo.png", { rsc: "1" })).toBe(false)
   })
 })

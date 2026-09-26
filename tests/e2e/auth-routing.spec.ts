@@ -1,5 +1,5 @@
 import { expect, test } from "./fixtures/auth.fixture"
-import { buildAuthCookie, buildVendorAuthCookie } from "./fixtures/auth-cookie"
+import { buildAuthCookie, buildBuyerAuthCookie, buildVendorAuthCookie } from "./fixtures/auth-cookie"
 
 /**
  * src/proxy.ts's redirect matrix, verified against real runtime behaviour -
@@ -236,5 +236,60 @@ test.describe("auth-routing (src/proxy.ts)", () => {
     // the cookie's tokens and move on, so the in-page URL is only transiently /login.
     const response = await page.goto("/buyer-dashboard")
     expect(response?.url()).toMatch(/\/login\?redirect=%2Fbuyer-dashboard/)
+  })
+})
+
+/**
+ * The redirects above are only true for the cookie at that instant (the shared cookie mirrors
+ * whichever tab wrote last - per-tab sessions), so none of them may ever be stored:
+ *   - document / RSC navigation redirects carry `Cache-Control: private, no-store`;
+ *   - App Router prefetches skip proxy.ts entirely (`config.matcher` `missing`), so the Router Cache
+ *     can never remember "this link leads to the other dashboard". The navigation that follows a
+ *     prefetch is a plain RSC request and is still redirected (second assertion).
+ * Plain HTTP, `maxRedirects: 0`: this is about the proxy's raw answer, not where a browser ends up.
+ */
+test.describe("auth-routing: redirects are never cacheable", () => {
+  test.use({ apiMockStrict: false })
+
+  test("navigations are redirected with no-store; App Router prefetches are never redirected", async ({
+    request,
+    baseURL,
+  }) => {
+    const buyer = buildBuyerAuthCookie({}, baseURL)
+    const cookie = `${buyer.name}=${buyer.value}`
+
+    const navigationVariants: Array<Record<string, string>> = [{ cookie }, { cookie, rsc: "1" }]
+    for (const headers of navigationVariants) {
+      const response = await request.get("/vendor-dashboard", { headers, maxRedirects: 0 })
+      expect(response.status(), JSON.stringify(Object.keys(headers))).toBe(307)
+      expect(response.headers().location).toBe("/buyer-dashboard")
+      expect(response.headers()["cache-control"]).toBe("private, no-store")
+    }
+
+    const prefetchVariants: Array<Record<string, string>> = [
+      { rsc: "1", "next-router-prefetch": "1", "next-router-segment-prefetch": "/_tree" },
+      { rsc: "1", "next-router-prefetch": "1" },
+    ]
+    for (const prefetchHeaders of prefetchVariants) {
+      const response = await request.get("/vendor-dashboard", {
+        headers: { cookie, ...prefetchHeaders },
+        maxRedirects: 0,
+      })
+      expect(response.status(), JSON.stringify(prefetchHeaders)).toBeLessThan(300)
+      expect(response.headers().location).toBeUndefined()
+    }
+  })
+
+  test("a signed-out dashboard prefetch is not redirected to /login either", async ({ request }) => {
+    const response = await request.get("/buyer-dashboard/orders", {
+      headers: { rsc: "1", "next-router-prefetch": "1" },
+      maxRedirects: 0,
+    })
+    expect(response.status()).toBeLessThan(300)
+    expect(response.headers().location).toBeUndefined()
+
+    const navigation = await request.get("/buyer-dashboard/orders", { maxRedirects: 0 })
+    expect(navigation.status()).toBe(307)
+    expect(navigation.headers()["cache-control"]).toBe("private, no-store")
   })
 })

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { tabSessionStorage } from "@/lib/storage/tab-session-storage"
 import { useAuthStore } from "@/stores/authStore"
 import { getRouterMock } from "@/test/mocks/next-navigation"
-import { useDashboardAuthGuard } from "./useDashboardAuthGuard"
+import { CROSS_ROLE_REDIRECT_LIMIT, useDashboardAuthGuard } from "./useDashboardAuthGuard"
 
 // Covers design doc §4.3 rows 1, 3, 7 and 13 (status transitions) as a `renderHook` complement
 // to the layout characterization suites, which cover the full 13-row matrix through the
@@ -173,5 +173,139 @@ describe("useDashboardAuthGuard", () => {
     expect(result.current.status).toBe("unauthorized")
     expect(result.current.unauthorizedRender).toBe("nothing")
     expect(getRouterMock().push).toHaveBeenCalledWith("/login")
+  })
+})
+
+describe("useDashboardAuthGuard - cross-tab safety", () => {
+  const vendorUser: StoredUser = { ...buyerUser, id: "vendor-1", roleName: "Vendor" }
+
+  /** What the shared cookie holds right now (decoded), i.e. what the proxy would judge by. */
+  const sharedCookie = (): string | null => {
+    const raw = document.cookie
+      .split("; ")
+      .find((c) => c.startsWith(`${COOKIE_NAME}=`))
+      ?.slice(COOKIE_NAME.length + 1)
+    return raw ? decodeURIComponent(raw) : null
+  }
+
+  /** Simulates a sibling tab (different account) writing the shared cookie. */
+  const siblingWritesCookie = (raw: string): void => {
+    // biome-ignore lint/suspicious/noDocumentCookie: simulating another tab's cookieStorage write
+    document.cookie = `${COOKIE_NAME}=${encodeURIComponent(raw)}; path=/`
+  }
+
+  it("scenario B: a vendor tab that landed on the buyer dashboard is sent back with ITS OWN cookie", () => {
+    const vendorSession = persistedEnvelope(vendorUser, true)
+    setStoreState(vendorUser, true)
+    seedSession(vendorSession)
+    // The proxy redirected this tab here because a focused buyer tab owned the cookie.
+    siblingWritesCookie(persistedEnvelope(buyerUser, true))
+
+    const cookieAtPush: Array<string | null> = []
+    getRouterMock().push.mockImplementation(() => {
+      cookieAtPush.push(sharedCookie())
+    })
+
+    renderHook(() => useDashboardAuthGuard("buyer"))
+
+    expect(getRouterMock().push).toHaveBeenCalledWith("/vendor-dashboard")
+    // The proxy will judge that navigation by this tab's vendor account, so it lets it through
+    // instead of bouncing it straight back to /buyer-dashboard.
+    expect(cookieAtPush).toEqual([vendorSession])
+  })
+
+  it("re-points the cookie at this tab right before a delayed (post-hydration) redirect", () => {
+    // Session says buyer, but the store never hydrates a user -> the 100ms timer redirects.
+    setStoreState(null, false)
+    const ownSession = persistedEnvelope(buyerUser, true)
+    seedSession(ownSession)
+
+    const cookieAtPush: Array<string | null> = []
+    getRouterMock().push.mockImplementation(() => {
+      cookieAtPush.push(sharedCookie())
+    })
+
+    renderHook(() => useDashboardAuthGuard("buyer"))
+    // A sibling tab takes the cookie during the hydration wait.
+    siblingWritesCookie(persistedEnvelope(vendorUser, true))
+
+    act(() => {
+      vi.advanceTimersByTime(100)
+    })
+
+    expect(getRouterMock().push).toHaveBeenCalledWith("/login")
+    expect(cookieAtPush).toEqual([ownSession])
+  })
+
+  it("never adopts a sibling's account from the cookie: a buyer tab stays a buyer while the cookie says vendor", () => {
+    setStoreState(buyerUser, true)
+    seedSession(persistedEnvelope(buyerUser, true))
+    siblingWritesCookie(persistedEnvelope(vendorUser, true))
+
+    const { result } = renderHook(() => useDashboardAuthGuard("buyer"))
+    act(() => {
+      vi.advanceTimersByTime(100)
+    })
+
+    expect(result.current.status).toBe("authorized")
+    expect(getRouterMock().push).not.toHaveBeenCalled()
+    expect(useAuthStore.getState().user?.roleName).toBe("Dentist")
+  })
+
+  it("a tab whose redirect was bounced back re-checks when it is shown again", () => {
+    setStoreState(vendorUser, true)
+    seedSession(persistedEnvelope(vendorUser, true))
+    const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden")
+
+    renderHook(() => useDashboardAuthGuard("buyer"))
+    expect(getRouterMock().push).toHaveBeenCalledTimes(1)
+
+    // The navigation was bounced (a sibling rewrote the cookie in between): the layout is still
+    // mounted and nothing in the store changed. Being hidden, focus-less events do nothing...
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"))
+    })
+    expect(getRouterMock().push).toHaveBeenCalledTimes(1)
+
+    // ...but once the user looks at the tab, the guard tries again.
+    visibility.mockReturnValue("visible")
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"))
+    })
+    expect(getRouterMock().push).toHaveBeenCalledTimes(2)
+    expect(getRouterMock().push).toHaveBeenLastCalledWith("/vendor-dashboard")
+    visibility.mockRestore()
+  })
+
+  it("caps buyer <-> vendor ping-pong, and showing the tab again re-arms it", () => {
+    setStoreState(vendorUser, true)
+    seedSession(persistedEnvelope(vendorUser, true))
+    const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible")
+
+    // Each bounce remounts a dashboard layout (the other one in a real ping-pong).
+    for (let hop = 0; hop < CROSS_ROLE_REDIRECT_LIMIT + 2; hop++) {
+      const { unmount } = renderHook(() => useDashboardAuthGuard("buyer"))
+      unmount()
+    }
+    expect(getRouterMock().push).toHaveBeenCalledTimes(CROSS_ROLE_REDIRECT_LIMIT)
+
+    const { unmount } = renderHook(() => useDashboardAuthGuard("buyer"))
+    expect(getRouterMock().push).toHaveBeenCalledTimes(CROSS_ROLE_REDIRECT_LIMIT)
+    act(() => {
+      window.dispatchEvent(new Event("focus"))
+    })
+    expect(getRouterMock().push).toHaveBeenCalledTimes(CROSS_ROLE_REDIRECT_LIMIT + 1)
+    unmount()
+    visibility.mockRestore()
+  })
+
+  it("the cap does not apply to sign-out redirects", () => {
+    setStoreState(null, false)
+    for (let hop = 0; hop < CROSS_ROLE_REDIRECT_LIMIT + 2; hop++) {
+      const { unmount } = renderHook(() => useDashboardAuthGuard("buyer"))
+      unmount()
+    }
+    expect(getRouterMock().push).toHaveBeenCalledTimes(CROSS_ROLE_REDIRECT_LIMIT + 2)
+    expect(getRouterMock().push).toHaveBeenLastCalledWith("/login")
   })
 })
