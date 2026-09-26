@@ -343,7 +343,7 @@ describe("Vendor ProductDetailModal — product details", () => {
     expect(dialog.queryByText("Restorative")).not.toBeInTheDocument()
   })
 
-  it("shows the em dash for an unset heavy shipping surcharge but still formats a real one", async () => {
+  it("hides the heavy shipping fee metric entirely when the surcharge is missing", async () => {
     server.use(
       http.get(USER_PRODUCT_URL, () =>
         HttpResponse.json(makeUserProductDetailResponse({ heavyShippingSurcharge: undefined })),
@@ -353,8 +353,34 @@ describe("Vendor ProductDetailModal — product details", () => {
     renderModal()
 
     const dialog = within(await screen.findByRole("dialog"))
+    await dialog.findByText("Brand")
+    expect(dialog.queryByText("Heavy shipping fee")).not.toBeInTheDocument()
+  })
+
+  it("hides the heavy shipping fee metric entirely when the surcharge is zero", async () => {
+    server.use(
+      http.get(USER_PRODUCT_URL, () => HttpResponse.json(makeUserProductDetailResponse({ heavyShippingSurcharge: 0 }))),
+    )
+
+    renderModal()
+
+    const dialog = within(await screen.findByRole("dialog"))
+    await dialog.findByText("Brand")
+    expect(dialog.queryByText("Heavy shipping fee")).not.toBeInTheDocument()
+  })
+
+  it("shows the heavy shipping fee metric with the formatted amount when the surcharge is positive", async () => {
+    server.use(
+      http.get(USER_PRODUCT_URL, () =>
+        HttpResponse.json(makeUserProductDetailResponse({ heavyShippingSurcharge: 30 })),
+      ),
+    )
+
+    renderModal()
+
+    const dialog = within(await screen.findByRole("dialog"))
     const heavyValue = (await dialog.findByText("Heavy shipping fee")).closest("div")
-    expect(within(heavyValue as HTMLElement).getByText("—")).toBeInTheDocument()
+    expect(within(heavyValue as HTMLElement).getByText("$30.00")).toBeInTheDocument()
   })
 
   it('shows the em dash for a zero discount instead of "0%"', async () => {

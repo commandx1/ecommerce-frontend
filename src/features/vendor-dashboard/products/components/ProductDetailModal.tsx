@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { getFullImageUrl, type Product, productsAPI, type UserProductDetailResponse } from "@/lib/api/products"
 import { formatShortDate } from "@/lib/helpers/format"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { hasHeavyShipmentFee } from "@/lib/helpers/shipping"
 import { useAuthStore } from "@/stores/authStore"
 
 interface ProductDetailModalProps {
@@ -237,15 +238,13 @@ export default function ProductDetailModal({
                     label="Shipment fee"
                     value={formatCurrency(userProduct.shipmentFee)}
                   />
-                  <MetricCard
-                    icon={<Tag size={14} />}
-                    label="Heavy shipping fee"
-                    value={
-                      userProduct.heavyShippingSurcharge != null
-                        ? formatCurrency(userProduct.heavyShippingSurcharge)
-                        : "—"
-                    }
-                  />
+                  {hasHeavyShipmentFee(userProduct.heavyShippingSurcharge) && (
+                    <MetricCard
+                      icon={<Tag size={14} />}
+                      label="Heavy shipping fee"
+                      value={formatCurrency(userProduct.heavyShippingSurcharge)}
+                    />
+                  )}
                 </div>
               </Section>
             )}

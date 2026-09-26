@@ -4,6 +4,7 @@ import type { CellContext, ColumnDef } from "@tanstack/react-table"
 import { useCallback } from "react"
 import type { UserProductSortBy } from "@/lib/api/products"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { hasHeavyShipmentFee } from "@/lib/helpers/shipping"
 import { cn } from "@/lib/utils"
 import { isDiscountOutOfRange } from "../../lib/inline-edit"
 import type { EditingDraft, ProductWithDetails, ViewMode } from "../../types"
@@ -160,9 +161,9 @@ export function usePricingColumns({
               className="h-9 w-24 rounded-lg border border-border-strong bg-surface px-3 text-sm font-medium text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand/40"
               disabled={isSaving}
             />
-          ) : (
-            formatCurrency(product.heavyShippingSurcharge ?? 0)
-          )}
+          ) : hasHeavyShipmentFee(product.heavyShippingSurcharge) ? (
+            formatCurrency(product.heavyShippingSurcharge)
+          ) : null}
         </div>
       )
     },

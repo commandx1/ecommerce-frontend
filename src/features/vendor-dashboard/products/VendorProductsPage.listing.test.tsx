@@ -89,6 +89,43 @@ describe("Vendor ProductsPage — listing", () => {
     expect(row.getByText("$9,506.11")).toBeInTheDocument()
   })
 
+  it("leaves the heavy shipping fee cell empty when there is no heavy fee", async () => {
+    // `periodicGrossRevenue` is given a non-zero value here so the only "$0.00" that could appear
+    // in either row is the heavy-fee cell itself - it otherwise also defaults to 0 and would make
+    // a bare `queryByText("$0.00")` assertion a false negative.
+    serveFilter([
+      makeVendorUserProduct({
+        productName: "No Heavy Fee - Zero",
+        heavyShippingSurcharge: 0,
+        periodicGrossRevenue: 100,
+      }),
+      makeVendorUserProduct({
+        id: "up-2",
+        productId: "p-2",
+        productName: "No Heavy Fee - Missing",
+        heavyShippingSurcharge: undefined,
+        periodicGrossRevenue: 100,
+      }),
+    ])
+
+    render(<ProductsPage />)
+
+    const zeroRow = await rowFor("No Heavy Fee - Zero")
+    expect(zeroRow.queryByText("$0.00")).not.toBeInTheDocument()
+
+    const missingRow = await rowFor("No Heavy Fee - Missing")
+    expect(missingRow.queryByText("$0.00")).not.toBeInTheDocument()
+  })
+
+  it("shows the formatted heavy shipping fee when it is positive", async () => {
+    serveFilter([makeVendorUserProduct({ productName: "Heavy Item", heavyShippingSurcharge: 18.25 })])
+
+    render(<ProductsPage />)
+
+    const row = await rowFor("Heavy Item")
+    expect(row.getByText("$18.25")).toBeInTheDocument()
+  })
+
   it("formats a 4-digit price with a thousands separator instead of a bare toFixed string", async () => {
     serveFilter([
       makeVendorUserProduct({
