@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: "Browse every dental supply category and jump straight to the products you need.",
 }
 
-export const revalidate = 3600
+export const revalidate = 900 // matches CATEGORY_COUNTS_REVALIDATE_SECONDS (segment config must be a literal)
 
 export default async function CategoriesRoutePage() {
   const options = await getProductCategoryOptions()
