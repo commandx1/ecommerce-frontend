@@ -124,10 +124,7 @@ describe("ProductListingClient", () => {
 
     it("Clear search removes q from the URL while keeping the other filters", async () => {
       const user = userEvent.setup({ pointerEventsCheck: 0 })
-      const { router } = renderListing(
-        { search: "implant", selectedBrands: ["MARK3"] },
-        "q=implant&brands=MARK3",
-      )
+      const { router } = renderListing({ search: "implant", selectedBrands: ["MARK3"] }, "q=implant&brands=MARK3")
 
       await user.click(screen.getAllByRole("button", { name: "Clear search" })[0]!)
 
