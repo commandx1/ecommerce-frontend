@@ -4,6 +4,7 @@ import { HttpResponse, http } from "msw"
 import { type ReactNode, StrictMode } from "react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { showToast } from "@/components/ui/Toast"
+import { queryKeys } from "@/lib/query/keys"
 import type { NotificationSocketOptions } from "@/lib/realtime/stomp-client"
 import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
@@ -64,6 +65,8 @@ vi.mock("@/components/ui/Toast", () => ({
 
 /** Typed view over the registry; the mock factory can only speak `unknown`. */
 const sockets = harness.sockets as unknown as FakeSocket[]
+
+const VALID_ORDER_ID = "11111111-1111-1111-1111-111111111111"
 
 function makeWrapper() {
   const queryClient = createTestQueryClient()
@@ -209,8 +212,6 @@ describe("useNotificationSocket", () => {
       expect(invalidateQueries).not.toHaveBeenCalled()
     })
 
-    const VALID_ORDER_ID = "11111111-1111-1111-1111-111111111111"
-
     it("makes the toast clickable, using the same href resolver as the notifications menu, when the push carries a resolvable orderId", () => {
       useAuthStore.setState({
         isAuthenticated: true,
@@ -287,6 +288,91 @@ describe("useNotificationSocket", () => {
       })
 
       expect(showToast.info).toHaveBeenCalledWith("Heads up", "Nothing to open here")
+    })
+  })
+
+  describe("order data invalidation", () => {
+    it("refreshes only the buyer order keys when a buyer receives an order push", () => {
+      useAuthStore.setState({ isAuthenticated: true, accessToken: "t1", user: makeAccountUser({ roleName: "Buyer" }) })
+      const { wrapper, invalidateQueries } = makeWrapper()
+      renderHook(() => useNotificationSocket(), { wrapper })
+
+      act(() => {
+        sockets[0]!.options.onMessage({
+          notificationId: "n-1",
+          type: "CUSTOMER_ORDER_SHIPPED",
+          orderId: VALID_ORDER_ID,
+          title: "Order shipped",
+          message: "Order is on its way",
+        })
+      })
+
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: queryKeys.orders.all })
+      expect(invalidateQueries).not.toHaveBeenCalledWith({ queryKey: queryKeys.vendor.orders.all })
+      expect(invalidateQueries).not.toHaveBeenCalledWith({ queryKey: queryKeys.vendor.overview.all })
+    })
+
+    it("refreshes only the vendor order and overview keys when a vendor receives an order push", () => {
+      useAuthStore.setState({
+        isAuthenticated: true,
+        accessToken: "t1",
+        user: makeAccountUser({ roleName: "Vendor" }),
+      })
+      const { wrapper, invalidateQueries } = makeWrapper()
+      renderHook(() => useNotificationSocket(), { wrapper })
+
+      act(() => {
+        sockets[0]!.options.onMessage({
+          notificationId: "n-1",
+          type: "VENDOR_ORDER_ITEM_CANCELLED",
+          orderId: VALID_ORDER_ID,
+          title: "Order item cancelled",
+          message: "A buyer cancelled an item",
+        })
+      })
+
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: queryKeys.vendor.orders.all })
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: queryKeys.vendor.overview.all })
+      expect(invalidateQueries).not.toHaveBeenCalledWith({ queryKey: queryKeys.orders.all })
+    })
+
+    it("recognizes an order push by a known order type alone, even without an orderId", () => {
+      useAuthStore.setState({ isAuthenticated: true, accessToken: "t1", user: makeAccountUser({ roleName: "Buyer" }) })
+      const { wrapper, invalidateQueries } = makeWrapper()
+      renderHook(() => useNotificationSocket(), { wrapper })
+
+      act(() => {
+        sockets[0]!.options.onMessage({
+          notificationId: "n-1",
+          type: "CUSTOMER_ORDER_DELIVERED",
+          orderId: null,
+          title: "Order delivered",
+          message: "Your order arrived",
+        })
+      })
+
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: queryKeys.orders.all })
+    })
+
+    it("does not refresh order keys for a non-order push", () => {
+      useAuthStore.setState({ isAuthenticated: true, accessToken: "t1", user: makeAccountUser({ roleName: "Buyer" }) })
+      const { wrapper, invalidateQueries } = makeWrapper()
+      renderHook(() => useNotificationSocket(), { wrapper })
+
+      act(() => {
+        sockets[0]!.options.onMessage({
+          notificationId: "n-1",
+          type: "SOME_UNKNOWN_TYPE",
+          orderId: null,
+          title: "Heads up",
+          message: "Nothing order-related here",
+        })
+      })
+
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["notifications"] })
+      expect(invalidateQueries).not.toHaveBeenCalledWith({ queryKey: queryKeys.orders.all })
+      expect(invalidateQueries).not.toHaveBeenCalledWith({ queryKey: queryKeys.vendor.orders.all })
+      expect(invalidateQueries).not.toHaveBeenCalledWith({ queryKey: queryKeys.vendor.overview.all })
     })
   })
 

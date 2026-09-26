@@ -12,6 +12,7 @@ import {
 } from "@/lib/realtime/stomp-client"
 import { useAuthStore } from "@/stores/authStore"
 import { notificationsKeys } from "../lib/notifications-keys"
+import { getOrderInvalidationKeys, isOrderRelatedPush } from "../lib/order-invalidation"
 import { isNotificationPushPayload } from "../lib/push-payload"
 import { getDashboardRole, resolveNotificationHref } from "../lib/resolve-notification-href"
 import { useMarkNotificationRead } from "./useNotificationMutations"
@@ -81,6 +82,11 @@ export function useNotificationSocket(): void {
           showToast.info(body.title, body.message)
         }
         void queryClient.invalidateQueries({ queryKey: notificationsKeys.all })
+        if (isOrderRelatedPush({ type: body.type, orderId })) {
+          for (const queryKey of getOrderInvalidationKeys(latestRef.current.role)) {
+            void queryClient.invalidateQueries({ queryKey })
+          }
+        }
       },
       onAuthError: () => {
         rejectedTokenRef.current = accessToken
