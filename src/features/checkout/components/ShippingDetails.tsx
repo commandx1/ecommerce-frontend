@@ -1,6 +1,5 @@
 "use client"
 
-import { ArrowRight } from "lucide-react"
 import NoticeBanner from "@/components/feedback/NoticeBanner"
 import ActionButton from "@/components/ui/ActionButton"
 import ShippingAddressSection from "@/features/checkout/components/ShippingAddressSection"
@@ -59,7 +58,6 @@ export default function ShippingDetails() {
           className="px-10 font-bold"
         >
           Continue to Billing
-          <ArrowRight className="ml-2 w-6 h-6" />
         </ActionButton>
       </div>
     </form>

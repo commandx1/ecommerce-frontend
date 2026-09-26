@@ -60,8 +60,13 @@ describe("BillingInformation — Stripe key present", () => {
 
     expect(await screen.findByText("Add a card to continue.")).toBeInTheDocument() // PaymentCardSection
     expect(screen.getByLabelText(/I agree to the/)).toBeInTheDocument() // BillingAgreementsSection
-    expect(screen.getByRole("button", { name: "Continue to Review" })).toBeInTheDocument()
+    const continueButton = screen.getByRole("button", { name: "Continue to Review" })
+    expect(continueButton).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Back to Shipping/ })).toBeInTheDocument()
+
+    // Next-step button is text-only: no arrow icon, symmetric horizontal padding.
+    expect(continueButton.querySelector("svg")).toBeNull()
+    expect(continueButton.className).toMatch(/\bpx-6\b/)
   })
 
   it("keeps Continue disabled until the agreement is checked, then enables it", async () => {

@@ -173,7 +173,12 @@ describe("CheckoutPage", () => {
     render(<CheckoutPage />)
 
     expect(await screen.findByText("No addresses found in your account.")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /Continue to Billing/ })).toBeDisabled()
+    const continueButton = screen.getByRole("button", { name: /Continue to Billing/ })
+    expect(continueButton).toBeDisabled()
+
+    // Next-step button is text-only: no arrow icon, symmetric horizontal padding.
+    expect(continueButton.querySelector("svg")).toBeNull()
+    expect(continueButton.className).toMatch(/\bpx-10\b/)
   })
 
   it("routes 'Edit Address' to the buyer's address book", async () => {

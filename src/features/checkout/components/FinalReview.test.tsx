@@ -94,6 +94,11 @@ describe("FinalReview", () => {
     expect(screen.getByRole("heading", { name: "Final Review" })).toBeInTheDocument()
     expect(screen.getByText("Visa •••• 4242")).toBeInTheDocument()
     expect(screen.getByText("Ready to Place Order")).toBeInTheDocument()
+
+    // Next-step button is text-only: no arrow icon, symmetric horizontal padding.
+    const placeOrderButton = screen.getByRole("button", { name: /Place Order/ })
+    expect(placeOrderButton.querySelector("svg")).toBeNull()
+    expect(placeOrderButton.className).toMatch(/\bpx-6\b/)
   })
 
   it("blocks Place Order while no Stripe payment method has been captured", () => {

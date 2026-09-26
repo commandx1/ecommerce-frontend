@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import ActionButton from "@/components/ui/ActionButton"
 import AsyncSubmitButton from "@/components/ui/AsyncSubmitButton"
 
@@ -29,7 +29,6 @@ export default function FinalReviewNavigation({
         isSubmitting={isPlacingOrder}
         disabled={submitDisabled}
         fullWidth={false}
-        icon={<ArrowRight className="ml-2 w-5 h-5" />}
       />
     </div>
   )

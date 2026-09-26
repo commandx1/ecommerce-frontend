@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import ActionButton from "@/components/ui/ActionButton"
 
 interface BillingNavigationProps {
@@ -18,7 +18,6 @@ export default function BillingNavigation({ termsAgreed, isSubmitting, onBack }:
           second `createPaymentMethod`, which is a payment-flow action and must not double-run. */}
       <ActionButton type="submit" disabled={!termsAgreed || isSubmitting}>
         {isSubmitting ? "Saving…" : "Continue to Review"}
-        <ArrowRight className="ml-2 w-5 h-5" />
       </ActionButton>
     </div>
   )
