@@ -95,6 +95,23 @@ describe("useContactForm", () => {
     expect(result.current.formData.subject).toBe("   ")
   })
 
+  it("rejects submission when the email is not a valid address, without resetting the form", () => {
+    const { result } = renderHook(() => useContactForm())
+    fillRequiredFields(result)
+
+    act(() => {
+      result.current.handleChange(change("email", "not-an-email"))
+    })
+
+    act(() => {
+      result.current.handleSubmit(submit())
+    })
+
+    expect(mockWarning).toHaveBeenCalledWith("Invalid email", "Please enter a valid email address.")
+    expect(mockSuccess).not.toHaveBeenCalled()
+    expect(result.current.formData.email).toBe("not-an-email")
+  })
+
   it("submits successfully once every required field is filled and resets the form", () => {
     const { result } = renderHook(() => useContactForm())
     fillRequiredFields(result)

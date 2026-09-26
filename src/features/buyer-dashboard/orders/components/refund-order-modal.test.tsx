@@ -1,98 +1,14 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { Children, isValidElement, type ReactNode } from "react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { BuyerOrder } from "@/lib/api/buyer-orders"
 import { makeBuyerOrder, makeBuyerOrderItem } from "@/test/factories/order.factory"
+import { installRadixPointerPolyfills } from "@/test/radix"
 import RefundOrderModal from "./refund-order-modal"
 
-/**
- * The real Radix `Select` locks up jsdom (infinite pointer-capture/scroll recursion, ending in
- * "Maximum call stack size exceeded") when it is opened while nested inside a Radix `Dialog` -
- * see TEST-FINDINGS.md infra note #10 ("Dialog içindeki Select hâlâ kapsanamıyor"). This modal
- * always renders its reason Select inside a Dialog, so the primitive is swapped for a plain
- * native <select> that preserves the same props contract (value/onValueChange/disabled, an id
- * on the trigger for the `<label htmlFor>` pairing, and the reason list from SelectItem
- * children). The trigger id and item list are read directly out of the (unrendered) children
- * tree during Select's own render - no cross-component state mutation, so no extra render passes
- * or warnings. This only replaces the shared UI primitive - refund-order-modal.tsx's own logic
- * (validation, payload building) still runs unmodified.
- */
-vi.mock("@/components/ui/select", () => {
-  function SelectTrigger(_props: { id?: string; className?: string; children?: ReactNode }) {
-    return null
-  }
-  function SelectValue(_props: { placeholder?: string }) {
-    return null
-  }
-  function SelectContent(_props: { children?: ReactNode; align?: string }) {
-    return null
-  }
-  function SelectItem(_props: { value: string; children?: ReactNode }) {
-    return null
-  }
-
-  function findTriggerId(node: ReactNode): string | undefined {
-    let found: string | undefined
-    Children.forEach(node, (child) => {
-      if (found !== undefined || !isValidElement(child)) return
-      if (child.type === SelectTrigger) {
-        found = (child.props as { id?: string }).id
-        return
-      }
-      const nested = (child.props as { children?: ReactNode } | undefined)?.children
-      if (nested !== undefined) found = findTriggerId(nested)
-    })
-    return found
-  }
-
-  function collectItems(node: ReactNode, out: Array<{ value: string; label: string }>): void {
-    Children.forEach(node, (child) => {
-      if (!isValidElement(child)) return
-      if (child.type === SelectItem) {
-        const props = child.props as { value: string; children?: ReactNode }
-        out.push({ value: props.value, label: String(props.children) })
-        return
-      }
-      const nested = (child.props as { children?: ReactNode } | undefined)?.children
-      if (nested !== undefined) collectItems(nested, out)
-    })
-  }
-
-  function Select({
-    value,
-    onValueChange,
-    disabled,
-    children,
-  }: {
-    value?: string
-    onValueChange?: (value: string) => void
-    disabled?: boolean
-    children?: ReactNode
-  }) {
-    const triggerId = findTriggerId(children)
-    const items: Array<{ value: string; label: string }> = []
-    collectItems(children, items)
-
-    return (
-      <select
-        id={triggerId}
-        disabled={disabled}
-        value={value ?? ""}
-        onChange={(event) => onValueChange?.(event.target.value)}
-      >
-        <option value="" />
-        {items.map((item) => (
-          <option key={item.value} value={item.value}>
-            {item.label}
-          </option>
-        ))}
-      </select>
-    )
-  }
-
-  return { Select, SelectTrigger, SelectValue, SelectContent, SelectItem }
-})
+// The reason Select is a Radix `Select` rendered inside a Radix `Dialog`; opening it needs jsdom's
+// pointer-capture APIs, which jsdom itself doesn't implement (see `installRadixPointerPolyfills`).
+installRadixPointerPolyfills()
 
 const setupUser = () => userEvent.setup()
 
@@ -115,8 +31,10 @@ function createStateValue(overrides?: Partial<ReturnType<typeof mockUseBuyerOrde
 /** Locates the card rendered for one order item so quantity/reason controls can be scoped to it. */
 const itemCard = (productName: string) => within(screen.getByText(productName).closest("div.rounded-xl") as HTMLElement)
 
-const selectReturnReason = (card: ReturnType<typeof itemCard>, reason: string) => {
-  fireEvent.change(card.getByLabelText("Return reason"), { target: { value: reason } })
+const selectReturnReason = async (card: ReturnType<typeof itemCard>, reason: string) => {
+  const user = userEvent.setup()
+  await user.click(card.getByLabelText("Return reason"))
+  await user.click(await screen.findByRole("option", { name: reason }))
 }
 
 beforeEach(() => {
@@ -272,7 +190,7 @@ describe("RefundOrderModal", () => {
     mockUseBuyerOrdersRefundModalActions.mockReturnValue({ setPendingRefundOrder: vi.fn(), submitRefundOrder })
 
     render(<RefundOrderModal />)
-    selectReturnReason(itemCard("Dental Kit"), "No Longer Needed")
+    await selectReturnReason(itemCard("Dental Kit"), "No Longer Needed")
     await user.click(screen.getByRole("button", { name: "Submit refund request" }))
 
     // The default quantity (1) exceeds the item's own quantity (0); this must not crash and must
@@ -296,7 +214,7 @@ describe("RefundOrderModal", () => {
     const card = itemCard("Dental Kit")
     const quantityInput = card.getByLabelText("Quantity to refund")
     fireEvent.change(quantityInput, { target: { value: "2" } })
-    selectReturnReason(card, "Product Arrived Damaged")
+    await selectReturnReason(card, "Product Arrived Damaged")
 
     await user.click(screen.getByRole("button", { name: "Submit refund request" }))
 
@@ -328,13 +246,13 @@ describe("RefundOrderModal", () => {
     await user.click(kitCard.getByRole("checkbox"))
     const kitQuantity = kitCard.getByLabelText("Quantity to refund")
     fireEvent.change(kitQuantity, { target: { value: "2" } })
-    selectReturnReason(kitCard, "Wrong Item Received")
+    await selectReturnReason(kitCard, "Wrong Item Received")
 
     const gloveCard = itemCard("Gloves Box")
     await user.click(gloveCard.getByRole("checkbox"))
     const gloveQuantity = gloveCard.getByLabelText("Quantity to refund")
     fireEvent.change(gloveQuantity, { target: { value: "5" } })
-    selectReturnReason(gloveCard, "Defective or Malfunctioning Product")
+    await selectReturnReason(gloveCard, "Defective or Malfunctioning Product")
 
     // Face Mask is deliberately left unselected.
     await user.click(screen.getByRole("button", { name: "Submit refund request" }))
@@ -364,7 +282,7 @@ describe("RefundOrderModal", () => {
     mockUseBuyerOrdersRefundModalActions.mockReturnValue({ setPendingRefundOrder: vi.fn(), submitRefundOrder })
 
     render(<RefundOrderModal />)
-    selectReturnReason(itemCard("Dental Kit"), "Other")
+    await selectReturnReason(itemCard("Dental Kit"), "Other")
     await user.click(screen.getByRole("button", { name: "Submit refund request" }))
 
     await waitFor(() => expect(submitRefundOrder).toHaveBeenCalledTimes(1))

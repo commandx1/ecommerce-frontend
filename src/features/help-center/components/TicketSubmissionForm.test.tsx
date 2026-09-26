@@ -53,12 +53,28 @@ describe("TicketSubmissionForm", () => {
     expect(screen.getByRole("combobox", { name: /Ticket Priority/ })).toBeInTheDocument()
   })
 
-  it("refuses to submit without a priority and category", async () => {
+  // Radix Select (>= 2.3.1) mirrors its value into a hidden native `<select required>` that
+  // carries an empty placeholder option while nothing is picked. The form opts out of native
+  // constraint validation (`noValidate`) so this warns via the app's own toast instead of the
+  // browser silently blocking the submit before `handleSubmit` ever runs.
+  it("warns about the missing priority and category instead of letting the browser block the submit", async () => {
     const user = userEvent.setup()
     render(<TicketSubmissionForm />)
 
     await user.type(screen.getByLabelText("Ticket Title *"), "Order never arrived")
     await user.type(screen.getByLabelText("Detailed Description *"), "The courier marked it delivered.")
+    await user.click(screen.getByRole("button", { name: /Submit Ticket/ }))
+
+    expect(mockToastWarning).toHaveBeenCalledWith("Missing details", expect.any(String))
+    expect(mockToastSuccess).not.toHaveBeenCalled()
+  })
+
+  it("warns about missing details once the selects are picked but the title is blank", async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 })
+    render(<TicketSubmissionForm />)
+
+    await fillTicket(user)
+    await user.clear(screen.getByLabelText("Ticket Title *"))
     await user.click(screen.getByRole("button", { name: /Submit Ticket/ }))
 
     expect(mockToastWarning).toHaveBeenCalledWith("Missing details", expect.any(String))

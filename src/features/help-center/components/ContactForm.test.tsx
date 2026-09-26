@@ -50,14 +50,43 @@ describe("ContactForm", () => {
     expect(screen.getByLabelText("Message *")).toBeInTheDocument()
   })
 
-  it("types the email field so the browser can validate it", () => {
+  it("hints the right mobile keyboard for the email and phone fields", () => {
     render(<ContactForm />)
 
     expect(screen.getByLabelText("Email Address *")).toHaveAttribute("type", "email")
     expect(screen.getByLabelText("Phone Number")).toHaveAttribute("type", "tel")
   })
 
+  it("warns about an invalid email instead of letting the browser block the submit", async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 })
+    render(<ContactForm />)
+
+    await fillRequiredFields(user)
+    await user.clear(screen.getByLabelText("Email Address *"))
+    await user.type(screen.getByLabelText("Email Address *"), "not-an-email")
+    await user.click(screen.getByRole("button", { name: /Send Message/ }))
+
+    expect(mockToastWarning).toHaveBeenCalledWith("Invalid email", expect.any(String))
+    expect(mockToastSuccess).not.toHaveBeenCalled()
+  })
+
   it("refuses to send while a required field is blank", async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 })
+    render(<ContactForm />)
+
+    await fillRequiredFields(user)
+    await user.clear(screen.getByLabelText("Last Name *"))
+    await user.click(screen.getByRole("button", { name: /Send Message/ }))
+
+    expect(mockToastWarning).toHaveBeenCalledWith("Missing details", expect.any(String))
+    expect(mockToastSuccess).not.toHaveBeenCalled()
+  })
+
+  // Radix Select (>= 2.3.1) mirrors its value into a hidden native `<select required>` that
+  // carries an empty placeholder option while nothing is picked. The form opts out of native
+  // constraint validation (`noValidate`) so this warns via the app's own toast instead of the
+  // browser silently blocking the submit before `handleSubmit` ever runs.
+  it("warns about the missing required subject instead of letting the browser block the submit", async () => {
     const user = userEvent.setup()
     render(<ContactForm />)
 

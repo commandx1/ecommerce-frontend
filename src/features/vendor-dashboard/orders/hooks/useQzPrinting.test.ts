@@ -35,14 +35,8 @@ describe("useQzPrinting", () => {
   })
 
   /**
-   * The printer picker itself is a Radix `<Select>` rendered inside the labels modal's Radix
-   * `Dialog` - a combination that reliably crashes in jsdom (`@radix-ui/react-focus-scope`
-   * recurses into "Maximum call stack size exceeded", confirmed to be a jsdom/dependency-tree
-   * issue and not a real-browser one: `vendor-orders.spec.ts`'s "printing a shipping label..."
-   * e2e test switches printers through the real UI at --repeat-each=5 without issue). This
-   * covers the same selection -> print wiring `VendorOrdersPage.test.tsx`'s removed "selects a
-   * different printer before printing" RTL test used to, one layer down, without ever mounting
-   * that Select/Dialog combination.
+   * Covers the selection -> print wiring at the hook level too, one layer below
+   * `VendorOrdersPage.test.tsx`'s "selects a different printer before printing" RTL test.
    */
   it("prints with whichever printer is currently selected, not just the default", async () => {
     qzMocks.getQzConnectionStatus.mockResolvedValue({

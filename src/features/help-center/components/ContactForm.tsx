@@ -11,7 +11,10 @@ const ContactForm = () => {
 
   return (
     <div className="rounded-3xl border border-border-soft bg-surface-elevated p-8 shadow-soft">
-      <form className="space-y-6" onSubmit={handleSubmit}>
+      {/* Radix Select (>= 2.3.1) mirrors its value into a hidden native `<select required>`, so
+          without `noValidate` an unpicked required select would let the browser's own constraint
+          validation block the submit before `handleSubmit` (and its toast) ever runs. */}
+      <form className="space-y-6" onSubmit={handleSubmit} noValidate>
         <ContactFormIdentityFields formData={formData} onChange={handleChange} />
         <ContactFormSubjectMessageFields formData={formData} onChange={handleChange} />
         <ContactFormAttachmentField />

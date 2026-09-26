@@ -82,7 +82,11 @@ export default function RegisterForm() {
     <div className="overflow-hidden rounded-3xl border border-border-soft bg-surface-elevated p-6 shadow-panel sm:p-8 lg:p-12">
       <RegisterFormIntro />
 
-      <form onSubmit={handleSubmit}>
+      {/* Radix Select (>= 2.3.1) mirrors its value into a hidden native `<select required>`, so
+          without `noValidate` an unpicked required select (business type, shipment policy) would
+          let the browser's own constraint validation block the submit before the zod-backed
+          `validateForm` in `handleSubmit` ever runs. */}
+      <form onSubmit={handleSubmit} noValidate>
         <div className="space-y-6">
           <PersonalInfoFields
             formData={formData}

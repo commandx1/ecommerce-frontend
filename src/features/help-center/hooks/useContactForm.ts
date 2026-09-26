@@ -1,8 +1,13 @@
 import type { ChangeEvent, FormEvent } from "react"
 import { useCallback, useState } from "react"
+import { z } from "zod"
 
 import { showToast } from "@/components/ui/Toast"
 import type { ContactFormData } from "@/features/help-center/types"
+
+// Reuses zod's own email check (the same primitive `register-schemas.ts` builds on) rather than
+// duplicating an email regex here.
+const emailSchema = z.string().email()
 
 const INITIAL_CONTACT_FORM: ContactFormData = {
   firstName: "",
@@ -37,6 +42,11 @@ export const useContactForm = () => {
       const missingFields = REQUIRED_FIELDS.filter((field) => isBlank(String(formData[field] ?? "")))
       if (missingFields.length > 0) {
         showToast.warning("Missing details", "Please complete all required fields before sending your message.")
+        return
+      }
+
+      if (!emailSchema.safeParse(formData.email).success) {
+        showToast.warning("Invalid email", "Please enter a valid email address.")
         return
       }
 
