@@ -1,3 +1,5 @@
+import { unstable_cache } from "next/cache"
+import { CATEGORY_COUNTS_REVALIDATE_SECONDS, CATEGORY_COUNTS_TAG } from "@/lib/cache/category-counts"
 import { apiRequest } from "./request"
 import { requireBackendUrl } from "./server-request"
 
@@ -101,15 +103,30 @@ export async function getProductVendorOptions(): Promise<VendorOption[]> {
   }
 }
 
-export async function getProductCategoryOptions(): Promise<FilterOption[]> {
-  const baseUrl = requireBackendUrl()
-  try {
-    return await apiRequest.requestJson<FilterOption[]>({
+// Not `fetch`-based (goes through the axios `apiRequest` layer, like every other function in
+// this file), so a fetch-level `next: { tags, revalidate }` can't cache it — `unstable_cache`
+// wraps arbitrary async work instead and is what `revalidateCategoryCounts` (see
+// `@/lib/actions/revalidate-category-counts`) purges on demand. Callers include the `/products`
+// listing, which is `force-dynamic`; `unstable_cache` has its own cache scope independent of the
+// page's dynamic-rendering config, so this one call still gets cached there. Left uncaught so a
+// failed fetch is never memoized as an empty result for the full TTL — `getProductCategoryOptions`
+// below still catches it and returns `[]`, exactly as before this cache was added.
+const getCachedProductCategoryOptions = unstable_cache(
+  (baseUrl: string) =>
+    apiRequest.requestJson<FilterOption[]>({
       client: "app",
       method: "GET",
       url: `${baseUrl}/api/products/categories`,
       fallbackMessage: "Failed to fetch product categories",
-    })
+    }),
+  ["product-category-options"],
+  { tags: [CATEGORY_COUNTS_TAG], revalidate: CATEGORY_COUNTS_REVALIDATE_SECONDS },
+)
+
+export async function getProductCategoryOptions(): Promise<FilterOption[]> {
+  const baseUrl = requireBackendUrl()
+  try {
+    return await getCachedProductCategoryOptions(baseUrl)
   } catch {
     return []
   }

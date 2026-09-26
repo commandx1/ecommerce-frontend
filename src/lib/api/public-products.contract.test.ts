@@ -1,7 +1,21 @@
 import { HttpResponse, http } from "msw"
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import { CATEGORY_COUNTS_REVALIDATE_SECONDS, CATEGORY_COUNTS_TAG } from "@/lib/cache/category-counts"
 import { server } from "@/mocks/server"
 import { makeProduct, makePublicProductsResponse } from "@/test/factories"
+
+// `getProductCategoryOptions` goes through `unstable_cache`, which throws "incrementalCache
+// missing" outside a real Next server request (there is none in Vitest). This mock passes the
+// wrapped function straight through — same behavior as no caching — while still letting
+// `keyParts`/`options` be asserted below, exactly like the app's real request context does.
+const cacheSpies = vi.hoisted(() => ({
+  unstable_cache: vi.fn(
+    (cb: (...args: never[]) => unknown, _keyParts?: string[], _options?: { tags?: string[]; revalidate?: number }) =>
+      cb,
+  ),
+}))
+vi.mock("next/cache", () => ({ unstable_cache: cacheSpies.unstable_cache }))
+
 import {
   getProductAttributeOptions,
   getProductBrandOptions,
@@ -171,6 +185,13 @@ describe("filter option endpoints contract", () => {
   it("getProductCategoryOptions returns typed FilterOption[]", async () => {
     const options = await getProductCategoryOptions()
     expect(options).toEqual([{ name: "Consumables", count: 45 }])
+  })
+
+  it("getProductCategoryOptions is wrapped in unstable_cache with the shared tag and 15-minute TTL", () => {
+    expect(cacheSpies.unstable_cache).toHaveBeenCalledTimes(1)
+    const call = cacheSpies.unstable_cache.mock.calls.at(0)
+    expect(call?.[2]).toEqual({ tags: [CATEGORY_COUNTS_TAG], revalidate: CATEGORY_COUNTS_REVALIDATE_SECONDS })
+    expect(CATEGORY_COUNTS_REVALIDATE_SECONDS).toBe(15 * 60)
   })
 
   it("getProductAttributeOptions returns typed AttributeGroup[]", async () => {

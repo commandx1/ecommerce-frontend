@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { showToast } from "@/components/ui/Toast"
+import { revalidateCategoryCounts } from "@/lib/actions/revalidate-category-counts"
 import { queryKeys } from "@/lib/query/keys"
 import { type SubmitProductInput, submitProduct } from "../api/product-editor-commands"
 import type { EditorMode } from "../lib/product-form"
@@ -33,6 +34,9 @@ export function useProductSubmit({
         queryClient.invalidateQueries({ queryKey: queryKeys.vendor.products.brands() }),
         queryClient.invalidateQueries({ queryKey: queryKeys.vendor.products.stats() }),
       ])
+      // Best-effort: a new or edited listing can change its category's public count, but this
+      // must never hold up the redirect below or surface as a failure.
+      void revalidateCategoryCounts()
       router.push("/vendor-dashboard/products")
     },
     onError: (error) => {

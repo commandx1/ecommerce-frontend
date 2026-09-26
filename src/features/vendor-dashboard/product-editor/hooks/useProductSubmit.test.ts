@@ -21,6 +21,11 @@ const toastSpies = vi.hoisted(() => ({
 }))
 vi.mock("@/components/ui/Toast", () => ({ showToast: toastSpies }))
 
+const revalidateCategoryCountsSpy = vi.hoisted(() => vi.fn())
+vi.mock("@/lib/actions/revalidate-category-counts", () => ({
+  revalidateCategoryCounts: revalidateCategoryCountsSpy,
+}))
+
 const UPDATE_LISTING: SubmitProductInput = {
   branch: "updateListing",
   values: { ...INITIAL_VALUES, price: "56", stock: "40" },
@@ -43,6 +48,7 @@ const setup = (mode: "create" | "edit" = "edit") => {
 
 beforeEach(() => {
   for (const spy of Object.values(toastSpies)) spy.mockClear()
+  revalidateCategoryCountsSpy.mockClear()
 })
 
 describe("useProductSubmit", () => {
@@ -67,6 +73,7 @@ describe("useProductSubmit", () => {
     expect(getRouterMock().push).toHaveBeenCalledWith("/vendor-dashboard/products")
     expect(onError).not.toHaveBeenCalled()
     await waitFor(() => expect(result.current.isSubmitting).toBe(false))
+    expect(revalidateCategoryCountsSpy).toHaveBeenCalledTimes(1)
   })
 
   it("is submitting while the request is in flight", async () => {
@@ -102,5 +109,6 @@ describe("useProductSubmit", () => {
     expect(toastSpies.error).toHaveBeenCalledWith(message)
     expect(invalidate).not.toHaveBeenCalled()
     expect(getRouterMock().push).not.toHaveBeenCalled()
+    expect(revalidateCategoryCountsSpy).not.toHaveBeenCalled()
   })
 })

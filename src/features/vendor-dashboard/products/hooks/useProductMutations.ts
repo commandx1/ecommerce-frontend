@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query"
 import { useCallback, useMemo, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
+import { revalidateCategoryCounts } from "@/lib/actions/revalidate-category-counts"
 import { productsAPI } from "@/lib/api/products"
 import { queryKeys, type VendorProductListParams } from "@/lib/query/keys"
 import type { VendorProductsListResult } from "../api/products-queries"
@@ -113,6 +114,9 @@ export function useProductMutations(listParams: VendorProductListParams, accessT
         setEditingDraft(null)
         // Stock and the active flag both feed the stat cards.
         void invalidateProductStats()
+        // Stock hitting zero or the active toggle can move this listing in or out of its
+        // category's public count; fire-and-forget, never blocks the already-saved edit.
+        void revalidateCategoryCounts()
       } catch (error) {
         console.error("Error updating product:", error)
         showToast.error("Update failed", error instanceof Error ? error.message : "Failed to update product")
@@ -130,6 +134,7 @@ export function useProductMutations(listParams: VendorProductListParams, accessT
       try {
         await productsAPI.deleteUserProduct(userProductId, accessToken)
         void invalidateProductStats()
+        void revalidateCategoryCounts()
         await queryClient.invalidateQueries({ queryKey: queryKeys.vendor.products.lists() })
         return true
       } catch (error) {

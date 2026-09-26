@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query"
 import { useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
+import { revalidateCategoryCounts } from "@/lib/actions/revalidate-category-counts"
 import { extractFileName, type ImportResult, vendorDocumentsAPI } from "@/lib/api/vendor-documents"
 import { queryKeys } from "@/lib/query/keys"
 import { useAuthStore } from "@/stores/authStore"
@@ -64,6 +65,11 @@ export function useDocumentUpload(onUploaded: () => void): DocumentUpload {
       // sent.
       onUploaded()
       void queryClient.invalidateQueries({ queryKey: queryKeys.vendor.documents.all })
+      // Accepted rows become live listings immediately, so a bulk import can change category
+      // counts the same as a single create; skip the call entirely when nothing was accepted.
+      if (result.acceptedCount > 0) {
+        void revalidateCategoryCounts()
+      }
 
       if (result.acceptedCount > 0 && result.skippedCount === 0 && result.wrongCount === 0) {
         showToast.success("Import complete", `${result.acceptedCount} product(s) imported successfully.`)
