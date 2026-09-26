@@ -184,6 +184,23 @@ describe("Navbar", () => {
 
     expect(screen.getByRole("button", { name: "Close menu" })).toHaveAttribute("aria-expanded", "true")
   })
+
+  it("does not offer notifications to an anonymous visitor", () => {
+    render(<Navbar />, { route: "/" })
+
+    expect(screen.queryByRole("button", { name: /Notifications/ })).not.toBeInTheDocument()
+  })
+
+  it("shows the notifications bell next to the cart once the store reports a session", async () => {
+    signIn()
+    render(<Navbar />, { route: "/" })
+
+    const cartLink = await screen.findByRole("link", { name: "Cart" })
+    const bell = await screen.findByRole("button", { name: /Notifications/ })
+
+    // Same row: the bell sits right after the cart in the DOM, both desktop and mobile share this markup.
+    expect(cartLink.compareDocumentPosition(bell) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
 })
 
 describe("Footer", () => {

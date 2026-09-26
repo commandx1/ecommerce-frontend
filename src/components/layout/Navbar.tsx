@@ -8,6 +8,7 @@ import ThemeToggle from "@/components/theme/ThemeToggle"
 import { GlassMorphMenu } from "@/components/ui/glass-morph-menu"
 import { glassDarkTintClass, LiquidGlass } from "@/components/ui/liquid-glass"
 import { useCartCount } from "@/features/cart/hooks/useCartQueries"
+import NotificationBell from "@/features/notifications/components/NotificationBell"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/authStore"
 import MainSearchbox from "../search/main-searchbox/MainSearchbox"
@@ -260,6 +261,8 @@ const Navbar = ({ initialAuthState }: NavbarProps) => {
                   )}
                 </Link>
               </GlassPill>
+
+              {isAuthenticated && user ? <NotificationBell /> : null}
 
               {isAuthenticated && user ? (
                 <AccountMenu
