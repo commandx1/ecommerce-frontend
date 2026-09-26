@@ -162,8 +162,14 @@ test.describe("auth-routing (src/proxy.ts)", () => {
       ),
     ])
 
-    await page.goto("/vendor-dashboard", { waitUntil: "domcontentloaded" })
-    await expect(page).toHaveURL(/\/login\?redirect=%2Fvendor-dashboard/)
+    // Assert the proxy's server redirect itself, not the in-page URL bar: this cookie carries
+    // valid user + accessToken (only `isAuthenticated` is stale/false), and authStore's
+    // `onRehydrateStorage` derives `isAuthenticated` from user+accessToken presence, ignoring the
+    // persisted flag - so the client rehydrates to `isAuthenticated: true` and useLoginForm's
+    // self-heal effect (see its own comment) immediately router.replaces to `?redirect=`'s target,
+    // making the in-page URL only transiently /login. Same shape as the Buyer case below.
+    const response = await page.goto("/vendor-dashboard")
+    expect(response?.url()).toMatch(/\/login\?redirect=%2Fvendor-dashboard/)
   })
 
   test('isAuthenticated:false + roleName:"Vendor" starting from a non-dashboard path (/products) is NOT redirected (K14 regression)', async ({

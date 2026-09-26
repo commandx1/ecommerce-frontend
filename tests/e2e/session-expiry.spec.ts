@@ -55,13 +55,18 @@ test.describe("session expiry (src/lib/api/client.ts 401 interceptor)", () => {
     apiMock,
   }) => {
     // Every GET /orders/buyer call (one per status-tab change, see
-    // use-buyer-orders-page.ts) 401s, delayed slightly so the page's initial
-    // load request is still in flight when the tab clicks below fire two
-    // more - all three then resolve with 401 close together, exercising
-    // client.ts's `authFailurePromise` memo under real overlap instead of
-    // one clean request at a time.
+    // use-buyer-orders-page.ts) 401s, delayed so the page's initial load
+    // request is still in flight when the tab clicks below fire two more -
+    // all three then resolve with 401 close together, exercising client.ts's
+    // `authFailurePromise` memo under real overlap instead of one clean
+    // request at a time. 1000ms (not the original 300ms): under a loaded
+    // suite run, hydration + the "Pending" visibility check below can itself
+    // take longer than 300ms, so the INITIAL load's own request could already
+    // 401 (and its `isAuthenticated: false` swap the page to "Please log in
+    // to view your orders.") before the test ever saw the tab strip -
+    // observed as a spurious "Pending" not-found failure under suite load.
     apiMock.on("GET", "/backend-api/orders/buyer", async () => {
-      await new Promise((resolve) => setTimeout(resolve, 300))
+      await new Promise((resolve) => setTimeout(resolve, 1_000))
       return { status: 401, body: { message: "Unauthorized" } }
     })
     apiMock.on("POST", "/backend-api/auth/logout", () => ({ status: 200 }))
@@ -72,10 +77,23 @@ test.describe("session expiry (src/lib/api/client.ts 401 interceptor)", () => {
 
     // Fire two tab-change requests back-to-back without awaiting either -
     // both hit the mocked (delayed) 401 while the initial load's request is
-    // also still pending.
+    // also still pending. Whichever of the three resolves first can already
+    // trigger `handleAuthFailure`'s real `window.location.assign` before the
+    // second click finishes dispatching - Playwright then reports the click's
+    // own target as "detached from the DOM" (the whole page is navigating
+    // away) and retries it until the action timeout. That is the redirect
+    // this test is actually asserting on, not a failed click, so a click
+    // aborted by the very navigation under test is swallowed here; the
+    // assertions below are what verify the redirect happened exactly once.
     await Promise.all([
-      buyerPage.getByRole("button", { name: "Pending", exact: true }).click(),
-      buyerPage.getByRole("button", { name: "Shipped", exact: true }).click(),
+      buyerPage
+        .getByRole("button", { name: "Pending", exact: true })
+        .click({ timeout: 5_000 })
+        .catch(() => {}),
+      buyerPage
+        .getByRole("button", { name: "Shipped", exact: true })
+        .click({ timeout: 5_000 })
+        .catch(() => {}),
     ])
 
     await expect(buyerPage).toHaveURL(/\/login\?/, { timeout: 15000 })

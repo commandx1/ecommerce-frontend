@@ -303,6 +303,16 @@ test.describe("multi-account tabs (per-browser-tab sessions)", () => {
     )
     await expect(buyerTabB).toHaveURL(/\/buyer-dashboard/)
 
+    // Let buyerTabA's own post-hydration background requests (cart, notifications count, orders
+    // poll - see useAuthHydration.ts / NotificationSocketBridge) quiet down before pulling its
+    // session out from under it below. Once `clearLocalSession()` drops the access token, any of
+    // those still-in-flight or about-to-fire requests come back 401 and race client.ts's own
+    // `handleAuthFailure` (a real `window.location.assign` to `/login?reason=session-expired`)
+    // against the buyer-dashboard guard's `router.push("/")` - flaky-once-in-hundreds evidence:
+    // this exact test landed on `/login` instead of `/` under suite load. Settling first removes
+    // the race instead of just widening the assertion's timeout around it.
+    await buyerTabA.waitForLoadState("networkidle")
+
     // `authStore.logout()` -> `clearLocalSession()` + `broadcastLogout(userId)` writes the
     // cross-tab logout key via a real `localStorage.setItem` from tab B - the mechanism
     // `broadcastLogout` itself uses. Every OTHER same-origin tab holding that same user id
