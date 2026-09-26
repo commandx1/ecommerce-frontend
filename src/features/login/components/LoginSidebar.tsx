@@ -8,13 +8,6 @@ const BENEFITS: Array<{ icon: LucideIcon; label: string }> = [
   { icon: TrendingUp, label: "Practice management tools" },
 ]
 
-const STATS: Array<{ value: string; label: string }> = [
-  { value: "10,000+", label: "Verified Dentists" },
-  { value: "500+", label: "Certified Suppliers" },
-  { value: "50,000+", label: "Products Available" },
-  { value: "99.8%", label: "Satisfaction Rate" },
-]
-
 export default function LoginSidebar() {
   return (
     <div className="flex flex-col justify-center bg-linear-to-br from-brand-surface via-brand to-brand-strong p-8 lg:p-12 dark:from-surface dark:via-surface-elevated dark:to-surface-muted">
@@ -35,18 +28,6 @@ export default function LoginSidebar() {
             <span>{label}</span>
           </div>
         ))}
-      </div>
-
-      <div className="rounded-2xl border border-inverse-foreground/15 bg-inverse-foreground/10 p-6 backdrop-blur-sm dark:border-border-soft/70 dark:bg-surface/70">
-        <h3 className="mb-4 text-lg font-semibold text-inverse-foreground">Trusted by Professionals</h3>
-        <div className="grid grid-cols-2 gap-4">
-          {STATS.map(({ value, label }) => (
-            <div key={label} className="text-center">
-              <div className="text-2xl font-bold text-accent-strong">{value}</div>
-              <div className="text-sm text-inverse-muted">{label}</div>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   )
