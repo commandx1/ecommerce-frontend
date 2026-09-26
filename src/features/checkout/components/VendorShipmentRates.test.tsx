@@ -21,9 +21,6 @@ vi.mock("@/lib/api/shipment", () => ({
 
 const getRates = vi.mocked(shipmentAPI.getRates)
 
-const CACHE_PREFIX = "checkout:shipping-rates:v1"
-const CACHE_TTL_MS = 15 * 60 * 1000
-
 let counter = 0
 
 function uniqueIds() {
@@ -74,33 +71,10 @@ function makeUberQuote(overrides: Partial<UberQuote> = {}): UberQuote {
   }
 }
 
-/** Builds the same cache key the component derives internally, for pre-seeding localStorage. */
-function cacheKeyFor(args: {
-  addressId: string
-  cartId: string
-  sellerId: string
-  items: { userProductId: string; productId: string; quantity: number }[]
-}): string {
-  const normalizedItems = [...args.items]
-    .sort((a, b) => a.userProductId.localeCompare(b.userProductId))
-    .map((item) => `${item.userProductId}:${item.productId}:${item.quantity}`)
-    .join("|")
-  return `${CACHE_PREFIX}:${args.addressId}:${args.cartId}:${args.sellerId}:${normalizedItems}`
-}
-
-function seedCache(
-  key: string,
-  data: { shippoRates: ShipmentRate[]; uberQuote: UberQuote | null; defaultShipmentFee: number | null },
-  fetchedAt: number,
-) {
-  window.localStorage.setItem(key, JSON.stringify({ fetchedAt, data }))
-}
-
 const items = [{ userProductId: "up-1", productId: "prod-1", name: "Widget", quantity: 2, shipmentFee: 0 }]
 
 beforeEach(() => {
   vi.restoreAllMocks()
-  window.localStorage.clear()
   getRates.mockReset()
 })
 
@@ -205,24 +179,13 @@ describe("VendorShipmentRates — malformed servicelevel (C axis)", () => {
   })
 })
 
-describe("VendorShipmentRates — cache TTL", () => {
-  beforeEach(() => {
-    vi.useFakeTimers({ toFake: ["Date"] })
-  })
-
-  it("reuses a cache entry exactly at the TTL boundary without hitting the network", async () => {
+describe("VendorShipmentRates — no response caching (always fetches fresh)", () => {
+  it("sends a brand new network request every time the card is mounted with the exact same inputs", async () => {
     const { addressId, cartId, sellerId } = uniqueIds()
-    const key = cacheKeyFor({ addressId, cartId, sellerId, items })
-    const now = Date.now()
-    seedCache(
-      key,
-      { shippoRates: [makeShippoRate({ objectId: "cached-rate" })], uberQuote: null, defaultShipmentFee: null },
-      now - CACHE_TTL_MS, // age === TTL exactly: `age > TTL` is false, so this must still be a hit
-    )
-    getRates.mockResolvedValue({ shippoRates: [makeShippoRate({ objectId: "network-rate" })], uberQuote: null })
+    getRates.mockResolvedValue({ shippoRates: [makeShippoRate({ objectId: "rate-1" })], uberQuote: null })
     const onSelect = vi.fn()
 
-    render(
+    const first = render(
       <VendorShipmentRates
         sellerId={sellerId}
         sellerName="Acme Dental"
@@ -232,51 +195,28 @@ describe("VendorShipmentRates — cache TTL", () => {
         onSelect={onSelect}
       />,
     )
-
-    await waitFor(() =>
-      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "cached-rate" })),
-    )
-    expect(getRates).not.toHaveBeenCalled()
-  })
-
-  it("treats a cache entry one millisecond past the TTL as expired and refetches", async () => {
-    const { addressId, cartId, sellerId } = uniqueIds()
-    const key = cacheKeyFor({ addressId, cartId, sellerId, items })
-    const now = Date.now()
-    seedCache(
-      key,
-      { shippoRates: [makeShippoRate({ objectId: "stale-rate" })], uberQuote: null, defaultShipmentFee: null },
-      now - CACHE_TTL_MS - 1, // 1ms past TTL: the user must not see a 15-minute-stale shipping price
-    )
-    getRates.mockResolvedValue({ shippoRates: [makeShippoRate({ objectId: "fresh-rate" })], uberQuote: null })
-    const onSelect = vi.fn()
-
-    render(
-      <VendorShipmentRates
-        sellerId={sellerId}
-        sellerName="Acme Dental"
-        items={items}
-        addressId={addressId}
-        cartId={cartId}
-        onSelect={onSelect}
-      />,
-    )
-
     await waitFor(() => expect(getRates).toHaveBeenCalledTimes(1))
-    await waitFor(() =>
-      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "fresh-rate" })),
-    )
-  })
-})
+    first.unmount()
 
-describe("VendorShipmentRates — cache key distinctness", () => {
-  it.each([
-    ["a different seller", (base: ReturnType<typeof uniqueIds>) => ({ ...base, sellerId: `${base.sellerId}-b` })],
-    ["a different address", (base: ReturnType<typeof uniqueIds>) => ({ ...base, addressId: `${base.addressId}-b` })],
-    ["a different cart", (base: ReturnType<typeof uniqueIds>) => ({ ...base, cartId: `${base.cartId}-b` })],
-  ])("does not reuse another %s's cached rates", async (_label, vary) => {
+    // Same seller/address/cart/items as above, remounted after the first request already
+    // settled — there is no cache left to serve, so this must be a second real network call.
+    render(
+      <VendorShipmentRates
+        sellerId={sellerId}
+        sellerName="Acme Dental"
+        items={items}
+        addressId={addressId}
+        cartId={cartId}
+        onSelect={onSelect}
+      />,
+    )
+
+    await waitFor(() => expect(getRates).toHaveBeenCalledTimes(2))
+  })
+
+  it("does not reuse another vendor/address/cart's rates — every card always asks the network", async () => {
     const base = uniqueIds()
-    const varied = vary(base)
+    const varied = { ...base, sellerId: `${base.sellerId}-b` }
 
     getRates.mockResolvedValue({ shippoRates: [makeShippoRate()], uberQuote: null })
     const onSelect = vi.fn()
@@ -305,123 +245,63 @@ describe("VendorShipmentRates — cache key distinctness", () => {
       />,
     )
 
-    // A second, distinct card must always ask the network — a same-key hit here would mean one
-    // vendor/address's shipping options leaking onto another's checkout card.
     await waitFor(() => expect(getRates).toHaveBeenCalledTimes(2))
   })
 
-  it("treats the same item set as the same cache key regardless of array order", async () => {
+  it("refetches when a quantity changes and shows the new rates instead of the old ones", async () => {
     const { addressId, cartId, sellerId } = uniqueIds()
-    // userProductId and productId are deliberately NOT alphabetically aligned (up-a carries the
-    // "later" productId) — if the sort ever fell through to the wrong tie-break field, this pair
-    // would sort differently than a naive same-alignment fixture would reveal.
-    const itemA = { userProductId: "up-a", productId: "prod-z", name: "A", quantity: 1, shipmentFee: 0 }
-    const itemB = { userProductId: "up-b", productId: "prod-a", name: "B", quantity: 3, shipmentFee: 0 }
-
-    getRates.mockResolvedValue({ shippoRates: [makeShippoRate()], uberQuote: null })
+    getRates.mockResolvedValueOnce({
+      shippoRates: [makeShippoRate({ objectId: "rate-qty-2", amount: "10.00" })],
+      uberQuote: null,
+    })
     const onSelect = vi.fn()
 
-    const first = render(
+    const { rerender } = render(
       <VendorShipmentRates
         sellerId={sellerId}
         sellerName="Acme Dental"
-        items={[itemA, itemB]}
+        items={items}
         addressId={addressId}
         cartId={cartId}
         onSelect={onSelect}
       />,
     )
-    await waitFor(() => expect(getRates).toHaveBeenCalledTimes(1))
-    first.unmount()
-
-    render(
-      <VendorShipmentRates
-        sellerId={sellerId}
-        sellerName="Acme Dental"
-        items={[itemB, itemA]}
-        addressId={addressId}
-        cartId={cartId}
-        onSelect={onSelect}
-      />,
-    )
-
-    // Cart line ordering is incidental — the same cart contents must be a cache hit, not a
-    // needless second network round trip on every re-render.
-    await waitFor(() =>
-      expect(onSelect).toHaveBeenLastCalledWith(sellerId, expect.objectContaining({ objectId: "rate-1" })),
-    )
+    await waitFor(() => expect(screen.getByText("$10.00")).toBeInTheDocument())
     expect(getRates).toHaveBeenCalledTimes(1)
-  })
 
-  it.each([
-    [
-      "two lines for the same seller product listing with different productIds",
-      { userProductId: "up-shared", productId: "prod-a", name: "A", quantity: 1, shipmentFee: 0 },
-      { userProductId: "up-shared", productId: "prod-b", name: "B", quantity: 1, shipmentFee: 0 },
-    ],
-    [
-      "two lines for the same seller product and catalog product, different quantities",
-      { userProductId: "up-shared", productId: "prod-same", name: "A", quantity: 5, shipmentFee: 0 },
-      { userProductId: "up-shared", productId: "prod-same", name: "B", quantity: 1, shipmentFee: 0 },
-    ],
-  ])("stays reorder-stable even when %s (userProductId tie-break)", async (_label, itemA, itemB) => {
-    const { addressId, cartId, sellerId } = uniqueIds()
-    getRates.mockResolvedValue({ shippoRates: [makeShippoRate()], uberQuote: null })
-    const onSelect = vi.fn()
+    getRates.mockResolvedValueOnce({
+      shippoRates: [makeShippoRate({ objectId: "rate-qty-5", amount: "22.00" })],
+      uberQuote: null,
+    })
+    const changedQuantityItems = [{ ...items[0]!, quantity: 5 }]
 
-    const first = render(
+    rerender(
       <VendorShipmentRates
         sellerId={sellerId}
         sellerName="Acme Dental"
-        items={[itemA, itemB]}
-        addressId={addressId}
-        cartId={cartId}
-        onSelect={onSelect}
-      />,
-    )
-    await waitFor(() => expect(getRates).toHaveBeenCalledTimes(1))
-    first.unmount()
-
-    render(
-      <VendorShipmentRates
-        sellerId={sellerId}
-        sellerName="Acme Dental"
-        items={[itemB, itemA]}
+        items={changedQuantityItems}
         addressId={addressId}
         cartId={cartId}
         onSelect={onSelect}
       />,
     )
 
-    // Two lines that share a userProductId still need a deterministic, order-independent tie-
-    // break (by productId, then quantity) — otherwise the same cart, re-rendered with its lines
-    // in a different order, would miss the cache and refetch needlessly.
-    await waitFor(() => expect(onSelect).toHaveBeenCalled())
-    expect(getRates).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(getRates).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(screen.getByText("$22.00")).toBeInTheDocument())
+    expect(screen.queryByText("$10.00")).not.toBeInTheDocument()
   })
 })
 
-describe("VendorShipmentRates — corrupted cache contents", () => {
-  it.each([
-    ["not valid JSON", "{not json"],
-    ["valid JSON but missing the data field", JSON.stringify({ fetchedAt: Date.now() })],
-    ["valid JSON but fetchedAt is falsy", JSON.stringify({ fetchedAt: 0, data: { shippoRates: [] } })],
-    [
-      // Distinct from "falsy fetchedAt" above: the key is absent entirely rather than 0, so
-      // `parsed.fetchedAt` is `undefined` and `Date.now() - undefined` is `NaN` (never > the TTL).
-      // An entry like this must still be rejected by the fetchedAt/data validity check — it must
-      // not fall through the TTL check into being served as if it were fresh, undated data.
-      "valid JSON with a data field but no fetchedAt key at all",
-      JSON.stringify({ data: { shippoRates: [], uberQuote: null, defaultShipmentFee: null } }),
-    ],
-  ])("treats %s as a cache miss and still fetches fresh rates", async (_label, rawValue) => {
+describe("VendorShipmentRates — stale selection is replaced on refetch", () => {
+  it("auto-selects the cheapest rate when the previously selected id is missing from a refetch", async () => {
     const { addressId, cartId, sellerId } = uniqueIds()
-    const key = cacheKeyFor({ addressId, cartId, sellerId, items })
-    window.localStorage.setItem(key, rawValue)
-    getRates.mockResolvedValue({ shippoRates: [makeShippoRate()], uberQuote: null })
+    getRates.mockResolvedValueOnce({
+      shippoRates: [makeShippoRate({ objectId: "rate-old", amount: "10.00" })],
+      uberQuote: null,
+    })
     const onSelect = vi.fn()
 
-    render(
+    const { rerender } = render(
       <VendorShipmentRates
         sellerId={sellerId}
         sellerName="Acme Dental"
@@ -431,22 +311,46 @@ describe("VendorShipmentRates — corrupted cache contents", () => {
         onSelect={onSelect}
       />,
     )
+    await waitFor(() =>
+      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "rate-old" })),
+    )
+    onSelect.mockClear()
 
-    await waitFor(() => expect(getRates).toHaveBeenCalledTimes(1))
-    await waitFor(() => expect(screen.getByText("Priority Mail")).toBeInTheDocument())
+    // Simulate the parent adopting the auto-selected rate, then the cart changing (new address)
+    // in a way that drops "rate-old" from the response entirely.
+    getRates.mockResolvedValueOnce({
+      shippoRates: [makeShippoRate({ objectId: "rate-new-cheap", amount: "4.00" })],
+      uberQuote: null,
+    })
+
+    rerender(
+      <VendorShipmentRates
+        sellerId={sellerId}
+        sellerName="Acme Dental"
+        items={items}
+        addressId={`${addressId}-new`}
+        cartId={cartId}
+        onSelect={onSelect}
+        selectedRateId="rate-old"
+      />,
+    )
+
+    // "rate-old" no longer exists in the fresh response — it must not silently ride along into
+    // the order. The cheapest available rate is auto-selected in its place.
+    await waitFor(() =>
+      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "rate-new-cheap" })),
+    )
   })
 
-  it("recovers rates from the network when reading the cache throws (e.g. blocked storage)", async () => {
+  it("re-selects the same rate with its updated amount when a refetch changes the price", async () => {
     const { addressId, cartId, sellerId } = uniqueIds()
-    // `vi.spyOn` on the `window.localStorage` instance itself does not stick in jsdom (each
-    // access can return a fresh Proxy over the same store) — spying on `Storage.prototype` does.
-    vi.spyOn(Object.getPrototypeOf(window.localStorage), "getItem").mockImplementation(() => {
-      throw new DOMException("blocked", "SecurityError")
+    getRates.mockResolvedValueOnce({
+      shippoRates: [makeShippoRate({ objectId: "rate-1", amount: "10.00" })],
+      uberQuote: null,
     })
-    getRates.mockResolvedValue({ shippoRates: [makeShippoRate()], uberQuote: null })
     const onSelect = vi.fn()
 
-    render(
+    const { rerender } = render(
       <VendorShipmentRates
         sellerId={sellerId}
         sellerName="Acme Dental"
@@ -456,22 +360,43 @@ describe("VendorShipmentRates — corrupted cache contents", () => {
         onSelect={onSelect}
       />,
     )
+    await waitFor(() =>
+      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "rate-1", amount: "10.00" })),
+    )
+    onSelect.mockClear()
 
-    // Regression for the storage-read bug found in this round: a throwing `getItem` must fall
-    // back to the network, not surface the generic "Failed to fetch shipping rates" error.
-    await waitFor(() => expect(screen.getByText("Priority Mail")).toBeInTheDocument())
-    expect(screen.queryByText("Failed to fetch shipping rates")).not.toBeInTheDocument()
+    // Same rate id comes back from the refetch, but the carrier price moved.
+    getRates.mockResolvedValueOnce({
+      shippoRates: [makeShippoRate({ objectId: "rate-1", amount: "18.00" })],
+      uberQuote: null,
+    })
+
+    rerender(
+      <VendorShipmentRates
+        sellerId={sellerId}
+        sellerName="Acme Dental"
+        items={items}
+        addressId={addressId}
+        cartId={`${cartId}-new`}
+        onSelect={onSelect}
+        selectedRateId="rate-1"
+      />,
+    )
+
+    await waitFor(() =>
+      expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "rate-1", amount: "18.00" })),
+    )
   })
 
-  it("still shows freshly fetched rates when writing to the cache throws (e.g. quota exceeded)", async () => {
+  it("does not call onSelect again when a refetch returns the same selected rate at the same price", async () => {
     const { addressId, cartId, sellerId } = uniqueIds()
-    vi.spyOn(Object.getPrototypeOf(window.localStorage), "setItem").mockImplementation(() => {
-      throw new DOMException("quota exceeded", "QuotaExceededError")
+    getRates.mockResolvedValueOnce({
+      shippoRates: [makeShippoRate({ objectId: "rate-1", amount: "10.00" })],
+      uberQuote: null,
     })
-    getRates.mockResolvedValue({ shippoRates: [makeShippoRate()], uberQuote: null })
     const onSelect = vi.fn()
 
-    render(
+    const { rerender } = render(
       <VendorShipmentRates
         sellerId={sellerId}
         sellerName="Acme Dental"
@@ -481,60 +406,30 @@ describe("VendorShipmentRates — corrupted cache contents", () => {
         onSelect={onSelect}
       />,
     )
-
-    // Regression: rates that were already successfully fetched must not be thrown away just
-    // because persisting them to the cache failed.
-    await waitFor(() => expect(screen.getByText("Priority Mail")).toBeInTheDocument())
-    expect(screen.queryByText("Failed to fetch shipping rates")).not.toBeInTheDocument()
     await waitFor(() =>
       expect(onSelect).toHaveBeenCalledWith(sellerId, expect.objectContaining({ objectId: "rate-1" })),
     )
-  })
+    onSelect.mockClear()
 
-  it("still excludes Air/Ground rates read straight from the cache, independent of the write-time filter", async () => {
-    const { addressId, cartId, sellerId } = uniqueIds()
-    const key = cacheKeyFor({ addressId, cartId, sellerId, items })
-    // Seeded directly (bypassing `writeShippingRatesToCache`, which already filters before
-    // writing) so this exercises the read path's OWN filtering in `applyRatesData` — a defense-in-
-    // depth check that matters if a cache entry was ever written by older code, or corrupted.
-    seedCache(
-      key,
-      {
-        shippoRates: [
-          makeShippoRate({
-            objectId: "cached-ground",
-            servicelevel: {
-              name: "USPS Ground Advantage",
-              token: "usps_ground_advantage",
-              terms: "",
-              extendedToken: "",
-              parentServicelevel: null,
-            },
-          }),
-          makeShippoRate({ objectId: "cached-priority" }),
-        ],
-        uberQuote: null,
-        defaultShipmentFee: null,
-      },
-      Date.now(),
-    )
-    getRates.mockResolvedValue({ shippoRates: [], uberQuote: null })
-    const onSelect = vi.fn()
+    getRates.mockResolvedValueOnce({
+      shippoRates: [makeShippoRate({ objectId: "rate-1", amount: "10.00" })],
+      uberQuote: null,
+    })
 
-    render(
+    rerender(
       <VendorShipmentRates
         sellerId={sellerId}
         sellerName="Acme Dental"
         items={items}
         addressId={addressId}
-        cartId={cartId}
+        cartId={`${cartId}-new`}
         onSelect={onSelect}
+        selectedRateId="rate-1"
       />,
     )
 
-    await waitFor(() => expect(screen.getByText("Priority Mail")).toBeInTheDocument())
-    expect(screen.queryByText("USPS Ground Advantage")).not.toBeInTheDocument()
-    expect(getRates).not.toHaveBeenCalled()
+    await waitFor(() => expect(getRates).toHaveBeenCalledTimes(2))
+    expect(onSelect).not.toHaveBeenCalled()
   })
 })
 

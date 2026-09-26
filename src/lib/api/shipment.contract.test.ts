@@ -4,9 +4,11 @@ import { server } from "@/mocks/server"
 import { type ShipmentRatesPayload, type ShipmentRatesResponse, shipmentAPI } from "./shipment"
 
 /**
- * `getRates` is called once per vendor from the checkout screen. It keeps a module-level 2s
- * dedup cache keyed by address + user + cart + parcels, so every test below uses a unique cartId
- * to stay isolated from its neighbours; the cache itself is exercised deliberately at the end.
+ * `getRates` is called once per vendor from the checkout screen. There is no persistent response
+ * cache — every call reaches `/shipment/rates` fresh. The only in-memory bookkeeping is a
+ * transient in-flight map (keyed by address + user + cart + parcels) that merges requests that
+ * are literally concurrent, exercised at the end of this file. Every test below still uses a
+ * unique cartId to stay isolated from its neighbours.
  */
 let cartCounter = 0
 
@@ -273,8 +275,7 @@ describe("shipmentAPI.getRates contract", () => {
         requestCount += 1
         attempt += 1
         if (attempt === 1) {
-          // Every failure on this endpoint is a 400 (see the "rejects on" cases above) -- kept
-          // consistent here even though this test is really about the dedup cache, not the status.
+          // Every failure on this endpoint is a 400 (see the "rejects on" cases above).
           return HttpResponse.json({ message: "Temporarily unavailable" }, { status: 400 })
         }
         return HttpResponse.json({ shippoRates: [makeShippoRate()], uberQuote: null })
@@ -288,7 +289,7 @@ describe("shipmentAPI.getRates contract", () => {
   })
 })
 
-describe("shipmentAPI.getRates deduplication", () => {
+describe("shipmentAPI.getRates request behavior", () => {
   it("collapses concurrent identical requests into a single round trip", async () => {
     useRatesHandler(() => HttpResponse.json({ shippoRates: [makeShippoRate()], uberQuote: null }))
 
@@ -299,7 +300,7 @@ describe("shipmentAPI.getRates deduplication", () => {
     expect(first).toBe(second)
   })
 
-  it("treats parcels in a different order as the same request", async () => {
+  it("collapses concurrent identical requests even when parcels are in a different order", async () => {
     useRatesHandler(() => HttpResponse.json({ shippoRates: [makeShippoRate()], uberQuote: null }))
 
     const payload = makePayload({
@@ -309,14 +310,17 @@ describe("shipmentAPI.getRates deduplication", () => {
         { userProductId: "up-a", quantity: 3 },
       ],
     })
-    await shipmentAPI.getRates(payload)
-    await shipmentAPI.getRates({
-      ...payload,
-      parcels: [
-        { userProductId: "up-a", quantity: 3 },
-        { userProductId: "up-b", quantity: 1 },
-      ],
-    })
+
+    await Promise.all([
+      shipmentAPI.getRates(payload),
+      shipmentAPI.getRates({
+        ...payload,
+        parcels: [
+          { userProductId: "up-a", quantity: 3 },
+          { userProductId: "up-b", quantity: 1 },
+        ],
+      }),
+    ])
 
     expect(requestCount).toBe(1)
   })
@@ -331,19 +335,16 @@ describe("shipmentAPI.getRates deduplication", () => {
     expect(requestCount).toBe(2)
   })
 
-  it("refetches once the 2s dedup window has elapsed", async () => {
+  it("sends a fresh request for the exact same payload once the previous one has settled — there is no response cache", async () => {
     useRatesHandler(() => HttpResponse.json({ shippoRates: [makeShippoRate()], uberQuote: null }))
 
-    const start = Date.now()
-    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(start)
-
-    const payload = makePayload({ userId: "seller-window" })
+    const payload = makePayload({ userId: "seller-repeat" })
     await shipmentAPI.getRates(payload)
     await shipmentAPI.getRates({ ...payload })
-    expect(requestCount).toBe(1)
-
-    nowSpy.mockReturnValue(start + 2001)
     await shipmentAPI.getRates({ ...payload })
-    expect(requestCount).toBe(2)
+
+    // Each call above `await`s the previous one to completion first, so none of them are ever
+    // truly concurrent with another — every one of them must hit the network.
+    expect(requestCount).toBe(3)
   })
 })

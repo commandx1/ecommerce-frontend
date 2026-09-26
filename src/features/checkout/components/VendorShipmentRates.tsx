@@ -14,87 +14,10 @@ interface VendorShipmentRatesProps {
   selectedRateId?: string
 }
 
-const SHIPPING_RATES_CACHE_KEY_PREFIX = "checkout:shipping-rates:v1"
-const SHIPPING_RATES_CACHE_TTL_MS = 15 * 60 * 1000
-
-interface ShippingRatesCacheValue {
-  fetchedAt: number
-  data: {
-    shippoRates: ShipmentRate[]
-    uberQuote: UberQuote | null
-    defaultShipmentFee: number | null
-  }
-}
-
-function buildShippingRatesCacheKey(args: {
-  addressId: string
-  cartId: string
-  sellerId: string
-  items: { userProductId: string; productId: string; quantity: number }[]
-}): string {
-  const normalizedItems = [...args.items]
-    .sort((a, b) => {
-      if (a.userProductId === b.userProductId) {
-        if (a.productId === b.productId) {
-          return a.quantity - b.quantity
-        }
-        return a.productId.localeCompare(b.productId)
-      }
-      return a.userProductId.localeCompare(b.userProductId)
-    })
-    .map((item) => `${item.userProductId}:${item.productId}:${item.quantity}`)
-    .join("|")
-
-  return `${SHIPPING_RATES_CACHE_KEY_PREFIX}:${args.addressId}:${args.cartId}:${args.sellerId}:${normalizedItems}`
-}
-
-function readShippingRatesFromCache(cacheKey: string): ShippingRatesCacheValue["data"] | null {
-  if (typeof window === "undefined") return null
-
-  // Storage access can throw (Safari private mode, sandboxed iframe, full quota). That must degrade
-  // to a cache miss, not surface as "Failed to fetch shipping rates".
-  try {
-    const rawValue = window.localStorage.getItem(cacheKey)
-    if (!rawValue) return null
-
-    const parsed = JSON.parse(rawValue) as ShippingRatesCacheValue
-    if (!parsed?.fetchedAt || !parsed.data) {
-      window.localStorage.removeItem(cacheKey)
-      return null
-    }
-
-    if (Date.now() - parsed.fetchedAt > SHIPPING_RATES_CACHE_TTL_MS) {
-      window.localStorage.removeItem(cacheKey)
-      return null
-    }
-
-    return parsed.data
-  } catch {
-    try {
-      window.localStorage.removeItem(cacheKey)
-    } catch {
-      // Storage is unusable altogether — nothing left to clean up.
-    }
-    return null
-  }
-}
-
-function writeShippingRatesToCache(cacheKey: string, data: ShippingRatesCacheValue["data"]) {
-  if (typeof window === "undefined") return
-
-  // Same class of bug as the read path above, but worse: this runs AFTER a successful network
-  // fetch. An uncaught `setItem` throw (quota exceeded, private mode, blocked storage) discarded
-  // rates the user already has and showed a network-style error for a caching failure. Caching is
-  // strictly best-effort — losing it must never lose the rates themselves.
-  try {
-    const payload: ShippingRatesCacheValue = {
-      fetchedAt: Date.now(),
-      data,
-    }
-    window.localStorage.setItem(cacheKey, JSON.stringify(payload))
-  } catch {
-    // Best-effort cache write; `applyRatesData` still runs with the freshly fetched data.
-  }
+interface RatesResponseData {
+  shippoRates: ShipmentRate[]
+  uberQuote: UberQuote | null
+  defaultShipmentFee: number | null
 }
 
 function formatShippingAmount(amount: number): string {
@@ -170,30 +93,41 @@ export default function VendorShipmentRates({
   onSelectRef.current = onSelect
   const selectedRateIdRef = useRef(selectedRateId)
   selectedRateIdRef.current = selectedRateId
+  // The previous response actually applied by THIS component instance, kept only to detect a
+  // stale/changed selection across a refetch (see `applyRatesData` below). `null` means "no
+  // response has landed yet" — the very first response of a mount must never override a
+  // selection it did not itself make (e.g. one resumed from a parent/session), only a later
+  // refetch may replace it.
+  const previousResponseRef = useRef<RatesResponseData | null>(null)
 
   useEffect(() => {
     let isMounted = true
 
-    const applyRatesData = (data: {
-      shippoRates: ShipmentRate[]
-      uberQuote: UberQuote | null
-      defaultShipmentFee: number | null
-    }) => {
+    const applyRatesData = (data: RatesResponseData) => {
       const filteredRates = data.shippoRates.filter((rate) => !isExcludedServiceLevel(rate))
 
       setRates(filteredRates)
       setUberQuote(data.uberQuote)
       setDefaultShipmentFee(data.defaultShipmentFee)
 
-      if (!selectedRateIdRef.current && (filteredRates.length > 0 || data.uberQuote)) {
-        const cheapestRate = [...filteredRates].sort(
-          (a, b) =>
-            getEffectiveRateAmount(a, data.defaultShipmentFee) - getEffectiveRateAmount(b, data.defaultShipmentFee),
-        )[0]
-        const cheapestRateAmount = cheapestRate
-          ? getEffectiveRateAmount(cheapestRate, data.defaultShipmentFee)
-          : Number.POSITIVE_INFINITY
-        const uberAmount = data.uberQuote ? getUberQuoteAmount(data.uberQuote) : Number.POSITIVE_INFINITY
+      const previousResponse = previousResponseRef.current
+      previousResponseRef.current = {
+        shippoRates: filteredRates,
+        uberQuote: data.uberQuote,
+        defaultShipmentFee: data.defaultShipmentFee,
+      }
+
+      const cheapestRate = [...filteredRates].sort(
+        (a, b) =>
+          getEffectiveRateAmount(a, data.defaultShipmentFee) - getEffectiveRateAmount(b, data.defaultShipmentFee),
+      )[0]
+      const cheapestRateAmount = cheapestRate
+        ? getEffectiveRateAmount(cheapestRate, data.defaultShipmentFee)
+        : Number.POSITIVE_INFINITY
+      const uberAmount = data.uberQuote ? getUberQuoteAmount(data.uberQuote) : Number.POSITIVE_INFINITY
+
+      const selectCheapest = () => {
+        if (filteredRates.length === 0 && !data.uberQuote) return
 
         if (data.uberQuote && uberAmount < cheapestRateAmount) {
           onSelectRef.current(sellerId, data.uberQuote)
@@ -207,6 +141,52 @@ export default function VendorShipmentRates({
           })
         }
       }
+
+      const currentSelectedId = selectedRateIdRef.current
+
+      if (!currentSelectedId) {
+        selectCheapest()
+        return
+      }
+
+      if (!previousResponse) {
+        // First response of this mount and a rate is already selected (carried over from a
+        // parent/session, not chosen from data this component has seen) — trust it as-is.
+        return
+      }
+
+      // A refetch (cart/address/etc. changed) landed while a rate was already selected. That
+      // selection was validated against the PREVIOUS response — if its id is gone from the
+      // fresh one it is stale and must not silently ride along into the order; if it survived
+      // but its price moved, the parent must hear about the new amount.
+      const matchedUber = data.uberQuote && data.uberQuote.id === currentSelectedId ? data.uberQuote : null
+      if (matchedUber) {
+        const previousUberAmount = previousResponse.uberQuote ? getUberQuoteAmount(previousResponse.uberQuote) : null
+        const newUberAmount = getUberQuoteAmount(matchedUber)
+        if (previousUberAmount === null || previousUberAmount !== newUberAmount) {
+          onSelectRef.current(sellerId, matchedUber)
+        }
+        return
+      }
+
+      const matchedRate = filteredRates.find(
+        (rate) =>
+          rate.objectId === currentSelectedId && Number.isFinite(getEffectiveRateAmount(rate, data.defaultShipmentFee)),
+      )
+      if (matchedRate) {
+        const newAmount = getEffectiveRateAmount(matchedRate, data.defaultShipmentFee)
+        const previousMatch = previousResponse.shippoRates.find((rate) => rate.objectId === currentSelectedId)
+        const previousAmount = previousMatch
+          ? getEffectiveRateAmount(previousMatch, previousResponse.defaultShipmentFee)
+          : null
+        if (previousAmount === null || previousAmount !== newAmount) {
+          onSelectRef.current(sellerId, { ...matchedRate, amount: newAmount.toFixed(2) })
+        }
+        return
+      }
+
+      // Selected id is no longer present (or no longer usable) in the fresh response.
+      selectCheapest()
     }
 
     const fetchRates = async () => {
@@ -214,28 +194,11 @@ export default function VendorShipmentRates({
         userProductId: item.userProductId,
         quantity: item.quantity,
       }))
-      const cacheKey = buildShippingRatesCacheKey({
-        addressId,
-        cartId,
-        sellerId,
-        items: items.map((item) => ({
-          userProductId: item.userProductId,
-          productId: item.productId,
-          quantity: item.quantity,
-        })),
-      })
 
       setIsLoading(true)
       setHasError(false)
 
       try {
-        const cached = readShippingRatesFromCache(cacheKey)
-        if (cached) {
-          if (!isMounted) return
-          applyRatesData(cached)
-          return
-        }
-
         const response = await shipmentAPI.getRates({
           addressId,
           userId: sellerId,
@@ -245,19 +208,16 @@ export default function VendorShipmentRates({
 
         if (!isMounted) return
 
-        const filteredRates = response.shippoRates.filter((rate) => !isExcludedServiceLevel(rate))
         const responseDefaultShipmentFee =
           typeof response.defaultShipmentFee === "number" && Number.isFinite(response.defaultShipmentFee)
             ? response.defaultShipmentFee
             : null
 
-        const dataForCache: ShippingRatesCacheValue["data"] = {
-          shippoRates: filteredRates,
+        applyRatesData({
+          shippoRates: response.shippoRates,
           uberQuote: response.uberQuote,
           defaultShipmentFee: responseDefaultShipmentFee,
-        }
-        writeShippingRatesToCache(cacheKey, dataForCache)
-        applyRatesData(dataForCache)
+        })
       } catch (_error) {
         if (!isMounted) return
         setHasError(true)

@@ -1,8 +1,11 @@
 import apiClient from "./client"
 
-const RATES_DEDUP_WINDOW_MS = 2000
+// Merges truly concurrent identical requests (e.g. React StrictMode's double-invoked effect, or
+// two callers asking for the same vendor's rates in the same tick) into a single network round
+// trip. This is NOT a response cache: nothing is retained once a request settles, so any call
+// that isn't literally in flight at the same moment always hits `/shipment/rates` fresh — stale
+// cached rates must never be served instead of a real request.
 const inFlightRatesRequests = new Map<string, Promise<ShipmentRatesResponse>>()
-const recentRatesResponses = new Map<string, { data: ShipmentRatesResponse; fetchedAt: number }>()
 
 export interface ShipmentRate {
   objectId: string
@@ -75,24 +78,9 @@ function buildRatesRequestKey(payload: ShipmentRatesPayload): string {
   return `${payload.addressId}__${payload.userId}__${payload.cartId}__${normalizedParcels}`
 }
 
-function pruneExpiredRatesCache(now: number) {
-  for (const [key, entry] of recentRatesResponses.entries()) {
-    if (now - entry.fetchedAt > RATES_DEDUP_WINDOW_MS) {
-      recentRatesResponses.delete(key)
-    }
-  }
-}
-
 class ShipmentAPI {
   async getRates(payload: ShipmentRatesPayload): Promise<ShipmentRatesResponse> {
-    const now = Date.now()
-    pruneExpiredRatesCache(now)
-
     const requestKey = buildRatesRequestKey(payload)
-    const cached = recentRatesResponses.get(requestKey)
-    if (cached && now - cached.fetchedAt <= RATES_DEDUP_WINDOW_MS) {
-      return cached.data
-    }
 
     const inFlight = inFlightRatesRequests.get(requestKey)
     if (inFlight) {
@@ -101,9 +89,7 @@ class ShipmentAPI {
 
     const requestPromise = (async () => {
       const response = await apiClient.post<ShipmentRatesResponse>("/shipment/rates", payload)
-      const data = response.data
-      recentRatesResponses.set(requestKey, { data, fetchedAt: Date.now() })
-      return data
+      return response.data
     })()
 
     inFlightRatesRequests.set(requestKey, requestPromise)
