@@ -29,6 +29,13 @@ vi.mock("next/link", async () => {
   return nextLinkMock()
 })
 
+// `unstable_cache` runs outside a Next request here and memoizes across tests, so one test's MSW
+// data would leak into the next. Pass-through keeps every call hitting the handlers.
+vi.mock("next/cache", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/cache")>()),
+  unstable_cache: <T>(fn: T) => fn,
+}))
+
 vi.mock("next/navigation", async () => {
   const { nextNavigationMock } = await import("./mocks/next-navigation")
   return nextNavigationMock()

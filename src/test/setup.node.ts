@@ -1,5 +1,11 @@
-import { afterAll, afterEach, beforeAll } from "vitest"
+import { afterAll, afterEach, beforeAll, vi } from "vitest"
 import { server } from "@/mocks/server"
+
+// Same pass-through as `setup.ts`: outside a Next request `unstable_cache` memoizes across tests.
+vi.mock("next/cache", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/cache")>()),
+  unstable_cache: <T>(fn: T) => fn,
+}))
 
 /**
  * Setup for the `node` Vitest project (route handlers, middleware and server-side fetchers).
