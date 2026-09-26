@@ -9,6 +9,7 @@ import { getFullImageUrl } from "@/lib/api/products"
 import type { VendorOrder, VendorOrderItem } from "@/lib/api/vendor-orders"
 import { isCancelableOrderItemStatus } from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { hasHeavyShipmentFee } from "@/lib/helpers/shipping"
 import { formatOrderItemStatus, getOrderItemStatusTagClass } from "@/lib/orders/order-format"
 
 interface CancelActionOptions {
@@ -189,7 +190,7 @@ export default function VendorOrderExpandedContent({
                       ) : (
                         <span>Shipment: {formatCurrency(getVendorShipmentFee(item))}</span>
                       )}
-                      {getVendorHeavyShipmentFee(item) > 0 ? (
+                      {hasHeavyShipmentFee(getVendorHeavyShipmentFee(item)) ? (
                         <>
                           <span className="text-border-strong">·</span>
                           <span>Heavy fee: {formatCurrency(getVendorHeavyShipmentFee(item))}</span>
@@ -291,11 +292,10 @@ export default function VendorOrderExpandedContent({
 
           {/* What the cancellation actually cost (same strip as the buyer side): null until a
             cancellation. `cancellationHeavyShipmentFeeRefund` is 0 (not null) without a heavy fee,
-            so it is compared with `> 0`. */}
+            so it is checked with `hasHeavyShipmentFee`. */}
           {typeof order.cancellationShipmentFee === "number" ||
           typeof order.cancellationShipmentRefundFee === "number" ||
-          (typeof order.cancellationHeavyShipmentFeeRefund === "number" &&
-            order.cancellationHeavyShipmentFeeRefund > 0) ? (
+          hasHeavyShipmentFee(order.cancellationHeavyShipmentFeeRefund) ? (
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-[8px] border border-border-soft bg-surface-muted/55 px-3 py-2 text-xs sm:px-4">
               {typeof order.cancellationShipmentFee === "number" ? (
                 <span className="text-text-secondary">
@@ -313,8 +313,7 @@ export default function VendorOrderExpandedContent({
                   </span>
                 </span>
               ) : null}
-              {typeof order.cancellationHeavyShipmentFeeRefund === "number" &&
-              order.cancellationHeavyShipmentFeeRefund > 0 ? (
+              {hasHeavyShipmentFee(order.cancellationHeavyShipmentFeeRefund) ? (
                 <span className="text-text-secondary">
                   Heavy fee refunded to buyer:{" "}
                   <span className="font-semibold text-success">
@@ -343,7 +342,7 @@ export default function VendorOrderExpandedContent({
                 <span>Shipping</span>
                 <span className="text-text-primary">{shippingTotal > 0 ? formatCurrency(shippingTotal) : "FREE"}</span>
               </div>
-              {heavyTotal > 0 ? (
+              {hasHeavyShipmentFee(heavyTotal) ? (
                 <div className="flex justify-between text-text-muted">
                   <span>Heavy shipment fee</span>
                   <span className="text-text-primary">{formatCurrency(heavyTotal)}</span>

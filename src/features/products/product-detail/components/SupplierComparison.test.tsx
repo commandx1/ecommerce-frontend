@@ -19,6 +19,7 @@ const makeSupplier = (overrides: Partial<SupplierViewModel> = {}): SupplierViewM
   shipping: "$5.00",
   shippingFee: "$5.00",
   heavyShippingFee: "$0.00",
+  hasHeavyShippingFee: false,
   distance: "12 km",
   distanceTime: "2 days",
   rating: 4.5,
@@ -60,11 +61,22 @@ describe("SupplierComparison", () => {
   })
 
   it("breaks shipping into standard, heavy and total", () => {
-    render(<SupplierComparison suppliers={[makeSupplier({ heavyShippingFee: "$20.00", shipping: "$25.00" })]} />)
+    render(
+      <SupplierComparison
+        suppliers={[makeSupplier({ heavyShippingFee: "$20.00", hasHeavyShippingFee: true, shipping: "$25.00" })]}
+      />,
+    )
 
     const row = rowFor("Acme Dental")
     expect(within(row).getByText("$20.00")).toBeInTheDocument()
     expect(within(row).getByText("Total: $25.00")).toBeInTheDocument()
+  })
+
+  it("hides the heavy shipping row entirely when there is no heavy fee", () => {
+    render(<SupplierComparison suppliers={[makeSupplier({ hasHeavyShippingFee: false })]} />)
+
+    const row = rowFor("Acme Dental")
+    expect(within(row).queryByText(/Heavy:/)).not.toBeInTheDocument()
   })
 
   it("shows a saving badge only while the listing is discounted", () => {

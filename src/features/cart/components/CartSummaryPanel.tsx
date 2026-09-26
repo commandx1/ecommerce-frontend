@@ -6,6 +6,7 @@ import SurfaceCard from "@/components/ui/SurfaceCard"
 import type { CartTotals } from "@/features/cart/types"
 import type { DentalLicenseStatus } from "@/lib/helpers/dentalLicense"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { hasHeavyShipmentFee } from "@/lib/helpers/shipping"
 
 interface CartSummaryPanelProps {
   autoOrderItemsCount: number
@@ -51,7 +52,7 @@ export default function CartSummaryPanel({
   const summaryRows: SummaryRow[] = [
     { label: `Subtotal (${itemsCount} item${itemsCount > 1 ? "s" : ""})`, value: formatCurrency(totals.subtotal) },
     { label: "Shipment fee", value: totals.shipmentFee === 0 ? "Free" : formatCurrency(totals.shipmentFee) },
-    ...(totals.heavyShipmentFee > 0
+    ...(hasHeavyShipmentFee(totals.heavyShipmentFee)
       ? [{ label: "Heavy shipment fee", value: formatCurrency(totals.heavyShipmentFee) }]
       : []),
     { label: "Estimated Tax", value: taxValue, isLoading: isTaxLoading },

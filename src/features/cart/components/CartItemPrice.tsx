@@ -1,5 +1,6 @@
 import { Truck, Weight } from "lucide-react"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { hasHeavyShipmentFee } from "@/lib/helpers/shipping"
 
 interface CartItemPriceProps {
   oldPrice: number
@@ -65,7 +66,9 @@ export default function CartItemPrice({
 
       <div className="mt-2 space-y-1.5 sm:min-w-[9.75rem] rounded-xl border border-border-soft/70 bg-surface-muted/60 px-2.5 py-2">
         <FeeRow icon={Truck} label="Shipment" amount={shipmentFeeTotal} />
-        {heavyShipmentFeeTotal > 0 ? <FeeRow icon={Weight} label="Heavy fee" amount={heavyShipmentFeeTotal} /> : null}
+        {hasHeavyShipmentFee(heavyShipmentFeeTotal) ? (
+          <FeeRow icon={Weight} label="Heavy fee" amount={heavyShipmentFeeTotal} />
+        ) : null}
       </div>
     </div>
   )

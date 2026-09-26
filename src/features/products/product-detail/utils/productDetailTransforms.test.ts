@@ -414,6 +414,7 @@ describe("buildSuppliers", () => {
     expect(supplier.shipping).toBe("Free")
     expect(supplier.shippingFee).toBe("Free")
     expect(supplier.heavyShippingFee).toBe("Free")
+    expect(supplier.hasHeavyShippingFee).toBe(false)
   })
 
   it("sums shipmentFee and heavyShippingSurcharge into the total shipping cost", () => {
@@ -422,6 +423,7 @@ describe("buildSuppliers", () => {
     expect(supplier.shipping).toBe("$7.50")
     expect(supplier.shippingFee).toBe("$5.00")
     expect(supplier.heavyShippingFee).toBe("$2.50")
+    expect(supplier.hasHeavyShippingFee).toBe(true)
   })
 
   it("defaults rating and reviewCount to 0 when missing", () => {

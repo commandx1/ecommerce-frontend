@@ -3,6 +3,7 @@
 import AddressContactInfo from "@/features/checkout/components/AddressContactInfo"
 import type { BuyerOrder } from "@/lib/api/buyer-orders"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { hasHeavyShipmentFee } from "@/lib/helpers/shipping"
 import type { BuyerOrderViewModel } from "../types"
 
 interface OrderSummaryPanelProps {
@@ -38,7 +39,7 @@ export default function OrderSummaryPanel({ order, summary }: OrderSummaryPanelP
               {summary.shippingTotal > 0 ? formatCurrency(summary.shippingTotal) : "FREE"}
             </span>
           </div>
-          {summary.heavyShipmentTotal > 0 ? (
+          {hasHeavyShipmentFee(summary.heavyShipmentTotal) ? (
             <div className="flex justify-between text-text-muted">
               <span>Heavy shipment fee</span>
               <span className="text-text-primary">{formatCurrency(summary.heavyShipmentTotal)}</span>

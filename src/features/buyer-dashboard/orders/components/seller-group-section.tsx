@@ -6,6 +6,7 @@ import { Collapse, CollapseContent, CollapseTrigger } from "@/components/ui/coll
 import type { BuyerOrder, BuyerOrderItem, BuyerOrderSellerGroup } from "@/lib/api/buyer-orders"
 import { isPreShippingCancelableStatus } from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { hasHeavyShipmentFee } from "@/lib/helpers/shipping"
 import { formatDateTime, getSellerFirstTwoLetters } from "@/lib/orders/order-format"
 import type { useBuyerOrdersTableActions } from "../context/buyer-orders-context"
 import OrderItemRow from "./order-item-row"
@@ -137,8 +138,7 @@ export default function SellerGroupSection({
             `cancellationHeavyShipmentFeeRefund` follows the same rule. */}
           {typeof group.cancellationShipmentFee === "number" ||
           typeof group.cancellationShipmentRefundFee === "number" ||
-          (typeof group.cancellationHeavyShipmentFeeRefund === "number" &&
-            group.cancellationHeavyShipmentFeeRefund > 0) ? (
+          hasHeavyShipmentFee(group.cancellationHeavyShipmentFeeRefund) ? (
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border-soft px-3 py-2 text-xs sm:px-4">
               {typeof group.cancellationShipmentFee === "number" ? (
                 <span className="text-text-secondary">
@@ -156,8 +156,7 @@ export default function SellerGroupSection({
                   </span>
                 </span>
               ) : null}
-              {typeof group.cancellationHeavyShipmentFeeRefund === "number" &&
-              group.cancellationHeavyShipmentFeeRefund > 0 ? (
+              {hasHeavyShipmentFee(group.cancellationHeavyShipmentFeeRefund) ? (
                 <span className="text-text-secondary">
                   Heavy fee refunded:{" "}
                   <span className="font-semibold text-success">

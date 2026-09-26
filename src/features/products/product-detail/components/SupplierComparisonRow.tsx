@@ -89,9 +89,11 @@ const SupplierComparisonRow = ({ supplier, isBestSeller, isSelected, onSelect }:
           <div className="text-xs text-text-muted">
             Shipping: <span className="font-medium text-text-primary">{supplier.shippingFee}</span>
           </div>
-          <div className="text-xs text-text-muted">
-            Heavy: <span className="font-medium text-text-primary">{supplier.heavyShippingFee}</span>
-          </div>
+          {supplier.hasHeavyShippingFee ? (
+            <div className="text-xs text-text-muted">
+              Heavy: <span className="font-medium text-text-primary">{supplier.heavyShippingFee}</span>
+            </div>
+          ) : null}
           <div className="text-sm font-semibold text-brand">Total: {supplier.shipping}</div>
         </div>
       </td>

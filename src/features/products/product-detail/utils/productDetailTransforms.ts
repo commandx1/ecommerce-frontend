@@ -2,6 +2,7 @@ import { CATEGORY_PATH_SEPARATOR } from "@/features/products/listing/lib/categor
 import { getFullImageUrl } from "@/lib/api/products"
 import { isDentalLicenseRequiredValue } from "@/lib/helpers/dentalLicense"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { hasHeavyShipmentFee } from "@/lib/helpers/shipping"
 import type { CategoryCrumb, ProductDetail, SpecificationItem, SupplierViewModel, UserProduct } from "../types"
 
 const FALLBACK_IMAGE = "/dentypro-product-placeholder.png"
@@ -159,6 +160,7 @@ export const buildSuppliers = (userProducts: UserProduct[], bestPriceVendorUserP
         shipping: shippingTotal <= 0 ? "Free" : formatCurrency(shippingTotal),
         shippingFee: shipmentFee <= 0 ? "Free" : formatCurrency(shipmentFee),
         heavyShippingFee: heavyShippingSurcharge <= 0 ? "Free" : formatCurrency(heavyShippingSurcharge),
+        hasHeavyShippingFee: hasHeavyShipmentFee(heavyShippingSurcharge),
         distance: up.vendorDistance,
         distanceTime: up.vendorDistanceTime,
         rating: up.vendorRating ?? 0,

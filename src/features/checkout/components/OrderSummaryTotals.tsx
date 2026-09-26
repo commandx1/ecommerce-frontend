@@ -1,5 +1,6 @@
 import { Loader2 } from "lucide-react"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { hasHeavyShipmentFee } from "@/lib/helpers/shipping"
 
 interface OrderSummaryTotalsProps {
   isTaxLoading: boolean
@@ -44,7 +45,7 @@ export default function OrderSummaryTotals({
           <span className="font-medium text-text-primary">{shipping === 0 ? "Free" : formatCurrency(shipping)}</span>
         </div>
       ) : null}
-      {heavyShipmentFee > 0 ? (
+      {hasHeavyShipmentFee(heavyShipmentFee) ? (
         <div className="flex justify-between text-sm">
           <span className="text-text-secondary">Heavy shipment fee</span>
           <span className="font-medium text-text-primary">{formatCurrency(heavyShipmentFee)}</span>

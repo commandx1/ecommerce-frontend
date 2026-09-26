@@ -9,6 +9,7 @@ import type { BuyerOrder, BuyerOrderItem } from "@/lib/api/buyer-orders"
 import { getFullImageUrl } from "@/lib/api/products"
 import { isDeliveredOrderItemStatus, isPreShippingCancelableStatus } from "@/lib/constants/order-item-status"
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { hasHeavyShipmentFee } from "@/lib/helpers/shipping"
 import { formatOrderItemStatus, getOrderItemStatusTagClass } from "@/lib/orders/order-format"
 import type { useBuyerOrdersTableActions } from "../context/buyer-orders-context"
 import { getItemAccentClasses } from "../lib/order-item-accent"
@@ -131,7 +132,7 @@ export default function OrderItemRow({
             ) : (
               <span>Shipment: {formatCurrency(shipmentFee)}</span>
             )}
-            {heavyShipmentFee > 0 ? (
+            {hasHeavyShipmentFee(heavyShipmentFee) ? (
               <>
                 <span className="text-border-strong">·</span>
                 <span>Heavy fee: {formatCurrency(heavyShipmentFee)}</span>

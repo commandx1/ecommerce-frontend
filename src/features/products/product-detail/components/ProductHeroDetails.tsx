@@ -90,10 +90,12 @@ const ProductHeroDetails = ({ product, selectedSupplier }: ProductHeroDetailsPro
               <div className="rounded-full border border-border-soft bg-surface-elevated px-3 py-1.5 text-sm text-text-secondary">
                 Shipping: <span className="font-semibold text-text-primary">{selectedSupplier.shippingFee}</span>
               </div>
-              <div className="rounded-full border border-border-soft bg-surface-elevated px-3 py-1.5 text-sm text-text-secondary">
-                Heavy shipping:{" "}
-                <span className="font-semibold text-text-primary">{selectedSupplier.heavyShippingFee}</span>
-              </div>
+              {selectedSupplier.hasHeavyShippingFee ? (
+                <div className="rounded-full border border-border-soft bg-surface-elevated px-3 py-1.5 text-sm text-text-secondary">
+                  Heavy shipping:{" "}
+                  <span className="font-semibold text-text-primary">{selectedSupplier.heavyShippingFee}</span>
+                </div>
+              ) : null}
               <div className="rounded-full border border-brand/30 bg-brand/10 px-3 py-1.5 text-sm text-text-secondary">
                 Total shipping: <span className="font-semibold text-brand">{selectedSupplier.shipping}</span>
               </div>

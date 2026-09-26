@@ -167,6 +167,7 @@ export interface SupplierViewModel {
   shipping: string
   shippingFee: string
   heavyShippingFee: string
+  hasHeavyShippingFee: boolean
   distance?: string
   distanceTime?: string
   rating: number

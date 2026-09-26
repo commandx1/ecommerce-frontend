@@ -1,4 +1,5 @@
 import formatCurrency from "@/lib/helpers/formatCurrency"
+import { hasHeavyShipmentFee } from "@/lib/helpers/shipping"
 
 interface OrderSummary {
   product: string
@@ -51,12 +52,12 @@ const OrderSummaryCard = ({
               {shippingFeePrice === 0 ? "Free" : formatCurrency(shippingFeePrice)}
             </span>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-text-secondary">Heavy shipping surcharge</span>
-            <span className="font-medium text-text-primary">
-              {heavyShippingFeePrice === 0 ? "Free" : formatCurrency(heavyShippingFeePrice)}
-            </span>
-          </div>
+          {hasHeavyShipmentFee(heavyShippingFeePrice) ? (
+            <div className="flex justify-between text-sm">
+              <span className="text-text-secondary">Heavy shipping surcharge</span>
+              <span className="font-medium text-text-primary">{formatCurrency(heavyShippingFeePrice)}</span>
+            </div>
+          ) : null}
           <div className="flex justify-between border-t border-border-soft pt-1.5">
             <span className="font-medium text-text-secondary">Total shipping</span>
             <span className="font-semibold text-success">
