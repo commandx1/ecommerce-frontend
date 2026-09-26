@@ -21,6 +21,7 @@ const DEFAULTS: ParsedListingSearchParams = {
   inStock: true,
   attributes: [],
   companyId: null,
+  search: null,
 }
 
 const parse = (params: ListingSearchParams = {}) => parseListingSearchParams(params)
@@ -46,6 +47,7 @@ describe("parseListingSearchParams — defaults", () => {
         inStock: undefined,
         attributes: undefined,
         companyId: undefined,
+        q: undefined,
       }),
     ).toEqual(DEFAULTS)
   })
@@ -255,6 +257,48 @@ describe("parseListingSearchParams — inStock", () => {
   })
 })
 
+describe("parseListingSearchParams — q / search", () => {
+  it("returns null when q is absent", () => {
+    expect(parse({}).search).toBeNull()
+  })
+
+  it("passes a plain q through untouched", () => {
+    expect(parse({ q: "implant" }).search).toBe("implant")
+  })
+
+  it("trims leading and trailing whitespace", () => {
+    expect(parse({ q: "  implant  " }).search).toBe("implant")
+  })
+
+  it("treats a whitespace-only q as absent (null)", () => {
+    expect(parse({ q: "   " }).search).toBeNull()
+  })
+
+  it("treats an empty-string q as absent (null)", () => {
+    expect(parse({ q: "" }).search).toBeNull()
+  })
+
+  it("caps an over-long q at 100 characters", () => {
+    const huge = "x".repeat(500)
+    const result = parse({ q: huge })
+    expect(result.search).toHaveLength(100)
+    expect(result.search).toBe(huge.slice(0, 100))
+  })
+
+  it("trims before capping, so trailing whitespace beyond 100 chars doesn't count against the cap", () => {
+    const padded = `${"x".repeat(100)}   `
+    expect(parse({ q: padded }).search).toBe("x".repeat(100))
+  })
+
+  it("keeps non-ASCII and special characters intact (within the cap)", () => {
+    expect(parse({ q: "İmplant Çelik 🦷" }).search).toBe("İmplant Çelik 🦷")
+  })
+
+  it("never throws for a hostile q value", () => {
+    expect(() => parse({ q: "<script>alert(1)</script>".repeat(50) })).not.toThrow()
+  })
+})
+
 describe("parseListingSearchParams — companyId", () => {
   it("passes a companyId through untouched", () => {
     expect(parse({ companyId: "acme-42" }).companyId).toBe("acme-42")
@@ -286,6 +330,7 @@ describe("parseListingSearchParams — hostile input never throws", () => {
     { brands: ["", ""] },
     { brands: "x".repeat(50_000) },
     { companyId: "<script>alert(1)</script>" },
+    { q: "x".repeat(50_000) },
     { page: "abc", size: "abc", minPrice: "abc", maxPrice: "abc", minRating: "abc", sort: "abc", inStock: "abc" },
   ]
 

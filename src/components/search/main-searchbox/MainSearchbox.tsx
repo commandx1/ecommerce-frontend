@@ -24,6 +24,10 @@ const MainSearchbox = ({ className }: MainSearchboxProps) => {
     handleInputChange,
     handleInputFocus,
     handleResultClick,
+    handleSubmit,
+    handleSeeAllClick,
+    seeAllHref,
+    trimmedQuery,
     handleImageError,
     getImageSrc,
   } = useMainSearch()
@@ -60,24 +64,34 @@ const MainSearchbox = ({ className }: MainSearchboxProps) => {
         )}
       />
       <div ref={barRef} className="relative z-10 flex w-full">
-        <div className="relative flex-1">
-          <SearchInput
-            inputRef={inputRef}
-            value={searchQuery}
-            onChange={handleInputChange}
-            onFocus={handleInputFocus}
-          />
-        </div>
-        <SearchActionButton isLoading={isLoading} />
+        {/* <search> gives this its accessible "search" landmark (biome's a11y rule flags the
+           equivalent role="search" on a plain <form> as redundant); the <form> underneath is
+           still what makes Enter submit natively. */}
+        <search className="flex w-full">
+          <form onSubmit={handleSubmit} className="flex w-full">
+            <div className="relative flex-1">
+              <SearchInput
+                inputRef={inputRef}
+                value={searchQuery}
+                onChange={handleInputChange}
+                onFocus={handleInputFocus}
+              />
+            </div>
+            <SearchActionButton isLoading={isLoading} />
+          </form>
+        </search>
       </div>
       <SearchResultsDropdown
         dropdownRef={dropdownRef}
         results={searchResults}
         isLoading={isLoading}
         show={rendered}
+        query={trimmedQuery}
+        seeAllHref={seeAllHref}
         getImageSrc={getImageSrc}
         onImageError={handleImageError}
         onResultClick={handleResultClick}
+        onSeeAllClick={handleSeeAllClick}
       />
     </div>
   )

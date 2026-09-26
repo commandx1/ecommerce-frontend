@@ -24,6 +24,7 @@ export interface PublicProductsFilterParams {
   inStock?: boolean
   sort?: string
   attributes?: string[]
+  search?: string | null
 }
 
 export async function getPublicProducts<TProduct = unknown>(
@@ -48,6 +49,7 @@ export async function getPublicProducts<TProduct = unknown>(
   if (filters.inStock === false) qs.set("inStock", "false")
   if (filters.sort && filters.sort !== "best-match") qs.set("sort", filters.sort)
   for (const attr of filters.attributes ?? []) qs.append("attributes", attr)
+  if (filters.search) qs.set("search", filters.search)
 
   return apiRequest.requestJson<PublicProductsResponse<TProduct>>({
     client: "app",

@@ -11,7 +11,7 @@ import { type ListingSearchParams, parseListingSearchParams } from "./server/par
 type BuilderBase = Parameters<typeof createProductsUrlBuilder>[0]
 
 const ARRAY_KEYS = ["brands", "manufacturers", "categories", "vendors", "attributes"] as const
-const SCALAR_KEYS = ["page", "size", "sort", "minPrice", "maxPrice", "minRating", "inStock", "companyId"] as const
+const SCALAR_KEYS = ["page", "size", "sort", "minPrice", "maxPrice", "minRating", "inStock", "companyId", "q"] as const
 
 /**
  * Stands in for the Next.js router + server boundary: takes the URL the builder produced and
@@ -48,6 +48,7 @@ const baseFilters: BuilderBase = {
   inStock: true,
   attributes: [],
   companyId: null,
+  search: null,
 }
 
 const filtersOf = (overrides: Partial<BuilderBase> = {}): BuilderBase => ({ ...baseFilters, ...overrides })
@@ -73,6 +74,9 @@ const symmetricCases: [name: string, filters: BuilderBase][] = [
   ["values needing URL encoding", filtersOf({ brands: ["a&b=c", "İmplant Çelik", "🦷 implant", "50% off"] })],
   ["attribute pairs with reserved characters", filtersOf({ attributes: ["color:red", "size=XL", "a+b"] })],
   ["a companyId scope", filtersOf({ companyId: "company-9" })],
+  ["a search term", filtersOf({ search: "implant" })],
+  ["a search term alongside other filters", filtersOf({ search: "implant", brands: ["nsk"], sort: "price-asc" })],
+  ["a search term needing URL encoding", filtersOf({ search: "İmplant Çelik 🦷" })],
   [
     "everything set at once",
     filtersOf({
@@ -110,6 +114,7 @@ describe("products URL round-trip: parse(build(filters)) === filters", () => {
       inStock: filters.inStock,
       attributes: filters.attributes,
       companyId: filters.companyId,
+      search: filters.search,
     })
   })
 
@@ -130,6 +135,7 @@ describe("products URL round-trip: parse(build(filters)) === filters", () => {
         inStock: once.inStock,
         attributes: once.attributes,
         companyId: once.companyId,
+        search: once.search,
       }),
     )
     expect(twice).toEqual(once)
@@ -206,18 +212,25 @@ describe("products URL round-trip: known asymmetries (locked in, NOT endorsed)",
   })
 })
 
-describe("products URL round-trip: no search-term support on either end", () => {
-  // Neither module knows about a free-text search param (q / search / keyword). Locking this in so
-  // that whoever adds search has to add it to BOTH ends and update this test.
-  it("the builder emits no free-text search param", () => {
-    const url = createProductsUrlBuilder(filtersOf({ brands: ["nsk"] }))()
-    for (const key of ["q", "search", "keyword", "term"]) {
-      expect(new URLSearchParams(url.slice(url.indexOf("?") + 1)).has(key)).toBe(false)
+describe("products URL round-trip: free-text search (q)", () => {
+  // Search support was added end-to-end (builder writes `q`, parser reads it back into `.search`).
+  // This replaces the old "neither end knows about search" lock-in test above.
+  it("the builder emits only `q` for a free-text term, no other alias", () => {
+    const url = createProductsUrlBuilder(filtersOf({ search: "implant" }))()
+    const params = new URLSearchParams(url.slice(url.indexOf("?") + 1))
+    expect(params.get("q")).toBe("implant")
+    for (const alias of ["search", "keyword", "term"]) {
+      expect(params.has(alias)).toBe(false)
     }
   })
 
-  it("the parser ignores a free-text search param placed in the URL by hand", () => {
-    const parsed = parseListingSearchParams({ ...({ q: "implant" } as unknown as ListingSearchParams) })
-    expect(parsed).not.toHaveProperty("q")
+  it("the parser reads `q` from the URL into `.search`", () => {
+    const parsed = parseListingSearchParams({ q: "implant" })
+    expect(parsed.search).toBe("implant")
+  })
+
+  it("a bare q with no other filters round-trips cleanly", () => {
+    const url = createProductsUrlBuilder(filtersOf({ search: "implant" }))()
+    expect(parseListingSearchParams(routeThroughNext(url)).search).toBe("implant")
   })
 })

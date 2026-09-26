@@ -117,6 +117,63 @@ describe("FilterNavigationProvider", () => {
     expect(params.has("inStock")).toBe(false)
   })
 
+  it("exposes currentSearch derived from the q URL param", () => {
+    setSearchParams("q=implant")
+    const { result } = renderNavigation()
+    expect(result.current.currentSearch).toBe("implant")
+  })
+
+  it("defaults currentSearch to null when q is absent", () => {
+    const { result } = renderNavigation()
+    expect(result.current.currentSearch).toBeNull()
+  })
+
+  it("navigate() preserves the current q when the update does not mention search", () => {
+    setSearchParams("q=implant&brands=nike")
+
+    const { result } = renderNavigation()
+
+    act(() => {
+      result.current.navigate({ brands: ["nike", "puma"] })
+    })
+
+    const router = getRouterMock()
+    const [url] = router.push.mock.calls[0] as [string]
+    const params = new URLSearchParams(url.split("?")[1])
+    expect(params.get("q")).toBe("implant")
+    expect(params.getAll("brands")).toEqual(["nike", "puma"])
+  })
+
+  it("navigate() clears q when the update explicitly passes search: null", () => {
+    setSearchParams("q=implant&brands=nike")
+
+    const { result } = renderNavigation()
+
+    act(() => {
+      result.current.navigate({ search: null })
+    })
+
+    const router = getRouterMock()
+    const [url] = router.push.mock.calls[0] as [string]
+    const params = new URLSearchParams(url.split("?")[1])
+    expect(params.has("q")).toBe(false)
+    expect(params.getAll("brands")).toEqual(["nike"])
+  })
+
+  it("navigate() sets q to a new explicit search value", () => {
+    setSearchParams("")
+
+    const { result } = renderNavigation()
+
+    act(() => {
+      result.current.navigate({ search: "curing light" })
+    })
+
+    const router = getRouterMock()
+    const [url] = router.push.mock.calls[0] as [string]
+    expect(new URLSearchParams(url.split("?")[1]).get("q")).toBe("curing light")
+  })
+
   it("startNavigation exposes the underlying transition starter", () => {
     const { result } = renderNavigation()
     expect(typeof result.current.startNavigation).toBe("function")

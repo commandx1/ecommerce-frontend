@@ -79,6 +79,7 @@ const filtersArbitrary: fc.Arbitrary<BuilderBase> = fc.record({
   inStock: fc.boolean(),
   attributes: filterArray,
   companyId: fc.constant(null),
+  search: fc.constant(null),
 })
 
 describe("products URL round-trip property: parse(build(filters)) === filters (in-domain values)", () => {
@@ -100,6 +101,7 @@ describe("products URL round-trip property: parse(build(filters)) === filters (i
         expect(result.inStock).toBe(filters.inStock)
         expect(result.attributes).toEqual(filters.attributes)
         expect(result.companyId).toBe(filters.companyId)
+        expect(result.search).toBe(filters.search)
       }),
       { seed: 42 },
     )
@@ -123,6 +125,7 @@ describe("products URL round-trip property: parse(build(filters)) === filters (i
           inStock: once.inStock,
           attributes: once.attributes,
           companyId: once.companyId,
+          search: once.search,
         })
         expect(twice).toEqual(once)
       }),
@@ -149,6 +152,7 @@ describe("products URL round-trip property: array filters preserve order and dup
           inStock: true,
           attributes: [],
           companyId: null,
+          search: null,
         })
         expect(result.brands).toEqual(brands)
       }),
@@ -187,6 +191,7 @@ describe("products URL round-trip property: whitespace-only array entries (NEW f
       inStock: true,
       attributes: [],
       companyId: null,
+      search: null,
     })
     expect(result.brands).toEqual([" ", "kavo"])
   })
@@ -218,6 +223,7 @@ describe("products URL round-trip property: fractional prices beyond 2 decimals 
           inStock: true,
           attributes: [],
           companyId: null,
+          search: null,
         })
         expect(result.minPrice).toBe(minPrice)
       }),
@@ -246,6 +252,7 @@ describe("products URL round-trip property: known asymmetry classes still hold f
           inStock: true,
           attributes: [],
           companyId: null,
+          search: null,
         })
         expect(result.displayPage).toBe(1)
         expect(result.apiPage).toBe(0)
@@ -272,6 +279,7 @@ describe("products URL round-trip property: known asymmetry classes still hold f
           inStock: true,
           attributes: [],
           companyId: null,
+          search: null,
         })
         expect(result.pageSize).toBe(30)
       }),
@@ -297,6 +305,7 @@ describe("products URL round-trip property: known asymmetry classes still hold f
           inStock: true,
           attributes: [],
           companyId: null,
+          search: null,
         })
         expect(result.minPrice).toBeNull()
         expect(result.minRating).toBeNull()
@@ -326,6 +335,7 @@ describe("products URL round-trip property: known asymmetry classes still hold f
             inStock: true,
             attributes: [],
             companyId: null,
+            search: null,
           })
           expect(result.sort).toBe("best-match")
         },

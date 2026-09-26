@@ -40,6 +40,7 @@ export async function getListingPageData({
   inStock,
   attributes,
   companyId,
+  search,
 }: ParsedListingSearchParams): Promise<ListingPageData> {
   const [productsResponse, brands, manufacturers, categories, vendors, attributeGroups] = await Promise.all([
     getPublicProducts<APIProduct>(apiPage, pageSize, {
@@ -54,6 +55,7 @@ export async function getListingPageData({
       inStock,
       sort,
       attributes,
+      search,
     }),
     getProductBrandOptions(),
     getProductManufacturerOptions(),

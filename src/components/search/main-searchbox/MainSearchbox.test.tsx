@@ -3,6 +3,7 @@ import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { SearchProduct } from "@/lib/api/product-search"
 import { server } from "@/mocks/server"
+import { getRouterMock } from "@/test/mocks/next-navigation"
 import { render, screen, waitFor } from "@/test/render"
 import MainSearchbox from "./MainSearchbox"
 
@@ -156,7 +157,69 @@ describe("MainSearchbox", () => {
     await waitFor(() => expect(queries).toEqual(["t"]))
   })
 
-  // Deferred: the magnifier button is a dead control for now (product decision: "şimdilik
-  // boşverelim"). When wired up, this verifies clicking it triggers a search immediately.
-  it.todo("clicking the search button triggers a search with the current query")
+  describe("submitting to /products", () => {
+    it("pressing Enter submits the form and navigates to /products?q=<query>", async () => {
+      const user = userEvent.setup()
+      installSearchHandler()
+      render(<MainSearchbox />)
+
+      await user.type(searchBox(), "tips{Enter}")
+
+      expect(getRouterMock().push).toHaveBeenCalledWith("/products?q=tips")
+    })
+
+    it("clicking the magnifier button submits the form", async () => {
+      const user = userEvent.setup()
+      installSearchHandler()
+      render(<MainSearchbox />)
+
+      await user.type(searchBox(), "tips")
+      await user.click(screen.getByRole("button", { name: "Search" }))
+
+      expect(getRouterMock().push).toHaveBeenCalledWith("/products?q=tips")
+    })
+
+    it("does nothing when the query is empty", async () => {
+      const user = userEvent.setup()
+      installSearchHandler()
+      render(<MainSearchbox />)
+
+      await user.click(screen.getByRole("button", { name: "Search" }))
+
+      expect(getRouterMock().push).not.toHaveBeenCalled()
+    })
+
+    it("closes the dropdown after submitting", async () => {
+      const user = userEvent.setup()
+      installSearchHandler()
+      render(<MainSearchbox />)
+
+      await user.type(searchBox(), "tips")
+      await screen.findByText("Intra Oral Mixing Tips")
+
+      await user.click(screen.getByRole("button", { name: "Search" }))
+
+      await waitFor(() => expect(screen.queryByText("Intra Oral Mixing Tips")).not.toBeInTheDocument())
+    })
+
+    it("shows a 'See all results' row that navigates to /products?q=<query> and closes the dropdown", async () => {
+      const user = userEvent.setup()
+      installSearchHandler()
+      render(<MainSearchbox />)
+
+      await user.type(searchBox(), "tips")
+      const seeAll = await screen.findByRole("link", { name: "See all results for “tips”" })
+      expect(seeAll).toHaveAttribute("href", "/products?q=tips")
+
+      await user.click(seeAll)
+      await waitFor(() => expect(screen.queryByText("Intra Oral Mixing Tips")).not.toBeInTheDocument())
+    })
+  })
+
+  it("prefills the box from the q search param when landing on /products", () => {
+    installSearchHandler()
+    render(<MainSearchbox />, { route: "/products", searchParams: "q=implant" })
+
+    expect(searchBox()).toHaveValue("implant")
+  })
 })

@@ -4,6 +4,7 @@ import UiBreadcrumb from "@/components/ui/breadcrumb"
 import type { AttributeGroup, FilterOption, VendorOption } from "@/lib/api/public-products"
 import type { SortValue } from "../server/parse-listing-search-params"
 import { createProductsUrlBuilder } from "./listing/buildProductsUrl"
+import EmptyListingState from "./listing/EmptyListingState"
 import FilterNavigationProvider from "./listing/FilterNavigationProvider"
 import MobileFilters from "./listing/MobileFilters"
 import PaginationBar from "./listing/PaginationBar"
@@ -50,6 +51,7 @@ interface ProductListingClientProps {
   inStock: boolean
   selectedAttributes: string[]
   companyId: string | null
+  search: string | null
 }
 
 const ProductListingClient = ({
@@ -74,6 +76,7 @@ const ProductListingClient = ({
   inStock,
   selectedAttributes,
   companyId,
+  search,
 }: ProductListingClientProps) => {
   const buildUrl = createProductsUrlBuilder({
     currentPage,
@@ -89,6 +92,7 @@ const ProductListingClient = ({
     inStock,
     attributes: selectedAttributes,
     companyId,
+    search,
   })
 
   return (
@@ -140,8 +144,12 @@ const ProductListingClient = ({
 
             <main className="flex-1">
               <div className="rounded-4xl border border-border-soft/80 bg-surface-elevated p-4 shadow-soft md:p-6">
-                <ResultsSummary totalElements={totalElements} />
-                <ProductGrid products={initialProducts} />
+                <ResultsSummary totalElements={totalElements} search={search} />
+                {totalElements === 0 ? (
+                  <EmptyListingState search={search} />
+                ) : (
+                  <ProductGrid products={initialProducts} />
+                )}
               </div>
               <PaginationBar
                 currentPage={currentPage}

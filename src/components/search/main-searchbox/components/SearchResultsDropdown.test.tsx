@@ -1,3 +1,4 @@
+import userEvent from "@testing-library/user-event"
 import { createRef } from "react"
 import { describe, expect, it, vi } from "vitest"
 import type { SearchProduct } from "@/lib/api/product-search"
@@ -64,6 +65,29 @@ describe("SearchResultsDropdown", () => {
     renderDropdown({ results: [], isLoading: true })
 
     expect(screen.getByText("No results found")).toBeInTheDocument()
+  })
+
+  it("renders a 'See all results' row when seeAllHref is set, and it links to that href", () => {
+    renderDropdown({ query: "tips", seeAllHref: "/products?q=tips" })
+
+    const seeAll = screen.getByRole("link", { name: "See all results for “tips”" })
+    expect(seeAll).toHaveAttribute("href", "/products?q=tips")
+  })
+
+  it("omits the 'See all results' row when seeAllHref is null", () => {
+    renderDropdown({ seeAllHref: null })
+
+    expect(screen.queryByRole("link", { name: /See all results/ })).not.toBeInTheDocument()
+  })
+
+  it("calls onSeeAllClick when the 'See all results' row is clicked", async () => {
+    const user = userEvent.setup()
+    const onSeeAllClick = vi.fn()
+    renderDropdown({ query: "tips", seeAllHref: "/products?q=tips", onSeeAllClick })
+
+    await user.click(screen.getByRole("link", { name: "See all results for “tips”" }))
+
+    expect(onSeeAllClick).toHaveBeenCalledTimes(1)
   })
 
   it("renders nothing when hidden", () => {

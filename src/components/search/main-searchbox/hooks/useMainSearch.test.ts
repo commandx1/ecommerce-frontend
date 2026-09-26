@@ -1,12 +1,15 @@
 import { act, renderHook, waitFor } from "@testing-library/react"
 import { HttpResponse, http } from "msw"
-import type { ChangeEvent } from "react"
-import { beforeEach, describe, expect, it } from "vitest"
+import type { ChangeEvent, FormEvent } from "react"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { SearchProduct } from "@/lib/api/product-search"
 import { server } from "@/mocks/server"
+import { getRouterMock, setPathname, setSearchParams } from "@/test/mocks/next-navigation"
 import { useMainSearch } from "./useMainSearch"
 
 const ENDPOINT = "*/api/products/public-search"
+
+const submitEvent = () => ({ preventDefault: vi.fn() }) as unknown as FormEvent<HTMLFormElement>
 
 const makeSearchProduct = (overrides: Partial<SearchProduct> = {}): SearchProduct => ({
   productId: "product-1",
@@ -346,6 +349,100 @@ describe("useMainSearch", () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false))
     expect(result.current.searchResults).toEqual([])
     expect(result.current.showDropdown).toBe(false)
+  })
+
+  describe("submit / navigate to /products", () => {
+    it("navigates to /products?q=<trimmed query> and closes the dropdown", async () => {
+      const { result } = renderHook(() => useMainSearch({ debounceMs: 10 }))
+
+      act(() => {
+        result.current.handleInputChange(change("  implant  "))
+      })
+      await waitFor(() => expect(result.current.searchQuery).toBe("  implant  "))
+
+      act(() => {
+        result.current.handleSubmit(submitEvent())
+      })
+
+      expect(getRouterMock().push).toHaveBeenCalledWith("/products?q=implant")
+      expect(result.current.showDropdown).toBe(false)
+    })
+
+    it("does nothing (no navigation) for an empty/whitespace-only query, but still closes the dropdown", () => {
+      const { result } = renderHook(() => useMainSearch({ debounceMs: 10 }))
+
+      act(() => {
+        result.current.handleInputChange(change("   "))
+      })
+
+      act(() => {
+        result.current.handleSubmit(submitEvent())
+      })
+
+      expect(getRouterMock().push).not.toHaveBeenCalled()
+      expect(result.current.showDropdown).toBe(false)
+    })
+
+    it("keeps the query in the box after submitting (unlike handleResultClick)", () => {
+      const { result } = renderHook(() => useMainSearch({ debounceMs: 10 }))
+
+      act(() => {
+        result.current.handleInputChange(change("implant"))
+      })
+      act(() => {
+        result.current.handleSubmit(submitEvent())
+      })
+
+      expect(result.current.searchQuery).toBe("implant")
+    })
+
+    it("exposes seeAllHref built from the trimmed query, and null when there is nothing to search for", () => {
+      const { result } = renderHook(() => useMainSearch({ debounceMs: 10 }))
+
+      expect(result.current.seeAllHref).toBeNull()
+
+      act(() => {
+        result.current.handleInputChange(change("  curing light  "))
+      })
+
+      expect(result.current.seeAllHref).toBe("/products?q=curing+light")
+      expect(result.current.trimmedQuery).toBe("curing light")
+    })
+
+    it("handleSeeAllClick closes the dropdown without clearing the query", () => {
+      const { result } = renderHook(() => useMainSearch({ debounceMs: 10 }))
+
+      act(() => {
+        result.current.handleInputChange(change("implant"))
+      })
+
+      act(() => {
+        result.current.handleSeeAllClick()
+      })
+
+      expect(result.current.showDropdown).toBe(false)
+      expect(result.current.searchQuery).toBe("implant")
+    })
+  })
+
+  describe("prefill from the URL on /products", () => {
+    it("initializes the query from the q search param when mounted on /products", () => {
+      setPathname("/products")
+      setSearchParams("q=implant")
+
+      const { result } = renderHook(() => useMainSearch({ debounceMs: 10 }))
+
+      expect(result.current.searchQuery).toBe("implant")
+    })
+
+    it("stays empty when mounted elsewhere, even if the URL happens to carry a q param", () => {
+      setPathname("/")
+      setSearchParams("q=implant")
+
+      const { result } = renderHook(() => useMainSearch({ debounceMs: 10 }))
+
+      expect(result.current.searchQuery).toBe("")
+    })
   })
 
   it("getImageSrc falls back to the placeholder when there is no cover photo or the image previously failed", () => {

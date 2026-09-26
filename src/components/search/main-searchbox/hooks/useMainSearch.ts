@@ -1,4 +1,5 @@
-import type { ChangeEvent } from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import type { ChangeEvent, FormEvent } from "react"
 import { useCallback, useEffect, useRef, useState } from "react"
 
 import { type SearchProduct, searchPublicProducts } from "@/lib/api/product-search"
@@ -12,10 +13,17 @@ interface UseMainSearchOptions {
 const DEFAULT_DEBOUNCE_MS = 300
 const DEFAULT_MAX_RESULTS = 20
 
+/** Where the header search box submits to; only the trimmed query is forwarded. */
+const buildSearchUrl = (query: string) => `/products?${new URLSearchParams({ q: query }).toString()}`
+
 export const useMainSearch = ({
   debounceMs = DEFAULT_DEBOUNCE_MS,
   maxResults = DEFAULT_MAX_RESULTS,
 }: UseMainSearchOptions = {}) => {
+  const router = useRouter()
+  const pathname = usePathname()
+  const routeSearchParams = useSearchParams()
+
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<SearchProduct[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -23,6 +31,14 @@ export const useMainSearch = ({
   const [imageFallbacks, setImageFallbacks] = useState<Record<string, boolean>>({})
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Keeps the box showing the active term after a header search lands on /products (or after a
+  // client-side navigation to a fresh /products?q=... URL, e.g. via browser back/forward).
+  useEffect(() => {
+    if (pathname === "/products") {
+      setSearchQuery(routeSearchParams.get("q") ?? "")
+    }
+  }, [pathname, routeSearchParams])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -91,6 +107,29 @@ export const useMainSearch = ({
     setSearchQuery("")
   }, [])
 
+  // Enter (native form submit) and the magnifier button (type="submit") both land here. An empty
+  // (or whitespace-only) query does nothing beyond closing the dropdown — there is nothing useful
+  // to search for on /products.
+  const handleSubmit = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault()
+      setShowDropdown(false)
+      const trimmed = searchQuery.trim()
+      if (!trimmed) return
+      router.push(buildSearchUrl(trimmed))
+    },
+    [searchQuery, router],
+  )
+
+  // The dropdown's trailing "See all results" row reuses the same destination/close behavior as a
+  // native submit, without needing a synthetic form event.
+  const handleSeeAllClick = useCallback(() => {
+    setShowDropdown(false)
+  }, [])
+
+  const trimmedQuery = searchQuery.trim()
+  const seeAllHref = trimmedQuery ? buildSearchUrl(trimmedQuery) : null
+
   const handleImageError = useCallback((productId: string) => {
     setImageFallbacks((prev) => ({
       ...prev,
@@ -118,6 +157,10 @@ export const useMainSearch = ({
     handleInputChange,
     handleInputFocus,
     handleResultClick,
+    handleSubmit,
+    handleSeeAllClick,
+    seeAllHref,
+    trimmedQuery,
     handleImageError,
     getImageSrc,
   }

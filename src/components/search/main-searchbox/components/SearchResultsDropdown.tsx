@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import type { RefObject } from "react"
 
 import type { SearchProduct } from "@/lib/api/product-search"
@@ -14,6 +15,11 @@ interface SearchResultsDropdownProps {
   getImageSrc: (product: SearchProduct) => string
   onImageError: (productId: string) => void
   onResultClick: () => void
+  /** Trimmed current query, used only to label the trailing "see all" row. */
+  query?: string
+  /** `/products?q=...` for the current query, or `null` when there is nothing to search for. */
+  seeAllHref?: string | null
+  onSeeAllClick?: () => void
 }
 
 const SearchResultsDropdown = ({
@@ -24,6 +30,9 @@ const SearchResultsDropdown = ({
   getImageSrc,
   onImageError,
   onResultClick,
+  query = "",
+  seeAllHref = null,
+  onSeeAllClick,
 }: SearchResultsDropdownProps) => {
   if (!show || (results.length === 0 && !isLoading)) {
     return null
@@ -47,6 +56,16 @@ const SearchResultsDropdown = ({
               onClick={onResultClick}
             />
           ))}
+          {seeAllHref ? (
+            <Link
+              href={seeAllHref}
+              data-menu-item
+              onClick={onSeeAllClick}
+              className="block border-t border-border-soft px-3 py-2.5 text-center text-sm font-semibold text-brand transition-colors hover:bg-surface-muted/80 sm:px-4 sm:py-3"
+            >
+              See all results for “{query}”
+            </Link>
+          ) : null}
         </div>
       ) : (
         <div className="p-4 text-center text-sm text-text-secondary">No results found</div>

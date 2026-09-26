@@ -15,6 +15,7 @@ export interface ListingSearchParams {
   inStock?: string
   attributes?: string | string[]
   companyId?: string
+  q?: string
 }
 
 export interface ParsedListingSearchParams {
@@ -32,12 +33,22 @@ export interface ParsedListingSearchParams {
   inStock: boolean
   attributes: string[]
   companyId: string | null
+  search: string | null
 }
 
 const DEFAULT_PAGE = 1
 const DEFAULT_PAGE_SIZE = 10
 // Must match backend ProductController.MAX_PUBLIC_PRODUCT_PAGE_SIZE (30); GET /api/products/public returns 400 above it.
 export const MAX_PAGE_SIZE = 30
+// Free-text search term (q): trimmed and capped so an unbounded query string can't be forwarded
+// to the backend relevance search verbatim.
+export const MAX_SEARCH_LENGTH = 100
+
+function parseSearchQuery(value: string | undefined): string | null {
+  if (!value) return null
+  const trimmed = value.trim().slice(0, MAX_SEARCH_LENGTH)
+  return trimmed || null
+}
 
 function parsePositiveInt(value: string | undefined, fallback: number) {
   const parsedValue = Number.parseInt(value ?? "", 10)
@@ -82,5 +93,6 @@ export function parseListingSearchParams(params: ListingSearchParams): ParsedLis
     inStock,
     attributes: parseStringArray(params.attributes),
     companyId: params.companyId ?? null,
+    search: parseSearchQuery(params.q),
   }
 }

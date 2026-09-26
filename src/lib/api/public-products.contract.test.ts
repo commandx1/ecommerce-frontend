@@ -112,6 +112,20 @@ describe("getPublicProducts contract", () => {
     expect(capturedQuery?.has("minRating")).toBe(false)
   })
 
+  it("sends the free-text search term as `search`", async () => {
+    await getPublicProducts(0, 10, { search: "implant" })
+
+    expect(capturedQuery?.get("search")).toBe("implant")
+  })
+
+  it("omits `search` when it is null or an empty string", async () => {
+    await getPublicProducts(0, 10, { search: null })
+    expect(capturedQuery?.has("search")).toBe(false)
+
+    await getPublicProducts(0, 10, { search: "" })
+    expect(capturedQuery?.has("search")).toBe(false)
+  })
+
   it("tolerates an empty content array", async () => {
     server.use(http.get("*/api/products/public", () => HttpResponse.json(makePublicProductsResponse({ content: [] }))))
 

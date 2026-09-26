@@ -16,6 +16,8 @@ export interface FilterUpdates {
   inStock?: boolean
   attributes?: string[]
   sort?: SortValue
+  /** Pass `null` to explicitly clear the free-text search term; omit to keep the current one. */
+  search?: string | null
 }
 
 export interface FilterNavigationState {
@@ -33,6 +35,7 @@ export interface FilterNavigationState {
   currentInStock: boolean
   currentAttributes: string[]
   currentSort: SortValue
+  currentSearch: string | null
 }
 
 export const FilterNavigationContext = createContext<FilterNavigationState | null>(null)
@@ -60,6 +63,9 @@ export function useFilterNavigationProvider(): FilterNavigationState {
       if (size) params.set("size", size)
       if (view) params.set("view", view)
       if (sort && sort !== "best-match") params.set("sort", sort)
+
+      const search = "search" in updates ? updates.search : searchParams.get("q")
+      if (search) params.set("q", search)
 
       const brands = "brands" in updates ? updates.brands : searchParams.getAll("brands")
       const manufacturers = "manufacturers" in updates ? updates.manufacturers : searchParams.getAll("manufacturers")
@@ -112,6 +118,7 @@ export function useFilterNavigationProvider(): FilterNavigationState {
     currentInStock: searchParams.get("inStock") !== "false",
     currentAttributes: searchParams.getAll("attributes"),
     currentSort: (searchParams.get("sort") ?? "best-match") as SortValue,
+    currentSearch: searchParams.get("q") || null,
   }
 }
 

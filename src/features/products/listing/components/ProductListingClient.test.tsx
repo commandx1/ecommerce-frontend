@@ -49,6 +49,7 @@ const renderListing = (overrides: Partial<ClientProps> = {}, searchParams = "") 
     inStock: true,
     selectedAttributes: [],
     companyId: null,
+    search: null,
     ...overrides,
   }
   return render(<ProductListingClient {...props} />, { route: "/products", searchParams })
@@ -101,6 +102,56 @@ describe("ProductListingClient", () => {
 
     expect(screen.getByRole("heading", { name: "0 Products Found" })).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Add to Cart" })).not.toBeInTheDocument()
+  })
+
+  describe("search (q)", () => {
+    it("shows 'Results for' with the term and the product count instead of the default heading", () => {
+      renderListing({ search: "implant", totalElements: 3 })
+
+      expect(screen.getByRole("heading", { name: "Results for “implant”" })).toBeInTheDocument()
+      expect(screen.getByText("3 products found")).toBeInTheDocument()
+    })
+
+    it("shows a Clear search control when a search term is active", () => {
+      renderListing({ search: "implant" })
+      expect(screen.getAllByRole("button", { name: "Clear search" }).length).toBeGreaterThan(0)
+    })
+
+    it("hides the Clear search control when there is no search term", () => {
+      renderListing({ search: null })
+      expect(screen.queryByRole("button", { name: "Clear search" })).not.toBeInTheDocument()
+    })
+
+    it("Clear search removes q from the URL while keeping the other filters", async () => {
+      const user = userEvent.setup({ pointerEventsCheck: 0 })
+      const { router } = renderListing(
+        { search: "implant", selectedBrands: ["MARK3"] },
+        "q=implant&brands=MARK3",
+      )
+
+      await user.click(screen.getAllByRole("button", { name: "Clear search" })[0]!)
+
+      const [url] = router.push.mock.calls[0] as [string]
+      const params = new URLSearchParams(url.split("?")[1])
+      expect(params.has("q")).toBe(false)
+      expect(params.getAll("brands")).toEqual(["MARK3"])
+    })
+
+    it("renders a 'No results for' empty state with a Clear search and a Browse all products action", () => {
+      renderListing({ initialProducts: [], totalElements: 0, search: "zzz-no-match" })
+
+      expect(screen.getByText("No results for “zzz-no-match”")).toBeInTheDocument()
+      expect(screen.getAllByRole("button", { name: "Clear search" }).length).toBeGreaterThan(0)
+      expect(screen.getByRole("link", { name: "Browse all products" })).toHaveAttribute("href", "/products")
+    })
+
+    it("renders a filters-only empty state (no Clear search) when there is no search term", () => {
+      renderListing({ initialProducts: [], totalElements: 0, search: null })
+
+      expect(screen.getByText("No products match your filters")).toBeInTheDocument()
+      expect(screen.queryByRole("button", { name: "Clear search" })).not.toBeInTheDocument()
+      expect(screen.getByRole("link", { name: "Browse all products" })).toHaveAttribute("href", "/products")
+    })
   })
 
   it("changing the sort resets to page 1 and keeps the other filters", async () => {

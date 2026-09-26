@@ -17,6 +17,7 @@ const emptyBase: BuilderBase = {
   inStock: true,
   attributes: [],
   companyId: null,
+  search: null,
 }
 
 const buildWith = (overrides: Partial<BuilderBase> = {}) => createProductsUrlBuilder({ ...emptyBase, ...overrides })
@@ -275,6 +276,52 @@ describe("createProductsUrlBuilder — companyId (TEST-FINDINGS K7 regression)",
     expect(buildWith({ companyId: "company-9", brands: ["nsk"], inStock: false })()).toBe(
       "/products?page=1&size=10&brands=nsk&inStock=false&companyId=company-9",
     )
+  })
+})
+
+describe("createProductsUrlBuilder — search (q)", () => {
+  it("omits q when search is null", () => {
+    expect(queryOf(buildWith({ search: null })()).has("q")).toBe(false)
+  })
+
+  it("omits q when search is an empty string", () => {
+    expect(queryOf(buildWith({ search: "" })()).has("q")).toBe(false)
+  })
+
+  it("emits q when a search term is set", () => {
+    expect(queryOf(buildWith({ search: "implant" })()).get("q")).toBe("implant")
+  })
+
+  it("keeps q across a pagination override", () => {
+    const url = buildWith({ search: "implant" })({ page: 2 })
+    expect(queryOf(url).get("q")).toBe("implant")
+    expect(queryOf(url).get("page")).toBe("2")
+  })
+
+  it("keeps q alongside other filters", () => {
+    expect(buildWith({ search: "implant", brands: ["nsk"], inStock: false })()).toBe(
+      "/products?page=1&size=10&q=implant&brands=nsk&inStock=false",
+    )
+  })
+
+  it("lets an explicit search override win over the base value", () => {
+    const build = buildWith({ search: "old" })
+    expect(queryOf(build({ search: "new" })).get("q")).toBe("new")
+  })
+
+  it("clears q when the override explicitly passes null, even though the base has a value", () => {
+    const build = buildWith({ search: "implant" })
+    expect(queryOf(build({ search: null })).has("q")).toBe(false)
+  })
+
+  it("keeps the base search when no search override is provided at all", () => {
+    const build = buildWith({ search: "implant" })
+    expect(queryOf(build({ page: 2 })).get("q")).toBe("implant")
+  })
+
+  it("percent-encodes the search term", () => {
+    expect(queryOf(buildWith({ search: "İmplant Çelik" })()).get("q")).toBe("İmplant Çelik")
+    expect(buildWith({ search: "a b" })()).toContain("q=a+b")
   })
 })
 

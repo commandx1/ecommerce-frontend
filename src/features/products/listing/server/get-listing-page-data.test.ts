@@ -36,6 +36,7 @@ const params = (overrides: Partial<ParsedListingSearchParams> = {}): ParsedListi
   inStock: true,
   attributes: [],
   companyId: null,
+  search: null,
   ...overrides,
 })
 
@@ -110,6 +111,38 @@ describe("getListingPageData — happy path", () => {
     expect(query.get("minRating")).toBe("4")
     expect(query.get("inStock")).toBe("false")
     expect(query.get("companyId")).toBe("c-9")
+  })
+
+  it("forwards the parsed search term to getPublicProducts as `search`", async () => {
+    const captured = createCapture()
+    stubAll()
+    server.use(
+      http.get(PRODUCTS, ({ request }) => {
+        record(captured, request)
+        return HttpResponse.json(productPage)
+      }),
+    )
+
+    await getListingPageData(params({ search: "implant" }))
+
+    const query = new URL(captured.url ?? "").searchParams
+    expect(query.get("search")).toBe("implant")
+  })
+
+  it("omits `search` entirely when there is no search term", async () => {
+    const captured = createCapture()
+    stubAll()
+    server.use(
+      http.get(PRODUCTS, ({ request }) => {
+        record(captured, request)
+        return HttpResponse.json(productPage)
+      }),
+    )
+
+    await getListingPageData(params({ search: null }))
+
+    const query = new URL(captured.url ?? "").searchParams
+    expect(query.has("search")).toBe(false)
   })
 
   it("omits the default sort and the in-stock flag when they carry no information", async () => {
