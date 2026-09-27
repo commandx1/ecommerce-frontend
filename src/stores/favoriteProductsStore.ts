@@ -9,11 +9,23 @@ let inFlightHydrate: Promise<void> | null = null
 // through). Non-null only while a hydrate is in flight.
 let writesDuringHydrate: Map<string, boolean> | null = null
 
+export interface HydrateOptions {
+  /** Re-fetches even if this tab already hydrated once - the favorites page wants the current
+   * server state (another device may have changed it) every time it's opened, not a stale cache. */
+  force?: boolean
+}
+
 interface FavoriteProductsStore {
   ids: Set<string>
   hasHydrated: boolean
   isHydrating: boolean
-  hydrate: () => Promise<void>
+  // Bumped by every local write (toggle, its rollback, setFavorite) - never by `hydrate`'s own
+  // snapshot merge. `useAuthHydration` watches this (not `ids` itself, which also changes on
+  // hydrate) to know when to broadcast a change to this same user's other same-browser tabs. Kept
+  // here rather than importing `authStore` from this module, which would be a static import cycle
+  // (`authStore.ts`'s own `resetPerUserClientState` already imports this module the other way).
+  lastLocalWriteAt: number
+  hydrate: (options?: HydrateOptions) => Promise<void>
   toggle: (productId: string) => Promise<boolean>
   setFavorite: (productId: string, value: boolean) => void
   reset: () => void
@@ -29,7 +41,7 @@ export const useFavoriteProductsStore = create<FavoriteProductsStore>((set, get)
       } else {
         next.delete(productId)
       }
-      return { ids: next }
+      return { ids: next, lastLocalWriteAt: Date.now() }
     })
   }
 
@@ -37,9 +49,10 @@ export const useFavoriteProductsStore = create<FavoriteProductsStore>((set, get)
     ids: new Set(),
     hasHydrated: false,
     isHydrating: false,
+    lastLocalWriteAt: 0,
 
-    hydrate: async () => {
-      if (get().hasHydrated) {
+    hydrate: async (options) => {
+      if (get().hasHydrated && !options?.force) {
         return
       }
 
@@ -118,7 +131,7 @@ export const useFavoriteProductsStore = create<FavoriteProductsStore>((set, get)
     reset: () => {
       inFlightHydrate = null
       writesDuringHydrate = null
-      set({ ids: new Set(), hasHydrated: false, isHydrating: false })
+      set({ ids: new Set(), hasHydrated: false, isHydrating: false, lastLocalWriteAt: 0 })
     },
   }
 })

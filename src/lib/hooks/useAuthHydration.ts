@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { refreshCart } from "@/features/cart/api/cart-queries"
+import { broadcastFavoritesChanged, onFavoritesChangedElsewhere } from "@/lib/storage/favorite-products-sync"
 import { onLogoutBroadcast } from "@/lib/storage/session-events"
 import { bindActiveTabSync, tabSessionStorage } from "@/lib/storage/tab-session-storage"
 import { useAuthStore } from "@/stores/authStore"
+import { useFavoriteProductsStore } from "@/stores/favoriteProductsStore"
 
 /**
  * Hook to ensure auth state is properly hydrated from cookies
@@ -79,9 +81,31 @@ export function useAuthHydration() {
         void state.clearLocalSession()
       }
     })
+    // A same-browser tab changed a favorite; re-hydrate here too, but only for the same signed-in
+    // user - a different account in this tab (per-tab sessions, see `tabSessionStorage`) must
+    // never adopt another account's favorites.
+    const unbindFavorites = onFavoritesChangedElsewhere((userId) => {
+      if (useAuthStore.getState().user?.id === userId) {
+        void useFavoriteProductsStore.getState().hydrate({ force: true })
+      }
+    })
+    // The other direction: tell this user's other same-browser tabs when a local write (toggle,
+    // its rollback, setFavorite) happens here. Watches `lastLocalWriteAt`, not `ids` itself, which
+    // also changes on a plain `hydrate` - that must not re-broadcast what a sibling tab just sent.
+    let lastSeenWriteAt = useFavoriteProductsStore.getState().lastLocalWriteAt
+    const unsubscribeFavoritesWrites = useFavoriteProductsStore.subscribe((state) => {
+      if (state.lastLocalWriteAt === lastSeenWriteAt) return
+      lastSeenWriteAt = state.lastLocalWriteAt
+      const userId = useAuthStore.getState().user?.id
+      if (userId) {
+        broadcastFavoritesChanged(userId)
+      }
+    })
     return () => {
       unbindSync()
       unbindLogout()
+      unbindFavorites()
+      unsubscribeFavoritesWrites()
     }
   }, [])
 

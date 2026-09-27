@@ -19,8 +19,10 @@ export default function FavoriteProductsTab() {
   const ids = useFavoriteProductsStore((s) => s.ids)
   const hasHydrated = useFavoriteProductsStore((s) => s.hasHydrated)
 
+  // Forces a fresh GET every time this tab mounts (not just once per tab lifetime): the buyer may
+  // have favorited/unfavorited a product on another device since the store last hydrated here.
   useEffect(() => {
-    void hydrate()
+    void hydrate({ force: true })
   }, [hydrate])
 
   const favoritesQuery = useQuery(favoriteProductsListOptions())

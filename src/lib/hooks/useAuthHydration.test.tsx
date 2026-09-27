@@ -1,11 +1,15 @@
 /** biome-ignore-all lint/suspicious/noDocumentCookie: these suites drive the document.cookie-based auth storage on purpose */
 
 import { act, waitFor } from "@testing-library/react"
+import { HttpResponse, http } from "msw"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { refreshCart } from "@/features/cart/api/cart-queries"
+import { broadcastFavoritesChanged, onFavoritesChangedElsewhere } from "@/lib/storage/favorite-products-sync"
 import { LOGOUT_EVENT_KEY } from "@/lib/storage/session-events"
 import { __resetTabSessionStorageForTests, tabSessionStorage } from "@/lib/storage/tab-session-storage"
+import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
+import { useFavoriteProductsStore } from "@/stores/favoriteProductsStore"
 import { renderWithProviders } from "@/test/render"
 import { useAuthHydration } from "./useAuthHydration"
 
@@ -296,5 +300,93 @@ describe("useAuthHydration cross-tab logout", () => {
     // No listener left to react - the store must still show the session that was live at unmount.
     await new Promise((resolve) => setTimeout(resolve, 10))
     expect(useAuthStore.getState().isAuthenticated).toBe(true)
+  })
+})
+
+describe("useAuthHydration cross-tab favorites (incoming)", () => {
+  /** Serves `favorite-ids`, tracking how many times it was hit. */
+  const serveFavoriteIds = (): { count: () => number } => {
+    let count = 0
+    server.use(
+      http.get("*/backend-api/products/favorite-ids", () => {
+        count += 1
+        return HttpResponse.json(["p-1"])
+      }),
+    )
+    return { count: () => count }
+  }
+
+  it("re-hydrates favorites when another same-browser tab reports a change for the same user", async () => {
+    useAuthStore.getState().setAuth(USER, "at", "rt")
+    const requests = serveFavoriteIds()
+    // Simulates the ids having already hydrated once in this tab, same as any normal page visit.
+    await useFavoriteProductsStore.getState().hydrate()
+    expect(requests.count()).toBe(1)
+
+    const { getByTestId } = renderWithProviders(<Probe />)
+    await waitFor(() => expect(getByTestId("hydrated")).toHaveTextContent("true"))
+
+    broadcastFavoritesChanged(USER.id)
+
+    await waitFor(() => expect(requests.count()).toBe(2))
+  })
+
+  it("ignores a favorites change reported for a different user id", async () => {
+    useAuthStore.getState().setAuth(USER, "at", "rt")
+    const requests = serveFavoriteIds()
+    await useFavoriteProductsStore.getState().hydrate()
+    expect(requests.count()).toBe(1)
+
+    const { getByTestId } = renderWithProviders(<Probe />)
+    await waitFor(() => expect(getByTestId("hydrated")).toHaveTextContent("true"))
+
+    broadcastFavoritesChanged("some-other-user")
+
+    // Give any (wrongly fired) re-hydrate a chance to run before asserting it didn't.
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(requests.count()).toBe(1)
+  })
+
+  it("removes its favorites listener on unmount", async () => {
+    useAuthStore.getState().setAuth(USER, "at", "rt")
+    const requests = serveFavoriteIds()
+    await useFavoriteProductsStore.getState().hydrate()
+
+    const { getByTestId, unmount } = renderWithProviders(<Probe />)
+    await waitFor(() => expect(getByTestId("hydrated")).toHaveTextContent("true"))
+    unmount()
+
+    broadcastFavoritesChanged(USER.id)
+
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(requests.count()).toBe(1)
+  })
+})
+
+describe("useAuthHydration cross-tab favorites (outgoing)", () => {
+  it("broadcasts the signed-in user's id when a favorite is toggled locally", async () => {
+    useAuthStore.getState().setAuth(USER, "at", "rt")
+    renderWithProviders(<Probe />)
+
+    const handler = vi.fn()
+    const unbind = onFavoritesChangedElsewhere(handler)
+
+    useFavoriteProductsStore.getState().setFavorite("p-1", true)
+
+    await waitFor(() => expect(handler).toHaveBeenCalledWith(USER.id))
+    unbind()
+  })
+
+  it("does not broadcast when no user is signed in", async () => {
+    renderWithProviders(<Probe />)
+
+    const handler = vi.fn()
+    const unbind = onFavoritesChangedElsewhere(handler)
+
+    useFavoriteProductsStore.getState().setFavorite("p-1", true)
+
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(handler).not.toHaveBeenCalled()
+    unbind()
   })
 })

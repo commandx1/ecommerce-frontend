@@ -5,7 +5,7 @@ import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
 import { makeAccountUser } from "@/test/factories"
 import { makeFavoriteProductItem } from "@/test/factories/product.factory"
-import { render, screen, waitFor } from "@/test/render"
+import { cleanup, render, screen, waitFor } from "@/test/render"
 import FavoriteProductsTab from "./FavoriteProductsTab"
 
 const mockToastError = vi.fn()
@@ -34,6 +34,34 @@ describe("FavoriteProductsTab loading", () => {
     render(<FavoriteProductsTab />)
 
     expect(await screen.findByText(item.productName)).toBeInTheDocument()
+  })
+})
+
+describe("FavoriteProductsTab cross-device freshness", () => {
+  /**
+   * The favorite-*ids* store hydrates once per tab lifetime by default (see
+   * `favoriteProductsStore.hydrate`), so without forcing a fresh GET on every mount, reopening
+   * this tab after favoriting/unfavoriting on another device would keep showing the ids this tab
+   * already had cached.
+   */
+  it("shows the current server state (not a stale cache) when the tab is reopened after a change made elsewhere", async () => {
+    const itemA = makeFavoriteProductItem({ productId: "p-a", productName: "Product A" })
+    const itemB = makeFavoriteProductItem({ productId: "p-b", productName: "Product B" })
+    server.use(http.get("*/backend-api/products/favorites", () => HttpResponse.json([itemA, itemB])))
+
+    server.use(http.get("*/backend-api/products/favorite-ids", () => HttpResponse.json([itemA.productId])))
+    const { unmount } = render(<FavoriteProductsTab />)
+    expect(await screen.findByText("Product A")).toBeInTheDocument()
+    expect(screen.queryByText("Product B")).not.toBeInTheDocument()
+    unmount()
+    cleanup()
+
+    // Simulates a favorites change made on a different device: A was unfavorited, B was favorited.
+    server.use(http.get("*/backend-api/products/favorite-ids", () => HttpResponse.json([itemB.productId])))
+    render(<FavoriteProductsTab />)
+
+    expect(await screen.findByText("Product B")).toBeInTheDocument()
+    expect(screen.queryByText("Product A")).not.toBeInTheDocument()
   })
 })
 

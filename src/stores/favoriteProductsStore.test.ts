@@ -158,6 +158,61 @@ describe("favoriteProductsStore hydrate", () => {
 
     expect(getIdsCount).toBe(2)
   })
+
+  it("hydrate({ force: true }) re-fetches even though the store already hydrated", async () => {
+    await store().hydrate()
+    expect(getIdsCount).toBe(1)
+    expect(store().hasHydrated).toBe(true)
+
+    await store().hydrate({ force: true })
+
+    expect(getIdsCount).toBe(2)
+  })
+
+  it("hydrate({ force: true }) picks up ids that changed on another device since the last hydrate", async () => {
+    await store().hydrate()
+    expect(store().ids.has("p-1")).toBe(true)
+
+    server.use(http.get("*/backend-api/products/favorite-ids", () => HttpResponse.json(["p-2"])))
+    await store().hydrate({ force: true })
+
+    expect(Array.from(store().ids)).toEqual(["p-2"])
+  })
+
+  it("a plain hydrate() call still only fetches once even after a forced hydrate", async () => {
+    await store().hydrate({ force: true })
+    expect(getIdsCount).toBe(1)
+
+    await store().hydrate()
+
+    expect(getIdsCount).toBe(1)
+  })
+})
+
+describe("favoriteProductsStore lastLocalWriteAt", () => {
+  // `useAuthHydration` watches this field (not `ids`) to know when to broadcast a cross-tab
+  // change - see its own tests for the broadcast/ignore behaviour that depends on it.
+  it("bumps on toggle, its rollback, and setFavorite", async () => {
+    expect(store().lastLocalWriteAt).toBe(0)
+
+    store().setFavorite("p-1", true)
+    const afterSetFavorite = store().lastLocalWriteAt
+    expect(afterSetFavorite).toBeGreaterThan(0)
+
+    await store().toggle("p-1")
+    const afterToggle = store().lastLocalWriteAt
+    expect(afterToggle).toBeGreaterThanOrEqual(afterSetFavorite)
+
+    server.use(http.post("*/backend-api/products/:productId/favorite", () => new HttpResponse(null, { status: 500 })))
+    await expect(store().toggle("p-2")).rejects.toBeInstanceOf(Error)
+    expect(store().lastLocalWriteAt).toBeGreaterThanOrEqual(afterToggle)
+  })
+
+  it("does not bump for hydrate's own snapshot merge", async () => {
+    await store().hydrate()
+
+    expect(store().lastLocalWriteAt).toBe(0)
+  })
 })
 
 describe("favoriteProductsStore toggle", () => {
