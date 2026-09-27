@@ -1,7 +1,8 @@
 import { HttpResponse, http } from "msw"
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { server } from "@/mocks/server"
 import { useAuthStore } from "./authStore"
+import { type PendingNewCard, useCheckoutStore } from "./checkoutStore"
 import { useFavoriteProductsStore } from "./favoriteProductsStore"
 
 const COOKIE_NAME = "auth-storage"
@@ -387,6 +388,139 @@ describe("authStore clearLocalSession", () => {
     await store().clearLocalSession()
 
     expect(await readRawAuthCookie()).toBeNull()
+  })
+})
+
+/**
+ * Regression coverage for the buyer-A-card-charges-buyer-B leak: `checkoutStore` is an in-memory
+ * singleton, so nothing about `useAuthStore` clearing itself touches it on its own. These tests
+ * drive the store the way a real buyer would (fill in checkout fields, then sign in as someone
+ * else in the same tab) rather than asserting on the reset function being called.
+ */
+describe("authStore identity change resets per-user client stores (checkout + favorites)", () => {
+  const userB = { ...user, id: "user-b" }
+
+  const pendingCardA: PendingNewCard = {
+    paymentMethodId: "pm_A",
+    brand: "visa",
+    last4: "1111",
+    expMonth: 12,
+    expYear: 2030,
+  }
+
+  /** Drives the store the way a buyer reaching checkout step 4 with a new card would. */
+  function fillInProgressCheckoutAsBuyerA(): void {
+    const checkout = useCheckoutStore.getState()
+    checkout.setStep(4)
+    checkout.updateShippingAddress({
+      firstName: "Alice",
+      lastName: "Anderson",
+      street: "1 Alpha St",
+      city: "Alphaville",
+      state: "CA",
+      zipCode: "90001",
+      phone: "555-0100",
+    })
+    checkout.updatePONumber("PO-ALICE-1")
+    checkout.updateSpecialInstructions("Leave at the front desk")
+    checkout.setTermsAgreed(true)
+    checkout.setPendingNewCard(pendingCardA)
+  }
+
+  function expectNoTraceOfBuyerA(): void {
+    const checkout = useCheckoutStore.getState()
+    expect(checkout.pendingNewCard).toBeNull()
+    expect(checkout.currentStep).toBe(1)
+    expect(checkout.poNumber).toBe("")
+    expect(checkout.specialInstructions).toBe("")
+    expect(checkout.termsAgreed).toBe(false)
+    expect(checkout.shippingAddress).toEqual({
+      firstName: "",
+      lastName: "",
+      company: "",
+      street: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      phone: "",
+    })
+  }
+
+  it("(a) buyer B's billing step has no trace of buyer A's card/address/PO/terms after A logs out and B logs in", async () => {
+    store().setAuth(user, "access-1", "refresh-1")
+    fillInProgressCheckoutAsBuyerA()
+
+    // A logs out via the Navbar.
+    await store().logout()
+
+    // B logs in, in the same tab.
+    store().setAuth(userB, "access-2", "refresh-2")
+
+    expectNoTraceOfBuyerA()
+  })
+
+  it("(b) same leak via login-over-session: B authenticating without A ever logging out still wipes A's checkout draft", async () => {
+    store().setAuth(user, "access-1", "refresh-1")
+    fillInProgressCheckoutAsBuyerA()
+
+    // B reaches /login (or completes /verify-2fa, /verify-email) while A's session is still live -
+    // setAuth is called directly, with no prior logout()/clearLocalSession() call.
+    store().setAuth(userB, "access-2", "refresh-2")
+
+    await vi.waitFor(() => expectNoTraceOfBuyerA())
+  })
+
+  it("(c) favorites: B sees only B's favorites, not A's, after logging in over A's session and hydrating", async () => {
+    server.use(http.get("*/backend-api/products/favorite-ids", () => HttpResponse.json(["fav-a-1", "fav-a-2"])))
+    store().setAuth(user, "access-1", "refresh-1")
+    await useFavoriteProductsStore.getState().hydrate()
+    expect(useFavoriteProductsStore.getState().ids).toEqual(new Set(["fav-a-1", "fav-a-2"]))
+
+    server.use(http.get("*/backend-api/products/favorite-ids", () => HttpResponse.json(["fav-b-1"])))
+    store().setAuth(userB, "access-2", "refresh-2")
+
+    // A's ids must be gone before B's own hydrate ever runs - otherwise B would render A's hearts
+    // for the frame(s) before the new GET resolves.
+    await vi.waitFor(() => expect(useFavoriteProductsStore.getState().ids.size).toBe(0))
+    expect(useFavoriteProductsStore.getState().hasHydrated).toBe(false)
+
+    await useFavoriteProductsStore.getState().hydrate()
+    expect(useFavoriteProductsStore.getState().ids).toEqual(new Set(["fav-b-1"]))
+  })
+
+  it("(d) does NOT wipe an in-progress checkout when the same user's tokens are re-set (2FA completing the same login / token refresh)", async () => {
+    store().setAuth(user, "access-1", "refresh-1")
+    fillInProgressCheckoutAsBuyerA()
+
+    // Same user id re-authenticating - must be left alone.
+    store().setAuth(user, "access-2", "refresh-2")
+
+    // Give any (incorrectly) fired async reset a chance to land before asserting it did not happen.
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    const checkout = useCheckoutStore.getState()
+    expect(checkout.pendingNewCard).toEqual(pendingCardA)
+    expect(checkout.currentStep).toBe(4)
+    expect(checkout.poNumber).toBe("PO-ALICE-1")
+    expect(checkout.termsAgreed).toBe(true)
+  })
+
+  it("revokes buyer A's session (best-effort) when B logs in over A's still-open session", async () => {
+    store().setAuth(user, "access-1", "refresh-1")
+
+    store().setAuth(userB, "access-2", "refresh-2")
+
+    await vi.waitFor(() => expect(logoutRequests).toHaveLength(1))
+    expect(logoutRequests[0]).toEqual({ authorization: "Bearer access-1", body: { refreshToken: "refresh-1" } })
+  })
+
+  it("does not attempt to revoke anything on a plain login (null -> A)", async () => {
+    store().setAuth(user, "access-1", "refresh-1")
+
+    // Give the (absent) revocation call a chance to fire before asserting it did not.
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(logoutRequests).toHaveLength(0)
   })
 })
 

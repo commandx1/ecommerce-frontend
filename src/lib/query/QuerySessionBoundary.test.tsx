@@ -1,6 +1,8 @@
 import { QueryClient } from "@tanstack/react-query"
 import { render } from "@testing-library/react"
-import { describe, expect, it } from "vitest"
+import { HttpResponse, http } from "msw"
+import { beforeEach, describe, expect, it } from "vitest"
+import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
 import QuerySessionBoundary from "./QuerySessionBoundary"
 
@@ -28,6 +30,13 @@ function seedCache(client: QueryClient): void {
 }
 
 describe("QuerySessionBoundary", () => {
+  beforeEach(() => {
+    // An A -> B identity switch now also fires `authStore`'s best-effort revocation of A's
+    // session (a raw `fetch`, not routed through `logout()`) - stub it so these cache-focused
+    // tests don't trip the strict "unhandled request" mode over an unrelated side effect.
+    server.use(http.post("*/backend-api/auth/logout", () => new HttpResponse(null, { status: 200 })))
+  })
+
   it("clears the cache when the user logs out (A -> null)", () => {
     const client = new QueryClient()
     useAuthStore.getState().setAuth(userWithId("user-a"), "access-1", "refresh-1")

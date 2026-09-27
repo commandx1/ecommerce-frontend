@@ -9,6 +9,46 @@ import { tabSessionStorage } from "@/lib/storage/tab-session-storage"
 // promise. Cleared in `finally` so a later, genuinely new logout is not swallowed.
 let logoutPromise: Promise<void> | null = null
 
+/**
+ * Every zustand store that holds per-user data outside `authStore` itself. Reset from both
+ * `clearLocalSession` (logout) and `setAuth` (login-over-an-existing-session, e.g. /login,
+ * /verify-2fa, /verify-email reached while already authenticated) so account A's checkout draft
+ * (including a tokenized-but-not-yet-charged card) or favorites can never carry over into account
+ * B's session in the same tab. `QuerySessionBoundary` covers the React Query cache separately -
+ * this covers the stores it does not know about.
+ */
+async function resetPerUserClientState(): Promise<void> {
+  const [{ useCheckoutStore }, { useFavoriteProductsStore }] = await Promise.all([
+    import("./checkoutStore"),
+    import("./favoriteProductsStore"),
+  ])
+  useCheckoutStore.getState().reset()
+  useFavoriteProductsStore.getState().reset()
+}
+
+/**
+ * Best-effort revocation of the session `setAuth` is about to overwrite, for the
+ * login-over-an-existing-session case (a different user authenticates in a tab that still holds
+ * account A's tokens). Deliberately a raw `fetch`, not `authAPIDirect.logout` (which goes through
+ * `apiClient`): that client's request interceptor always stamps the *current* live access token
+ * onto outgoing requests, and by the time this fire-and-forget call reaches the network `setAuth`
+ * has already made B's token the live one - `apiClient` would send A's refresh token with B's
+ * bearer token instead of A's own. Must never throw or block B's login - A's refresh token
+ * outliving this call just means it expires normally instead of being revoked early.
+ */
+function revokePreviousSession(accessToken: string, refreshToken: string): void {
+  void fetch("/backend-api/auth/logout", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ refreshToken }),
+  }).catch(() => {
+    // Best-effort: B's login must proceed regardless.
+  })
+}
+
 export interface User {
   id: string
   name: string
@@ -67,7 +107,13 @@ export const useAuthStore = create<AuthState>()(
           refreshToken,
         }),
 
-      setAuth: (user, accessToken, refreshToken, isAdminImpersonating = false) =>
+      setAuth: (user, accessToken, refreshToken, isAdminImpersonating = false) => {
+        const previous = get()
+        // A different identity was signed in in this tab (login-over-session: /login, /verify-2fa,
+        // /verify-email reached while already authenticated). Same-user re-`setAuth` (token refresh,
+        // 2FA completing the same login) must NOT match this - it would wipe an in-progress checkout.
+        const isIdentitySwitch = previous.user !== null && previous.user.id !== user.id
+
         set({
           user,
           accessToken,
@@ -75,7 +121,15 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: true,
           isAdminImpersonating,
           error: null,
-        }),
+        })
+
+        if (isIdentitySwitch) {
+          void resetPerUserClientState()
+          if (previous.accessToken && previous.refreshToken) {
+            revokePreviousSession(previous.accessToken, previous.refreshToken)
+          }
+        }
+      },
 
       setIsAdminImpersonating: (isAdminImpersonating) => set({ isAdminImpersonating }),
 
@@ -95,8 +149,7 @@ export const useAuthStore = create<AuthState>()(
         useAuthStore.persist.clearStorage()
         // Cached server data (cart included) is dropped by QuerySessionBoundary on the user change above.
 
-        const { useFavoriteProductsStore } = await import("./favoriteProductsStore")
-        useFavoriteProductsStore.getState().reset()
+        await resetPerUserClientState()
       },
 
       logout: async () => {
