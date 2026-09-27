@@ -18,6 +18,12 @@ const toastSpies = vi.hoisted(() => ({
 
 vi.mock("@/components/ui/Toast", () => ({ showToast: toastSpies }))
 
+// The storefront category-counts purge (a Server Action); resolves by default.
+const revalidateCategoryCountsSpy = vi.hoisted(() => vi.fn())
+vi.mock("@/lib/actions/revalidate-category-counts", () => ({
+  revalidateCategoryCounts: revalidateCategoryCountsSpy,
+}))
+
 const onClose = vi.fn()
 const onSuccess = vi.fn()
 
@@ -112,6 +118,7 @@ beforeEach(() => {
   }
   onClose.mockClear()
   onSuccess.mockClear()
+  revalidateCategoryCountsSpy.mockReset().mockResolvedValue(undefined)
   useAuthStore.setState({
     user: makeAccountUser({ roleName: "Vendor" }),
     accessToken: "vendor-token",
@@ -327,6 +334,22 @@ describe("ProductDetailsModal — submitting a local catalogue product", () => {
     await waitFor(() => expect(toastSpies.success).toHaveBeenCalledWith("Product added successfully!"))
     expect(payload).toMatchObject({ productId: "p-42", price: 19.99, discount: 0, stock: 3, active: true })
     expect(onSuccess).toHaveBeenCalled()
+    // The new listing is live, so the storefront's cached category counts are purged.
+    expect(revalidateCategoryCountsSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it("completes the add without waiting for the category-counts purge", async () => {
+    const user = userEvent.setup()
+    vi.spyOn(apiRequest, "requestJson").mockResolvedValue({ id: "up-1" } as never)
+    revalidateCategoryCountsSpy.mockReturnValue(new Promise<void>(() => {}))
+
+    render(<ProductDetailsModal product={localProduct()} isOpen onClose={onClose} onSuccess={onSuccess} />)
+    await user.type(screen.getByLabelText("Price *"), "10")
+    await user.type(screen.getByLabelText("Stock *"), "1")
+    await user.click(screen.getByRole("button", { name: "Add Product" }))
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalled())
+    expect(screen.getByRole("button", { name: "Add Product" })).toBeEnabled()
   })
 
   it("surfaces the backend error message and does not call onSuccess", async () => {
@@ -340,6 +363,7 @@ describe("ProductDetailsModal — submitting a local catalogue product", () => {
 
     expect(await screen.findByText("Duplicate listing")).toBeInTheDocument()
     expect(onSuccess).not.toHaveBeenCalled()
+    expect(revalidateCategoryCountsSpy).not.toHaveBeenCalled()
   })
 
   it("falls back to a generic error message when the failure has none", async () => {

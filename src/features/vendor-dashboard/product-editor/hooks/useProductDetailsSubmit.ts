@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
+import { revalidateCategoryCounts } from "@/lib/actions/revalidate-category-counts"
 import type { NormalizedSearchProduct } from "@/lib/api/products"
 import { useAuthStore } from "@/stores/authStore"
 import { submitSearchResultProduct } from "../api/product-editor-commands"
@@ -42,6 +43,10 @@ export function useProductDetailsSubmit({ product, isOpen, onSuccess }: UseProdu
     try {
       await submitSearchResultProduct(product, price, stock, accessToken || "")
       showToast.success("Product added successfully!")
+      // Best-effort, like every other vendor product mutation: a catalogued product added here is
+      // listed immediately (POST /api/user-products), so its category's public count can change.
+      // Not awaited, so it can never hold up or fail the add.
+      void revalidateCategoryCounts()
       onSuccess()
     } catch (error) {
       const message = (error as { message?: string })?.message || "Failed to add product. Please try again."
