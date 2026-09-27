@@ -141,6 +141,27 @@ describe("GET /api/images/proxy — happy path", () => {
     expect(blob.size).toBeGreaterThan(0)
   })
 
+  // These allowlisted hosts serve plain (non-content-hashed) URLs, so a re-uploaded image can
+  // change the bytes behind the same URL - a year-long `immutable` cache would then serve the old
+  // image for a year. FIX: a much shorter, revalidatable cache window instead.
+  it("caches for a day with a week of stale-while-revalidate, not a year as immutable", async () => {
+    server.use(
+      http.get(
+        "https://images.barcodelookup.com/a.jpg",
+        () =>
+          new HttpResponse(new Blob(["binary-image-data"], { type: "image/jpeg" }), {
+            headers: { "Content-Type": "image/jpeg" },
+          }),
+      ),
+    )
+
+    const response = await GET(
+      routeRequest(`/api/images/proxy?url=${encodeURIComponent("https://images.barcodelookup.com/a.jpg")}`),
+    )
+
+    expect(response.headers.get("Cache-Control")).toBe("public, max-age=86400, stale-while-revalidate=604800")
+  })
+
   it("returns a generic 502 (no upstream error text) when the upstream fetch fails", async () => {
     server.use(http.get("https://images.barcodelookup.com/missing.jpg", () => HttpResponse.error()))
 

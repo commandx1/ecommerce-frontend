@@ -73,7 +73,12 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": contentType,
-        "Cache-Control": "public, max-age=31536000, immutable",
+        // These allowlisted hosts (barcodelookup, imgix, Shippo's S3 bucket) serve plain,
+        // non-content-hashed URLs - the same URL can start pointing at different bytes if the
+        // vendor re-uploads an image, so `immutable`/a one-year `max-age` was never actually
+        // safe here. A day of caching plus a week of stale-while-revalidate still avoids
+        // refetching on every request without risking a stale image for a year.
+        "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
       },
     })
   } catch {
