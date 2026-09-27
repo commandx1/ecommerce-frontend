@@ -2,7 +2,7 @@ import type { QueryClient } from "@tanstack/react-query"
 import { act, renderHook } from "@testing-library/react"
 import { afterAll, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest"
 import { showToast } from "@/components/ui/Toast"
-import { type CartData, cartCommands } from "@/features/cart/api/cart-queries"
+import { type CartData, cartCommands, EMPTY_CART } from "@/features/cart/api/cart-queries"
 import { useCheckoutAutoOrder } from "@/features/checkout/hooks/useCheckoutAutoOrder"
 import { SHIPPING_QUOTE_TTL_MS } from "@/features/checkout/lib/shipping-quote-expiry"
 import type { GetPaymentStatusResponse, PlaceOrderPayload, PlaceOrderResponse } from "@/lib/api/orders"
@@ -184,10 +184,11 @@ describe("useFinalReview — happy path", () => {
     await placeAndSettle(result.current.onPlaceOrder)
 
     expect(useCheckoutStore.getState().autoOrderUserProductIds).toEqual(["up-auto"])
-    // The cart is emptied by the confirmation screen, never by this hook — so a failed payment
-    // (see below) cannot lose the buyer's basket.
+    // The backend cart itself is only ever cleared through `cartCommands.clearCart` (the
+    // confirmation screen's "Continue shopping") — this hook just writes the known-empty value
+    // into the cache once the payment has actually gone through, it never calls that command.
     expect(clearCart).not.toHaveBeenCalled()
-    expect(cachedCart(client)?.cartItems).toHaveLength(2)
+    expect(cachedCart(client)?.cartItems).toHaveLength(0)
   })
 
   it("exposes the payment method summary the review screen prints", () => {
@@ -971,10 +972,12 @@ describe("useFinalReview — stale payload regression (Final Review schedule edi
 })
 
 /**
- * Design doc §4: once `POST /orders` has resolved the order row exists, so cached orders and the
- * cart are stale (the cart only marked stale - no refetch, the badge keeps its count until
- * "Continue shopping"), a saved card must show up in payment methods, and a paid order with repeat
- * lines creates schedules. Nothing is invalidated when the order was never created.
+ * Design doc §4: once `POST /orders` has resolved the order row exists, so cached orders are
+ * stale, a saved card must show up in payment methods, and a paid order with repeat lines creates
+ * schedules. The cart is emptied in the cache as soon as the payment actually succeeded (the
+ * backend has already soft-deleted it by then) and otherwise only marked stale - no refetch, so a
+ * declined/abandoned payment leaves the buyer's basket exactly as it was. Nothing is invalidated
+ * when the order was never created.
  */
 describe("useFinalReview — cache invalidation after the order is created", () => {
   const invalidatedKeys = (spy: MockInstance<QueryClient["invalidateQueries"]>) =>
@@ -985,7 +988,7 @@ describe("useFinalReview — cache invalidation after the order is created", () 
     return { ...rendered, invalidate: vi.spyOn(rendered.client, "invalidateQueries") }
   }
 
-  it("invalidates orders and marks the cart stale without refetching it, only after placeOrder resolved", async () => {
+  it("invalidates orders, empties the cart in cache and marks it stale without refetching, only after placeOrder resolved", async () => {
     let resolveOrder!: (value: PlaceOrderResponse) => void
     placeOrder.mockReturnValue(
       new Promise<PlaceOrderResponse>((resolve) => {
@@ -1000,6 +1003,8 @@ describe("useFinalReview — cache invalidation after the order is created", () 
     })
     expect(placeOrder).toHaveBeenCalledTimes(1)
     expect(invalidate).not.toHaveBeenCalled()
+    // Still the pre-order cart while the charge is in flight.
+    expect(client.getQueryData(queryKeys.cart.detail())).toMatchObject({ cartId: "cart-1" })
 
     await act(async () => {
       resolveOrder(orderResponse())
@@ -1012,7 +1017,26 @@ describe("useFinalReview — cache invalidation after the order is created", () 
     const cartState = client.getQueryState(queryKeys.cart.detail())
     expect(cartState?.isInvalidated).toBe(true)
     expect(cartState?.fetchStatus).toBe("idle")
-    // The basket itself is untouched until the confirmation screen clears it.
+    // F5: the payment succeeded, so the backend has already soft-deleted the cart - the cache is
+    // emptied immediately (badge/cart page show 0 without navigating to "Continue shopping").
+    expect(client.getQueryData(queryKeys.cart.detail())).toEqual(EMPTY_CART)
+  })
+
+  it("empties the cart in cache immediately on a successful payment, without any navigation", async () => {
+    const { result, client } = renderFinalReview()
+
+    await placeAndSettle(result.current.onPlaceOrder)
+
+    expect(useCheckoutStore.getState().orderResult).toMatchObject({ status: "PAYMENT_SUCCESS" })
+    expect(client.getQueryData(queryKeys.cart.detail())).toEqual(EMPTY_CART)
+  })
+
+  it("leaves the cached cart intact when the order was created but the payment was declined", async () => {
+    fakeStripe().confirmCardPayment.mockResolvedValue(stripeError("Your card was declined."))
+    const { result, client } = renderWithInvalidationSpy()
+
+    await placeAndSettle(result.current.onPlaceOrder)
+
     expect(client.getQueryData(queryKeys.cart.detail())).toMatchObject({ cartId: "cart-1" })
   })
 

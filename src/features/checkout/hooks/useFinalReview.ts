@@ -4,6 +4,7 @@ import { useStripe } from "@stripe/react-stripe-js"
 import { useQueryClient } from "@tanstack/react-query"
 import { useCallback, useMemo, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
+import { EMPTY_CART } from "@/features/cart/api/cart-queries"
 import { useCartId } from "@/features/cart/hooks/useCartQueries"
 import { useCheckoutAutoOrder } from "@/features/checkout/hooks/useCheckoutAutoOrder"
 import { handleExpiredShippingQuote, isShippingQuoteExpired } from "@/features/checkout/lib/shipping-quote-expiry"
@@ -132,6 +133,9 @@ export function useFinalReview(): UseFinalReviewResult {
     let orderCreated = false
     let cardSaved = false
     let autoOrdersScheduled = false
+    // The backend soft-deletes the cart the moment a payment succeeds, so the cache must be
+    // emptied right here rather than waiting for the confirmation screen's "Continue shopping".
+    let cartClearedByPayment = false
 
     try {
       if (!orderPayload) {
@@ -252,6 +256,7 @@ export function useFinalReview(): UseFinalReviewResult {
       }
 
       isPaymentCanceled = resolvedPaymentIntentStatus === "canceled"
+      cartClearedByPayment = finalOrderStatus === "PAYMENT_SUCCESS"
 
       // Auto-order schedules are only written once Stripe's `payment_intent.succeeded` webhook
       // lands, so snapshot the expected ids only when the payment actually went through. Doing it
@@ -278,10 +283,15 @@ export function useFinalReview(): UseFinalReviewResult {
       setIsPlacingOrder(false)
       setStoreIsPlacingOrder(false)
 
-      // The cart is only marked stale (no refetch): the badge keeps its count until "Continue
-      // shopping" clears the cart.
       if (orderCreated) {
         void queryClient.invalidateQueries({ queryKey: queryKeys.orders.all })
+        // A successful payment means the backend has already soft-deleted the cart - write the
+        // known-empty value straight into the cache so every reader (badge, cart page) reflects
+        // it immediately, instead of waiting for "Continue shopping" to clear it.
+        if (cartClearedByPayment) {
+          queryClient.setQueryData(queryKeys.cart.detail(), EMPTY_CART)
+        }
+        // Marked stale (not refetched): the next plain `refreshCart()` reconciles with the server.
         void queryClient.invalidateQueries({ queryKey: queryKeys.cart.detail(), refetchType: "none" })
         if (cardSaved) {
           void queryClient.invalidateQueries({ queryKey: queryKeys.paymentMethods.all })
