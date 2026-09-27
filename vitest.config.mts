@@ -105,6 +105,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      // See vitest.workspace.ts for why this is aliased away in tests.
+      "server-only": fileURLToPath(new URL("./src/test/mocks/server-only.ts", import.meta.url)),
     },
   },
 })

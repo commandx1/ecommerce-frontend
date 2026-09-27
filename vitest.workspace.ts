@@ -22,6 +22,10 @@ import { defineWorkspace } from "vitest/config"
  */
 const alias = {
   "@": fileURLToPath(new URL("./src", import.meta.url)),
+  // The real `server-only` package throws unless bundled under Next's "react-server" resolve
+  // condition, which Vitest never sets - alias it to a no-op so modules doing `import "server-only"`
+  // (e.g. `@/lib/api/product-detail`) stay importable from tests.
+  "server-only": fileURLToPath(new URL("./src/test/mocks/server-only.ts", import.meta.url)),
 }
 
 const NODE_TEST_GLOBS = [

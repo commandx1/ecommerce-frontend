@@ -1,4 +1,9 @@
-"use server"
+// Not a "use server" module: `fetchProductDetailPageData`/`fetchProductReviews` are only ever
+// called from server components (`get-product-detail-page-data.ts`), never a client component. A
+// "use server" file exposes every export as a public Server Action reachable over its own POST
+// endpoint with an unvalidated `id` path segment - `server-only` instead makes any accidental
+// client-side import a build-time error, with no such surface.
+import "server-only"
 
 import { cookies } from "next/headers"
 import { cache } from "react"
@@ -116,7 +121,7 @@ export async function fetchProductReviews(productId: string, userProductId?: str
     .requestJson<ReviewsResponse>({
       client: "app",
       method: "GET",
-      url: `${baseUrl}/api/reviews/product/${productId}`,
+      url: `${baseUrl}/api/reviews/product/${encodeURIComponent(productId)}`,
       params: { page: 0, size: 10, ...(userProductId ? { userProductId } : {}) },
       headers,
       fallbackMessage: "Failed to fetch reviews",
@@ -137,7 +142,7 @@ export async function fetchProductDetailPageData(id: string): Promise<ProductDet
       .requestResponse<(Record<string, unknown> & { product?: unknown }) | string>({
         client: "app",
         method: "GET",
-        url: `${baseUrl}/api/products/${id}/with-user-products`,
+        url: `${baseUrl}/api/products/${encodeURIComponent(id)}/with-user-products`,
         headers,
         validateStatus: () => true,
         fallbackMessage: "Failed to fetch product",
@@ -150,7 +155,7 @@ export async function fetchProductDetailPageData(id: string): Promise<ProductDet
       .requestJson<QuestionsResponse>({
         client: "app",
         method: "GET",
-        url: `${baseUrl}/api/product-questions/product/${id}`,
+        url: `${baseUrl}/api/product-questions/product/${encodeURIComponent(id)}`,
         params: { page: 0, size: 10 },
         headers,
         fallbackMessage: "Failed to fetch questions",

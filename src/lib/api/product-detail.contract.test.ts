@@ -75,8 +75,11 @@ const mockReviewsResponse = {
 
 let capturedMeAuthHeader: string | null | undefined
 let capturedProductAuthHeader: string | null | undefined
+let capturedProductPath: string | null = null
 let capturedQuestionsQuery: URLSearchParams | null = null
+let capturedQuestionsPath: string | null = null
 let capturedReviewsQuery: URLSearchParams | null = null
+let capturedReviewsPath: string | null = null
 
 /**
  * These handlers capture the outgoing request so the assertions below can pin the exact wire
@@ -86,8 +89,11 @@ beforeEach(() => {
   setAuthCookie(null)
   capturedMeAuthHeader = undefined
   capturedProductAuthHeader = undefined
+  capturedProductPath = null
   capturedQuestionsQuery = null
+  capturedQuestionsPath = null
   capturedReviewsQuery = null
+  capturedReviewsPath = null
 
   server.use(
     http.get("*/api/users/me", ({ request }) => {
@@ -96,14 +102,17 @@ beforeEach(() => {
     }),
     http.get("*/api/products/:id/with-user-products", ({ request }) => {
       capturedProductAuthHeader = request.headers.get("authorization")
+      capturedProductPath = new URL(request.url).pathname
       return HttpResponse.json(mockWithUserProducts)
     }),
     http.get("*/api/product-questions/product/:id", ({ request }) => {
       capturedQuestionsQuery = new URL(request.url).searchParams
+      capturedQuestionsPath = new URL(request.url).pathname
       return HttpResponse.json(mockQuestionsResponse)
     }),
     http.get("*/api/reviews/product/:productId", ({ request }) => {
       capturedReviewsQuery = new URL(request.url).searchParams
+      capturedReviewsPath = new URL(request.url).pathname
       return HttpResponse.json(mockReviewsResponse)
     }),
   )
@@ -122,6 +131,19 @@ describe("fetchProductDetailPageData contract", () => {
 
     expect(capturedQuestionsQuery?.get("page")).toBe("0")
     expect(capturedQuestionsQuery?.get("size")).toBe("10")
+  })
+
+  // The `id` comes straight from the `[id]` route param with no server-side validation, so it is
+  // percent-encoded before being spliced into the backend path - otherwise a value containing "/"
+  // could add extra path segments (e.g. break out to a sibling route) instead of being sent as a
+  // single opaque id.
+  it("percent-encodes an id containing a slash instead of splicing it in as extra path segments", async () => {
+    const trickyId = "p/../admin 1"
+
+    await fetchProductDetailPageData(trickyId)
+
+    expect(capturedProductPath).toBe(`/api/products/${encodeURIComponent(trickyId)}/with-user-products`)
+    expect(capturedQuestionsPath).toBe(`/api/product-questions/product/${encodeURIComponent(trickyId)}`)
   })
 
   it("does not attach an Authorization header when there is no auth cookie", async () => {
@@ -251,6 +273,14 @@ describe("fetchProductReviews contract", () => {
     await fetchProductReviews("p-1", "up-2")
 
     expect(capturedReviewsQuery?.get("userProductId")).toBe("up-2")
+  })
+
+  it("percent-encodes an id containing a slash instead of splicing it in as extra path segments", async () => {
+    const trickyId = "p/../admin 1"
+
+    await fetchProductReviews(trickyId)
+
+    expect(capturedReviewsPath).toBe(`/api/reviews/product/${encodeURIComponent(trickyId)}`)
   })
 
   it("tolerates an empty content array", async () => {
