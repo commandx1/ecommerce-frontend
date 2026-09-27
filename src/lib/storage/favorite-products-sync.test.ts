@@ -13,13 +13,37 @@ afterEach(() => {
 })
 
 describe("favorite-products-sync via BroadcastChannel", () => {
-  it("delivers a broadcast change to another listener with the right user id", async () => {
+  /**
+   * `broadcastFavoritesChanged` runs in this same module/JS realm as the test, i.e. the same
+   * "tab" `onFavoritesChangedElsewhere` filters out (see the self-filter note in the source) - so
+   * simulating an actual OTHER tab means posting on a raw channel with a different `sourceTabId`,
+   * exactly like a sibling browser tab's own `broadcastFavoritesChanged` call would.
+   */
+  const postFromAnotherTab = (message: Record<string, unknown>): void => {
+    const channel = new BroadcastChannel("favorite-products-sync")
+    channel.postMessage({ sourceTabId: "other-tab", at: Date.now(), ...message })
+    channel.close()
+  }
+
+  it("delivers a change posted from another tab, with the right user id", async () => {
+    const handler = vi.fn()
+    const unbind = onFavoritesChangedElsewhere(handler)
+
+    postFromAnotherTab({ userId: "user-1" })
+
+    await vi.waitFor(() => expect(handler).toHaveBeenCalledWith("user-1"))
+    unbind()
+  })
+
+  it("ignores this same tab's own broadcast (BroadcastChannel delivers to every channel object, not just other tabs)", async () => {
     const handler = vi.fn()
     const unbind = onFavoritesChangedElsewhere(handler)
 
     broadcastFavoritesChanged("user-1")
 
-    await vi.waitFor(() => expect(handler).toHaveBeenCalledWith("user-1"))
+    // Give any (wrongly delivered) self-message a chance to land before asserting it didn't.
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(handler).not.toHaveBeenCalled()
     unbind()
   })
 
@@ -35,7 +59,7 @@ describe("favorite-products-sync via BroadcastChannel", () => {
     const unbind = onFavoritesChangedElsewhere(handler)
     unbind()
 
-    broadcastFavoritesChanged("user-1")
+    postFromAnotherTab({ userId: "user-1" })
 
     // Give any (unwanted) delivery a chance to land before asserting it didn't.
     await new Promise((resolve) => setTimeout(resolve, 10))
@@ -53,13 +77,13 @@ describe("favorite-products-sync storage fallback (no BroadcastChannel)", () => 
     window.dispatchEvent(new StorageEvent("storage", init))
   }
 
-  it("writes only a version marker and user id, never favorite data", () => {
+  it("writes only a version marker, user id and source tab id, never favorite data", () => {
     broadcastFavoritesChanged("user-1")
 
     const raw = localStorage.getItem(STORAGE_KEY)
     expect(raw).not.toBeNull()
     const payload = JSON.parse(raw as string)
-    expect(payload).toEqual({ userId: "user-1", at: expect.any(Number) })
+    expect(payload).toEqual({ userId: "user-1", at: expect.any(Number), sourceTabId: expect.any(String) })
   })
 
   it("fires the handler for a dispatched storage event with the right key and payload", () => {

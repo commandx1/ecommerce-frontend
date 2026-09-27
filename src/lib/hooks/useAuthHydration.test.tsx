@@ -4,7 +4,6 @@ import { act, waitFor } from "@testing-library/react"
 import { HttpResponse, http } from "msw"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { refreshCart } from "@/features/cart/api/cart-queries"
-import { broadcastFavoritesChanged, onFavoritesChangedElsewhere } from "@/lib/storage/favorite-products-sync"
 import { LOGOUT_EVENT_KEY } from "@/lib/storage/session-events"
 import { __resetTabSessionStorageForTests, tabSessionStorage } from "@/lib/storage/tab-session-storage"
 import { server } from "@/mocks/server"
@@ -18,6 +17,18 @@ import { useAuthHydration } from "./useAuthHydration"
  * module boundary.
  */
 vi.mock("@/features/cart/api/cart-queries", () => ({ refreshCart: vi.fn(async () => {}) }))
+
+/**
+ * `broadcastFavoritesChanged` is mocked (keeping `onFavoritesChangedElsewhere` real, via
+ * `importOriginal`) because it self-filters same-tab delivery - see `favorite-products-sync.ts` -
+ * so a broadcast made and listened for in this same test process can never be observed through
+ * the real listener API. The "outgoing" describe block below asserts on this spy directly instead.
+ */
+const { broadcastFavoritesChangedSpy } = vi.hoisted(() => ({ broadcastFavoritesChangedSpy: vi.fn() }))
+vi.mock("@/lib/storage/favorite-products-sync", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/storage/favorite-products-sync")>()
+  return { ...actual, broadcastFavoritesChanged: broadcastFavoritesChangedSpy }
+})
 
 /**
  * `useAuthHydration` is the bridge that survives a hard refresh: React state starts empty, the
@@ -74,6 +85,7 @@ beforeEach(() => {
   // each test below simulates a separate page load, so reset the gate.
   __resetTabSessionStorageForTests()
   mockedRefreshCart.mockClear()
+  broadcastFavoritesChangedSpy.mockClear()
 })
 
 afterEach(() => {
@@ -316,6 +328,18 @@ describe("useAuthHydration cross-tab favorites (incoming)", () => {
     return { count: () => count }
   }
 
+  /**
+   * `useAuthHydration`'s own listener runs in this same JS realm/"tab" as the test, and
+   * `broadcastFavoritesChanged` self-filters (see `favorite-products-sync.ts`) - so simulating an
+   * actual OTHER tab means posting on a raw channel with a different `sourceTabId`, exactly like a
+   * sibling browser tab's own `broadcastFavoritesChanged` call would.
+   */
+  const reportFavoritesChangedFromAnotherTab = (userId: string): void => {
+    const channel = new BroadcastChannel("favorite-products-sync")
+    channel.postMessage({ userId, at: Date.now(), sourceTabId: "other-tab" })
+    channel.close()
+  }
+
   it("re-hydrates favorites when another same-browser tab reports a change for the same user", async () => {
     useAuthStore.getState().setAuth(USER, "at", "rt")
     const requests = serveFavoriteIds()
@@ -326,7 +350,7 @@ describe("useAuthHydration cross-tab favorites (incoming)", () => {
     const { getByTestId } = renderWithProviders(<Probe />)
     await waitFor(() => expect(getByTestId("hydrated")).toHaveTextContent("true"))
 
-    broadcastFavoritesChanged(USER.id)
+    reportFavoritesChangedFromAnotherTab(USER.id)
 
     await waitFor(() => expect(requests.count()).toBe(2))
   })
@@ -340,7 +364,7 @@ describe("useAuthHydration cross-tab favorites (incoming)", () => {
     const { getByTestId } = renderWithProviders(<Probe />)
     await waitFor(() => expect(getByTestId("hydrated")).toHaveTextContent("true"))
 
-    broadcastFavoritesChanged("some-other-user")
+    reportFavoritesChangedFromAnotherTab("some-other-user")
 
     // Give any (wrongly fired) re-hydrate a chance to run before asserting it didn't.
     await new Promise((resolve) => setTimeout(resolve, 10))
@@ -356,7 +380,7 @@ describe("useAuthHydration cross-tab favorites (incoming)", () => {
     await waitFor(() => expect(getByTestId("hydrated")).toHaveTextContent("true"))
     unmount()
 
-    broadcastFavoritesChanged(USER.id)
+    reportFavoritesChangedFromAnotherTab(USER.id)
 
     await new Promise((resolve) => setTimeout(resolve, 10))
     expect(requests.count()).toBe(1)
@@ -368,25 +392,17 @@ describe("useAuthHydration cross-tab favorites (outgoing)", () => {
     useAuthStore.getState().setAuth(USER, "at", "rt")
     renderWithProviders(<Probe />)
 
-    const handler = vi.fn()
-    const unbind = onFavoritesChangedElsewhere(handler)
-
     useFavoriteProductsStore.getState().setFavorite("p-1", true)
 
-    await waitFor(() => expect(handler).toHaveBeenCalledWith(USER.id))
-    unbind()
+    await waitFor(() => expect(broadcastFavoritesChangedSpy).toHaveBeenCalledWith(USER.id))
   })
 
   it("does not broadcast when no user is signed in", async () => {
     renderWithProviders(<Probe />)
 
-    const handler = vi.fn()
-    const unbind = onFavoritesChangedElsewhere(handler)
-
     useFavoriteProductsStore.getState().setFavorite("p-1", true)
 
     await new Promise((resolve) => setTimeout(resolve, 10))
-    expect(handler).not.toHaveBeenCalled()
-    unbind()
+    expect(broadcastFavoritesChangedSpy).not.toHaveBeenCalled()
   })
 })
