@@ -156,6 +156,24 @@ describe("GET /api/products/[id]/with-user-products", () => {
     expect(captured.count).toBe(2)
   })
 
+  // Regression: this handler used to interpolate `id` into the backend path unencoded, unlike
+  // its sibling routes (e.g. `products/review/[id]`). A path-traversal-shaped id must reach the
+  // backend percent-encoded as a single opaque segment, not as literal `/../` path segments.
+  it("percent-encodes a path-traversal-shaped id instead of forwarding it as literal path segments", async () => {
+    const captured = createCapture()
+    server.use(
+      http.get(ANY, ({ request }) => {
+        record(captured, request)
+        return HttpResponse.json(payload)
+      }),
+    )
+
+    await GET(routeRequest("/api/products/a%2F..%2Fb/with-user-products"), routeParams({ id: "a/../b" }))
+
+    expect(captured.url).toBe(`${BACKEND}/api/products/${encodeURIComponent("a/../b")}/with-user-products`)
+    expect(captured.url).toBe(`${BACKEND}/api/products/a%2F..%2Fb/with-user-products`)
+  })
+
   it("exposes GET only", async () => {
     const route = await import("./route")
 

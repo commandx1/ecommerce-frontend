@@ -19,7 +19,7 @@ export const GET = withPrivateNoStore(async (request: NextRequest, { params }: {
       headers.Authorization = authHeader
     }
 
-    const response = await serverRequest(`/api/products/${id}/with-user-products`, {
+    const response = await serverRequest(`/api/products/${encodeURIComponent(id)}/with-user-products`, {
       method: "GET",
       headers,
       cache: "no-store", // Always fetch fresh data for SSR
