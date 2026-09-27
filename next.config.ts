@@ -74,6 +74,32 @@ const nextConfig: NextConfig = {
       // guard then took the shared cookie back from the tab the user was looking at). The vendor
       // guard's cross-role target is /buyer-dashboard too, so its redirect paid for that hop as well.
       { source: "/buyer-dashboard", destination: "/buyer-dashboard/orders", permanent: false },
+      // Same class of bug as /buyer-dashboard above: these four legacy URLs used to redirect()
+      // from inside their own page.tsx, which sits under the dashboard's loading.tsx and so
+      // streams to the browser as a second, client-side navigation - vulnerable to the same
+      // background-tab cookie mix-up. Answering them here is one request, judged once. The
+      // page.tsx files stay in place as a harmless fallback (see routes.test.tsx) in case a
+      // build ever serves them without this config (e.g. a stale edge cache).
+      {
+        source: "/buyer-dashboard/vendors",
+        destination: "/buyer-dashboard/favorites?tab=vendors",
+        permanent: false,
+      },
+      {
+        source: "/buyer-dashboard/vendors/favorites",
+        destination: "/buyer-dashboard/favorites?tab=vendors",
+        permanent: false,
+      },
+      {
+        source: "/buyer-dashboard/suppliers",
+        destination: "/buyer-dashboard/favorites?tab=vendors",
+        permanent: false,
+      },
+      {
+        source: "/buyer-dashboard/suppliers/favorites",
+        destination: "/buyer-dashboard/favorites?tab=vendors",
+        permanent: false,
+      },
     ]
   },
   async rewrites() {

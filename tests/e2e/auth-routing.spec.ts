@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures/auth.fixture"
 import { buildAuthCookie, buildBuyerAuthCookie, buildVendorAuthCookie } from "./fixtures/auth-cookie"
+import { registerAllMocks } from "./mocks"
 
 /**
  * src/proxy.ts's redirect matrix, verified against real runtime behaviour -
@@ -72,6 +73,43 @@ test.describe("auth-routing (src/proxy.ts)", () => {
     // Kök sayfa artık Orders'a redirect ediyor; overview dummy veri olduğu için gizlendi.
     await buyerPage.goto("/buyer-dashboard", { waitUntil: "domcontentloaded" })
     await expect(buyerPage).toHaveURL(/\/buyer-dashboard\/orders$/)
+  })
+
+  // next.config.ts redirects() (same fix as /buyer-dashboard above): these four legacy URLs used
+  // to redirect() from inside their own page.tsx, which streams to the browser as a second,
+  // client-side navigation because it sits under the dashboard's loading.tsx. Answered here, at
+  // the edge, before the proxy and before any render.
+  test.describe("legacy buyer-dashboard vendors/suppliers URLs redirect to the Vendors favorites tab", () => {
+    for (const legacyPath of [
+      "/buyer-dashboard/vendors",
+      "/buyer-dashboard/vendors/favorites",
+      "/buyer-dashboard/suppliers",
+      "/buyer-dashboard/suppliers/favorites",
+    ]) {
+      test(`${legacyPath} - a real browser lands on the Vendors tab with the Favorites heading`, async ({
+        buyerPage,
+        apiMock,
+      }) => {
+        registerAllMocks(apiMock)
+        await buyerPage.goto(legacyPath)
+        await expect(buyerPage).toHaveURL(/\/buyer-dashboard\/favorites\?tab=vendors$/)
+        await expect(buyerPage.getByRole("heading", { name: "Favorites", level: 1 })).toBeVisible()
+      })
+
+      // The assertion above alone would also pass for the OLD page-level `redirect()` (a page.goto
+      // ultimately lands on the right URL either way) - it does not prove this is a single request
+      // answered before the proxy. A raw, unauthenticated HTTP GET does: next.config's redirects()
+      // answers with one 307 here; a page-level `redirect()` under app/buyer-dashboard/loading.tsx
+      // instead streams a 200 (the RSC payload triggers the navigation only once it reaches the
+      // browser), so this would fail against that old code.
+      test(`${legacyPath} - answered by a single 307 before the proxy (unauthenticated is fine)`, async ({
+        request,
+      }) => {
+        const response = await request.get(legacyPath, { maxRedirects: 0 })
+        expect(response.status()).toBe(307)
+        expect(response.headers().location).toBe("/buyer-dashboard/favorites?tab=vendors")
+      })
+    }
   })
 
   test("Vendor hitting a non-dashboard page (/products) is redirected to /vendor-dashboard", async ({ vendorPage }) => {
