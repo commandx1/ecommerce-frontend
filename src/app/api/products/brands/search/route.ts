@@ -1,9 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
+import { withPrivateNoStore } from "@/lib/api/server-response-headers"
 
 // Search brand names for the brand filter dropdown (paginated, typeahead)
 // GET /api/products/brands/search?search=...&page=0&size=20
-export async function GET(request: NextRequest) {
+export const GET = withPrivateNoStore(async (request: NextRequest) => {
   try {
     const authHeader = request.headers.get("Authorization")
 
@@ -56,4 +57,4 @@ export async function GET(request: NextRequest) {
     const errorMessage = error instanceof Error ? error.message : "Internal server error"
     return NextResponse.json({ message: errorMessage }, { status: 500 })
   }
-}
+})

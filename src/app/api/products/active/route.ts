@@ -1,10 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
+import { withPrivateNoStore } from "@/lib/api/server-response-headers"
 
 // Search active products by free-text (barcode, name, detailedName, manufacturerCode)
 // and optional brand filter. Paginated for infinite scroll.
 // GET /api/products/active?search=...&brand=...&page=0&size=10
-export async function GET(request: NextRequest) {
+export const GET = withPrivateNoStore(async (request: NextRequest) => {
   try {
     const authHeader = request.headers.get("Authorization")
 
@@ -62,4 +63,4 @@ export async function GET(request: NextRequest) {
     const errorMessage = error instanceof Error ? error.message : "Internal server error"
     return NextResponse.json({ message: errorMessage }, { status: 500 })
   }
-}
+})

@@ -1,8 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getAuthorizationHeader } from "@/lib/api/server-auth"
 import { serverRequest } from "@/lib/api/server-request"
+import { withPrivateNoStore } from "@/lib/api/server-response-headers"
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const GET = withPrivateNoStore(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const { id } = await params
 
@@ -58,4 +59,4 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   } catch {
     return NextResponse.json({ message: "Internal server error" }, { status: 500 })
   }
-}
+})

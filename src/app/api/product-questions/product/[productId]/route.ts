@@ -1,44 +1,47 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getAuthorizationHeader } from "@/lib/api/server-auth"
 import { serverRequest } from "@/lib/api/server-request"
+import { withPrivateNoStore } from "@/lib/api/server-response-headers"
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ productId: string }> }) {
-  try {
-    const { productId } = await params
-    const { searchParams } = new URL(request.url)
-    const page = searchParams.get("page") || "0"
-    const size = searchParams.get("size") || "10"
+export const GET = withPrivateNoStore(
+  async (request: NextRequest, { params }: { params: Promise<{ productId: string }> }) => {
+    try {
+      const { productId } = await params
+      const { searchParams } = new URL(request.url)
+      const page = searchParams.get("page") || "0"
+      const size = searchParams.get("size") || "10"
 
-    const accessToken = getAuthorizationHeader(request)?.replace("Bearer ", "") ?? null
+      const accessToken = getAuthorizationHeader(request)?.replace("Bearer ", "") ?? null
 
-    // Build headers
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-      "User-Agent": "Mozilla/5.0",
-      Accept: "application/json",
+      // Build headers
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0",
+        Accept: "application/json",
+      }
+
+      if (accessToken) {
+        headers.Authorization = `Bearer ${accessToken}`
+      }
+
+      const response = await serverRequest(
+        `/api/product-questions/product/${encodeURIComponent(productId)}?page=${page}&size=${size}`,
+        {
+          method: "GET",
+          headers,
+          cache: "no-store", // Always fetch fresh data for SSR
+        },
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Failed to fetch product questions" }))
+        return NextResponse.json(errorData, { status: response.status })
+      }
+
+      const data = await response.json()
+      return NextResponse.json(data)
+    } catch {
+      return NextResponse.json({ message: "Internal server error" }, { status: 500 })
     }
-
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    const response = await serverRequest(
-      `/api/product-questions/product/${encodeURIComponent(productId)}?page=${page}&size=${size}`,
-      {
-        method: "GET",
-        headers,
-        cache: "no-store", // Always fetch fresh data for SSR
-      },
-    )
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: "Failed to fetch product questions" }))
-      return NextResponse.json(errorData, { status: response.status })
-    }
-
-    const data = await response.json()
-    return NextResponse.json(data)
-  } catch {
-    return NextResponse.json({ message: "Internal server error" }, { status: 500 })
-  }
-}
+  },
+)

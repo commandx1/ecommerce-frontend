@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
+import { withPrivateNoStore } from "@/lib/api/server-response-headers"
 
 const FILTER_FALLBACK_PAGE_SIZE = 1000
 
@@ -29,7 +30,7 @@ function extractUserProductsFromFilterPayload(data: unknown): unknown[] {
 }
 
 // Get All User Products - GET /api/user-products
-export async function GET(request: NextRequest) {
+export const GET = withPrivateNoStore(async (request: NextRequest) => {
   try {
     const authHeader = getAuthorizationHeader(request)
 
@@ -93,7 +94,7 @@ export async function GET(request: NextRequest) {
     const errorMessage = error instanceof Error ? error.message : "Internal server error"
     return NextResponse.json({ message: errorMessage }, { status: 500 })
   }
-}
+})
 
 // Create User Product - POST /api/user-products
 export async function POST(request: NextRequest) {

@@ -2,10 +2,11 @@ import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { getAuthorizationHeader } from "@/lib/api/server-auth"
 import { serverRequest } from "@/lib/api/server-request"
+import { withPrivateNoStore } from "@/lib/api/server-response-headers"
 
 // Get vendor's own products with review status - GET /api/products/my-products
 // Query: approved (TRUE|FALSE|NULL|ALL), sortBy, sortDir, page, size
-export async function GET(request: NextRequest) {
+export const GET = withPrivateNoStore(async (request: NextRequest) => {
   try {
     const authHeader = getAuthorizationHeader(request)
 
@@ -48,4 +49,4 @@ export async function GET(request: NextRequest) {
     const errorMessage = error instanceof Error ? error.message : "Internal server error"
     return NextResponse.json({ message: errorMessage }, { status: 500 })
   }
-}
+})

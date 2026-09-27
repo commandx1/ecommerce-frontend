@@ -81,6 +81,15 @@ describe("GET /api/product-questions/product/[productId]", () => {
     expect(captured.authorization).toBe(AUTH)
   })
 
+  it("sets Cache-Control: private, no-store and Vary: Cookie, Authorization", async () => {
+    server.use(http.get(ANY, () => HttpResponse.json(questions)))
+
+    const response = await GET(routeRequest("/api/product-questions/product/p-1"), routeParams({ productId: "p-1" }))
+
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store")
+    expect(response.headers.get("Vary")).toBe("Cookie, Authorization")
+  })
+
   it("stays anonymous and successful without a session", async () => {
     const captured = createCapture()
     server.use(

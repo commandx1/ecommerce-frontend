@@ -54,6 +54,15 @@ describe("GET /api/user-products/stats", () => {
     expect(captured.authorization).toBe(AUTH)
   })
 
+  it("sets Cache-Control: private, no-store and Vary: Cookie, Authorization", async () => {
+    server.use(http.get(STATS, () => HttpResponse.json(expectedStats)))
+
+    const response = await GET(routeRequest("/api/user-products/stats", { authorization: AUTH }))
+
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store")
+    expect(response.headers.get("Vary")).toBe("Cookie, Authorization")
+  })
+
   it("recomputes the counters when the backend answers with a product list instead", async () => {
     server.use(http.get(STATS, () => HttpResponse.json({ content: inventory })))
 

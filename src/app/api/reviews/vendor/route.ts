@@ -2,8 +2,9 @@ import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { getAuthorizationHeader } from "@/lib/api/server-auth"
 import { serverRequest } from "@/lib/api/server-request"
+import { withPrivateNoStore } from "@/lib/api/server-response-headers"
 
-export async function GET(request: NextRequest) {
+export const GET = withPrivateNoStore(async (request: NextRequest) => {
   try {
     const authHeader = getAuthorizationHeader(request)
     if (!authHeader) {
@@ -30,4 +31,4 @@ export async function GET(request: NextRequest) {
   } catch {
     return NextResponse.json({ message: "Internal server error" }, { status: 500 })
   }
-}
+})

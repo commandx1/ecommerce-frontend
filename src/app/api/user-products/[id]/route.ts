@@ -1,9 +1,10 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { serverRequest } from "@/lib/api/server-request"
+import { withPrivateNoStore } from "@/lib/api/server-response-headers"
 
 // Get User Product - GET /api/user-products/:id
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const GET = withPrivateNoStore(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const authHeader = request.headers.get("Authorization")
     const { id } = await params
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const errorMessage = error instanceof Error ? error.message : "Internal server error"
     return NextResponse.json({ message: errorMessage }, { status: 500 })
   }
-}
+})
 
 // Update User Product - PUT /api/user-products/:id
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

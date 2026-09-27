@@ -1,9 +1,10 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { buildErrorResponse, parseJsonOrText, proxyRequest } from "@/features/products/api/proxy/http"
+import { withPrivateNoStore } from "@/lib/api/server-response-headers"
 
 // Get Product by ID, ignoring active status (owner or admin only) - GET /api/products/:id/owner
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const GET = withPrivateNoStore(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const { id } = await params
     const authHeader = request.headers.get("Authorization")
@@ -33,4 +34,4 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const errorMessage = error instanceof Error ? error.message : "Internal server error"
     return NextResponse.json({ message: errorMessage }, { status: 500 })
   }
-}
+})

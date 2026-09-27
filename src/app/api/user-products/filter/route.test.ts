@@ -36,6 +36,15 @@ describe("GET /api/user-products/filter", () => {
     await expect(response.json()).resolves.toEqual({ message: "Unauthorized" })
   })
 
+  it("sets Cache-Control: private, no-store and Vary: Cookie, Authorization", async () => {
+    server.use(http.get(UPSTREAM, () => HttpResponse.json(page)))
+
+    const response = await GET(routeRequest("/api/user-products/filter?type=ACTIVE", { authorization: AUTH }))
+
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store")
+    expect(response.headers.get("Vary")).toBe("Cookie, Authorization")
+  })
+
   it("sends the required parameters with their defaults", async () => {
     const captured = createCapture()
     server.use(

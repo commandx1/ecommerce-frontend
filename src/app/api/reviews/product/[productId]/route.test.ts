@@ -37,6 +37,15 @@ describe("GET /api/reviews/product/[productId]", () => {
     expect(url.searchParams.has("userProductId")).toBe(false)
   })
 
+  it("sets Cache-Control: private, no-store and Vary: Cookie, Authorization", async () => {
+    server.use(http.get(ANY, () => HttpResponse.json(reviews)))
+
+    const response = await GET(routeRequest("/api/reviews/product/p-1"), routeParams({ productId: "p-1" }))
+
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store")
+    expect(response.headers.get("Vary")).toBe("Cookie, Authorization")
+  })
+
   it("forwards pagination and the optional userProductId filter", async () => {
     const captured = createCapture()
     server.use(

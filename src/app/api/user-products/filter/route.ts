@@ -2,9 +2,10 @@ import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { getAuthorizationHeader } from "@/lib/api/server-auth"
 import { serverRequest } from "@/lib/api/server-request"
+import { withPrivateNoStore } from "@/lib/api/server-response-headers"
 
 // Filter User Products - GET /api/user-products/filter?type=ACTIVE&price=false&page=0&size=10
-export async function GET(request: NextRequest) {
+export const GET = withPrivateNoStore(async (request: NextRequest) => {
   try {
     const authHeader = getAuthorizationHeader(request)
 
@@ -93,4 +94,4 @@ export async function GET(request: NextRequest) {
     const errorMessage = error instanceof Error ? error.message : "Internal server error"
     return NextResponse.json({ message: errorMessage }, { status: 500 })
   }
-}
+})

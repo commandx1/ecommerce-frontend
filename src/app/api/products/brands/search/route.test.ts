@@ -30,6 +30,15 @@ describe("GET /api/products/brands/search", () => {
     expect(url.searchParams.get("size")).toBe("5")
   })
 
+  it("sets Cache-Control: private, no-store and Vary: Cookie, Authorization", async () => {
+    server.use(http.get(UPSTREAM, () => HttpResponse.json(page)))
+
+    const response = await GET(routeRequest("/api/products/brands/search", { authorization: AUTH }))
+
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store")
+    expect(response.headers.get("Vary")).toBe("Cookie, Authorization")
+  })
+
   it("defaults to an empty term on page 0 with size 20", async () => {
     const captured = createCapture()
     server.use(

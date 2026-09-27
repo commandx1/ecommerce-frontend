@@ -40,6 +40,15 @@ describe("GET /api/user-products", () => {
     expect(captured.authorization).toBe(AUTH)
   })
 
+  it("sets Cache-Control: private, no-store and Vary: Cookie, Authorization", async () => {
+    server.use(http.get(LIST, () => HttpResponse.json([userProduct])))
+
+    const response = await GET(routeRequest("/api/user-products", { authorization: AUTH }))
+
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store")
+    expect(response.headers.get("Vary")).toBe("Cookie, Authorization")
+  })
+
   it("accepts the auth-storage cookie as the credential source", async () => {
     const captured = createCapture()
     server.use(

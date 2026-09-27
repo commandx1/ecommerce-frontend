@@ -2,9 +2,10 @@ import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { buildErrorResponse, parseJsonOrText, proxyRequest } from "@/features/products/api/proxy/http"
 import type { ProductRouteContext } from "@/features/products/api/proxy/types"
+import { withPrivateNoStore } from "@/lib/api/server-response-headers"
 
 // Get Product by ID - GET /api/products/:id
-export async function GET(request: NextRequest, { params }: ProductRouteContext) {
+export const GET = withPrivateNoStore(async (request: NextRequest, { params }: ProductRouteContext) => {
   try {
     const { id } = await params
     const authHeader = request.headers.get("Authorization")
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest, { params }: ProductRouteContext)
     const errorMessage = error instanceof Error ? error.message : "Internal server error"
     return NextResponse.json({ message: errorMessage }, { status: 500 })
   }
-}
+})
 
 // Update Product by ID - PUT /api/products/:id
 export async function PUT(request: NextRequest, { params }: ProductRouteContext) {

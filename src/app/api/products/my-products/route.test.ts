@@ -37,6 +37,15 @@ describe("GET /api/products/my-products", () => {
     expect(url.searchParams.get("size")).toBe("25")
   })
 
+  it("sets Cache-Control: private, no-store and Vary: Cookie, Authorization", async () => {
+    server.use(http.get(UPSTREAM, () => HttpResponse.json(page)))
+
+    const response = await GET(routeRequest("/api/products/my-products", { authorization: AUTH }))
+
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store")
+    expect(response.headers.get("Vary")).toBe("Cookie, Authorization")
+  })
+
   it("forwards unknown parameters as-is — the route applies no allowlist", async () => {
     const captured = createCapture()
     server.use(
