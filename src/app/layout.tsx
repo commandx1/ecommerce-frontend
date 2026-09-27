@@ -9,6 +9,7 @@ import ConditionalNavbar from "@/components/layout/ConditionalNavbar"
 import QueryProvider from "@/components/providers/QueryProvider"
 import { StripeConfigProvider } from "@/components/providers/StripeConfigProvider"
 import ThemeProvider from "@/components/theme/ThemeProvider"
+import { buildNavbarInitialAuthState } from "./layout-auth-state"
 
 const manrope = Manrope({
   variable: "--font-denty-sans",
@@ -30,25 +31,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  // Read auth cookie for SSR
+  // Read auth cookie for SSR - see `buildNavbarInitialAuthState` for what gets kept.
   const cookieStore = await cookies()
   const authCookie = cookieStore.get("auth-storage")
-  let initialState = null
-
-  if (authCookie) {
-    try {
-      let parsed = null
-      try {
-        parsed = JSON.parse(authCookie.value)
-      } catch {
-        const decodedValue = decodeURIComponent(authCookie.value)
-        parsed = JSON.parse(decodedValue)
-      }
-      initialState = parsed?.state || null
-    } catch {
-      // Ignore parsing errors
-    }
-  }
+  const initialState = buildNavbarInitialAuthState(authCookie?.value)
 
   const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? ""
 
