@@ -69,6 +69,9 @@ export function useDocumentUpload(onUploaded: () => void): DocumentUpload {
       // counts the same as a single create; skip the call entirely when nothing was accepted.
       if (result.acceptedCount > 0) {
         void revalidateCategoryCounts()
+        // The import modal sits over VendorProductsPage - without this its table, stat cards and
+        // brand filter keep showing pre-import data until an unrelated refetch happens to land.
+        void queryClient.invalidateQueries({ queryKey: queryKeys.vendor.products.all })
       }
 
       if (result.acceptedCount > 0 && result.skippedCount === 0 && result.wrongCount === 0) {
