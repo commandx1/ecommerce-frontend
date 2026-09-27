@@ -114,9 +114,15 @@ export function useProductMutations(listParams: VendorProductListParams, accessT
         setEditingDraft(null)
         // Stock and the active flag both feed the stat cards.
         void invalidateProductStats()
-        // Stock hitting zero or the active toggle can move this listing in or out of its
-        // category's public count; fire-and-forget, never blocks the already-saved edit.
-        void revalidateCategoryCounts()
+        // Only stock crossing the 0 boundary (in or out of stock) or the active toggle can move
+        // this listing in or out of its category's public count - a price/discount/shipping-only
+        // edit never does, so skip the purge for those. Fire-and-forget either way, never blocks
+        // the already-saved edit.
+        const stockCrossedZeroBoundary = (product.stock === 0) !== (parsed.stock === 0)
+        const activeChanged = product.active !== parsed.active
+        if (stockCrossedZeroBoundary || activeChanged) {
+          void revalidateCategoryCounts()
+        }
       } catch (error) {
         console.error("Error updating product:", error)
         showToast.error("Update failed", error instanceof Error ? error.message : "Failed to update product")

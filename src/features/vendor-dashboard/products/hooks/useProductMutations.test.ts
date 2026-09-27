@@ -49,12 +49,74 @@ beforeEach(() => {
 })
 
 describe("useProductMutations", () => {
-  it("saveEdit triggers category-counts revalidation on success (stock/active feed public counts)", async () => {
+  /**
+   * `saveEdit`'s category-counts purge is narrowed to only the edits that can move a listing in
+   * or out of its category's public count: stock crossing the 0 boundary, or the active toggle.
+   * A price/discount/shipping-only edit must not fire it - see the F6-style regression comment
+   * inline in `useProductMutations.ts`.
+   */
+  it("does not revalidate category counts for a price-only edit", async () => {
+    const product = makeVendorUserProduct({ stock: 5, active: true }) as ProductWithDetails
     server.use(http.put("*/api/user-products/:id", () => HttpResponse.json(makeVendorUserProduct())))
     const { result } = setup()
 
-    act(() => result.current.startEdit(PRODUCT))
-    await act(() => result.current.saveEdit(PRODUCT))
+    act(() => result.current.startEdit(product))
+    act(() => result.current.updateDraft({ price: "999" }))
+    await act(() => result.current.saveEdit(product))
+
+    // Sanity: the save actually succeeded (editingProductId clears) rather than failing silently
+    // before ever reaching the revalidation decision.
+    await waitFor(() => expect(result.current.editingProductId).toBeNull())
+    expect(toastSpies.error).not.toHaveBeenCalled()
+    expect(revalidateCategoryCountsSpy).not.toHaveBeenCalled()
+  })
+
+  it("revalidates category counts when stock crosses from in-stock to out-of-stock (5 -> 0)", async () => {
+    const product = makeVendorUserProduct({ stock: 5, active: true }) as ProductWithDetails
+    server.use(http.put("*/api/user-products/:id", () => HttpResponse.json(makeVendorUserProduct())))
+    const { result } = setup()
+
+    act(() => result.current.startEdit(product))
+    act(() => result.current.updateDraft({ stock: "0" }))
+    await act(() => result.current.saveEdit(product))
+
+    await waitFor(() => expect(revalidateCategoryCountsSpy).toHaveBeenCalledTimes(1))
+  })
+
+  it("revalidates category counts when stock crosses from out-of-stock to in-stock (0 -> 3)", async () => {
+    const product = makeVendorUserProduct({ stock: 0, active: true }) as ProductWithDetails
+    server.use(http.put("*/api/user-products/:id", () => HttpResponse.json(makeVendorUserProduct())))
+    const { result } = setup()
+
+    act(() => result.current.startEdit(product))
+    act(() => result.current.updateDraft({ stock: "3" }))
+    await act(() => result.current.saveEdit(product))
+
+    await waitFor(() => expect(revalidateCategoryCountsSpy).toHaveBeenCalledTimes(1))
+  })
+
+  it("does not revalidate category counts when stock changes but stays above zero (5 -> 3)", async () => {
+    const product = makeVendorUserProduct({ stock: 5, active: true }) as ProductWithDetails
+    server.use(http.put("*/api/user-products/:id", () => HttpResponse.json(makeVendorUserProduct())))
+    const { result } = setup()
+
+    act(() => result.current.startEdit(product))
+    act(() => result.current.updateDraft({ stock: "3" }))
+    await act(() => result.current.saveEdit(product))
+
+    await waitFor(() => expect(result.current.editingProductId).toBeNull())
+    expect(toastSpies.error).not.toHaveBeenCalled()
+    expect(revalidateCategoryCountsSpy).not.toHaveBeenCalled()
+  })
+
+  it("revalidates category counts when the active toggle changes", async () => {
+    const product = makeVendorUserProduct({ stock: 5, active: true }) as ProductWithDetails
+    server.use(http.put("*/api/user-products/:id", () => HttpResponse.json(makeVendorUserProduct())))
+    const { result } = setup()
+
+    act(() => result.current.startEdit(product))
+    act(() => result.current.updateDraft({ active: "inactive" }))
+    await act(() => result.current.saveEdit(product))
 
     await waitFor(() => expect(revalidateCategoryCountsSpy).toHaveBeenCalledTimes(1))
   })
