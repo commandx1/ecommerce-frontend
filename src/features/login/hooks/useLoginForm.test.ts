@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { LoginFormData } from "@/features/login/types"
+import { useAuthStore } from "@/stores/authStore"
 import { getRouterMock, setSearchParams } from "@/test/mocks/next-navigation"
 import { useLoginForm } from "./useLoginForm"
 
@@ -21,7 +22,7 @@ vi.mock("@/components/ui/Toast", () => ({
   },
 }))
 
-const fillAndSubmit = async (data: Partial<LoginFormData> = {}) => {
+const fillAndSubmit = async (data: Partial<LoginFormData> = {}, options: { keepSignedIn?: boolean } = {}) => {
   const { result } = renderHook(() => useLoginForm())
 
   act(() => {
@@ -31,6 +32,9 @@ const fillAndSubmit = async (data: Partial<LoginFormData> = {}) => {
     result.current.handleChange({
       target: { name: "password", value: data.password ?? "secret123" },
     } as never)
+    if (options.keepSignedIn) {
+      result.current.handleKeepSignedInChange(true)
+    }
   })
 
   await act(async () => {
@@ -46,6 +50,8 @@ beforeEach(() => {
   mockToastError.mockClear()
   mockToastWarning.mockClear()
   setSearchParams()
+  localStorage.clear()
+  useAuthStore.getState().clearAuth()
 })
 
 describe("useLoginForm reason toast", () => {
@@ -145,6 +151,27 @@ describe("useLoginForm 2FA redirect", () => {
 
     await waitFor(() => expect(getRouterMock().push).toHaveBeenCalledWith("/verify-2fa?email=buyer%40example.com"))
   })
+
+  // The /verify-2fa hop has no access to the login form's state - the "Keep me signed in" choice
+  // has to survive the redirect as a query param, or a checked box would be silently forgotten
+  // the moment 2FA is required.
+  it("carries a checked 'Keep me signed in' box into the /verify-2fa link", async () => {
+    mockLogin.mockResolvedValue({ twoFactorRequired: true })
+
+    await fillAndSubmit(undefined, { keepSignedIn: true })
+
+    await waitFor(() =>
+      expect(getRouterMock().push).toHaveBeenCalledWith("/verify-2fa?email=buyer%40example.com&keepSignedIn=1"),
+    )
+  })
+
+  it("omits keepSignedIn from the /verify-2fa link when the box is unchecked", async () => {
+    mockLogin.mockResolvedValue({ twoFactorRequired: true })
+
+    await fillAndSubmit()
+
+    await waitFor(() => expect(getRouterMock().push).toHaveBeenCalledWith("/verify-2fa?email=buyer%40example.com"))
+  })
 })
 
 describe("useLoginForm post-login redirect safety", () => {
@@ -169,5 +196,104 @@ describe("useLoginForm post-login redirect safety", () => {
     await fillAndSubmit()
 
     await waitFor(() => expect(getRouterMock().push).toHaveBeenCalledWith("/"))
+  })
+})
+
+/**
+ * Old code (`REMEMBER_ME_EMAIL_KEY` / `REMEMBER_ME_PASSWORD_KEY`) wrote the shopper's password to
+ * `localStorage` in plaintext whenever "Remember me" was checked. The new "Keep me signed in"
+ * only ever changes the `auth-storage` cookie's lifetime - it must never touch `localStorage`.
+ */
+describe("useLoginForm Keep me signed in cookie mode", () => {
+  const successResponse = {
+    id: "1",
+    name: "Buyer",
+    surname: "One",
+    email: "buyer@example.com",
+    phoneNumber: "555",
+    emailConfirmed: true,
+    phoneNumberConfirmed: true,
+    twoFactorEnabled: false,
+    lockoutEnd: null,
+    createdDate: "2026-01-01",
+    roleName: "BUYER",
+    accessToken: "access-1",
+    refreshToken: "refresh-1",
+  }
+
+  it("writes a persistent (expires) cookie when the box is checked at login", async () => {
+    mockLogin.mockResolvedValue(successResponse)
+    const setSpy = vi.spyOn(document, "cookie", "set")
+
+    await fillAndSubmit(undefined, { keepSignedIn: true })
+
+    const written = setSpy.mock.calls
+      .map((call) => call[0] as string)
+      .filter((call) => call.includes("auth-storage="))
+      .at(-1)
+    expect(written).toContain("expires=")
+    expect(useAuthStore.getState().keepSignedIn).toBe(true)
+  })
+
+  it("writes a session-only (no expires) cookie when the box is left unchecked at login", async () => {
+    mockLogin.mockResolvedValue(successResponse)
+    const setSpy = vi.spyOn(document, "cookie", "set")
+
+    await fillAndSubmit()
+
+    const written = setSpy.mock.calls
+      .map((call) => call[0] as string)
+      .filter((call) => call.includes("auth-storage="))
+      .at(-1)
+    expect(written).not.toContain("expires=")
+    expect(useAuthStore.getState().keepSignedIn).toBe(false)
+  })
+
+  it("never writes anything to localStorage on a successful login, checked or not", async () => {
+    mockLogin.mockResolvedValue(successResponse)
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem")
+
+    await fillAndSubmit(undefined, { keepSignedIn: true })
+
+    expect(setItemSpy).not.toHaveBeenCalledWith("remembered_email", expect.anything())
+    expect(setItemSpy).not.toHaveBeenCalledWith("remembered_password", expect.anything())
+    expect(localStorage.getItem("remembered_email")).toBeNull()
+    expect(localStorage.getItem("remembered_password")).toBeNull()
+  })
+})
+
+describe("useLoginForm legacy remember-me cleanup", () => {
+  it("deletes the legacy remembered_email/remembered_password keys on mount", () => {
+    localStorage.setItem("remembered_email", "buyer@example.com")
+    localStorage.setItem("remembered_password", "hunter2")
+
+    renderHook(() => useLoginForm())
+
+    expect(localStorage.getItem("remembered_email")).toBeNull()
+    expect(localStorage.getItem("remembered_password")).toBeNull()
+  })
+
+  it("does not auto-fill the form from the legacy keys", () => {
+    localStorage.setItem("remembered_email", "buyer@example.com")
+    localStorage.setItem("remembered_password", "hunter2")
+
+    const { result } = renderHook(() => useLoginForm())
+
+    expect(result.current.formData).toEqual({ email: "", password: "" })
+  })
+
+  // Register stashes { email, password } in sessionStorage to auto-login once /verify-email
+  // confirms the code. A shopper who registers and then abandons verification (closes the tab,
+  // comes back later and goes straight to /login) must not leave that plaintext password sitting
+  // in sessionStorage indefinitely.
+  it("clears an abandoned register-to-verify-email auto-login password on mount", () => {
+    sessionStorage.setItem(
+      "verify_email_autologin_credentials",
+      JSON.stringify({ email: "buyer@example.com", password: "hunter2" }),
+    )
+
+    renderHook(() => useLoginForm())
+
+    expect(sessionStorage.getItem("verify_email_autologin_credentials")).toBeNull()
   })
 })

@@ -89,16 +89,17 @@ describe("cookieStorage.getItem", () => {
 })
 
 describe("cookieStorage.setItem", () => {
-  it("writes an encoded value with a 30-day expiry, a root path and SameSite=Lax", () => {
+  it("writes a persistent (~30-day expiry) cookie when the stored state opted into keepSignedIn", () => {
     const setSpy = vi.spyOn(document, "cookie", "set")
     vi.useFakeTimers()
     vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"))
 
     try {
-      cookieStorage.setItem("auth-storage", '{"state":{"accessToken":"a b"}}')
+      const payload = '{"state":{"accessToken":"a b","keepSignedIn":true}}'
+      cookieStorage.setItem("auth-storage", payload)
 
       const written = setSpy.mock.calls[0]?.[0] as string
-      expect(written).toContain(`auth-storage=${encodeURIComponent('{"state":{"accessToken":"a b"}}')}`)
+      expect(written).toContain(`auth-storage=${encodeURIComponent(payload)}`)
       expect(written).toContain("expires=Sat, 31 Jan 2026 00:00:00 GMT")
       expect(written).toContain("path=/")
       expect(written).toContain("SameSite=Lax")
@@ -107,6 +108,35 @@ describe("cookieStorage.setItem", () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  it("writes a session-only cookie (no expires at all) when keepSignedIn is false", () => {
+    const setSpy = vi.spyOn(document, "cookie", "set")
+
+    cookieStorage.setItem("auth-storage", '{"state":{"accessToken":"a b","keepSignedIn":false}}')
+
+    const written = setSpy.mock.calls[0]?.[0] as string
+    expect(written).not.toContain("expires=")
+    expect(written).toContain("path=/")
+    expect(written).toContain("SameSite=Lax")
+  })
+
+  it("defaults to a session-only cookie when the stored state has no keepSignedIn flag at all", () => {
+    const setSpy = vi.spyOn(document, "cookie", "set")
+
+    cookieStorage.setItem("auth-storage", '{"state":{"accessToken":"a b"}}')
+
+    const written = setSpy.mock.calls[0]?.[0] as string
+    expect(written).not.toContain("expires=")
+  })
+
+  it("defaults to a session-only cookie when the value is not parseable JSON", () => {
+    const setSpy = vi.spyOn(document, "cookie", "set")
+
+    cookieStorage.setItem("auth-storage", "not-json")
+
+    const written = setSpy.mock.calls[0]?.[0] as string
+    expect(written).not.toContain("expires=")
   })
 
   it("adds Secure when served over https", () => {

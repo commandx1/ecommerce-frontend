@@ -1,7 +1,9 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
+import { clearLegacyRememberMeStorage } from "@/lib/storage/legacy-remember-me"
 import { broadcastLogout } from "@/lib/storage/session-events"
 import { tabSessionStorage } from "@/lib/storage/tab-session-storage"
+import { clearVerifyEmailAutologinCredentials } from "@/lib/storage/verify-email-autologin"
 
 // Mirrors the `authFailurePromise` pattern in `src/lib/api/client.ts`: without this, calling
 // `logout()` twice concurrently (e.g. `Promise.all([logout(), logout()])`) fires two
@@ -69,12 +71,23 @@ interface AuthState {
   refreshToken: string | null
   isAuthenticated: boolean
   isAdminImpersonating: boolean
+  // Carries the login screen's "Keep me signed in" choice through the session's whole lifetime
+  // (token refreshes, cross-tab cookie re-writes) so `cookieStorage.setItem` - which only ever
+  // sees this already-serialized state, not the checkbox - can still tell a persistent cookie
+  // apart from a session-only one. See `cookie-storage.ts`.
+  keepSignedIn: boolean
   isLoading: boolean
   error: string | null
 
   setUser: (user: User) => void
   setTokens: (accessToken: string, refreshToken: string) => void
-  setAuth: (user: User, accessToken: string, refreshToken: string, isAdminImpersonating?: boolean) => void
+  setAuth: (
+    user: User,
+    accessToken: string,
+    refreshToken: string,
+    isAdminImpersonating?: boolean,
+    keepSignedIn?: boolean,
+  ) => void
   setIsAdminImpersonating: (isImpersonating: boolean) => void
   clearAuth: () => void
   clearLocalSession: () => Promise<void>
@@ -91,6 +104,7 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       isAuthenticated: false,
       isAdminImpersonating: false,
+      keepSignedIn: false,
       isLoading: false,
       error: null,
 
@@ -107,7 +121,7 @@ export const useAuthStore = create<AuthState>()(
           refreshToken,
         }),
 
-      setAuth: (user, accessToken, refreshToken, isAdminImpersonating = false) => {
+      setAuth: (user, accessToken, refreshToken, isAdminImpersonating = false, keepSignedIn = false) => {
         const previous = get()
         // A different identity was signed in in this tab (login-over-session: /login, /verify-2fa,
         // /verify-email reached while already authenticated). Same-user re-`setAuth` (token refresh,
@@ -120,6 +134,7 @@ export const useAuthStore = create<AuthState>()(
           refreshToken,
           isAuthenticated: true,
           isAdminImpersonating,
+          keepSignedIn,
           error: null,
         })
 
@@ -140,6 +155,7 @@ export const useAuthStore = create<AuthState>()(
           refreshToken: null,
           isAuthenticated: false,
           isAdminImpersonating: false,
+          keepSignedIn: false,
           error: null,
         }),
 
@@ -148,6 +164,8 @@ export const useAuthStore = create<AuthState>()(
         // persist only rewrote an empty state; delete it so proxy.ts sees no cookie at all.
         useAuthStore.persist.clearStorage()
         // Cached server data (cart included) is dropped by QuerySessionBoundary on the user change above.
+        clearLegacyRememberMeStorage()
+        clearVerifyEmailAutologinCredentials()
 
         await resetPerUserClientState()
       },
@@ -201,6 +219,7 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
         isAdminImpersonating: state.isAdminImpersonating,
+        keepSignedIn: state.keepSignedIn,
       }),
       onRehydrateStorage: () => (state) => {
         // After rehydration, ensure isAuthenticated matches user presence

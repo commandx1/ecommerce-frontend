@@ -15,6 +15,7 @@ function Verify2FAContent() {
   const searchParams = useSearchParams()
   const email = searchParams.get("email")
   const { setAuth } = useAuthStore()
+  const keepSignedIn = searchParams.get("keepSignedIn") === "1"
   const redirectTarget = safeRedirect(searchParams.get("redirect"))
   const backToSignInHref = redirectTarget === "/" ? "/login" : `/login?redirect=${encodeURIComponent(redirectTarget)}`
 
@@ -68,6 +69,8 @@ function Verify2FAContent() {
           },
           data.accessToken,
           data.refreshToken,
+          false,
+          keepSignedIn,
         )
       } else {
         throw new Error("Authentication tokens are missing from response.")

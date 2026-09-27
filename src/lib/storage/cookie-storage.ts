@@ -36,6 +36,23 @@ function parseCookieValue(cookieString: string, name: string): string | null {
 const secureCookieSuffix = (): string =>
   typeof location !== "undefined" && location.protocol === "https:" ? "; Secure" : ""
 
+/**
+ * This adapter is generic, but in practice the only thing it ever stores is the `auth-storage`
+ * Zustand-persist payload (`{"state": {...}, "version": n}`). Cookie lifetime follows the
+ * shopper's "Keep me signed in" choice, which lives inside that already-serialized state as
+ * `state.keepSignedIn` (see `authStore.ts`) - reading it back out here is what lets a persistent
+ * vs. session cookie survive every rewrite (token refresh, cross-tab resync) without a second,
+ * separately-threaded flag.
+ */
+const wantsPersistentCookie = (stringValue: string): boolean => {
+  try {
+    const parsed = JSON.parse(stringValue) as { state?: { keepSignedIn?: unknown } }
+    return parsed?.state?.keepSignedIn === true
+  } catch {
+    return false
+  }
+}
+
 export const cookieStorage: Storage = {
   getItem: (name: string): string | null => {
     // Only works client-side
@@ -60,13 +77,20 @@ export const cookieStorage: Storage = {
       stringValue = JSON.stringify(value)
     }
 
-    const expires = new Date()
-    expires.setTime(expires.getTime() + 30 * 24 * 60 * 60 * 1000)
+    // Checked "Keep me signed in": a persistent cookie that survives a browser restart. Left
+    // unchecked: no `expires` at all, so the browser drops the cookie itself when it closes -
+    // no plaintext password or long-lived session is left behind on a shared machine.
+    let expiresSuffix = ""
+    if (wantsPersistentCookie(stringValue)) {
+      const expires = new Date()
+      expires.setTime(expires.getTime() + 30 * 24 * 60 * 60 * 1000)
+      expiresSuffix = `; expires=${expires.toUTCString()}`
+    }
 
     // This *is* the cookie storage adapter: the sync Storage interface it implements (required by
     // Zustand persist and by SSR reads in layouts) has no equivalent in the async Cookie Store API.
     // biome-ignore lint/suspicious/noDocumentCookie: sync Storage adapter, see comment above
-    document.cookie = `${name}=${encodeURIComponent(stringValue)}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureCookieSuffix()}`
+    document.cookie = `${name}=${encodeURIComponent(stringValue)}${expiresSuffix}; path=/; SameSite=Lax${secureCookieSuffix()}`
   },
 
   removeItem: (name: string): void => {

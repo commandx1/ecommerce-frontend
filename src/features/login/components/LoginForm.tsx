@@ -11,10 +11,10 @@ export default function LoginForm() {
     formData,
     isFormValid,
     isLoading,
-    rememberMe,
+    keepSignedIn,
     handleChange,
     handleForgotPassword,
-    handleRememberMeChange,
+    handleKeepSignedInChange,
     handleSubmit,
   } = useLoginForm()
 
@@ -26,8 +26,8 @@ export default function LoginForm() {
         <div className="space-y-6">
           <LoginFormFields formData={formData} onChange={handleChange} isSubmitting={isLoading} />
           <LoginFormOptions
-            rememberMe={rememberMe}
-            onRememberMeChange={handleRememberMeChange}
+            keepSignedIn={keepSignedIn}
+            onKeepSignedInChange={handleKeepSignedInChange}
             onForgotPassword={handleForgotPassword}
             isSubmitting={isLoading}
           />

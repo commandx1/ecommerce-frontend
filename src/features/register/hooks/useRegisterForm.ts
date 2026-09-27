@@ -7,11 +7,10 @@ import { buildAddressPayload, initialFormData } from "@/features/register/lib/re
 import { ownerInviteSchema, registerSchema, teamMemberInviteSchema } from "@/features/register/lib/register-schemas"
 import type { InviteRole } from "@/features/register/types"
 import { authAPIDirect as authAPI, type CompanyPayload, type RegisterPayload } from "@/lib/api/auth-direct"
+import { storeVerifyEmailAutologinCredentials } from "@/lib/storage/verify-email-autologin"
 import type { ParsedAddress } from "@/lib/utils/google-maps"
 import { normalizePhoneNumber } from "@/lib/utils/phone-number"
 import { useAuthStore } from "@/stores/authStore"
-
-const VERIFY_EMAIL_AUTLOGIN_KEY = "verify_email_autologin_credentials"
 
 export const useRegisterForm = (options?: {
   initialEmail?: string
@@ -100,15 +99,7 @@ export const useRegisterForm = (options?: {
         ...registerFields,
         address: buildAddressPayload(formData),
       })
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem(
-          VERIFY_EMAIL_AUTLOGIN_KEY,
-          JSON.stringify({
-            email: formData.email,
-            password: formData.password,
-          }),
-        )
-      }
+      storeVerifyEmailAutologinCredentials({ email: formData.email, password: formData.password })
       showToast.love("Welcome to DentzPro!", "Thank you for registering with us — we're thrilled to have you!")
       router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`)
     } catch (error: unknown) {

@@ -5,11 +5,11 @@ import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState 
 import { showToast } from "@/components/ui/Toast"
 import { login } from "@/features/login/services/login"
 import type { LoginFormData } from "@/features/login/types"
+import { clearLegacyRememberMeStorage } from "@/lib/storage/legacy-remember-me"
+import { clearVerifyEmailAutologinCredentials } from "@/lib/storage/verify-email-autologin"
 import { safeRedirect } from "@/lib/utils/safe-redirect"
 import { useAuthStore } from "@/stores/authStore"
 
-const REMEMBER_ME_EMAIL_KEY = "remembered_email"
-const REMEMBER_ME_PASSWORD_KEY = "remembered_password"
 const DEVICE_NAME = "windows"
 
 export const useLoginForm = () => {
@@ -24,31 +24,29 @@ export const useLoginForm = () => {
     email: "",
     password: "",
   })
-  const [rememberMe, setRememberMe] = useState(false)
+  const [keepSignedIn, setKeepSignedIn] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
+  // Login page mount: wipe the pre-"Keep me signed in" localStorage keys (they held the password
+  // in plaintext). Autofill is now the browser's own password manager's job, via the fields'
+  // `autoComplete` attributes - nothing is ever read back out of storage here. Also wipes the
+  // register-to-verify-email auto-login password if the shopper registered and then abandoned
+  // verification (closed the tab, came back later) - reaching /login means that flow is over.
   useEffect(() => {
-    if (typeof window === "undefined") return
-
-    const rememberedEmail = localStorage.getItem(REMEMBER_ME_EMAIL_KEY)
-    const rememberedPassword = localStorage.getItem(REMEMBER_ME_PASSWORD_KEY)
-
-    setFormData({
-      email: rememberedEmail || "",
-      password: rememberedPassword || "",
-    })
-
-    setRememberMe(Boolean(rememberedEmail || rememberedPassword))
+    clearLegacyRememberMeStorage()
+    clearVerifyEmailAutologinCredentials()
   }, [])
 
   const isFormValid = useMemo(() => formData.email.length > 0 && formData.password.length > 0, [formData])
   const postLoginRedirect = useMemo(() => safeRedirect(searchParams.get("redirect")), [searchParams])
 
-  // Carries `redirect` through the 2FA hop so a code-required login still lands back where the
-  // shopper started once `verify-2fa` succeeds.
+  // Carries `redirect` (and the "Keep me signed in" choice) through the 2FA hop so a
+  // code-required login still lands back where the shopper started, in the same cookie-lifetime
+  // mode, once `verify-2fa` succeeds.
   const verify2FAUrl = (email: string): string => {
     const base = `/verify-2fa?email=${encodeURIComponent(email)}`
-    return postLoginRedirect === "/" ? base : `${base}&redirect=${encodeURIComponent(postLoginRedirect)}`
+    const withRedirect = postLoginRedirect === "/" ? base : `${base}&redirect=${encodeURIComponent(postLoginRedirect)}`
+    return keepSignedIn ? `${withRedirect}&keepSignedIn=1` : withRedirect
   }
 
   // Proxy bounce self-heal: a tab whose session is valid but whose shared cookie was stale at
@@ -100,8 +98,8 @@ export const useLoginForm = () => {
     }))
   }
 
-  const handleRememberMeChange = (value: boolean) => {
-    setRememberMe(value)
+  const handleKeepSignedInChange = (value: boolean) => {
+    setKeepSignedIn(value)
   }
 
   const handleForgotPassword = () => {
@@ -135,14 +133,6 @@ export const useLoginForm = () => {
         return
       }
 
-      if (rememberMe) {
-        localStorage.setItem(REMEMBER_ME_EMAIL_KEY, formData.email)
-        localStorage.setItem(REMEMBER_ME_PASSWORD_KEY, formData.password)
-      } else {
-        localStorage.removeItem(REMEMBER_ME_EMAIL_KEY)
-        localStorage.removeItem(REMEMBER_ME_PASSWORD_KEY)
-      }
-
       const userData = {
         id: response.id,
         name: response.name,
@@ -159,7 +149,7 @@ export const useLoginForm = () => {
 
       if (response.accessToken && response.refreshToken) {
         const { setAuth } = useAuthStore.getState()
-        setAuth(userData, response.accessToken, response.refreshToken)
+        setAuth(userData, response.accessToken, response.refreshToken, false, keepSignedIn)
       } else {
         setUser(userData)
       }
@@ -205,10 +195,10 @@ export const useLoginForm = () => {
     formData,
     isFormValid,
     isLoading,
-    rememberMe,
+    keepSignedIn,
     handleChange,
     handleForgotPassword,
-    handleRememberMeChange,
+    handleKeepSignedInChange,
     handleSignUp,
     handleSubmit,
   }

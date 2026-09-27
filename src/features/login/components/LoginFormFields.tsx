@@ -18,6 +18,7 @@ export default function LoginFormFields({ formData, onChange, isSubmitting }: Lo
         label="Email Address"
         name="email"
         type="email"
+        autoComplete="username"
         required
         value={formData.email}
         onChange={onChange}
@@ -30,6 +31,7 @@ export default function LoginFormFields({ formData, onChange, isSubmitting }: Lo
         id="password"
         label="Password"
         name="password"
+        autoComplete="current-password"
         required
         value={formData.password}
         onChange={onChange}

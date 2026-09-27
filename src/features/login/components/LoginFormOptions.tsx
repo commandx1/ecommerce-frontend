@@ -4,31 +4,31 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 
 interface LoginFormOptionsProps {
-  rememberMe: boolean
-  onRememberMeChange: (value: boolean) => void
+  keepSignedIn: boolean
+  onKeepSignedInChange: (value: boolean) => void
   onForgotPassword: () => void
   isSubmitting: boolean
 }
 
 export default function LoginFormOptions({
-  rememberMe,
-  onRememberMeChange,
+  keepSignedIn,
+  onKeepSignedInChange,
   onForgotPassword,
   isSubmitting,
 }: LoginFormOptionsProps) {
-  const rememberMeId = useId()
+  const keepSignedInId = useId()
 
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
         <Checkbox
-          id={rememberMeId}
-          checked={rememberMe}
-          onChange={(event) => onRememberMeChange(event.target.checked)}
+          id={keepSignedInId}
+          checked={keepSignedIn}
+          onChange={(event) => onKeepSignedInChange(event.target.checked)}
           disabled={isSubmitting}
         />
-        <Label htmlFor={rememberMeId} className="text-sm text-text-secondary">
-          Remember me
+        <Label htmlFor={keepSignedInId} className="text-sm text-text-secondary">
+          Keep me signed in
         </Label>
       </div>
       <Button

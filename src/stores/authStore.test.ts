@@ -179,6 +179,7 @@ describe("authStore clearAuth", () => {
       "accessToken",
       "isAdminImpersonating",
       "isAuthenticated",
+      "keepSignedIn",
       "refreshToken",
       "user",
     ])
@@ -220,6 +221,94 @@ describe("authStore persist + cookieStorage contract", () => {
 
     // A raw `;` would truncate the cookie - encodeURIComponent is what keeps this parseable.
     expect(persisted.state.user.roleName).toBe("Vendor Manager;Buyer")
+  })
+})
+
+/**
+ * The "Keep me signed in" checkbox on `/login` must control whether the shared `auth-storage`
+ * cookie survives a browser restart (persistent, ~30-day expiry) or is dropped the moment the
+ * browser closes (session cookie, no `expires` at all). The mode is threaded through `setAuth`
+ * and lives inside the persisted state itself (`state.keepSignedIn`), so every later rewrite of
+ * the cookie - a token refresh (`setTokens`), a cross-tab resync - must keep reproducing the same
+ * mode without the caller having to pass it again.
+ */
+describe("authStore keepSignedIn cookie lifetime", () => {
+  it("writes a persistent (expires) cookie when keepSignedIn is true", async () => {
+    const setSpy = vi.spyOn(document, "cookie", "set")
+
+    store().setAuth(user, "access-1", "refresh-1", false, true)
+
+    const written = setSpy.mock.calls
+      .map((call) => call[0] as string)
+      .filter((call) => call.includes("auth-storage="))
+      .at(-1)
+    expect(written).toContain("expires=")
+  })
+
+  it("writes a session-only cookie (no expires) when keepSignedIn is false", async () => {
+    const setSpy = vi.spyOn(document, "cookie", "set")
+
+    store().setAuth(user, "access-1", "refresh-1", false, false)
+
+    const written = setSpy.mock.calls
+      .map((call) => call[0] as string)
+      .filter((call) => call.includes("auth-storage="))
+      .at(-1)
+    expect(written).not.toContain("expires=")
+  })
+
+  it("defaults to a session-only cookie when the caller does not pass keepSignedIn at all", async () => {
+    const setSpy = vi.spyOn(document, "cookie", "set")
+
+    store().setAuth(user, "access-1", "refresh-1")
+
+    const written = setSpy.mock.calls
+      .map((call) => call[0] as string)
+      .filter((call) => call.includes("auth-storage="))
+      .at(-1)
+    expect(written).not.toContain("expires=")
+    expect(store().keepSignedIn).toBe(false)
+  })
+
+  it("keeps writing a persistent cookie across a token refresh (setTokens) in keepSignedIn mode", async () => {
+    store().setAuth(user, "access-1", "refresh-1", false, true)
+
+    const setSpy = vi.spyOn(document, "cookie", "set")
+    store().setTokens("access-2", "refresh-2")
+
+    const written = setSpy.mock.calls
+      .map((call) => call[0] as string)
+      .filter((call) => call.includes("auth-storage="))
+      .at(-1)
+    expect(written).toContain("expires=")
+    expect(await readRawAuthCookie()).not.toBeNull()
+    const persisted = JSON.parse(decodeURIComponent((await readRawAuthCookie()) as string))
+    expect(persisted.state.accessToken).toBe("access-2")
+    expect(persisted.state.keepSignedIn).toBe(true)
+  })
+
+  it("keeps writing a session-only cookie across a token refresh (setTokens) when not in keepSignedIn mode", async () => {
+    store().setAuth(user, "access-1", "refresh-1", false, false)
+
+    const setSpy = vi.spyOn(document, "cookie", "set")
+    store().setTokens("access-2", "refresh-2")
+
+    const written = setSpy.mock.calls
+      .map((call) => call[0] as string)
+      .filter((call) => call.includes("auth-storage="))
+      .at(-1)
+    expect(written).not.toContain("expires=")
+    const persisted = JSON.parse(decodeURIComponent((await readRawAuthCookie()) as string))
+    expect(persisted.state.keepSignedIn).toBe(false)
+  })
+
+  it("resets keepSignedIn to false on clearAuth/logout", async () => {
+    store().setAuth(user, "access-1", "refresh-1", false, true)
+    expect(store().keepSignedIn).toBe(true)
+
+    await store().logout()
+
+    expect(store().keepSignedIn).toBe(false)
   })
 })
 
@@ -389,6 +478,20 @@ describe("authStore clearLocalSession", () => {
 
     expect(await readRawAuthCookie()).toBeNull()
   })
+
+  // Old code left `remembered_email` / `remembered_password` (a plaintext password) behind in
+  // localStorage forever - logout never touched them. `clearLocalSession()` backs both `logout()`
+  // and the impersonation hand-off, so this is the one place that guarantees they are gone.
+  it("clears the legacy remembered_email/remembered_password localStorage keys", async () => {
+    localStorage.setItem("remembered_email", "buyer@example.com")
+    localStorage.setItem("remembered_password", "hunter2")
+    store().setAuth(user, "access-1", "refresh-1")
+
+    await store().clearLocalSession()
+
+    expect(localStorage.getItem("remembered_email")).toBeNull()
+    expect(localStorage.getItem("remembered_password")).toBeNull()
+  })
 })
 
 /**
@@ -537,6 +640,7 @@ describe("authStore defaults", () => {
     expect(initial.isAuthenticated).toBe(false)
     expect(initial.isAdminImpersonating).toBe(false)
     expect(initial.isLoading).toBe(false)
+    expect(initial.keepSignedIn).toBe(false)
   })
 })
 

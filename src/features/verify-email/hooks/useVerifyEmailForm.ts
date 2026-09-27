@@ -5,11 +5,14 @@ import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from "r
 import { showToast } from "@/components/ui/Toast"
 import { login } from "@/features/login/services/login"
 import { authAPIDirect } from "@/lib/api/auth-direct"
+import {
+  clearVerifyEmailAutologinCredentials,
+  readVerifyEmailAutologinCredentials,
+} from "@/lib/storage/verify-email-autologin"
 import { useAuthStore } from "@/stores/authStore"
 
 const CODE_LENGTH = 6
 const DEVICE_NAME = "windows"
-const VERIFY_EMAIL_AUTLOGIN_KEY = "verify_email_autologin_credentials"
 
 export const useVerifyEmailForm = () => {
   const router = useRouter()
@@ -57,48 +60,49 @@ export const useVerifyEmailForm = () => {
     try {
       await authAPIDirect.verifyEmail({ email, code })
 
-      const rawCredentials = typeof window !== "undefined" ? sessionStorage.getItem(VERIFY_EMAIL_AUTLOGIN_KEY) : null
+      const credentials = readVerifyEmailAutologinCredentials()
 
-      if (rawCredentials) {
+      if (credentials && credentials.email === email) {
         try {
-          const parsed = JSON.parse(rawCredentials) as { email?: string; password?: string }
-          if (parsed.email && parsed.password && parsed.email === email) {
-            const response = await login({
-              email: parsed.email,
-              password: parsed.password,
-              device: DEVICE_NAME,
-            })
+          const response = await login({
+            email: credentials.email,
+            password: credentials.password,
+            device: DEVICE_NAME,
+          })
 
-            const userData = {
-              id: response.id,
-              name: response.name,
-              surname: response.surname,
-              email: response.email,
-              phoneNumber: response.phoneNumber,
-              emailConfirmed: response.emailConfirmed,
-              phoneNumberConfirmed: response.phoneNumberConfirmed,
-              twoFactorEnabled: response.twoFactorEnabled,
-              lockoutEnd: response.lockoutEnd,
-              createdDate: response.createdDate,
-              roleName: response.roleName,
-            }
-
-            if (response.accessToken && response.refreshToken) {
-              const { setAuth } = useAuthStore.getState()
-              setAuth(userData, response.accessToken, response.refreshToken)
-            } else {
-              const { setUser } = useAuthStore.getState()
-              setUser(userData)
-            }
-
-            sessionStorage.removeItem(VERIFY_EMAIL_AUTLOGIN_KEY)
-            showToast.success("Email verified", "You are now signed in.")
-            router.refresh()
-            router.push("/")
-            return
+          const userData = {
+            id: response.id,
+            name: response.name,
+            surname: response.surname,
+            email: response.email,
+            phoneNumber: response.phoneNumber,
+            emailConfirmed: response.emailConfirmed,
+            phoneNumberConfirmed: response.phoneNumberConfirmed,
+            twoFactorEnabled: response.twoFactorEnabled,
+            lockoutEnd: response.lockoutEnd,
+            createdDate: response.createdDate,
+            roleName: response.roleName,
           }
+
+          if (response.accessToken && response.refreshToken) {
+            const { setAuth } = useAuthStore.getState()
+            // Session-only cookie: this is a fresh, un-opted-in sign-in - the shopper never saw
+            // a "Keep me signed in" checkbox during registration.
+            setAuth(userData, response.accessToken, response.refreshToken)
+          } else {
+            const { setUser } = useAuthStore.getState()
+            setUser(userData)
+          }
+
+          clearVerifyEmailAutologinCredentials()
+          showToast.success("Email verified", "You are now signed in.")
+          router.refresh()
+          router.push("/")
+          return
         } catch {
-          // Fallback to login redirect if parsing or auto-login fails
+          // Fallback to login redirect if auto-login fails
+        } finally {
+          clearVerifyEmailAutologinCredentials()
         }
       }
 
