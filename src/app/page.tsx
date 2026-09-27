@@ -7,8 +7,6 @@ export const metadata: Metadata = {
   title: "DentyPro",
 }
 
-export const revalidate = 900 // matches CATEGORY_COUNTS_REVALIDATE_SECONDS (segment config must be a literal)
-
 export default async function Home() {
   const options = await getProductCategoryOptions()
   const featuredCategories = selectFeaturedCategories(options)
