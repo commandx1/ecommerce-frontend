@@ -106,6 +106,15 @@ export default function VendorShipmentRates({
   // clock starts at fetch, never at click).
   const fetchedAtRef = useRef<number | null>(null)
 
+  // The request's parcels, as a value-comparable string. The fetch effect keys on THIS, not on the
+  // `items` array: the cart query hands out a fresh `cartItems` array on every fetch
+  // (`structuralSharing: false` in cartQueryOptions), so checkout's own mount-time cart refresh gave
+  // this card a new-but-identical `items` and it re-requested (and re-auto-selected) a second
+  // quote per vendor. Only a real change to what is being shipped may refetch.
+  const parcelsKey = JSON.stringify(
+    items.map((item) => ({ userProductId: item.userProductId, quantity: item.quantity })),
+  )
+
   useEffect(() => {
     let isMounted = true
 
@@ -202,10 +211,7 @@ export default function VendorShipmentRates({
     }
 
     const fetchRates = async () => {
-      const parcels = items.map((item) => ({
-        userProductId: item.userProductId,
-        quantity: item.quantity,
-      }))
+      const parcels: { userProductId: string; quantity: number }[] = JSON.parse(parcelsKey)
 
       setIsLoading(true)
       setHasError(false)
@@ -240,14 +246,14 @@ export default function VendorShipmentRates({
       }
     }
 
-    if (addressId && cartId && items.length > 0) {
+    if (addressId && cartId && parcelsKey !== "[]") {
       void fetchRates()
     }
 
     return () => {
       isMounted = false
     }
-  }, [addressId, cartId, items, sellerId])
+  }, [addressId, cartId, parcelsKey, sellerId])
 
   // The seller's plain product shipment fee (heavy surcharge excluded), used only as the "Great
   // deal" badge's comparison base - see the badge computation below.

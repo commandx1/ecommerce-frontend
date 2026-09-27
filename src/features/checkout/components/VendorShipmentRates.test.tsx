@@ -298,6 +298,45 @@ describe("VendorShipmentRates — no response caching (always fetches fresh)", (
     await waitFor(() => expect(screen.getByText("$22.00")).toBeInTheDocument())
     expect(screen.queryByText("$10.00")).not.toBeInTheDocument()
   })
+
+  it("does not refetch when a cart refresh hands it a new but identical items array", async () => {
+    // The cart query disables structural sharing, so checkout's mount-time cart refresh gives every
+    // card a fresh `items` array with the same lines - that alone must not request a second quote.
+    const { addressId, cartId, sellerId } = uniqueIds()
+    getRates.mockResolvedValue({
+      shippoRates: [makeShippoRate({ objectId: "rate-1", amount: "10.00" })],
+      uberQuote: null,
+    })
+    const onSelect = vi.fn()
+
+    const { rerender } = render(
+      <VendorShipmentRates
+        sellerId={sellerId}
+        sellerName="Acme Dental"
+        items={items}
+        addressId={addressId}
+        cartId={cartId}
+        onSelect={onSelect}
+      />,
+    )
+    await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1))
+
+    rerender(
+      <VendorShipmentRates
+        sellerId={sellerId}
+        sellerName="Acme Dental"
+        items={items.map((item) => ({ ...item }))}
+        addressId={addressId}
+        cartId={cartId}
+        onSelect={onSelect}
+        selectedRateId="rate-1"
+      />,
+    )
+
+    expect(screen.getByText("$10.00")).toBeInTheDocument()
+    expect(getRates).toHaveBeenCalledTimes(1)
+    expect(onSelect).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe("VendorShipmentRates — stale selection is replaced on refetch", () => {
