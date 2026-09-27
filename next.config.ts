@@ -64,6 +64,18 @@ const nextConfig: NextConfig = {
       },
     ]
   },
+  async redirects() {
+    return [
+      // The buyer dashboard has no overview yet (see app/buyer-dashboard/page.tsx). Redirecting here,
+      // before the proxy and before any render, keeps it a single request. `redirect()` in that page
+      // sits under the dashboard's `loading.tsx`, so it reaches the browser as a SECOND, client-side
+      // navigation fired after hydration - and when the tab is in the background, the proxy judges
+      // that hop with the FOCUSED tab's cookie (a vendor tab bounced it to /vendor-dashboard, whose
+      // guard then took the shared cookie back from the tab the user was looking at). The vendor
+      // guard's cross-role target is /buyer-dashboard too, so its redirect paid for that hop as well.
+      { source: "/buyer-dashboard", destination: "/buyer-dashboard/orders", permanent: false },
+    ]
+  },
   async rewrites() {
     return [
       {

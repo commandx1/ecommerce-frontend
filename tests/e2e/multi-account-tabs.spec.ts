@@ -83,6 +83,11 @@ async function openTabAs(
   await setAccountCookie(context, cookie, expectRole)
   await page.goto(url, { waitUntil: "domcontentloaded" })
   await waitForSessionAdoption(page)
+  // The user sees the dashboard before moving on to the next tab. `domcontentloaded` alone does not
+  // mean the app has booted: until it has, this tab's own bootstrap (which writes the shared cookie)
+  // can still land AFTER the next tab's cookie and silently flip it. The sidebar only renders once
+  // the dashboard guard has authorized this tab's session, i.e. after that bootstrap.
+  await page.getByTestId("dashboard-sidebar").waitFor({ state: "attached" })
 
   const held = await page.evaluate(() => {
     try {
