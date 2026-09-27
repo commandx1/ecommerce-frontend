@@ -54,6 +54,14 @@ export const useFavoriteProductsStore = create<FavoriteProductsStore>((set, get)
       inFlightHydrate = (async () => {
         try {
           const ids = new Set(await getMyFavoriteProductIds())
+
+          // reset() (logout / account switch) may have run while this GET was in flight and
+          // already started a newer hydrate (or none at all). Either way this run no longer owns
+          // `writesDuringHydrate`, so its snapshot is for a different user - write nothing.
+          if (writesDuringHydrate !== writes) {
+            return
+          }
+
           // Local writes made after the GET was issued are newer than its snapshot - keep them.
           for (const [productId, value] of writes) {
             if (value) {

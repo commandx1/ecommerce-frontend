@@ -120,6 +120,33 @@ describe("favoriteProductsStore hydrate", () => {
     expect(store().ids.has("p-1")).toBe(false)
   })
 
+  it("ignores a hydrate GET that resolves after a logout reset, so a previous user's favorites never leak", async () => {
+    const { release: releaseUserA } = gateGetIds(["a-1"])
+    const hydratingUserA = store().hydrate()
+    // Wait for user A's request to actually reach the gated handler before switching users, so it
+    // is genuinely in flight (not merely queued) when reset() runs below.
+    await vi.waitFor(() => expect(getIdsCount).toBe(1))
+
+    store().reset()
+
+    server.use(
+      http.get("*/backend-api/products/favorite-ids", () => {
+        getIdsCount += 1
+        return HttpResponse.json(["b-1"])
+      }),
+    )
+    await store().hydrate()
+
+    expect(store().ids.has("b-1")).toBe(true)
+
+    releaseUserA()
+    await hydratingUserA
+
+    expect(Array.from(store().ids)).toEqual(["b-1"])
+    expect(store().ids.has("a-1")).toBe(false)
+    expect(store().hasHydrated).toBe(true)
+  })
+
   it("clears the in-flight guard on reset so a fresh hydrate issues a new request", async () => {
     await store().hydrate()
     expect(getIdsCount).toBe(1)
