@@ -59,12 +59,15 @@ export function useAuthHydration() {
     setIsHydrated(true)
   }, [])
 
-  // Fetch cart once authenticated (only for non-impersonating users)
+  // Fetch cart once authenticated (only for non-impersonating users). Keyed on the signed-in
+  // user's id, not the access token: a plain token refresh (same user) must not trigger another
+  // `GET /cart` - only signing in as a different account should.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: deliberately excludes accessToken, see comment above
   useEffect(() => {
     if (isAuthenticated && accessToken && !isAdminImpersonating) {
       refreshCart()
     }
-  }, [isAuthenticated, accessToken, isAdminImpersonating])
+  }, [isAuthenticated, user?.id, isAdminImpersonating])
 
   // Keep the shared cookie pointed at this tab while it's focused, and drop this tab's session
   // locally (without touching the server or sibling tabs) if the same account logs out elsewhere.

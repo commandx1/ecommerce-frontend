@@ -36,10 +36,13 @@ export default function DashboardHeader({
 
   const displayName = user ? `${user.name} ${user.surname}`.trim() || user.email : accountFallbackName
 
+  // Keyed on the user's id, not the whole `user` object: a profile save (name/surname/email)
+  // hands back a new object for the same account and must not trigger another `GET /cart`.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: deliberately excludes the `user` object, see comment above
   useEffect(() => {
     if (!showCart || !user) return
     void refreshCart()
-  }, [showCart, user])
+  }, [showCart, user?.id])
 
   const handleLogout = async () => {
     await logout()

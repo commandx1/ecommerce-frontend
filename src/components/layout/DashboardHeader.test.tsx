@@ -1,4 +1,4 @@
-import { render as rtlRender } from "@testing-library/react"
+import { act, render as rtlRender } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -98,6 +98,53 @@ describe("DashboardHeader", () => {
     await cartCommands.addItem("up-1", 2)
 
     expect(await screen.findByText("2")).toBeInTheDocument()
+  })
+
+  /**
+   * F9 regression guard: this effect used to be keyed on the whole `user` object, so a profile
+   * save (a new object for the same account) re-ran it and called `refreshCart()` again.
+   * Asserted on `queryClient.fetchQuery` (what `refreshCart()` calls under the hood) rather than
+   * on an actual `GET /cart` landing, because react-query's own dedup window would otherwise
+   * mask a second `refreshCart()` call that happens to arrive within it.
+   */
+  it("does not refetch the cart when the signed-in user's profile changes, only their identity", async () => {
+    signIn({ id: "user-1", name: "Serhat" })
+    server.use(http.get("*/backend-api/cart", () => HttpResponse.json(makeCart({ cartItems: [] }))))
+
+    const { queryClient } = renderHeader({ showCart: true })
+    await waitFor(() => expect(queryClient.getQueryData(queryKeys.cart.detail())).toBeDefined())
+    const fetchQuerySpy = vi.spyOn(queryClient, "fetchQuery")
+
+    act(() => {
+      useAuthStore.setState({ user: makeAccountUser({ id: "user-1", name: "Serhat Updated" }) })
+    })
+
+    await waitFor(() => expect(screen.getByText("Serhat Updated Belen")).toBeInTheDocument())
+    expect(fetchQuerySpy).not.toHaveBeenCalled()
+  })
+
+  it("refetches the cart when a different account signs in", async () => {
+    signIn({ id: "user-1", name: "Serhat" })
+    let getCartCount = 0
+    server.use(
+      http.get("*/backend-api/cart", () => {
+        getCartCount += 1
+        return HttpResponse.json(makeCart({ cartItems: [] }))
+      }),
+    )
+
+    // QuerySessionBoundary is what actually empties the cache on an identity change in the real
+    // app; mounted here so the account switch below is the same shape as production, not just a
+    // same-tick `setState` that this hook's own dedup window would otherwise mask.
+    const { queryClient } = renderHeader({ showCart: true })
+    rtlRender(<QuerySessionBoundary queryClient={queryClient}>boundary</QuerySessionBoundary>)
+    await waitFor(() => expect(getCartCount).toBe(1))
+
+    act(() => {
+      useAuthStore.setState({ user: makeAccountUser({ id: "user-2", name: "Ayse" }) })
+    })
+
+    await waitFor(() => expect(getCartCount).toBe(2))
   })
 
   it("empties the badge once the cache is cleared on logout (QuerySessionBoundary)", async () => {

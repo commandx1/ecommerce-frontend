@@ -1,6 +1,6 @@
 /** biome-ignore-all lint/suspicious/noDocumentCookie: these suites drive the document.cookie-based auth storage on purpose */
 
-import { waitFor } from "@testing-library/react"
+import { act, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { refreshCart } from "@/features/cart/api/cart-queries"
 import { LOGOUT_EVENT_KEY } from "@/lib/storage/session-events"
@@ -221,6 +221,35 @@ describe("useAuthHydration cart bootstrap", () => {
 
     await waitFor(() => expect(getByTestId("hydrated")).toHaveTextContent("true"))
     expect(mockedRefreshCart).not.toHaveBeenCalled()
+  })
+
+  /**
+   * F9 regression guard: this effect used to be keyed on `accessToken`, so every silent token
+   * refresh (same signed-in user) fired an extra `GET /cart`.
+   */
+  it("does not refetch the cart when only the access token changes for the same user", async () => {
+    useAuthStore.getState().setAuth(USER, "at-1", "rt")
+    renderWithProviders(<Probe />)
+    await waitFor(() => expect(mockedRefreshCart).toHaveBeenCalledTimes(1))
+
+    act(() => {
+      useAuthStore.getState().setTokens("at-2", "rt")
+    })
+    // Give a (wrongly firing) extra effect a chance to run before asserting it didn't.
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(mockedRefreshCart).toHaveBeenCalledTimes(1)
+  })
+
+  it("refetches the cart when a different user becomes authenticated", async () => {
+    useAuthStore.getState().setAuth(USER, "at-1", "rt")
+    renderWithProviders(<Probe />)
+    await waitFor(() => expect(mockedRefreshCart).toHaveBeenCalledTimes(1))
+
+    act(() => {
+      useAuthStore.getState().setAuth({ ...USER, id: "u-2" }, "at-2", "rt")
+    })
+
+    await waitFor(() => expect(mockedRefreshCart).toHaveBeenCalledTimes(2))
   })
 })
 
