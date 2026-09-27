@@ -19,7 +19,9 @@ import {
  * key in `VendorOrdersPage.refresh.test.tsx`, and `recentOrdersOptions` reuses that exact key.
  */
 describe("vendor overview query options", () => {
-  const cases: Array<[string, () => { refetchInterval?: unknown; refetchOnWindowFocus?: unknown; refetchIntervalInBackground?: unknown }]> = [
+  const cases: Array<
+    [string, () => { refetchInterval?: unknown; refetchOnWindowFocus?: unknown; refetchIntervalInBackground?: unknown }]
+  > = [
     ["revenueSummaryOptions", () => revenueSummaryOptions(30, true)],
     ["reviewSummaryOptions", () => reviewSummaryOptions(true)],
     ["periodicRevenueOptions", () => periodicRevenueOptions({ months: 12 }, true)],
