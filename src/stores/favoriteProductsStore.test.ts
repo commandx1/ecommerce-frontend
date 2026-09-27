@@ -28,7 +28,7 @@ afterEach(() => {
 })
 
 /** Holds the GET open so overlapping callers are guaranteed to be concurrent. */
-function gateGetIds(): { release: () => void } {
+function gateGetIds(ids: string[] = ["p-1"]): { release: () => void } {
   let release: () => void = () => undefined
   const gate = new Promise<void>((resolve) => {
     release = resolve
@@ -38,7 +38,7 @@ function gateGetIds(): { release: () => void } {
     http.get("*/backend-api/products/favorite-ids", async () => {
       getIdsCount += 1
       await gate
-      return HttpResponse.json(["p-1"])
+      return HttpResponse.json(ids)
     }),
   )
 
@@ -94,6 +94,30 @@ describe("favoriteProductsStore hydrate", () => {
 
     expect(Array.from(store().ids).sort()).toEqual(["p-1", "p-2"])
     expect(store().hasHydrated).toBe(true)
+  })
+
+  it("keeps a favorite the user added while the hydrate GET was still in flight", async () => {
+    const { release } = gateGetIds([])
+
+    const hydrating = store().hydrate()
+    await store().toggle("p-2")
+    release()
+    await hydrating
+
+    expect(store().hasHydrated).toBe(true)
+    expect(store().ids.has("p-2")).toBe(true)
+  })
+
+  it("keeps a removal the user made while the hydrate GET was still in flight", async () => {
+    const { release } = gateGetIds()
+
+    const hydrating = store().hydrate()
+    store().setFavorite("p-1", true)
+    await store().toggle("p-1")
+    release()
+    await hydrating
+
+    expect(store().ids.has("p-1")).toBe(false)
   })
 
   it("clears the in-flight guard on reset so a fresh hydrate issues a new request", async () => {
