@@ -8,6 +8,19 @@ import { extractErrorStatus, isAuthHandledError } from "@/lib/api/auth-error"
 export const FETCH_ONCE_PER_MOUNT = { staleTime: 0, gcTime: 0, retry: false } as const
 
 /**
+ * The backend sends no push notification for a new Shippo order, so an open vendor orders (or
+ * overview) page never learns about one on its own. Layered on `FETCH_ONCE_PER_MOUNT`: refetch
+ * when the tab regains focus and every 60s while it stays visible - `refetchIntervalInBackground:
+ * false` is explicit so the interval pauses (rather than piling up requests) once the tab is
+ * hidden, per TanStack's `focusManager.isFocused()` check.
+ */
+export const REFRESH_WHILE_VISIBLE = {
+  refetchOnWindowFocus: true,
+  refetchInterval: 60_000,
+  refetchIntervalInBackground: false,
+} as const
+
+/**
  * One retry for 5xx / network errors, none for anything the interceptor already handled
  * (401 `authHandled`) or any other 4xx (the server has already answered - retrying it is
  * pointless and, for a write-shaped 409/422, actively misleading).

@@ -11,7 +11,7 @@ import {
 } from "@/lib/api/vendor-dashboard"
 import { type VendorOrdersResponse, vendorOrdersAPI } from "@/lib/api/vendor-orders"
 import { queryKeys } from "@/lib/query/keys"
-import { FETCH_ONCE_PER_MOUNT } from "@/lib/query/query-client"
+import { FETCH_ONCE_PER_MOUNT, REFRESH_WHILE_VISIBLE } from "@/lib/query/query-client"
 
 export function revenueSummaryOptions(daysFromNow: number, enabled: boolean) {
   return queryOptions<VendorRevenueSummary>({
@@ -19,6 +19,7 @@ export function revenueSummaryOptions(daysFromNow: number, enabled: boolean) {
     queryFn: ({ signal }) => vendorDashboardAPI.getRevenueSummary(daysFromNow, signal),
     enabled,
     ...FETCH_ONCE_PER_MOUNT,
+    ...REFRESH_WHILE_VISIBLE,
   })
 }
 
@@ -28,6 +29,7 @@ export function reviewSummaryOptions(enabled: boolean) {
     queryFn: ({ signal }) => vendorDashboardAPI.getReviewSummary(signal),
     enabled,
     ...FETCH_ONCE_PER_MOUNT,
+    ...REFRESH_WHILE_VISIBLE,
   })
 }
 
@@ -41,6 +43,7 @@ export function periodicRevenueOptions(params: { months?: number }, enabled: boo
       ),
     enabled,
     ...FETCH_ONCE_PER_MOUNT,
+    ...REFRESH_WHILE_VISIBLE,
   })
 }
 
@@ -54,6 +57,7 @@ export function topSellingOptions(
       vendorDashboardAPI.getTopSellingProducts(params.page, params.size, params.daysFromNow, params.sortDir, signal),
     enabled,
     ...FETCH_ONCE_PER_MOUNT,
+    ...REFRESH_WHILE_VISIBLE,
   })
 }
 
@@ -63,6 +67,7 @@ export function stockSummaryOptions(params: { page: number; size: number }, enab
     queryFn: ({ signal }) => vendorDashboardAPI.getStockSummary(params.page, params.size, signal),
     enabled,
     ...FETCH_ONCE_PER_MOUNT,
+    ...REFRESH_WHILE_VISIBLE,
   })
 }
 
@@ -72,6 +77,7 @@ export function geoDistributionOptions(params: { daysFromNow?: number }, enabled
     queryFn: ({ signal }) => vendorDashboardAPI.getGeographicDistribution(params.daysFromNow, signal),
     enabled,
     ...FETCH_ONCE_PER_MOUNT,
+    ...REFRESH_WHILE_VISIBLE,
   })
 }
 
@@ -89,5 +95,6 @@ export function recentOrdersOptions(enabled: boolean) {
     queryFn: ({ signal }) => vendorOrdersAPI.getVendorOrders(0, 4, "createdDate", "desc", "ALL", signal),
     enabled,
     ...FETCH_ONCE_PER_MOUNT,
+    ...REFRESH_WHILE_VISIBLE,
   })
 }
