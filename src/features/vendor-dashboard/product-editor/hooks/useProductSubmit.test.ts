@@ -48,7 +48,7 @@ const setup = (mode: "create" | "edit" = "edit") => {
 
 beforeEach(() => {
   for (const spy of Object.values(toastSpies)) spy.mockClear()
-  revalidateCategoryCountsSpy.mockClear()
+  revalidateCategoryCountsSpy.mockClear().mockResolvedValue(undefined)
 })
 
 describe("useProductSubmit", () => {

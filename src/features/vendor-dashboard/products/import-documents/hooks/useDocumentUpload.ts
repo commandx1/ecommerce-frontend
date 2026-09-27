@@ -3,7 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query"
 import { useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
-import { revalidateCategoryCounts } from "@/lib/actions/revalidate-category-counts"
+import { requestCategoryCountsPurge } from "@/lib/actions/request-category-counts-purge"
 import { extractFileName, type ImportResult, vendorDocumentsAPI } from "@/lib/api/vendor-documents"
 import { queryKeys } from "@/lib/query/keys"
 import { useAuthStore } from "@/stores/authStore"
@@ -68,7 +68,7 @@ export function useDocumentUpload(onUploaded: () => void): DocumentUpload {
       // Accepted rows become live listings immediately, so a bulk import can change category
       // counts the same as a single create; skip the call entirely when nothing was accepted.
       if (result.acceptedCount > 0) {
-        void revalidateCategoryCounts()
+        requestCategoryCountsPurge()
         // The import modal sits over VendorProductsPage - without this its table, stat cards and
         // brand filter keep showing pre-import data until an unrelated refetch happens to land.
         void queryClient.invalidateQueries({ queryKey: queryKeys.vendor.products.all })

@@ -3,7 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query"
 import { useCallback, useMemo, useRef, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
-import { revalidateCategoryCounts } from "@/lib/actions/revalidate-category-counts"
+import { requestCategoryCountsPurge } from "@/lib/actions/request-category-counts-purge"
 import { productsAPI } from "@/lib/api/products"
 import { queryKeys, type VendorProductListParams } from "@/lib/query/keys"
 import type { VendorProductsListResult } from "../api/products-queries"
@@ -121,7 +121,7 @@ export function useProductMutations(listParams: VendorProductListParams, accessT
         const stockCrossedZeroBoundary = (product.stock === 0) !== (parsed.stock === 0)
         const activeChanged = product.active !== parsed.active
         if (stockCrossedZeroBoundary || activeChanged) {
-          void revalidateCategoryCounts()
+          requestCategoryCountsPurge()
         }
       } catch (error) {
         console.error("Error updating product:", error)
@@ -139,7 +139,7 @@ export function useProductMutations(listParams: VendorProductListParams, accessT
 
       try {
         await productsAPI.deleteUserProduct(userProductId, accessToken)
-        void revalidateCategoryCounts()
+        requestCategoryCountsPurge()
         // `.all` (not just `.lists()`/`.stats()`) so a deleted product's brand also drops out of
         // the brand filter, not just the table and stat cards.
         await queryClient.invalidateQueries({ queryKey: queryKeys.vendor.products.all })

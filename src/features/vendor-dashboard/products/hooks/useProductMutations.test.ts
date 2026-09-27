@@ -23,6 +23,18 @@ vi.mock("@/lib/actions/revalidate-category-counts", () => ({
   revalidateCategoryCounts: revalidateCategoryCountsSpy,
 }))
 
+/** `requestCategoryCountsPurge` (used by useProductMutations) wraps this same mock, so every
+ * assertion above still exercises the real wrapper, not a bypass of it. */
+const trackUnhandledRejections = () => {
+  const seen: unknown[] = []
+  const onUnhandledRejection = (reason: unknown) => seen.push(reason)
+  process.on("unhandledRejection", onUnhandledRejection)
+  return {
+    seen,
+    stop: () => process.off("unhandledRejection", onUnhandledRejection),
+  }
+}
+
 const LIST_PARAMS = {
   view: "active" as const,
   type: "TOTAL" as const,
@@ -45,7 +57,7 @@ const setup = () => {
 
 beforeEach(() => {
   for (const spy of Object.values(toastSpies)) spy.mockClear()
-  revalidateCategoryCountsSpy.mockClear()
+  revalidateCategoryCountsSpy.mockClear().mockResolvedValue(undefined)
 })
 
 describe("useProductMutations", () => {
@@ -140,6 +152,27 @@ describe("useProductMutations", () => {
 
     expect(deleted).toBe(true)
     await waitFor(() => expect(revalidateCategoryCountsSpy).toHaveBeenCalledTimes(1))
+  })
+
+  it("deleteProduct still succeeds and leaks no unhandled rejection when the purge request itself fails", async () => {
+    server.use(http.delete("*/api/user-products/:id", () => new HttpResponse(null, { status: 204 })))
+    revalidateCategoryCountsSpy.mockRejectedValueOnce(new Error("Failed to fetch"))
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined)
+    const rejections = trackUnhandledRejections()
+
+    const { result } = setup()
+    const deleted = await act(() => result.current.deleteProduct(PRODUCT.id))
+
+    expect(deleted).toBe(true)
+    await waitFor(() => expect(revalidateCategoryCountsSpy).toHaveBeenCalledTimes(1))
+    // Flush the wrapper's `.catch` microtask.
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(rejections.seen).toEqual([])
+    expect(warnSpy).toHaveBeenCalledTimes(1)
+
+    rejections.stop()
+    warnSpy.mockRestore()
   })
 
   it("deleteProduct does not revalidate category counts when the request fails", async () => {

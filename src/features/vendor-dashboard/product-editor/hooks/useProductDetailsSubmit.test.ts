@@ -40,7 +40,7 @@ const setup = () => {
 }
 
 beforeEach(() => {
-  revalidateCategoryCountsSpy.mockClear()
+  revalidateCategoryCountsSpy.mockClear().mockResolvedValue(undefined)
   onSuccess.mockClear()
   useAuthStore.setState({
     user: makeAccountUser({ roleName: "Vendor" }),

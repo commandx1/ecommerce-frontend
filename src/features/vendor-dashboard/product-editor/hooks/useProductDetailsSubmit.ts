@@ -3,7 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
-import { revalidateCategoryCounts } from "@/lib/actions/revalidate-category-counts"
+import { requestCategoryCountsPurge } from "@/lib/actions/request-category-counts-purge"
 import type { NormalizedSearchProduct } from "@/lib/api/products"
 import { queryKeys } from "@/lib/query/keys"
 import { useAuthStore } from "@/stores/authStore"
@@ -49,7 +49,7 @@ export function useProductDetailsSubmit({ product, isOpen, onSuccess }: UseProdu
       // Best-effort, like every other vendor product mutation: a catalogued product added here is
       // listed immediately (POST /api/user-products), so its category's public count can change.
       // Not awaited, so it can never hold up or fail the add.
-      void revalidateCategoryCounts()
+      requestCategoryCountsPurge()
       // Same reasoning for the vendor's own product list: without this the products table, stat
       // cards and brand filter behind this modal keep showing pre-add data.
       void queryClient.invalidateQueries({ queryKey: queryKeys.vendor.products.all })
