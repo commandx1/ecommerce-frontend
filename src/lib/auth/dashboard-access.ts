@@ -1,8 +1,10 @@
 /**
  * Pure access-decision table for the buyer/vendor dashboard guards: "read the cookie first, wait
  * for the store to hydrate, then decide". No React, router or storage; `useDashboardAuthGuard` is
- * the only caller.
+ * the only caller (`src/proxy.ts` only shares `RETURN_TO_PARAM`).
  */
+
+import { safeRedirect } from "@/lib/utils/safe-redirect"
 
 export type DashboardRole = "buyer" | "vendor"
 
@@ -130,4 +132,38 @@ export function decideAfterHydration(
     return { kind: "redirect", to: policy.crossRoleTarget }
   }
   return { kind: "allow" }
+}
+
+/**
+ * Query param `src/proxy.ts` adds when it bounces a dashboard request to the OTHER dashboard
+ * because the shared cookie holds a sibling tab's account: the internal path + query the tab
+ * originally asked for. The guard that then recovers the tab sends it back there instead of to the
+ * dashboard root.
+ */
+export const RETURN_TO_PARAM = "returnTo"
+
+/** Longer values are ignored outright (no internal dashboard URL comes anywhere near this). */
+export const RETURN_TO_MAX_LENGTH = 2048
+
+/**
+ * Where a tab recovering from a role mismatch should go, given the raw `returnTo` value as read
+ * from the URL (i.e. decoded exactly once), or `null` to fall back to `policy.crossRoleTarget`.
+ *
+ * The recovering guard is the one mounted on the WRONG dashboard, so the only acceptable target is
+ * inside its `crossRoleTarget` area (the tab's own dashboard). Open-redirect safety is delegated to
+ * `safeRedirect` (the same validator as the login `?redirect=`); its parsed, normalised result is
+ * what gets area-checked and returned, and its "/" fallback never passes the area check.
+ */
+export function resolveCrossRoleReturnTo(policy: DashboardAccessPolicy, raw: string | null): string | null {
+  if (!raw || raw.length > RETURN_TO_MAX_LENGTH) {
+    return null
+  }
+
+  const target = safeRedirect(raw)
+  const pathname = target.split(/[?#]/, 1)[0] ?? ""
+  const area = policy.crossRoleTarget
+  if (pathname !== area && !pathname.startsWith(`${area}/`)) {
+    return null
+  }
+  return target
 }

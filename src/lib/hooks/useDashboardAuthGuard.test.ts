@@ -309,3 +309,127 @@ describe("useDashboardAuthGuard - cross-tab safety", () => {
     expect(getRouterMock().push).toHaveBeenLastCalledWith("/login")
   })
 })
+
+describe("useDashboardAuthGuard - returning a recovering tab to the page it asked for (returnTo)", () => {
+  const vendorUser: StoredUser = { ...buyerUser, id: "vendor-1", roleName: "Vendor" }
+  const ORIGIN = "http://localhost:3000"
+  const originalLocation = window.location
+
+  /** Puts this tab on `path` (the URL the proxy redirected it to). */
+  const landOn = (path: string): void => {
+    Object.defineProperty(window, "location", { configurable: true, writable: true, value: new URL(path, ORIGIN) })
+  }
+
+  const siblingWritesCookie = (raw: string): void => {
+    // biome-ignore lint/suspicious/noDocumentCookie: simulating another tab's cookieStorage write
+    document.cookie = `${COOKIE_NAME}=${encodeURIComponent(raw)}; path=/`
+  }
+
+  const sharedCookie = (): string | null => {
+    const raw = document.cookie
+      .split("; ")
+      .find((c) => c.startsWith(`${COOKIE_NAME}=`))
+      ?.slice(COOKIE_NAME.length + 1)
+    return raw ? decodeURIComponent(raw) : null
+  }
+
+  afterEach(() => {
+    Object.defineProperty(window, "location", { configurable: true, writable: true, value: originalLocation })
+  })
+
+  it("bug A: a vendor tab reloaded on /vendor-dashboard/orders under a buyer cookie goes back to /orders", () => {
+    const vendorSession = persistedEnvelope(vendorUser, true)
+    setStoreState(vendorUser, true)
+    seedSession(vendorSession)
+    siblingWritesCookie(persistedEnvelope(buyerUser, true))
+    // proxy: /vendor-dashboard/orders -> /buyer-dashboard?returnTo=... -> (next.config) /buyer-dashboard/orders
+    landOn("/buyer-dashboard/orders?returnTo=%2Fvendor-dashboard%2Forders")
+
+    const cookieAtNavigation: Array<string | null> = []
+    getRouterMock().replace.mockImplementation(() => {
+      cookieAtNavigation.push(sharedCookie())
+    })
+
+    renderHook(() => useDashboardAuthGuard("buyer"))
+
+    expect(getRouterMock().replace).toHaveBeenCalledWith("/vendor-dashboard/orders")
+    expect(getRouterMock().push).not.toHaveBeenCalled()
+    // The proxy will judge that navigation by this tab's own vendor account.
+    expect(cookieAtNavigation).toEqual([vendorSession])
+  })
+
+  it("bug B: a buyer tab that typed /buyer-dashboard/favorites under a vendor cookie goes back to /favorites", () => {
+    setStoreState(buyerUser, true)
+    seedSession(persistedEnvelope(buyerUser, true))
+    siblingWritesCookie(persistedEnvelope(vendorUser, true))
+    landOn("/vendor-dashboard?returnTo=%2Fbuyer-dashboard%2Ffavorites%3Ftab%3Dvendors")
+
+    renderHook(() => useDashboardAuthGuard("vendor"))
+
+    expect(getRouterMock().replace).toHaveBeenCalledWith("/buyer-dashboard/favorites?tab=vendors")
+    expect(getRouterMock().push).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ["an external URL", "https://evil.com"],
+    ["a protocol-relative URL", "//evil.com"],
+    ["a backslash trick", "/evil.com"],
+    ["a tab-smuggled host", "/\t/evil.com"],
+    ["the other role's dashboard", "/buyer-dashboard/orders"],
+    ["a storefront page", "/cart"],
+    ["a relative path", "vendor-dashboard/orders"],
+  ])("ignores %s and falls back to the dashboard root", (_label, returnTo) => {
+    setStoreState(vendorUser, true)
+    seedSession(persistedEnvelope(vendorUser, true))
+    landOn(`/buyer-dashboard/orders?returnTo=${encodeURIComponent(returnTo)}`)
+
+    renderHook(() => useDashboardAuthGuard("buyer"))
+
+    expect(getRouterMock().replace).not.toHaveBeenCalled()
+    expect(getRouterMock().push).toHaveBeenCalledWith("/vendor-dashboard")
+  })
+
+  it("a double-encoded value is decoded only once and rejected", () => {
+    setStoreState(vendorUser, true)
+    seedSession(persistedEnvelope(vendorUser, true))
+    landOn("/buyer-dashboard/orders?returnTo=%252Fvendor-dashboard%252Forders")
+
+    renderHook(() => useDashboardAuthGuard("buyer"))
+
+    expect(getRouterMock().replace).not.toHaveBeenCalled()
+    expect(getRouterMock().push).toHaveBeenCalledWith("/vendor-dashboard")
+  })
+
+  it("a tab that belongs on this dashboard stays, and returnTo is stripped from the address bar", () => {
+    setStoreState(vendorUser, true)
+    seedSession(persistedEnvelope(vendorUser, true))
+    // Single-tab vendor who typed a buyer-dashboard URL: proxy sent it here with returnTo.
+    landOn("/vendor-dashboard?returnTo=%2Fbuyer-dashboard%2Forders&page=2")
+    const replaceState = vi.spyOn(window.history, "replaceState")
+
+    const { result } = renderHook(() => useDashboardAuthGuard("vendor"))
+    act(() => {
+      vi.advanceTimersByTime(100)
+    })
+
+    expect(result.current.status).toBe("authorized")
+    expect(getRouterMock().replace).not.toHaveBeenCalled()
+    expect(getRouterMock().push).not.toHaveBeenCalled()
+    expect(replaceState).toHaveBeenCalledWith(null, "", "/vendor-dashboard?page=2")
+    replaceState.mockRestore()
+  })
+
+  it("returnTo redirects count toward the ping-pong cap", () => {
+    setStoreState(vendorUser, true)
+    seedSession(persistedEnvelope(vendorUser, true))
+    landOn("/buyer-dashboard/orders?returnTo=%2Fvendor-dashboard%2Forders")
+
+    for (let hop = 0; hop < CROSS_ROLE_REDIRECT_LIMIT + 2; hop++) {
+      const { unmount } = renderHook(() => useDashboardAuthGuard("buyer"))
+      unmount()
+    }
+
+    expect(getRouterMock().replace).toHaveBeenCalledTimes(CROSS_ROLE_REDIRECT_LIMIT)
+    expect(getRouterMock().push).not.toHaveBeenCalled()
+  })
+})

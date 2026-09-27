@@ -306,7 +306,8 @@ test.describe("auth-routing: redirects are never cacheable", () => {
     for (const headers of navigationVariants) {
       const response = await request.get("/vendor-dashboard", { headers, maxRedirects: 0 })
       expect(response.status(), JSON.stringify(Object.keys(headers))).toBe(307)
-      expect(response.headers().location).toBe("/buyer-dashboard")
+      // `returnTo` lets a tab of the other role, bounced here by a sibling's cookie, go back.
+      expect(response.headers().location).toBe("/buyer-dashboard?returnTo=%2Fvendor-dashboard")
       expect(response.headers()["cache-control"]).toBe("private, no-store")
     }
 

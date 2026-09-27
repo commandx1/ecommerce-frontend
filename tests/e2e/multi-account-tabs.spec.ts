@@ -444,4 +444,82 @@ test.describe("multi-account tabs (per-browser-tab sessions)", () => {
     await expect(buyerTab).toHaveURL(/\/buyer-dashboard/)
     expect(await buyerTab.evaluate(() => sessionStorage.getItem("auth-storage"))).not.toContain("Vendor")
   })
+
+  /** Every URL a tab's top-level navigations went through, redirect hops included. */
+  function recordNavigations(page: Page): string[] {
+    const urls: string[] = []
+    page.on("request", (request) => {
+      if (request.isNavigationRequest() && request.frame() === page.mainFrame()) {
+        urls.push(new URL(request.url()).pathname)
+      }
+    })
+    return urls
+  }
+
+  test("a vendor tab reloaded on /vendor-dashboard/orders under a buyer cookie comes back to /orders", async ({
+    context,
+    baseURL,
+  }) => {
+    await installVisibilityControl(context)
+
+    const buyerTab = await openTabAs(
+      context,
+      buildBuyerAuthCookie({ id: BUYER_ID }, baseURL),
+      "BUYER",
+      "/buyer-dashboard",
+    )
+    const vendorTab = await openTabAs(context, buildVendorAuthCookie({}, baseURL), "Vendor", "/vendor-dashboard/orders")
+    await expect(vendorTab.getByRole("heading", { name: "Orders", level: 1 })).toBeVisible()
+
+    // The user was last in the buyer tab: the shared cookie is the buyer's.
+    await activateTab(buyerTab)
+    await buyerTab.waitForFunction(
+      () => document.cookie.includes("auth-storage") && !document.cookie.includes("Vendor"),
+    )
+
+    // Reloading the vendor tab is judged by that buyer cookie -> the proxy bounces it to the buyer
+    // dashboard; the vendor guard resyncs the cookie and must return to /orders, not the overview.
+    const hops = recordNavigations(vendorTab)
+    await vendorTab.reload({ waitUntil: "domcontentloaded" })
+
+    await expect(vendorTab).toHaveURL((url) => url.pathname === "/vendor-dashboard/orders" && url.search === "", {
+      timeout: 10_000,
+    })
+    await expect(vendorTab.getByRole("heading", { name: "Orders", level: 1 })).toBeVisible()
+    // Precondition, not decoration: the tab really went through the cross-role bounce.
+    expect(hops.some((path) => path.startsWith("/buyer-dashboard"))).toBe(true)
+    expect(await vendorTab.evaluate(() => sessionStorage.getItem("auth-storage"))).toContain("Vendor")
+    await expect(buyerTab).toHaveURL(/\/buyer-dashboard/)
+  })
+
+  test("a buyer tab that types /buyer-dashboard/favorites under a vendor cookie lands on /favorites", async ({
+    context,
+    baseURL,
+  }) => {
+    await installVisibilityControl(context)
+
+    const buyerTab = await openTabAs(
+      context,
+      buildBuyerAuthCookie({ id: BUYER_ID }, baseURL),
+      "BUYER",
+      "/buyer-dashboard/orders",
+    )
+    // The vendor tab is opened last, so the shared cookie is the vendor's.
+    const vendorTab = await openTabAs(context, buildVendorAuthCookie({}, baseURL), "Vendor", "/vendor-dashboard")
+    const jar = await context.cookies()
+    expect(decodeURIComponent(jar.find((c) => c.name === "auth-storage")?.value ?? "")).toContain("Vendor")
+
+    // Typing a URL into the address bar is a plain document navigation: no in-page pointerdown /
+    // keydown, so nothing resyncs the cookie first and the proxy sends it to /vendor-dashboard.
+    const hops = recordNavigations(buyerTab)
+    await buyerTab.goto("/buyer-dashboard/favorites", { waitUntil: "domcontentloaded" })
+
+    await expect(buyerTab).toHaveURL((url) => url.pathname === "/buyer-dashboard/favorites" && url.search === "", {
+      timeout: 10_000,
+    })
+    await expect(buyerTab.getByRole("heading", { name: "Favorites", level: 1 })).toBeVisible()
+    expect(hops.some((path) => path.startsWith("/vendor-dashboard"))).toBe(true)
+    expect(await buyerTab.evaluate(() => sessionStorage.getItem("auth-storage"))).not.toContain("Vendor")
+    await expect(vendorTab).toHaveURL(/\/vendor-dashboard/)
+  })
 })

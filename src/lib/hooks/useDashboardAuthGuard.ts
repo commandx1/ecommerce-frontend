@@ -8,7 +8,9 @@ import {
   decideAfterHydration,
   decideInitialAccess,
   HYDRATION_WAIT_MS,
+  RETURN_TO_PARAM,
   readStoredSession,
+  resolveCrossRoleReturnTo,
 } from "@/lib/auth/dashboard-access"
 import { syncActiveTabCookie, tabSessionStorage } from "@/lib/storage/tab-session-storage"
 import { useAuthStore } from "@/stores/authStore"
@@ -33,6 +35,23 @@ function allowCrossRoleRedirect(now: number): boolean {
   }
   crossRoleRedirectTimes.push(now)
   return true
+}
+
+/** The proxy's `returnTo` (see proxy.ts `crossRoleRedirect`) on the current URL, decoded once. */
+function readReturnTo(): string | null {
+  return new URLSearchParams(window.location.search).get(RETURN_TO_PARAM)
+}
+
+/**
+ * Drops `returnTo` from the address bar once this tab turned out to belong here after all (a
+ * single-tab user who typed the other dashboard's URL). `null` state is the documented way to let
+ * the App Router pick the change up (useSearchParams stays in sync) without a navigation.
+ */
+function stripReturnTo(): void {
+  const url = new URL(window.location.href)
+  if (!url.searchParams.has(RETURN_TO_PARAM)) return
+  url.searchParams.delete(RETURN_TO_PARAM)
+  window.history.replaceState(null, "", url.pathname + url.search + url.hash)
 }
 
 /** Test-only: clears the cross-role redirect loop guard. */
@@ -63,7 +82,10 @@ export interface DashboardAuthGuardResult {
  * - the check re-runs whenever the tab is shown/focused again, so a tab whose redirect was still
  *   bounced (a sibling rewrote the cookie in between) recovers instead of sitting on a blank page;
  * - buyer <-> vendor redirects are capped (see `CROSS_ROLE_REDIRECT_LIMIT`), so a cookie that
- *   keeps flipping can never turn into an endless push loop.
+ *   keeps flipping can never turn into an endless push loop;
+ * - a buyer <-> vendor redirect goes back to the page the tab originally asked for when the proxy
+ *   left it in `returnTo` and it lies inside the tab's own dashboard (`resolveCrossRoleReturnTo`),
+ *   replacing the wrong dashboard's history entry; otherwise to the dashboard root as before.
  */
 export function useDashboardAuthGuard(role: DashboardRole): DashboardAuthGuardResult {
   const router = useRouter()
@@ -103,10 +125,22 @@ export function useDashboardAuthGuard(role: DashboardRole): DashboardAuthGuardRe
       // The proxy decides by the shared cookie, which may currently hold a sibling tab's account;
       // point it at this tab (or clear it, for a signed-out tab) right before the request leaves.
       syncActiveTabCookie(AUTH_STORAGE_KEY)
-      if (to === policy.crossRoleTarget && !allowCrossRoleRedirect(Date.now())) {
-        return
+      if (to === policy.crossRoleTarget) {
+        // A capped redirect leaves the URL (and its `returnTo`) alone for the next re-check.
+        if (!allowCrossRoleRedirect(Date.now())) {
+          return
+        }
+        const back = resolveCrossRoleReturnTo(policy, readReturnTo())
+        if (back) {
+          router.replace(back)
+          return
+        }
       }
       router.push(to)
+    }
+    const allow = () => {
+      stripReturnTo()
+      setIsChecking(false)
     }
 
     let raw: string | null
@@ -125,7 +159,7 @@ export function useDashboardAuthGuard(role: DashboardRole): DashboardAuthGuardRe
     }
 
     if (decision.kind === "allow") {
-      setIsChecking(false)
+      allow()
       return
     }
 
@@ -137,7 +171,7 @@ export function useDashboardAuthGuard(role: DashboardRole): DashboardAuthGuardRe
       if (after.kind === "redirect") {
         leaveTo(after.to)
       } else {
-        setIsChecking(false)
+        allow()
       }
     }, HYDRATION_WAIT_MS)
 

@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
+import { RETURN_TO_PARAM } from "@/lib/auth/dashboard-access"
 
 /**
  * Every redirect below is decided by the shared `auth-storage` cookie, which only mirrors whichever
@@ -11,6 +12,18 @@ const redirectTo = (url: URL): NextResponse => {
   const response = NextResponse.redirect(url)
   response.headers.set("Cache-Control", "private, no-store")
   return response
+}
+
+/**
+ * A role-mismatch redirect from one dashboard to the other. When the shared cookie belongs to a
+ * sibling tab's account, the tab that asked is not really of that role: its dashboard guard resyncs
+ * the cookie and sends it home - to `returnTo` (validated there, see `resolveCrossRoleReturnTo`)
+ * rather than to its dashboard root, so the page it asked for is not lost.
+ */
+const crossRoleRedirect = (target: string, request: NextRequest): NextResponse => {
+  const url = new URL(target, request.url)
+  url.searchParams.set(RETURN_TO_PARAM, request.nextUrl.pathname + request.nextUrl.search)
+  return redirectTo(url)
 }
 
 export async function proxy(request: NextRequest) {
@@ -54,7 +67,11 @@ export async function proxy(request: NextRequest) {
   const AUTH_PATHS = ["/login", "/register", "/verify-email", "/verify-2fa", "/forgot-password", "/reset-password"]
   const isAuthPage = pathname.startsWith("/auth/") || AUTH_PATHS.includes(pathname)
   if (isAuthenticated && user?.roleName === "Vendor" && !pathname.startsWith("/vendor-dashboard") && !isAuthPage) {
-    return redirectTo(new URL("/vendor-dashboard", request.url))
+    // Only a buyer-dashboard request can come from a tab of the other role that wants to go back;
+    // storefront pages keep the plain redirect (vendors are simply not allowed there).
+    return pathname.startsWith("/buyer-dashboard")
+      ? crossRoleRedirect("/vendor-dashboard", request)
+      : redirectTo(new URL("/vendor-dashboard", request.url))
   }
 
   // Protected dashboard routes logic
@@ -67,11 +84,11 @@ export async function proxy(request: NextRequest) {
 
     // Role check between dashboards
     if (pathname.startsWith("/vendor-dashboard") && user.roleName !== "Vendor") {
-      return redirectTo(new URL("/buyer-dashboard", request.url))
+      return crossRoleRedirect("/buyer-dashboard", request)
     }
 
     if (pathname.startsWith("/buyer-dashboard") && user.roleName === "Vendor") {
-      return redirectTo(new URL("/vendor-dashboard", request.url))
+      return crossRoleRedirect("/vendor-dashboard", request)
     }
   }
 

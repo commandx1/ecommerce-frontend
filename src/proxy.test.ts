@@ -65,10 +65,10 @@ describe("proxy role routing matrix", () => {
     // --- authenticated buyer -----------------------------------------------
     { name: "buyer on their own dashboard passes through", cookie: BUYER, path: "/buyer-dashboard", redirectTo: null },
     {
-      name: "buyer reaching into the vendor dashboard is bounced to the buyer dashboard",
+      name: "buyer reaching into the vendor dashboard is bounced to the buyer dashboard, remembering the page",
       cookie: BUYER,
       path: "/vendor-dashboard/products",
-      redirectTo: "/buyer-dashboard",
+      redirectTo: "/buyer-dashboard?returnTo=%2Fvendor-dashboard%2Fproducts",
     },
     { name: "buyer on a storefront page passes through", cookie: BUYER, path: "/cart", redirectTo: null },
 
@@ -92,10 +92,10 @@ describe("proxy role routing matrix", () => {
       redirectTo: "/vendor-dashboard",
     },
     {
-      name: "vendor reaching into the buyer dashboard is pinned to the vendor dashboard",
+      name: "vendor reaching into the buyer dashboard is pinned to the vendor dashboard, remembering the page",
       cookie: VENDOR,
       path: "/buyer-dashboard",
-      redirectTo: "/vendor-dashboard",
+      redirectTo: "/vendor-dashboard?returnTo=%2Fbuyer-dashboard",
     },
     {
       name: "vendor on a lookalike prefix (/registerx, not an auth page) is pinned to the vendor dashboard",
@@ -207,7 +207,7 @@ describe("proxy role routing matrix", () => {
       name: "authenticated user with no roleName is treated as a buyer on the vendor dashboard",
       cookie: authCookie({ user: {}, isAuthenticated: true }),
       path: "/vendor-dashboard",
-      redirectTo: "/buyer-dashboard",
+      redirectTo: "/buyer-dashboard?returnTo=%2Fvendor-dashboard",
     },
     {
       name: "authenticated user with no roleName passes through on their own dashboard",
@@ -335,6 +335,46 @@ describe("proxy redirect construction", () => {
     // `startsWith` matches this path, so it IS guarded — locked in so a future change is visible.
     expect(response.status).toBe(307)
     expect(locationOf(response)).toBe("/login?redirect=%2Fbuyer-dashboard-info")
+  })
+})
+
+describe("proxy role-mismatch redirects remember the page the tab asked for (returnTo)", () => {
+  // The shared cookie mirrors whichever tab was active last, so a dashboard request judged by it
+  // may come from a tab of the OTHER role. That tab's guard resyncs the cookie and goes back to
+  // `returnTo` (validated in dashboard-access.ts) instead of its dashboard root.
+  const returnToOf = (response: Response): string | null =>
+    new URL(response.headers.get("location") ?? "", ORIGIN).searchParams.get("returnTo")
+
+  it("vendor tab reloading /vendor-dashboard/orders under a buyer cookie keeps /orders", async () => {
+    const response = await proxy(makeRequest("/vendor-dashboard/orders", BUYER))
+
+    expect(response.status).toBe(307)
+    expect(new URL(response.headers.get("location") ?? "").pathname).toBe("/buyer-dashboard")
+    expect(returnToOf(response)).toBe("/vendor-dashboard/orders")
+    expect(response.headers.get("cache-control")).toBe("private, no-store")
+  })
+
+  it("buyer tab typing /buyer-dashboard/favorites under a vendor cookie keeps /favorites (and its query)", async () => {
+    const response = await proxy(makeRequest("/buyer-dashboard/favorites?tab=vendors", VENDOR))
+
+    expect(response.status).toBe(307)
+    expect(new URL(response.headers.get("location") ?? "").pathname).toBe("/vendor-dashboard")
+    expect(returnToOf(response)).toBe("/buyer-dashboard/favorites?tab=vendors")
+    expect(response.headers.get("cache-control")).toBe("private, no-store")
+  })
+
+  it("storefront pages under a vendor cookie keep the plain redirect (no returnTo)", async () => {
+    for (const path of ["/", "/cart", "/products?token=abc"]) {
+      const response = await proxy(makeRequest(path, VENDOR))
+      expect(locationOf(response)).toBe("/vendor-dashboard")
+    }
+  })
+
+  it("the unauthenticated login redirect is unchanged (redirect=, no returnTo)", async () => {
+    const response = await proxy(makeRequest("/buyer-dashboard/favorites"))
+
+    expect(locationOf(response)).toBe("/login?redirect=%2Fbuyer-dashboard%2Ffavorites")
+    expect(returnToOf(response)).toBeNull()
   })
 })
 

@@ -4,7 +4,9 @@ import {
   type DashboardRole,
   decideAfterHydration,
   decideInitialAccess,
+  RETURN_TO_MAX_LENGTH,
   readStoredSession,
+  resolveCrossRoleReturnTo,
 } from "./dashboard-access"
 
 const buyerUser = { roleName: "Dentist" }
@@ -235,5 +237,60 @@ describe("DASHBOARD_ACCESS_POLICIES render targets (row 7)", () => {
 
   it("vendor renders nothing while unauthorized", () => {
     expect(DASHBOARD_ACCESS_POLICIES.vendor.unauthorizedRender).toBe("nothing")
+  })
+})
+
+describe("resolveCrossRoleReturnTo", () => {
+  // The guard on the WRONG dashboard: buyer layout recovering a vendor tab, vendor layout
+  // recovering a buyer tab. Only the tab's own dashboard area is an acceptable destination.
+  const vendorTabOnBuyerDashboard = DASHBOARD_ACCESS_POLICIES.buyer
+  const buyerTabOnVendorDashboard = DASHBOARD_ACCESS_POLICIES.vendor
+
+  it("accepts a page inside the tab's own dashboard, query and all", () => {
+    expect(resolveCrossRoleReturnTo(vendorTabOnBuyerDashboard, "/vendor-dashboard/orders")).toBe(
+      "/vendor-dashboard/orders",
+    )
+    expect(resolveCrossRoleReturnTo(vendorTabOnBuyerDashboard, "/vendor-dashboard")).toBe("/vendor-dashboard")
+    expect(resolveCrossRoleReturnTo(buyerTabOnVendorDashboard, "/buyer-dashboard/favorites?tab=vendors")).toBe(
+      "/buyer-dashboard/favorites?tab=vendors",
+    )
+  })
+
+  it("rejects the other role's area (would just bounce again)", () => {
+    expect(resolveCrossRoleReturnTo(vendorTabOnBuyerDashboard, "/buyer-dashboard/orders")).toBeNull()
+    expect(resolveCrossRoleReturnTo(buyerTabOnVendorDashboard, "/vendor-dashboard/orders")).toBeNull()
+  })
+
+  it("rejects pages outside any dashboard and lookalike prefixes", () => {
+    expect(resolveCrossRoleReturnTo(buyerTabOnVendorDashboard, "/")).toBeNull()
+    expect(resolveCrossRoleReturnTo(buyerTabOnVendorDashboard, "/cart")).toBeNull()
+    expect(resolveCrossRoleReturnTo(buyerTabOnVendorDashboard, "/login")).toBeNull()
+    expect(resolveCrossRoleReturnTo(buyerTabOnVendorDashboard, "/buyer-dashboard-info")).toBeNull()
+    expect(resolveCrossRoleReturnTo(vendorTabOnBuyerDashboard, "/vendor-dashboardx/orders")).toBeNull()
+  })
+
+  it.each([
+    "https://evil.com",
+    "https://evil.com/buyer-dashboard",
+    "//evil.com/buyer-dashboard",
+    "/\\evil.com/buyer-dashboard",
+    "/\t/evil.com/buyer-dashboard",
+    "javascript:alert(1)",
+    "buyer-dashboard/orders",
+    "%2Fbuyer-dashboard%2Forders",
+  ])("rejects an off-origin or malformed value: %s", (raw) => {
+    expect(resolveCrossRoleReturnTo(buyerTabOnVendorDashboard, raw)).toBeNull()
+  })
+
+  it("area-checks the normalised path, so dot segments cannot escape it", () => {
+    expect(resolveCrossRoleReturnTo(buyerTabOnVendorDashboard, "/buyer-dashboard/../vendor-dashboard")).toBeNull()
+    expect(resolveCrossRoleReturnTo(buyerTabOnVendorDashboard, "/buyer-dashboard/../login")).toBeNull()
+  })
+
+  it("ignores empty, absent and over-long values", () => {
+    expect(resolveCrossRoleReturnTo(buyerTabOnVendorDashboard, null)).toBeNull()
+    expect(resolveCrossRoleReturnTo(buyerTabOnVendorDashboard, "")).toBeNull()
+    const long = `/buyer-dashboard/orders?q=${"a".repeat(RETURN_TO_MAX_LENGTH)}`
+    expect(resolveCrossRoleReturnTo(buyerTabOnVendorDashboard, long)).toBeNull()
   })
 })
