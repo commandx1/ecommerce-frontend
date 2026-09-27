@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react"
 import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { queryKeys } from "@/lib/query/keys"
 import { server } from "@/mocks/server"
 import { makeVendorUserProduct } from "@/test/factories"
 import { createQueryWrapper } from "@/test/render"
@@ -38,8 +39,8 @@ const LIST_PARAMS = {
 const PRODUCT = makeVendorUserProduct() as ProductWithDetails
 
 const setup = () => {
-  const { wrapper } = createQueryWrapper()
-  return renderHook(() => useProductMutations(LIST_PARAMS, "vendor-token"), { wrapper })
+  const { wrapper, client } = createQueryWrapper()
+  return { ...renderHook(() => useProductMutations(LIST_PARAMS, "vendor-token"), { wrapper }), client }
 }
 
 beforeEach(() => {
@@ -87,5 +88,20 @@ describe("useProductMutations", () => {
 
     expect(deleted).toBe(false)
     expect(revalidateCategoryCountsSpy).not.toHaveBeenCalled()
+  })
+
+  /**
+   * F6 regression guard: a deleted product used to only invalidate the products list and stat
+   * cards, so a brand that only appeared on the deleted listing lingered in the brand filter.
+   */
+  it("invalidates the vendor products brand filter (and stats) after a delete", async () => {
+    server.use(http.delete("*/api/user-products/:id", () => new HttpResponse(null, { status: 204 })))
+    const { result, client } = setup()
+    const invalidate = vi.spyOn(client, "invalidateQueries")
+
+    const deleted = await act(() => result.current.deleteProduct(PRODUCT.id))
+
+    expect(deleted).toBe(true)
+    expect(invalidate.mock.calls.map(([filters]) => filters?.queryKey)).toContainEqual(queryKeys.vendor.products.all)
   })
 })

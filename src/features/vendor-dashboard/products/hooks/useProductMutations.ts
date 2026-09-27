@@ -133,9 +133,10 @@ export function useProductMutations(listParams: VendorProductListParams, accessT
 
       try {
         await productsAPI.deleteUserProduct(userProductId, accessToken)
-        void invalidateProductStats()
         void revalidateCategoryCounts()
-        await queryClient.invalidateQueries({ queryKey: queryKeys.vendor.products.lists() })
+        // `.all` (not just `.lists()`/`.stats()`) so a deleted product's brand also drops out of
+        // the brand filter, not just the table and stat cards.
+        await queryClient.invalidateQueries({ queryKey: queryKeys.vendor.products.all })
         return true
       } catch (error) {
         console.error("Error deleting product:", error)
@@ -143,7 +144,7 @@ export function useProductMutations(listParams: VendorProductListParams, accessT
         return false
       }
     },
-    [accessToken, queryClient, invalidateProductStats],
+    [accessToken, queryClient],
   )
 
   const applyBulkDiscount = useCallback(

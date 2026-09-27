@@ -55,6 +55,11 @@ export function useOrderActions(listParams: VendorOrderListParams): OrderActions
   const invalidateOtherOrderViews = () =>
     void queryClient.invalidateQueries({ queryKey: queryKeys.vendor.orders.all, refetchType: "none" })
 
+  // A seller cancel or an approved return restocks the item, which feeds the products table's
+  // stock/status columns and its stat cards - without this they kept showing the pre-restock
+  // numbers until an unrelated products refetch happened to land.
+  const invalidateProductStats = () => void queryClient.invalidateQueries({ queryKey: queryKeys.vendor.products.all })
+
   const patchList = (updater: (page: VendorOrdersResponse) => VendorOrdersResponse) => {
     queryClient.setQueryData<VendorOrdersResponse>(listKey, (data) => (data ? updater(data) : data))
   }
@@ -121,6 +126,7 @@ export function useOrderActions(listParams: VendorOrderListParams): OrderActions
       patchList((page) => ({ ...page, orders: patchCancelledItems(page.orders, cancelledIds) }))
       showToast.success("Cancellation sent", response.message || description)
       invalidateOtherOrderViews()
+      invalidateProductStats()
     } catch (error: unknown) {
       const apiErrorMessage = extractApiErrorMessage(error)
       showToast.error("Cancellation failed", apiErrorMessage || "Cancellation request could not be submitted.")
@@ -144,6 +150,7 @@ export function useOrderActions(listParams: VendorOrderListParams): OrderActions
       patchList((page) => ({ ...page, orders: patchConfirmedReturns(page.orders, confirmedIds) }))
       showToast.success("Return approved", response.message || "Return confirmed and refund created.")
       invalidateOtherOrderViews()
+      invalidateProductStats()
     } catch (error: unknown) {
       const apiErrorMessage = extractApiErrorMessage(error)
       showToast.error("Return approval failed", apiErrorMessage || "Return could not be approved.")

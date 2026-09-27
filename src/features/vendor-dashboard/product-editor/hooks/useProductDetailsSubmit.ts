@@ -1,9 +1,11 @@
 "use client"
 
+import { useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 import { showToast } from "@/components/ui/Toast"
 import { revalidateCategoryCounts } from "@/lib/actions/revalidate-category-counts"
 import type { NormalizedSearchProduct } from "@/lib/api/products"
+import { queryKeys } from "@/lib/query/keys"
 import { useAuthStore } from "@/stores/authStore"
 import { submitSearchResultProduct } from "../api/product-editor-commands"
 import { validateSearchResultInputs } from "../lib/search-result-payloads"
@@ -17,6 +19,7 @@ export interface UseProductDetailsSubmitInput {
 /** ProductDetailsModal's price/stock form plus its one-shot "Add Product" submit. */
 export function useProductDetailsSubmit({ product, isOpen, onSuccess }: UseProductDetailsSubmitInput) {
   const { accessToken } = useAuthStore()
+  const queryClient = useQueryClient()
   const [price, setPrice] = useState("")
   const [stock, setStock] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -47,6 +50,9 @@ export function useProductDetailsSubmit({ product, isOpen, onSuccess }: UseProdu
       // listed immediately (POST /api/user-products), so its category's public count can change.
       // Not awaited, so it can never hold up or fail the add.
       void revalidateCategoryCounts()
+      // Same reasoning for the vendor's own product list: without this the products table, stat
+      // cards and brand filter behind this modal keep showing pre-add data.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.vendor.products.all })
       onSuccess()
     } catch (error) {
       const message = (error as { message?: string })?.message || "Failed to add product. Please try again."
