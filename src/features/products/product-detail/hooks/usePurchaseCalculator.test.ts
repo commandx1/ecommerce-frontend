@@ -483,9 +483,12 @@ describe("usePurchaseCalculator", () => {
       expect(result.current.shippingFeePrice).toBe(15)
     })
 
-    // SURPRISING BEHAVIOUR (locked in, not fixed): both the base shipping fee and the heavy
-    // surcharge are multiplied per unit, so a "flat" $75 heavy fee becomes $750 at quantity 10.
-    it("multiplies the heavy shipping surcharge per unit rather than charging it once", () => {
+    // INTENDED: this matches the backend, not a bug. OrderCreationService.calculateHeavyShipmentFee
+    // multiplies the heavy surcharge by quantity (and OrderCancellationService refunds it per unit
+    // the same way), and the cart (CartItemPrice.tsx, useCartPage.ts) and checkout
+    // (useOrderSummary.ts) all charge it per unit too - so a "flat" $75 heavy fee becoming $750 at
+    // quantity 10 here is this screen staying consistent with the rest of the order lifecycle.
+    it("charges the heavy shipping surcharge per unit, matching the backend and cart", () => {
       const { result } = renderCalculator({
         selectedSupplierShippingFee: "$10.00",
         selectedSupplierHeavyShippingFee: "$75.00",
