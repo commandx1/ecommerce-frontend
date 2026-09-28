@@ -222,10 +222,34 @@ describe("PurchaseOptions", () => {
       expect(screen.getByRole("button", { name: /Buy Now/i })).toBeDisabled()
     })
 
-    // Known bug, fix tracked separately (frontend-only, not a backend dependency): the quantity
-    // clamp uses `stockCount || 1`, so a zero-stock supplier still shows a purchasable quantity
-    // of one instead of reflecting that nothing can be bought.
-    it.todo("shows a quantity that cannot exceed the zero units available for a zero-stock supplier")
+    it("shows a quantity that cannot exceed the zero units available for a zero-stock supplier", () => {
+      renderPurchase({ suppliers: [makeSupplier({ stockCount: 0 })] })
+
+      expect(quantityBox()).toHaveValue("0")
+      expect(screen.getByText("Units available: 0")).toBeInTheDocument()
+
+      const [decrement, increment] = stepperButtons() as [HTMLElement, HTMLElement]
+      expect(decrement).toBeDisabled()
+      expect(increment).toBeDisabled()
+    })
+
+    it("never writes a zero-quantity item to the cart, because the button that would is disabled", async () => {
+      signIn()
+      const user = userEvent.setup()
+      let addItemCalled = false
+      server.use(
+        http.post("*/backend-api/cart/items", () => {
+          addItemCalled = true
+          return new HttpResponse(null, { status: 200 })
+        }),
+      )
+      renderPurchase({ suppliers: [makeSupplier({ stockCount: 0 })] })
+
+      await user.click(screen.getByRole("button", { name: /Out of Stock/i }))
+
+      expect(addItemCalled).toBe(false)
+      expect(mockToastError).not.toHaveBeenCalled()
+    })
   })
 
   it("keeps the quote request available even when the item is out of stock", () => {

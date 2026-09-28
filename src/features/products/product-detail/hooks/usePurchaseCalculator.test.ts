@@ -365,14 +365,27 @@ describe("usePurchaseCalculator", () => {
       expect(result.current.quantity).toBe(5)
     })
 
-    // SUSPECTED BUG (locked in, not fixed): the clamp is `setQuantity(stockCount || 1)`, so a
-    // product with zero stock still ends up with a selectable quantity of 1 rather than 0.
-    it("clamps to 1 - not 0 - when stock is zero", () => {
+    it("clamps to 0 - not 1 - when stock is zero", () => {
       const { result } = renderCalculator({ stockCount: 0 })
 
       act(() => {
         result.current.setQuantity(10)
       })
+
+      expect(result.current.quantity).toBe(0)
+    })
+
+    it("clamps a fresh zero-stock mount straight to 0", () => {
+      const { result } = renderCalculator({ stockCount: 0 })
+
+      expect(result.current.quantity).toBe(0)
+    })
+
+    it("returns the quantity to 1 when a later-selected supplier has stock again", () => {
+      const { result, rerender } = renderCalculator({ stockCount: 0 })
+      expect(result.current.quantity).toBe(0)
+
+      rerender(makeProps({ stockCount: 20 }))
 
       expect(result.current.quantity).toBe(1)
     })

@@ -64,7 +64,13 @@ export const usePurchaseCalculator = ({
 
   useEffect(() => {
     if (quantity > stockCount) {
-      setQuantity(stockCount || 1)
+      // Zero stock means zero purchasable units, not one - an out-of-stock supplier must clamp
+      // down to 0, never back up to a selectable quantity.
+      setQuantity(stockCount)
+    } else if (quantity === 0 && stockCount > 0) {
+      // Recovering from zero stock (e.g. switching to another supplier that has stock): the
+      // downward-only clamp above never fires again on its own, so bump back up to 1 here.
+      setQuantity(1)
     }
   }, [stockCount, quantity])
 
