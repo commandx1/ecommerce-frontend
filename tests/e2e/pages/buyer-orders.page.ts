@@ -82,6 +82,39 @@ export class BuyerOrdersPage extends BasePage {
     return this.page.getByRole("button", { name: /Cancel All Items from/ }).filter({ hasText: sellerName })
   }
 
+  // Same desktop-table/mobile-list duplication as orderItemsHeading above - filter to the one
+  // the current viewport actually shows so count assertions (0 vs 1 vs 2) aren't doubled.
+  requestReturnButton(): Locator {
+    return this.page.getByRole("button", { name: "Request Return" }).filter({ visible: true })
+  }
+
+  // -- Cancel confirmation modal (cancel-confirm-modal.tsx) --
+
+  get confirmCancelButton(): Locator {
+    return this.page.getByRole("button", { name: "Confirm cancel" })
+  }
+
+  get keepOrderButton(): Locator {
+    return this.page.getByRole("button", { name: "Keep order" })
+  }
+
+  // -- Refund/return modal (refund-order-modal.tsx) --
+
+  // `exact: true` matters here: Modal's own (sr-only) dialog title is "Request return" -
+  // lowercase "return" - and role-name matching is case-insensitive without it, which would
+  // otherwise match both that hidden title and the panel's real, visible "Request Return" h2.
+  get refundModalHeading(): Locator {
+    return this.page.getByRole("heading", { name: "Request Return", exact: true })
+  }
+
+  returnReasonSelect(): Locator {
+    return this.page.getByRole("combobox", { name: "Return reason" })
+  }
+
+  get submitRefundButton(): Locator {
+    return this.page.getByRole("button", { name: "Submit refund request" })
+  }
+
   // -- Pagination (orders-pagination.tsx -> DashboardPagination) --
 
   // PaginationNext/Previous render as a plain <a> with no `href`
