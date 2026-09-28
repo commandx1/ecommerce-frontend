@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { roundCurrency } from "@/lib/helpers/money"
 
 interface BulkPricingOption {
   id: number
@@ -85,14 +86,19 @@ export const usePurchaseCalculator = ({
     ? parsePrice(selectedSupplierShippingFee)
     : parsePrice(orderSummary.shipping)
   const heavyShippingFeeUnitPrice = selectedSupplierHeavyShippingFee ? parsePrice(selectedSupplierHeavyShippingFee) : 0
-  const shippingFeePrice = shippingFeeUnitPrice * quantity
-  const heavyShippingFeePrice = heavyShippingFeeUnitPrice * quantity
-  const shippingPrice = shippingFeePrice + heavyShippingFeePrice
+  // Shipping and the money totals below are rounded to the nearest cent: raw IEEE-754
+  // multiplication (a per-unit fee * quantity) routinely leaves a binary-float tail that must
+  // not leak past this hook. `productTotal` is kept as the raw per-line figure on purpose (it
+  // feeds `unitPrice * quantity` displays that already format through Intl), but every actual
+  // money total does not get to carry that tail.
+  const shippingFeePrice = roundCurrency(shippingFeeUnitPrice * quantity)
+  const heavyShippingFeePrice = roundCurrency(heavyShippingFeeUnitPrice * quantity)
+  const shippingPrice = roundCurrency(shippingFeePrice + heavyShippingFeePrice)
   const productTotal = unitPrice * quantity
-  const subtotal = productTotal
+  const subtotal = roundCurrency(productTotal)
   // No tax is estimated here: sales tax is address-based and computed by the backend at order
   // creation, and this screen has no address yet.
-  const total = subtotal + shippingPrice
+  const total = roundCurrency(subtotal + shippingPrice)
 
   return {
     quantity,

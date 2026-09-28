@@ -507,19 +507,36 @@ describe("usePurchaseCalculator", () => {
       expect(result.current.shippingPrice).toBe(10)
     })
 
-    // FLOATING-POINT LEAK (locked in, not fixed): the hook does raw IEEE-754 arithmetic and never
-    // rounds, so subtotal/total can carry a binary-float tail. Any consumer rendering these values
-    // must format them; printing them raw shows "8641.920000000001".
-    it("returns an unrounded IEEE-754 subtotal", () => {
+    // The hook does raw IEEE-754 arithmetic internally, which can leave a binary-float tail (e.g.
+    // 99.99 * 3 === 299.96999999999997, not 299.97). `subtotal` is a money output, not an
+    // intermediate figure, so it must round that tail away to the nearest cent rather than leak it
+    // to any consumer that isn't itself a formatter.
+    it("rounds the subtotal to the nearest cent instead of leaking IEEE-754 noise", () => {
       const { result } = renderCalculator({
-        bulkPricing: [makeTier({ id: 1, range: "1-9", price: "$1,234.56" })],
+        bulkPricing: [makeTier({ id: 1, range: "1-9", price: "$99.99" })],
       })
 
       act(() => {
-        result.current.setQuantity(7)
+        result.current.setQuantity(3)
       })
 
-      expect(result.current.subtotal).toBe(8641.92)
+      expect(result.current.subtotal).toBe(299.97)
+    })
+
+    it("rounds the shipping parts and the grand total to the nearest cent as well", () => {
+      const { result } = renderCalculator({
+        bulkPricing: [makeTier({ id: 1, range: "1-9", price: "$99.99" })],
+        selectedSupplierShippingFee: "$0.10",
+      })
+
+      act(() => {
+        result.current.setQuantity(3)
+      })
+
+      expect(result.current.shippingFeePrice).toBe(0.3)
+      expect(result.current.shippingPrice).toBe(0.3)
+      expect(result.current.subtotal).toBe(299.97)
+      expect(result.current.total).toBe(300.27)
     })
 
     it("returns an unrounded IEEE-754 product total", () => {
