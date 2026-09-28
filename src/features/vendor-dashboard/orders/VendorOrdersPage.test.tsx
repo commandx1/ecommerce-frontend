@@ -3,7 +3,12 @@ import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { server } from "@/mocks/server"
 import { useAuthStore } from "@/stores/authStore"
-import { makeAccountUser, makeVendorOrder, makeVendorOrderItem } from "@/test/factories"
+import {
+  makeAccountUser,
+  makeSellerConfirmReturnResponse,
+  makeVendorOrder,
+  makeVendorOrderItem,
+} from "@/test/factories"
 import { setSearchParams } from "@/test/mocks/next-navigation"
 import { installRadixPointerPolyfills } from "@/test/radix"
 import { fireEvent, render, screen, waitFor, within } from "@/test/render"
@@ -611,6 +616,43 @@ describe("VendorOrdersPage", () => {
     )
 
     await waitFor(() => expect(toastSpies.success).toHaveBeenCalledWith("Return approved", "Return confirmed"))
+  })
+
+  // The above only checks the toast - this closes the two things it doesn't: the exact wire
+  // body sellerConfirmReturn gets (SellerConfirmReturnRequest is `{ orderItemIds: string[] }`,
+  // OrderController#sellerConfirmReturn), and that a real, visible status change follows -
+  // patchConfirmedReturns (order-patches.ts) flips returnRefundStatus to APPROVED client-side, so
+  // the row's tag becomes "Return Approved" and, since canManageDeliveredReturn no longer matches,
+  // "Approve Return" itself disappears.
+  it("sends orderItemIds and marks the item Return Approved, removing the Approve Return action", async () => {
+    const user = userEvent.setup()
+    serveOrders(
+      makeVendorOrder({
+        orderId: "vorder-1",
+        orderItems: [makeVendorOrderItem({ id: "vitem-1", status: "DELIVERED", returnRefundStatus: "DELIVERED" })],
+      }),
+    )
+    let requestBody: unknown
+    server.use(
+      http.post("*/backend-api/orders/sellerConfirmReturn", async ({ request }) => {
+        requestBody = await request.json()
+        return HttpResponse.json(makeSellerConfirmReturnResponse())
+      }),
+    )
+
+    render(<VendorOrdersPage />)
+    await expandFirstOrder(user)
+
+    await user.click(
+      (await (await desktopTable()).findAllByRole("button", { name: /Approve Return/ }))[0] as HTMLElement,
+    )
+
+    await waitFor(() => expect(toastSpies.success).toHaveBeenCalledWith("Return approved", "Return confirmed"))
+    expect(requestBody).toEqual({ orderItemIds: ["vitem-1"] })
+
+    const table = await desktopTable()
+    expect(await table.findByText("Return Approved")).toBeInTheDocument()
+    expect(table.queryByRole("button", { name: /Approve Return/ })).not.toBeInTheDocument()
   })
 
   // Regression: `SellerConfirmReturnResponse.orderItemIds` is always set by
