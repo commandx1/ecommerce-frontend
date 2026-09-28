@@ -13,15 +13,17 @@ export function existingImagesOf(product: Product): ExistingImages {
 
 /**
  * Plain edit only shows price/discount/stock as editable, so only the fields that form renders
- * are seeded. Quirks kept on purpose: `barcode` is `String(product.barcode)` even when missing
- * ("undefined"), and manufacturer, category, dimensions and listing fees stay at their defaults.
+ * are seeded. Quirk kept on purpose: manufacturer, category, dimensions and listing fees stay at
+ * their defaults. `barcode` follows the same missing/null -> "" convention as every other
+ * optional field here, while still rendering a real numeric barcode (including `0`) as its
+ * string form.
  */
 export function mapEditLoad(product: Product, userProduct: UserProduct) {
   const values: ProductFormValues = {
     ...INITIAL_VALUES,
     name: product.name || "",
     detailedName: product.detailedName || "",
-    barcode: String(product.barcode),
+    barcode: product.barcode != null ? String(product.barcode) : "",
     barcodeFormats: product.barcodeFormats || "EAN_13",
     active: userProduct.active,
     description: product.description || "",

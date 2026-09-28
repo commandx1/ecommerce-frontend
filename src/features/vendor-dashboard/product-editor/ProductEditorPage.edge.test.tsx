@@ -1316,6 +1316,7 @@ describe("CreateProductPage — loading with partial backend data", () => {
             id: String(params.id),
             name: "Bare Product",
             detailedName: undefined,
+            barcode: undefined,
             barcodeFormats: undefined,
             brand: undefined,
             coverPhotoPath: undefined,
@@ -1331,6 +1332,8 @@ describe("CreateProductPage — loading with partial backend data", () => {
 
     const nameInput = await screen.findByLabelText(/Product Name/)
     await waitFor(() => expect(nameInput).toHaveValue("Bare Product"))
+    // A missing barcode must blank the field, not stringify `undefined` into it.
+    expect(screen.getByLabelText("Barcode")).toHaveValue("")
   })
 })
 

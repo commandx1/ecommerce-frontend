@@ -67,7 +67,7 @@ describe("mapEditLoad", () => {
     expect(existingImages).toEqual(existingImagesOf(FULL_PRODUCT))
   })
 
-  it("keeps the String(barcode) quirk and the defaults for missing optional fields", () => {
+  it("blanks a missing barcode instead of showing the literal text 'undefined'", () => {
     const { values } = mapEditLoad(
       makeProduct({
         name: undefined,
@@ -79,10 +79,25 @@ describe("mapEditLoad", () => {
       }),
       makeVendorUserProduct(),
     )
-    expect(values.barcode).toBe("undefined")
+    expect(values.barcode).toBe("")
     expect(values.name).toBe("")
     expect(values.barcodeFormats).toBe("EAN_13")
     expect(values.brand).toBe("")
+  })
+
+  it("blanks a null barcode the same way as a missing one", () => {
+    const { values } = mapEditLoad(makeProduct({ barcode: null as unknown as number }), makeVendorUserProduct())
+    expect(values.barcode).toBe("")
+  })
+
+  it("keeps a real numeric barcode as its string form", () => {
+    const { values } = mapEditLoad(makeProduct({ barcode: 12345 }), makeVendorUserProduct())
+    expect(values.barcode).toBe("12345")
+  })
+
+  it('keeps a zero barcode as "0" rather than blanking it', () => {
+    const { values } = mapEditLoad(makeProduct({ barcode: 0 }), makeVendorUserProduct())
+    expect(values.barcode).toBe("0")
   })
 })
 
