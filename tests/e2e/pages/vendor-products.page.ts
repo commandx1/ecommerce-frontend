@@ -26,6 +26,25 @@ export class VendorProductsPage extends BasePage {
   statusSelectTrigger(row: Locator): Locator {
     return row.getByRole("combobox")
   }
+
+  // -- Import Products modal (ImportDocumentsModal) --
+
+  get openImportModalButton(): Locator {
+    return this.page.getByRole("button", { name: "Import Products" })
+  }
+
+  get importModal(): Locator {
+    return this.page.getByRole("dialog")
+  }
+
+  /** Hidden `<input type="file">` inside DocumentUploadForm's drop zone label. */
+  get importFileInput(): Locator {
+    return this.importModal.locator('input[type="file"]')
+  }
+
+  get importUploadButton(): Locator {
+    return this.importModal.getByRole("button", { name: "Upload Document" })
+  }
 }
 
 /** Vendor "create product" page (`/vendor-dashboard/products/create`). */
