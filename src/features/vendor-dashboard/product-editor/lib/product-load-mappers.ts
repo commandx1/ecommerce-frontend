@@ -45,7 +45,7 @@ export function mapReviewEditLoad(product: Product, userProduct: UserProductDeta
     ...INITIAL_VALUES,
     name: product.name || "",
     detailedName: product.detailedName || "",
-    barcode: product.barcode ? String(product.barcode) : "",
+    barcode: product.barcode != null ? String(product.barcode) : "",
     barcodeFormats: product.barcodeFormats || "EAN_13",
     active: userProduct.active,
     description: product.description || "",

@@ -156,7 +156,7 @@ describe("mapReviewEditLoad", () => {
 
   it("falls back to blanks and defaults when optional fields are missing", () => {
     const { values } = mapReviewEditLoad(
-      makeProduct({ barcode: 0, barcodeFormats: undefined, dentalLicenseRequired: undefined }),
+      makeProduct({ barcode: undefined, barcodeFormats: undefined, dentalLicenseRequired: undefined }),
       makeUserProductDetailResponse({
         skuCode: undefined,
         shipmentFee: undefined,
@@ -173,5 +173,18 @@ describe("mapReviewEditLoad", () => {
       heavyShippingSurcharge: "",
       fulfillmentPolicy: "",
     })
+  })
+
+  it("blanks a null barcode the same way as a missing one", () => {
+    const { values } = mapReviewEditLoad(
+      makeProduct({ barcode: null as unknown as number }),
+      makeUserProductDetailResponse(),
+    )
+    expect(values.barcode).toBe("")
+  })
+
+  it('keeps a zero barcode as "0" rather than blanking it', () => {
+    const { values } = mapReviewEditLoad(makeProduct({ barcode: 0 }), makeUserProductDetailResponse())
+    expect(values.barcode).toBe("0")
   })
 })
